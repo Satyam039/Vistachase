@@ -1,0 +1,33 @@
+# Node modules
+node_modules
+/.pnp
+.pnp.js
+
+# Next.js build
+.next/
+.next-prod/
+out/
+
+# Production
+build
+
+# Misc
+.DS_Store
+*.pem
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local environment files
+.env*.local
+.env
+
+# Prisma
+/prisma/*.db
+/prisma/*.db-journal
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts

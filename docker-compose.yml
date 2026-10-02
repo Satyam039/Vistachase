@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:vistachase_secret@postgres:5432/vistachase?schema=public
+      - REDIS_URL=redis://redis:6379
+      - DB_PROVIDER=prisma-postgres
+      - CACHE_PROVIDER=redis
+      - STORAGE_PROVIDER=local
+      - EMAIL_PROVIDER=console
+      - PAYMENT_PROVIDER=mock
+      - AI_VOICE_PROVIDER=mock
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: vistachase_secret
+      POSTGRES_DB: vistachase
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+
+volumes:
+  pgdata:
+  redisdata:

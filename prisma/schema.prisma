@@ -1,0 +1,250 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  name         String
+  phone        String?
+  role         String    @default("CUSTOMER") // ADMIN, OPERATOR, DISPATCHER, CUSTOMER
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  bookings     Booking[]
+  auditLogs    AuditLog[]
+
+  @@index([email])
+}
+
+model Destination {
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  name            String
+  province        String   @default("Alberta")
+  region          String   @default("Canadian Rockies")
+  description     String
+  heroImage       String
+  isFeatured      Boolean  @default(false)
+  metaTitle       String?
+  metaDescription String?
+  createdAt       DateTime @default(now())
+  tours           Tour[]
+
+  @@index([slug])
+}
+
+model Tour {
+  id              String          @id @default(cuid())
+  slug            String          @unique
+  title           String
+  category        String          @default("SHARED") // SHARED, PRIVATE, SHUTTLE, MULTIDAY
+  durationHours   Float
+  summary         String
+  description     String
+  inclusions      String          // JSON array string
+  exclusions      String          // JSON array string
+  highlights      String          // JSON array string
+  whatToBring     String          // JSON array string
+  featuredImage   String
+  galleryImages   String          // JSON array string
+  basePrice       Float
+  currency        String          @default("CAD")
+  minGroupSize    Int             @default(1)
+  maxGroupSize    Int             @default(14)
+  isFeatured      Boolean         @default(false)
+  rating          Float           @default(5.0)
+  reviewCount     Int             @default(0)
+  destinationId   String
+  destination     Destination     @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  departures      TourDeparture[]
+  reviews         Review[]
+
+  @@index([slug])
+  @@index([category])
+  @@index([destinationId])
+}
+
+model ShuttleRoute {
+  id              String          @id @default(cuid())
+  slug            String          @unique
+  name            String
+  origin          String
+  destination     String
+  isReturn        Boolean         @default(true)
+  description     String
+  notes           String?
+  departures      TourDeparture[]
+
+  @@index([slug])
+}
+
+model ShuttleStop {
+  id           String    @id @default(cuid())
+  name         String
+  town         String    // Banff, Canmore, Lake Louise, Calgary
+  address      String
+  latitude     Float
+  longitude    Float
+  instructions String
+  sortOrder    Int       @default(0)
+  isActive     Boolean   @default(true)
+  bookings     Booking[]
+
+  @@index([town])
+}
+
+model TourDeparture {
+  id             String            @id @default(cuid())
+  tourId         String?
+  tour           Tour?             @relation(fields: [tourId], references: [id], onDelete: Cascade)
+  shuttleRouteId String?
+  shuttleRoute   ShuttleRoute?     @relation(fields: [shuttleRouteId], references: [id], onDelete: Cascade)
+  date           String            // YYYY-MM-DD
+  departureTime  String            // e.g. "05:00", "08:30"
+  returnTime     String?           // e.g. "10:30", "16:30"
+  capacityTotal  Int               @default(14)
+  capacityBooked Int               @default(0)
+  capacityHeld   Int               @default(0)
+  price          Float
+  currency       String            @default("CAD")
+  status         String            @default("ACTIVE") // ACTIVE, FULL, CANCELLED
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  holds          ReservationHold[]
+  bookings       Booking[]
+
+  @@index([date])
+  @@index([tourId])
+  @@index([shuttleRouteId])
+}
+
+model ReservationHold {
+  id              String        @id @default(cuid())
+  holdToken       String        @unique
+  tourDepartureId String
+  tourDeparture   TourDeparture @relation(fields: [tourDepartureId], references: [id], onDelete: Cascade)
+  seatsCount      Int
+  customerName    String
+  customerEmail   String
+  customerPhone   String?
+  expiresAt       DateTime
+  status          String        @default("ACTIVE") // ACTIVE, EXPIRED, CONVERTED, RELEASED
+  createdAt       DateTime      @default(now())
+
+  @@index([holdToken])
+  @@index([expiresAt])
+}
+
+model Booking {
+  id               String        @id @default(cuid())
+  bookingReference String        @unique // e.g. VC-2026-89412
+  customerId       String?
+  customer         User?         @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  customerName     String
+  customerEmail    String
+  customerPhone    String
+  tourDepartureId  String
+  tourDeparture    TourDeparture @relation(fields: [tourDepartureId], references: [id], onDelete: Restrict)
+  pickupStopId     String?
+  pickupStop       ShuttleStop?  @relation(fields: [pickupStopId], references: [id], onDelete: SetNull)
+  pickupCustomText String?
+  pickupTime       String?
+  adultsCount      Int           @default(1)
+  childrenCount    Int           @default(0)
+  infantsCount     Int           @default(0)
+  totalSeats       Int
+  subtotal         Float
+  tax              Float         @default(0.0)
+  addOnsTotal      Float         @default(0.0)
+  totalAmount      Float
+  currency         String        @default("CAD")
+  status           String        @default("CONFIRMED") // CONFIRMED, PENDING_PAYMENT, CANCELLED, COMPLETED
+  specialRequests  String?
+  voucherCode      String        @unique
+  qrCodeUrl        String?
+  isBoarded        Boolean       @default(false)
+  boardedAt        DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  items            BookingAddOn[]
+  payments         Payment[]
+  review           Review?
+
+  @@index([bookingReference])
+  @@index([customerEmail])
+  @@index([voucherCode])
+}
+
+model BookingAddOn {
+  id        String   @id @default(cuid())
+  bookingId String
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  name      String
+  price     Float
+  quantity  Int      @default(1)
+}
+
+model Payment {
+  id            String   @id @default(cuid())
+  bookingId     String
+  booking       Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  amount        Float
+  currency      String   @default("CAD")
+  provider      String   // mock, stripe
+  transactionId String   @unique
+  status        String   // SUCCEEDED, PENDING, REFUNDED
+  createdAt     DateTime @default(now())
+
+  @@index([transactionId])
+  @@index([bookingId])
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  tourId     String
+  tour       Tour     @relation(fields: [tourId], references: [id], onDelete: Cascade)
+  bookingId  String?  @unique
+  booking    Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  authorName String
+  rating     Int      @default(5)
+  title      String
+  body       String
+  isVerified Boolean  @default(true)
+  isFeatured Boolean  @default(false)
+  date       String
+  createdAt  DateTime @default(now())
+
+  @@index([tourId])
+}
+
+model MediaAsset {
+  id        String   @id @default(cuid())
+  title     String
+  url       String
+  folder    String   @default("tours")
+  altText   String?
+  sizeBytes Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action     String   // e.g. "HOLD_CREATED", "CAPACITY_OVERRIDE", "BOOKING_REFUNDED"
+  entityType String   // "Booking", "TourDeparture", "User"
+  entityId   String
+  details    String   // JSON string
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+}
