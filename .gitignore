@@ -3,12 +3,13 @@ node_modules
 /.pnp
 .pnp.js
 
-# Next.js build
+# Next.js build (frontend)
 .next/
 .next-prod/
 out/
 
-# Production
+# Backend build
+dist/
 build
 
 # Misc
@@ -25,8 +26,11 @@ yarn-error.log*
 .env
 
 # Prisma
-/prisma/*.db
-/prisma/*.db-journal
+backend/prisma/*.db
+backend/prisma/*.db-journal
+
+# Local uploads
+backend/public/uploads
 
 # TypeScript
 *.tsbuildinfo

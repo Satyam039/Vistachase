@@ -1,0 +1,62 @@
+/* Tailwind preflight goes in a named layer so the Astryx theme wins over it
+   (layer order is declared in layers.css). Utilities stay unlayered. */
+@layer tw-preflight {
+  @tailwind base;
+}
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: #f8fafc;
+    --foreground: #091a14;
+    --primary: #0f382c;
+    --primary-foreground: #ffffff;
+    --gold: #c89b3c;
+    --gold-foreground: #072019;
+    --card: #ffffff;
+    --card-foreground: #091a14;
+    --border: #e2e8f0;
+  }
+
+  body {
+    color: var(--foreground);
+    background: var(--background);
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Glassmorphism & Luxury Alpine Accents */
+.glass-panel {
+  background: rgba(11, 44, 34, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.glass-panel-light {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.gold-gradient {
+  background: linear-gradient(135deg, #dfb658 0%, #c89b3c 50%, #a97b25 100%);
+}
+
+.forest-gradient {
+  background: linear-gradient(160deg, #072019 0%, #0b2c22 60%, #164d3d 100%);
+}
+
+.gold-text-gradient {
+  background: linear-gradient(135deg, #f7df96 0%, #dfb658 50%, #c89b3c 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* StyleX app styles (stylex.create in src/) are emitted here by @stylexjs/postcss-plugin,
+   in layers after reset, tw-preflight, astryx-base and astryx-theme. */
+@stylex;
