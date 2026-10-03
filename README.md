@@ -8,7 +8,7 @@
 
 ## 📌 Executive Summary & Current Status
 
-This repository contains the full custom travel booking platform for **Vista Chase**, built with a **modular monolith architecture** using **Next.js 14 (App Router), React, TypeScript, Tailwind CSS, Prisma, and Redis**. 
+This repository contains the full custom travel booking platform for **Vista Chase**, split into two apps: a **Next.js 14 (App Router) + React + Tailwind CSS frontend** in `frontend/` and an **Express + Prisma + Redis REST API backend** in `backend/`, all in TypeScript. 
 
 The platform is designed for **zero-cost local and Render staging development** while maintaining an **AWS-ready enterprise architecture** for seamless production migration (RDS, S3, ElastiCache, Stripe, SES).
 
@@ -94,8 +94,8 @@ The platform is designed for **zero-cost local and Render staging development** 
 ---
 
 ### 🟢 Phase 8: Security, Analytics, Observability & Hardening (COMPLETE)
-- Cache-backed sliding window rate limiter (`/lib/security/rate-limiter.ts`).
-- Comprehensive operational audit logging (`/lib/security/audit-logger.ts`).
+- Cache-backed sliding window rate limiter (`backend/src/lib/security/rate-limiter.ts`).
+- Comprehensive operational audit logging (`backend/src/lib/security/audit-logger.ts`).
 - System health and observability endpoint (`/api/health`).
 - Hardened HTTP security headers (CSP, nosniff, SAMEORIGIN, Permissions-Policy).
 - Docker multi-stage containerization & Render blueprint (`render.yaml`).
@@ -103,24 +103,54 @@ The platform is designed for **zero-cost local and Render staging development** 
 
 ---
 
+## 📁 Repository Layout
+
+```text
+Vistachase/
+├── backend/                 # Express REST API (port 4000)
+│   ├── prisma/              # schema.prisma, seed.js, local dev.db
+│   ├── src/
+│   │   ├── server.ts        # entry point
+│   │   ├── app.ts           # Express app + /api/* routers
+│   │   ├── routes/          # HTTP handlers (auth, tours, bookings, admin, ...)
+│   │   ├── modules/         # domain repositories (business logic + Prisma)
+│   │   └── lib/             # providers: cache, payment, email, AI, maps, auth, security
+│   ├── tests/               # Vitest suites
+│   └── Dockerfile
+├── frontend/                # Next.js website (port 3000)
+│   ├── src/app/             # pages & layouts (no API routes)
+│   ├── src/components/
+│   ├── src/lib/api/         # typed client used by server components
+│   ├── next.config.mjs      # proxies /api/* to the backend
+│   └── Dockerfile
+├── docker-compose.yml       # frontend + backend + Postgres + Redis
+└── render.yaml              # two Render web services + Postgres
+```
+
+The browser only talks to the frontend. Server components call the backend directly via `BACKEND_URL`, and client-side `fetch("/api/...")` calls are rewritten by Next.js to the backend, so the `vc_token` auth cookie stays first-party.
+
+---
+
 ## 🛠️ How to Run the Application Locally
 
 ### 1. Install Dependencies
 ```bash
-npm install
+npm run install:all
 ```
 
 ### 2. Configure Environment Variables
-Copy `.env.example` to `.env` (pre-configured with working local zero-cost defaults):
 ```bash
-cp .env.example .env
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
 ```
 
-### 3. Initialize & Seed Database
+### 3. Initialize & Seed Database (inside `backend/`)
 ```bash
+cd backend
 npx prisma generate
 npx prisma db push
 npm run prisma:seed
+cd ..
 ```
 
 *Seeded Test Accounts:*
@@ -128,18 +158,19 @@ npm run prisma:seed
 - **Dispatcher**: `dispatch@vistachase.com` / `Dispatch2026!`
 - **Customer**: `sarah.traveler@example.com` / `Traveler2026!`
 
-### 4. Run Development Server
+### 4. Run Both Servers (two terminals)
 ```bash
-npm run dev
+npm run dev:backend    # API on http://localhost:4000
+npm run dev:frontend   # Website on http://localhost:3000
 ```
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### 5. Run Verification & Test Suite
+### 5. Run Verification & Test Suite (from the repo root)
 ```bash
-npm run test        # Runs all Vitest test suites (14 tests)
-npm run typecheck   # Validates TypeScript types (tsc --noEmit)
-npm run lint        # Verifies ESLint rules
-npm run build       # Validates production Next.js compilation
+npm run test        # Backend Vitest suites (37 tests)
+npm run typecheck   # tsc --noEmit in backend and frontend
+npm run lint        # ESLint on the frontend
+npm run build       # Backend bundle + Next.js production build
 ```
 
 ---

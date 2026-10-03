@@ -48,3 +48,4 @@ The application uses clean provider interfaces enabling seamless zero-cost devel
 
 ## Change Log
 - **2026-10-02**: Workspace initialized. Next.js, TypeScript, Tailwind CSS, Docker, Render blueprint, environment templates created. Phase 0 in progress.
+- **2026-10-03**: Split the codebase into `frontend/` (Next.js UI, no API routes) and `backend/` (Express REST API with Prisma, domain modules, providers and tests). Pages that read the database directly now load data from new backend endpoints (`/api/tours`, `/api/tours/:slug`, `/api/shuttles`, `/api/destinations`, `/api/departures/checkout`); browser `/api/*` calls are proxied by Next.js rewrites.

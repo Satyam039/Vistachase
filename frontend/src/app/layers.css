@@ -1,0 +1,13 @@
+/*
+ * Cascade layer order for Astryx + Tailwind v3. Must stay in its own file and be
+ * imported first in layout.tsx: webpack hoists @import content above inline CSS,
+ * so declaring the order inside globals.css would come too late.
+ *
+ *   reset         Astryx :where() reset (lowest)
+ *   tw-preflight  Tailwind base/preflight + our base styles (globals.css)
+ *   astryx-base   Astryx component styles
+ *   astryx-theme  Stone theme tokens + component overrides (themes/stone/stone.css)
+ *
+ * Tailwind components/utilities stay unlayered, so existing utility classes keep winning.
+ */
+@layer reset, tw-preflight, astryx-base, astryx-theme;

@@ -1,17 +1,35 @@
 version: '3.8'
 
 services:
-  app:
+  frontend:
     build:
-      context: .
+      context: ./frontend
       dockerfile: Dockerfile
+      args:
+        BACKEND_URL: http://backend:4000
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
+      - BACKEND_URL=http://backend:4000
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=production
+      - PORT=4000
+      - FRONTEND_URL=http://localhost:3000
+      # Note: prisma/schema.prisma uses the sqlite provider; switch it to postgresql to use this URL
       - DATABASE_URL=postgresql://postgres:vistachase_secret@postgres:5432/vistachase?schema=public
       - REDIS_URL=redis://redis:6379
-      - DB_PROVIDER=prisma-postgres
       - CACHE_PROVIDER=redis
       - STORAGE_PROVIDER=local
       - EMAIL_PROVIDER=console

@@ -2,6 +2,11 @@
 
 This document describes **exactly how to set up, configure, and run the Vista Chase custom travel booking platform locally from zero**, based directly on the actual current codebase.
 
+The repository is split into two independent apps:
+
+* **`backend/`** — Express REST API (port `4000`): Prisma schema & seed, domain modules, provider abstractions, auth, and the test suite.
+* **`frontend/`** — Next.js UI (port `3000`): pages and components only. It reads data from the backend over HTTP, and proxies browser calls to `/api/*` to the backend (see `frontend/next.config.mjs`).
+
 ---
 
 ## 1. Prerequisites
@@ -20,10 +25,11 @@ Before setting up the project, ensure your environment meets the following speci
 
 ## 2. Project Architecture
 
-The application is structured as a **modular monolith** with clean provider abstractions. This enables seamless, zero-cost development locally with zero external paid dependencies while keeping the system 100% cloud-ready.
+The application is split into a **Next.js frontend** and an **Express backend API** (the backend keeps the modular, provider-based structure). This enables seamless, zero-cost development locally with zero external paid dependencies while keeping the system 100% cloud-ready.
 
 ### Tech Stack Breakdown
-* **Framework**: Next.js 14.2.15 (React 18.3.1, App Router, Server Components)
+* **Frontend**: Next.js 14.2.15 (React 18.3.1, App Router, Server Components)
+* **Backend**: Express 5 REST API (Node.js 20, bundled with tsup, `tsx` for dev)
 * **Language**: TypeScript 5.4.5 (Strict mode)
 * **Styling**: Tailwind CSS 3.4.3 with custom alpine luxury theme tokens
 * **Database ORM**: Prisma Client 5.22.0
@@ -33,7 +39,7 @@ The application is structured as a **modular monolith** with clean provider abst
 
 | Component | Local Development (Current) | Render Staging | Future AWS Production |
 | :--- | :--- | :--- | :--- |
-| **Hosting** | Local Node.js / Next.js Dev Server | Render Web Service (`render.yaml`) | AWS ECS / Fargate or Amplify |
+| **Hosting** | Local Express API + Next.js Dev Server | Two Render Web Services (`render.yaml`) | AWS ECS / Fargate or Amplify |
 | **Database** | **SQLite** (`prisma/dev.db` - zero setup) | Render PostgreSQL (Free Tier) | AWS RDS (PostgreSQL Multi-AZ) |
 | **Cache & Holds** | **In-Memory TTL Cache** (`MemoryCacheProvider`) | Render Redis / In-Memory | AWS ElastiCache (Redis) |
 | **Storage** | **Local Disk** (`public/uploads`) | Render Persistent Disk / S3 | AWS S3 + CloudFront CDN |
@@ -48,10 +54,11 @@ The application is structured as a **modular monolith** with clean provider abst
 
 ### Local Database Engine
 * **Engine**: **SQLite**
-* **File Location**: `prisma/dev.db` (automatically generated inside the `prisma/` folder)
+* **File Location**: `backend/prisma/dev.db` (automatically generated inside the `backend/prisma/` folder)
 * **Environment Variable**: `DATABASE_URL="file:./dev.db"`
-* **Prisma Schema File**: `prisma/schema.prisma`
-* **Seed File**: `prisma/seed.js`
+* **Prisma Schema File**: `backend/prisma/schema.prisma`
+* **Seed File**: `backend/prisma/seed.js`
+* All database commands below are run from inside `backend/`.
 
 ### Database Management Commands
 
@@ -80,7 +87,7 @@ npm run prisma:seed
 
 ## 4. Environment Variables
 
-All configuration is controlled through `.env`. A complete template is provided in `.env.example`.
+Each app has its own `.env`: `backend/.env` (template: `backend/.env.example`) holds the database, cache, provider and secret settings; `frontend/.env` (template: `frontend/.env.example`) only needs `BACKEND_URL` (where the API lives, default `http://localhost:4000`) and public `NEXT_PUBLIC_*` keys. The table below lists the backend variables.
 
 ### Variables Table
 
@@ -121,19 +128,20 @@ Follow these exact steps to clone and install the project:
 git clone <repository-url>
 cd VistaChase
 
-# 2. Install all dependencies
-npm install
+# 2. Install dependencies for both apps
+npm run install:all
 
-# 3. Create your local environment file
+# 3. Create the local environment files
 # On Linux/macOS:
-cp .env.example .env
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
 # On Windows PowerShell:
-Copy-Item .env.example .env
+Copy-Item backend/.env.example backend/.env
+Copy-Item frontend/.env.example frontend/.env
 ```
 
-Ensure your `.env` contains the local SQLite defaults:
+Ensure `backend/.env` contains the local SQLite defaults:
 ```ini
-DB_PROVIDER=prisma-sqlite
 DATABASE_URL="file:./dev.db"
 CACHE_PROVIDER=memory
 STORAGE_PROVIDER=local
@@ -147,9 +155,11 @@ MAPS_PROVIDER=mock
 
 ## 6. Database Setup
 
-Once `.env` is created, run the database setup commands:
+Once `backend/.env` is created, run the database setup commands from the `backend/` folder:
 
 ```bash
+cd backend
+
 # 1. Generate the Prisma Client
 npx prisma generate
 
@@ -172,21 +182,26 @@ Expected output from seed:
 
 ## 7. Run Application
 
-Start the Next.js development server:
+Start both servers, each in its own terminal:
 
 ```bash
-npm run dev
+# Terminal 1 - Express API on http://localhost:4000
+npm run dev:backend
+
+# Terminal 2 - Next.js website on http://localhost:3000
+npm run dev:frontend
 ```
 
 * **Local Website URL**: [http://localhost:3000](http://localhost:3000)
-* **Default Port**: `3000`
+* **Backend API URL**: [http://localhost:4000/api/health](http://localhost:4000/api/health)
+* **Default Ports**: `3000` (frontend), `4000` (backend). The frontend needs the backend running — every page loads its data from the API.
 * **Network Access**: Accessible across local devices on your network via `http://<your-local-ip>:3000`
 
 ---
 
 ## 8. Demo Accounts
 
-The following development accounts are seeded directly into `dev.db` by `prisma/seed.js`:
+The following development accounts are seeded directly into `dev.db` by `backend/prisma/seed.js`:
 
 > ⚠️ **DEVELOPMENT ONLY — DO NOT USE IN PRODUCTION**
 
@@ -217,7 +232,7 @@ All listed routes are implemented and functional in the current codebase:
 ### Staff & Operations Management
 * **Admin Operations Dashboard**: [http://localhost:3000/admin](http://localhost:3000/admin)
 * **Live Driver & Dispatch Board**: [http://localhost:3000/admin/dispatch](http://localhost:3000/admin/dispatch)
-* **System Health Check**: [http://localhost:3000/api/health](http://localhost:3000/api/health)
+* **System Health Check**: [http://localhost:3000/api/health](http://localhost:3000/api/health) (proxied to the backend at `http://localhost:4000/api/health`)
 
 ### Product Catalogs & Preserved URLs
 * **Shuttles Product Page**: [http://localhost:3000/shuttles](http://localhost:3000/shuttles)
@@ -246,7 +261,7 @@ All listed routes are implemented and functional in the current codebase:
 
 ## 10. Verification Commands
 
-Before committing code or deploying, run these four verification scripts defined in `package.json`:
+Before committing code or deploying, run these four verification scripts from the repository root (they call into `backend/` and `frontend/`):
 
 ```bash
 # 1. Run automated unit & integration test suites
@@ -258,19 +273,19 @@ npm run test
 # 2. Check TypeScript static types
 npm run typecheck
 ```
-*Verifies: Executes `tsc --noEmit` to ensure 0 TypeScript compilation or type errors.*
+*Verifies: Executes `tsc --noEmit` in both apps to ensure 0 TypeScript compilation or type errors.*
 
 ```bash
 # 3. Run ESLint code quality checks
 npm run lint
 ```
-*Verifies: Runs `next lint` using the Next.js core web vitals rules.*
+*Verifies: Runs `next lint` on the frontend using the Next.js core web vitals rules.*
 
 ```bash
 # 4. Compile optimized production build
 npm run build
 ```
-*Verifies: Tests full Next.js production bundler, static generation, route trees, and server component execution.*
+*Verifies: Bundles the backend with tsup (`backend/dist/server.js`) and runs the full Next.js production build for the frontend.*
 
 ---
 
@@ -287,14 +302,14 @@ npm run build
 ### Problem: Port 3000 already in use
 * **Symptom**: `Error: listen EADDRINUSE: address already in use :::3000`
 * **Solution**: 
-  1. Specify a different port when launching: `npx next dev -p 3001` or set `PORT=3001` in `.env`.
+  1. Specify a different port when launching: `npx next dev -p 3001` in `frontend/` (or set `PORT` in `backend/.env` for the API, and update `BACKEND_URL` in `frontend/.env` to match).
   2. Or stop the process holding port 3000:
      - On Windows: `Get-Process -Id (Get-NetTCPConnection -LocalPort 3000).OwningProcess | Stop-Process`
      - On Linux/macOS: `lsof -ti:3000 | xargs kill -9`
 
 ### Problem: Database out of sync or seed error
 * **Symptom**: `SQLite database dev.db table does not exist` or foreign key constraint error during seed.
-* **Solution**: Delete `prisma/dev.db` and run:
+* **Solution**: Delete `backend/prisma/dev.db` and run (inside `backend/`):
   ```bash
   npx prisma db push
   npm run prisma:seed
@@ -302,7 +317,7 @@ npm run build
 
 ### Problem: Redis connection warning in terminal
 * **Symptom**: `[RedisCacheProvider] Redis connection error, falling back`
-* **Solution**: This is expected if you don't have a local Redis server running. Set `CACHE_PROVIDER=memory` in `.env` to use the built-in in-memory cache with zero external dependencies.
+* **Solution**: This is expected if you don't have a local Redis server running. Set `CACHE_PROVIDER=memory` in `backend/.env` to use the built-in in-memory cache with zero external dependencies.
 
 ---
 
@@ -310,27 +325,28 @@ npm run build
 
 | Path | Purpose |
 | :--- | :--- |
-| `package.json` | Project scripts, dependencies, and metadata |
-| `.env` | Local active environment configuration (never commit to git) |
-| `.env.example` | Template documenting all environment variables and providers |
-| `prisma/schema.prisma` | Database schema (Users, Tours, Shuttles, Stops, Capacity, Bookings) |
-| `prisma/seed.js` | Complete Canadian Rockies and Vista Chase seed script |
-| `prisma/dev.db` | Local SQLite database file |
-| `src/app/` | Next.js App Router pages and layouts |
-| `src/components/layout/` | Responsive `Navbar.tsx` and `Footer.tsx` |
-| `src/components/tours/` | Reusable `TourDetailView.tsx` with capacity & JSON-LD |
-| `src/lib/cache/` | `cache.provider.ts`: In-Memory and Redis cache implementations |
-| `src/lib/storage/` | `storage.provider.ts`: Local filesystem and AWS S3 storage |
-| `src/lib/email/` | `email.provider.ts`: Console logger and Resend/SES email providers |
-| `src/lib/payment/` | `payment.provider.ts`: Mock simulator and Stripe providers |
-| `src/lib/ai/` | `ai.provider.ts`: AI Concierge with credit-card safety refusal |
-| `src/lib/maps/` | `maps.provider.ts`: Geo-coordinates for Banff, Canmore, and Lake Louise |
-| `src/lib/auth/` | `auth.ts`: JWT signing, bcrypt password hashing, RBAC permissions |
-| `src/modules/` | Domain repositories: `tours`, `shuttles`, `reservations`, `bookings` |
-| `tests/` | Unit and integration test suites (`foundation`, `domain`, `routes`) |
-| `Dockerfile` | Multi-stage production container build |
-| `docker-compose.yml` | Containerized PostgreSQL, Redis, and Next.js orchestration |
-| `render.yaml` | Render Blueprint for zero-cost staging deployment |
+| `package.json` | Root convenience scripts (`install:all`, `dev:backend`, `dev:frontend`, `build`, `test`, …) |
+| `docker-compose.yml` | Frontend, backend, PostgreSQL and Redis containers |
+| `render.yaml` | Render Blueprint: two web services (`backend/`, `frontend/`) + PostgreSQL |
+| **`backend/`** | **Express REST API** |
+| `backend/.env.example` | Template for all backend environment variables and providers |
+| `backend/prisma/schema.prisma` | Database schema (Users, Tours, Shuttles, Stops, Capacity, Bookings) |
+| `backend/prisma/seed.js` | Complete Canadian Rockies and Vista Chase seed script |
+| `backend/prisma/dev.db` | Local SQLite database file |
+| `backend/src/server.ts` | API entry point (listens on `PORT`, default `4000`) |
+| `backend/src/app.ts` | Express app: middleware, CORS, and `/api/*` router mounting |
+| `backend/src/routes/` | HTTP route handlers (`auth`, `tours`, `shuttles`, `destinations`, `departures`, `reservations`, `bookings`, `account`, `reviews`, `pickups`, `concierge`, `admin`, `health`) |
+| `backend/src/modules/` | Domain repositories: `tours`, `shuttles`, `destinations`, `departures`, `reservations`, `bookings`, `reviews`, `admin` |
+| `backend/src/lib/` | Providers: cache, storage, email, payment, AI, maps, auth (JWT/RBAC + request guard), security (rate limiter, audit log), db |
+| `backend/tests/` | Vitest unit and integration suites (run against the local database) |
+| `backend/Dockerfile` | Production container for the API |
+| **`frontend/`** | **Next.js website** |
+| `frontend/.env.example` | `BACKEND_URL` and public `NEXT_PUBLIC_*` keys |
+| `frontend/next.config.mjs` | Security headers and the `/api/*` → backend rewrite |
+| `frontend/src/app/` | App Router pages and layouts (no API routes) |
+| `frontend/src/components/` | `Navbar`, `Footer`, `TourDetailView`, `BookingCheckoutClient`, `TourSearchFilter` |
+| `frontend/src/lib/api/` | Typed server-side API client (`catalog.ts`) and response types (`types.ts`) |
+| `frontend/Dockerfile` | Production container for the website |
 
 ---
 
@@ -340,7 +356,7 @@ npm run build
 The following services are fully functional locally through zero-cost mock/local providers. **You do NOT need API keys or credit cards for any of these right now**:
 * **Database**: Local SQLite (No cloud account required)
 * **Redis**: Local memory cache (No cloud account required)
-* **Storage**: Local `/public/uploads` (No AWS S3 required)
+* **Storage**: Local `backend/public/uploads` (No AWS S3 required)
 * **Payments**: Built-in test sandbox (No Stripe account required)
 * **Email**: Terminal console logger (No Resend or SES required)
 * **AI & Voice**: Built-in deterministic Rockies concierge (No OpenAI/Gemini required)
@@ -393,19 +409,23 @@ When the client is ready to launch on production infrastructure, the following c
 Run these commands to go from a fresh clone to a working local platform in under 2 minutes:
 
 ```bash
-# 1. Install packages
-npm install
+# 1. Install packages for both apps
+npm run install:all
 
 # 2. Configure environment
-cp .env.example .env
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
 
 # 3. Setup and seed database
+cd backend
 npx prisma generate
 npx prisma db push
 npm run prisma:seed
+cd ..
 
-# 4. Start local server
-npm run dev
+# 4. Start the API (terminal 1) and the website (terminal 2)
+npm run dev:backend
+npm run dev:frontend
 ```
 
 Then open [http://localhost:3000](http://localhost:3000) in your web browser.
