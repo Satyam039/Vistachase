@@ -42,6 +42,7 @@ model Destination {
 model Tour {
   id              String          @id @default(cuid())
   slug            String          @unique
+  bokunId         String?         @unique // Bókun Product Key e.g. "1142134"
   title           String
   category        String          @default("SHARED") // SHARED, PRIVATE, SHUTTLE, MULTIDAY
   durationHours   Float
@@ -68,6 +69,7 @@ model Tour {
   reviews         Review[]
 
   @@index([slug])
+  @@index([bokunId])
   @@index([category])
   @@index([destinationId])
 }
@@ -120,6 +122,7 @@ model TourDeparture {
   updatedAt      DateTime          @updatedAt
   holds          ReservationHold[]
   bookings       Booking[]
+  operationRuns  OperationRun[]
 
   @@index([date])
   @@index([tourId])
@@ -144,41 +147,48 @@ model ReservationHold {
 }
 
 model Booking {
-  id               String        @id @default(cuid())
-  bookingReference String        @unique // e.g. VC-2026-89412
-  customerId       String?
-  customer         User?         @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  customerName     String
-  customerEmail    String
-  customerPhone    String
-  tourDepartureId  String
-  tourDeparture    TourDeparture @relation(fields: [tourDepartureId], references: [id], onDelete: Restrict)
-  pickupStopId     String?
-  pickupStop       ShuttleStop?  @relation(fields: [pickupStopId], references: [id], onDelete: SetNull)
-  pickupCustomText String?
-  pickupTime       String?
-  adultsCount      Int           @default(1)
-  childrenCount    Int           @default(0)
-  infantsCount     Int           @default(0)
-  totalSeats       Int
-  subtotal         Float
-  tax              Float         @default(0.0)
-  addOnsTotal      Float         @default(0.0)
-  totalAmount      Float
-  currency         String        @default("CAD")
-  status           String        @default("CONFIRMED") // CONFIRMED, PENDING_PAYMENT, CANCELLED, COMPLETED
-  specialRequests  String?
-  voucherCode      String        @unique
-  qrCodeUrl        String?
-  isBoarded        Boolean       @default(false)
-  boardedAt        DateTime?
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
-  items            BookingAddOn[]
-  payments         Payment[]
-  review           Review?
+  id                     String                 @id @default(cuid())
+  bookingReference       String                 @unique // e.g. VC-2026-89412
+  bokunBookingId         String?                @unique // Bókun external confirmation reference
+  customerId             String?
+  customer               User?                  @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  customerName           String
+  customerEmail          String
+  customerPhone          String
+  tourDepartureId        String
+  tourDeparture          TourDeparture          @relation(fields: [tourDepartureId], references: [id], onDelete: Restrict)
+  pickupStopId           String?
+  pickupStop             ShuttleStop?           @relation(fields: [pickupStopId], references: [id], onDelete: SetNull)
+  pickupCustomText       String?
+  pickupTime             String?
+  adultsCount            Int                    @default(1)
+  childrenCount          Int                    @default(0)
+  infantsCount           Int                    @default(0)
+  totalSeats             Int
+  subtotal               Float
+  tax                    Float                  @default(0.0)
+  addOnsTotal            Float                  @default(0.0)
+  totalAmount            Float
+  currency               String                 @default("CAD")
+  status                 String                 @default("CONFIRMED") // CONFIRMED, PENDING_PAYMENT, CANCELLED, COMPLETED
+  specialRequests        String?
+  voucherCode            String                 @unique
+  qrCodeUrl              String?
+  trackingToken          String?                @unique // 64-character unguessable crypto hex string
+  trackingTokenExpiresAt DateTime?
+  isBoarded              Boolean                @default(false)
+  boardedAt              DateTime?
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
+  items                  BookingAddOn[]
+  payments               Payment[]
+  review                 Review?
+  runBookings            RunBooking[]
+  whatsappNotifications  WhatsAppNotification[]
 
   @@index([bookingReference])
+  @@index([bokunBookingId])
+  @@index([trackingToken])
   @@index([customerEmail])
   @@index([voucherCode])
 }
@@ -223,6 +233,134 @@ model Review {
   createdAt  DateTime @default(now())
 
   @@index([tourId])
+}
+
+// ---------------------------------------------------------------------------
+// Mornby Operations Platform Models: Fleet, Drivers, Runs & Routing
+// ---------------------------------------------------------------------------
+
+model Vehicle {
+  id               String            @id @default(cuid())
+  name             String            // e.g. "Mercedes-Benz Sprinter Executive #4"
+  type             String            @default("VAN_14") // VAN_14, SUV_6, COACH_24
+  capacity         Int               @default(14)
+  licensePlate     String            @unique // e.g. "ALBERTA • 7VC-894"
+  vinNumber        String?
+  trackingDeviceId String?           @unique
+  isActive         Boolean           @default(true)
+  status           String            @default("AVAILABLE") // AVAILABLE, ASSIGNED, IN_SERVICE, MAINTENANCE
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  runs             OperationRun[]
+  positions        VehiclePosition[]
+
+  @@index([licensePlate])
+}
+
+model Driver {
+  id           String         @id @default(cuid())
+  name         String         // Legal full name (internal operations)
+  publicName   String         // Customer-visible name (e.g. "Marc")
+  email        String         @unique
+  phone        String         // Internal contact phone
+  licenseClass String         @default("Class 4")
+  bio          String?
+  photoUrl     String?
+  rating       Float          @default(5.0)
+  isActive     Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  runs         OperationRun[]
+
+  @@index([email])
+}
+
+model OperationRun {
+  id              String           @id @default(cuid())
+  name            String           // e.g. "Run 1 - Morning Lake Louise Express"
+  date            String           // YYYY-MM-DD
+  departureTime   String?          // e.g. "05:00"
+  tourDepartureId String
+  tourDeparture   TourDeparture    @relation(fields: [tourDepartureId], references: [id], onDelete: Cascade)
+  vehicleId       String?
+  vehicle         Vehicle?         @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  driverId        String?
+  driver          Driver?          @relation(fields: [driverId], references: [id], onDelete: SetNull)
+  status          String           @default("PLANNED") // PLANNED, READY, DISPATCHED, BOARDING, IN_PROGRESS, COMPLETED, CANCELLED, DELAYED
+  notes           String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  bookings        RunBooking[]
+  trackingSession TrackingSession?
+
+  @@index([date])
+  @@index([status])
+  @@index([tourDepartureId])
+}
+
+model RunBooking {
+  id          String       @id @default(cuid())
+  runId       String
+  run         OperationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  bookingId   String
+  booking     Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  pickupOrder Int          @default(0) // Sequence order (1, 2, 3...)
+  isBoarded   Boolean      @default(false)
+  boardedAt   DateTime?
+  notes       String?
+
+  @@unique([runId, bookingId])
+  @@index([runId])
+  @@index([bookingId])
+}
+
+model TrackingSession {
+  id        String       @id @default(cuid())
+  runId     String       @unique
+  run       OperationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  token     String       @unique // 64-char crypto hex string
+  isActive  Boolean      @default(true)
+  expiresAt DateTime
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([token])
+}
+
+model VehiclePosition {
+  id        String   @id @default(cuid())
+  vehicleId String
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  latitude  Float
+  longitude Float
+  heading   Float    @default(0)
+  speedKmh  Float    @default(0)
+  timestamp DateTime @default(now())
+
+  @@index([vehicleId, timestamp])
+}
+
+model WhatsAppNotification {
+  id           String   @id @default(cuid())
+  bookingId    String
+  booking      Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  type         String   @default("T_60_TRACKING")
+  phone        String
+  messageId    String?
+  status       String   @default("SENT") // SENT, FAILED, DELIVERED
+  dispatchedAt DateTime @default(now())
+
+  @@unique([bookingId, type]) // Strict Idempotency Guarantee
+  @@index([bookingId])
+}
+
+model BokunSyncLog {
+  id            String   @id @default(cuid())
+  syncType      String   // "POLL", "WEBHOOK", "CSV_IMPORT"
+  recordsSynced Int      @default(0)
+  status        String   @default("SUCCESS")
+  details       String?  // JSON or error log
+  createdAt     DateTime @default(now())
 }
 
 model MediaAsset {

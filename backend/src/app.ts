@@ -14,6 +14,8 @@ import reservationsRoutes from "@/routes/reservations.routes";
 import reviewsRoutes from "@/routes/reviews.routes";
 import shuttlesRoutes from "@/routes/shuttles.routes";
 import toursRoutes from "@/routes/tours.routes";
+import operationsRoutes from "@/routes/operations.routes";
+import trackingRoutes from "@/routes/tracking.routes";
 
 export function createApp() {
   const app = express();
@@ -52,6 +54,8 @@ export function createApp() {
   app.use("/api/reviews", reviewsRoutes);
   app.use("/api/shuttles", shuttlesRoutes);
   app.use("/api/tours", toursRoutes);
+  app.use("/api/operations", operationsRoutes);
+  app.use("/api/track", trackingRoutes);
 
   app.use("/api", (_req, res) => {
     res.status(404).json({ success: false, error: "Not found" });

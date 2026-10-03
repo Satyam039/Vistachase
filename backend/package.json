@@ -26,6 +26,7 @@
     "ioredis": "^5.4.1",
     "jsonwebtoken": "^9.0.2",
     "qrcode": "^1.5.3",
+    "vistachase": "file:..",
     "zod": "^3.23.8"
   },
   "devDependencies": {

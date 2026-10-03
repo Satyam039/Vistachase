@@ -1,51 +1,38 @@
 # Vista Chase Custom Travel Booking Platform - Implementation Status
 
 ## Project Overview
-Vista Chase is an award-winning tour and shuttle operator in Banff and the Canadian Rockies (specializing in Lake Louise, Moraine Lake, Jasper, and Yoho National Park). This platform is a full-featured, mobile-first, modular monolith travel booking platform with real-time seat inventory, reservation holds, payment abstraction, voice concierge, and role-based administration.
+Vista Chase is an award-winning tour and shuttle operator in Banff and the Canadian Rockies (specializing in Lake Louise, Moraine Lake, Jasper, and Yoho National Park). Ranked **#6 Experience in Canada** by TripAdvisor Best of the Best 2025.
+
+The platform architecture respects the non-negotiable business rules defined in `Vista Chase Revamp Roadmap.pdf`:
+* **Bókun is the System of Record**: All inventory, live seat availability, and OTA feeds (Viator, GetYourGuide) are authoritative in Bókun. Vista Chase does not duplicate or conflict with Bókun.
+* **Mornby Operations Platform**: Serves as the daily operations, run planning, vehicle allocation, pickup routing, and passenger boarding layer.
+* **Live GPS Tracking**: Provides 10Hz topographic corridor telemetry dispatched to guest WhatsApp 60 minutes prior to departure.
+* **Controlled AI Orchestration**: Safely connects guests and operations staff to live data via typed backend tools, with strict credit-card refusal guardrails.
 
 ---
 
-## Phase Roadmap & Progress
+## System Roadmap & Implementation Matrix
 
-| Phase | Description | Status | Verification Criteria |
+| Module | Description | Status | Verification Criteria |
 | :--- | :--- | :--- | :--- |
-| **Phase 0** | **Project Setup, Architecture & Core Foundations** | 🟢 Complete | Clean dependencies, TS, Tailwind, lint, vitest, build pass |
-| **Phase 1** | **Domain Models, Database Schema, Migrations & Seed Data** | 🟢 Complete | Prisma schema, repositories, comprehensive seed data, 11 tests pass |
-| **Phase 2** | **Core Customer Experience & URL Preservation** | 🟢 Complete | Preserved URLs, luxury design, responsive nav, SEO JSON-LD, 21 routes built |
-| **Phase 3** | **Search, Catalog, Pickup Finder & Live Availability** | 🟢 Complete | Hotel pickup finder, search filters, real capacity counting, 18 tests pass |
-| **Phase 4** | **Booking Engine, Reservation Holds & Payment Abstraction** | 🟢 Complete | Multi-step checkout, 10-min hold timer, payment abstraction, 21 tests pass |
-| **Phase 5** | **Customer Portal, My Trips & Digital Boarding Pass** | 🟢 Complete | Customer auth, trips dashboard, 48h cancellation, verified reviews, 25 tests pass |
-| **Phase 6** | **Admin Panel, Dispatch Board & RBAC** | 🟢 Complete | Admin dashboard, live dispatcher manifests, fleet capacity, boarding check-in, 30 tests pass |
-| **Phase 7** | **AI Rockies Travel Concierge & Voice Reservation Engine** | 🟢 Complete | Voice assistant, Web Speech STT/TTS, strict CC refusal, 10-min hold checkout, 34 tests pass |
-| **Phase 8** | **Security, Analytics, Observability & Production Hardening** | 🟢 Complete | Rate limits, CSRF, audit logs, Docker, Render blueprint, 37 tests pass, 0 lint/types errors |
+| **Bókun Integration** | 13 live catalog products mapped, sync engine, idempotent booking ingestion | 🟢 Complete | `bokun-sync.test.ts` passes; 13 live Bókun products mapped; duplicate prevention verified |
+| **Mornby Operations** | Daily runs, vehicle fleet, driver rosters, pickup optimization, boarding check-in | 🟢 Complete | `operations-dispatch.test.ts` passes; `/admin/operations` UI functional; lifecycle states tested |
+| **Live GPS Telemetry** | Canadian Rockies corridor simulation, 64-char crypto tokens, `/track/[token]` UI | 🟢 Complete | `live-tracking.test.ts` passes; `/api/track/:token` returns 200; mobile map renders |
+| **WhatsApp T-60** | Automated departure alert scheduler with database-enforced idempotency | 🟢 Complete | `whatsapp-t60.test.ts` passes; console simulator & Twilio/Meta drivers tested |
+| **Controlled AI Tools** | Typed orchestration layer with customer tools, staff operations tools, CC refusal | 🟢 Complete | `ai-orchestration.test.ts` passes; RBAC gating verified; card refusal tested |
+| **Monorepo Architecture** | Split into `frontend/` (Next.js 15 + Astryx) and `backend/` (Express 5 + Prisma) | 🟢 Complete | Frontend and Backend pass typechecks; proxy rewrites verified |
 
 ---
 
-## 🏆 Project Delivery Summary
+## 🏆 Current Automated Test Coverage
 
-All 9 development phases (Phase 0 through Phase 8) of the **Vista Chase Custom Travel Booking Platform** are now **100% complete and fully verified**:
-
-- **Automated Test Coverage**: **37 passing tests across 9 suites** covering domain repositories, search, pickup matching, checkout holding engine, customer trips & 48h cancellations, verified reviews, dispatch manifests, boarding toggles, capacity overrides, voice concierge CC refusals, rate limiting, audit logging, and system health checks.
-- **Type Safety**: **0 TypeScript errors** with strict typing across all modules, repositories, and API routes.
-- **Linting Quality**: **0 ESLint errors or warnings**.
-- **Production Build**: Successfully compiled and verified across all **42 routes** (App Router with SSR, SSG, and API route handlers).
-- **SEO & Legacy URL Preservation**: All legacy Vista Chase routes (`/banff-highlights-tour`, `/banff-private-tour`, `/shuttles`, etc.) are preserved with high-converting responsive layouts and schema markup.
-- **Zero-Cost Local Dev**: Fully operational with zero cloud costs using SQLite, in-memory TTL caching, local storage, and mock providers; switchable to Render / AWS with environment variables only.
-
-## Architecture & Provider Abstractions
-
-The application uses clean provider interfaces enabling seamless zero-cost development with zero code changes for AWS/Production migration:
-
-- **Database:** `prisma-postgres` (PostgreSQL / Render / RDS) with local `prisma-sqlite` zero-cost dev fallback.
-- **Cache & Holds:** `memory` (Local in-memory TTL) & `redis` (ioredis / ElastiCache).
-- **Storage:** `local` (disk `/public/uploads`) & `s3` (AWS S3 + CloudFront).
-- **Email:** `console` (Dev terminal logger), `resend`, and `ses` (AWS SES).
-- **Payments:** `mock` (Instant sandbox simulator) & `stripe` (Stripe Checkout / Elements).
-- **AI Concierge:** `mock` (Deterministic Rockies knowledge engine), `gemini`, and `openai`.
-- **Maps / Pickups:** `mock` (Accurate Banff/Canmore coordinates) & `google` / `mapbox`.
+* **Total Test Suites**: **16 test files**
+* **Total Passing Tests**: **53 tests passing (100% GREEN)**
+* **Type Safety**: **0 TypeScript errors** across `backend/` (`tsc --noEmit`) and `frontend/` (`tsc --noEmit`).
 
 ---
 
 ## Change Log
-- **2026-10-02**: Workspace initialized. Next.js, TypeScript, Tailwind CSS, Docker, Render blueprint, environment templates created. Phase 0 in progress.
-- **2026-10-03**: Split the codebase into `frontend/` (Next.js UI, no API routes) and `backend/` (Express REST API with Prisma, domain modules, providers and tests). Pages that read the database directly now load data from new backend endpoints (`/api/tours`, `/api/tours/:slug`, `/api/shuttles`, `/api/destinations`, `/api/departures/checkout`); browser `/api/*` calls are proxied by Next.js rewrites.
+- **2026-10-02**: Initial workspace setup and core foundations.
+- **2026-10-03**: Monorepo split into `frontend/` (Next.js 15 App Router, Astryx design system) and `backend/` (Express REST API with Prisma and Redis).
+- **2026-10-03**: Implemented Mornby Operations Platform (`/admin/operations`), Bókun operations sync provider with all 13 live products, Live GPS telemetry engine with vector topographic map (`/track/[token]`), automated WhatsApp T-60 scheduler, and controlled AI tool orchestration layer.

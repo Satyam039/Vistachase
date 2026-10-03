@@ -1,11 +1,11 @@
 import { Router } from "express";
 import { getAIProvider, ChatMessage } from "@/lib/ai/ai.provider";
-import { getMapsProvider } from "@/lib/maps/maps.provider";
-import { createReservationHold } from "@/modules/reservations/reservation.repository";
-import prisma from "@/lib/db/prisma";
+import { executeAiTool } from "@/lib/ai/ai.tools";
+import { getAuthenticatedStaff } from "@/lib/auth/admin-guard";
 
 const router = Router();
 
+// POST /api/concierge (Chat interaction with safety refusal & tool execution)
 router.post("/", async (req, res) => {
   try {
     const messages: ChatMessage[] = req.body?.messages || [];
@@ -15,84 +15,24 @@ router.post("/", async (req, res) => {
     }
 
     const aiProvider = getAIProvider();
-    const mapsProvider = getMapsProvider();
 
     // 1. Send chat to AI provider (with built-in credit card refusal guardrail)
     const response = await aiProvider.chat(messages);
 
-    let attachedData: Record<string, unknown> | null = null;
-    let checkoutUrl: string | null = null;
-    let holdToken: string | null = null;
+    const staff = getAuthenticatedStaff(req, ["ADMIN", "OPERATOR", "DISPATCHER"]);
+    const toolContext = {
+      isStaff: !!staff,
+      role: staff?.role,
+      userEmail: staff?.email,
+    };
 
-    // 2. Execute safe backend actions if tool calls were requested
+    let toolExecutionResults: any[] = [];
+
+    // 2. Safely execute validated backend tools
     if (response.toolCalls && response.toolCalls.length > 0) {
       for (const call of response.toolCalls) {
-        if (call.name === "findPickup") {
-          const q = (call.arguments.query as string) || "Banff";
-          const stops = await mapsProvider.searchPickups(q);
-          attachedData = { type: "pickups", stops: stops.slice(0, 5) };
-        } else if (call.name === "checkAvailability") {
-          const departures = await prisma.tourDeparture.findMany({
-            where: {
-              status: "SCHEDULED",
-            },
-            include: {
-              tour: true,
-              shuttleRoute: true,
-            },
-            take: 4,
-            orderBy: { date: "asc" },
-          });
-
-          attachedData = {
-            type: "availability",
-            departures: departures.map((d) => ({
-              id: d.id,
-              date: d.date,
-              departureTime: d.departureTime,
-              title: d.tour?.title || d.shuttleRoute?.name,
-              price: d.price,
-              currency: d.currency,
-              availableSeats: Math.max(0, d.capacityTotal - (d.capacityBooked + d.capacityHeld)),
-            })),
-          };
-        } else if (call.name === "createVoiceReservationHold") {
-          // Find first available scheduled departure
-          const departure = await prisma.tourDeparture.findFirst({
-            where: {
-              status: "SCHEDULED",
-            },
-            include: { tour: true, shuttleRoute: true },
-          });
-
-          if (departure) {
-            const seatsToHold = 2; // Default party of 2 for concierge voice holds
-            const holdResult = await createReservationHold({
-              departureId: departure.id,
-              seatsCount: seatsToHold,
-              customerName: "Concierge Guest",
-              customerEmail: "concierge.guest@vistachase.com",
-            });
-
-            if (holdResult.success && holdResult.holdToken) {
-              holdToken = holdResult.holdToken;
-              checkoutUrl = `/book?departureId=${departure.id}&holdToken=${holdResult.holdToken}&seats=${seatsToHold}`;
-              attachedData = {
-                type: "hold",
-                holdToken: holdResult.holdToken,
-                expiresAt: holdResult.expiresAt,
-                departure: {
-                  id: departure.id,
-                  title: departure.tour?.title || departure.shuttleRoute?.name,
-                  date: departure.date,
-                  departureTime: departure.departureTime,
-                  seats: seatsToHold,
-                },
-                checkoutUrl,
-              };
-            }
-          }
-        }
+        const result = await executeAiTool(call.name, call.arguments, toolContext);
+        toolExecutionResults.push(result);
       }
     }
 
@@ -100,14 +40,40 @@ router.post("/", async (req, res) => {
       success: true,
       message: response.message,
       hasSafetyRefusal: response.hasSafetyRefusal || false,
-      toolCalls: response.toolCalls,
-      data: attachedData,
-      checkoutUrl,
-      holdToken,
+      toolCalls: response.toolCalls || [],
+      toolResults: toolExecutionResults,
     });
-  } catch (error) {
-    console.error("Concierge API error:", error);
-    return res.status(500).json({ error: "Failed to communicate with Concierge." });
+  } catch (error: any) {
+    console.error("Concierge route error:", error);
+    return res.status(500).json({
+      error: "Unable to process concierge request.",
+    });
+  }
+});
+
+// POST /api/concierge/tool (Direct Tool Invocation with Validation & RBAC)
+router.post("/tool", async (req, res) => {
+  try {
+    const { toolName, args } = req.body ?? {};
+    if (!toolName) {
+      return res.status(400).json({ error: "toolName is required." });
+    }
+
+    const staff = getAuthenticatedStaff(req, ["ADMIN", "OPERATOR", "DISPATCHER"]);
+    const context = {
+      isStaff: !!staff,
+      role: staff?.role,
+      userEmail: staff?.email,
+    };
+
+    const result = await executeAiTool(toolName, args || {}, context);
+    if (!result.success) {
+      return res.status(result.error?.includes("UNAUTHORIZED") ? 403 : 400).json(result);
+    }
+
+    return res.json(result);
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message || "Failed to execute AI tool." });
   }
 });
 
