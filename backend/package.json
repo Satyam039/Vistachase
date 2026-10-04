@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsup src/server.ts --format cjs --target node20 --out-dir dist --clean",
-    "start": "node dist/server.js",
+    "start": "node scripts/start-production.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -43,5 +43,8 @@
     "tsx": "^4.19.0",
     "typescript": "^5.4.5",
     "vitest": "^1.6.0"
+  },
+  "prisma": {
+    "seed": "node -r dotenv/config prisma/seed.js"
   }
 }

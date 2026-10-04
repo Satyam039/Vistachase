@@ -4,7 +4,7 @@ services:
     env: node
     plan: free
     rootDir: backend
-    buildCommand: npm install && npx prisma generate && npm run build
+    buildCommand: npm install && node scripts/prepare-db.js && npm run build
     startCommand: npm run start
     healthCheckPath: /api/health
     envVars:
