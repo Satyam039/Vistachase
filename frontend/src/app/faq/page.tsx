@@ -1,4 +1,5 @@
-import { ChevronDown, HelpCircle, ShieldCheck } from "lucide-react";
+import { HelpCircle, ChevronRight, ShieldCheck, Clock } from "lucide-react";
+import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -12,59 +13,82 @@ export const metadata: Metadata = {
 
 const FAQS = [
   {
-    q: "Can I drive my own car to Moraine Lake?",
-    a: "No. Parks Canada has permanently closed Moraine Lake Road to personal and rental vehicles. Only authorized commercial tour and shuttle operators like Vista Chase are permitted through the checkpoint.",
+    q: "Can I drive my personal or rental car to Moraine Lake?",
+    a: "No. Parks Canada has permanently closed Moraine Lake Road to personal and rental vehicles to protect the fragile alpine corridor. Authorized commercial tour and shuttle operators like Vista Chase are the only guaranteed direct vehicle route without competing in crowded public lotteries.",
   },
   {
-    q: "Where do you pick up in Banff and Canmore?",
-    a: "We offer complimentary round-trip pickups directly at over 25 hotels in Banff, Canmore, and Lake Louise—including Fairmont Banff Springs, Banff Caribou Lodge, Moose Hotel, Rimrock Resort, Malcolm Hotel Canmore, Coast Canmore Hotel, and Lake Louise Inn. You can also meet us at the Banff Train Station public parking lot.",
+    q: "Where do you pick up in Banff, Canmore, and Lake Louise?",
+    a: "We offer complimentary round-trip pickups directly at over 25 premier hotels and lodges—including Fairmont Banff Springs, Banff Caribou Lodge, Moose Hotel, Rimrock Resort, Malcolm Hotel Canmore, Coast Canmore Hotel, and Lake Louise Inn. If staying at an Airbnb, we arrange the closest safe boarding point.",
   },
   {
-    q: "What is your cancellation and refund policy?",
-    a: "We offer 100% full refunds on cancellations made at least 48 hours prior to your scheduled departure. For private tours, cancellations made 72 hours prior receive a full refund.",
+    q: "What is your cancellation and refund guarantee?",
+    a: "We offer 100% full refunds on cancellations made at least 48 hours prior to your scheduled departure time. For private SUV tours, cancellations made 72 hours prior receive a complete 100% refund with zero penalties.",
   },
   {
     q: "Do I need a Parks Canada Discovery Pass?",
-    a: "Yes, all visitors entering Banff National Park must have a valid Parks Canada Pass. You can purchase one upon entering the park or add our Parks Canada Pass Assistance add-on during checkout, and our team will have it ready for your vehicle.",
+    a: "Yes, all visitors entering Banff National Park must have a valid Parks Canada Pass. You can purchase one upon entering the national park gate or online via Parks Canada before your tour date.",
   },
   {
-    q: "What happens if it rains or snows?",
-    a: "Tours operate rain, shine, or snow! Mountain weather changes rapidly and creates dramatic misty vistas. In the rare event of extreme road closure by Parks Canada (e.g. avalanche control), you will be given the choice between a free reschedule or a 100% full refund.",
+    q: "What happens in case of mountain rain or snow?",
+    a: "Tours operate in all safe mountain conditions—rain, sunshine, or fresh alpine snow! Weather in the Rockies shifts quickly and creates stunning moody mountain photography. In the rare event of severe road closure by Parks Canada, you will receive an immediate free reschedule or 100% full refund.",
   },
   {
-    q: "What time does the Sunrise Shuttle depart?",
-    a: "Sunrise shuttles typically pick up between 4:45 AM and 5:15 AM depending on your hotel and sunrise timing for that month. We arrive at Moraine Lake with plenty of time to walk up the Rockpile before first light strikes the Ten Peaks.",
+    q: "What time do the Sunrise Shuttles depart?",
+    a: "Sunrise shuttles typically pick up between 4:45 AM and 5:15 AM depending on your hotel and sunrise timing for that month. We arrive at Moraine Lake with plenty of time to ascend the Rockpile before first light strikes the Ten Peaks.",
   },
 ];
 
 export default function FAQPage() {
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      <section className="bg-forest-950 text-white py-16 px-4 sm:px-6 lg:px-8 text-center">
-        <div className="max-w-4xl mx-auto space-y-4">
-          <span className="text-xs uppercase tracking-widest font-bold text-gold-400">Clear Answers</span>
-          <h1 className="text-3xl sm:text-5xl font-bold font-display text-white">
+    <div className="min-h-screen bg-[#F9F9F7] text-[#1C1F23]">
+      {/* 01. EDITORIAL HERO BANNER */}
+      <section className="bg-[#0C1F21] text-white pt-24 pb-16 px-4 sm:px-6 lg:px-12 text-center relative overflow-hidden border-b border-white/10">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-[#FFE085] text-xs font-semibold uppercase tracking-wider border border-white/15">
+            <HelpCircle className="w-3.5 h-3.5 text-[#F5BF03]" />
+            <span>Guest Information &amp; Advice</span>
+          </div>
+          <h1 className="text-4xl sm:text-6xl font-light font-serif tracking-tight text-white leading-[1.1]">
             Frequently Asked Questions
           </h1>
-          <p className="text-slate-300 max-w-2xl mx-auto text-base">
-            Everything you need to know about planning your Canadian Rockies journey with Vista Chase.
+          <p className="text-slate-300 text-base sm:text-lg leading-relaxed font-sans max-w-2xl mx-auto">
+            Everything you need to know about planning your Canadian Rockies journey, Parks Canada permits, and
+            guaranteed Moraine Lake access.
           </p>
         </div>
       </section>
 
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 flex-1 w-full space-y-6">
+      {/* 02. FAQ LIST */}
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-12 py-16 space-y-6">
         {FAQS.map((faq, index) => (
           <div
             key={index}
-            className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-2.5"
+            className="p-8 rounded-3xl bg-white border border-slate-200/90 shadow-sm space-y-3 hover:shadow-md transition-shadow"
           >
-            <h2 className="text-lg font-bold text-forest-950 flex items-start gap-2.5">
-              <HelpCircle className="w-5 h-5 text-gold-500 shrink-0 mt-0.5" />
+            <h2 className="text-xl font-serif font-medium text-[#1C1F23] flex items-start gap-3">
+              <span className="w-6 h-6 rounded-full bg-[#3A9CA6]/15 text-[#3A9CA6] flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold font-sans">
+                Q
+              </span>
               <span>{faq.q}</span>
             </h2>
-            <p className="text-sm text-slate-700 leading-relaxed pl-7.5">{faq.a}</p>
+            <p className="text-sm text-slate-600 leading-relaxed pl-9">{faq.a}</p>
           </div>
         ))}
+
+        {/* Support Help Banner */}
+        <div className="mt-12 p-8 rounded-3xl bg-[#0C1F21] text-white flex flex-col sm:flex-row sm:items-center justify-between gap-6 border border-white/10">
+          <div className="space-y-1">
+            <span className="text-xs uppercase tracking-widest text-[#FFE085] font-bold">Have a specific question?</span>
+            <h3 className="text-xl font-serif font-light text-white">Our Banff concierge team is ready to help</h3>
+          </div>
+          <Link
+            href="/contact-us"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest text-[#1C1F23] golden-summit-btn shrink-0"
+          >
+            <span>Contact Concierge</span>
+            <ChevronRight className="w-4 h-4" />
+          </Link>
+        </div>
       </section>
     </div>
   );

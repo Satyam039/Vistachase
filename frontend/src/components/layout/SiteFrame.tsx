@@ -154,7 +154,7 @@ function ExperiencesMegaMenu() {
           <TopNavMegaMenuFeaturedCard
             title="Banff Highlights Tour"
             description="Ranked the #6 experience in Canada by TripAdvisor travelers."
-            image="https://images.unsplash.com/photo-1503614472-8c93d56e92ce?q=80&w=600&auto=format&fit=crop"
+            image="https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/68e75d228ead1330ef50075f_Moraine-Lake-Perfect-Reflection.webp"
             imageAlt="Moraine Lake and the Valley of the Ten Peaks"
             linkLabel="See the tour"
             linkHref="/banff-highlights-tour"

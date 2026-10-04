@@ -20,6 +20,41 @@ const config: Config = {
       ...astryxThemeExtension,
       colors: {
         ...astryxThemeExtension.colors,
+        ocean: {
+          950: "#061314",
+          900: "#0c1f21",
+          800: "#14363a",
+          700: "#1e5258",
+          600: "#2a757e",
+          500: "#3a9ca6", // Primary Ocean Teal
+          400: "#5ab0ba",
+          300: "#84c7ce",
+          200: "#b5e1e6",
+          100: "#daf0f2",
+          50: "#f0f9fa",
+        },
+        summit: {
+          700: "#c29600",
+          600: "#daa500",
+          500: "#f5bf03", // Primary Golden Summit
+          400: "#fad23d",
+          300: "#ffe085", // Golden Tint
+          200: "#ffecb3",
+          100: "#fff7db",
+        },
+        obsidian: {
+          950: "#0e1012",
+          900: "#1c1f23", // Obsidian Black
+          800: "#2d3238",
+          700: "#40464f",
+          600: "#5a626d",
+          500: "#757e8c",
+          400: "#949eac",
+          300: "#bac2cc",
+          200: "#dce0e5",
+          100: "#f0f2f5",
+          50: "#f9f9f7",  // Frost White
+        },
         forest: {
           950: "#04120e",
           900: "#072019",
@@ -35,9 +70,9 @@ const config: Config = {
         },
         gold: {
           600: "#a97b25",
-          500: "#c89b3c",
+          500: "#f5bf03",
           400: "#dfb658",
-          300: "#edd084",
+          300: "#ffe085",
           200: "#fae9b8",
           100: "#fdf6e2",
         },
@@ -46,14 +81,15 @@ const config: Config = {
           ice: "#d4e7f5",
           glacier: "#73a5c6",
           slate: "#334155",
-          charcoal: "#1e293b",
-          dark: "#0f172a",
+          charcoal: "#1c1f23",
+          dark: "#0c1f21",
         }
       },
       fontFamily: {
         ...astryxThemeExtension.fontFamily,
         sans: ["var(--font-inter)", "sans-serif"],
         display: ["var(--font-montserrat)", "sans-serif"],
+        editorial: ["Georgia", "Playfair Display", "serif"],
       },
       boxShadow: {
         ...astryxThemeExtension.boxShadow,
