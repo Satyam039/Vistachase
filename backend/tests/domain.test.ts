@@ -25,7 +25,7 @@ describe("Domain Repositories & Business Logic", () => {
   it("fetches tour by exact slug (URL preservation)", async () => {
     const tour = await getTourBySlug("banff-private-tour");
     expect(tour).not.toBeNull();
-    expect(tour?.title).toContain("Luxury Private SUV");
+    expect(tour?.title).toContain("Banff Private");
     expect(tour?.category).toBe("PRIVATE");
   });
 

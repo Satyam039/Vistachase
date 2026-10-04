@@ -14,7 +14,7 @@ import { Section } from "@astryxdesign/core/Section";
 import { HStack, Stack, VStack } from "@astryxdesign/core/Stack";
 import { Text } from "@astryxdesign/core/Text";
 import { Award, Mail, MapPin, Phone, ShieldCheck } from "lucide-react";
-import { BrandMark } from "@/components/brand/BrandMark";
+import { BrandLogo } from "@/components/brand/BrandMark";
 
 type FooterLink = { label: string; href: string };
 
@@ -70,12 +70,7 @@ export function SiteFooter() {
       <Stack maxWidth={1280} gap={8} className="mx-auto w-full px-page">
         <Grid columns={{ minWidth: 220, repeat: "fit" }} gap={8}>
           <VStack gap={4}>
-            <HStack gap={3} vAlign="center">
-              <BrandMark size={40} />
-              <Text type="large" weight="bold">
-                Vista Chase
-              </Text>
-            </HStack>
+            <BrandLogo height={72} />
             <Text as="p" color="secondary">
               Banff and the Canadian Rockies&apos; top-rated tour operator since 2018, ranked the #6
               experience in Canada in TripAdvisor&apos;s 2025 Travelers&apos; Choice Best of the Best.

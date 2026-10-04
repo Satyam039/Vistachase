@@ -1,5 +1,41 @@
+import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/db/prisma";
 import { getExpiredHeldSeats, liveCapacity } from "@/modules/reservations/reservation.repository";
+
+export interface TourFact {
+  label: string;
+  value: string;
+}
+
+export interface TourStop {
+  name: string;
+  text: string;
+}
+
+export interface TourSection {
+  heading: string;
+  body: string[];
+  items: string[];
+  steps: { time: string; text: string }[];
+  stops: TourStop[];
+  note: string | null;
+}
+
+export interface TourTab {
+  label: string;
+  sections: TourSection[];
+}
+
+export interface TourFaq {
+  question: string;
+  answer: string;
+}
+
+export interface VehicleOption {
+  id: string;
+  label: string;
+  seats: number;
+}
 
 export interface TourWithAvailability {
   id: string;
@@ -22,6 +58,18 @@ export interface TourWithAvailability {
   isFeatured: boolean;
   rating: number;
   reviewCount: number;
+  /** Bokun experience the live site sells this product through (null for enquiry-only products). */
+  bokunExperienceId: string | null;
+  bookingMode: "BOKUN" | "ENQUIRY";
+  /** PERSON: price per guest. GROUP: price per vehicle / private group. */
+  priceUnit: "PERSON" | "GROUP";
+  facts: TourFact[];
+  tabs: TourTab[];
+  faqs: TourFaq[];
+  crossSells: string[];
+  vehicleOptions: VehicleOption[];
+  metaTitle: string | null;
+  metaDescription: string | null;
   destination: {
     id: string;
     slug: string;
@@ -42,37 +90,29 @@ export interface TourWithAvailability {
   }[];
 }
 
-export async function getTours(options?: {
-  category?: string;
-  destinationSlug?: string;
-  isFeatured?: boolean;
-}): Promise<TourWithAvailability[]> {
-  const where: Record<string, unknown> = {};
-  if (options?.category) where.category = options.category;
-  if (options?.isFeatured !== undefined) where.isFeatured = options.isFeatured;
-  if (options?.destinationSlug) {
-    where.destination = { slug: options.destinationSlug };
+const tourInclude = {
+  destination: {
+    select: { id: true, slug: true, name: true },
+  },
+  departures: {
+    where: { status: "ACTIVE" },
+    orderBy: [{ date: "asc" as const }, { departureTime: "asc" as const }],
+  },
+};
+
+type TourRow = Prisma.TourGetPayload<{ include: typeof tourInclude }>;
+
+function json<T>(value: string | null | undefined, fallback: T): T {
+  if (!value) return fallback;
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return fallback;
   }
+}
 
-  const tours = await prisma.tour.findMany({
-    where,
-    include: {
-      destination: {
-        select: { id: true, slug: true, name: true },
-      },
-      departures: {
-        where: {
-          status: "ACTIVE",
-        },
-        orderBy: [{ date: "asc" }, { departureTime: "asc" }],
-      },
-    },
-    orderBy: { basePrice: "asc" },
-  });
-
-  const expiredHeld = await getExpiredHeldSeats(tours.flatMap((t) => t.departures.map((d) => d.id)));
-
-  return tours.map((t) => ({
+function toTourDto(t: TourRow, expiredHeld: Map<string, number>): TourWithAvailability {
+  return {
     id: t.id,
     slug: t.slug,
     title: t.title,
@@ -80,12 +120,12 @@ export async function getTours(options?: {
     durationHours: t.durationHours,
     summary: t.summary,
     description: t.description,
-    inclusions: JSON.parse(t.inclusions || "[]"),
-    exclusions: JSON.parse(t.exclusions || "[]"),
-    highlights: JSON.parse(t.highlights || "[]"),
-    whatToBring: JSON.parse(t.whatToBring || "[]"),
+    inclusions: json(t.inclusions, []),
+    exclusions: json(t.exclusions, []),
+    highlights: json(t.highlights, []),
+    whatToBring: json(t.whatToBring, []),
     featuredImage: t.featuredImage,
-    galleryImages: JSON.parse(t.galleryImages || "[]"),
+    galleryImages: json(t.galleryImages, []),
     basePrice: t.basePrice,
     currency: t.currency,
     minGroupSize: t.minGroupSize,
@@ -93,6 +133,16 @@ export async function getTours(options?: {
     isFeatured: t.isFeatured,
     rating: t.rating,
     reviewCount: t.reviewCount,
+    bokunExperienceId: t.bokunExperienceId,
+    bookingMode: t.bookingMode === "ENQUIRY" ? "ENQUIRY" : "BOKUN",
+    priceUnit: t.priceUnit === "GROUP" ? "GROUP" : "PERSON",
+    facts: json(t.facts, []),
+    tabs: json(t.tabs, []),
+    faqs: json(t.faqs, []),
+    crossSells: json(t.crossSells, []),
+    vehicleOptions: json(t.vehicleOptions, []),
+    metaTitle: t.metaTitle,
+    metaDescription: t.metaDescription,
     destination: t.destination,
     departures: t.departures.map((d) => ({
       id: d.id,
@@ -107,60 +157,36 @@ export async function getTours(options?: {
       currency: d.currency,
       status: d.status,
     })),
-  }));
+  };
+}
+
+export async function getTours(options?: {
+  category?: string;
+  destinationSlug?: string;
+  isFeatured?: boolean;
+}): Promise<TourWithAvailability[]> {
+  const where: Prisma.TourWhereInput = {};
+  if (options?.category) where.category = options.category;
+  if (options?.isFeatured !== undefined) where.isFeatured = options.isFeatured;
+  if (options?.destinationSlug) {
+    where.destination = { slug: options.destinationSlug };
+  }
+
+  // Live-site order (sortOrder), so listings match vistachase.com
+  const tours = await prisma.tour.findMany({
+    where,
+    include: tourInclude,
+    orderBy: [{ sortOrder: "asc" }, { basePrice: "asc" }],
+  });
+
+  const expiredHeld = await getExpiredHeldSeats(tours.flatMap((t) => t.departures.map((d) => d.id)));
+  return tours.map((t) => toTourDto(t, expiredHeld));
 }
 
 export async function getTourBySlug(slug: string): Promise<TourWithAvailability | null> {
-  const t = await prisma.tour.findUnique({
-    where: { slug },
-    include: {
-      destination: {
-        select: { id: true, slug: true, name: true },
-      },
-      departures: {
-        where: { status: "ACTIVE" },
-        orderBy: [{ date: "asc" }, { departureTime: "asc" }],
-      },
-    },
-  });
-
+  const t = await prisma.tour.findUnique({ where: { slug }, include: tourInclude });
   if (!t) return null;
 
   const expiredHeld = await getExpiredHeldSeats(t.departures.map((d) => d.id));
-
-  return {
-    id: t.id,
-    slug: t.slug,
-    title: t.title,
-    category: t.category,
-    durationHours: t.durationHours,
-    summary: t.summary,
-    description: t.description,
-    inclusions: JSON.parse(t.inclusions || "[]"),
-    exclusions: JSON.parse(t.exclusions || "[]"),
-    highlights: JSON.parse(t.highlights || "[]"),
-    whatToBring: JSON.parse(t.whatToBring || "[]"),
-    featuredImage: t.featuredImage,
-    galleryImages: JSON.parse(t.galleryImages || "[]"),
-    basePrice: t.basePrice,
-    currency: t.currency,
-    minGroupSize: t.minGroupSize,
-    maxGroupSize: t.maxGroupSize,
-    isFeatured: t.isFeatured,
-    rating: t.rating,
-    reviewCount: t.reviewCount,
-    destination: t.destination,
-    departures: t.departures.map((d) => ({
-      id: d.id,
-      date: d.date,
-      departureTime: d.departureTime,
-      returnTime: d.returnTime,
-      capacityTotal: d.capacityTotal,
-      capacityBooked: d.capacityBooked,
-      ...liveCapacity(d, expiredHeld),
-      price: d.price,
-      currency: d.currency,
-      status: d.status,
-    })),
-  };
+  return toTourDto(t, expiredHeld);
 }

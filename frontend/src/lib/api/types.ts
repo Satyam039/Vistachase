@@ -14,6 +14,42 @@ export interface DepartureAvailability {
   status: string;
 }
 
+export interface TourFact {
+  label: string;
+  value: string;
+}
+
+export interface TourStop {
+  name: string;
+  text: string;
+}
+
+/** One heading block inside a detail tab (copy imported from the live product page). */
+export interface TourSection {
+  heading: string;
+  body: string[];
+  items: string[];
+  steps: { time: string; text: string }[];
+  stops: TourStop[];
+  note: string | null;
+}
+
+export interface TourTab {
+  label: string;
+  sections: TourSection[];
+}
+
+export interface TourFaq {
+  question: string;
+  answer: string;
+}
+
+export interface VehicleOption {
+  id: string;
+  label: string;
+  seats: number;
+}
+
 export interface TourWithAvailability {
   id: string;
   slug: string;
@@ -35,6 +71,18 @@ export interface TourWithAvailability {
   isFeatured: boolean;
   rating: number;
   reviewCount: number;
+  /** Bokun experience the live site sells this product through (null for enquiry-only products). */
+  bokunExperienceId: string | null;
+  bookingMode: "BOKUN" | "ENQUIRY";
+  /** PERSON: price per guest. GROUP: price per vehicle / private group. */
+  priceUnit: "PERSON" | "GROUP";
+  facts: TourFact[];
+  tabs: TourTab[];
+  faqs: TourFaq[];
+  crossSells: string[];
+  vehicleOptions: VehicleOption[];
+  metaTitle: string | null;
+  metaDescription: string | null;
   destination: {
     id: string;
     slug: string;

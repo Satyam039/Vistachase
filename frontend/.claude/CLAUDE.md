@@ -9,9 +9,15 @@ Next.js 15 / React 19 UI. All data comes from the Express backend (`../backend`)
 proxied by `next.config.mjs`). Never import backend code here.
 
 Astryx setup (already done, don't redo):
-- Theme: Stone, copied as editable source in `src/themes/stone/stoneTheme.ts`. Edit that file, then
-  run `npm run theme:build` to regenerate `stone.css` / `stone.js` (never edit the generated files).
+- Theme: Vista Chase (`src/themes/vistachase/vistachaseTheme.ts`), which `extends` Stone
+  (`src/themes/stone/stoneTheme.ts`, editable source) and only overrides the brand: teal accent
+  (#257780 / text #226d75 for AA contrast; the live #3A9CA6 is icon-only) and Gill Sans headings
+  (system font where available, Montserrat fallback; the live site's licensed Gill Sans webfont files are
+  not bundled). Edit either source file, then `npm run theme:build` regenerates `vistachase.css` /
+  `vistachase.js` (never edit generated files). The extended theme is flat: Stone's CSS isn't loaded.
   `npm run theme:check` fails if the generated files are stale.
+- Logo: `src/components/brand/BrandMark.tsx` — `BrandMark` (horse-and-rider mark, nav bar) and `BrandLogo`
+  (full lockup, footer), PNGs in `public/brand` taken from the live Webflow site.
 - Responsive scale lives in the theme's `adaptations`, one rule per Astryx width tier
   (body px / H1 px / page radius / page margin), measured in the browser except the 768–1023 row:
     375 (<640)       14 / 21 / 12px / 16px
@@ -51,10 +57,20 @@ Astryx setup (already done, don't redo):
   `/search` uses `TourSearch` (library template: in-place filtering synced to the URL, grouped by category,
   sort, empty state); `/shared-tours` and `/private-tours` use `TourGallery` (product-gallery template).
   Seat counts come from the backend, which ignores expired holds, so they are live everywhere.
-- Tour detail pages (`/banff-highlights-tour` etc. and `/tours/[slug]`) render `TourDetailView` (product-detail
-  template): gallery + sticky booking column (departure Selector, QuantityInput guests, Book → `/book?departureId=&guests=`),
-  collapsible details, JSON-LD. Tours without departures show "Dates on request" + concierge CTA. "From" prices
-  use `fromPrice()` (cheapest scheduled departure, else list price).
+- Tour detail pages: every product is served by the top-level `src/app/[slug]/page.tsx` at its live
+  vistachase.com URL (static routes win; unknown slugs 404; `/tours/<slug>` 308-redirects there). Metadata
+  comes from the tour's imported `metaTitle` / `metaDescription`. They render `TourDetailView` (product-detail
+  template): gallery + sticky column (facts row from the live page, price with `priceUnitLabel()`, booking
+  panel), then the live tab structure (`tour.tabs`: Overview / Inclusions or Selection / Itinerary or Process /
+  Seasonal, plus FAQ from `tour.faqs`) and "Explore more" cross-sells (`tour.crossSells`). The booking panel
+  follows `tour.bookingMode`: BOKUN tours with local departures book through `/book`; without departures they
+  show "Dates on request"; ENQUIRY tours (custom private tours, multi-day) show the vehicle picker
+  (`tour.vehicleOptions`, caps guests) and "Request this tour" → `/contact-us?tour=&guests=&vehicle=`
+  (the enquiry form itself is roadmap Phase 2). JSON-LD: TouristTrip + FAQPage. "From" prices use
+  `fromPrice()` (cheapest scheduled departure, else list price).
+- Catalog content (all 13 live products) is imported, not hand-written: `backend/scripts/import_webflow_catalog.py`
+  parses saved live pages into `backend/prisma/catalog/products.json`; `backend/prisma/catalog/load-catalog.js`
+  maps it to Tour rows for `prisma/seed.js`.
 - Pricing model (enforced in `backend/src/modules/pricing/departure-pricing.ts`): shared tours and shuttles
   are priced per guest and take one seat each; PRIVATE tours are priced per vehicle (departure price once,
   any party up to the vehicle's seats) and a hold or booking takes the whole vehicle off sale. The frontend

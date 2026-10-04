@@ -19,4 +19,7 @@
   --font-figtree: "Figtree Variable";
   --font-stone-heading: "Montserrat Variable";
   --font-jetbrains-mono: "JetBrains Mono Variable";
+  /* Vista Chase theme headings (src/themes/vistachase/vistachaseTheme.ts): the live
+     brand face where the OS has it; the theme falls back to Montserrat. */
+  --font-brand-heading: "Gill Sans", "Gill Sans MT", "Gill Sans Nova";
 }

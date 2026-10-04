@@ -41,6 +41,7 @@ export interface SearchFilters {
 const CATEGORY_LABELS: Record<string, string> = {
   SHARED: "Shared tours",
   PRIVATE: "Private tours",
+  SHUTTLE: "Lake shuttles",
   MULTIDAY: "Multi-day packages",
 };
 
@@ -76,7 +77,7 @@ export function filterTours(tours: TourWithAvailability[], filters: SearchFilter
     if (filters.category !== "ALL" && tour.category !== filters.category) return false;
     if (filters.destination !== "ALL" && tour.destination.slug !== filters.destination) return false;
     if (keyword) {
-      const text = `${tour.title} ${tour.summary} ${tour.description} ${tour.destination.name}`.toLowerCase();
+      const text = `${tour.title} ${tour.summary} ${tour.description} ${tour.destination.name} ${tour.highlights.join(" ")}`.toLowerCase();
       if (!text.includes(keyword)) return false;
     }
     // A chosen date narrows to tours that actually run that day with room for the party.

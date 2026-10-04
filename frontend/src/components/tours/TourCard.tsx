@@ -51,6 +51,30 @@ export function isVehicleTour(tour: TourWithAvailability) {
   return tour.category === "PRIVATE";
 }
 
+/** "Price from" unit label: private tours and packages are priced per group. */
+export function priceUnitLabel(tour: TourWithAvailability) {
+  return tour.priceUnit === "GROUP" ? "per group" : "per guest";
+}
+
+/** Duration as the product page states it ("9-11 hours"), falling back to the hours figure. */
+export function durationLabel(tour: TourWithAvailability) {
+  return tour.facts.find((f) => /duration/i.test(f.label))?.value ?? `${tour.durationHours} hours`;
+}
+
+/** Group size line; per-group tours list their vehicle sizes ("6 or 13 guests"). */
+export function groupLabel(tour: TourWithAvailability) {
+  if (tour.vehicleOptions.length > 0) {
+    return `Private, up to ${tour.vehicleOptions.map((v) => v.seats).join(" or ")} guests`;
+  }
+  return `Max ${tour.maxGroupSize} guests`;
+}
+
+export function reviewsLabel(tour: TourWithAvailability) {
+  return tour.reviewCount >= 1000
+    ? `${tour.reviewCount.toLocaleString("en-CA")}+ reviews`
+    : `${tour.reviewCount} reviews`;
+}
+
 /** Whether a departure can take this party. */
 export function departureFits(tour: TourWithAvailability, departure: TourWithAvailability["departures"][number], seats: number) {
   return isVehicleTour(tour)
@@ -64,6 +88,9 @@ export function nextDepartureFor(tour: TourWithAvailability, seats: number, date
 }
 
 function availability(tour: TourWithAvailability, seats: number, date?: string) {
+  if (tour.bookingMode === "ENQUIRY") {
+    return { variant: "neutral" as const, text: "Custom dates on request" };
+  }
   if (tour.departures.length === 0) {
     return { variant: "neutral" as const, text: "Dates on request" };
   }
@@ -94,9 +121,7 @@ export function TourCard({
   date?: string;
   headingLevel?: 2 | 3;
 }) {
-  const isPrivate = tour.category === "PRIVATE";
-  const priceLabel = isPrivate ? "Private vehicle, from" : "Per guest, from";
-  const groupLabel = isPrivate ? `Up to ${tour.maxGroupSize} guests` : `Max ${tour.maxGroupSize} guests`;
+  const priceLabel = tour.priceUnit === "GROUP" ? "Per group, from" : "Per guest, from";
   const status = availability(tour, seats, date);
   const price = fromPrice(tour);
 
@@ -121,7 +146,7 @@ export function TourCard({
             <Token size="sm" label={tour.destination.name} icon={<Icon icon={MapPin} size="xsm" />} />
             <Token
               size="sm"
-              label={`${tour.rating.toFixed(1)} · ${tour.reviewCount} reviews`}
+              label={`${tour.rating.toFixed(1)} · ${reviewsLabel(tour)}`}
               icon={<Icon icon={Star} size="xsm" />}
             />
           </HStack>
@@ -131,7 +156,7 @@ export function TourCard({
               {tour.summary}
             </Text>
             <Text type="supporting" color="secondary">
-              {tour.durationHours} hours · {groupLabel}
+              {durationLabel(tour)} · {groupLabel(tour)}
             </Text>
           </VStack>
           <Divider />
