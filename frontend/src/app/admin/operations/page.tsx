@@ -229,7 +229,7 @@ export default function MornbyOperationsPage() {
   const allRuns = departures.flatMap((d) => d.operationRuns);
 
   return (
-    <div className="min-h-screen bg-[#07130F] text-slate-100 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-ocean-950 text-slate-100 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-6">
 
         {/* Top Operational Header */}
@@ -249,13 +249,14 @@ export default function MornbyOperationsPage() {
 
           <div className="flex flex-wrap items-center gap-3">
             {/* Date Switcher */}
-            <div className="flex items-center gap-2 bg-[#0C1E18] px-3 py-1.5 rounded-xl border border-forest-700/60 text-xs">
+            <div className="flex items-center gap-2 bg-ocean-900 px-3 py-1.5 rounded-xl border border-forest-700/60 text-xs">
               <Calendar className="w-3.5 h-3.5 text-gold-400" />
               <input
                 type="date"
+                aria-label="Operations date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="bg-transparent text-white font-mono text-xs focus:outline-none"
+                className="bg-transparent text-white font-mono text-xs rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-summit-500"
               />
             </div>
 
@@ -297,7 +298,7 @@ export default function MornbyOperationsPage() {
         {/* KPI Metrics Strip */}
         {stats && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="bg-[#0C1E18] p-4 rounded-2xl border border-forest-800/80 shadow-lg">
+            <div className="bg-ocean-900 p-4 rounded-2xl border border-forest-800/80 shadow-lg">
               <span className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block">
                 Active Vehicle Runs
               </span>
@@ -306,7 +307,7 @@ export default function MornbyOperationsPage() {
               </p>
             </div>
 
-            <div className="bg-[#0C1E18] p-4 rounded-2xl border border-forest-800/80 shadow-lg">
+            <div className="bg-ocean-900 p-4 rounded-2xl border border-forest-800/80 shadow-lg">
               <span className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block">
                 Boarding Manifest
               </span>
@@ -316,7 +317,7 @@ export default function MornbyOperationsPage() {
               </p>
             </div>
 
-            <div className="bg-[#0C1E18] p-4 rounded-2xl border border-forest-800/80 shadow-lg">
+            <div className="bg-ocean-900 p-4 rounded-2xl border border-forest-800/80 shadow-lg">
               <span className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block">
                 Fleet Deployed
               </span>
@@ -326,7 +327,7 @@ export default function MornbyOperationsPage() {
               </p>
             </div>
 
-            <div className="bg-[#0C1E18] p-4 rounded-2xl border border-forest-800/80 shadow-lg">
+            <div className="bg-ocean-900 p-4 rounded-2xl border border-forest-800/80 shadow-lg">
               <span className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block">
                 Departures Scheduled
               </span>
@@ -339,7 +340,7 @@ export default function MornbyOperationsPage() {
         )}
 
         {/* Departures & Runs Manifest Table */}
-        <div className="bg-[#0C1E18] rounded-3xl border border-forest-800/80 shadow-2xl overflow-hidden">
+        <div className="bg-ocean-900 rounded-3xl border border-forest-800/80 shadow-2xl overflow-hidden">
           <div className="p-5 border-b border-forest-800/80 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Truck className="w-5 h-5 text-gold-400" />
@@ -372,7 +373,7 @@ export default function MornbyOperationsPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-[#050C0A] text-slate-400 uppercase tracking-wider font-mono text-[10px] border-b border-forest-800">
+                <thead className="bg-ocean-950 text-slate-400 uppercase tracking-wider font-mono text-[10px] border-b border-forest-800">
                   <tr>
                     <th className="py-3.5 px-4">Time &amp; Run Name</th>
                     <th className="py-3.5 px-4">Tour / Bókun ID</th>
@@ -439,10 +440,11 @@ export default function MornbyOperationsPage() {
 
                         <td className="py-3.5 px-4">
                           <select
+                            aria-label="Run status"
                             value={run.status}
                             disabled={updatingRunId === run.id}
                             onChange={(e) => handleStatusChange(run.id, e.target.value)}
-                            className={`px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase border cursor-pointer ${statusObj.color} focus:outline-none`}
+                            className={`px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase border cursor-pointer ${statusObj.color} focus:outline-none focus-visible:ring-2 focus-visible:ring-summit-500`}
                           >
                             {RUN_STATUSES.map((s) => (
                               <option key={s.value} value={s.value} className="bg-slate-900 text-white">
@@ -484,7 +486,7 @@ export default function MornbyOperationsPage() {
         {/* Selected Run Manifest Modal / Drawer */}
         {selectedRun && (
           <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-[#0C1E18] rounded-3xl border border-forest-800 shadow-2xl max-w-3xl w-full max-h-[85vh] flex flex-col overflow-hidden">
+            <div className="bg-ocean-900 rounded-3xl border border-forest-800 shadow-2xl max-w-3xl w-full max-h-[85vh] flex flex-col overflow-hidden">
               {/* Modal Header */}
               <div className="p-6 border-b border-forest-800/80 flex items-center justify-between">
                 <div>
@@ -597,7 +599,7 @@ export default function MornbyOperationsPage() {
               </div>
 
               {/* Modal Footer */}
-              <div className="p-4 bg-[#050C0A] border-t border-forest-800/80 flex items-center justify-between text-xs text-slate-400">
+              <div className="p-4 bg-ocean-950 border-t border-forest-800/80 flex items-center justify-between text-xs text-slate-400">
                 <span>{selectedRun.bookings.length} Pickups on Manifest</span>
                 {selectedRun.trackingSession && (
                   <Link

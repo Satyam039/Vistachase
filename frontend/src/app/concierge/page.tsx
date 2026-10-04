@@ -203,7 +203,7 @@ export default function ConciergePage() {
               className={`p-2.5 rounded-xl border transition-colors ${
                 ttsEnabled
                   ? "bg-forest-800 text-gold-400 border-forest-700 hover:bg-forest-700"
-                  : "bg-forest-950 text-slate-500 border-forest-800"
+                  : "bg-forest-950 text-slate-400 border-forest-800"
               }`}
               title={ttsEnabled ? "Mute Voice Speech" : "Enable Voice Speech"}
             >
@@ -223,9 +223,14 @@ export default function ConciergePage() {
         </div>
       </div>
 
-      {/* Main Conversation Stream */}
-      <div className="flex-1 overflow-y-auto px-4 py-6">
-        <div className="max-w-4xl mx-auto space-y-4">
+      {/* Main Conversation Stream: a polite live log, so new replies are announced (WCAG 4.1.3),
+          and focusable so keyboard users can scroll it (WCAG 2.1.1). */}
+      <div
+        className="flex-1 overflow-y-auto px-4 py-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-summit-500"
+        tabIndex={0}
+        aria-label="Conversation with the AI concierge"
+      >
+        <div className="max-w-4xl mx-auto space-y-4" role="log" aria-live="polite">
           {messages.map((m) => {
             const isUser = m.role === "user";
             return (
@@ -255,7 +260,7 @@ export default function ConciergePage() {
                         <span>SECURITY GUARDRAIL TRIGGERED</span>
                       </div>
                     )}
-                    <p>{m.text}</p>
+                    <p className="text-inherit">{m.text}</p>
                   </div>
 
                   {/* Attached Pickup Results */}
@@ -373,7 +378,7 @@ export default function ConciergePage() {
       {/* Suggested Quick Inquiries */}
       <div className="px-4 py-2 border-t border-forest-800/60 bg-forest-950">
         <div className="max-w-4xl mx-auto flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-          <span className="text-slate-500 flex items-center gap-1 whitespace-nowrap">
+          <span className="text-slate-400 flex items-center gap-1 whitespace-nowrap">
             <HelpCircle className="w-3 h-3 text-gold-400" />
             <span>Try:</span>
           </span>
@@ -430,6 +435,7 @@ export default function ConciergePage() {
           >
             <input
               type="text"
+              aria-label="Message the AI concierge"
               placeholder={isListening ? "Listening to your voice..." : "Ask anything about Banff, shuttles, pickups, or reserve seats..."}
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
@@ -438,9 +444,10 @@ export default function ConciergePage() {
             <button
               type="submit"
               disabled={!inputText.trim() || loading}
-              className="p-2 rounded-xl text-forest-950 gold-gradient hover:opacity-95 disabled:opacity-40 transition-all"
+              aria-label="Send message"
+              className="p-2.5 rounded-xl text-forest-950 gold-gradient hover:opacity-95 disabled:opacity-40 transition-all"
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-4 h-4" aria-hidden="true" />
             </button>
           </form>
         </div>

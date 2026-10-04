@@ -1,5 +1,6 @@
 const { PrismaClient } = require("@prisma/client");
 const bcrypt = require("bcryptjs");
+const QRCode = require("qrcode");
 const catalog = require("./catalog/load-catalog");
 
 const prisma = new PrismaClient();
@@ -84,7 +85,7 @@ async function main() {
       province: "Alberta",
       region: "Canadian Rockies",
       description: "Canada's first and most iconic national park, featuring pristine glacial lakes, towering peaks, wildlife corridors, and the historic alpine town of Banff.",
-      heroImage: "https://images.unsplash.com/photo-1503614472-8c93d56e92ce?q=80&w=1600&auto=format&fit=crop",
+      heroImage: catalog.mediaSrc("photos/vermilion-lakes-mount-rundle"),
       isFeatured: true,
       metaTitle: "Banff National Park Tours & Shuttles | Vista Chase",
       metaDescription: "Experience Banff National Park with luxury private SUV tours, guaranteed lake shuttles, and local expert guides.",
@@ -98,7 +99,7 @@ async function main() {
       province: "Alberta",
       region: "Canadian Rockies",
       description: "Famed for its vivid turquoise waters fed by the Ten Peaks glaciers. Private vehicular access is restricted; Vista Chase provides guaranteed commercial shuttle permits.",
-      heroImage: "https://images.unsplash.com/photo-1536152470836-b943b246224c?q=80&w=1600&auto=format&fit=crop",
+      heroImage: catalog.mediaSrc("photos/moraine-lake-perfect-reflection"),
       isFeatured: true,
       metaTitle: "Moraine Lake Guaranteed Shuttles & Tours | Vista Chase",
       metaDescription: "Guaranteed access to Moraine Lake. Avoid parking road closures with our Sunrise and Golden Hour shuttles from Banff and Canmore.",
@@ -112,7 +113,7 @@ async function main() {
       province: "Alberta",
       region: "Canadian Rockies",
       description: "The jewel of the Rockies with emerald waters, the majestic Victoria Glacier backdrop, and world-class alpine hiking trails.",
-      heroImage: "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?q=80&w=1600&auto=format&fit=crop",
+      heroImage: catalog.mediaSrc("photos/lake-louise-sunrise"),
       isFeatured: true,
       metaTitle: "Lake Louise Tours & Direct Shuttles | Vista Chase",
       metaDescription: "Visit Lake Louise without parking frustration. Direct hotel pickups in Banff and Canmore with guaranteed lakeside drop-off.",
@@ -126,7 +127,7 @@ async function main() {
       province: "Alberta",
       region: "Canadian Rockies",
       description: "Vast wilderness, rugged canyon waterfalls, ancient glaciers along the Icefields Parkway, and pristine mountain solitude.",
-      heroImage: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=1600&auto=format&fit=crop",
+      heroImage: catalog.mediaSrc("photos/spirit-island"),
       isFeatured: true,
       metaTitle: "Jasper & Icefields Parkway Private Tours | Vista Chase",
       metaDescription: "Private SUV day trips and multi-day tours along the world-renowned Icefields Parkway to Jasper National Park.",
@@ -140,7 +141,7 @@ async function main() {
       province: "British Columbia",
       region: "Canadian Rockies",
       description: "Home to the thunderous Takakkaw Falls, the vivid green waters of Emerald Lake, and ancient fossil beds.",
-      heroImage: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1600&auto=format&fit=crop",
+      heroImage: catalog.mediaSrc("photos/emerald-lake-island"),
       isFeatured: false,
       metaTitle: "Yoho National Park & Emerald Lake Tours | Vista Chase",
       metaDescription: "Explore Emerald Lake and Natural Bridge with Vista Chase private guides.",
@@ -405,7 +406,8 @@ async function main() {
       status: "CONFIRMED",
       specialRequests: "Window seats preferred, anniversary trip.",
       voucherCode: "VC-VOUCH-7891",
-      qrCodeUrl: "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=VC-2026-98412",
+      // Generated locally like real bookings (booking.repository.ts); no third-party QR service
+      qrCodeUrl: await QRCode.toDataURL("VC-2026-98412", { margin: 1, width: 300 }),
       items: {
         create: [
           {
@@ -478,7 +480,7 @@ async function main() {
       phone: "+1-825-734-9456",
       licenseClass: "Class 4 Commercial",
       bio: "Parks Canada certified master naturalist with 1,400+ Rockies expeditions.",
-      photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=400&auto=format&fit=crop",
+      photoUrl: null, // no guide photos yet; the tracking page shows the Vista Chase emblem
       rating: 4.98,
       isActive: true,
     },
@@ -492,27 +494,13 @@ async function main() {
       phone: "+1-825-734-9457",
       licenseClass: "Class 4 Commercial",
       bio: "Senior alpine wildlife specialist and certified Lake Louise interpretive guide.",
-      photoUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=400&auto=format&fit=crop",
+      photoUrl: null, // no guide photos yet; the tracking page shows the Vista Chase emblem
       rating: 4.99,
       isActive: true,
     },
   });
 
-  // 10. Map live Bókun Product IDs (Roadmap p.4)
-  await prisma.tour.updateMany({
-    where: { slug: "banff-highlights-tour" },
-    data: { bokunId: "1142134" },
-  });
-
-  await prisma.tour.updateMany({
-    where: { slug: "banff-private-tour" },
-    data: { bokunId: "1167962" },
-  });
-
-  await prisma.tour.updateMany({
-    where: { slug: "icefields-jasper-private-tour" },
-    data: { bokunId: "856008" },
-  });
+  // 10. Bokun product IDs come from prisma/catalog/product-map.json (placeholders until provided)
 
   // 11. Mornby Operations Run for Today's Departures
   const todayStr = new Date().toISOString().split("T")[0];

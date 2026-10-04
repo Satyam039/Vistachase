@@ -1,7 +1,9 @@
 import prisma from "@/lib/db/prisma";
+import { CATALOG, PRODUCT_MAP, bokunKey, slugForBokunId } from "@/modules/bokun/product-map";
 
 export interface BokunProduct {
-  id: string; // e.g. "1142134"
+  /** Bokun experience ID, or `pending:<slug>` until Vista Chase provides it (see product-map.ts). */
+  id: string;
   slug: string;
   title: string;
   category: "SHARED" | "PRIVATE" | "SHUTTLE" | "MULTIDAY";
@@ -43,145 +45,34 @@ export interface IBookingOperationsProvider {
 }
 
 // ---------------------------------------------------------------------------
-// Authoritative 13 Live Bókun Products (from Vista Chase Revamp Roadmap, p. 4)
+// The 13 live vistachase.com products, from the product mapping table
+// (prisma/catalog/product-map.json) and the content imported from the live site.
 // ---------------------------------------------------------------------------
-export const BOKUN_CATALOG_PRODUCTS: BokunProduct[] = [
-  // Shared Tours (max 12 guests)
-  {
-    id: "1142134",
-    slug: "banff-highlights-tour",
-    title: "Lake Louise, Moraine Lake & Banff Highlights Tour",
-    category: "SHARED",
-    durationHours: 10,
-    capacity: 12,
-    basePrice: 189.0,
-    currency: "CAD",
-  },
-  {
-    id: "1114197",
-    slug: "shared-tours-heart-of-banff",
-    title: "Heart of Banff Alpine Explorer",
-    category: "SHARED",
-    durationHours: 9,
-    capacity: 12,
-    basePrice: 175.0,
-    currency: "CAD",
-  },
-  {
-    id: "1113741",
-    slug: "shared-tours-banff-yoho",
-    title: "Banff + Yoho National Park & Emerald Lake",
-    category: "SHARED",
-    durationHours: 10,
-    capacity: 12,
-    basePrice: 199.0,
-    currency: "CAD",
-  },
-  {
-    id: "1114201",
-    slug: "shared-tours-icefields-jasper",
-    title: "Icefields Parkway & Athabasca Glacier Expedition",
-    category: "SHARED",
-    durationHours: 11,
-    capacity: 12,
-    basePrice: 229.0,
-    currency: "CAD",
-  },
-  {
-    id: "1114208",
-    slug: "winter-special",
-    title: "Abraham Lake Ice Bubbles & Winter Wonders",
-    category: "SHARED",
-    durationHours: 9,
-    capacity: 12,
-    basePrice: 185.0,
-    currency: "CAD",
-  },
+function durationHours(facts: { label: string; value: string }[]) {
+  const text = facts.find((f) => /duration/i.test(f.label))?.value ?? "";
+  const nums = (text.match(/\d+(\.\d+)?/g) || []).map(Number);
+  if (nums.length === 0) return 8;
+  if (/day/i.test(text)) return nums[0] * 24;
+  return nums.length > 1 ? (nums[0] + nums[1]) / 2 : nums[0];
+}
 
-  // Private Tours (per vehicle)
-  {
-    id: "1167962",
-    slug: "banff-private-tour",
-    title: "Luxury Private SUV Tour: Banff & Lake Louise",
-    category: "PRIVATE",
-    durationHours: 11,
-    capacity: 6,
-    basePrice: 1250.0,
+export const BOKUN_CATALOG_PRODUCTS: BokunProduct[] = PRODUCT_MAP.map((product) => {
+  const content = CATALOG.find((c) => c.slug === product.slug);
+  const perGroup = product.category === "PRIVATE" || product.category === "MULTIDAY";
+  return {
+    id: bokunKey(product),
+    slug: product.slug,
+    title: content?.title ?? product.slug,
+    category: product.category,
+    durationHours: durationHours(content?.facts ?? []),
+    capacity: perGroup ? 13 : 12,
+    basePrice: content?.priceFrom ?? 0,
     currency: "CAD",
-  },
-  {
-    id: "856008",
-    slug: "icefields-jasper-private-tour",
-    title: "Private Columbia Icefield & Jasper Experience",
-    category: "PRIVATE",
-    durationHours: 11,
-    capacity: 6,
-    basePrice: 1450.0,
-    currency: "CAD",
-  },
-  {
-    id: "1136438",
-    slug: "winter-signature-private-tour",
-    title: "Winter Signature Private Rockies Safari",
-    category: "PRIVATE",
-    durationHours: 9,
-    capacity: 6,
-    basePrice: 1350.0,
-    currency: "CAD",
-  },
-  {
-    id: "BOKUN-CUSTOM-1",
-    slug: "banff-yoho-custom-private-tour",
-    title: "Custom Private Rockies Charter: Banff & Yoho",
-    category: "PRIVATE",
-    durationHours: 11,
-    capacity: 6,
-    basePrice: 1400.0,
-    currency: "CAD",
-  },
+  };
+});
 
-  // Shuttles & Packages
-  {
-    id: "928996",
-    slug: "sunrise-shuttle-to-moraine-lake-and-lake-louise",
-    title: "Sunrise Commercial Shuttle: Moraine Lake & Lake Louise",
-    category: "SHUTTLE",
-    durationHours: 5,
-    capacity: 14,
-    basePrice: 89.0,
-    currency: "CAD",
-  },
-  {
-    id: "933218",
-    slug: "full-day-at-lake-louise-and-moraine-lake",
-    title: "Full Day Express Shuttle: Lake Louise & Moraine Lake",
-    category: "SHUTTLE",
-    durationHours: 8,
-    capacity: 14,
-    basePrice: 95.0,
-    currency: "CAD",
-  },
-  {
-    id: "BOKUN-MULTIDAY-1",
-    slug: "multi-day-tour-package-for-banff",
-    title: "Complete Canadian Rockies 3-Day Luxury Adventure",
-    category: "MULTIDAY",
-    durationHours: 24,
-    capacity: 8,
-    basePrice: 2890.0,
-    currency: "CAD",
-  },
-  {
-    id: "BOKUN-CUSTOM-2",
-    slug: "jasper-custom-private-tour",
-    title: "Customized Jasper Wildlife & Alpine Charter",
-    category: "PRIVATE",
-    durationHours: 12,
-    capacity: 6,
-    basePrice: 1550.0,
-    currency: "CAD",
-  },
-];
+/** Bokun-shaped product ID for a website slug (real ID once provided). */
+const keyFor = (slug: string) => BOKUN_CATALOG_PRODUCTS.find((p) => p.slug === slug)!.id;
 
 // ---------------------------------------------------------------------------
 // Mock Bókun Operations Provider (Zero-Cost Dev & Testing)
@@ -202,7 +93,7 @@ export class MockBokunOperationsProvider implements IBookingOperationsProvider {
         {
           bokunBookingId: `BK-OTA-VIATOR-${date}-001`,
           bookingReference: `VC-${date.replace(/-/g, "")}-V1`,
-          productBokunId: "1142134",
+          productBokunId: keyFor("banff-highlights-tour"),
           departureDate: date,
           departureTime: "08:30",
           customerName: "Liam Hemsworth",
@@ -220,7 +111,7 @@ export class MockBokunOperationsProvider implements IBookingOperationsProvider {
         {
           bokunBookingId: `BK-OTA-GYG-${date}-002`,
           bookingReference: `VC-${date.replace(/-/g, "")}-G2`,
-          productBokunId: "1142134",
+          productBokunId: keyFor("banff-highlights-tour"),
           departureDate: date,
           departureTime: "08:30",
           customerName: "Elena Rostova",
@@ -237,7 +128,7 @@ export class MockBokunOperationsProvider implements IBookingOperationsProvider {
         {
           bokunBookingId: `BK-DIRECT-${date}-003`,
           bookingReference: `VC-${date.replace(/-/g, "")}-D3`,
-          productBokunId: "928996",
+          productBokunId: keyFor("sunrise-shuttle-to-moraine-lake-and-lake-louise"),
           departureDate: date,
           departureTime: "05:00",
           customerName: "Arthur Pendelton",
@@ -265,13 +156,9 @@ export class MockBokunOperationsProvider implements IBookingOperationsProvider {
 
         if (!departure) {
           // Find matching tour
+          // Bokun ID → website product via the mapping table (works for pending placeholders too)
           const tour = await prisma.tour.findFirst({
-            where: {
-              OR: [
-                { bokunId: item.productBokunId },
-                { slug: "banff-highlights-tour" },
-              ],
-            },
+            where: { slug: slugForBokunId(item.productBokunId) ?? "banff-highlights-tour" },
           });
 
           departure = await prisma.tourDeparture.create({

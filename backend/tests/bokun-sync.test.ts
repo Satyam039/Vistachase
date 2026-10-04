@@ -1,27 +1,32 @@
 import { describe, it, expect } from "vitest";
 import prisma from "@/lib/db/prisma";
-import { getBokunOperationsProvider, BOKUN_CATALOG_PRODUCTS } from "@/modules/bokun/bokun.provider";
+import { getBokunOperationsProvider } from "@/modules/bokun/bokun.provider";
+import { PRODUCT_MAP, bokunReadiness, slugForBokunId } from "@/modules/bokun/product-map";
 
 describe("Bókun Operations & Integration Layer", () => {
-  it("maintains authoritative mapping for all 13 Bókun catalog products from Roadmap", async () => {
+  it("lists the 13 live products from the mapping table, with pending Bokun IDs until provided", async () => {
     const provider = getBokunOperationsProvider();
     const products = await provider.fetchProducts();
 
     expect(products.length).toBe(13);
+    for (const mapped of PRODUCT_MAP) {
+      const product = products.find((p) => p.slug === mapped.slug);
+      expect(product, mapped.slug).toBeDefined();
+      expect(product?.id).toBe(mapped.bokunId ?? `pending:${mapped.slug}`);
+      expect(slugForBokunId(product!.id)).toBe(mapped.slug);
+      expect(product?.basePrice, mapped.slug).toBeGreaterThan(0);
+    }
 
-    // Verify key Bókun IDs from Roadmap p.4
-    const banffHighlights = products.find((p) => p.id === "1142134");
-    expect(banffHighlights).toBeDefined();
-    expect(banffHighlights?.title).toContain("Banff Highlights");
-    expect(banffHighlights?.category).toBe("SHARED");
-
-    const banffPrivate = products.find((p) => p.id === "1167962");
-    expect(banffPrivate).toBeDefined();
-    expect(banffPrivate?.category).toBe("PRIVATE");
-
-    const sunriseShuttle = products.find((p) => p.id === "928996");
-    expect(sunriseShuttle).toBeDefined();
+    const sunriseShuttle = products.find((p) => p.slug === "sunrise-shuttle-to-moraine-lake-and-lake-louise");
     expect(sunriseShuttle?.category).toBe("SHUTTLE");
+    expect(sunriseShuttle?.basePrice).toBe(125);
+  });
+
+  it("reports what is missing before the site can call Bokun", () => {
+    const readiness = bokunReadiness();
+    const bokunProducts = PRODUCT_MAP.filter((p) => p.bookingMode === "BOKUN");
+    expect(readiness.productIdsMissing.length).toBe(bokunProducts.filter((p) => !p.bokunId).length);
+    if (readiness.productIdsMissing.length > 0) expect(readiness.ready).toBe(false);
   });
 
   it("synchronizes incoming Bókun bookings and prevents duplicate records (Idempotency)", async () => {

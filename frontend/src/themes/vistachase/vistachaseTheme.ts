@@ -2,7 +2,7 @@
  * Vista Chase Theme
  *
  * Stone (src/themes/stone/stoneTheme.ts) with the Vista Chase brand on top:
- * the live site's teal (#3A9CA6) as the accent and Gill Sans headings.
+ * the live site's teal (#3A9CA6) as the accent and IBM Plex Sans as the typeface.
  * Everything else (neutrals, status colours, radius, shadows, the five-tier
  * responsive adaptations, component overrides) is inherited from Stone.
  *
@@ -21,27 +21,22 @@ export const vistachaseTheme = defineTheme({
   name: 'vistachase',
   extends: stoneTheme,
 
-  // typography is a scale input, so extends replaces it: keep Stone's scale and
-  // body/code families, swap the heading family.
+  // typography is a scale input, so extends replaces it: keep Stone's scale and set every
+  // family to the Vista Chase typeface, IBM Plex Sans (self-hosted, src/app/fonts.css).
   typography: {
     scale: {base: 14, ratio: 1.25},
     body: {
-      family: 'var(--font-figtree)',
-      fallbacks:
-        'Figtree, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+      family: 'var(--font-plex-sans)',
+      fallbacks: '"IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
     },
-    // Gill Sans is the live brand face. Its webfont files are licensed to the
-    // Webflow site and aren't bundled here, so it renders where the OS ships it
-    // (macOS, iOS, Windows with Office) and falls back to Montserrat elsewhere.
     heading: {
-      family: 'var(--font-brand-heading)',
-      fallbacks:
-        'var(--font-stone-heading), Montserrat, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+      family: 'var(--font-plex-sans)',
+      fallbacks: '"IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
       weights: {3: 'bold', 4: 'bold'},
     },
     code: {
-      family: 'var(--font-jetbrains-mono)',
-      fallbacks: '"JetBrains Mono", "SF Mono", Monaco, Consolas, monospace',
+      family: 'var(--font-plex-mono)',
+      fallbacks: '"IBM Plex Mono", "SF Mono", Monaco, Consolas, monospace',
     },
   },
 
@@ -52,5 +47,26 @@ export const vistachaseTheme = defineTheme({
     '--color-text-accent': ['#226d75', '#7fd3db'],
     '--color-icon-accent': ['#3a9ca6', '#6cc9d2'], // brand teal; icons need 3:1
     '--color-on-accent': ['#ffffff', '#0e2a2d'],
+  },
+
+  components: {
+    // The sticky site header must stay above page content while scrolling: the cinematic
+    // sections create stacking contexts (z-10), which otherwise paint over the header and
+    // hide keyboard focus in it (WCAG 2.4.11 Focus Not Obscured).
+    'app-shell-header': {
+      base: {zIndex: '40'},
+    },
+    // A page Layout that grows with its content (height="auto") must not also stretch to
+    // min-height: 100%: inside the site's auto-height AppShell that pushed the footer out of
+    // the scrollable area (its bottom links could not be reached on /search and /book).
+    layout: {
+      'height:auto': {minHeight: 'auto'},
+    },
+    // Form fields: on keyboard focus Astryx only tints the 1px border. Add the same 2px focus
+    // outline buttons use (--focus-outline-* tokens), so focus is clearly visible (WCAG 2.4.7).
+    'text-input': {base: {':focus-within': {outline: 'var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color)', outlineOffset: '2px'}}},
+    'text-area': {base: {':focus-within': {outline: 'var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color)', outlineOffset: '2px'}}},
+    'date-input': {base: {':focus-within': {outline: 'var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color)', outlineOffset: '2px'}}},
+    selector: {base: {':focus-within': {outline: 'var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color)', outlineOffset: '2px'}}},
   },
 });

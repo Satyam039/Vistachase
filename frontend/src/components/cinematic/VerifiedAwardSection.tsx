@@ -70,13 +70,13 @@ export function VerifiedAwardSection() {
               <div className="relative p-8 sm:p-10 rounded-2xl bg-frost-white border border-black/5 shadow-xl text-center max-w-sm">
                 <div className="relative w-56 h-56 mx-auto mb-4">
                   <Image
-                    src="https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6a125b0bbd624b7655b6d861_Tripadvisor%20BOTB%20Badge%20%2B%20Travelers%E2%80%99%20Choice%20Center%20Aligned%20Black%20-%20L.png"
+                    src="/media/badges/tripadvisor-best-of-the-best-2025.png"
                     alt="TripAdvisor Best of the Best 2025 #6 Canada"
                     fill
                     className="object-contain"
                   />
                 </div>
-                <p className="text-xs uppercase tracking-widest text-slate-400 font-bold">
+                <p className="text-xs uppercase tracking-widest text-slate-500 font-bold">
                   OFFICIAL ACCREDITATION
                 </p>
                 <p className="text-sm font-medium text-slate-700 mt-1">

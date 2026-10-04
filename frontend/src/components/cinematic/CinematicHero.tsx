@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ChevronDown, ShieldCheck, Star } from "lucide-react";
 import { ScrollReveal } from "./ScrollReveal";
+import { AmbientVideo } from "@/components/cinematic/AmbientVideo";
 
 interface CinematicHeroProps {
   eyebrow?: string;
@@ -12,6 +13,8 @@ interface CinematicHeroProps {
   subtitle?: string;
   posterImage?: string;
   videoSrc?: string;
+  /** 1080p encode for large screens. */
+  videoSrcHd?: string;
   primaryCtaLabel?: string;
   primaryCtaHref?: string;
   secondaryCtaLabel?: string;
@@ -22,8 +25,9 @@ export function CinematicHero({
   eyebrow = "VISTA CHASE • CANADIAN ROCKIES",
   title = "Discover the Canadian Rockies Your Way",
   subtitle = "Whether you want the freedom of a luxury private SUV tour, the fun of a shared small group adventure, or guaranteed shuttles to Moraine Lake and Lake Louise — Vista Chase makes it effortless, scenic, and unforgettable.",
-  posterImage = "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/690fe8161931736580e464ee_Hero%20Background%20Image%203.webp",
+  posterImage = "/media/site/hero-background-image-3.webp",
   videoSrc,
+  videoSrcHd,
   primaryCtaLabel = "Explore Experiences",
   primaryCtaHref = "#experiences",
   secondaryCtaLabel = "Book Your Experience",
@@ -42,16 +46,13 @@ export function CinematicHero({
           className="object-cover object-center scale-[1.03] transition-transform duration-1000 ease-out"
         />
         {videoSrc && (
-          <video
-            autoPlay
-            muted
-            loop
-            playsInline
+          <AmbientVideo
+            src={videoSrc}
+            srcHd={videoSrcHd}
             poster={posterImage}
             className="absolute inset-0 w-full h-full object-cover"
-          >
-            <source src={videoSrc} type="video/mp4" />
-          </video>
+            buttonClassName="bottom-6 right-6"
+          />
         )}
         {/* Layered cinematic overlays */}
         <div className="absolute inset-0 cinematic-scrim" />

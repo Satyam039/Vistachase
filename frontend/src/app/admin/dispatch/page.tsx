@@ -180,9 +180,10 @@ export default function DispatchBoardPage() {
               <Calendar className="w-4 h-4 text-gold-400" />
               <input
                 type="date"
+                aria-label="Dispatch date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="bg-transparent text-xs sm:text-sm font-semibold text-white focus:outline-none"
+                className="bg-transparent text-xs sm:text-sm font-semibold text-white rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-summit-500"
               />
             </div>
             <button
@@ -235,7 +236,7 @@ export default function DispatchBoardPage() {
         {!loading && manifests.length === 0 && (
           <div className="py-20 text-center bg-forest-900/40 rounded-3xl border border-forest-800 p-8">
             <Truck className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-            <h3 className="text-lg font-bold text-white">No Departures Scheduled for {selectedDate}</h3>
+            <h2 className="text-lg font-bold text-white">No Departures Scheduled for {selectedDate}</h2>
             <p className="text-xs text-slate-400 max-w-md mx-auto mt-1 mb-6">
               There are no tour or shuttle runs scheduled on this specific date. Switch dates using the arrows above or view upcoming peak season runs.
             </p>

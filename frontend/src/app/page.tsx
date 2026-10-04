@@ -21,7 +21,7 @@ export const metadata = {
       "Ranked #6 Experience in Canada by TripAdvisor 2025. Explore Banff, Lake Louise & Moraine Lake in comfort.",
     images: [
       {
-        url: "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/690fe8161931736580e464ee_Hero%20Background%20Image%203.webp",
+        url: "/media/site/hero-background-image-3.webp",
         width: 1200,
         height: 630,
         alt: "Vista Chase Canadian Rockies",
@@ -32,9 +32,13 @@ export const metadata = {
 
 export default function HomePage() {
   return (
-    <main className="flex flex-col w-full bg-frost-white selection:bg-summit-500 selection:text-obsidian-900">
+    <div className="flex flex-col w-full bg-obsidian-50 selection:bg-summit-500 selection:text-obsidian-900">
       {/* 01: Full-Screen Cinematic Hero */}
-      <CinematicHero />
+      <CinematicHero
+        videoSrc="/media/videos/lake-louise-summer.mp4"
+        videoSrcHd="/media/videos/lake-louise-summer-1080.mp4"
+        posterImage="/media/videos/lake-louise-summer-poster.webp"
+      />
 
       {/* 02: Official TripAdvisor Best of the Best #6 Canada Award */}
       <VerifiedAwardSection />
@@ -65,6 +69,6 @@ export default function HomePage() {
 
       {/* 11: Final Cinematic Rockies Call to Action */}
       <CinematicFinalCta />
-    </main>
+    </div>
   );
 }

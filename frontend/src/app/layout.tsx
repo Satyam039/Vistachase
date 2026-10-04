@@ -14,6 +14,14 @@ export const metadata: Metadata = {
   description:
     "Banff's premier tour operator. TripAdvisor #6 Best Experience in Canada. Guaranteed shuttles to Moraine Lake & Lake Louise, luxury private SUV tours & multi-day packages.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://www.vistachase.com"),
+  // Browser icons: the gold horse emblem, served by the backend (backend/media/brand).
+  icons: {
+    icon: [
+      { url: "/media/brand/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/media/brand/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: "/media/brand/apple-touch-icon.png",
+  },
   alternates: {
     canonical: "/",
   },
@@ -25,7 +33,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "https://images.unsplash.com/photo-1503614472-8c93d56e92ce?q=80&w=1200&auto=format&fit=crop",
+        url: "/media/photos/moraine-lake-perfect-reflection.webp",
         width: 1200,
         height: 630,
         alt: "Moraine Lake Valley of the Ten Peaks",

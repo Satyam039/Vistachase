@@ -27,12 +27,12 @@ export default async function ShuttlesPage() {
   const routes = await getShuttleRoutes();
 
   return (
-    <div className="min-h-screen bg-[#F9F9F7] text-[#1C1F23]">
+    <div className="min-h-screen bg-obsidian-50 text-obsidian-900">
       {/* 01. EDITORIAL HERO BANNER */}
-      <section className="bg-[#0C1F21] text-white pt-24 pb-16 px-4 sm:px-6 lg:px-12 relative overflow-hidden border-b border-white/10">
+      <section className="bg-ocean-900 text-white pt-24 pb-16 px-4 sm:px-6 lg:px-12 relative overflow-hidden border-b border-white/10">
         <div className="max-w-7xl mx-auto space-y-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-[#FFE085] text-xs font-semibold uppercase tracking-wider border border-white/15">
-            <ShieldCheck className="w-4 h-4 text-[#F5BF03]" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-summit-300 text-xs font-semibold uppercase tracking-wider border border-white/15">
+            <ShieldCheck className="w-4 h-4 text-summit-500" />
             <span>Official Parks Canada Commercial Access Partner</span>
           </div>
 
@@ -49,8 +49,8 @@ export default async function ShuttlesPage() {
       </section>
 
       {/* 02. MORAINE LAKE ACCESS ADVISORY */}
-      <section className="bg-[#FFE085]/20 border-b border-[#F5BF03]/30 py-4 px-4 sm:px-6 lg:px-12">
-        <div className="max-w-7xl mx-auto flex items-center gap-3 text-xs sm:text-sm text-[#1C1F23]">
+      <section className="bg-summit-300/20 border-b border-summit-500/30 py-4 px-4 sm:px-6 lg:px-12">
+        <div className="max-w-7xl mx-auto flex items-center gap-3 text-xs sm:text-sm text-obsidian-900">
           <AlertTriangle className="w-5 h-5 text-amber-700 shrink-0" />
           <span>
             <strong>Parks Canada Regulation:</strong> Personal and rental cars are prohibited on Moraine Lake Road
@@ -69,20 +69,20 @@ export default async function ShuttlesPage() {
             >
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-slate-100 pb-6">
                 <div className="space-y-2">
-                  <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#3A9CA6]">
+                  <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-ocean-600">
                     <Compass className="w-4 h-4" />
                     <span>Corridor: {route.origin} ➔ {route.destination}</span>
                   </div>
-                  <h2 className="text-2xl sm:text-3xl font-serif font-light text-[#1C1F23]">{route.name}</h2>
+                  <h2 className="text-2xl sm:text-3xl font-serif font-light text-obsidian-900">{route.name}</h2>
                   <p className="text-slate-600 text-sm max-w-2xl leading-relaxed">
                     {route.description}
                   </p>
                 </div>
 
                 <div className="shrink-0 flex md:flex-col items-end justify-between md:justify-center p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                  <span className="text-xs uppercase tracking-wider text-slate-400">Round-Trip From</span>
+                  <span className="text-xs uppercase tracking-wider text-slate-500">Round-Trip From</span>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-serif font-light text-[#1C1F23]">
+                    <span className="text-3xl font-serif font-light text-obsidian-900">
                       ${route.departures[0]?.price || 89}
                     </span>
                     <span className="text-xs font-semibold text-slate-500">CAD</span>
@@ -109,21 +109,21 @@ export default async function ShuttlesPage() {
               {/* Live Scheduled Departures */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-bold text-[#1C1F23] uppercase tracking-wider flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-[#3A9CA6]" />
+                  <h3 className="text-xs font-bold text-obsidian-900 uppercase tracking-wider flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-ocean-600" />
                     <span>Scheduled Departures (Live Seat Inventory)</span>
                   </h3>
-                  <span className="text-xs text-slate-400">Instant Bókun Reservation</span>
+                  <span className="text-xs text-slate-500">Instant Bókun Reservation</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   {route.departures.map((dep) => (
                     <div
                       key={dep.id}
-                      className="p-4 rounded-2xl border border-slate-200 bg-white flex flex-col justify-between gap-4 hover:border-[#3A9CA6] transition-all duration-200 shadow-sm"
+                      className="p-4 rounded-2xl border border-slate-200 bg-white flex flex-col justify-between gap-4 hover:border-ocean-500 transition-all duration-200 shadow-sm"
                     >
                       <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold text-[#1C1F23]">
+                        <span className="font-bold text-obsidian-900">
                           {dep.date} • {dep.departureTime}
                         </span>
                         <span
@@ -142,7 +142,7 @@ export default async function ShuttlesPage() {
                       {dep.seatsAvailable > 0 ? (
                         <Link
                           href={`/book?departureId=${dep.id}`}
-                          className="w-full py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider text-[#1C1F23] golden-summit-btn text-center shadow-sm hover:opacity-95 transition-all flex items-center justify-center gap-1.5"
+                          className="w-full py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider text-obsidian-900 golden-summit-btn text-center shadow-sm hover:opacity-95 transition-all flex items-center justify-center gap-1.5"
                         >
                           <span>Reserve (${dep.price} CAD)</span>
                           <ArrowRight className="w-3.5 h-3.5" />

@@ -1,0 +1,7058 @@
+{
+ "generatedBy": "scripts/media/build-media.mjs",
+ "count": 334,
+ "assets": [
+  {
+   "id": "badges/civitatis-logo",
+   "src": "/media/badges/civitatis-logo.png",
+   "width": 1600,
+   "height": 662,
+   "title": "Civitatis Logo",
+   "alt": "Civitatis brand name in bold pink lowercase letters on a black background.",
+   "collection": "badges",
+   "kind": "badges",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/691ad3be75416ce3df5d812a_Civitatis-Logo.png",
+    "pages": [
+     "home"
+    ]
+   }
+  },
+  {
+   "id": "badges/expedia-logo",
+   "src": "/media/badges/expedia-logo.png",
+   "width": 1600,
+   "height": 453,
+   "title": "expedia logo png transparent",
+   "alt": "Expedia logo with yellow airplane inside a dark blue circle next to the word Expedia in dark blue text",
+   "collection": "badges",
+   "kind": "badges",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/691ad3bed15dec1a3f088e4b_expedia-logo-png-transparent.png",
+    "pages": [
+     "home"
+    ]
+   }
+  },
+  {
+   "id": "badges/five-stars",
+   "src": "/media/badges/five-stars.png",
+   "width": 88,
+   "height": 14,
+   "title": "Frames",
+   "alt": "Five yellow stars on a white background representing a 5-star rating.",
+   "collection": "badges",
+   "kind": "badges",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6908fc809327ebd246a80834_Frames.png",
+    "pages": [
+     "banff-highlights-tour",
+     "banff-private-tour",
+     "banff-yoho-custom-private-tour",
+     "full-day-at-lake-louise-and-moraine-lake",
+     "icefields-jasper-private-tour",
+     "jasper-custom-private-tour",
+     "multi-day-tour-package-for-banff",
+     "shared-tours-banff-yoho",
+     "shared-tours-heart-of-banff",
+     "shared-tours-icefields-jasper",
+     "sunrise-shuttle-to-moraine-lake-and-lake-louise",
+     "winter-signature-private-tour",
+     "winter-special"
+    ]
+   }
+  },
+  {
+   "id": "badges/get-your-guide-logo",
+   "src": "/media/badges/get-your-guide-logo.png",
+   "width": 400,
+   "height": 140,
+   "title": "Get Your Guide Logo",
+   "alt": "GetYourGuide company logo in orange text.",
+   "collection": "badges",
+   "kind": "badges",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/691ad59089e29176ffcb2c69_Get%20Your%20Guide%20Logo.png",
+    "pages": [
+     "home"
+    ]
+   }
+  },
+  {
+   "id": "badges/google-logo",
+   "src": "/media/badges/google-logo.png",
+   "width": 1600,
+   "height": 521,
+   "title": "Google logo",
+   "alt": "Google logo above a row of five yellow star ratings on transparent background.",
+   "collection": "badges",
+   "kind": "badges",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/691ad50ffd3777dc4cf0e156_Google%20logo.png",
+    "pages": [
+     "home"
+    ]
+   }
+  },
+  {
+   "id": "badges/klook-logo",
+   "src": "/media/badges/klook-logo.png",
+   "width": 1216,
+   "height": 349,
+   "title": "klook logo brandlogos.net naa2l",
+   "alt": "Klook brand logo with colorful abstract shapes forming a circular pattern to the left of the orange lowercase text 'klook'.",
+   "collection": "badges",
+   "kind": "badges",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/691ad40e3e3b185eeb634e26_klook-logo_brandlogos.net_naa2l.png",
+    "pages": [
+     "home"
+    ]
+   }
+  },
+  {
+   "id": "badges/project-expedition-logo",
+   "src": "/media/badges/project-expedition-logo.png",
+   "width": 1600,
+   "height": 503,
+   "title": "project expedition Logo",
+   "alt": "Orange camel silhouette with mountains on its back followed by an orange rectangle containing the text 'PROJECT EXPEDITION'.",
+   "collection": "badges",
+   "kind": "badges",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/691ad0756da02ba40a7caf57_project-expedition-Logo.webp",
+    "pages": [
+     "home"
+    ]
+   }
+  },
+  {
+   "id": "badges/tripadvisor-best-of-the-best-2025",
+   "src": "/media/badges/tripadvisor-best-of-the-best-2025.png",
+   "width": 1009,
+   "height": 1174,
+   "title": "Tripadvisor BOTB Badge + Travelers’ Choice Center Aligned Black L",
+   "alt": "Tripadvisor BOTB Badge + Travelers’ Choice Center Aligned Black L",
+   "collection": "badges",
+   "kind": "badges",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6a125b0bbd624b7655b6d861_Tripadvisor%20BOTB%20Badge%20%2B%20Travelers%E2%80%99%20Choice%20Center%20Aligned%20Black%20-%20L.png",
+    "pages": [
+     "banff-highlights-tour",
+     "css",
+     "home"
+    ]
+   }
+  },
+  {
+   "id": "badges/tripadvisor-logo",
+   "src": "/media/badges/tripadvisor-logo.png",
+   "width": 800,
+   "height": 122,
+   "title": "Tripadvisor idSto8f0HB 1",
+   "alt": "Tripadvisor",
+   "collection": "badges",
+   "kind": "badges",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/691ace89e156673a0f597a5f_Tripadvisor_idSto8f0HB_1.png",
+    "pages": [
+     "home"
+    ]
+   }
+  },
+  {
+   "id": "badges/viator-logo",
+   "src": "/media/badges/viator-logo.png",
+   "width": 1600,
+   "height": 402,
+   "title": "viator seeklogo",
+   "alt": "Viator company logo.",
+   "collection": "badges",
+   "kind": "badges",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/691acec025274569c3f0e5be_viator-seeklogo.png",
+    "pages": [
+     "home"
+    ]
+   }
+  },
+  {
+   "id": "blog/2025-influencer-angeliauntung6",
+   "src": "/media/blog/2025-influencer-angeliauntung6.webp",
+   "width": 1600,
+   "height": 864,
+   "title": "Influencer AngeliaUntung6",
+   "alt": "Influencer AngeliaUntung6",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/69b3c16fbedb94fdea327b35_2025_Influencer_AngeliaUntung6.jpg",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/566fc2cc-e8c6-433f-9ee6-de95e1f05922",
+   "src": "/media/blog/566fc2cc-e8c6-433f-9ee6-de95e1f05922.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "566fc2cc e8c6 433f 9ee6 de95e1f05922",
+   "alt": "566fc2cc e8c6 433f 9ee6 de95e1f05922",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/69fbe7deb7bdfd1e38a00ca8_566fc2cc-e8c6-433f-9ee6-de95e1f05922.jpg",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/6a1cf1af9c83315aa8412e7b-fb4e841b",
+   "src": "/media/blog/6a1cf1af9c83315aa8412e7b-fb4e841b.webp",
+   "width": 1600,
+   "height": 840,
+   "title": "6a1cf1af9c83315aa8412e7b fb4e841b",
+   "alt": "6a1cf1af9c83315aa8412e7b fb4e841b",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a28ce59c2f66710da5acdd1_6a1cf1af9c83315aa8412e7b_fb4e841b.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/7a624aef-ac98-4b5d-bc5b-09f8562908bd",
+   "src": "/media/blog/7a624aef-ac98-4b5d-bc5b-09f8562908bd.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "7a624aef ac98 4b5d bc5b 09f8562908bd",
+   "alt": "7a624aef ac98 4b5d bc5b 09f8562908bd",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/69f162969909d261a82b932f_7a624aef-ac98-4b5d-bc5b-09f8562908bd.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/apr-23-2026-07-46-39-am",
+   "src": "/media/blog/apr-23-2026-07-46-39-am.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "Apr 23, , 07 46 39 AM",
+   "alt": "Apr 23, , 07 46 39 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/69e9825234b10a4feda045ce_Apr%2023%2C%202026%2C%2007_46_39%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/banff-national-park",
+   "src": "/media/blog/banff-national-park.webp",
+   "width": 1600,
+   "height": 1067,
+   "title": "Banff National Park",
+   "alt": "Banff National Park",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [
+    "banff"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6989d531faf79ad0241ce649_Banff-National-Park.webp",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/banff-national-park-photography-guide",
+   "src": "/media/blog/banff-national-park-photography-guide.webp",
+   "width": 1600,
+   "height": 1280,
+   "title": "Banff+National+Park+Photography+Guide",
+   "alt": "Banff+National+Park+Photography+Guide",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [
+    "banff"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/698db8855512aea63be96990_Banff%2BNational%2BPark%2BPhotography%2BGuide.webp",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/blog",
+   "src": "/media/blog/blog.webp",
+   "width": 1024,
+   "height": 1024,
+   "title": "Blog",
+   "alt": "Blog",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/69df38e2f2b11c38ef0e26cb_Blog.jpeg",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/caption",
+   "src": "/media/blog/caption.webp",
+   "width": 500,
+   "height": 400,
+   "title": "caption",
+   "alt": "caption",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/69c0deb73eeb93ac9d996932_caption.jpg",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/cb8fcde9-a56d-4fe5-8e2d-9632d9d22567",
+   "src": "/media/blog/cb8fcde9-a56d-4fe5-8e2d-9632d9d22567.webp",
+   "width": 1365,
+   "height": 1024,
+   "title": "cb8fcde9 a56d 4fe5 8e2d 9632d9d22567",
+   "alt": "cb8fcde9 a56d 4fe5 8e2d 9632d9d22567",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/69c3ad4ecf7622868a5fae2b_cb8fcde9-a56d-4fe5-8e2d-9632d9d22567.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-apr-17-2026-10-52-35-am",
+   "src": "/media/blog/chatgpt-image-apr-17-2026-10-52-35-am.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "ChatGPT Image Apr 17, , 10 52 35 AM",
+   "alt": "ChatGPT Image Apr 17, , 10 52 35 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/69e1d7546f2f3e2410d79d03_ChatGPT%20Image%20Apr%2017%2C%202026%2C%2010_52_35%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-apr-21-2026-07-10-28-am",
+   "src": "/media/blog/chatgpt-image-apr-21-2026-07-10-28-am.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "ChatGPT Image Apr 21, , 07 10 28 AM",
+   "alt": "ChatGPT Image Apr 21, , 07 10 28 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/69e6d74f717089fe042b32ab_ChatGPT%20Image%20Apr%2021%2C%202026%2C%2007_10_28%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-aug-10-2026-08-47-17-am",
+   "src": "/media/blog/chatgpt-image-aug-10-2026-08-47-17-am.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "ChatGPT Image Aug 10, , 08 47 17 AM",
+   "alt": "ChatGPT Image Aug 10, , 08 47 17 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a7942c6990004e5de1cb0eb_ChatGPT%20Image%20Aug%2010%2C%202026%2C%2008_47_17%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-aug-21-2026-09-35-11-am",
+   "src": "/media/blog/chatgpt-image-aug-21-2026-09-35-11-am.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "ChatGPT Image Aug 21, , 09 35 11 AM",
+   "alt": "ChatGPT Image Aug 21, , 09 35 11 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a87cffac3722797afbbc6e6_ChatGPT%20Image%20Aug%2021%2C%202026%2C%2009_35_11%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-aug-4-2026-07-18-39-am",
+   "src": "/media/blog/chatgpt-image-aug-4-2026-07-18-39-am.webp",
+   "width": 1600,
+   "height": 800,
+   "title": "ChatGPT Image Aug 4, , 07 18 39 AM",
+   "alt": "ChatGPT Image Aug 4, , 07 18 39 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a7146bc889e63cb2098cb05_ChatGPT%20Image%20Aug%204%2C%202026%2C%2007_18_39%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-dec-29-2025-02-07-56-pm",
+   "src": "/media/blog/chatgpt-image-dec-29-2025-02-07-56-pm.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "ChatGPT Image Dec 29, , 02 07 56 PM",
+   "alt": "ChatGPT Image Dec 29, , 02 07 56 PM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/695245141ff1ccbe62ec5fbf_ChatGPT%20Image%20Dec%2029%2C%202025%2C%2002_07_56%20PM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-feb-2-2026-05-18-16-pm",
+   "src": "/media/blog/chatgpt-image-feb-2-2026-05-18-16-pm.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "ChatGPT Image Feb 2, , 05 18 16 PM",
+   "alt": "ChatGPT Image Feb 2, , 05 18 16 PM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/69809f1ab951606a04c0443f_ChatGPT%20Image%20Feb%202%2C%202026%2C%2005_18_16%20PM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-feb-25-2026-06-36-42-pm",
+   "src": "/media/blog/chatgpt-image-feb-25-2026-06-36-42-pm.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "ChatGPT Image Feb 25, , 06 36 42 PM",
+   "alt": "ChatGPT Image Feb 25, , 06 36 42 PM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/699f334b7a3260fd27d39617_ChatGPT%20Image%20Feb%2025%2C%202026%2C%2006_36_42%20PM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-jan-27-2026-07-53-53-am",
+   "src": "/media/blog/chatgpt-image-jan-27-2026-07-53-53-am.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "ChatGPT Image Jan 27, , 07 53 53 AM",
+   "alt": "ChatGPT Image Jan 27, , 07 53 53 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6978a5cd277133034e83b4b9_ChatGPT%20Image%20Jan%2027%2C%202026%2C%2007_53_53%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-jan-6-2026-01-40-12-pm",
+   "src": "/media/blog/chatgpt-image-jan-6-2026-01-40-12-pm.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "ChatGPT Image Jan 6, , 01 40 12 PM",
+   "alt": "ChatGPT Image Jan 6, , 01 40 12 PM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/695cea6223da21b049e0dd40_ChatGPT%20Image%20Jan%206%2C%202026%2C%2001_40_12%20PM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-jan-8-2026-05-10-44-pm",
+   "src": "/media/blog/chatgpt-image-jan-8-2026-05-10-44-pm.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "ChatGPT Image Jan 8, , 05 10 44 PM",
+   "alt": "ChatGPT Image Jan 8, , 05 10 44 PM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6960e21b843f8c1f18fe118f_ChatGPT%20Image%20Jan%208%2C%202026%2C%2005_10_44%20PM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-jul-1-2026-09-13-32-am",
+   "src": "/media/blog/chatgpt-image-jul-1-2026-09-13-32-am.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "ChatGPT Image Jul 1, , 09 13 32 AM",
+   "alt": "ChatGPT Image Jul 1, , 09 13 32 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a448db96a0a5adeefffbeea_ChatGPT%20Image%20Jul%201%2C%202026%2C%2009_13_32%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-jul-13-2026-10-39-01-am",
+   "src": "/media/blog/chatgpt-image-jul-13-2026-10-39-01-am.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "ChatGPT Image Jul 13, , 10 39 01 AM",
+   "alt": "ChatGPT Image Jul 13, , 10 39 01 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a547444bb454fc321584b48_ChatGPT%20Image%20Jul%2013%2C%202026%2C%2010_39_01%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-jul-17-2026-06-45-51-am",
+   "src": "/media/blog/chatgpt-image-jul-17-2026-06-45-51-am.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "ChatGPT Image Jul 17, , 06 45 51 AM",
+   "alt": "ChatGPT Image Jul 17, , 06 45 51 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a5982e5db1b168146973ee9_ChatGPT%20Image%20Jul%2017%2C%202026%2C%2006_45_51%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-jul-21-2026-09-28-30-am",
+   "src": "/media/blog/chatgpt-image-jul-21-2026-09-28-30-am.webp",
+   "width": 1600,
+   "height": 800,
+   "title": "ChatGPT Image Jul 21, , 09 28 30 AM",
+   "alt": "ChatGPT Image Jul 21, , 09 28 30 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a5eefc6fd289d1a0056a917_ChatGPT%20Image%20Jul%2021%2C%202026%2C%2009_28_30%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-jul-23-2026-07-47-54-am",
+   "src": "/media/blog/chatgpt-image-jul-23-2026-07-47-54-am.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "ChatGPT Image Jul 23, , 07 47 54 AM",
+   "alt": "ChatGPT Image Jul 23, , 07 47 54 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a617a9d09a38d01e43cc018_ChatGPT%20Image%20Jul%2023%2C%202026%2C%2007_47_54%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-jul-27-2026-09-22-21-am",
+   "src": "/media/blog/chatgpt-image-jul-27-2026-09-22-21-am.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "ChatGPT Image Jul 27, , 09 22 21 AM",
+   "alt": "ChatGPT Image Jul 27, , 09 22 21 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a66d679fdb885cdd3b5d4d0_ChatGPT%20Image%20Jul%2027%2C%202026%2C%2009_22_21%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-jul-29-2026-10-47-06-am",
+   "src": "/media/blog/chatgpt-image-jul-29-2026-10-47-06-am.webp",
+   "width": 1600,
+   "height": 900,
+   "title": "ChatGPT Image Jul 29, , 10 47 06 AM",
+   "alt": "ChatGPT Image Jul 29, , 10 47 06 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a698e3521e7bb0982f57851_ChatGPT%20Image%20Jul%2029%2C%202026%2C%2010_47_06%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-jul-3-2026-07-40-56-am",
+   "src": "/media/blog/chatgpt-image-jul-3-2026-07-40-56-am.webp",
+   "width": 1600,
+   "height": 878,
+   "title": "ChatGPT Image Jul 3, , 07 40 56 AM",
+   "alt": "ChatGPT Image Jul 3, , 07 40 56 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a471abcf40b127ecf015416_ChatGPT%20Image%20Jul%203%2C%202026%2C%2007_40_56%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-jul-31-2026-09-05-21-am",
+   "src": "/media/blog/chatgpt-image-jul-31-2026-09-05-21-am.webp",
+   "width": 1600,
+   "height": 854,
+   "title": "ChatGPT Image Jul 31, , 09 05 21 AM",
+   "alt": "ChatGPT Image Jul 31, , 09 05 21 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a6c18d4693690449c2d3998_ChatGPT%20Image%20Jul%2031%2C%202026%2C%2009_05_21%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-jul-7-2026-06-58-45-am",
+   "src": "/media/blog/chatgpt-image-jul-7-2026-06-58-45-am.webp",
+   "width": 1600,
+   "height": 800,
+   "title": "ChatGPT Image Jul 7, , 06 58 45 AM",
+   "alt": "ChatGPT Image Jul 7, , 06 58 45 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a4c56ea4ca64dbb7b0ec82f_ChatGPT%20Image%20Jul%207%2C%202026%2C%2006_58_45%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-jul-9-2026-08-50-54-am",
+   "src": "/media/blog/chatgpt-image-jul-9-2026-08-50-54-am.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "ChatGPT Image Jul 9, , 08 50 54 AM",
+   "alt": "ChatGPT Image Jul 9, , 08 50 54 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a4f143a3472d0b77c32dbd4_ChatGPT%20Image%20Jul%209%2C%202026%2C%2008_50_54%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-jun-11-2026-08-12-48-am",
+   "src": "/media/blog/chatgpt-image-jun-11-2026-08-12-48-am.webp",
+   "width": 1600,
+   "height": 840,
+   "title": "ChatGPT Image Jun 11, , 08 12 48 AM",
+   "alt": "ChatGPT Image Jun 11, , 08 12 48 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a2a217d7611142703e2de59_ChatGPT%20Image%20Jun%2011%2C%202026%2C%2008_12_48%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-jun-15-2026-08-15-50-am",
+   "src": "/media/blog/chatgpt-image-jun-15-2026-08-15-50-am.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "ChatGPT Image Jun 15, , 08 15 50 AM",
+   "alt": "ChatGPT Image Jun 15, , 08 15 50 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a2f69e69b060f6e076bb17e_ChatGPT%20Image%20Jun%2015%2C%202026%2C%2008_15_50%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-jun-17-2026-07-15-45-am",
+   "src": "/media/blog/chatgpt-image-jun-17-2026-07-15-45-am.webp",
+   "width": 1600,
+   "height": 757,
+   "title": "ChatGPT Image Jun 17, , 07 15 45 AM",
+   "alt": "ChatGPT Image Jun 17, , 07 15 45 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a31ff5440c939a235ad749c_ChatGPT%20Image%20Jun%2017%2C%202026%2C%2007_15_45%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-jun-19-2026-07-50-54-am",
+   "src": "/media/blog/chatgpt-image-jun-19-2026-07-50-54-am.webp",
+   "width": 1600,
+   "height": 757,
+   "title": "ChatGPT Image Jun 19, , 07 50 54 AM",
+   "alt": "ChatGPT Image Jun 19, , 07 50 54 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a34a823ca34a7520d24fd08_ChatGPT%20Image%20Jun%2019%2C%202026%2C%2007_50_54%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-jun-2-2026-11-14-34-pm",
+   "src": "/media/blog/chatgpt-image-jun-2-2026-11-14-34-pm.webp",
+   "width": 1600,
+   "height": 800,
+   "title": "ChatGPT Image Jun 2, , 11 14 34 PM",
+   "alt": "ChatGPT Image Jun 2, , 11 14 34 PM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a1f184c1fa8f28b994e92c7_ChatGPT%20Image%20Jun%202%2C%202026%2C%2011_14_34%20PM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-jun-23-2026-07-54-58-am",
+   "src": "/media/blog/chatgpt-image-jun-23-2026-07-54-58-am.webp",
+   "width": 1600,
+   "height": 640,
+   "title": "ChatGPT Image Jun 23, , 07 54 58 AM",
+   "alt": "ChatGPT Image Jun 23, , 07 54 58 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a39ef56c7badc4ddc71446b_ChatGPT%20Image%20Jun%2023%2C%202026%2C%2007_54_58%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-jun-25-2026-07-18-38-am",
+   "src": "/media/blog/chatgpt-image-jun-25-2026-07-18-38-am.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "ChatGPT Image Jun 25, , 07 18 38 AM",
+   "alt": "ChatGPT Image Jun 25, , 07 18 38 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a3c89044766efbcffd2efcc_ChatGPT%20Image%20Jun%2025%2C%202026%2C%2007_18_38%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-jun-29-2026-07-34-17-am",
+   "src": "/media/blog/chatgpt-image-jun-29-2026-07-34-17-am.webp",
+   "width": 1600,
+   "height": 800,
+   "title": "ChatGPT Image Jun 29, , 07 34 17 AM",
+   "alt": "ChatGPT Image Jun 29, , 07 34 17 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a41d3989be51ac3992c7233_ChatGPT%20Image%20Jun%2029%2C%202026%2C%2007_34_17%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-jun-5-2026-10-55-42-am",
+   "src": "/media/blog/chatgpt-image-jun-5-2026-10-55-42-am.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "ChatGPT Image Jun 5, , 10 55 42 AM",
+   "alt": "ChatGPT Image Jun 5, , 10 55 42 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a225ea2a5c7176012554ca7_ChatGPT%20Image%20Jun%205%2C%202026%2C%2010_55_42%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-jun-9-2026-07-36-24-am",
+   "src": "/media/blog/chatgpt-image-jun-9-2026-07-36-24-am.webp",
+   "width": 1600,
+   "height": 683,
+   "title": "ChatGPT Image Jun 9, , 07 36 24 AM",
+   "alt": "ChatGPT Image Jun 9, , 07 36 24 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a2776704cb71fd13f0cab84_ChatGPT%20Image%20Jun%209%2C%202026%2C%2007_36_24%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-mar-10-2026-01-07-51-pm",
+   "src": "/media/blog/chatgpt-image-mar-10-2026-01-07-51-pm.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "ChatGPT Image Mar 10, , 01 07 51 PM",
+   "alt": "ChatGPT Image Mar 10, , 01 07 51 PM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/69afccb980f23ebfaf5d56d8_ChatGPT%20Image%20Mar%2010%2C%202026%2C%2001_07_51%20PM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-mar-20-2026-01-47-14-pm",
+   "src": "/media/blog/chatgpt-image-mar-20-2026-01-47-14-pm.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "ChatGPT Image Mar 20, , 01 47 14 PM",
+   "alt": "ChatGPT Image Mar 20, , 01 47 14 PM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/69bd06ad3cf24cfc30e90f5f_ChatGPT%20Image%20Mar%2020%2C%202026%2C%2001_47_14%20PM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-mar-27-2026-03-56-42-pm",
+   "src": "/media/blog/chatgpt-image-mar-27-2026-03-56-42-pm.webp",
+   "width": 1024,
+   "height": 1536,
+   "title": "ChatGPT Image Mar 27, , 03 56 42 PM",
+   "alt": "ChatGPT Image Mar 27, , 03 56 42 PM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/69c65b760ea0123ab351d77c_ChatGPT%20Image%20Mar%2027%2C%202026%2C%2003_56_42%20PM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-mar-31-2026-11-07-13-am",
+   "src": "/media/blog/chatgpt-image-mar-31-2026-11-07-13-am.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "ChatGPT Image Mar 31, , 11 07 13 AM",
+   "alt": "ChatGPT Image Mar 31, , 11 07 13 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/69cb77a216abf91df8bb80dd_ChatGPT%20Image%20Mar%2031%2C%202026%2C%2011_07_13%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-mar-6-2026-08-28-21-am",
+   "src": "/media/blog/chatgpt-image-mar-6-2026-08-28-21-am.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "ChatGPT Image Mar 6, , 08 28 21 AM",
+   "alt": "ChatGPT Image Mar 6, , 08 28 21 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/69aa42eced6d750899c361c5_ChatGPT%20Image%20Mar%206%2C%202026%2C%2008_28_21%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-may-1-2026-07-04-55-am",
+   "src": "/media/blog/chatgpt-image-may-1-2026-07-04-55-am.webp",
+   "width": 1600,
+   "height": 800,
+   "title": "ChatGPT Image May 1, , 07 04 55 AM",
+   "alt": "ChatGPT Image May 1, , 07 04 55 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/69f4049583171c90bea32338_ChatGPT%20Image%20May%201%2C%202026%2C%2007_04_55%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-may-15-2026-07-06-08-am",
+   "src": "/media/blog/chatgpt-image-may-15-2026-07-06-08-am.webp",
+   "width": 1600,
+   "height": 878,
+   "title": "ChatGPT Image May 15, , 07 06 08 AM",
+   "alt": "ChatGPT Image May 15, , 07 06 08 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a06810a8f9e4a542776e83f_ChatGPT%20Image%20May%2015%2C%202026%2C%2007_06_08%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-may-21-2026-07-40-58-am",
+   "src": "/media/blog/chatgpt-image-may-21-2026-07-40-58-am.webp",
+   "width": 1600,
+   "height": 817,
+   "title": "ChatGPT Image May 21, , 07 40 58 AM",
+   "alt": "ChatGPT Image May 21, , 07 40 58 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a0e6bc84a7553443a0ec268_ChatGPT%20Image%20May%2021%2C%202026%2C%2007_40_58%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-may-25-2026-06-48-16-am",
+   "src": "/media/blog/chatgpt-image-may-25-2026-06-48-16-am.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "ChatGPT Image May 25, , 06 48 16 AM",
+   "alt": "ChatGPT Image May 25, , 06 48 16 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a13a450b4c33bf17f6ecdc4_ChatGPT%20Image%20May%2025%2C%202026%2C%2006_48_16%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-may-27-2026-07-15-15-am",
+   "src": "/media/blog/chatgpt-image-may-27-2026-07-15-15-am.webp",
+   "width": 1600,
+   "height": 800,
+   "title": "ChatGPT Image May 27, , 07 15 15 AM",
+   "alt": "ChatGPT Image May 27, , 07 15 15 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a164f9d274faa0d519aea89_ChatGPT%20Image%20May%2027%2C%202026%2C%2007_15_15%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-may-29-2026-12-15-53-pm",
+   "src": "/media/blog/chatgpt-image-may-29-2026-12-15-53-pm.webp",
+   "width": 1600,
+   "height": 640,
+   "title": "ChatGPT Image May 29, , 12 15 53 PM",
+   "alt": "ChatGPT Image May 29, , 12 15 53 PM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a1938e52af7527cb5f60508_ChatGPT%20Image%20May%2029%2C%202026%2C%2012_15_53%20PM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-may-5-2026-12-19-08-pm",
+   "src": "/media/blog/chatgpt-image-may-5-2026-12-19-08-pm.webp",
+   "width": 1600,
+   "height": 900,
+   "title": "ChatGPT Image May 5, , 12 19 08 PM",
+   "alt": "ChatGPT Image May 5, , 12 19 08 PM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/69f9a9e27a75557692bdb6a6_ChatGPT%20Image%20May%205%2C%202026%2C%2012_19_08%20PM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-sep-1-2026-09-08-17-am",
+   "src": "/media/blog/chatgpt-image-sep-1-2026-09-08-17-am.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "ChatGPT Image Sep 1, , 09 08 17 AM",
+   "alt": "ChatGPT Image Sep 1, , 09 08 17 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a9649d1943a531a96059219_ChatGPT%20Image%20Sep%201%2C%202026%2C%2009_08_17%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-sep-11-2026-08-33-06-am",
+   "src": "/media/blog/chatgpt-image-sep-11-2026-08-33-06-am.webp",
+   "width": 1600,
+   "height": 900,
+   "title": "ChatGPT Image Sep 11, , 08 33 06 AM",
+   "alt": "ChatGPT Image Sep 11, , 08 33 06 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6aa36fcacd755a9a0350dcc7_ChatGPT%20Image%20Sep%2011%2C%202026%2C%2008_33_06%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-sep-25-2026-12-25-17-pm",
+   "src": "/media/blog/chatgpt-image-sep-25-2026-12-25-17-pm.webp",
+   "width": 1600,
+   "height": 900,
+   "title": "ChatGPT Image Sep 25, , 12 25 17 PM",
+   "alt": "ChatGPT Image Sep 25, , 12 25 17 PM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6ab61ba622c68280e1d3834d_ChatGPT%20Image%20Sep%2025%2C%202026%2C%2012_25_17%20PM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-sep-29-2026-10-16-06-am",
+   "src": "/media/blog/chatgpt-image-sep-29-2026-10-16-06-am.webp",
+   "width": 1600,
+   "height": 900,
+   "title": "ChatGPT Image Sep 29, , 10 16 06 AM",
+   "alt": "ChatGPT Image Sep 29, , 10 16 06 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6abb44389119f7aca6aeb615_ChatGPT%20Image%20Sep%2029%2C%202026%2C%2010_16_06%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-sep-3-2026-10-28-01-am",
+   "src": "/media/blog/chatgpt-image-sep-3-2026-10-28-01-am.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "ChatGPT Image Sep 3, , 10 28 01 AM",
+   "alt": "ChatGPT Image Sep 3, , 10 28 01 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a99005424dccd96395952c9_ChatGPT%20Image%20Sep%203%2C%202026%2C%2010_28_01%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-sep-7-2026-10-51-03-am",
+   "src": "/media/blog/chatgpt-image-sep-7-2026-10-51-03-am.webp",
+   "width": 1600,
+   "height": 900,
+   "title": "ChatGPT Image Sep 7, , 10 51 03 AM",
+   "alt": "ChatGPT Image Sep 7, , 10 51 03 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a9e4a892a3101e6e4ce596e_ChatGPT%20Image%20Sep%207%2C%202026%2C%2010_51_03%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/chatgpt-image-sep-9-2026-07-48-20-am",
+   "src": "/media/blog/chatgpt-image-sep-9-2026-07-48-20-am.webp",
+   "width": 1600,
+   "height": 800,
+   "title": "ChatGPT Image Sep 9, , 07 48 20 AM",
+   "alt": "ChatGPT Image Sep 9, , 07 48 20 AM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6aa0c2d39e46435f50ddfeeb_ChatGPT%20Image%20Sep%209%2C%202026%2C%2007_48_20%20AM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/download-1",
+   "src": "/media/blog/download-1.webp",
+   "width": 275,
+   "height": 183,
+   "title": "download",
+   "alt": "download",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/697093754f3c7c1f5b3029c9_download%20(1).jpg",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/feb-19-2026-10-07-10-pm",
+   "src": "/media/blog/feb-19-2026-10-07-10-pm.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "Feb 19, , 10 07 10 PM",
+   "alt": "Feb 19, , 10 07 10 PM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/699b117b96125f9ce40212da_Feb%2019%2C%202026%2C%2010_07_10%20PM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/jan-1-2026-06-43-02-pm",
+   "src": "/media/blog/jan-1-2026-06-43-02-pm.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "Jan 1, , 06 43 02 PM",
+   "alt": "Jan 1, , 06 43 02 PM",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/695786ed03b172dc9990a113_Jan%201%2C%202026%2C%2006_43_02%20PM.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/luxury-banff-lake-escape",
+   "src": "/media/blog/luxury-banff-lake-escape.webp",
+   "width": 1600,
+   "height": 900,
+   "title": "Luxury Banff Lake Escape",
+   "alt": "Luxury Banff Lake Escape",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [
+    "banff"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6abdf5e816eb1eee8e00f3db_Luxury%20Banff%20Lake%20Escape.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/peyto-lake",
+   "src": "/media/blog/peyto-lake.webp",
+   "width": 1402,
+   "height": 1122,
+   "title": "Peyto lake",
+   "alt": "Peyto lake",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [
+    "peyto-lake",
+    "icefields-parkway",
+    "banff"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/69eec6c1e1ef9ff58c0b5947_Peyto%20lake.jpeg",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/screenshot-2026-03-18-133826",
+   "src": "/media/blog/screenshot-2026-03-18-133826.webp",
+   "width": 780,
+   "height": 514,
+   "title": "Screenshot 03 18",
+   "alt": "Screenshot 03 18",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/69ba5d8aa045ba811ba0727b_Screenshot%202026-03-18%20133826.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/screenshot-2026-04-09-122926",
+   "src": "/media/blog/screenshot-2026-04-09-122926.webp",
+   "width": 775,
+   "height": 511,
+   "title": "Screenshot 04 09",
+   "alt": "Screenshot 04 09",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/69d74e61f8f25da8faea3f8f_Screenshot%202026-04-09%20122926.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/twilight-at-moraine-lake-and-lake-louise",
+   "src": "/media/blog/twilight-at-moraine-lake-and-lake-louise.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "Twilight at Moraine Lake and Lake Louise",
+   "alt": "Twilight at Moraine Lake and Lake Louise",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [
+    "moraine-lake",
+    "banff",
+    "lake-louise"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/69dcb148b793a717e559a29d_Twilight%20at%20Moraine%20Lake%20and%20Lake%20Louise.png",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/whatsapp-image-2026-04-02-at-11-15-12",
+   "src": "/media/blog/whatsapp-image-2026-04-02-at-11-15-12.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "WhatsApp Image 04 02 at 11.15.12",
+   "alt": "WhatsApp Image 04 02 at 11.15.12",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/69ce0751d93229d2a64c4008_WhatsApp%20Image%202026-04-02%20at%2011.15.12.jpeg",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/whatsapp-image-2026-04-06-at-11-23-13",
+   "src": "/media/blog/whatsapp-image-2026-04-06-at-11-23-13.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "WhatsApp Image 04 06 at 11.23.13",
+   "alt": "WhatsApp Image 04 06 at 11.23.13",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/69d360d40118d00fda484544_WhatsApp%20Image%202026-04-06%20at%2011.23.13.jpeg",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/whatsapp-image-2026-05-10-at-18-09-35",
+   "src": "/media/blog/whatsapp-image-2026-05-10-at-18-09-35.webp",
+   "width": 1543,
+   "height": 1019,
+   "title": "WhatsApp Image 05 10 at 18.09.35",
+   "alt": "WhatsApp Image 05 10 at 18.09.35",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a0188fba225ea214c71ab12_WhatsApp%20Image%202026-05-10%20at%2018.09.35.jpeg",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/whatsapp-image-2026-05-12-at-22-43-46",
+   "src": "/media/blog/whatsapp-image-2026-05-12-at-22-43-46.webp",
+   "width": 1600,
+   "height": 912,
+   "title": "WhatsApp Image 05 12 at 22.43.46",
+   "alt": "WhatsApp Image 05 12 at 22.43.46",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a03d6d2b63eb8800669ef78_WhatsApp%20Image%202026-05-12%20at%2022.43.46.jpeg",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/whatsapp-image-2026-05-19-at-08-19-48",
+   "src": "/media/blog/whatsapp-image-2026-05-19-at-08-19-48.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "WhatsApp Image 05 19 at 08.19.48",
+   "alt": "WhatsApp Image 05 19 at 08.19.48",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a0bded0e4f54de45bb2ec9f_WhatsApp%20Image%202026-05-19%20at%2008.19.48.jpeg",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/whatsapp-image-2026-07-15-at-12-09-11",
+   "src": "/media/blog/whatsapp-image-2026-07-15-at-12-09-11.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "WhatsApp Image 07 15 at 12.09.11",
+   "alt": "WhatsApp Image 07 15 at 12.09.11",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a572b492966060f5f8997b8_WhatsApp%20Image%202026-07-15%20at%2012.09.11.jpeg",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/whatsapp-image-2026-08-05-at-09-13-22",
+   "src": "/media/blog/whatsapp-image-2026-08-05-at-09-13-22.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "WhatsApp Image 08 05 at 09.13.22",
+   "alt": "WhatsApp Image 08 05 at 09.13.22",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a73fed64d93a2dcfc4c2c6e_WhatsApp%20Image%202026-08-05%20at%2009.13.22.jpeg",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/whatsapp-image-2026-08-19-at-09-41-13",
+   "src": "/media/blog/whatsapp-image-2026-08-19-at-09-41-13.webp",
+   "width": 862,
+   "height": 575,
+   "title": "WhatsApp Image 08 19 at 09.41.13",
+   "alt": "WhatsApp Image 08 19 at 09.41.13",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a852cf0fc93875719d40da8_WhatsApp%20Image%202026-08-19%20at%2009.41.13.jpeg",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/whatsapp-image-2026-08-25-at-11-46-45",
+   "src": "/media/blog/whatsapp-image-2026-08-25-at-11-46-45.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "WhatsApp Image 08 25 at 11.46.45",
+   "alt": "WhatsApp Image 08 25 at 11.46.45",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a8d336338ef00546d7ecdeb_WhatsApp%20Image%202026-08-25%20at%2011.46.45.jpeg",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "blog/whatsapp-image-2026-08-27-at-09-57-17-1",
+   "src": "/media/blog/whatsapp-image-2026-08-27-at-09-57-17-1.webp",
+   "width": 1536,
+   "height": 1024,
+   "title": "WhatsApp Image 08 27 at 09.57.17",
+   "alt": "WhatsApp Image 08 27 at 09.57.17",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/6a8fd568437e07816eab0815_WhatsApp%20Image%202026-08-27%20at%2009.57.17%20(1).jpeg",
+    "pages": [
+     "blog"
+    ]
+   }
+  },
+  {
+   "id": "brand/apple-touch-icon",
+   "src": "/media/brand/apple-touch-icon.png",
+   "width": 180,
+   "height": 180,
+   "title": "Browser icon 180px",
+   "alt": "",
+   "collection": "brand",
+   "kind": "brand",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/69089376e89919ea16ef4b89_images%204%20(1).png",
+    "pages": [
+     "about-us",
+     "banff-highlights-tour",
+     "banff-private-tour",
+     "banff-yoho-custom-private-tour",
+     "blog",
+     "contact-us",
+     "faq",
+     "full-day-at-lake-louise-and-moraine-lake",
+     "gallery",
+     "home",
+     "icefields-jasper-private-tour",
+     "jasper-custom-private-tour",
+     "multi-day-tour-package-for-banff",
+     "privacy-policy",
+     "privacy-policy-vista-chase",
+     "private-tours",
+     "shared-tours",
+     "shared-tours-banff-yoho",
+     "shared-tours-heart-of-banff",
+     "shared-tours-icefields-jasper",
+     "shuttles",
+     "sunrise-shuttle-to-moraine-lake-and-lake-louise",
+     "terms-and-conditions",
+     "winter-signature-private-tour",
+     "winter-special"
+    ],
+    "derived": "horse emblem on Obsidian Black"
+   }
+  },
+  {
+   "id": "brand/favicon-32",
+   "src": "/media/brand/favicon-32.png",
+   "width": 32,
+   "height": 32,
+   "title": "Browser icon 32px",
+   "alt": "",
+   "collection": "brand",
+   "kind": "brand",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/69089376e89919ea16ef4b89_images%204%20(1).png",
+    "pages": [
+     "about-us",
+     "banff-highlights-tour",
+     "banff-private-tour",
+     "banff-yoho-custom-private-tour",
+     "blog",
+     "contact-us",
+     "faq",
+     "full-day-at-lake-louise-and-moraine-lake",
+     "gallery",
+     "home",
+     "icefields-jasper-private-tour",
+     "jasper-custom-private-tour",
+     "multi-day-tour-package-for-banff",
+     "privacy-policy",
+     "privacy-policy-vista-chase",
+     "private-tours",
+     "shared-tours",
+     "shared-tours-banff-yoho",
+     "shared-tours-heart-of-banff",
+     "shared-tours-icefields-jasper",
+     "shuttles",
+     "sunrise-shuttle-to-moraine-lake-and-lake-louise",
+     "terms-and-conditions",
+     "winter-signature-private-tour",
+     "winter-special"
+    ],
+    "derived": "horse emblem on Obsidian Black"
+   }
+  },
+  {
+   "id": "brand/horse-emblem-gold",
+   "src": "/media/brand/horse-emblem-gold.png",
+   "width": 714,
+   "height": 592,
+   "title": "4a63d88a7f5330f9765fc90768f76f2c323f34d3",
+   "alt": "Vista Chase Elegant Horse Logo",
+   "collection": "brand",
+   "kind": "brand",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6907ce5d58aa3223085833b6_4a63d88a7f5330f9765fc90768f76f2c323f34d3.png",
+    "pages": [
+     "home"
+    ]
+   }
+  },
+  {
+   "id": "brand/horse-mark",
+   "src": "/media/brand/horse-mark.png",
+   "width": 96,
+   "height": 76,
+   "title": "Horse-and-rider mark",
+   "alt": "",
+   "collection": "brand",
+   "kind": "brand",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/69089376e89919ea16ef4b89_images%204%20(1).png",
+    "pages": [
+     "about-us",
+     "banff-highlights-tour",
+     "banff-private-tour",
+     "banff-yoho-custom-private-tour",
+     "blog",
+     "contact-us",
+     "faq",
+     "full-day-at-lake-louise-and-moraine-lake",
+     "gallery",
+     "home",
+     "icefields-jasper-private-tour",
+     "jasper-custom-private-tour",
+     "multi-day-tour-package-for-banff",
+     "privacy-policy",
+     "privacy-policy-vista-chase",
+     "private-tours",
+     "shared-tours",
+     "shared-tours-banff-yoho",
+     "shared-tours-heart-of-banff",
+     "shared-tours-icefields-jasper",
+     "shuttles",
+     "sunrise-shuttle-to-moraine-lake-and-lake-louise",
+     "terms-and-conditions",
+     "winter-signature-private-tour",
+     "winter-special"
+    ],
+    "derived": "cropped from brand/logo-dark"
+   }
+  },
+  {
+   "id": "brand/horse-rider-background",
+   "src": "/media/brand/horse-rider-background.png",
+   "width": 1600,
+   "height": 1600,
+   "title": "Horse Background Image V3",
+   "alt": "Silhouette of a person wearing a hat riding a horse and looking through binoculars.",
+   "collection": "brand",
+   "kind": "brand",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/691010a937bd1626bd437647_Horse%20Background%20Image%20V3.png",
+    "pages": [
+     "home"
+    ]
+   }
+  },
+  {
+   "id": "brand/horse-rider-banff-winters",
+   "src": "/media/brand/horse-rider-banff-winters.png",
+   "width": 1600,
+   "height": 1543,
+   "title": "Horse Rider Banff winters",
+   "alt": "Silhouette of a cowboy riding a horse through mist with distant hills in the background.",
+   "collection": "brand",
+   "kind": "brand",
+   "places": [
+    "banff"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/68e75d2165989122b4afc105_Horse-Rider-Banff-winters.webp",
+    "pages": [
+     "shared-tours"
+    ]
+   }
+  },
+  {
+   "id": "brand/icon-192",
+   "src": "/media/brand/icon-192.png",
+   "width": 192,
+   "height": 192,
+   "title": "Browser icon 192px",
+   "alt": "",
+   "collection": "brand",
+   "kind": "brand",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/69089376e89919ea16ef4b89_images%204%20(1).png",
+    "pages": [
+     "about-us",
+     "banff-highlights-tour",
+     "banff-private-tour",
+     "banff-yoho-custom-private-tour",
+     "blog",
+     "contact-us",
+     "faq",
+     "full-day-at-lake-louise-and-moraine-lake",
+     "gallery",
+     "home",
+     "icefields-jasper-private-tour",
+     "jasper-custom-private-tour",
+     "multi-day-tour-package-for-banff",
+     "privacy-policy",
+     "privacy-policy-vista-chase",
+     "private-tours",
+     "shared-tours",
+     "shared-tours-banff-yoho",
+     "shared-tours-heart-of-banff",
+     "shared-tours-icefields-jasper",
+     "shuttles",
+     "sunrise-shuttle-to-moraine-lake-and-lake-louise",
+     "terms-and-conditions",
+     "winter-signature-private-tour",
+     "winter-special"
+    ],
+    "derived": "horse emblem on Obsidian Black"
+   }
+  },
+  {
+   "id": "brand/logo-dark",
+   "src": "/media/brand/logo-dark.png",
+   "width": 213,
+   "height": 118,
+   "title": "images 4",
+   "alt": "images 4",
+   "collection": "brand",
+   "kind": "brand",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/69089376e89919ea16ef4b89_images%204%20(1).png",
+    "pages": [
+     "about-us",
+     "banff-highlights-tour",
+     "banff-private-tour",
+     "banff-yoho-custom-private-tour",
+     "blog",
+     "contact-us",
+     "faq",
+     "full-day-at-lake-louise-and-moraine-lake",
+     "gallery",
+     "home",
+     "icefields-jasper-private-tour",
+     "jasper-custom-private-tour",
+     "multi-day-tour-package-for-banff",
+     "privacy-policy",
+     "privacy-policy-vista-chase",
+     "private-tours",
+     "shared-tours",
+     "shared-tours-banff-yoho",
+     "shared-tours-heart-of-banff",
+     "shared-tours-icefields-jasper",
+     "shuttles",
+     "sunrise-shuttle-to-moraine-lake-and-lake-louise",
+     "terms-and-conditions",
+     "winter-signature-private-tour",
+     "winter-special"
+    ]
+   }
+  },
+  {
+   "id": "brand/logo-white",
+   "src": "/media/brand/logo-white.png",
+   "width": 213,
+   "height": 96,
+   "title": "images 4",
+   "alt": "images 4",
+   "collection": "brand",
+   "kind": "brand",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6906ed2d407b21d560ca0dd0_images%204.png",
+    "pages": [
+     "about-us",
+     "banff-highlights-tour",
+     "banff-private-tour",
+     "banff-yoho-custom-private-tour",
+     "blog",
+     "contact-us",
+     "faq",
+     "full-day-at-lake-louise-and-moraine-lake",
+     "gallery",
+     "home",
+     "icefields-jasper-private-tour",
+     "jasper-custom-private-tour",
+     "multi-day-tour-package-for-banff",
+     "privacy-policy",
+     "privacy-policy-vista-chase",
+     "private-tours",
+     "shared-tours",
+     "shared-tours-banff-yoho",
+     "shared-tours-heart-of-banff",
+     "shared-tours-icefields-jasper",
+     "shuttles",
+     "sunrise-shuttle-to-moraine-lake-and-lake-louise",
+     "terms-and-conditions",
+     "winter-signature-private-tour",
+     "winter-special"
+    ]
+   }
+  },
+  {
+   "id": "icons/arrow-right-1",
+   "src": "/media/icons/arrow-right-1.png",
+   "width": 32,
+   "height": 32,
+   "title": "Arrow Right",
+   "alt": "Left arrow icon.",
+   "collection": "icons",
+   "kind": "icons",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6907abead4c4d08bc7af12ae_Arrow%20Right%20(1).png",
+    "pages": [
+     "home"
+    ]
+   }
+  },
+  {
+   "id": "icons/book-open",
+   "src": "/media/icons/book-open.png",
+   "width": 24,
+   "height": 24,
+   "title": "book open",
+   "alt": "Open book icon",
+   "collection": "icons",
+   "kind": "icons",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/690a1c4ce40b8009566cd327_book-open.png",
+    "pages": [
+     "contact-us"
+    ]
+   }
+  },
+  {
+   "id": "icons/briefcase",
+   "src": "/media/icons/briefcase.png",
+   "width": 48,
+   "height": 48,
+   "title": "briefcase",
+   "alt": "Black briefcase icon with a handle and a flap.",
+   "collection": "icons",
+   "kind": "icons",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6909fbaf1d49165000dee93a_briefcase.png",
+    "pages": [
+     "about-us"
+    ]
+   }
+  },
+  {
+   "id": "icons/button-arrow",
+   "src": "/media/icons/button-arrow.svg",
+   "title": "Button Arrow",
+   "alt": "",
+   "collection": "icons",
+   "kind": "icons",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6a1259390a2225ab7e67113c_Button%20Arrow.svg",
+    "pages": [
+     "home"
+    ]
+   }
+  },
+  {
+   "id": "icons/checkmark-circle",
+   "src": "/media/icons/checkmark-circle.png",
+   "width": 28,
+   "height": 28,
+   "title": "Checkmark Circle",
+   "alt": "Yellow checkmark inside a black circle with a yellow border.",
+   "collection": "icons",
+   "kind": "icons",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6907d007edc89e709d230e13_Checkmark%20Circle.png",
+    "pages": [
+     "home"
+    ]
+   }
+  },
+  {
+   "id": "icons/close-4361951",
+   "src": "/media/icons/close-4361951.png",
+   "width": 512,
+   "height": 512,
+   "title": "close",
+   "alt": "",
+   "collection": "icons",
+   "kind": "icons",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/696a8eb0a419ea9b86fab110_close_4361951.png",
+    "pages": [
+     "css"
+    ]
+   }
+  },
+  {
+   "id": "icons/dollar-sign",
+   "src": "/media/icons/dollar-sign.png",
+   "width": 48,
+   "height": 48,
+   "title": "dollar sign",
+   "alt": "Black dollar sign symbol on white background.",
+   "collection": "icons",
+   "kind": "icons",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6909fb77efc00b6048f5336d_dollar-sign.png",
+    "pages": [
+     "about-us"
+    ]
+   }
+  },
+  {
+   "id": "icons/duration-icon-container",
+   "src": "/media/icons/duration-icon-container.png",
+   "width": 22,
+   "height": 22,
+   "title": "Duration Icon Container",
+   "alt": "Yellow stopwatch icon indicating duration or time measurement.",
+   "collection": "icons",
+   "kind": "icons",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6908fe001ab74e98d2ca8147_Duration%20Icon%20Container.png",
+    "pages": [
+     "banff-highlights-tour",
+     "banff-private-tour",
+     "banff-yoho-custom-private-tour",
+     "full-day-at-lake-louise-and-moraine-lake",
+     "icefields-jasper-private-tour",
+     "jasper-custom-private-tour",
+     "multi-day-tour-package-for-banff",
+     "shared-tours-banff-yoho",
+     "shared-tours-heart-of-banff",
+     "shared-tours-icefields-jasper",
+     "sunrise-shuttle-to-moraine-lake-and-lake-louise",
+     "winter-signature-private-tour",
+     "winter-special"
+    ]
+   }
+  },
+  {
+   "id": "icons/entry-fees-container",
+   "src": "/media/icons/entry-fees-container.png",
+   "width": 14,
+   "height": 24,
+   "title": "Entry Fees Container",
+   "alt": "Table listing entry fees in Canadian Dollar CAD",
+   "collection": "icons",
+   "kind": "icons",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6908ffb784218e644a3c0639_Entry%20Fees%20Container.png",
+    "pages": [
+     "banff-highlights-tour",
+     "banff-private-tour",
+     "banff-yoho-custom-private-tour",
+     "full-day-at-lake-louise-and-moraine-lake",
+     "icefields-jasper-private-tour",
+     "jasper-custom-private-tour",
+     "multi-day-tour-package-for-banff",
+     "shared-tours-banff-yoho",
+     "shared-tours-heart-of-banff",
+     "shared-tours-icefields-jasper",
+     "sunrise-shuttle-to-moraine-lake-and-lake-louise",
+     "winter-signature-private-tour",
+     "winter-special"
+    ]
+   }
+  },
+  {
+   "id": "icons/film-1",
+   "src": "/media/icons/film-1.png",
+   "width": 48,
+   "height": 48,
+   "title": "film",
+   "alt": "Black filmstrip icon with perforated edges and rectangular frames.",
+   "collection": "icons",
+   "kind": "icons",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6909f0ed73d7ab64343abd19_film%20(1).png",
+    "pages": [
+     "about-us"
+    ]
+   }
+  },
+  {
+   "id": "icons/group-1-1",
+   "src": "/media/icons/group-1-1.png",
+   "width": 62,
+   "height": 62,
+   "title": "Group 1",
+   "alt": "Black circle with a white plus sign in the center.",
+   "collection": "icons",
+   "kind": "icons",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6909eb140d49d0b356147655_Group%201%20(1).png",
+    "pages": [
+     "about-us",
+     "gallery"
+    ]
+   }
+  },
+  {
+   "id": "icons/home-1",
+   "src": "/media/icons/home-1.png",
+   "width": 24,
+   "height": 24,
+   "title": "home",
+   "alt": "home icon",
+   "collection": "icons",
+   "kind": "icons",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/69099e25e66e116bbf164c71_home%20(1).png",
+    "pages": [
+     "contact-us"
+    ]
+   }
+  },
+  {
+   "id": "icons/icon",
+   "src": "/media/icons/icon.png",
+   "width": 30,
+   "height": 52,
+   "title": "Icon",
+   "alt": "Yellow dollar sign icon on transparent background.",
+   "collection": "icons",
+   "kind": "icons",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6908d9186a770a17df674a06_Icon.png",
+    "pages": [
+     "private-tours",
+     "shared-tours",
+     "shuttles"
+    ]
+   }
+  },
+  {
+   "id": "icons/icon-1",
+   "src": "/media/icons/icon-1.png",
+   "width": 48,
+   "height": 48,
+   "title": "Icon",
+   "alt": "Yellow smiling face emoji with a simple smile and round eyes.",
+   "collection": "icons",
+   "kind": "icons",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6908de07d1488620cca9e2f1_Icon%20(1).png",
+    "pages": [
+     "private-tours",
+     "shared-tours",
+     "shuttles"
+    ]
+   }
+  },
+  {
+   "id": "icons/icon-2",
+   "src": "/media/icons/icon-2.png",
+   "width": 47,
+   "height": 47,
+   "title": "Icon",
+   "alt": "Yellow checkmark inside a circular outline.",
+   "collection": "icons",
+   "kind": "icons",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6908de1d5925c6905d80c752_Icon%20(2).png",
+    "pages": [
+     "private-tours",
+     "shared-tours",
+     "shuttles"
+    ]
+   }
+  },
+  {
+   "id": "icons/icon-3",
+   "src": "/media/icons/icon-3.png",
+   "width": 52,
+   "height": 30,
+   "title": "Icon",
+   "alt": "Yellow icon of a lightning bolt inside a partial square with a dot in the upper right corner.",
+   "collection": "icons",
+   "kind": "icons",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6908de31c85d9ad71e6b6677_Icon%20(3).png",
+    "pages": [
+     "private-tours",
+     "shared-tours",
+     "shuttles"
+    ]
+   }
+  },
+  {
+   "id": "icons/image-2025-11-04t165713-526",
+   "src": "/media/icons/image-2025-11-04t165713-526.png",
+   "width": 413,
+   "height": 413,
+   "title": "Image 11 04T165713.",
+   "alt": "Vintage brass compass rose with cardinal directions and degree markings in a circular wooden frame.",
+   "collection": "icons",
+   "kind": "icons",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6909dc26fabd64f347297f0c_Image%20-%202025-11-04T165713.526.png",
+    "pages": [
+     "about-us"
+    ]
+   }
+  },
+  {
+   "id": "icons/map",
+   "src": "/media/icons/map.png",
+   "width": 48,
+   "height": 48,
+   "title": "map",
+   "alt": "Icon of a folded map with three panels outlined in black.",
+   "collection": "icons",
+   "kind": "icons",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6909fb3584a6cc2a4bdfefec_map.png",
+    "pages": [
+     "about-us"
+    ]
+   }
+  },
+  {
+   "id": "icons/multi-day-icon-2",
+   "src": "/media/icons/multi-day-icon-2.svg",
+   "title": "multi day icon 2",
+   "alt": "A destination icon used to showcase shared tours.",
+   "collection": "icons",
+   "kind": "icons",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/69287c083128e0fb03de7841_multi%20day%20icon%202.svg",
+    "pages": [
+     "home"
+    ]
+   }
+  },
+  {
+   "id": "icons/operation-icon-container",
+   "src": "/media/icons/operation-icon-container.png",
+   "width": 20,
+   "height": 22,
+   "title": "Operation Icon Container",
+   "alt": "Black outlined container box with tools inside, held by two robotic-looking mechanical hands on a dark circular background.",
+   "collection": "icons",
+   "kind": "icons",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6908fff5a0456b1b79d4515d_Operation%20Icon%20Container.png",
+    "pages": [
+     "banff-highlights-tour",
+     "banff-private-tour",
+     "banff-yoho-custom-private-tour",
+     "full-day-at-lake-louise-and-moraine-lake",
+     "icefields-jasper-private-tour",
+     "jasper-custom-private-tour",
+     "multi-day-tour-package-for-banff",
+     "shared-tours-banff-yoho",
+     "shared-tours-heart-of-banff",
+     "shared-tours-icefields-jasper",
+     "sunrise-shuttle-to-moraine-lake-and-lake-louise",
+     "winter-signature-private-tour",
+     "winter-special"
+    ]
+   }
+  },
+  {
+   "id": "icons/private-tour-icon",
+   "src": "/media/icons/private-tour-icon.svg",
+   "title": "private tour icon",
+   "alt": "A SUV icon used to showcase private tour.",
+   "collection": "icons",
+   "kind": "icons",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/69287b55332f130c8345a715_private%20tour%20icon.svg",
+    "pages": [
+     "home"
+    ]
+   }
+  },
+  {
+   "id": "icons/share-tour-icon",
+   "src": "/media/icons/share-tour-icon.svg",
+   "title": "share tour icon",
+   "alt": "A van icon with luggage on the roof, used to showcase multiday tours ",
+   "collection": "icons",
+   "kind": "icons",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/69287bb6d59eccd429cfc507_share%20tour%20icon.svg",
+    "pages": [
+     "home"
+    ]
+   }
+  },
+  {
+   "id": "icons/shuttle-icon",
+   "src": "/media/icons/shuttle-icon.svg",
+   "title": "shuttle icon",
+   "alt": "A carry on bag icon used here to showcase shuttle service.",
+   "collection": "icons",
+   "kind": "icons",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/69287c4a301479ed39a1f108_shuttle%20icon.svg",
+    "pages": [
+     "home"
+    ]
+   }
+  },
+  {
+   "id": "icons/small-group-icon-container",
+   "src": "/media/icons/small-group-icon-container.png",
+   "width": 18,
+   "height": 20,
+   "title": "Small Group Icon Container",
+   "alt": "Icon of three blue human figures grouped together representing a small group.",
+   "collection": "icons",
+   "kind": "icons",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6908ffd57a25cd1195c08852_Small%20Group%20Icon%20Container.png",
+    "pages": [
+     "banff-highlights-tour",
+     "banff-private-tour",
+     "banff-yoho-custom-private-tour",
+     "full-day-at-lake-louise-and-moraine-lake",
+     "icefields-jasper-private-tour",
+     "jasper-custom-private-tour",
+     "multi-day-tour-package-for-banff",
+     "shared-tours-banff-yoho",
+     "shared-tours-heart-of-banff",
+     "shared-tours-icefields-jasper",
+     "sunrise-shuttle-to-moraine-lake-and-lake-louise",
+     "winter-signature-private-tour",
+     "winter-special"
+    ]
+   }
+  },
+  {
+   "id": "icons/testimonial-image",
+   "src": "/media/icons/testimonial-image.png",
+   "width": 472,
+   "height": 414,
+   "title": "Testimonial Image",
+   "alt": "",
+   "collection": "icons",
+   "kind": "icons",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6907e859e8c0cc24d18283a1_Testimonial%20Image.png",
+    "pages": [
+     "about-us",
+     "banff-highlights-tour",
+     "banff-private-tour",
+     "banff-yoho-custom-private-tour",
+     "full-day-at-lake-louise-and-moraine-lake",
+     "home",
+     "icefields-jasper-private-tour",
+     "jasper-custom-private-tour",
+     "multi-day-tour-package-for-banff",
+     "private-tours",
+     "shared-tours",
+     "shared-tours-banff-yoho",
+     "shared-tours-heart-of-banff",
+     "shared-tours-icefields-jasper",
+     "shuttles",
+     "sunrise-shuttle-to-moraine-lake-and-lake-louise",
+     "winter-signature-private-tour",
+     "winter-special"
+    ]
+   }
+  },
+  {
+   "id": "icons/title",
+   "src": "/media/icons/title.png",
+   "width": 28,
+   "height": 25,
+   "title": "Title",
+   "alt": "",
+   "collection": "icons",
+   "kind": "icons",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6907e428f7ceea05c52e8956_Title.png",
+    "pages": [
+     "about-us",
+     "banff-highlights-tour",
+     "banff-private-tour",
+     "banff-yoho-custom-private-tour",
+     "full-day-at-lake-louise-and-moraine-lake",
+     "home",
+     "icefields-jasper-private-tour",
+     "jasper-custom-private-tour",
+     "multi-day-tour-package-for-banff",
+     "private-tours",
+     "shared-tours",
+     "shared-tours-banff-yoho",
+     "shared-tours-heart-of-banff",
+     "shared-tours-icefields-jasper",
+     "shuttles",
+     "sunrise-shuttle-to-moraine-lake-and-lake-louise",
+     "winter-signature-private-tour",
+     "winter-special"
+    ]
+   }
+  },
+  {
+   "id": "icons/topo-background-4",
+   "src": "/media/icons/topo-background-4.png",
+   "width": 1402,
+   "height": 1600,
+   "title": "topo background 4",
+   "alt": "",
+   "collection": "icons",
+   "kind": "icons",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6921fef09d4783fde7808cd4_topo%20background%204.webp",
+    "pages": [
+     "css"
+    ]
+   }
+  },
+  {
+   "id": "icons/user-1",
+   "src": "/media/icons/user-1.png",
+   "width": 48,
+   "height": 48,
+   "title": "user",
+   "alt": "Minimalist gray user profile icon of a person silhouette.",
+   "collection": "icons",
+   "kind": "icons",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6909fb5aa3de0bf6b9f1a90d_user%20(1).png",
+    "pages": [
+     "about-us"
+    ]
+   }
+  },
+  {
+   "id": "icons/vector-10",
+   "src": "/media/icons/vector-10.png",
+   "width": 278,
+   "height": 137,
+   "title": "Vector",
+   "alt": "",
+   "collection": "icons",
+   "kind": "icons",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/690882b17645790704662b01_Vector%20(10).png",
+    "pages": [
+     "home",
+     "private-tours",
+     "shared-tours",
+     "shuttles"
+    ]
+   }
+  },
+  {
+   "id": "icons/watch",
+   "src": "/media/icons/watch.png",
+   "width": 24,
+   "height": 24,
+   "title": "watch",
+   "alt": "Minimalist wristwatch with black strap and white face showing time at 8:19.",
+   "collection": "icons",
+   "kind": "icons",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/690a1c39cba4aa9b1be1e4b0_watch.png",
+    "pages": [
+     "contact-us"
+    ]
+   }
+  },
+  {
+   "id": "photos/abraham-lake-elk",
+   "src": "/media/photos/abraham-lake-elk.webp",
+   "width": 2048,
+   "height": 1365,
+   "title": "Elk by Abraham Lake",
+   "alt": "Bull elk beside the highway above Abraham Lake in autumn",
+   "collection": "photos",
+   "kind": "wildlife",
+   "places": [
+    "abraham-lake"
+   ],
+   "tags": [
+    "elk",
+    "autumn",
+    "road"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "iStock-1290242535.jpg"
+   }
+  },
+  {
+   "id": "photos/athabasca-falls",
+   "src": "/media/photos/athabasca-falls.webp",
+   "width": 2048,
+   "height": 1460,
+   "title": "Athabasca Falls",
+   "alt": "Athabasca Falls thundering through a rock gorge in Jasper National Park",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "jasper",
+    "icefields-parkway",
+    "athabasca-falls"
+   ],
+   "tags": [
+    "waterfall",
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "pexels-souvenirpixels-5513805.jpg"
+   }
+  },
+  {
+   "id": "photos/athabasca-falls-evening",
+   "src": "/media/photos/athabasca-falls-evening.webp",
+   "width": 2048,
+   "height": 1367,
+   "title": "Athabasca Falls at golden hour",
+   "alt": "Athabasca Falls and Mount Kerkeslin in golden evening light",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "jasper",
+    "icefields-parkway",
+    "athabasca-falls"
+   ],
+   "tags": [
+    "waterfall",
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "pexels-souvenirpixels-5697656.jpg"
+   }
+  },
+  {
+   "id": "photos/athabasca-glacier",
+   "src": "/media/photos/athabasca-glacier.webp",
+   "width": 1524,
+   "height": 1012,
+   "title": "Athabasca Glacier",
+   "alt": "The icefall of the Athabasca Glacier at the Columbia Icefield",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "icefields-parkway",
+    "columbia-icefield",
+    "athabasca-glacier",
+    "jasper"
+   ],
+   "tags": [
+    "glacier"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "2. Athabasca Glacier.jpg"
+   }
+  },
+  {
+   "id": "photos/aurora-vermilion-lakes",
+   "src": "/media/photos/aurora-vermilion-lakes.webp",
+   "width": 2048,
+   "height": 1365,
+   "title": "Northern lights over Vermilion Lakes",
+   "alt": "Aurora borealis over Mount Rundle and the Vermilion Lakes dock",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "banff",
+    "vermilion-lakes"
+   ],
+   "tags": [
+    "night",
+    "aurora",
+    "winter"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "iStock-2157886051.jpg"
+   }
+  },
+  {
+   "id": "photos/backcountry-ski-selfie",
+   "src": "/media/photos/backcountry-ski-selfie.webp",
+   "width": 1200,
+   "height": 1600,
+   "title": "Backcountry ski selfie",
+   "alt": "Skier in a helmet and goggles beside a steep snowy peak",
+   "collection": "photos",
+   "kind": "people",
+   "places": [
+    "banff"
+   ],
+   "tags": [
+    "winter"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "7936abae-a61a-400a-9733-8dec58499bb2.jpg"
+   }
+  },
+  {
+   "id": "photos/bald-eagle",
+   "src": "/media/photos/bald-eagle.webp",
+   "width": 1206,
+   "height": 1482,
+   "title": "Bald eagle",
+   "alt": "Close-up of a bald eagle in Banff National Park",
+   "collection": "photos",
+   "kind": "wildlife",
+   "places": [
+    "banff"
+   ],
+   "tags": [
+    "eagle"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Bald-Eagle-in-banff-national-park.jpeg"
+   }
+  },
+  {
+   "id": "photos/banff-mountain-pond",
+   "src": "/media/photos/banff-mountain-pond.webp",
+   "width": 2048,
+   "height": 1365,
+   "title": "Mountain pond near Banff",
+   "alt": "Calm pond with a footbridge and the Fairholme Range near Banff",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "banff"
+   ],
+   "tags": [
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "DSC00069.JPG"
+   }
+  },
+  {
+   "id": "photos/banff-mountain-pond-paddlers",
+   "src": "/media/photos/banff-mountain-pond-paddlers.webp",
+   "width": 2048,
+   "height": 1365,
+   "title": "Paddlers on a mountain pond",
+   "alt": "Paddlers on a calm pond below the Fairholme Range near Banff",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "banff"
+   ],
+   "tags": [
+    "summer",
+    "paddling"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "DSC00073.JPG"
+   }
+  },
+  {
+   "id": "photos/banff-mountain-pond-reflection",
+   "src": "/media/photos/banff-mountain-pond-reflection.webp",
+   "width": 2048,
+   "height": 1365,
+   "title": "Mountain pond reflection",
+   "alt": "Mountains and forest reflected in a calm pond near Banff",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "banff"
+   ],
+   "tags": [
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "DSC00071.JPG"
+   }
+  },
+  {
+   "id": "photos/bison-herd",
+   "src": "/media/photos/bison-herd.webp",
+   "width": 2048,
+   "height": 1370,
+   "title": "Bison herd",
+   "alt": "Plains bison bull in front of a grazing herd",
+   "collection": "photos",
+   "kind": "wildlife",
+   "places": [
+    "waterton"
+   ],
+   "tags": [
+    "bison"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "iStock-2155728322.jpg"
+   }
+  },
+  {
+   "id": "photos/bow-falls",
+   "src": "/media/photos/bow-falls.webp",
+   "width": 799,
+   "height": 529,
+   "title": "Bow Falls",
+   "alt": "Bow Falls on the Bow River in Banff",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "banff",
+    "bow-falls"
+   ],
+   "tags": [
+    "waterfall",
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "2. Bow Falls.jpg"
+   }
+  },
+  {
+   "id": "photos/bow-glacier-falls-cirque-peak",
+   "src": "/media/photos/bow-glacier-falls-cirque-peak.webp",
+   "width": 2048,
+   "height": 1352,
+   "title": "Bow Glacier Falls from Cirque Peak",
+   "alt": "Turquoise glacier lake and Bow Glacier Falls seen from Cirque Peak",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "bow-lake",
+    "icefields-parkway",
+    "banff"
+   ],
+   "tags": [
+    "glacier",
+    "hiking"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "glacier-lake-and-bow-falls-from-cirque-peak-banff-2026-03-19-10-41-15-utc.jpg"
+   }
+  },
+  {
+   "id": "photos/bow-lake-autumn",
+   "src": "/media/photos/bow-lake-autumn.webp",
+   "width": 2048,
+   "height": 1347,
+   "title": "Bow Lake in autumn",
+   "alt": "Golden shrubs and still water at Bow Lake below Crowfoot Mountain in autumn",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "bow-lake",
+    "icefields-parkway",
+    "banff"
+   ],
+   "tags": [
+    "autumn"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Bow-Lake-autumn-in-canada-2026-03-17-09-02-23-utc.jpg"
+   }
+  },
+  {
+   "id": "photos/bow-lake-crowfoot-mountain",
+   "src": "/media/photos/bow-lake-crowfoot-mountain.webp",
+   "width": 2048,
+   "height": 1365,
+   "title": "Bow Lake and Crowfoot Mountain",
+   "alt": "Crowfoot Mountain reflected in Bow Lake under a bright sky",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "bow-lake",
+    "icefields-parkway",
+    "banff"
+   ],
+   "tags": [
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Bow-Lake-banff-national-park-canada-2026-03-24-23-55-19-utc.jpg"
+   }
+  },
+  {
+   "id": "photos/bow-lake-dock",
+   "src": "/media/photos/bow-lake-dock.webp",
+   "width": 2048,
+   "height": 1365,
+   "title": "Bow Lake",
+   "alt": "Wooden dock reaching into calm Bow Lake below the peaks of the Icefields Parkway",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "bow-lake",
+    "icefields-parkway",
+    "banff"
+   ],
+   "tags": [
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Bow Lake.jpg"
+   }
+  },
+  {
+   "id": "photos/bow-lake-dock-sunrise",
+   "src": "/media/photos/bow-lake-dock-sunrise.webp",
+   "width": 2048,
+   "height": 1365,
+   "title": "Bow Lake dock at dawn",
+   "alt": "Wooden dock and dramatic clouds over Bow Lake at dawn",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "bow-lake",
+    "icefields-parkway",
+    "banff"
+   ],
+   "tags": [
+    "sunrise"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "iStock-1439862448.jpg"
+   }
+  },
+  {
+   "id": "photos/bow-lake-elk",
+   "src": "/media/photos/bow-lake-elk.webp",
+   "width": 2048,
+   "height": 1365,
+   "title": "Elk at Bow Lake",
+   "alt": "Bull elk beside turquoise Bow Lake on the Icefields Parkway",
+   "collection": "photos",
+   "kind": "wildlife",
+   "places": [
+    "bow-lake",
+    "icefields-parkway",
+    "banff"
+   ],
+   "tags": [
+    "elk",
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "iStock-.jpg"
+   }
+  },
+  {
+   "id": "photos/bow-lake-long-exposure",
+   "src": "/media/photos/bow-lake-long-exposure.webp",
+   "width": 2048,
+   "height": 1365,
+   "title": "Bow Lake long exposure",
+   "alt": "Streaking clouds over Bow Lake and Crowfoot Mountain in a long exposure",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "bow-lake",
+    "icefields-parkway",
+    "banff"
+   ],
+   "tags": [
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "ZwfVlDRP0NSlUgmqGa4LDMzWIu6u2hhxecvhVYDtO6Xskjigh4vFurKuP_tCjH0PLPuofLFRwaIBYJSz1-yHAZMY1SeooxQ4l84rRRRUvjlnvD8UikeFoLNHjwz0mwYxKKKSJqvnq0JiMv4Jm_Z8euDfuwx6EruX6uTN0KuNc56SPMpZVufqVORmRI84L1qx.jpg"
+   }
+  },
+  {
+   "id": "photos/bow-lake-reflection",
+   "src": "/media/photos/bow-lake-reflection.webp",
+   "width": 2048,
+   "height": 1238,
+   "title": "Bow Lake reflection",
+   "alt": "Bow Lake reflecting cliffs and glaciers on the Icefields Parkway",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "bow-lake",
+    "icefields-parkway",
+    "banff"
+   ],
+   "tags": [
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Bow-Lake-banff-national-park-alberta-canada-2026-03-24-14-10-14-utc.jpg"
+   }
+  },
+  {
+   "id": "photos/bull-elk-breath",
+   "src": "/media/photos/bull-elk-breath.webp",
+   "width": 2048,
+   "height": 1271,
+   "title": "Bull elk",
+   "alt": "Bull elk breathing steam on a frosty autumn morning",
+   "collection": "photos",
+   "kind": "wildlife",
+   "places": [
+    "banff"
+   ],
+   "tags": [
+    "elk",
+    "autumn"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "bull-elk-in-banff-national-park-canada-2026-03-19-09-26-17-utc.jpg"
+   }
+  },
+  {
+   "id": "photos/bull-elk-bugling",
+   "src": "/media/photos/bull-elk-bugling.webp",
+   "width": 2048,
+   "height": 1268,
+   "title": "Bull elk bugling",
+   "alt": "Bull elk bugling in golden grass during the autumn rut",
+   "collection": "photos",
+   "kind": "wildlife",
+   "places": [
+    "banff"
+   ],
+   "tags": [
+    "elk",
+    "autumn"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "bull-elk-in-banff-national-park-canada-2026-03-19-21-52-31-utc.jpg"
+   }
+  },
+  {
+   "id": "photos/cadillac-escalade-black",
+   "src": "/media/photos/cadillac-escalade-black.webp",
+   "width": 1200,
+   "height": 600,
+   "title": "Cadillac Escalade",
+   "alt": "Black Cadillac Escalade on a white background",
+   "collection": "photos",
+   "kind": "fleet",
+   "places": [],
+   "tags": [
+    "suv",
+    "escalade"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Cadillac-Escalade-full-black.jpg"
+   }
+  },
+  {
+   "id": "photos/cadillac-escalade-esv-side",
+   "src": "/media/photos/cadillac-escalade-esv-side.webp",
+   "width": 2048,
+   "height": 1536,
+   "title": "Cadillac Escalade ESV",
+   "alt": "Side view of a black long-wheelbase Cadillac Escalade ESV",
+   "collection": "photos",
+   "kind": "fleet",
+   "places": [],
+   "tags": [
+    "suv",
+    "escalade"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Black-Cadillac-escalade-2024-extended-wheelbase.jpg"
+   }
+  },
+  {
+   "id": "photos/cadillac-escalade-iq",
+   "src": "/media/photos/cadillac-escalade-iq.webp",
+   "width": 1600,
+   "height": 1200,
+   "title": "Cadillac Escalade IQ",
+   "alt": "Black Cadillac Escalade IQ electric SUV",
+   "collection": "photos",
+   "kind": "fleet",
+   "places": [],
+   "tags": [
+    "suv",
+    "escalade"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Black-Cadillac-Escalade.jpg"
+   }
+  },
+  {
+   "id": "photos/cadillac-escalade-iql-dashboard",
+   "src": "/media/photos/cadillac-escalade-iql-dashboard.webp",
+   "width": 1920,
+   "height": 810,
+   "title": "Cadillac Escalade IQL dashboard",
+   "alt": "Wide curved display across the dashboard of a Cadillac Escalade IQL",
+   "collection": "photos",
+   "kind": "fleet",
+   "places": [],
+   "tags": [
+    "suv",
+    "escalade",
+    "interior"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Interior-Front-Dashboard-with-huge-screen-Escalade-IQL.jpg"
+   }
+  },
+  {
+   "id": "photos/cadillac-escalade-iql-front",
+   "src": "/media/photos/cadillac-escalade-iql-front.webp",
+   "width": 640,
+   "height": 427,
+   "title": "Cadillac Escalade IQL",
+   "alt": "Black Cadillac Escalade IQL luxury SUV, front three-quarter view",
+   "collection": "photos",
+   "kind": "fleet",
+   "places": [],
+   "tags": [
+    "suv",
+    "escalade"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Black Escalade IQL 2026.jpg"
+   }
+  },
+  {
+   "id": "photos/cadillac-escalade-iql-interior",
+   "src": "/media/photos/cadillac-escalade-iql-interior.webp",
+   "width": 2000,
+   "height": 1000,
+   "title": "Cadillac Escalade IQL interior",
+   "alt": "Dark leather front seats of a Cadillac Escalade IQL at dusk",
+   "collection": "photos",
+   "kind": "fleet",
+   "places": [],
+   "tags": [
+    "suv",
+    "escalade",
+    "interior"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Interior-Cadillac-Escalade-IQL-2026.jpg"
+   }
+  },
+  {
+   "id": "photos/cadillac-escalade-iql-rear-seats",
+   "src": "/media/photos/cadillac-escalade-iql-rear-seats.webp",
+   "width": 1200,
+   "height": 1200,
+   "title": "Cadillac Escalade IQL rear cabin",
+   "alt": "Rear cabin of the Cadillac Escalade IQL with leather seats and seatback screens",
+   "collection": "photos",
+   "kind": "fleet",
+   "places": [],
+   "tags": [
+    "suv",
+    "escalade",
+    "interior"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Cadillac-Escalade-IQL.jpg"
+   }
+  },
+  {
+   "id": "photos/cadillac-escalade-iql-side",
+   "src": "/media/photos/cadillac-escalade-iql-side.webp",
+   "width": 2048,
+   "height": 1536,
+   "title": "Cadillac Escalade IQL side view",
+   "alt": "Side view of a black Cadillac Escalade IQL",
+   "collection": "photos",
+   "kind": "fleet",
+   "places": [],
+   "tags": [
+    "suv",
+    "escalade"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Cadillac-Escalade-IQL-Electric-parking-lot.jpg"
+   }
+  },
+  {
+   "id": "photos/cadillac-escalade-mountains",
+   "src": "/media/photos/cadillac-escalade-mountains.webp",
+   "width": 1024,
+   "height": 683,
+   "title": "Cadillac Escalade in the mountains",
+   "alt": "Black Cadillac Escalade parked on a mountain road at dusk",
+   "collection": "photos",
+   "kind": "fleet",
+   "places": [],
+   "tags": [
+    "suv",
+    "escalade"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Black-Cadillac-Escalade-in-Mountains.jpg"
+   }
+  },
+  {
+   "id": "photos/cadillac-escalade-showroom",
+   "src": "/media/photos/cadillac-escalade-showroom.webp",
+   "width": 1024,
+   "height": 769,
+   "title": "Cadillac Escalade ESV",
+   "alt": "Black Cadillac Escalade ESV with chrome trim in a showroom",
+   "collection": "photos",
+   "kind": "fleet",
+   "places": [],
+   "tags": [
+    "suv",
+    "escalade"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Cadillac-escalade-2024-Black-with-chrome.jpg"
+   }
+  },
+  {
+   "id": "photos/cadillac-escalade-sunset",
+   "src": "/media/photos/cadillac-escalade-sunset.webp",
+   "width": 1200,
+   "height": 600,
+   "title": "Cadillac Escalade at sunset",
+   "alt": "Cadillac Escalade front three-quarter view in warm sunset light",
+   "collection": "photos",
+   "kind": "fleet",
+   "places": [],
+   "tags": [
+    "suv",
+    "escalade"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Cadillac-escalade-on-the-highway.jpg"
+   }
+  },
+  {
+   "id": "photos/cameron-falls",
+   "src": "/media/photos/cameron-falls.webp",
+   "width": 1525,
+   "height": 1015,
+   "title": "Cameron Falls",
+   "alt": "Cameron Falls tumbling over layered rock in Waterton Lakes National Park",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "waterton"
+   ],
+   "tags": [
+    "waterfall",
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "1. Cameron Falls.jpg"
+   }
+  },
+  {
+   "id": "photos/canada-lynx",
+   "src": "/media/photos/canada-lynx.webp",
+   "width": 1200,
+   "height": 800,
+   "title": "Canada lynx",
+   "alt": "Canada lynx walking through snow in Banff National Park",
+   "collection": "photos",
+   "kind": "wildlife",
+   "places": [
+    "banff"
+   ],
+   "tags": [
+    "winter",
+    "lynx"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Lynx-somewhere-in-banff-national-park.png"
+   }
+  },
+  {
+   "id": "photos/canyon-edge-selfie",
+   "src": "/media/photos/canyon-edge-selfie.webp",
+   "width": 1600,
+   "height": 1200,
+   "title": "Canyon edge selfie",
+   "alt": "Smiling traveller in a cap at the edge of a limestone canyon",
+   "collection": "photos",
+   "kind": "people",
+   "places": [
+    "jasper"
+   ],
+   "tags": [
+    "hiking"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "a40b5f8e-5f2c-41a8-88f8-df4369cb17a8.jpg"
+   }
+  },
+  {
+   "id": "photos/canyon-ice-walk",
+   "src": "/media/photos/canyon-ice-walk.webp",
+   "width": 2048,
+   "height": 1364,
+   "title": "Frozen canyon walk",
+   "alt": "Turquoise creek between snow-capped boulders in a frozen canyon",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "banff",
+    "johnston-canyon"
+   ],
+   "tags": [
+    "winter",
+    "ice-walk"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Untitled 3.jpg"
+   }
+  },
+  {
+   "id": "photos/castle-mountain",
+   "src": "/media/photos/castle-mountain.webp",
+   "width": 1535,
+   "height": 2048,
+   "title": "Castle Mountain",
+   "alt": "Castle Mountain's turreted cliffs above the Bow Valley Parkway",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "banff",
+    "castle-mountain",
+    "bow-valley-parkway"
+   ],
+   "tags": [
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "magnificent-castle-rock-mountain-in-bow-valley-par-2026-03-26-10-52-12-utc.jpg"
+   }
+  },
+  {
+   "id": "photos/cliff-jump-waterfall",
+   "src": "/media/photos/cliff-jump-waterfall.webp",
+   "width": 828,
+   "height": 1446,
+   "title": "Cliff jump by a waterfall",
+   "alt": "Swimmer about to jump from a rock ledge beside a waterfall",
+   "collection": "photos",
+   "kind": "people",
+   "places": [
+    "banff"
+   ],
+   "tags": [
+    "adventure",
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "A-Man-jumping-from-a-cliff-near-the-waterfall.jpg"
+   }
+  },
+  {
+   "id": "photos/consolation-valley-chipmunk",
+   "src": "/media/photos/consolation-valley-chipmunk.webp",
+   "width": 2048,
+   "height": 1365,
+   "title": "Chipmunk in Consolation Valley",
+   "alt": "Chipmunk sitting on an outstretched hand in Consolation Valley",
+   "collection": "photos",
+   "kind": "wildlife",
+   "places": [
+    "moraine-lake",
+    "consolation-lakes",
+    "banff"
+   ],
+   "tags": [
+    "summer",
+    "hiking"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "consolation-valley-banff-national-park-alberta-2026-03-26-00-07-50-utc.jpg"
+   }
+  },
+  {
+   "id": "photos/consolation-valley-squirrel",
+   "src": "/media/photos/consolation-valley-squirrel.webp",
+   "width": 2048,
+   "height": 1365,
+   "title": "Consolation Lakes",
+   "alt": "Ground squirrel standing on a rock above Consolation Lakes",
+   "collection": "photos",
+   "kind": "wildlife",
+   "places": [
+    "moraine-lake",
+    "consolation-lakes",
+    "banff"
+   ],
+   "tags": [
+    "summer",
+    "hiking"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "consolation-valley-banff-national-park-alberta-2026-03-26-02-50-41-utc.jpg"
+   }
+  },
+  {
+   "id": "photos/crowfoot-mountain-meadow",
+   "src": "/media/photos/crowfoot-mountain-meadow.webp",
+   "width": 1280,
+   "height": 853,
+   "title": "Crowfoot Mountain",
+   "alt": "Snow-dusted Crowfoot Mountain above golden autumn meadows by Bow Lake",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "bow-lake",
+    "icefields-parkway",
+    "banff"
+   ],
+   "tags": [
+    "autumn"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "lake-5870800_1280.jpg"
+   }
+  },
+  {
+   "id": "photos/emerald-lake-island",
+   "src": "/media/photos/emerald-lake-island.webp",
+   "width": 1920,
+   "height": 1440,
+   "title": "Emerald Lake",
+   "alt": "Emerald Lake's jade water and lodge island in Yoho National Park",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "yoho",
+    "emerald-lake"
+   ],
+   "tags": [
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "pexels-sahil-patel-2166452-3818407.jpg"
+   }
+  },
+  {
+   "id": "photos/emerald-lake-lodge",
+   "src": "/media/photos/emerald-lake-lodge.webp",
+   "width": 2048,
+   "height": 1280,
+   "title": "Emerald Lake",
+   "alt": "Lodge cabin on the shore of jade-green Emerald Lake in Yoho National Park",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "yoho",
+    "emerald-lake"
+   ],
+   "tags": [
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "emerald-lake-yoho-national-park-canada-british-col-2026-01-07-00-32-49-utc.jpg"
+   }
+  },
+  {
+   "id": "photos/emerald-lake-misty",
+   "src": "/media/photos/emerald-lake-misty.webp",
+   "width": 2048,
+   "height": 1365,
+   "title": "Emerald Lake on a misty day",
+   "alt": "Lodge on the shore of Emerald Lake with mist on the peaks",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "yoho",
+    "emerald-lake"
+   ],
+   "tags": [
+    "autumn"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "iStock-1279353977.jpg"
+   }
+  },
+  {
+   "id": "photos/executive-rear-seat",
+   "src": "/media/photos/executive-rear-seat.webp",
+   "width": 2048,
+   "height": 1365,
+   "title": "Executive rear seat",
+   "alt": "Business traveller relaxing on a phone call in a luxury car's rear seat",
+   "collection": "photos",
+   "kind": "people",
+   "places": [],
+   "tags": [
+    "suv",
+    "interior",
+    "stock"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "man-in-suit-talking-on-phone-in-car-2026-03-19-03-04-06-utc.jpg"
+   }
+  },
+  {
+   "id": "photos/fairmont-banff-springs",
+   "src": "/media/photos/fairmont-banff-springs.webp",
+   "width": 2048,
+   "height": 1123,
+   "title": "Fairmont Banff Springs",
+   "alt": "The Fairmont Banff Springs hotel above the Bow Valley",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "banff"
+   ],
+   "tags": [
+    "hotel",
+    "autumn"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Untitled 2.jpg"
+   }
+  },
+  {
+   "id": "photos/forest-trail-hikers",
+   "src": "/media/photos/forest-trail-hikers.webp",
+   "width": 2048,
+   "height": 1366,
+   "title": "Hikers on a forest trail",
+   "alt": "Three hikers walking a wooded trail in autumn",
+   "collection": "photos",
+   "kind": "people",
+   "places": [
+    "banff"
+   ],
+   "tags": [
+    "hiking",
+    "autumn"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "three-people-hiking-on-a-wooded-trail-2026-03-09-21-47-24-utc.jpg"
+   }
+  },
+  {
+   "id": "photos/frozen-alpine-lake-selfie",
+   "src": "/media/photos/frozen-alpine-lake-selfie.webp",
+   "width": 1200,
+   "height": 1600,
+   "title": "Frozen alpine lake",
+   "alt": "Smiling traveller in a beanie above a snowy alpine lake",
+   "collection": "photos",
+   "kind": "people",
+   "places": [
+    "banff"
+   ],
+   "tags": [
+    "winter",
+    "hiking"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "7999ab9b-fb1c-4c42-b30b-c88eabbd8621.jpg"
+   }
+  },
+  {
+   "id": "photos/grassi-lakes",
+   "src": "/media/photos/grassi-lakes.webp",
+   "width": 2048,
+   "height": 1536,
+   "title": "Grassi Lakes",
+   "alt": "Emerald-green Grassi Lakes surrounded by pines above Canmore",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "canmore",
+    "grassi-lakes"
+   ],
+   "tags": [
+    "summer",
+    "hiking"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Grassi-Lake-Canmore.jpg"
+   }
+  },
+  {
+   "id": "photos/guide-with-guests",
+   "src": "/media/photos/guide-with-guests.webp",
+   "width": 1400,
+   "height": 933,
+   "title": "Guide with guests",
+   "alt": "Vista Chase guide chatting with a group of guests beside the van",
+   "collection": "photos",
+   "kind": "people",
+   "places": [
+    "banff"
+   ],
+   "tags": [
+    "guide",
+    "guests"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Matilda with customers.jpg"
+   }
+  },
+  {
+   "id": "photos/hiker-above-bow-valley",
+   "src": "/media/photos/hiker-above-bow-valley.webp",
+   "width": 1200,
+   "height": 1600,
+   "title": "Hiker above the Bow Valley",
+   "alt": "Smiling hiker with a red pack on a summit high above the Bow River valley",
+   "collection": "photos",
+   "kind": "people",
+   "places": [
+    "canmore",
+    "banff"
+   ],
+   "tags": [
+    "hiking",
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "14ab494b-5176-47a3-99fd-67acb71bedb0.jpg"
+   }
+  },
+  {
+   "id": "photos/icefields-parkway-crowfoot",
+   "src": "/media/photos/icefields-parkway-crowfoot.webp",
+   "width": 2048,
+   "height": 901,
+   "title": "Icefields Parkway",
+   "alt": "The Icefields Parkway running toward Crowfoot Mountain and its glacier",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "icefields-parkway",
+    "banff"
+   ],
+   "tags": [
+    "road",
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Icefields-Parkway-with-Crowfoot-Glacier-banff-national-park-alberta-canada-2026-03-25-00-22-13-utc.jpg"
+   }
+  },
+  {
+   "id": "photos/jasper-milky-way",
+   "src": "/media/photos/jasper-milky-way.webp",
+   "width": 1920,
+   "height": 1280,
+   "title": "Milky Way over Jasper",
+   "alt": "The Milky Way across the night sky in the Jasper Dark Sky Preserve",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "jasper"
+   ],
+   "tags": [
+    "night"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Night-Sky-Jasper-Milkyway-gALAXY.jpg"
+   }
+  },
+  {
+   "id": "photos/johnston-canyon",
+   "src": "/media/photos/johnston-canyon.webp",
+   "width": 2048,
+   "height": 1351,
+   "title": "Johnston Canyon",
+   "alt": "Johnston Canyon's waterfall plunging through a mossy gorge",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "banff",
+    "johnston-canyon",
+    "bow-valley-parkway"
+   ],
+   "tags": [
+    "waterfall",
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "johnston-canyon-banff-national-park-2026-03-19-10-41-14-utc.jpg"
+   }
+  },
+  {
+   "id": "photos/lake-louise-boathouse",
+   "src": "/media/photos/lake-louise-boathouse.webp",
+   "width": 1920,
+   "height": 1440,
+   "title": "Lake Louise boathouse",
+   "alt": "The Lake Louise boathouse below Fairview Mountain on a misty morning",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "lake-louise",
+    "banff"
+   ],
+   "tags": [
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Lake-Louise-Boathouse.jpg"
+   }
+  },
+  {
+   "id": "photos/lake-louise-canoe",
+   "src": "/media/photos/lake-louise-canoe.webp",
+   "width": 1920,
+   "height": 1440,
+   "title": "Canoe on Lake Louise",
+   "alt": "Red canoe with a Canadian flag paddling across turquoise Lake Louise",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "lake-louise",
+    "banff"
+   ],
+   "tags": [
+    "summer",
+    "paddling"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Lake-Louise-Canoe.jpg"
+   }
+  },
+  {
+   "id": "photos/lake-louise-chateau-view",
+   "src": "/media/photos/lake-louise-chateau-view.webp",
+   "width": 1280,
+   "height": 836,
+   "title": "Lake Louise and the Chateau",
+   "alt": "Lake Louise with the Fairmont Chateau on the far shore",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "lake-louise",
+    "banff"
+   ],
+   "tags": [
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "lake-louise-1901680_1280.jpg"
+   }
+  },
+  {
+   "id": "photos/lake-louise-first-snow",
+   "src": "/media/photos/lake-louise-first-snow.webp",
+   "width": 735,
+   "height": 642,
+   "title": "Lake Louise after the first snow",
+   "alt": "Snow-covered spruce trees beside Lake Louise after the first snowfall",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "lake-louise",
+    "banff"
+   ],
+   "tags": [
+    "winter"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Lake-Louise-after-first-snow.jpg"
+   }
+  },
+  {
+   "id": "photos/lake-louise-friends",
+   "src": "/media/photos/lake-louise-friends.webp",
+   "width": 1200,
+   "height": 1600,
+   "title": "Friends at Lake Louise",
+   "alt": "Two friends celebrating in front of Lake Louise",
+   "collection": "photos",
+   "kind": "people",
+   "places": [
+    "lake-louise",
+    "banff"
+   ],
+   "tags": [
+    "guests",
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Two-guys-posing-in-front-of-lake-louise.jpg"
+   }
+  },
+  {
+   "id": "photos/lake-louise-from-big-beehive",
+   "src": "/media/photos/lake-louise-from-big-beehive.webp",
+   "width": 2048,
+   "height": 815,
+   "title": "Lake Louise from the Big Beehive",
+   "alt": "Turquoise Lake Louise far below the Big Beehive trail and surrounding peaks",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "lake-louise",
+    "banff"
+   ],
+   "tags": [
+    "hiking",
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Big-Beehive-hiking-over-the-lake-louise-2026-03-25-10-52-37-utc.jpg"
+   }
+  },
+  {
+   "id": "photos/lake-louise-from-chateau",
+   "src": "/media/photos/lake-louise-from-chateau.webp",
+   "width": 1920,
+   "height": 1280,
+   "title": "Lake Louise from the Fairmont Chateau",
+   "alt": "Lake Louise and Victoria Glacier seen through an arched window of the Fairmont Chateau",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "lake-louise",
+    "banff"
+   ],
+   "tags": [
+    "hotel"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Lake-Louise-from-Fairmont-Chateau.jpg"
+   }
+  },
+  {
+   "id": "photos/lake-louise-red-canoes",
+   "src": "/media/photos/lake-louise-red-canoes.webp",
+   "width": 2048,
+   "height": 1357,
+   "title": "Red canoes at Lake Louise",
+   "alt": "Red canoes on the Lake Louise dock below Victoria Glacier",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "lake-louise",
+    "banff"
+   ],
+   "tags": [
+    "summer",
+    "paddling"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "picturesque-lake-with-mountains-and-bright-red-can-2026-01-09-08-31-18-utc.jpg"
+   }
+  },
+  {
+   "id": "photos/lake-louise-shoreline",
+   "src": "/media/photos/lake-louise-shoreline.webp",
+   "width": 1280,
+   "height": 960,
+   "title": "Lake Louise shoreline",
+   "alt": "Rocky shoreline and turquoise water at Lake Louise below Victoria Glacier",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "lake-louise",
+    "banff"
+   ],
+   "tags": [
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "lake-louise-197406_1280.jpg"
+   }
+  },
+  {
+   "id": "photos/lake-louise-sunrise",
+   "src": "/media/photos/lake-louise-sunrise.webp",
+   "width": 2048,
+   "height": 1365,
+   "title": "Lake Louise at sunrise",
+   "alt": "Alpenglow on the peaks above Lake Louise at sunrise",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "lake-louise",
+    "banff"
+   ],
+   "tags": [
+    "sunrise",
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Lake-Louise-Sunrise.jpg"
+   }
+  },
+  {
+   "id": "photos/lake-louise-traveller",
+   "src": "/media/photos/lake-louise-traveller.webp",
+   "width": 1919,
+   "height": 1279,
+   "title": "Traveller at Lake Louise",
+   "alt": "Traveller standing on the Lake Louise shoreline looking at Victoria Glacier",
+   "collection": "photos",
+   "kind": "people",
+   "places": [
+    "lake-louise",
+    "banff"
+   ],
+   "tags": [
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Lake-Louise-After-Rain.jpg"
+   }
+  },
+  {
+   "id": "photos/lake-ohara-alpine-lakes",
+   "src": "/media/photos/lake-ohara-alpine-lakes.webp",
+   "width": 1240,
+   "height": 930,
+   "title": "Lake O'Hara alpine lakes",
+   "alt": "Chain of alpine lakes and forest below rugged peaks in the Lake O'Hara area of Yoho National Park",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "yoho",
+    "lake-ohara"
+   ],
+   "tags": [
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "1 3.jpg"
+   }
+  },
+  {
+   "id": "photos/lake-ohara-opabin",
+   "src": "/media/photos/lake-ohara-opabin.webp",
+   "width": 2048,
+   "height": 1365,
+   "title": "Lake O'Hara",
+   "alt": "Hiker on a rock above the turquoise lakes of Lake O'Hara in Yoho National Park",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "yoho",
+    "lake-ohara"
+   ],
+   "tags": [
+    "hiking",
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Lake-O_hara-Yoho-National-Park.jpg"
+   }
+  },
+  {
+   "id": "photos/lake-ohara-viewpoint",
+   "src": "/media/photos/lake-ohara-viewpoint.webp",
+   "width": 1200,
+   "height": 800,
+   "title": "Lake O'Hara viewpoint",
+   "alt": "Hiker on a rocky viewpoint above the turquoise lakes of the Lake O'Hara area",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "yoho",
+    "lake-ohara"
+   ],
+   "tags": [
+    "hiking",
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "2 3.jpg"
+   }
+  },
+  {
+   "id": "photos/larch-trail-ten-peaks",
+   "src": "/media/photos/larch-trail-ten-peaks.webp",
+   "width": 2048,
+   "height": 1365,
+   "title": "Larch trail",
+   "alt": "Trail through golden larches toward snowy peaks in autumn",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "moraine-lake",
+    "larch-valley",
+    "banff"
+   ],
+   "tags": [
+    "autumn",
+    "larches",
+    "hiking"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "iStock-1446811468.jpg"
+   }
+  },
+  {
+   "id": "photos/larch-valley-hike",
+   "src": "/media/photos/larch-valley-hike.webp",
+   "width": 2048,
+   "height": 1152,
+   "title": "Larch Valley hike",
+   "alt": "Hiker walking through golden larches toward the Ten Peaks in autumn",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "moraine-lake",
+    "larch-valley",
+    "banff"
+   ],
+   "tags": [
+    "autumn",
+    "hiking",
+    "larches"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Larchmenia.jpg"
+   }
+  },
+  {
+   "id": "photos/larch-valley-jump",
+   "src": "/media/photos/larch-valley-jump.webp",
+   "width": 1365,
+   "height": 2048,
+   "title": "Jump in Larch Valley",
+   "alt": "Hiker leaping between boulders in Larch Valley with the Ten Peaks behind",
+   "collection": "photos",
+   "kind": "people",
+   "places": [
+    "moraine-lake",
+    "larch-valley",
+    "banff"
+   ],
+   "tags": [
+    "autumn",
+    "hiking"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "pexels-jaime-reimer-1376930-3128830.jpg"
+   }
+  },
+  {
+   "id": "photos/larches-lakeside",
+   "src": "/media/photos/larches-lakeside.webp",
+   "width": 2048,
+   "height": 1365,
+   "title": "Golden larches by the lake",
+   "alt": "Golden larch trees reflected in a mountain lake in autumn",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "banff"
+   ],
+   "tags": [
+    "autumn",
+    "larches"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Larch-Trees-Lake-side.jpg"
+   }
+  },
+  {
+   "id": "photos/maligne-canyon-ice-walk",
+   "src": "/media/photos/maligne-canyon-ice-walk.webp",
+   "width": 1080,
+   "height": 810,
+   "title": "Maligne Canyon ice walk",
+   "alt": "Visitor standing below frozen waterfalls inside Maligne Canyon in winter",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "jasper",
+    "maligne",
+    "maligne-canyon"
+   ],
+   "tags": [
+    "winter",
+    "ice-walk"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "malign Canyon 1.jpg"
+   }
+  },
+  {
+   "id": "photos/maligne-lake-cruise-boat",
+   "src": "/media/photos/maligne-lake-cruise-boat.webp",
+   "width": 2048,
+   "height": 1365,
+   "title": "Maligne Lake cruise boat",
+   "alt": "Maligne Lake cruise boat at the dock on turquoise water",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "jasper",
+    "maligne",
+    "maligne-lake"
+   ],
+   "tags": [
+    "boat",
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "DSC01515.jpg"
+   }
+  },
+  {
+   "id": "photos/maligne-lake-cruise-dock",
+   "src": "/media/photos/maligne-lake-cruise-dock.webp",
+   "width": 2048,
+   "height": 1365,
+   "title": "Maligne Lake cruise",
+   "alt": "Maligne Lake cruise boat at the dock with mountains across the lake",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "jasper",
+    "maligne",
+    "maligne-lake"
+   ],
+   "tags": [
+    "boat",
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Cruise To Spirit Island.jpg"
+   }
+  },
+  {
+   "id": "photos/medicine-lake",
+   "src": "/media/photos/medicine-lake.webp",
+   "width": 1516,
+   "height": 1005,
+   "title": "Medicine Lake",
+   "alt": "Medicine Lake with golden autumn trees in Jasper National Park",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "jasper",
+    "maligne",
+    "medicine-lake"
+   ],
+   "tags": [
+    "autumn"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "16. Medicine Lake.jpg"
+   }
+  },
+  {
+   "id": "photos/moose-lake-autumn",
+   "src": "/media/photos/moose-lake-autumn.webp",
+   "width": 1526,
+   "height": 1144,
+   "title": "Moose Lake in autumn",
+   "alt": "Golden autumn trees reflected in blue Moose Lake",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "jasper",
+    "moose-lake"
+   ],
+   "tags": [
+    "autumn"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "15. Moose Lake Fall Season.jpg"
+   }
+  },
+  {
+   "id": "photos/moose-reflection",
+   "src": "/media/photos/moose-reflection.webp",
+   "width": 1508,
+   "height": 1000,
+   "title": "Moose reflection",
+   "alt": "Lone moose wading in still water with a perfect reflection",
+   "collection": "photos",
+   "kind": "wildlife",
+   "places": [
+    "jasper"
+   ],
+   "tags": [
+    "moose"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Moose Reflection.jpg"
+   }
+  },
+  {
+   "id": "photos/moraine-lake-canoes",
+   "src": "/media/photos/moraine-lake-canoes.webp",
+   "width": 1920,
+   "height": 1280,
+   "title": "Moraine Lake canoes",
+   "alt": "Colourful canoes at the Moraine Lake dock below the Ten Peaks",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "moraine-lake",
+    "banff"
+   ],
+   "tags": [
+    "summer",
+    "paddling"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Moraine-Lake-Boathouse.jpg"
+   }
+  },
+  {
+   "id": "photos/moraine-lake-classic",
+   "src": "/media/photos/moraine-lake-classic.webp",
+   "width": 2048,
+   "height": 1365,
+   "title": "Moraine Lake",
+   "alt": "Classic view of Moraine Lake and the Valley of the Ten Peaks",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "moraine-lake",
+    "banff"
+   ],
+   "tags": [
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Moraine lake 1.jpg"
+   }
+  },
+  {
+   "id": "photos/moraine-lake-from-larch-valley",
+   "src": "/media/photos/moraine-lake-from-larch-valley.webp",
+   "width": 2048,
+   "height": 844,
+   "title": "Moraine Lake from Larch Valley",
+   "alt": "Moraine Lake and the Ten Peaks seen from the Larch Valley trail",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "moraine-lake",
+    "larch-valley",
+    "banff"
+   ],
+   "tags": [
+    "hiking",
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "lake-moraine-view-panorama-Larch-valley-hike-banff-national-park-2026-01-08-06-46-23-utc.jpg"
+   }
+  },
+  {
+   "id": "photos/moraine-lake-perfect-reflection",
+   "src": "/media/photos/moraine-lake-perfect-reflection.webp",
+   "width": 1920,
+   "height": 1375,
+   "title": "Moraine Lake reflection",
+   "alt": "Moraine Lake perfectly reflecting the Valley of the Ten Peaks",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "moraine-lake",
+    "banff"
+   ],
+   "tags": [
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Moraine-Lake-Perfect-Reflection.jpg"
+   }
+  },
+  {
+   "id": "photos/moraine-lake-red-canoes",
+   "src": "/media/photos/moraine-lake-red-canoes.webp",
+   "width": 1920,
+   "height": 1280,
+   "title": "Moraine Lake red canoes",
+   "alt": "Red and blue canoes at the Moraine Lake dock below the Ten Peaks",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "moraine-lake",
+    "banff"
+   ],
+   "tags": [
+    "summer",
+    "paddling"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "matthew-fournier-ycv7guIlR9c-unsplash.jpg"
+   }
+  },
+  {
+   "id": "photos/moraine-lake-reflection-morning",
+   "src": "/media/photos/moraine-lake-reflection-morning.webp",
+   "width": 2048,
+   "height": 1365,
+   "title": "Moraine Lake morning reflection",
+   "alt": "Moraine Lake perfectly reflecting the Ten Peaks in morning light",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "moraine-lake",
+    "lake-louise",
+    "banff"
+   ],
+   "tags": [
+    "summer",
+    "sunrise"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "DSC01007.jpg"
+   }
+  },
+  {
+   "id": "photos/moraine-lake-rockpile-couple",
+   "src": "/media/photos/moraine-lake-rockpile-couple.webp",
+   "width": 1280,
+   "height": 853,
+   "title": "Couple at Moraine Lake",
+   "alt": "Couple sitting on the Moraine Lake rockpile looking over the lake",
+   "collection": "photos",
+   "kind": "people",
+   "places": [
+    "moraine-lake",
+    "banff"
+   ],
+   "tags": [
+    "guests",
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "lake-202153_1280.jpg"
+   }
+  },
+  {
+   "id": "photos/moraine-lake-rockpile-view",
+   "src": "/media/photos/moraine-lake-rockpile-view.webp",
+   "width": 1280,
+   "height": 853,
+   "title": "Moraine Lake from the rockpile",
+   "alt": "Moraine Lake and the Ten Peaks seen from the rockpile on a cloudy day",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "moraine-lake",
+    "banff"
+   ],
+   "tags": [
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "moraine-lake-6834481_1280.jpg"
+   }
+  },
+  {
+   "id": "photos/moraine-lake-summer",
+   "src": "/media/photos/moraine-lake-summer.webp",
+   "width": 2048,
+   "height": 1365,
+   "title": "Moraine Lake in summer",
+   "alt": "Moraine Lake glowing turquoise between pines under summer clouds",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "moraine-lake",
+    "banff"
+   ],
+   "tags": [
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "moraine-lake-2026-03-17-20-13-39-utc.jpg"
+   }
+  },
+  {
+   "id": "photos/moraine-lake-ten-peaks",
+   "src": "/media/photos/moraine-lake-ten-peaks.webp",
+   "width": 1536,
+   "height": 2048,
+   "title": "Moraine Lake and the Valley of the Ten Peaks",
+   "alt": "Turquoise Moraine Lake mirroring the snowy Valley of the Ten Peaks",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "moraine-lake",
+    "lake-louise",
+    "banff"
+   ],
+   "tags": [
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "31a1396b-c026-4885-9887-caa0f2edae84.jpg"
+   }
+  },
+  {
+   "id": "photos/moraine-lake-through-pines",
+   "src": "/media/photos/moraine-lake-through-pines.webp",
+   "width": 2048,
+   "height": 1345,
+   "title": "Moraine Lake through the pines",
+   "alt": "Moraine Lake framed by tall pines below the Ten Peaks",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "moraine-lake",
+    "banff"
+   ],
+   "tags": [
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "lake-moraine-banff-national-park-2026-03-19-22-52-55-utc.jpg"
+   }
+  },
+  {
+   "id": "photos/moraine-lake-traveller",
+   "src": "/media/photos/moraine-lake-traveller.webp",
+   "width": 1200,
+   "height": 1600,
+   "title": "Traveller at Moraine Lake",
+   "alt": "Traveller standing in front of Moraine Lake and the Ten Peaks",
+   "collection": "photos",
+   "kind": "people",
+   "places": [
+    "moraine-lake",
+    "banff"
+   ],
+   "tags": [
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Man-Posing-in-front-of-Moraine-Lake.jpg"
+   }
+  },
+  {
+   "id": "photos/morants-curve-summer",
+   "src": "/media/photos/morants-curve-summer.webp",
+   "width": 1439,
+   "height": 2048,
+   "title": "Morant's Curve",
+   "alt": "A red freight train curving along the Bow River at Morant's Curve",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "banff",
+    "morants-curve",
+    "bow-valley-parkway"
+   ],
+   "tags": [
+    "summer",
+    "train"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "pexels-sophie-cambridge-285178291-13096135.jpg"
+   }
+  },
+  {
+   "id": "photos/morants-curve-winter",
+   "src": "/media/photos/morants-curve-winter.webp",
+   "width": 2048,
+   "height": 989,
+   "title": "Morant's Curve in winter",
+   "alt": "A train rounding Morant's Curve beside the snowy Bow River",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "banff",
+    "morants-curve",
+    "bow-valley-parkway"
+   ],
+   "tags": [
+    "winter",
+    "train"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "morant-s-curve-banff-national-park-alberta-canada-2026-03-09-21-50-11-utc.jpg"
+   }
+  },
+  {
+   "id": "photos/mountain-goat",
+   "src": "/media/photos/mountain-goat.webp",
+   "width": 1639,
+   "height": 2048,
+   "title": "Mountain goat",
+   "alt": "Mountain goat grazing on an alpine meadow below a waterfall",
+   "collection": "photos",
+   "kind": "wildlife",
+   "places": [
+    "moraine-lake",
+    "banff"
+   ],
+   "tags": [
+    "goat"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "moraine-goat.jpg.webp"
+   }
+  },
+  {
+   "id": "photos/mountain-lake-reflection",
+   "src": "/media/photos/mountain-lake-reflection.webp",
+   "width": 1280,
+   "height": 854,
+   "title": "Mountain lake reflection",
+   "alt": "Forested peaks reflected in a deep blue mountain lake",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "yoho"
+   ],
+   "tags": [
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "nature-3039901_1280.jpg"
+   }
+  },
+  {
+   "id": "photos/natural-bridge",
+   "src": "/media/photos/natural-bridge.webp",
+   "width": 1528,
+   "height": 1018,
+   "title": "Natural Bridge",
+   "alt": "The Kicking Horse River rushing through the Natural Bridge in Yoho National Park",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "yoho",
+    "natural-bridge"
+   ],
+   "tags": [
+    "river",
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "1. Natural Bridge.jpg"
+   }
+  },
+  {
+   "id": "photos/norquay-snow-tubing",
+   "src": "/media/photos/norquay-snow-tubing.webp",
+   "width": 1200,
+   "height": 960,
+   "title": "Snow tubing at Mt Norquay",
+   "alt": "Guests snow tubing at Mt Norquay with Mount Rundle behind",
+   "collection": "photos",
+   "kind": "people",
+   "places": [
+    "banff",
+    "mount-norquay"
+   ],
+   "tags": [
+    "winter",
+    "guests"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "snow_tubing_mount_norquay_rundle.1200x960.jpg"
+   }
+  },
+  {
+   "id": "photos/peyto-lake",
+   "src": "/media/photos/peyto-lake.webp",
+   "width": 2048,
+   "height": 1365,
+   "title": "Peyto Lake",
+   "alt": "Wolf-head shaped Peyto Lake glowing turquoise in the valley below",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "peyto-lake",
+    "icefields-parkway",
+    "banff"
+   ],
+   "tags": [
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Peyto Lake.jpg"
+   }
+  },
+  {
+   "id": "photos/peyto-lake-ground-squirrel",
+   "src": "/media/photos/peyto-lake-ground-squirrel.webp",
+   "width": 2048,
+   "height": 1365,
+   "title": "Ground squirrel at Peyto Lake",
+   "alt": "Golden-mantled ground squirrel on a rock above turquoise Peyto Lake",
+   "collection": "photos",
+   "kind": "wildlife",
+   "places": [
+    "peyto-lake",
+    "icefields-parkway",
+    "banff"
+   ],
+   "tags": [
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Golden-mantled ground squirrel Near Peyto lake .jpg"
+   }
+  },
+  {
+   "id": "photos/peyto-lake-lookout-chipmunk",
+   "src": "/media/photos/peyto-lake-lookout-chipmunk.webp",
+   "width": 1365,
+   "height": 2048,
+   "title": "Peyto Lake lookout",
+   "alt": "Chipmunk on a rock at the Peyto Lake lookout above the turquoise lake",
+   "collection": "photos",
+   "kind": "wildlife",
+   "places": [
+    "peyto-lake",
+    "icefields-parkway",
+    "banff"
+   ],
+   "tags": [
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "wildlife at Peyto Lake lookout.jpg"
+   }
+  },
+  {
+   "id": "photos/peyto-lake-valley",
+   "src": "/media/photos/peyto-lake-valley.webp",
+   "width": 1280,
+   "height": 854,
+   "title": "Peyto Lake valley",
+   "alt": "Peyto Lake winding through the Mistaya Valley under a deep blue sky",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "peyto-lake",
+    "icefields-parkway",
+    "banff"
+   ],
+   "tags": [
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "peyto-lake-2575418_1280.jpg"
+   }
+  },
+  {
+   "id": "photos/prince-of-wales-hotel",
+   "src": "/media/photos/prince-of-wales-hotel.webp",
+   "width": 1522,
+   "height": 1012,
+   "title": "Prince of Wales Hotel",
+   "alt": "The green-roofed Prince of Wales Hotel in Waterton Lakes National Park",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "waterton"
+   ],
+   "tags": [
+    "hotel"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "12. Prince of wales.jpg"
+   }
+  },
+  {
+   "id": "photos/prince-of-wales-hotel-trail",
+   "src": "/media/photos/prince-of-wales-hotel-trail.webp",
+   "width": 1527,
+   "height": 1010,
+   "title": "Prince of Wales Hotel from the trail",
+   "alt": "Trail leading to the Prince of Wales Hotel on its hill in Waterton under low cloud",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "waterton"
+   ],
+   "tags": [
+    "hotel"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "12. Prince ofWales.jpg"
+   }
+  },
+  {
+   "id": "photos/skier-mountain-selfie",
+   "src": "/media/photos/skier-mountain-selfie.webp",
+   "width": 1600,
+   "height": 1200,
+   "title": "Mountain selfie in the snow",
+   "alt": "Smiling traveller in ski goggles above snowy peaks",
+   "collection": "photos",
+   "kind": "people",
+   "places": [
+    "banff"
+   ],
+   "tags": [
+    "winter"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "6759e43f-3095-4e74-aab8-0afdc6eee955.jpg"
+   }
+  },
+  {
+   "id": "photos/spirit-island",
+   "src": "/media/photos/spirit-island.webp",
+   "width": 1365,
+   "height": 2048,
+   "title": "Spirit Island",
+   "alt": "Spirit Island and its pines on Maligne Lake in Jasper National Park",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "jasper",
+    "maligne",
+    "maligne-lake",
+    "spirit-island"
+   ],
+   "tags": [
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Spirit Island Jasper.jpg"
+   }
+  },
+  {
+   "id": "photos/spirit-island-reflection",
+   "src": "/media/photos/spirit-island-reflection.webp",
+   "width": 2048,
+   "height": 1536,
+   "title": "Spirit Island reflection",
+   "alt": "Clouds and pines reflected in Maligne Lake near Spirit Island",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "jasper",
+    "maligne",
+    "maligne-lake",
+    "spirit-island"
+   ],
+   "tags": [
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "iStock-1172109261.jpg"
+   }
+  },
+  {
+   "id": "photos/spirit-island-wide",
+   "src": "/media/photos/spirit-island-wide.webp",
+   "width": 2048,
+   "height": 1365,
+   "title": "Spirit Island on Maligne Lake",
+   "alt": "Wide view of Spirit Island on Maligne Lake under summer clouds",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "jasper",
+    "maligne",
+    "maligne-lake",
+    "spirit-island"
+   ],
+   "tags": [
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Spirit island 2.jpg"
+   }
+  },
+  {
+   "id": "photos/sprinter-15-passenger",
+   "src": "/media/photos/sprinter-15-passenger.webp",
+   "width": 2048,
+   "height": 1153,
+   "title": "15-passenger Sprinter",
+   "alt": "Black 15-passenger Mercedes Sprinter van with its side door open",
+   "collection": "photos",
+   "kind": "fleet",
+   "places": [],
+   "tags": [
+    "van",
+    "sprinter"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Sprinter-15-Passanger-Van-With-extra-comfort-seats.jpg"
+   }
+  },
+  {
+   "id": "photos/sprinter-black-exterior",
+   "src": "/media/photos/sprinter-black-exterior.webp",
+   "width": 2048,
+   "height": 1365,
+   "title": "Mercedes Sprinter",
+   "alt": "Black Mercedes Sprinter van with tinted windows",
+   "collection": "photos",
+   "kind": "fleet",
+   "places": [],
+   "tags": [
+    "van",
+    "sprinter"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Mercedes-Sprinter-Black-Limo-Comfort-Seats.jpg"
+   }
+  },
+  {
+   "id": "photos/sprinter-cabin-captain-seats",
+   "src": "/media/photos/sprinter-cabin-captain-seats.webp",
+   "width": 2048,
+   "height": 1536,
+   "title": "Sprinter captain seats",
+   "alt": "Captain seats with ambient lighting inside a Mercedes Sprinter",
+   "collection": "photos",
+   "kind": "fleet",
+   "places": [],
+   "tags": [
+    "van",
+    "sprinter",
+    "interior"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Mercedes-Sprinter-with-after-market-seats.jpg"
+   }
+  },
+  {
+   "id": "photos/sprinter-cabin-leather-seats",
+   "src": "/media/photos/sprinter-cabin-leather-seats.webp",
+   "width": 2048,
+   "height": 1536,
+   "title": "Sprinter cabin",
+   "alt": "Quilted black leather passenger seats inside a Mercedes Sprinter",
+   "collection": "photos",
+   "kind": "fleet",
+   "places": [],
+   "tags": [
+    "van",
+    "sprinter",
+    "interior"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Mercedes-Sprinter-15-Passanger-Black-extra-comfort-seats-fitted-aftermarket.jpg"
+   }
+  },
+  {
+   "id": "photos/three-sisters-canmore",
+   "src": "/media/photos/three-sisters-canmore.webp",
+   "width": 1920,
+   "height": 1279,
+   "title": "Three Sisters, Canmore",
+   "alt": "The snow-dusted Three Sisters peaks reflected in a pond in Canmore",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "canmore"
+   ],
+   "tags": [
+    "winter"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "Three-Sisters-Canmore.jpg"
+   }
+  },
+  {
+   "id": "photos/vermilion-lakes-dock",
+   "src": "/media/photos/vermilion-lakes-dock.webp",
+   "width": 2048,
+   "height": 1365,
+   "title": "Vermilion Lakes dock",
+   "alt": "Small dock on Vermilion Lakes with Mount Rundle behind",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "banff",
+    "vermilion-lakes"
+   ],
+   "tags": [
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "DSC00043.JPG"
+   }
+  },
+  {
+   "id": "photos/vermilion-lakes-mount-rundle",
+   "src": "/media/photos/vermilion-lakes-mount-rundle.webp",
+   "width": 1365,
+   "height": 2048,
+   "title": "Vermilion Lakes and Mount Rundle",
+   "alt": "Mount Rundle rising above Vermilion Lakes near Banff on a summer day",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "banff",
+    "vermilion-lakes"
+   ],
+   "tags": [
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "DSC00028.JPG"
+   }
+  },
+  {
+   "id": "photos/vista-chase-sprinter-canmore",
+   "src": "/media/photos/vista-chase-sprinter-canmore.webp",
+   "width": 1152,
+   "height": 2048,
+   "title": "Vista Chase Sprinter in Canmore",
+   "alt": "Black Vista Chase branded Mercedes Sprinter van parked in Canmore below the Three Sisters",
+   "collection": "photos",
+   "kind": "fleet",
+   "places": [
+    "canmore"
+   ],
+   "tags": [
+    "van",
+    "sprinter",
+    "branded"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "787ad296-5161-4042-b4da-0f0b7c808c98.jpeg"
+   }
+  },
+  {
+   "id": "photos/wapta-falls",
+   "src": "/media/photos/wapta-falls.webp",
+   "width": 1526,
+   "height": 1101,
+   "title": "Wapta Falls",
+   "alt": "Wide Wapta Falls on the Kicking Horse River in Yoho National Park",
+   "collection": "photos",
+   "kind": "landscape",
+   "places": [
+    "yoho",
+    "wapta-falls"
+   ],
+   "tags": [
+    "waterfall",
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "10. Wapta Falls.jpg"
+   }
+  },
+  {
+   "id": "photos/waterton-bison-paddock",
+   "src": "/media/photos/waterton-bison-paddock.webp",
+   "width": 1520,
+   "height": 1005,
+   "title": "Bison Paddock",
+   "alt": "Plains bison grazing in the Bison Paddock at Waterton Lakes National Park",
+   "collection": "photos",
+   "kind": "wildlife",
+   "places": [
+    "waterton"
+   ],
+   "tags": [
+    "bison"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "11. Bison_s Paddock.jpg"
+   }
+  },
+  {
+   "id": "photos/waterton-elk-lake",
+   "src": "/media/photos/waterton-elk-lake.webp",
+   "width": 509,
+   "height": 339,
+   "title": "Elk in a Waterton lake",
+   "alt": "Elk wading in a blue lake in Waterton Lakes National Park in autumn",
+   "collection": "photos",
+   "kind": "wildlife",
+   "places": [
+    "waterton"
+   ],
+   "tags": [
+    "elk",
+    "autumn"
+   ],
+   "source": {
+    "origin": "vista-chase-photo-library",
+    "file": "waterton 8.jpg"
+   }
+  },
+  {
+   "id": "site/about-image-1",
+   "src": "/media/site/about-image-1.webp",
+   "width": 332,
+   "height": 486,
+   "title": "About Image",
+   "alt": "Colorful canoes docked on a clear blue lake surrounded by green pine trees and snow-capped mountains under a blue sky.",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/69076dd2d4e37b1f117a692d_About%20Image%20(1).webp",
+    "pages": [
+     "home"
+    ]
+   }
+  },
+  {
+   "id": "site/abraham-lake-with-frozen-bubbles",
+   "src": "/media/site/abraham-lake-with-frozen-bubbles.webp",
+   "width": 1900,
+   "height": 1900,
+   "title": "Abraham Lake with frozen bubbles",
+   "alt": "Abraham Lake with frozen bubbles",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [
+    "abraham-lake"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/68e75d7f8318b5033e2382ad_Abraham%20Lake%20with%20frozen%20bubbles.webp",
+    "pages": [
+     "winter-special"
+    ]
+   }
+  },
+  {
+   "id": "site/alberta-2297204-1280",
+   "src": "/media/site/alberta-2297204-1280.webp",
+   "width": 1280,
+   "height": 862,
+   "title": "alberta",
+   "alt": "alberta",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/692e913874153ed36dba0f73_alberta-2297204_1280.webp",
+    "pages": [
+     "css"
+    ]
+   }
+  },
+  {
+   "id": "site/autumn-moring-hike-rockies",
+   "src": "/media/site/autumn-moring-hike-rockies.webp",
+   "width": 1920,
+   "height": 1280,
+   "title": "Autumn moring hike rockies",
+   "alt": "Autumn moring hike rockies",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/68e75d20ab9f597ba6a2fe95_Autumn-moring-hike-rockies.jpg",
+    "pages": [
+     "jasper-custom-private-tour"
+    ]
+   }
+  },
+  {
+   "id": "site/banff-alberta",
+   "src": "/media/site/banff-alberta.webp",
+   "width": 736,
+   "height": 901,
+   "title": "Banff, Alberta",
+   "alt": "A mother bear and two cubs crossing a forest road with tall pine trees and snow-capped mountains in the background.",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [
+    "banff"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6910d40496d29de47d5df462_Banff%2C%20Alberta.jpg",
+    "pages": [
+     "private-tours",
+     "shuttles"
+    ]
+   }
+  },
+  {
+   "id": "site/banff-gondola-hike",
+   "src": "/media/site/banff-gondola-hike.webp",
+   "width": 1920,
+   "height": 1280,
+   "title": "Banff Gondola hike",
+   "alt": "Banff Gondola hike",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [
+    "banff"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/68e75d207df1cfac21f7ad40_Banff-Gondola-hike.webp",
+    "pages": [
+     "shared-tours-heart-of-banff"
+    ]
+   }
+  },
+  {
+   "id": "site/bow-lake-before-freezing",
+   "src": "/media/site/bow-lake-before-freezing.webp",
+   "width": 1920,
+   "height": 1440,
+   "title": "Bow Lake Before Freezing",
+   "alt": "Bow Lake Before Freezing",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [
+    "bow-lake",
+    "icefields-parkway",
+    "banff"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/68e75d20c38042eaa5cab5fc_Bow-Lake-Before-Freezing.webp",
+    "pages": [
+     "icefields-jasper-private-tour"
+    ]
+   }
+  },
+  {
+   "id": "site/bow-lake-lodge",
+   "src": "/media/site/bow-lake-lodge.webp",
+   "width": 1920,
+   "height": 1440,
+   "title": "Bow Lake Lodge",
+   "alt": "Bow Lake Lodge",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [
+    "bow-lake",
+    "icefields-parkway",
+    "banff"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/68e75d208b4fe71372c2260a_Bow-Lake-Lodge.webp",
+    "pages": [
+     "css"
+    ]
+   }
+  },
+  {
+   "id": "site/country-house-3707-640",
+   "src": "/media/site/country-house-3707-640.webp",
+   "width": 640,
+   "height": 480,
+   "title": "country house",
+   "alt": "country house",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/692e91389eb0a4effd439725_country-house-3707_640.jpg",
+    "pages": [
+     "home"
+    ]
+   }
+  },
+  {
+   "id": "site/cruse-maligne-lake",
+   "src": "/media/site/cruse-maligne-lake.webp",
+   "width": 1920,
+   "height": 1280,
+   "title": "Cruse maligne lake",
+   "alt": "Cruse maligne lake",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [
+    "jasper",
+    "maligne"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/68e75d21e9e7e81f39f43922_Cruse-maligne-lake.webp",
+    "pages": [
+     "css"
+    ]
+   }
+  },
+  {
+   "id": "site/dcb45221eefae27970a0c11f4f7fc0eb3edb65d1-1",
+   "src": "/media/site/dcb45221eefae27970a0c11f4f7fc0eb3edb65d1-1.webp",
+   "width": 930,
+   "height": 620,
+   "title": "dcb45221eefae27970a0c11f4f7fc0eb3edb65d1",
+   "alt": "dcb45221eefae27970a0c11f4f7fc0eb3edb65d1",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/69108a62d2ab543e335612b6_dcb45221eefae27970a0c11f4f7fc0eb3edb65d1%20(1).jpg",
+    "pages": [
+     "shared-tours-banff-yoho"
+    ]
+   }
+  },
+  {
+   "id": "site/destination-image-1",
+   "src": "/media/site/destination-image-1.webp",
+   "width": 262,
+   "height": 351,
+   "title": "Destination Image",
+   "alt": "Destination Image",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6909ecaf8f2ad08a1d5a91ec_Destination%20Image%20(1).png",
+    "pages": [
+     "css"
+    ]
+   }
+  },
+  {
+   "id": "site/ellipse-1",
+   "src": "/media/site/ellipse-1.webp",
+   "width": 206,
+   "height": 206,
+   "title": "Ellipse 1",
+   "alt": "Four people standing on a ledge facing the ocean, with one pointing into the distance.",
+   "collection": "site",
+   "kind": "people",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/69076e2a3a4dcb182aadc777_Ellipse%201.webp",
+    "pages": [
+     "home"
+    ]
+   }
+  },
+  {
+   "id": "site/ellipse-1-1",
+   "src": "/media/site/ellipse-1-1.webp",
+   "width": 210,
+   "height": 210,
+   "title": "Ellipse 1",
+   "alt": "Gray wolf walking through dry grassland with blurred background.",
+   "collection": "site",
+   "kind": "people",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6908dcfa1febf2e305fddedc_Ellipse%201%20(1).png",
+    "pages": [
+     "private-tours",
+     "shared-tours"
+    ]
+   }
+  },
+  {
+   "id": "site/ellipse-2",
+   "src": "/media/site/ellipse-2.webp",
+   "width": 200,
+   "height": 200,
+   "title": "Ellipse 2",
+   "alt": "Smiling woman with long dark hair wearing a red top, outdoors with blurred background.",
+   "collection": "site",
+   "kind": "people",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/690768b9a5c9b551816c9687_Ellipse%202.webp",
+    "pages": [
+     "home"
+    ]
+   }
+  },
+  {
+   "id": "site/ellipse-3",
+   "src": "/media/site/ellipse-3.webp",
+   "width": 50,
+   "height": 50,
+   "title": "Ellipse 3",
+   "alt": "Portrait of a woman with short light brown hair wearing a blue top against a light blue background.",
+   "collection": "site",
+   "kind": "people",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/690768b941128eff04dfdf51_Ellipse%203.png",
+    "pages": [
+     "home"
+    ]
+   }
+  },
+  {
+   "id": "site/ellipse-4",
+   "src": "/media/site/ellipse-4.webp",
+   "width": 50,
+   "height": 50,
+   "title": "Ellipse 4",
+   "alt": "Portrait of a man with glasses, a red beard, and short hair wearing a white shirt against a white background.",
+   "collection": "site",
+   "kind": "people",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/690768b9839824bb8e5356a5_Ellipse%204.png",
+    "pages": [
+     "home"
+    ]
+   }
+  },
+  {
+   "id": "site/ellipse-5-1",
+   "src": "/media/site/ellipse-5-1.webp",
+   "width": 50,
+   "height": 50,
+   "title": "Ellipse 5",
+   "alt": "Smiling man outdoors with blurred green trees in the background.",
+   "collection": "site",
+   "kind": "people",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/690768b969747d13e815f3f2_Ellipse%205%20(1).png",
+    "pages": [
+     "home"
+    ]
+   }
+  },
+  {
+   "id": "site/ellipse-6-2",
+   "src": "/media/site/ellipse-6-2.webp",
+   "width": 50,
+   "height": 50,
+   "title": "Ellipse 6",
+   "alt": "Person wearing a black beret and dark clothing looking to the side against a plain white background.",
+   "collection": "site",
+   "kind": "people",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/690768b9a3f39800bf6afaf7_Ellipse%206%20(2).png",
+    "pages": [
+     "home"
+    ]
+   }
+  },
+  {
+   "id": "site/emerald-lake-boathouse",
+   "src": "/media/site/emerald-lake-boathouse.webp",
+   "width": 1920,
+   "height": 1192,
+   "title": "Emerald Lake Boathouse",
+   "alt": "Emerald Lake Boathouse",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [
+    "yoho"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/68e75d2105dfa8d351d18a43_Emerald-Lake-Boathouse.webp",
+    "pages": [
+     "home"
+    ]
+   }
+  },
+  {
+   "id": "site/emerald-lake-canoe",
+   "src": "/media/site/emerald-lake-canoe.webp",
+   "width": 1920,
+   "height": 1440,
+   "title": "Emerald Lake Canoe",
+   "alt": "Emerald Lake Canoe",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [
+    "yoho"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/68e75d21096ef533648e2b26_Emerald-Lake-Canoe.webp",
+    "pages": [
+     "css"
+    ]
+   }
+  },
+  {
+   "id": "site/explore-more-section-background-image",
+   "src": "/media/site/explore-more-section-background-image.webp",
+   "width": 1440,
+   "height": 691,
+   "title": "Explore More section Background image",
+   "alt": "Explore More section Background image",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6910165a83d5d1c9a1102f73_Explore%20More%20section%20Background%20image.webp",
+    "pages": [
+     "css"
+    ]
+   }
+  },
+  {
+   "id": "site/explore-more-section-background-image-v2",
+   "src": "/media/site/explore-more-section-background-image-v2.webp",
+   "width": 1920,
+   "height": 1440,
+   "title": "Explore More section Background image V2",
+   "alt": "Explore More section Background image V2",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/691016d459a3477434900e48_Explore%20More%20section%20Background%20image%20V2.png",
+    "pages": [
+     "css"
+    ]
+   }
+  },
+  {
+   "id": "site/explore-more-section-background-image-v4",
+   "src": "/media/site/explore-more-section-background-image-v4.webp",
+   "width": 1920,
+   "height": 1440,
+   "title": "Explore More section Background image V4",
+   "alt": "Explore More section Background image V4",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6910180d09b269f0d2f37aea_Explore%20More%20section%20Background%20image%20V4.png",
+    "pages": [
+     "css"
+    ]
+   }
+  },
+  {
+   "id": "site/feature-image-1",
+   "src": "/media/site/feature-image-1.webp",
+   "width": 413,
+   "height": 415,
+   "title": "Feature Image",
+   "alt": "Woman with red hair wearing a black vest and holding a clipboard, standing on a forest path and smiling while talking to someone.",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6907d17f97c5c1e84eff3593_Feature%20Image%20(1).png",
+    "pages": [
+     "home"
+    ]
+   }
+  },
+  {
+   "id": "site/hero-background-image-3",
+   "src": "/media/site/hero-background-image-3.webp",
+   "width": 1920,
+   "height": 1440,
+   "title": "Hero Background Image 3",
+   "alt": "Hero Background Image 3",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/690fe8161931736580e464ee_Hero%20Background%20Image%203.webp",
+    "pages": [
+     "css"
+    ]
+   }
+  },
+  {
+   "id": "site/hero-image-5",
+   "src": "/media/site/hero-image-5.webp",
+   "width": 1080,
+   "height": 519,
+   "title": "Hero Image",
+   "alt": "Hero Image",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/69097c950306ad828b64040b_Hero%20Image%20(5).png",
+    "pages": [
+     "css"
+    ]
+   }
+  },
+  {
+   "id": "site/hotel-prince-of-wales-657635-1280",
+   "src": "/media/site/hotel-prince-of-wales-657635-1280.webp",
+   "width": 1280,
+   "height": 833,
+   "title": "hotel prince of wales",
+   "alt": "hotel prince of wales",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [
+    "waterton"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/692e913a60c8f2fa3682f0cf_hotel-prince-of-wales-657635_1280.webp",
+    "pages": [
+     "css"
+    ]
+   }
+  },
+  {
+   "id": "site/ice-castle-51332-1280",
+   "src": "/media/site/ice-castle-51332-1280.webp",
+   "width": 1280,
+   "height": 800,
+   "title": "ice castle",
+   "alt": "ice castle",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/692e913a77d4d33197aa2373_ice-castle-51332_1280.jpg",
+    "pages": [
+     "winter-special"
+    ]
+   }
+  },
+  {
+   "id": "site/icefields-parkway-winters",
+   "src": "/media/site/icefields-parkway-winters.webp",
+   "width": 2048,
+   "height": 1152,
+   "title": "Icefields Parkway Winters",
+   "alt": "Empty Icefield Parkway in Alberta flanked by snow-covered pine trees leading towards snow-capped mountains under a partly cloudy sky.",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [
+    "icefields-parkway"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/68e75d21ab5560e13cdb2760_Icefields-Parkway-Winters.webp",
+    "pages": [
+     "icefields-jasper-private-tour"
+    ]
+   }
+  },
+  {
+   "id": "site/image-2025-11-03t170916-442",
+   "src": "/media/site/image-2025-11-03t170916-442.webp",
+   "width": 342,
+   "height": 354,
+   "title": "Image 11 03T170916.",
+   "alt": "Lake Louise image taken from Big Beehive",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [
+    "lake-louise",
+    "banff"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/69088d7061d22e4decedc2a1_Image%20-%202025-11-03T170916.442.png",
+    "pages": [
+     "home",
+     "private-tours",
+     "shared-tours",
+     "shuttles"
+    ]
+   }
+  },
+  {
+   "id": "site/image-2025-11-03t224701-833",
+   "src": "/media/site/image-2025-11-03t224701-833.webp",
+   "width": 404,
+   "height": 528,
+   "title": "Image 11 03T224701.",
+   "alt": "Long straight road leading through dense forest towards large rocky mountains under a cloudy sky.",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6908dc94b2fde580f8559766_Image%20-%202025-11-03T224701.833.png",
+    "pages": [
+     "private-tours",
+     "shared-tours",
+     "shuttles"
+    ]
+   }
+  },
+  {
+   "id": "site/image-2025-11-04t000713-323",
+   "src": "/media/site/image-2025-11-04t000713-323.webp",
+   "width": 168,
+   "height": 204,
+   "title": "Image 11 04T000713.",
+   "alt": "Front of a shop with a glass door and windows displaying colorful hanging lamps, with a bicycle parked outside on the street.",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6908ef5a283219ab9f648056_Image%20-%202025-11-04T000713.323.png",
+    "pages": [
+     "private-tours",
+     "shared-tours",
+     "shuttles"
+    ]
+   }
+  },
+  {
+   "id": "site/image-2025-11-04t001506-877",
+   "src": "/media/site/image-2025-11-04t001506-877.webp",
+   "width": 168,
+   "height": 204,
+   "title": "Image 11 04T001506.",
+   "alt": "Group of four friends outdoors raising glasses in a toast around a wooden table with food and drinks.",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6908f13ed8a1a512c6aaa486_Image%20-%202025-11-04T001506.877.png",
+    "pages": [
+     "private-tours",
+     "shared-tours",
+     "shuttles"
+    ]
+   }
+  },
+  {
+   "id": "site/image-2025-11-04t001537-043",
+   "src": "/media/site/image-2025-11-04t001537-043.webp",
+   "width": 168,
+   "height": 204,
+   "title": "Image 11 04T001537.",
+   "alt": "Person's hand on the steering wheel of a car driving at dusk with blurred city lights in the background.",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6908f15134cedcf867a992f1_Image%20-%202025-11-04T001537.043.png",
+    "pages": [
+     "private-tours",
+     "shared-tours",
+     "shuttles"
+    ]
+   }
+  },
+  {
+   "id": "site/image-2025-11-04t001557-610",
+   "src": "/media/site/image-2025-11-04t001557-610.webp",
+   "width": 168,
+   "height": 204,
+   "title": "Image 11 04T001557.",
+   "alt": "Red and blue kayaks docked on a calm lake with tall evergreen trees and snow-capped mountains in the background.",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6908f16652ebe7e06c798773_Image%20-%202025-11-04T001557.610.png",
+    "pages": [
+     "private-tours",
+     "shared-tours",
+     "shuttles"
+    ]
+   }
+  },
+  {
+   "id": "site/image-2025-11-04t001618-314",
+   "src": "/media/site/image-2025-11-04t001618-314.webp",
+   "width": 168,
+   "height": 204,
+   "title": "Image 11 04T001618.",
+   "alt": "Close-up of two people shaking hands in an office setting.",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6908f17be42cd3b9563c46a0_Image%20-%202025-11-04T001618.314.png",
+    "pages": [
+     "private-tours",
+     "shared-tours",
+     "shuttles"
+    ]
+   }
+  },
+  {
+   "id": "site/image-2025-11-04t203238-158",
+   "src": "/media/site/image-2025-11-04t203238-158.webp",
+   "width": 359,
+   "height": 480,
+   "title": "Image 11 04T203238.",
+   "alt": "Snow-covered mountain landscape with a glacier and a winding road with vehicles at the base.",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/690a0ea577fc01e93008fcc2_Image%20-%202025-11-04T203238.158.png",
+    "pages": [
+     "gallery"
+    ]
+   }
+  },
+  {
+   "id": "site/image-2025-11-04t203728-815",
+   "src": "/media/site/image-2025-11-04t203728-815.webp",
+   "width": 229,
+   "height": 240,
+   "title": "Image 11 04T203728.",
+   "alt": "Three hikers walking on a trail overlooking a turquoise lake and mountain range under a partly cloudy sky.",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/690a0fb7ec1ddb173789f9f6_Image%20-%202025-11-04T203728.815.png",
+    "pages": [
+     "gallery"
+    ]
+   }
+  },
+  {
+   "id": "site/image-2025-11-04t204022-206",
+   "src": "/media/site/image-2025-11-04t204022-206.webp",
+   "width": 266,
+   "height": 229,
+   "title": "Image 11 04T204022.",
+   "alt": "Grizzly bear standing on a rocky ledge with wildflowers, overlooking a mountain lake at sunset.",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/690a105dd4137f442635d56f_Image%20-%202025-11-04T204022.206.png",
+    "pages": [
+     "gallery"
+    ]
+   }
+  },
+  {
+   "id": "site/image-2025-11-04t204121-339",
+   "src": "/media/site/image-2025-11-04t204121-339.webp",
+   "width": 133,
+   "height": 114,
+   "title": "Image 11 04T204121.",
+   "alt": "Snow-covered town nestled in a valley with a river and towering rocky mountains in the background under a clear sky.",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/690a10a504e882933340f4b8_Image%20-%202025-11-04T204121.339.png",
+    "pages": [
+     "gallery"
+    ]
+   }
+  },
+  {
+   "id": "site/image-2025-11-04t204734-691",
+   "src": "/media/site/image-2025-11-04t204734-691.webp",
+   "width": 226,
+   "height": 262,
+   "title": "Image 11 04T204734.",
+   "alt": "Red and gray tent next to a campfire by a river with pine trees and mountains at sunset.",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/690a1218bcaffa448bc8544f_Image%20-%202025-11-04T204734.691.png",
+    "pages": [
+     "gallery"
+    ]
+   }
+  },
+  {
+   "id": "site/image-2025-11-04t205052-221",
+   "src": "/media/site/image-2025-11-04t205052-221.webp",
+   "width": 327,
+   "height": 125,
+   "title": "Image 11 04T205052.",
+   "alt": "Hiker with a backpack walking along a snowy mountain ridge with pine trees and distant mountain views.",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/690a12dcadfea5b3a5ee816b_Image%20-%202025-11-04T205052.221.png",
+    "pages": [
+     "gallery"
+    ]
+   }
+  },
+  {
+   "id": "site/image-2025-11-04t205416-282",
+   "src": "/media/site/image-2025-11-04t205416-282.webp",
+   "width": 182,
+   "height": 125,
+   "title": "Image 11 04T205416.",
+   "alt": "Scenic view of golden autumn forest with mountain peaks and a winding river under a partly cloudy sky.",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/690a13a820c462c71c298b5b_Image%20-%202025-11-04T205416.282.png",
+    "pages": [
+     "gallery"
+    ]
+   }
+  },
+  {
+   "id": "site/image-2025-11-04t210434-975",
+   "src": "/media/site/image-2025-11-04t210434-975.webp",
+   "width": 266,
+   "height": 250,
+   "title": "Image 11 04T210434.",
+   "alt": "A steam train traveling on curved tracks beside a river in a forested mountain valley under a partly cloudy sky.",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [
+    "banff"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/690a1613098a903d97414ebd_Image%20-%202025-11-04T210434.975.png",
+    "pages": [
+     "gallery",
+     "home"
+    ]
+   }
+  },
+  {
+   "id": "site/istock",
+   "src": "/media/site/istock.webp",
+   "width": 1920,
+   "height": 1280,
+   "title": "iStock",
+   "alt": "iStock",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/68e75d2146442f7929973b2b_iStock-.webp",
+    "pages": [
+     "css"
+    ]
+   }
+  },
+  {
+   "id": "site/istock-2157886051",
+   "src": "/media/site/istock-2157886051.webp",
+   "width": 1920,
+   "height": 1280,
+   "title": "iStock",
+   "alt": "iStock",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/68e75d22f943fa3247eedf40_iStock-2157886051.webp",
+    "pages": [
+     "css"
+    ]
+   }
+  },
+  {
+   "id": "site/lake-5870800-1280",
+   "src": "/media/site/lake-5870800-1280.webp",
+   "width": 1280,
+   "height": 853,
+   "title": "lake",
+   "alt": "lake",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/692e913b31bb77ecf7bf9896_lake-5870800_1280.webp",
+    "pages": [
+     "banff-highlights-tour",
+     "css"
+    ]
+   }
+  },
+  {
+   "id": "site/lake-louise-197406-1280",
+   "src": "/media/site/lake-louise-197406-1280.webp",
+   "width": 1280,
+   "height": 960,
+   "title": "lake louise",
+   "alt": "lake louise",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [
+    "lake-louise",
+    "banff"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/692e913ae175581f7f69089f_lake-louise-197406_1280.jpg",
+    "pages": [
+     "css"
+    ]
+   }
+  },
+  {
+   "id": "site/lake-louise-boathouse",
+   "src": "/media/site/lake-louise-boathouse.webp",
+   "width": 1920,
+   "height": 1440,
+   "title": "Lake Louise Boathouse",
+   "alt": "Lake Louise Boathouse",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [
+    "lake-louise",
+    "banff"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/68e75d2256117f7ef574e475_Lake-Louise-Boathouse.webp",
+    "pages": [
+     "css"
+    ]
+   }
+  },
+  {
+   "id": "site/lake-louise-from-fairmont-chateau",
+   "src": "/media/site/lake-louise-from-fairmont-chateau.webp",
+   "width": 1920,
+   "height": 1280,
+   "title": "Lake Louise from Fairmont Chateau",
+   "alt": "Lake Louise from Fairmont Chateau",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [
+    "lake-louise",
+    "banff"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/68e75d2241160e7b6fe97901_Lake-Louise-from-Fairmont-Chateau.webp",
+    "pages": [
+     "css"
+    ]
+   }
+  },
+  {
+   "id": "site/lake-louise-from-fairview-lookout",
+   "src": "/media/site/lake-louise-from-fairview-lookout.webp",
+   "width": 2048,
+   "height": 975,
+   "title": "Lake Louise from Fairview lookout",
+   "alt": "Lake Louise from Fairview lookout",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [
+    "lake-louise",
+    "banff"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/68e75d2226843ce4cd9e72a1_Lake-Louise-from-Fairview-lookout.webp",
+    "pages": [
+     "css"
+    ]
+   }
+  },
+  {
+   "id": "site/lake-louise-sunrise",
+   "src": "/media/site/lake-louise-sunrise.webp",
+   "width": 1920,
+   "height": 1280,
+   "title": "Lake Louise Sunrise",
+   "alt": "Lake Louise Sunrise",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [
+    "lake-louise",
+    "banff"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/68e75d226c9d99122f227d20_Lake-Louise-Sunrise.webp",
+    "pages": [
+     "css",
+     "full-day-at-lake-louise-and-moraine-lake"
+    ]
+   }
+  },
+  {
+   "id": "site/lake-minnewanka-icy",
+   "src": "/media/site/lake-minnewanka-icy.webp",
+   "width": 1920,
+   "height": 1280,
+   "title": "Lake Minnewanka Icy",
+   "alt": "Lake Minnewanka Icy",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [
+    "banff",
+    "lake-minnewanka"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/68e75d2288aa36b09a764af3_Lake-Minnewanka-Icy.webp",
+    "pages": [
+     "home"
+    ]
+   }
+  },
+  {
+   "id": "site/larch-trees-lake-side",
+   "src": "/media/site/larch-trees-lake-side.webp",
+   "width": 1920,
+   "height": 1280,
+   "title": "Larch Trees Lake side",
+   "alt": "Larch Trees Lake side",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [
+    "banff"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/68e75d221cfb8fa8e0d6ab76_Larch-Trees-Lake-side.webp",
+    "pages": [
+     "multi-day-tour-package-for-banff"
+    ]
+   }
+  },
+  {
+   "id": "site/maligne-lake-6822703-1280",
+   "src": "/media/site/maligne-lake-6822703-1280.webp",
+   "width": 1280,
+   "height": 914,
+   "title": "maligne lake",
+   "alt": "maligne lake",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [
+    "jasper",
+    "maligne"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/692e913b1962f6cfa4285000_maligne-lake-6822703_1280.webp",
+    "pages": [
+     "home"
+    ]
+   }
+  },
+  {
+   "id": "site/matthew-fournier-ycv7guilr9c-unsplash",
+   "src": "/media/site/matthew-fournier-ycv7guilr9c-unsplash.webp",
+   "width": 1920,
+   "height": 1280,
+   "title": "matthew fournier ycv7guIlR9c unsplash",
+   "alt": "Colorful canoes docked on calm blue Moraine lake with pine trees and snow-capped mountains in the background.",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [
+    "moraine-lake",
+    "banff"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/68e75d22ed26b2388eaa971e_matthew-fournier-ycv7guIlR9c-unsplash.webp",
+    "pages": [
+     "banff-highlights-tour",
+     "full-day-at-lake-louise-and-moraine-lake"
+    ]
+   }
+  },
+  {
+   "id": "site/moraine-lake-perfect-reflection",
+   "src": "/media/site/moraine-lake-perfect-reflection.webp",
+   "width": 1920,
+   "height": 1375,
+   "title": "Moraine Lake Perfect Reflection",
+   "alt": "Clear blue lake perfectly reflecting surrounding pine trees and snow-capped rocky mountains under a clear sky.",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [
+    "moraine-lake",
+    "banff",
+    "lake-louise"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/68e75d228ead1330ef50075f_Moraine-Lake-Perfect-Reflection.webp",
+    "pages": [
+     "css",
+     "home",
+     "shared-tours",
+     "sunrise-shuttle-to-moraine-lake-and-lake-louise"
+    ]
+   }
+  },
+  {
+   "id": "site/native-on-lake-louise",
+   "src": "/media/site/native-on-lake-louise.webp",
+   "width": 1920,
+   "height": 1280,
+   "title": "Native on Lake Louise",
+   "alt": "Native on Lake Louise",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [
+    "lake-louise",
+    "banff"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/68e75d23792c2beb49e20cb2_Native-on-Lake-Louise.webp",
+    "pages": [
+     "banff-private-tour"
+    ]
+   }
+  },
+  {
+   "id": "site/pexels-aleksandar-pasaric-5686514",
+   "src": "/media/site/pexels-aleksandar-pasaric-5686514.webp",
+   "width": 2048,
+   "height": 1365,
+   "title": "pexels aleksandar pasaric",
+   "alt": "pexels aleksandar pasaric",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/691bd15feb0c5409afe661d7_pexels-aleksandar-pasaric-5686514.jpg",
+    "pages": [
+     "css"
+    ]
+   }
+  },
+  {
+   "id": "site/pexels-kqpho-1583582",
+   "src": "/media/site/pexels-kqpho-1583582.webp",
+   "width": 2048,
+   "height": 1367,
+   "title": "pexels kqpho",
+   "alt": "pexels kqpho",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/690c297495c42b492da4de75_pexels-kqpho-1583582.webp",
+    "pages": [
+     "css"
+    ]
+   }
+  },
+  {
+   "id": "site/pexels-sahil-patel-2166452-3818407",
+   "src": "/media/site/pexels-sahil-patel-2166452-3818407.webp",
+   "width": 1920,
+   "height": 1440,
+   "title": "pexels sahil patel",
+   "alt": "Turquoise Emerald lake with pine trees on a small island, mountains in the background, and kayakers on the water.",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [
+    "yoho"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/68e75d2316ef5e8dcc7d7d97_pexels-sahil-patel-2166452-3818407.webp",
+    "pages": [
+     "css",
+     "shared-tours-banff-yoho"
+    ]
+   }
+  },
+  {
+   "id": "site/peyto-lake-torqoise-blue-water",
+   "src": "/media/site/peyto-lake-torqoise-blue-water.webp",
+   "width": 1920,
+   "height": 1280,
+   "title": "Peyto Lake torqoise blue water",
+   "alt": "Turquoise alpine, Wolf Head Shaped Peyto lake surrounded by dense pine forest and rocky mountains at sunset with clouds reflected in the water.",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [
+    "peyto-lake",
+    "icefields-parkway",
+    "banff"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/68e75d2383e44d252e23ea96_Peyto-Lake-torqoise-blue-water.webp",
+    "pages": [
+     "banff-private-tour",
+     "css"
+    ]
+   }
+  },
+  {
+   "id": "site/peyto-lake-winters",
+   "src": "/media/site/peyto-lake-winters.webp",
+   "width": 1920,
+   "height": 1440,
+   "title": "Peyto Lake winters",
+   "alt": "Peyto Lake winters",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [
+    "peyto-lake",
+    "icefields-parkway",
+    "banff"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/68e75d231846ebbc5b036b41_Peyto%20Lake%20winters.webp",
+    "pages": [
+     "winter-signature-private-tour"
+    ]
+   }
+  },
+  {
+   "id": "site/photo-0e488c3666bd",
+   "src": "/media/site/photo-0e488c3666bd.webp",
+   "width": 1257,
+   "height": 839,
+   "title": "0e488c3666bd2efa6b07ecb678923cc35effc67f",
+   "alt": "Turquoise glacial lake surrounded by dense evergreen forest and rugged mountains under a cloudy sky.",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/69097f7a444cfc54faad1e38_0e488c3666bd2efa6b07ecb678923cc35effc67f.jpg",
+    "pages": [
+     "home",
+     "shared-tours-icefields-jasper"
+    ]
+   }
+  },
+  {
+   "id": "site/photo-9eb27b0d59fa",
+   "src": "/media/site/photo-9eb27b0d59fa.webp",
+   "width": 1103,
+   "height": 735,
+   "title": "9eb27b0d59fa366d6e137b6c7de19c6319099460",
+   "alt": "9eb27b0d59fa366d6e137b6c7de19c6319099460",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6908eca67a50fa0675e86703_9eb27b0d59fa366d6e137b6c7de19c6319099460.jpg",
+    "pages": [
+     "css"
+    ]
+   }
+  },
+  {
+   "id": "site/photo-b0fefddaaa9d",
+   "src": "/media/site/photo-b0fefddaaa9d.webp",
+   "width": 1103,
+   "height": 735,
+   "title": "b0fefddaaa9d594be98d65d9c659800732cc2d2b",
+   "alt": "b0fefddaaa9d594be98d65d9c659800732cc2d2b",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6908ec446c7500be66768709_b0fefddaaa9d594be98d65d9c659800732cc2d2b.jpg",
+    "pages": [
+     "css"
+    ]
+   }
+  },
+  {
+   "id": "site/photo-e7d8482f2f69",
+   "src": "/media/site/photo-e7d8482f2f69.webp",
+   "width": 1200,
+   "height": 800,
+   "title": "e7d8482f2f69af66ea2ef1fcb7da7dd480c73f4f",
+   "alt": "e7d8482f2f69af66ea2ef1fcb7da7dd480c73f4f",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/69077f004b30dfaa6bbd3d16_e7d8482f2f69af66ea2ef1fcb7da7dd480c73f4f.png",
+    "pages": [
+     "css"
+    ]
+   }
+  },
+  {
+   "id": "site/photo-e87732b97ba2",
+   "src": "/media/site/photo-e87732b97ba2.webp",
+   "width": 1103,
+   "height": 735,
+   "title": "e87732b97ba2d81f763db7a31c18306a400176ab",
+   "alt": "Snow-covered mountain town at dusk with illuminated streets surrounded by tall snowy peaks.",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6908ec71970c77da288d5947_e87732b97ba2d81f763db7a31c18306a400176ab.jpg",
+    "pages": [
+     "css",
+     "home"
+    ]
+   }
+  },
+  {
+   "id": "site/photo-f2472ca4ed06",
+   "src": "/media/site/photo-f2472ca4ed06.webp",
+   "width": 1872,
+   "height": 1248,
+   "title": "f2472ca4ed067430d12489aa9f96c513df947a0e",
+   "alt": "f2472ca4ed067430d12489aa9f96c513df947a0e",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6907b03c96b2ea520c80fda8_f2472ca4ed067430d12489aa9f96c513df947a0e.webp",
+    "pages": [
+     "css"
+    ]
+   }
+  },
+  {
+   "id": "site/sipirit-island-maligne-lake",
+   "src": "/media/site/sipirit-island-maligne-lake.webp",
+   "width": 1919,
+   "height": 1281,
+   "title": "Sipirit Island Maligne Lake",
+   "alt": "Small forested spirit island in turquoise Maligne Lake surrounded by snow-capped mountains and mist under a cloudy sky.",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [
+    "jasper",
+    "maligne"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/68e75d23c700a5bd13e4c5f6_Sipirit-Island-Maligne-Lake.webp",
+    "pages": [
+     "jasper-custom-private-tour",
+     "shared-tours-icefields-jasper"
+    ]
+   }
+  },
+  {
+   "id": "site/takakkaw-falls-wapta-mountain",
+   "src": "/media/site/takakkaw-falls-wapta-mountain.webp",
+   "width": 1920,
+   "height": 1109,
+   "title": "Takakkaw Falls Wapta Mountain",
+   "alt": "Takakkaw Falls Wapta Mountain",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [
+    "yoho"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/68e75d235b1f8ccf38777ea6_Takakkaw-Falls-Wapta-Mountain.webp",
+    "pages": [
+     "banff-yoho-custom-private-tour"
+    ]
+   }
+  },
+  {
+   "id": "site/tempimage8jnmzg",
+   "src": "/media/site/tempimage8jnmzg.webp",
+   "width": 2048,
+   "height": 1536,
+   "title": "tempImage8jNmzg",
+   "alt": "tempImage8jNmzg",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6910d4185a78f136b7ff3dd0_tempImage8jNmzg.jpg",
+    "pages": [
+     "css"
+    ]
+   }
+  },
+  {
+   "id": "site/three-sisters-canmore",
+   "src": "/media/site/three-sisters-canmore.webp",
+   "width": 1920,
+   "height": 1279,
+   "title": "Three Sisters Canmore",
+   "alt": "Snow-covered Three Sisters mountain peaks with evergreen trees and a partially frozen river reflecting the landscape under a clear blue sky.",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [
+    "canmore"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/68e75d23281afc35312ecb08_Three-Sisters-Canmore.webp",
+    "pages": [
+     "winter-signature-private-tour"
+    ]
+   }
+  },
+  {
+   "id": "site/tour-image",
+   "src": "/media/site/tour-image.webp",
+   "width": 1128,
+   "height": 784,
+   "title": "Tour Image",
+   "alt": "Street scene at dusk with people walking, lit shop signs, parked cars, and a large mountain with a colorful sunset sky in the background.",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/690900866883402a46bd2922_Tour%20Image.webp",
+    "pages": [
+     "shared-tours-heart-of-banff"
+    ]
+   }
+  },
+  {
+   "id": "site/vista-chase-coffee-noraine-lake",
+   "src": "/media/site/vista-chase-coffee-noraine-lake.webp",
+   "width": 1024,
+   "height": 1024,
+   "title": "Vista Chase coffee noraine lake",
+   "alt": "Vista Chase coffee noraine lake",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/68e75d80d6cace66c5c3566a_Vista-Chase-coffee-noraine-lake.webp",
+    "pages": [
+     "sunrise-shuttle-to-moraine-lake-and-lake-louise"
+    ]
+   }
+  },
+  {
+   "id": "site/waterfawl-lake-banff-icefields-parkway",
+   "src": "/media/site/waterfawl-lake-banff-icefields-parkway.webp",
+   "width": 1920,
+   "height": 1282,
+   "title": "Waterfawl Lake Banff Icefields Parkway",
+   "alt": "Waterfawl Lake on icefields parkway with snow covered mountain, turquoise water and golden aspen trees.",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [
+    "icefields-parkway",
+    "banff"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/68e75d2490694f6a23c171aa_Waterfawl-Lake-Banff-Icefields-Parkway.webp",
+    "pages": [
+     "css",
+     "multi-day-tour-package-for-banff"
+    ]
+   }
+  },
+  {
+   "id": "site/woman-2896389-1920",
+   "src": "/media/site/woman-2896389-1920.webp",
+   "width": 1920,
+   "height": 1280,
+   "title": "woman",
+   "alt": "A traveller in green jacket and white hat standing on snowy rocks by the turquoise Lake Louise surrounded by snow-covered mountains and Victoria Mountain hiding in Clouds.",
+   "collection": "site",
+   "kind": "landscape",
+   "places": [
+    "lake-louise",
+    "banff"
+   ],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/68e75d2492e7e8a78352949f_woman-2896389_1920.webp",
+    "pages": [
+     "banff-yoho-custom-private-tour",
+     "css"
+    ]
+   }
+  },
+  {
+   "id": "videos/athabasca-falls",
+   "src": "/media/videos/athabasca-falls.mp4",
+   "poster": "/media/videos/athabasca-falls-poster.webp",
+   "width": 1280,
+   "height": 720,
+   "duration": 15,
+   "title": "Athabasca Falls",
+   "alt": "The Athabasca River pouring through its gorge below Mount Kerkeslin in Jasper National Park",
+   "collection": "videos",
+   "kind": "video",
+   "places": [
+    "jasper",
+    "icefields-parkway",
+    "athabasca-falls"
+   ],
+   "tags": [
+    "summer",
+    "waterfall"
+   ],
+   "source": {
+    "origin": "vista-chase-video-library",
+    "file": "Videos 2/athabasca-falls-on-the-upper-athabasca-river-in-ja-2025-12-17-04-39-47-utc.mov"
+   }
+  },
+  {
+   "id": "videos/athabasca-falls-rainbow",
+   "src": "/media/videos/athabasca-falls-rainbow.mp4",
+   "poster": "/media/videos/athabasca-falls-rainbow-poster.webp",
+   "width": 1280,
+   "height": 720,
+   "duration": 15,
+   "title": "Rainbow over Athabasca Falls",
+   "alt": "Spray and a rainbow over Athabasca Falls in summer",
+   "collection": "videos",
+   "kind": "video",
+   "places": [
+    "jasper",
+    "icefields-parkway",
+    "athabasca-falls"
+   ],
+   "tags": [
+    "summer",
+    "waterfall"
+   ],
+   "source": {
+    "origin": "vista-chase-video-library",
+    "file": "Videos 2/summer-in-athabasca-falls-jasper-national-park-c-2026-02-27-01-43-22-utc.mp4"
+   }
+  },
+  {
+   "id": "videos/emerald-lake-canoes",
+   "src": "/media/videos/emerald-lake-canoes.mp4",
+   "poster": "/media/videos/emerald-lake-canoes-poster.webp",
+   "width": 1280,
+   "height": 720,
+   "duration": 15,
+   "title": "Emerald Lake canoes",
+   "alt": "Red canoes at the Emerald Lake dock, with the lodge across the water in Yoho National Park",
+   "collection": "videos",
+   "kind": "video",
+   "places": [
+    "yoho",
+    "emerald-lake"
+   ],
+   "tags": [
+    "summer",
+    "paddling"
+   ],
+   "source": {
+    "origin": "vista-chase-video-library",
+    "file": "Videos 2/emerald-lakeyoho-national-park-in-canada-emerald-l-2025-12-17-23-54-53-utc.mov"
+   }
+  },
+  {
+   "id": "videos/emerald-lake-lodge",
+   "src": "/media/videos/emerald-lake-lodge.mp4",
+   "poster": "/media/videos/emerald-lake-lodge-poster.webp",
+   "width": 1280,
+   "height": 720,
+   "duration": 13,
+   "title": "Emerald Lake Lodge",
+   "alt": "Emerald Lake Lodge mirrored in calm jade water in Yoho National Park",
+   "collection": "videos",
+   "kind": "video",
+   "places": [
+    "yoho",
+    "emerald-lake"
+   ],
+   "tags": [
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-video-library",
+    "file": "Videos 2/emerald-lake-yoho-national-park-in-canada-emerald-l-2025-12-17-04-11-21-utc.mov"
+   }
+  },
+  {
+   "id": "videos/fairmont-banff-springs-winter",
+   "src": "/media/videos/fairmont-banff-springs-winter.mp4",
+   "poster": "/media/videos/fairmont-banff-springs-winter-poster.webp",
+   "width": 1280,
+   "height": 720,
+   "duration": 6.88,
+   "title": "Fairmont Banff Springs in winter",
+   "alt": "The Fairmont Banff Springs hotel in falling snow, framed by frosted trees",
+   "collection": "videos",
+   "kind": "video",
+   "places": [
+    "banff"
+   ],
+   "tags": [
+    "winter",
+    "hotel"
+   ],
+   "source": {
+    "origin": "vista-chase-video-library",
+    "file": "Videos 2/snowy-resort-hotel-castle-in-the-canadian-rocky-mo-2025-12-17-05-32-07-utc.mov"
+   }
+  },
+  {
+   "id": "videos/grizzly-bear-cub-jasper",
+   "src": "/media/videos/grizzly-bear-cub-jasper.mp4",
+   "poster": "/media/videos/grizzly-bear-cub-jasper-poster.webp",
+   "width": 1280,
+   "height": 720,
+   "duration": 13.75,
+   "title": "Grizzly bear and cub",
+   "alt": "A grizzly bear and her cub walking along a forest road in Jasper National Park",
+   "collection": "videos",
+   "kind": "video",
+   "places": [
+    "jasper"
+   ],
+   "tags": [
+    "wildlife",
+    "bear"
+   ],
+   "source": {
+    "origin": "vista-chase-video-library",
+    "file": "Videos 2/grizzly-bear-with-cub-walk-on-a-road-in-jasper-nat-2025-12-17-23-30-00-utc.mov"
+   }
+  },
+  {
+   "id": "videos/lake-louise-summer",
+   "src": "/media/videos/lake-louise-summer.mp4",
+   "srcHd": "/media/videos/lake-louise-summer-1080.mp4",
+   "poster": "/media/videos/lake-louise-summer-poster.webp",
+   "width": 1280,
+   "height": 720,
+   "duration": 15,
+   "title": "Lake Louise in summer",
+   "alt": "Turquoise Lake Louise below Victoria Glacier, with walkers on the lakeshore path",
+   "collection": "videos",
+   "kind": "video",
+   "places": [
+    "lake-louise",
+    "banff"
+   ],
+   "tags": [
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-video-library",
+    "file": "Videos 2/summer-in-lake-louise-banff-national-park-canada-2026-02-09-17-44-25-utc.mp4"
+   }
+  },
+  {
+   "id": "videos/maligne-lake-cruise",
+   "src": "/media/videos/maligne-lake-cruise.mp4",
+   "poster": "/media/videos/maligne-lake-cruise-poster.webp",
+   "width": 1280,
+   "height": 720,
+   "duration": 15,
+   "title": "Maligne Lake cruise",
+   "alt": "A cruise boat crossing Maligne Lake below snow-capped peaks in Jasper National Park",
+   "collection": "videos",
+   "kind": "video",
+   "places": [
+    "jasper",
+    "maligne",
+    "maligne-lake",
+    "spirit-island"
+   ],
+   "tags": [
+    "summer",
+    "boat"
+   ],
+   "source": {
+    "origin": "vista-chase-video-library",
+    "file": "Videos 2/tourist-boat-cruising-maligne-lake-with-snow-cappe-2026-04-22-19-12-18-utc.mov"
+   }
+  },
+  {
+   "id": "videos/sunwapta-falls",
+   "src": "/media/videos/sunwapta-falls.mp4",
+   "poster": "/media/videos/sunwapta-falls-poster.webp",
+   "width": 1280,
+   "height": 720,
+   "duration": 15,
+   "title": "Sunwapta Falls",
+   "alt": "Sunwapta Falls dropping into a forested canyon on the Icefields Parkway",
+   "collection": "videos",
+   "kind": "video",
+   "places": [
+    "jasper",
+    "icefields-parkway",
+    "sunwapta-falls"
+   ],
+   "tags": [
+    "summer",
+    "waterfall"
+   ],
+   "source": {
+    "origin": "vista-chase-video-library",
+    "file": "Videos 2/upper-sunwapta-falls-in-jasper-national-park-canad-2025-12-17-11-17-34-utc.mov"
+   }
+  },
+  {
+   "id": "videos/vermilion-lakes",
+   "src": "/media/videos/vermilion-lakes.mp4",
+   "poster": "/media/videos/vermilion-lakes-poster.webp",
+   "width": 1280,
+   "height": 676,
+   "duration": 7.38,
+   "title": "Vermilion Lakes",
+   "alt": "Vermilion Lakes and a snow-dusted Mount Rundle on a cloudy day near Banff",
+   "collection": "videos",
+   "kind": "video",
+   "places": [
+    "banff",
+    "vermilion-lakes"
+   ],
+   "tags": [
+    "autumn"
+   ],
+   "source": {
+    "origin": "vista-chase-video-library",
+    "file": "Videos/Vermillion-lakes-banff-national-park-landscape-in-winter-2025-12-17-16-06-05-utc.mov"
+   }
+  }
+ ]
+}

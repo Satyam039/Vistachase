@@ -1,0 +1,267 @@
+{
+ "_readme": [
+  "Product mapping table: website page <-> Bokun product <-> Mornby tour. One row per live vistachase.com product.",
+  "bokunId: the Bokun experience (product) ID. Placeholder (null) until Vista Chase provides the IDs; fill each one in and reseed (npm run prisma:seed). Bokun API keys go in .env (BOKUN_*).",
+  "bookingMode: BOKUN = instant booking through Bokun; ENQUIRY = request form (custom itineraries, multi-day).",
+  "mornbyTour: the tour name in Mornby (mornby.com > Tours). mornbyMatch 'proposed' means matched by name and route and needs confirming by operations; 'none' means Mornby has no matching tour yet.",
+  "places / season: used to pick each product's gallery photos from backend/media (see prisma/catalog/load-catalog.js)."
+ ],
+ "bokun": {
+  "onlineSalesChannelId": null
+ },
+ "products": [
+  {
+   "slug": "banff-highlights-tour",
+   "url": "https://www.vistachase.com/banff-highlights-tour",
+   "category": "SHARED",
+   "bookingMode": "BOKUN",
+   "bokunId": null,
+   "destination": "banff-national-park",
+   "mornbyTour": "Banff Shared DAY TOUR",
+   "mornbyMatch": "proposed",
+   "places": [
+    "moraine-lake",
+    "lake-louise",
+    "bow-lake",
+    "peyto-lake",
+    "johnston-canyon",
+    "castle-mountain",
+    "morants-curve"
+   ],
+   "season": "all"
+  },
+  {
+   "slug": "shared-tours-heart-of-banff",
+   "url": "https://www.vistachase.com/shared-tours-heart-of-banff",
+   "category": "SHARED",
+   "bookingMode": "BOKUN",
+   "bokunId": null,
+   "destination": "banff-national-park",
+   "mornbyTour": "8 Iconic Stops - Banff in First Class",
+   "mornbyMatch": "proposed",
+   "places": [
+    "bow-falls",
+    "lake-minnewanka",
+    "vermilion-lakes",
+    "banff"
+   ],
+   "season": "all"
+  },
+  {
+   "slug": "shared-tours-banff-yoho",
+   "url": "https://www.vistachase.com/shared-tours-banff-yoho",
+   "category": "SHARED",
+   "bookingMode": "BOKUN",
+   "bokunId": null,
+   "destination": "yoho-national-park",
+   "mornbyTour": null,
+   "mornbyMatch": "none",
+   "places": [
+    "lake-louise",
+    "moraine-lake",
+    "emerald-lake",
+    "natural-bridge",
+    "yoho",
+    "bow-lake",
+    "peyto-lake"
+   ],
+   "season": "all"
+  },
+  {
+   "slug": "shared-tours-icefields-jasper",
+   "url": "https://www.vistachase.com/shared-tours-icefields-jasper",
+   "category": "SHARED",
+   "bookingMode": "BOKUN",
+   "bokunId": null,
+   "destination": "jasper-national-park",
+   "mornbyTour": "Jasper Shared Tour",
+   "mornbyMatch": "proposed",
+   "places": [
+    "icefields-parkway",
+    "bow-lake",
+    "peyto-lake",
+    "athabasca-glacier",
+    "columbia-icefield",
+    "athabasca-falls",
+    "sunwapta-falls"
+   ],
+   "season": "summer"
+  },
+  {
+   "slug": "winter-special",
+   "url": "https://www.vistachase.com/winter-special",
+   "category": "SHARED",
+   "bookingMode": "BOKUN",
+   "bokunId": null,
+   "destination": "banff-national-park",
+   "mornbyTour": null,
+   "mornbyMatch": "none",
+   "places": [
+    "abraham-lake",
+    "lake-louise",
+    "peyto-lake",
+    "bow-lake",
+    "johnston-canyon",
+    "banff"
+   ],
+   "season": "winter"
+  },
+  {
+   "slug": "banff-private-tour",
+   "url": "https://www.vistachase.com/banff-private-tour",
+   "category": "PRIVATE",
+   "bookingMode": "BOKUN",
+   "bokunId": null,
+   "destination": "banff-national-park",
+   "mornbyTour": "Banff Private Tour",
+   "mornbyMatch": "proposed",
+   "places": [
+    "lake-louise",
+    "moraine-lake",
+    "bow-lake",
+    "peyto-lake",
+    "johnston-canyon",
+    "morants-curve",
+    "castle-mountain"
+   ],
+   "season": "all"
+  },
+  {
+   "slug": "icefields-jasper-private-tour",
+   "url": "https://www.vistachase.com/icefields-jasper-private-tour",
+   "category": "PRIVATE",
+   "bookingMode": "BOKUN",
+   "bokunId": null,
+   "destination": "jasper-national-park",
+   "mornbyTour": "Jasper & Columbia Icefield Private Day Tour (Private)",
+   "mornbyMatch": "proposed",
+   "places": [
+    "icefields-parkway",
+    "bow-lake",
+    "peyto-lake",
+    "columbia-icefield",
+    "athabasca-glacier",
+    "athabasca-falls",
+    "sunwapta-falls"
+   ],
+   "season": "summer"
+  },
+  {
+   "slug": "winter-signature-private-tour",
+   "url": "https://www.vistachase.com/winter-signature-private-tour",
+   "category": "PRIVATE",
+   "bookingMode": "BOKUN",
+   "bokunId": null,
+   "destination": "banff-national-park",
+   "mornbyTour": null,
+   "mornbyMatch": "none",
+   "places": [
+    "abraham-lake",
+    "bow-lake",
+    "peyto-lake",
+    "lake-louise",
+    "johnston-canyon",
+    "banff"
+   ],
+   "season": "winter"
+  },
+  {
+   "slug": "banff-yoho-custom-private-tour",
+   "url": "https://www.vistachase.com/banff-yoho-custom-private-tour",
+   "category": "PRIVATE",
+   "bookingMode": "ENQUIRY",
+   "bokunId": null,
+   "destination": "yoho-national-park",
+   "mornbyTour": "Private Customizable Banff Tour (Private)",
+   "mornbyMatch": "proposed",
+   "places": [
+    "lake-louise",
+    "moraine-lake",
+    "emerald-lake",
+    "natural-bridge",
+    "lake-minnewanka",
+    "bow-falls",
+    "johnston-canyon",
+    "yoho"
+   ],
+   "season": "all"
+  },
+  {
+   "slug": "jasper-custom-private-tour",
+   "url": "https://www.vistachase.com/jasper-custom-private-tour",
+   "category": "PRIVATE",
+   "bookingMode": "ENQUIRY",
+   "bokunId": null,
+   "destination": "jasper-national-park",
+   "mornbyTour": null,
+   "mornbyMatch": "none",
+   "places": [
+    "maligne-lake",
+    "spirit-island",
+    "medicine-lake",
+    "maligne-canyon",
+    "athabasca-falls",
+    "jasper",
+    "sunwapta-falls"
+   ],
+   "season": "all"
+  },
+  {
+   "slug": "sunrise-shuttle-to-moraine-lake-and-lake-louise",
+   "url": "https://www.vistachase.com/sunrise-shuttle-to-moraine-lake-and-lake-louise",
+   "category": "SHUTTLE",
+   "bookingMode": "BOKUN",
+   "bokunId": null,
+   "destination": "moraine-lake",
+   "mornbyTour": "Moraine Lake & Lake Louise Shuttle",
+   "mornbyMatch": "proposed",
+   "places": [
+    "moraine-lake",
+    "lake-louise"
+   ],
+   "season": "summer"
+  },
+  {
+   "slug": "full-day-at-lake-louise-and-moraine-lake",
+   "url": "https://www.vistachase.com/full-day-at-lake-louise-and-moraine-lake",
+   "category": "SHUTTLE",
+   "bookingMode": "BOKUN",
+   "bokunId": null,
+   "destination": "moraine-lake",
+   "mornbyTour": "Moraine Lake & Lake Louise Shuttle",
+   "mornbyMatch": "proposed",
+   "places": [
+    "lake-louise",
+    "moraine-lake",
+    "larch-valley",
+    "consolation-lakes"
+   ],
+   "season": "summer"
+  },
+  {
+   "slug": "multi-day-tour-package-for-banff",
+   "url": "https://www.vistachase.com/multi-day-tour-package-for-banff",
+   "category": "MULTIDAY",
+   "bookingMode": "ENQUIRY",
+   "bokunId": null,
+   "destination": "banff-national-park",
+   "mornbyTour": null,
+   "mornbyMatch": "none",
+   "places": [
+    "banff",
+    "yoho",
+    "jasper",
+    "icefields-parkway",
+    "waterton",
+    "canmore"
+   ],
+   "season": "all"
+  }
+ ],
+ "mornbyOnly": [
+  {
+   "mornbyTour": "Columbia Icefield Adventure - Skywalk + 4 Stops",
+   "note": "Shared tour in Mornby with no page on vistachase.com. Decide whether it gets a page."
+  }
+ ]
+}

@@ -185,9 +185,9 @@ export default function AdminDashboardPage() {
                 <Truck className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-white group-hover:text-gold-300 transition-colors">
+                <h2 className="text-sm font-bold text-white group-hover:text-gold-300 transition-colors">
                   Daily Dispatch Manifests
-                </h4>
+                </h2>
                 <p className="text-xs text-slate-400">Driver pickup routes &amp; passenger check-in</p>
               </div>
             </div>
@@ -203,9 +203,9 @@ export default function AdminDashboardPage() {
                 <Calendar className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-white group-hover:text-emerald-300 transition-colors">
+                <h2 className="text-sm font-bold text-white group-hover:text-emerald-300 transition-colors">
                   Hotel Pickup Directory
-                </h4>
+                </h2>
                 <p className="text-xs text-slate-400">25+ Banff, Canmore &amp; Lake Louise stops</p>
               </div>
             </div>
@@ -221,9 +221,9 @@ export default function AdminDashboardPage() {
                 <Ticket className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-white group-hover:text-cyan-300 transition-colors">
+                <h2 className="text-sm font-bold text-white group-hover:text-cyan-300 transition-colors">
                   Inventory &amp; Search Engine
-                </h4>
+                </h2>
                 <p className="text-xs text-slate-400">Live seat availability &amp; departures</p>
               </div>
             </div>
@@ -234,11 +234,17 @@ export default function AdminDashboardPage() {
         {/* Recent Bookings Table */}
         <div className="rounded-2xl bg-forest-900 border border-forest-800 shadow-xl overflow-hidden">
           <div className="p-6 border-b border-forest-800 flex items-center justify-between">
-            <h3 className="text-lg font-bold text-white">Recent Guest Reservations</h3>
+            <h2 className="text-lg font-bold text-white">Recent Guest Reservations</h2>
             <span className="text-xs text-slate-400">Showing latest transactions</span>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Scrollable on narrow screens: focusable so keyboard users can scroll it (WCAG 2.1.1) */}
+          <div
+            className="overflow-x-auto rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-summit-500"
+            tabIndex={0}
+            role="region"
+            aria-label="Latest bookings"
+          >
             <table className="w-full text-left text-sm text-slate-300">
               <thead className="bg-forest-950/80 text-xs uppercase text-slate-400 border-b border-forest-800">
                 <tr>
@@ -292,7 +298,7 @@ export default function AdminDashboardPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={7} className="py-8 text-center text-slate-500 text-xs">
+                    <td colSpan={7} className="py-8 text-center text-slate-400 text-xs">
                       {loading ? "Loading bookings..." : "No bookings recorded yet."}
                     </td>
                   </tr>

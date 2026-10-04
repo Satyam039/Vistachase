@@ -11,13 +11,21 @@ proxied by `next.config.mjs`). Never import backend code here.
 Astryx setup (already done, don't redo):
 - Theme: Vista Chase (`src/themes/vistachase/vistachaseTheme.ts`), which `extends` Stone
   (`src/themes/stone/stoneTheme.ts`, editable source) and only overrides the brand: teal accent
-  (#257780 / text #226d75 for AA contrast; the live #3A9CA6 is icon-only) and Gill Sans headings
-  (system font where available, Montserrat fallback; the live site's licensed Gill Sans webfont files are
-  not bundled). Edit either source file, then `npm run theme:build` regenerates `vistachase.css` /
+  (#257780 / text #226d75 for AA contrast; the live #3A9CA6 is icon-only) and IBM Plex Sans for every
+  family (body, headings; IBM Plex Mono for code). Edit either source file, then `npm run theme:build` regenerates `vistachase.css` /
   `vistachase.js` (never edit generated files). The extended theme is flat: Stone's CSS isn't loaded.
   `npm run theme:check` fails if the generated files are stale.
-- Logo: `src/components/brand/BrandMark.tsx` — `BrandMark` (horse-and-rider mark, nav bar) and `BrandLogo`
-  (full lockup, footer), PNGs in `public/brand` taken from the live Webflow site.
+- Logo: `src/components/brand/BrandMark.tsx` — `BrandMark` (horse-and-rider mark in the nav; `white` and
+  `emblem` variants) and `BrandLogo` (full lockup, footer). Files are in `backend/media/brand`.
+- Images: every image is served by the backend from `backend/media` at `/media/...` (`next.config.mjs`
+  rewrites `/media/*` to the backend like `/api/*`; `next/image` takes the `/media/...` path as a local src).
+  There are no remote image hosts: don't add Webflow/Unsplash URLs, add the file to backend/media instead
+  (`backend/scripts/media/build-media.mjs`, catalogued in `backend/media/manifest.json`, queryable at
+  `/api/media?collection=&place=&tag=`).
+- Brand colours (live vistachase.com names): Ocean Teal `ocean-500` #3A9CA6, Golden Summit `summit-500`
+  #F5BF03, Golden Tint `summit-300` #FFE085, Obsidian Black `obsidian-900` #1C1F23, Frost White
+  `obsidian-50` #F9F9F7 (tailwind.config.ts). Use these tokens, never raw hex (`bg-[#3A9CA6]`); the legacy
+  `forest-*` / `gold-*` names are aliases of the brand scales.
 - Responsive scale lives in the theme's `adaptations`, one rule per Astryx width tier
   (body px / H1 px / page radius / page margin), measured in the browser except the 768–1023 row:
     375 (<640)       14 / 21 / 12px / 16px
@@ -38,9 +46,9 @@ Astryx setup (already done, don't redo):
 - Illustrations: `src/components/illustrations` (NoResults, NoTrips, NotFound, ErrorState, Welcome),
   token-colored and sized per Astryx guidelines (`size="sm|md|lg"` = 120/180/240px). Pass them to
   `EmptyState`'s `icon` slot. New illustrations must reuse `Illustration` + token fill/stroke classes.
-- Fonts are self-hosted with Fontsource (`src/app/fonts.css`), not next/font: next/font requires SWC and
-  the StyleX Babel config turns SWC off. fonts.css defines --font-inter, --font-montserrat (site) and
-  --font-figtree, --font-stone-heading, --font-jetbrains-mono (Stone theme).
+- Typeface: IBM Plex Sans everywhere, self-hosted with Fontsource (`src/app/fonts.css`, --font-plex-sans and
+  --font-plex-mono), not next/font: next/font requires SWC and the StyleX Babel config turns SWC off.
+  Tailwind's sans/serif/display/editorial all map to IBM Plex Sans and mono to IBM Plex Mono.
 - StyleX is compiled (official Astryx/StyleX Next.js setup): `babel.config.js` (@stylexjs/babel-plugin,
   `@/*` alias) + `postcss.config.js` (@stylexjs/postcss-plugin) + `@stylex;` at the end of globals.css.
   `stylex.create()`, `xstyle` and the typed tokens in `@astryxdesign/core/theme/tokens.stylex` all work.
@@ -79,6 +87,26 @@ Astryx setup (already done, don't redo):
   because the existing site is light-only.
 - CSS cascade layers: order is declared in `src/app/layers.css` (imported first in layout.tsx):
   `reset, tw-preflight, astryx-base, astryx-theme`, with Tailwind utilities unlayered. Keep it that way.
+
+Accessibility (WCAG 2.2 AA) — `npm run a11y` (frontend + backend running, Chrome installed) audits every
+route at 320px and 1440px: axe WCAG 2.0–2.2 A/AA, reflow at 320px, Tab order (visible focus, focus hidden
+behind the sticky header, traps). Report in `a11y-report/summary.md`. Keep it at zero findings:
+- Text colour: brand Ocean Teal `ocean-500` (#3A9CA6) is 3.2:1 on white, so never use it for text on light
+  surfaces: use `ocean-600` (#257780). On dark surfaces use `ocean-300`/`ocean-400`. `slate-400` text only
+  on dark surfaces; on white use `slate-500` or darker. Gold (`summit-*`) is a fill, not a text colour on light.
+- The sticky header sits at z-index 40 (theme `app-shell-header`) and SiteFrame sets `scroll-padding-top`
+  from its height, so focused elements never land under it. Don't give page sections a z-index above 40.
+- Don't add a `<main>`: AppShell renders the main landmark and the skip link.
+- Form fields: a `<label htmlFor>` tied to every control (or `aria-label`), `autoComplete` on identity
+  fields, errors in `role="alert"`. Icon-only buttons need `aria-label`.
+- Motion: Tailwind ping/pulse/bounce are finite (tailwind.config.ts); reduced motion turns animation off
+  (globals.css).
+- Video: clips live in `backend/media/videos` (MP4 + `-poster.webp`, `-1080.mp4` for hero clips) and come
+  from the API: `tour.videos` (clips of the places a tour visits) and `destination.heroVideo`. Play them only
+  through `cinematic/AmbientVideo` (`src`, `srcHd`, `poster`): it loads when on screen, pauses off screen, has
+  a pause button, and stays on the poster with reduced motion or data saver. Inside it the parent must be
+  `position: relative`.
+- Client-component pages set their title in a sibling `layout.tsx` (every page needs its own title).
 
 Building pages from templates (https://astryx.atmeta.com/templates):
 1. Pick the template: `npm run astryx -- build "<what the page does>"`, or choose one by id from

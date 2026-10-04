@@ -32,7 +32,7 @@ const FEATURED_TOURS: FeaturedTour[] = [
     rating: "4.9",
     reviewCount: 380,
     priceFrom: "$189 CAD",
-    image: "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/690a1613098a903d97414ebd_Image%20-%202025-11-04T210434.975.png",
+    image: "/media/site/image-2025-11-04t210434-975.webp",
     slug: "banff-highlights-tour",
     highlights: ["Moraine Lake Shoreline", "Lake Louise Chateau", "Bow Falls & Castle Mountain"],
   },
@@ -46,7 +46,7 @@ const FEATURED_TOURS: FeaturedTour[] = [
     rating: "5.0",
     reviewCount: 215,
     priceFrom: "$1,149 CAD",
-    image: "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/69108a62d2ab543e335612b6_dcb45221eefae27970a0c11f4f7fc0eb3edb65d1%20(1).jpg",
+    image: "/media/site/dcb45221eefae27970a0c11f4f7fc0eb3edb65d1-1.webp",
     slug: "banff-private-tour",
     highlights: ["Custom Pace & Itinerary", "GMC Yukon Denali XL VIP", "Door-to-Door Canmore/Banff Pickup"],
   },
@@ -60,7 +60,7 @@ const FEATURED_TOURS: FeaturedTour[] = [
     rating: "4.9",
     reviewCount: 420,
     priceFrom: "$79 CAD",
-    image: "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/68e75d228ead1330ef50075f_Moraine-Lake-Perfect-Reflection.webp",
+    image: "/media/photos/moraine-lake-perfect-reflection.webp",
     slug: "shuttles",
     highlights: ["Arrival Before Public Access", "Calm Lake Reflection Window", "Bypass Road Restrictions"],
   },
@@ -74,7 +74,7 @@ const FEATURED_TOURS: FeaturedTour[] = [
     rating: "5.0",
     reviewCount: 165,
     priceFrom: "$1,399 CAD",
-    image: "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/691010a937bd1626bd437647_Horse%20Background%20Image%20V3.png",
+    image: "/media/brand/horse-rider-background.png",
     slug: "icefields-jasper-private-tour",
     highlights: ["Peyto & Bow Lakes", "Athabasca Glacier View", "Mistaya Canyon Exploration"],
   },
@@ -142,10 +142,10 @@ export function FeaturedExperiences() {
                   <div>
                     {/* Rating & Duration Meta */}
                     <div className="flex items-center justify-between text-xs text-slate-500 mb-2.5">
-                      <div className="flex items-center gap-1 text-summit-600 font-bold">
-                        <Star className="w-3.5 h-3.5 fill-summit-500" />
+                      <div className="flex items-center gap-1 text-obsidian-900 font-bold">
+                        <Star className="w-3.5 h-3.5 text-summit-500 fill-summit-500" aria-hidden="true" />
                         <span>{tour.rating}</span>
-                        <span className="text-slate-400 font-normal">({tour.reviewCount})</span>
+                        <span className="text-slate-500 font-normal">({tour.reviewCount})</span>
                       </div>
                       <div className="flex items-center gap-1 text-slate-600">
                         <Clock className="w-3.5 h-3.5" />

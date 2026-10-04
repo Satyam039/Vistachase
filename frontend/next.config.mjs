@@ -12,25 +12,28 @@ const nextConfig = {
   // frontend/ is a standalone app; don't let Next infer a parent folder as the workspace root
   outputFileTracingRoot: path.dirname(fileURLToPath(import.meta.url)),
   reactStrictMode: true,
+  // No remote image hosts: every image is served by the backend at /media (rewrite below).
   images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'cdn.prod.website-files.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
-      },
-    ],
+    remotePatterns: [],
   },
-  // Browser requests to /api/* are proxied to the Express backend, so client code
+  // Browser requests to /api/* and /media/* are proxied to the Express backend, so client code
   // keeps using relative URLs and the vc_token auth cookie stays first-party.
   async rewrites() {
     return [
       {
         source: '/api/:path*',
         destination: `${BACKEND_URL}/api/:path*`,
+      },
+      // Every site image lives in the backend (backend/media). next/image requests
+      // /media/... as a local path, and this rewrite fetches it from the backend.
+      {
+        source: '/media/:path*',
+        destination: `${BACKEND_URL}/media/:path*`,
+      },
+      // Browsers still ask for /favicon.ico directly.
+      {
+        source: '/favicon.ico',
+        destination: `${BACKEND_URL}/media/brand/favicon-32.png`,
       },
     ];
   },

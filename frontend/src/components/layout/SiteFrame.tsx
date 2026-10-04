@@ -154,7 +154,7 @@ function ExperiencesMegaMenu() {
           <TopNavMegaMenuFeaturedCard
             title="Banff Highlights Tour"
             description="Ranked the #6 experience in Canada by TripAdvisor travelers."
-            image="https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/68e75d228ead1330ef50075f_Moraine-Lake-Perfect-Reflection.webp"
+            image="/media/photos/moraine-lake-perfect-reflection.webp"
             imageAlt="Moraine Lake and the Valley of the Ten Peaks"
             linkLabel="See the tour"
             linkHref="/banff-highlights-tour"
@@ -174,6 +174,25 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setIsMobileNavOpen(false);
   }, [pathname]);
+
+  // The header is sticky, so anything scrolled into view under it would be hidden. Reserve its
+  // height as scroll padding: focused elements and #anchors then land below the header
+  // (WCAG 2.4.11 Focus Not Obscured). Tracks the header as the banner is dismissed or it wraps.
+  useEffect(() => {
+    const header = document.querySelector<HTMLElement>(".astryx-app-shell-header");
+    if (!header) return;
+    const root = document.documentElement;
+    const update = () => {
+      root.style.scrollPaddingTop = `${Math.ceil(header.getBoundingClientRect().height) + 8}px`;
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(header);
+    return () => {
+      observer.disconnect();
+      root.style.scrollPaddingTop = "";
+    };
+  }, []);
 
   return (
     <AppShell

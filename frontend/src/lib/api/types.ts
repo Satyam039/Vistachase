@@ -50,6 +50,17 @@ export interface VehicleOption {
   seats: number;
 }
 
+/** A background clip served by the backend (backend/media/videos). */
+export interface PageVideo {
+  id: string;
+  src: string;
+  /** 1080p encode for large screens (hero clips only). */
+  srcHd: string | null;
+  poster: string;
+  title: string;
+  alt: string;
+}
+
 export interface TourWithAvailability {
   id: string;
   slug: string;
@@ -64,6 +75,8 @@ export interface TourWithAvailability {
   whatToBring: string[];
   featuredImage: string;
   galleryImages: string[];
+  /** Clips of the places the tour visits, best match first. */
+  videos: PageVideo[];
   basePrice: number;
   currency: string;
   minGroupSize: number;
@@ -71,8 +84,8 @@ export interface TourWithAvailability {
   isFeatured: boolean;
   rating: number;
   reviewCount: number;
-  /** Bokun experience the live site sells this product through (null for enquiry-only products). */
-  bokunExperienceId: string | null;
+  /** Bokun experience ID from the product mapping table; null until Vista Chase provides it. */
+  bokunId: string | null;
   bookingMode: "BOKUN" | "ENQUIRY";
   /** PERSON: price per guest. GROUP: price per vehicle / private group. */
   priceUnit: "PERSON" | "GROUP";
@@ -111,6 +124,8 @@ export interface DestinationSummary {
   region: string;
   description: string;
   heroImage: string;
+  /** Hero clip for the destination, when there is one. */
+  heroVideo?: PageVideo | null;
   isFeatured: boolean;
   metaTitle: string | null;
   metaDescription: string | null;

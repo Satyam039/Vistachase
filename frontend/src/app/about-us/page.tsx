@@ -14,12 +14,12 @@ export const metadata: Metadata = {
 
 export default function AboutUsPage() {
   return (
-    <div className="min-h-screen bg-[#F9F9F7] text-[#1C1F23]">
+    <div className="min-h-screen bg-obsidian-50 text-obsidian-900">
       {/* 01. EDITORIAL HERO BANNER */}
-      <section className="bg-[#0C1F21] text-white pt-24 pb-20 px-4 sm:px-6 lg:px-12 relative overflow-hidden border-b border-white/10">
+      <section className="bg-ocean-900 text-white pt-24 pb-20 px-4 sm:px-6 lg:px-12 relative overflow-hidden border-b border-white/10">
         <div className="max-w-4xl mx-auto space-y-6 text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-[#FFE085] text-xs font-semibold uppercase tracking-wider border border-white/15">
-            <Award className="w-4 h-4 text-[#F5BF03]" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-summit-300 text-xs font-semibold uppercase tracking-wider border border-white/15">
+            <Award className="w-4 h-4 text-summit-500" />
             <span>TripAdvisor Best of the Best 2025 · #6 in Canada</span>
           </div>
 
@@ -38,8 +38,8 @@ export default function AboutUsPage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-20 space-y-20">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-6">
-            <span className="text-xs uppercase tracking-widest text-[#3A9CA6] font-bold">Our Heritage</span>
-            <h2 className="text-3xl sm:text-4xl font-light font-serif text-[#1C1F23] leading-tight">
+            <span className="text-xs uppercase tracking-widest text-ocean-600 font-bold">Our Heritage</span>
+            <h2 className="text-3xl sm:text-4xl font-light font-serif text-obsidian-900 leading-tight">
               Why We Built Vista Chase: Elevating the Rockies Experience
             </h2>
             <div className="space-y-4 text-slate-700 leading-relaxed text-sm sm:text-base">
@@ -62,14 +62,14 @@ export default function AboutUsPage() {
 
           <div className="relative aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl bg-slate-900 border border-slate-200">
             <Image
-              src="https://cdn.prod.website-files.com/66045d65f543fe7fe5bf3b3b/66187747e7a83d3e698eaef9_vsc-2023-oct-123.jpg"
+              src="/media/photos/guide-with-guests.webp"
               alt="Certified Vista Chase mountain guide overlooking Bow Valley"
               fill
               className="object-cover"
               sizes="(max-width: 1024px) 100vw, 600px"
             />
             <div className="absolute bottom-4 left-4 right-4 p-4 rounded-2xl bg-black/60 backdrop-blur-md border border-white/10 text-white text-xs">
-              <span className="font-bold text-[#FFE085] block">Local Guides · Lifelong Bow Valley Residents</span>
+              <span className="font-bold text-summit-300 block">Local Guides · Lifelong Bow Valley Residents</span>
               <span className="text-slate-300">Certified interpretive guides with wilderness first responder training</span>
             </div>
           </div>
@@ -78,10 +78,10 @@ export default function AboutUsPage() {
         {/* 03. CORE BRAND PILLARS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-4">
           <div className="p-8 rounded-3xl bg-white border border-slate-200/90 shadow-sm space-y-4">
-            <div className="w-12 h-12 rounded-2xl bg-[#0C1F21] text-[#FFE085] flex items-center justify-center">
+            <div className="w-12 h-12 rounded-2xl bg-ocean-900 text-summit-300 flex items-center justify-center">
               <ShieldCheck className="w-6 h-6" />
             </div>
-            <h3 className="text-xl font-serif font-medium text-[#1C1F23]">Licensed Commercial Access</h3>
+            <h3 className="text-xl font-serif font-medium text-obsidian-900">Licensed Commercial Access</h3>
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
               Official Parks Canada commercial operating permits guarantee direct vehicle corridor access to Moraine
               Lake and Lake Louise. Fully insured and provincially certified.
@@ -89,10 +89,10 @@ export default function AboutUsPage() {
           </div>
 
           <div className="p-8 rounded-3xl bg-white border border-slate-200/90 shadow-sm space-y-4">
-            <div className="w-12 h-12 rounded-2xl bg-[#0C1F21] text-[#FFE085] flex items-center justify-center">
+            <div className="w-12 h-12 rounded-2xl bg-ocean-900 text-summit-300 flex items-center justify-center">
               <Users className="w-6 h-6" />
             </div>
-            <h3 className="text-xl font-serif font-medium text-[#1C1F23]">Intimate Small Groups (Max 12)</h3>
+            <h3 className="text-xl font-serif font-medium text-obsidian-900">Intimate Small Groups (Max 12)</h3>
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
               We never operate 50-passenger mass tour coaches. Small group sizes mean personal attention from your guide,
               unhurried photo opportunities, and light environmental impact.
@@ -100,10 +100,10 @@ export default function AboutUsPage() {
           </div>
 
           <div className="p-8 rounded-3xl bg-white border border-slate-200/90 shadow-sm space-y-4">
-            <div className="w-12 h-12 rounded-2xl bg-[#0C1F21] text-[#FFE085] flex items-center justify-center">
+            <div className="w-12 h-12 rounded-2xl bg-ocean-900 text-summit-300 flex items-center justify-center">
               <Heart className="w-6 h-6" />
             </div>
-            <h3 className="text-xl font-serif font-medium text-[#1C1F23]">Alpine Hospitality</h3>
+            <h3 className="text-xl font-serif font-medium text-obsidian-900">Alpine Hospitality</h3>
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
               Hot French roast coffee, cocoa, clean mountain shuttles, and live WhatsApp shuttle corridor tracking
               designed around guest comfort at every mile.
@@ -112,9 +112,9 @@ export default function AboutUsPage() {
         </div>
 
         {/* 04. CALL TO ACTION */}
-        <div className="p-10 rounded-3xl bg-[#0C1F21] text-white flex flex-col md:flex-row md:items-center justify-between gap-6 border border-white/10">
+        <div className="p-10 rounded-3xl bg-ocean-900 text-white flex flex-col md:flex-row md:items-center justify-between gap-6 border border-white/10">
           <div className="space-y-2 max-w-xl">
-            <span className="text-xs uppercase tracking-widest text-[#3A9CA6] font-bold">Ready to Explore?</span>
+            <span className="text-xs uppercase tracking-widest text-ocean-300 font-bold">Ready to Explore?</span>
             <h3 className="text-2xl sm:text-3xl font-serif font-light text-white">
               Discover the Canadian Rockies Your Way
             </h3>
@@ -124,7 +124,7 @@ export default function AboutUsPage() {
           </div>
           <Link
             href="/#featured-experiences"
-            className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest text-[#1C1F23] golden-summit-btn shrink-0 shadow-lg"
+            className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest text-obsidian-900 golden-summit-btn shrink-0 shadow-lg"
           >
             <span>View All Tours</span>
             <ChevronRight className="w-4 h-4" />

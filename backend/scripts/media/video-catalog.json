@@ -1,0 +1,177 @@
+[
+ {
+  "file": "Videos 2/summer-in-lake-louise-banff-national-park-canada-2026-02-09-17-44-25-utc.mp4",
+  "id": "lake-louise-summer",
+  "title": "Lake Louise in summer",
+  "alt": "Turquoise Lake Louise below Victoria Glacier, with walkers on the lakeshore path",
+  "places": [
+   "lake-louise",
+   "banff"
+  ],
+  "tags": [
+   "summer"
+  ],
+  "hero": true,
+  "start": 0,
+  "duration": 15
+ },
+ {
+  "file": "Videos 2/emerald-lakeyoho-national-park-in-canada-emerald-l-2025-12-17-23-54-53-utc.mov",
+  "id": "emerald-lake-canoes",
+  "title": "Emerald Lake canoes",
+  "alt": "Red canoes at the Emerald Lake dock, with the lodge across the water in Yoho National Park",
+  "places": [
+   "yoho",
+   "emerald-lake"
+  ],
+  "tags": [
+   "summer",
+   "paddling"
+  ],
+  "hero": false,
+  "start": 0,
+  "duration": 15
+ },
+ {
+  "file": "Videos 2/emerald-lake-yoho-national-park-in-canada-emerald-l-2025-12-17-04-11-21-utc.mov",
+  "id": "emerald-lake-lodge",
+  "title": "Emerald Lake Lodge",
+  "alt": "Emerald Lake Lodge mirrored in calm jade water in Yoho National Park",
+  "places": [
+   "yoho",
+   "emerald-lake"
+  ],
+  "tags": [
+   "summer"
+  ],
+  "hero": false,
+  "start": 0,
+  "duration": 13
+ },
+ {
+  "file": "Videos 2/athabasca-falls-on-the-upper-athabasca-river-in-ja-2025-12-17-04-39-47-utc.mov",
+  "id": "athabasca-falls",
+  "title": "Athabasca Falls",
+  "alt": "The Athabasca River pouring through its gorge below Mount Kerkeslin in Jasper National Park",
+  "places": [
+   "jasper",
+   "icefields-parkway",
+   "athabasca-falls"
+  ],
+  "tags": [
+   "summer",
+   "waterfall"
+  ],
+  "hero": false,
+  "start": 0,
+  "duration": 15
+ },
+ {
+  "file": "Videos 2/summer-in-athabasca-falls-jasper-national-park-c-2026-02-27-01-43-22-utc.mp4",
+  "id": "athabasca-falls-rainbow",
+  "title": "Rainbow over Athabasca Falls",
+  "alt": "Spray and a rainbow over Athabasca Falls in summer",
+  "places": [
+   "jasper",
+   "icefields-parkway",
+   "athabasca-falls"
+  ],
+  "tags": [
+   "summer",
+   "waterfall"
+  ],
+  "hero": false,
+  "start": 0,
+  "duration": 15
+ },
+ {
+  "file": "Videos 2/upper-sunwapta-falls-in-jasper-national-park-canad-2025-12-17-11-17-34-utc.mov",
+  "id": "sunwapta-falls",
+  "title": "Sunwapta Falls",
+  "alt": "Sunwapta Falls dropping into a forested canyon on the Icefields Parkway",
+  "places": [
+   "jasper",
+   "icefields-parkway",
+   "sunwapta-falls"
+  ],
+  "tags": [
+   "summer",
+   "waterfall"
+  ],
+  "hero": false,
+  "start": 0,
+  "duration": 15
+ },
+ {
+  "file": "Videos 2/tourist-boat-cruising-maligne-lake-with-snow-cappe-2026-04-22-19-12-18-utc.mov",
+  "id": "maligne-lake-cruise",
+  "title": "Maligne Lake cruise",
+  "alt": "A cruise boat crossing Maligne Lake below snow-capped peaks in Jasper National Park",
+  "places": [
+   "jasper",
+   "maligne",
+   "maligne-lake",
+   "spirit-island"
+  ],
+  "tags": [
+   "summer",
+   "boat"
+  ],
+  "hero": false,
+  "start": 0,
+  "duration": 15
+ },
+ {
+  "file": "Videos 2/grizzly-bear-with-cub-walk-on-a-road-in-jasper-nat-2025-12-17-23-30-00-utc.mov",
+  "id": "grizzly-bear-cub-jasper",
+  "title": "Grizzly bear and cub",
+  "alt": "A grizzly bear and her cub walking along a forest road in Jasper National Park",
+  "places": [
+   "jasper"
+  ],
+  "tags": [
+   "wildlife",
+   "bear"
+  ],
+  "hero": false,
+  "start": 0,
+  "duration": 14
+ },
+ {
+  "file": "Videos 2/snowy-resort-hotel-castle-in-the-canadian-rocky-mo-2025-12-17-05-32-07-utc.mov",
+  "id": "fairmont-banff-springs-winter",
+  "title": "Fairmont Banff Springs in winter",
+  "alt": "The Fairmont Banff Springs hotel in falling snow, framed by frosted trees",
+  "places": [
+   "banff"
+  ],
+  "tags": [
+   "winter",
+   "hotel"
+  ],
+  "hero": false,
+  "start": 0,
+  "duration": 7
+ },
+ {
+  "file": "Videos/Vermillion-lakes-banff-national-park-landscape-in-winter-2025-12-17-16-06-05-utc.mov",
+  "id": "vermilion-lakes",
+  "title": "Vermilion Lakes",
+  "alt": "Vermilion Lakes and a snow-dusted Mount Rundle on a cloudy day near Banff",
+  "places": [
+   "banff",
+   "vermilion-lakes"
+  ],
+  "tags": [
+   "autumn"
+  ],
+  "hero": false,
+  "start": 0,
+  "duration": 8
+ },
+ {
+  "file": "Videos 2/wild-bighorn-sheep-in-badlands-national-park-2026-01-20-15-55-43-utc.mp4",
+  "exclude": true,
+  "reason": "Bighorn sheep in Badlands National Park (South Dakota, USA), not the Canadian Rockies"
+ }
+]

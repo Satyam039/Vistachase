@@ -23,6 +23,7 @@ RUN adduser --system --uid 1001 api
 
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/media ./media
 COPY --from=builder --chown=api:nodejs /app/dist ./dist
 COPY --from=builder /app/package.json ./package.json
 

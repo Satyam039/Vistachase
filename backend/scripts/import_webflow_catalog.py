@@ -18,22 +18,11 @@ import sys
 sys.path.insert(0, os.path.dirname(__file__))
 from minidom import parse  # noqa: E402
 
-# Live URL slug → catalog settings that the page itself doesn't state.
-PRODUCTS = {
-    "banff-highlights-tour": {"category": "SHARED", "destination": "banff-national-park", "bokun": "1142134"},
-    "shared-tours-heart-of-banff": {"category": "SHARED", "destination": "banff-national-park", "bokun": "1114197"},
-    "shared-tours-banff-yoho": {"category": "SHARED", "destination": "yoho-national-park", "bokun": "1113741"},
-    "shared-tours-icefields-jasper": {"category": "SHARED", "destination": "jasper-national-park", "bokun": "1114201"},
-    "winter-special": {"category": "SHARED", "destination": "banff-national-park", "bokun": "1114208"},
-    "banff-private-tour": {"category": "PRIVATE", "destination": "banff-national-park", "bokun": "1167962"},
-    "icefields-jasper-private-tour": {"category": "PRIVATE", "destination": "jasper-national-park", "bokun": "856008"},
-    "winter-signature-private-tour": {"category": "PRIVATE", "destination": "banff-national-park", "bokun": "1136438"},
-    "banff-yoho-custom-private-tour": {"category": "PRIVATE", "destination": "yoho-national-park", "bokun": None},
-    "jasper-custom-private-tour": {"category": "PRIVATE", "destination": "jasper-national-park", "bokun": None},
-    "sunrise-shuttle-to-moraine-lake-and-lake-louise": {"category": "SHUTTLE", "destination": "moraine-lake", "bokun": "928996"},
-    "full-day-at-lake-louise-and-moraine-lake": {"category": "SHUTTLE", "destination": "moraine-lake", "bokun": "933218"},
-    "multi-day-tour-package-for-banff": {"category": "MULTIDAY", "destination": "banff-national-park", "bokun": None},
-}
+# Live URL slug → catalog settings the page itself doesn't state (category, destination,
+# booking mode, Bokun ID), from the product mapping table.
+MAP_FILE = os.path.join(os.path.dirname(__file__), "..", "prisma", "catalog", "product-map.json")
+with open(MAP_FILE, encoding="utf-8") as _f:
+    PRODUCTS = {p["slug"]: p for p in json.load(_f)["products"]}
 
 
 def cls(name):
@@ -324,8 +313,8 @@ def extract(slug, source):
         "slug": slug,
         "category": conf["category"],
         "destination": conf["destination"],
-        "bokunExperienceId": conf["bokun"],
-        "bookingMode": "BOKUN" if conf["bokun"] else "ENQUIRY",
+        "bokunId": conf["bokunId"],
+        "bookingMode": conf["bookingMode"],
         "title": title.text() if title else slug,
         "metaTitle": html.unescape(re.sub(r"\s+", " ", title_tag.group(1)).strip()) if title_tag else None,
         "metaDescription": html.unescape(meta_desc.group(1)) if meta_desc else None,

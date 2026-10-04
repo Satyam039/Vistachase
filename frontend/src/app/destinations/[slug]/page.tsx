@@ -4,6 +4,7 @@ import Link from "next/link";
 import { getDestinationBySlug } from "@/lib/api/catalog";
 import { MapPin, ChevronRight, Clock, Users, Sparkles, ArrowRight, ShieldCheck } from "lucide-react";
 import type { Metadata } from "next";
+import { AmbientVideo } from "@/components/cinematic/AmbientVideo";
 
 const DESTINATION_STORIES: Record<
   string,
@@ -18,17 +19,17 @@ const DESTINATION_STORIES: Record<
       {
         name: "Bow Falls & Surprise Corner",
         description: "The thundering glacier-fed cascades beneath the historic Fairmont Banff Springs Hotel.",
-        image: "https://images.unsplash.com/photo-1510312305653-8ed496efae75?q=80&w=1000&auto=format&fit=crop",
+        image: "/media/photos/bow-falls.webp",
       },
       {
         name: "Johnston Canyon Lower & Upper Falls",
         description: "Suspended catwalks hugging deep limestone canyon walls and dramatic turquoise pools.",
-        image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=1000&auto=format&fit=crop",
+        image: "/media/photos/johnston-canyon.webp",
       },
       {
         name: "Mount Norquay & Vermilion Lakes",
         description: "Panoramic alpine lookouts reflecting Mount Rundle in tranquil wetland waters.",
-        image: "https://cdn.prod.website-files.com/66045d65f543fe7fe5bf3b3b/66187747e7a83d3e698eaef9_vsc-2023-oct-123.jpg",
+        image: "/media/photos/bow-falls.webp",
       },
     ],
   },
@@ -38,17 +39,17 @@ const DESTINATION_STORIES: Record<
       {
         name: "Moraine Lake & Valley of the Ten Peaks",
         description: "The world's most recognizable glacier-fed turquoise waters. Guaranteed commercial access with Vista Chase.",
-        image: "https://cdn.prod.website-files.com/66045d65f543fe7fe5bf3b3b/661a357eb4520970ef37baae_Lake%20Moraine-min.jpg",
+        image: "/media/photos/moraine-lake-perfect-reflection.webp",
       },
       {
         name: "Lake Louise & Victoria Glacier",
         description: "Iconic alpine shoreline, red canoes, and dramatic peaks flanking the Fairmont Chateau.",
-        image: "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?q=80&w=1000&auto=format&fit=crop",
+        image: "/media/photos/lake-louise-red-canoes.webp",
       },
       {
         name: "Morant's Curve Scenic Lookout",
         description: "The historic Bow River railway bend where Canadian Pacific trains wind through mountain majesty.",
-        image: "https://cdn.prod.website-files.com/66045d65f543fe7fe5bf3b3b/661f77d337ee36fafe108e42_vsc-2023-oct-22.jpg",
+        image: "/media/photos/morants-curve-summer.webp",
       },
     ],
   },
@@ -58,12 +59,12 @@ const DESTINATION_STORIES: Record<
       {
         name: "Emerald Lake",
         description: "Vivid jade waters enclosed by the President Range, offering quiet morning walking paths.",
-        image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1000&auto=format&fit=crop",
+        image: "/media/photos/emerald-lake-island.webp",
       },
       {
         name: "Natural Bridge",
         description: "An ancient rock formation carved by the relentless force of the Kicking Horse River.",
-        image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=1000&auto=format&fit=crop",
+        image: "/media/photos/natural-bridge.webp",
       },
     ],
   },
@@ -73,12 +74,12 @@ const DESTINATION_STORIES: Record<
       {
         name: "Peyto Lake & Bow Summit",
         description: "The iconic wolf-shaped glacial lake viewed from the highest highway elevation in the Canadian national parks.",
-        image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=1000&auto=format&fit=crop",
+        image: "/media/photos/peyto-lake.webp",
       },
       {
         name: "Columbia Icefield & Athabasca Glacier",
         description: "The largest sub-polar icefield in North America, feeding water to three distinct oceans.",
-        image: "https://images.unsplash.com/photo-1503614472-8c93d56e92ce?q=80&w=1000&auto=format&fit=crop",
+        image: "/media/photos/athabasca-glacier.webp",
       },
     ],
   },
@@ -117,9 +118,9 @@ export default async function DestinationDetailPage({
   };
 
   return (
-    <div className="min-h-screen bg-[#F9F9F7] text-[#1C1F23]">
+    <div className="min-h-screen bg-obsidian-50 text-obsidian-900">
       {/* 01. CINEMATIC DESTINATION HERO */}
-      <section className="relative bg-[#0C1F21] text-white pt-28 pb-20 px-4 sm:px-6 lg:px-12 overflow-hidden border-b border-white/10">
+      <section className="relative bg-ocean-900 text-white pt-28 pb-20 px-4 sm:px-6 lg:px-12 overflow-hidden border-b border-white/10">
         <div className="absolute inset-0 z-0">
           <Image
             src={dest.heroImage}
@@ -129,24 +130,34 @@ export default async function DestinationDetailPage({
             className="object-cover opacity-35"
             sizes="100vw"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0C1F21] via-[#0C1F21]/70 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-ocean-900 via-ocean-900/70 to-transparent" />
         </div>
+        {dest.heroVideo && (
+          // Same 35% opacity as the photo over the dark hero, so text contrast is unchanged.
+          <AmbientVideo
+            src={dest.heroVideo.src}
+            srcHd={dest.heroVideo.srcHd}
+            poster={dest.heroVideo.poster}
+            className="absolute inset-0 z-0 h-full w-full object-cover opacity-35"
+            buttonClassName="bottom-4 right-4"
+          />
+        )}
 
         <div className="relative z-10 max-w-7xl mx-auto space-y-6">
-          <nav className="flex items-center gap-2 text-xs uppercase tracking-widest text-slate-400">
-            <Link href="/" className="hover:text-white transition-colors">
+          <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-x-2 text-xs uppercase tracking-widest text-slate-300">
+            <Link href="/" className="inline-flex min-h-6 items-center hover:text-white transition-colors">
               Home
             </Link>
-            <ChevronRight className="w-3 h-3 text-slate-600" />
-            <Link href="/destinations" className="hover:text-white transition-colors">
+            <ChevronRight className="w-3 h-3 text-slate-500" aria-hidden="true" />
+            <Link href="/destinations" className="inline-flex min-h-6 items-center hover:text-white transition-colors">
               Destinations
             </Link>
-            <ChevronRight className="w-3 h-3 text-slate-600" />
-            <span className="text-[#FFE085]">{dest.name}</span>
+            <ChevronRight className="w-3 h-3 text-slate-500" aria-hidden="true" />
+            <span aria-current="page" className="text-summit-300">{dest.name}</span>
           </nav>
 
           <div className="max-w-3xl space-y-4">
-            <span className="text-xs uppercase tracking-widest text-[#3A9CA6] font-bold block">
+            <span className="text-xs uppercase tracking-widest text-ocean-300 font-bold block">
               {story.tagline}
             </span>
             <h1 className="text-4xl sm:text-6xl font-light font-serif tracking-tight text-white leading-[1.1]">
@@ -163,8 +174,8 @@ export default async function DestinationDetailPage({
       {story.landmarks.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-16 space-y-8">
           <div className="space-y-2">
-            <span className="text-xs uppercase tracking-widest text-[#3A9CA6] font-bold">Iconic Sights</span>
-            <h2 className="text-3xl sm:text-4xl font-light font-serif text-[#1C1F23]">
+            <span className="text-xs uppercase tracking-widest text-ocean-600 font-bold">Iconic Sights</span>
+            <h2 className="text-3xl sm:text-4xl font-light font-serif text-obsidian-900">
               What Makes {dest.name} Unforgettable
             </h2>
           </div>
@@ -185,7 +196,7 @@ export default async function DestinationDetailPage({
                   />
                 </div>
                 <div className="p-6 space-y-2">
-                  <h3 className="text-lg font-serif font-medium text-[#1C1F23]">{landmark.name}</h3>
+                  <h3 className="text-lg font-serif font-medium text-obsidian-900">{landmark.name}</h3>
                   <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">{landmark.description}</p>
                 </div>
               </div>
@@ -198,23 +209,23 @@ export default async function DestinationDetailPage({
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-16 space-y-8 border-t border-slate-200/70">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div className="space-y-1">
-            <span className="text-xs uppercase tracking-widest text-[#3A9CA6] font-bold">Curated Tours &amp; Shuttles</span>
-            <h2 className="text-3xl font-light font-serif text-[#1C1F23]">Experiences in {dest.name}</h2>
+            <span className="text-xs uppercase tracking-widest text-ocean-600 font-bold">Curated Tours &amp; Shuttles</span>
+            <h2 className="text-3xl font-light font-serif text-obsidian-900">Experiences in {dest.name}</h2>
           </div>
           <span className="text-xs text-slate-500 font-medium">Bókun System of Record Integration</span>
         </div>
 
         {dest.tours.length === 0 ? (
           <div className="p-12 text-center bg-white rounded-3xl border border-slate-200 shadow-sm max-w-xl mx-auto space-y-4">
-            <Sparkles className="w-8 h-8 text-[#F5BF03] mx-auto" />
-            <h3 className="text-xl font-serif text-[#1C1F23]">Upcoming Seasonal Departures</h3>
+            <Sparkles className="w-8 h-8 text-summit-500 mx-auto" />
+            <h3 className="text-xl font-serif text-obsidian-900">Upcoming Seasonal Departures</h3>
             <p className="text-slate-600 text-sm leading-relaxed">
               Our upcoming seasonal tours for {dest.name} are being scheduled. Connect with our AI concierge or team
               for private charter arrangements.
             </p>
             <Link
               href="/concierge"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider text-[#1C1F23] golden-summit-btn"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider text-obsidian-900 golden-summit-btn"
             >
               Ask AI Concierge
             </Link>
@@ -224,7 +235,7 @@ export default async function DestinationDetailPage({
             {dest.tours.map((tour) => (
               <article
                 key={tour.id}
-                className="group relative rounded-3xl overflow-hidden bg-white border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-[#3A9CA6]/40 transition-all duration-300 flex flex-col justify-between"
+                className="group relative rounded-3xl overflow-hidden bg-white border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-ocean-500/40 transition-all duration-300 flex flex-col justify-between"
               >
                 <div>
                   <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-900">
@@ -236,7 +247,7 @@ export default async function DestinationDetailPage({
                       sizes="(max-width: 768px) 100vw, 400px"
                     />
                     <div className="absolute top-4 left-4">
-                      <span className="text-[11px] font-bold uppercase tracking-widest text-[#FFE085] bg-[#1C1F23]/80 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
+                      <span className="text-[11px] font-bold uppercase tracking-widest text-summit-300 bg-obsidian-900/80 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
                         {tour.category}
                       </span>
                     </div>
@@ -245,17 +256,17 @@ export default async function DestinationDetailPage({
                   <div className="p-6 space-y-3">
                     <div className="flex items-center gap-3 text-xs text-slate-500">
                       <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5 text-[#3A9CA6]" />
+                        <Clock className="w-3.5 h-3.5 text-ocean-600" />
                         <span>{tour.durationHours} Hours</span>
                       </span>
                       <span>•</span>
                       <span className="flex items-center gap-1">
-                        <Users className="w-3.5 h-3.5 text-[#3A9CA6]" />
+                        <Users className="w-3.5 h-3.5 text-ocean-600" />
                         <span>Max {tour.maxGroupSize}</span>
                       </span>
                     </div>
 
-                    <h3 className="text-xl font-serif font-medium text-[#1C1F23] group-hover:text-[#3A9CA6] transition-colors leading-snug">
+                    <h3 className="text-xl font-serif font-medium text-obsidian-900 group-hover:text-ocean-600 transition-colors leading-snug">
                       <Link href={`/${tour.slug}`}>
                         <span className="absolute inset-0 z-10" />
                         {tour.title}
@@ -271,14 +282,14 @@ export default async function DestinationDetailPage({
                 <div className="p-6 pt-0 mt-auto">
                   <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
                     <div>
-                      <span className="text-[11px] uppercase tracking-wider text-slate-400 block">From</span>
+                      <span className="text-[11px] uppercase tracking-wider text-slate-500 block">From</span>
                       <div className="flex items-baseline gap-1">
-                        <span className="text-2xl font-serif font-light text-[#1C1F23]">${tour.basePrice}</span>
+                        <span className="text-2xl font-serif font-light text-obsidian-900">${tour.basePrice}</span>
                         <span className="text-xs font-semibold text-slate-500">{tour.currency}</span>
                       </div>
                     </div>
 
-                    <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider text-[#1C1F23] golden-summit-btn shadow-sm">
+                    <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider text-obsidian-900 golden-summit-btn shadow-sm">
                       <span>Reserve</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </span>

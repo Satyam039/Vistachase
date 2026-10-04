@@ -57,7 +57,7 @@ export default function RegisterPage() {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
         <div className="bg-white py-8 px-6 shadow-card rounded-3xl border border-slate-200 sm:px-10 space-y-6">
           {errorMsg && (
-            <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
+            <div role="alert" className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{errorMsg}</span>
             </div>
@@ -65,10 +65,10 @@ export default function RegisterPage() {
 
           <form onSubmit={handleRegister} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700">Full Name *</label>
+              <label htmlFor="app-register-full-name" className="text-xs font-bold text-slate-700">Full Name *</label>
               <div className="relative">
                 <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
+                <input id="app-register-full-name" autoComplete="name"
                   type="text"
                   required
                   value={name}
@@ -80,10 +80,10 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700">Email Address *</label>
+              <label htmlFor="app-register-email-address" className="text-xs font-bold text-slate-700">Email Address *</label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
+                <input id="app-register-email-address" autoComplete="email"
                   type="email"
                   required
                   value={email}
@@ -95,10 +95,10 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700">Mobile Phone *</label>
+              <label htmlFor="app-register-mobile-phone" className="text-xs font-bold text-slate-700">Mobile Phone *</label>
               <div className="relative">
                 <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
+                <input id="app-register-mobile-phone" autoComplete="tel"
                   type="tel"
                   required
                   value={phone}
@@ -110,10 +110,10 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700">Password *</label>
+              <label htmlFor="app-register-password" className="text-xs font-bold text-slate-700">Password *</label>
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
+                <input id="app-register-password" autoComplete="new-password"
                   type="password"
                   required
                   value={password}
