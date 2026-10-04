@@ -43,9 +43,9 @@ services:
         value: 20.18.0
       - key: NODE_ENV
         value: production
-      # Public URL of vistachase-backend, e.g. https://vistachase-backend.onrender.com
+      # Public URL of vistachase-backend
       - key: BACKEND_URL
-        sync: false
+        value: https://vistachase-backend.onrender.com
 
 databases:
   - name: vistachase-db
