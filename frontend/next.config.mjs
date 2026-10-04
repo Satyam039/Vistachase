@@ -1,7 +1,10 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const BACKEND_URL = (process.env.BACKEND_URL || 'http://localhost:4000').replace(/\/$/, '');
+const BACKEND_URL = (
+  process.env.BACKEND_URL ||
+  (process.env.RENDER ? 'https://vistachase-backend.onrender.com' : 'http://localhost:4000')
+).replace(/\/$/, '');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
