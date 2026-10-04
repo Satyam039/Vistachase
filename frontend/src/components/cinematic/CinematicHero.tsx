@@ -35,8 +35,9 @@ export function CinematicHero({
 }: CinematicHeroProps) {
   return (
     <section className="relative w-full min-h-[92vh] lg:min-h-screen flex items-center justify-center overflow-hidden bg-ocean-950">
-      {/* Background Media Layer */}
-      <div className="absolute inset-0 z-0">
+      {/* Background Media Layer. No z-index here: it would trap the video's pause button
+          below the foreground content (z-10); the button (z-20) must stay on top. */}
+      <div className="absolute inset-0">
         <Image
           src={posterImage}
           alt="Canadian Rockies Panorama"

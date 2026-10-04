@@ -40,8 +40,9 @@ export function MediaStory({
 
   return (
     <div className="relative w-full min-h-[85vh] lg:min-h-screen flex items-center justify-center overflow-hidden bg-ocean-950 snap-start">
-      {/* Background Media Container */}
-      <div className="absolute inset-0 z-0 overflow-hidden">
+      {/* Background Media Container. No z-index: the video's pause button (z-20) must stay
+          above the story content (z-10). */}
+      <div className="absolute inset-0 overflow-hidden">
         {mediaType === "video" ? (
           <AmbientVideo
             src={media}
