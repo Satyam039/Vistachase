@@ -12,7 +12,7 @@ export function CinematicFinalCta() {
       {/* Background Mountain Panorama */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6910165a83d5d1c9a1102f73_Explore%20More%20section%20Background%20image.webp"
+          src="/media/site/explore-more-section-background-image.webp"
           alt="Canadian Rockies Panorama"
           fill
           sizes="100vw"

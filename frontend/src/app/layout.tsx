@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "https://images.unsplash.com/photo-1503614472-8c93d56e92ce?q=80&w=1200&auto=format&fit=crop",
+        url: "/media/photos/moraine-lake-perfect-reflection.webp",
         width: 1200,
         height: 630,
         alt: "Moraine Lake Valley of the Ten Peaks",

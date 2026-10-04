@@ -98,7 +98,7 @@ export function TourCard({
   const price = fromPrice(tour);
 
   return (
-    <article className="group relative rounded-3xl overflow-hidden bg-white border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-[#3A9CA6]/40 transition-all duration-300 flex flex-col justify-between">
+    <article className="group relative rounded-3xl overflow-hidden bg-white border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-ocean-500/40 transition-all duration-300 flex flex-col justify-between">
       <div>
         {/* Media Frame */}
         <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-900">
@@ -114,13 +114,13 @@ export function TourCard({
 
           {/* Destination Badge & Rating */}
           <div className="absolute top-4 left-4 right-4 flex items-center justify-between gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1C1F23]/80 backdrop-blur-md text-[#FFE085] text-xs font-semibold uppercase tracking-wider border border-white/10">
-              <MapPin className="w-3 h-3 text-[#F5BF03]" />
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-obsidian-900/80 backdrop-blur-md text-summit-300 text-xs font-semibold uppercase tracking-wider border border-white/10">
+              <MapPin className="w-3 h-3 text-summit-500" />
               {tour.destination.name}
             </span>
 
-            <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-md text-xs font-bold text-[#1C1F23] shadow-sm">
-              <Star className="w-3.5 h-3.5 fill-[#F5BF03] text-[#F5BF03]" />
+            <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-md text-xs font-bold text-obsidian-900 shadow-sm">
+              <Star className="w-3.5 h-3.5 fill-summit-500 text-summit-500" />
               <span>{tour.rating.toFixed(1)}</span>
             </div>
           </div>
@@ -138,17 +138,17 @@ export function TourCard({
           <div className="space-y-2">
             <div className="flex items-center gap-3 text-xs text-slate-500">
               <span className="flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5 text-[#3A9CA6]" />
+                <Clock className="w-3.5 h-3.5 text-ocean-500" />
                 <span>{durationLabel(tour)}</span>
               </span>
               <span>•</span>
               <span className="flex items-center gap-1">
-                <Users className="w-3.5 h-3.5 text-[#3A9CA6]" />
+                <Users className="w-3.5 h-3.5 text-ocean-500" />
                 <span>{groupLabel(tour)}</span>
               </span>
             </div>
 
-            <h3 className="text-xl font-serif font-medium text-[#1C1F23] group-hover:text-[#3A9CA6] transition-colors leading-snug">
+            <h3 className="text-xl font-serif font-medium text-obsidian-900 group-hover:text-ocean-500 transition-colors leading-snug">
               <Link href={`/${tour.slug}`}>
                 <span className="absolute inset-0 z-10" />
                 {tour.title}
@@ -168,7 +168,7 @@ export function TourCard({
           <div>
             <span className="text-[11px] uppercase tracking-wider text-slate-400 block">{priceLabel}</span>
             <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-serif font-light text-[#1C1F23]">{money(price)}</span>
+              <span className="text-2xl font-serif font-light text-obsidian-900">{money(price)}</span>
               <span className="text-xs font-semibold text-slate-500">{tour.currency}</span>
             </div>
           </div>
@@ -188,7 +188,7 @@ export function TourCard({
               {status.text}
             </span>
 
-            <span className="inline-flex items-center gap-1 text-xs font-bold text-[#3A9CA6] group-hover:translate-x-0.5 transition-transform">
+            <span className="inline-flex items-center gap-1 text-xs font-bold text-ocean-500 group-hover:translate-x-0.5 transition-transform">
               <span>View Experience</span>
               <ArrowUpRight className="w-3.5 h-3.5" />
             </span>

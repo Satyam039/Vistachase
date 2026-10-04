@@ -55,26 +55,28 @@ const config: Config = {
           100: "#f0f2f5",
           50: "#f9f9f7",  // Frost White
         },
+        // Legacy palette names from the original build, now pointing at the Vista Chase brand
+        // colours (live site: Ocean Teal, Golden Summit) so older pages render on-brand.
         forest: {
-          950: "#04120e",
-          900: "#072019",
-          850: "#0b2c22",
-          800: "#0f382c",
-          700: "#164d3d",
-          600: "#1f6853",
-          500: "#2d8b70",
-          400: "#44ab8d",
-          300: "#6bc4ac",
-          100: "#d3f1e8",
-          50: "#f0faf7",
+          950: "#061314",
+          900: "#0c1f21",
+          850: "#10292c",
+          800: "#14363a",
+          700: "#1e5258",
+          600: "#2a757e",
+          500: "#3a9ca6",
+          400: "#5ab0ba",
+          300: "#84c7ce",
+          100: "#daf0f2",
+          50: "#f0f9fa",
         },
         gold: {
-          600: "#a97b25",
+          600: "#c29600",
           500: "#f5bf03",
-          400: "#dfb658",
+          400: "#fad23d",
           300: "#ffe085",
-          200: "#fae9b8",
-          100: "#fdf6e2",
+          200: "#ffecb3",
+          100: "#fff7db",
         },
         rockies: {
           sky: "#eaf3fa",
@@ -87,15 +89,19 @@ const config: Config = {
       },
       fontFamily: {
         ...astryxThemeExtension.fontFamily,
-        sans: ["var(--font-inter)", "sans-serif"],
-        display: ["var(--font-montserrat)", "sans-serif"],
-        editorial: ["Georgia", "Playfair Display", "serif"],
+        // IBM Plex Sans everywhere: the "serif", "display" and "editorial" styles used by the
+        // cinematic sections render in IBM Plex Sans too, so the site has one typeface.
+        sans: ["var(--font-plex-sans)", "IBM Plex Sans", "system-ui", "sans-serif"],
+        serif: ["var(--font-plex-sans)", "IBM Plex Sans", "system-ui", "sans-serif"],
+        display: ["var(--font-plex-sans)", "IBM Plex Sans", "system-ui", "sans-serif"],
+        editorial: ["var(--font-plex-sans)", "IBM Plex Sans", "system-ui", "sans-serif"],
+        mono: ["var(--font-plex-mono)", "IBM Plex Mono", "ui-monospace", "monospace"],
       },
       boxShadow: {
         ...astryxThemeExtension.boxShadow,
         glass: "0 8px 32px 0 rgba(0, 0, 0, 0.37)",
-        card: "0 10px 30px -5px rgba(7, 32, 25, 0.08)",
-        glow: "0 0 25px rgba(200, 155, 60, 0.35)",
+        card: "0 10px 30px -5px rgba(28, 31, 35, 0.08)",
+        glow: "0 0 25px rgba(245, 191, 3, 0.35)",
       },
       animation: {
         "pulse-slow": "pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite",

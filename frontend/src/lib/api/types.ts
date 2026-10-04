@@ -71,8 +71,8 @@ export interface TourWithAvailability {
   isFeatured: boolean;
   rating: number;
   reviewCount: number;
-  /** Bokun experience the live site sells this product through (null for enquiry-only products). */
-  bokunExperienceId: string | null;
+  /** Bokun experience ID from the product mapping table; null until Vista Chase provides it. */
+  bokunId: string | null;
   bookingMode: "BOKUN" | "ENQUIRY";
   /** PERSON: price per guest. GROUP: price per vehicle / private group. */
   priceUnit: "PERSON" | "GROUP";

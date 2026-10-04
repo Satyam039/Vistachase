@@ -7,10 +7,10 @@ import { ArrowUpRight, Check, AlertCircle, Clock, ShieldCheck } from "lucide-rea
 import { ScrollReveal } from "./ScrollReveal";
 
 const AVATARS = [
-  "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/690768b9a5c9b551816c9687_Ellipse%202.webp",
-  "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/690768b941128eff04dfdf51_Ellipse%203.png",
-  "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/690768b9839824bb8e5356a5_Ellipse%204.png",
-  "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/690768b969747d13e815f3f2_Ellipse%205%20(1).png",
+  "/media/site/ellipse-2.webp",
+  "/media/site/ellipse-3.webp",
+  "/media/site/ellipse-4.webp",
+  "/media/site/ellipse-5-1.webp",
 ];
 
 export function PlanAheadGuaranteedAccess() {
@@ -23,7 +23,7 @@ export function PlanAheadGuaranteedAccess() {
             <ScrollReveal delay={150} yOffset={24}>
               <div className="relative h-[480px] sm:h-[560px] w-full rounded-2xl overflow-hidden shadow-2xl">
                 <Image
-                  src="https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/69076dd2d4e37b1f117a692d_About%20Image%20(1).webp"
+                  src="/media/site/about-image-1.webp"
                   alt="Red canoes docked at Moraine Lake shoreline"
                   fill
                   sizes="(max-width: 1024px) 100vw, 50vw"

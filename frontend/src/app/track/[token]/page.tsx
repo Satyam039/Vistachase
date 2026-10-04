@@ -50,8 +50,8 @@ export default async function TrackPage({ params }: TrackPageProps) {
 
   if (!telemetry) {
     return (
-      <div className="min-h-screen bg-[#07130F] text-slate-100 flex flex-col items-center justify-center p-4">
-        <div className="max-w-md w-full bg-[#0C1E18] rounded-3xl p-8 border border-forest-800/80 shadow-2xl text-center space-y-6">
+      <div className="min-h-screen bg-ocean-950 text-slate-100 flex flex-col items-center justify-center p-4">
+        <div className="max-w-md w-full bg-ocean-900 rounded-3xl p-8 border border-forest-800/80 shadow-2xl text-center space-y-6">
           <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 mx-auto flex items-center justify-center">
             <ShieldAlert className="w-8 h-8" />
           </div>

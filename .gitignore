@@ -39,3 +39,6 @@ backend/public/uploads
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# Raw photo library (872 MB). Optimized copies live in backend/media (scripts/media/build-media.mjs).
+/Images/

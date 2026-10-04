@@ -1,4 +1,5 @@
 import express from "express";
+import { MEDIA_DIR } from "@/modules/media/media.repository";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import accountRoutes from "@/routes/account.routes";
@@ -16,6 +17,7 @@ import shuttlesRoutes from "@/routes/shuttles.routes";
 import toursRoutes from "@/routes/tours.routes";
 import operationsRoutes from "@/routes/operations.routes";
 import trackingRoutes from "@/routes/tracking.routes";
+import mediaRoutes from "@/routes/media.routes";
 
 export function createApp() {
   const app = express();
@@ -41,6 +43,20 @@ export function createApp() {
     next();
   });
 
+  // Site images (backend/media). The frontend proxies /media/* here like /api/*.
+  // File names aren't content-hashed, so cache for a day and revalidate in the background.
+  app.use(
+    "/media",
+    express.static(MEDIA_DIR, {
+      index: false,
+      fallthrough: false,
+      setHeaders(res) {
+        res.setHeader("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800");
+        res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+      },
+    })
+  );
+
   app.use("/api/account", accountRoutes);
   app.use("/api/admin", adminRoutes);
   app.use("/api/auth", authRoutes);
@@ -56,6 +72,7 @@ export function createApp() {
   app.use("/api/tours", toursRoutes);
   app.use("/api/operations", operationsRoutes);
   app.use("/api/track", trackingRoutes);
+  app.use("/api/media", mediaRoutes);
 
   app.use("/api", (_req, res) => {
     res.status(404).json({ success: false, error: "Not found" });
