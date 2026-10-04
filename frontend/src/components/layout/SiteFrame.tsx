@@ -175,6 +175,25 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
     setIsMobileNavOpen(false);
   }, [pathname]);
 
+  // The header is sticky, so anything scrolled into view under it would be hidden. Reserve its
+  // height as scroll padding: focused elements and #anchors then land below the header
+  // (WCAG 2.4.11 Focus Not Obscured). Tracks the header as the banner is dismissed or it wraps.
+  useEffect(() => {
+    const header = document.querySelector<HTMLElement>(".astryx-app-shell-header");
+    if (!header) return;
+    const root = document.documentElement;
+    const update = () => {
+      root.style.scrollPaddingTop = `${Math.ceil(header.getBoundingClientRect().height) + 8}px`;
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(header);
+    return () => {
+      observer.disconnect();
+      root.style.scrollPaddingTop = "";
+    };
+  }, []);
+
   return (
     <AppShell
       height="auto"

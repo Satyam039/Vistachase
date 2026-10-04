@@ -1,6 +1,6 @@
 {
  "generatedBy": "scripts/media/build-media.mjs",
- "count": 321,
+ "count": 334,
  "assets": [
   {
    "id": "badges/civitatis-logo",
@@ -1722,6 +1722,94 @@
    }
   },
   {
+   "id": "brand/apple-touch-icon",
+   "src": "/media/brand/apple-touch-icon.png",
+   "width": 180,
+   "height": 180,
+   "title": "Browser icon 180px",
+   "alt": "",
+   "collection": "brand",
+   "kind": "brand",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/69089376e89919ea16ef4b89_images%204%20(1).png",
+    "pages": [
+     "about-us",
+     "banff-highlights-tour",
+     "banff-private-tour",
+     "banff-yoho-custom-private-tour",
+     "blog",
+     "contact-us",
+     "faq",
+     "full-day-at-lake-louise-and-moraine-lake",
+     "gallery",
+     "home",
+     "icefields-jasper-private-tour",
+     "jasper-custom-private-tour",
+     "multi-day-tour-package-for-banff",
+     "privacy-policy",
+     "privacy-policy-vista-chase",
+     "private-tours",
+     "shared-tours",
+     "shared-tours-banff-yoho",
+     "shared-tours-heart-of-banff",
+     "shared-tours-icefields-jasper",
+     "shuttles",
+     "sunrise-shuttle-to-moraine-lake-and-lake-louise",
+     "terms-and-conditions",
+     "winter-signature-private-tour",
+     "winter-special"
+    ],
+    "derived": "horse emblem on Obsidian Black"
+   }
+  },
+  {
+   "id": "brand/favicon-32",
+   "src": "/media/brand/favicon-32.png",
+   "width": 32,
+   "height": 32,
+   "title": "Browser icon 32px",
+   "alt": "",
+   "collection": "brand",
+   "kind": "brand",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/69089376e89919ea16ef4b89_images%204%20(1).png",
+    "pages": [
+     "about-us",
+     "banff-highlights-tour",
+     "banff-private-tour",
+     "banff-yoho-custom-private-tour",
+     "blog",
+     "contact-us",
+     "faq",
+     "full-day-at-lake-louise-and-moraine-lake",
+     "gallery",
+     "home",
+     "icefields-jasper-private-tour",
+     "jasper-custom-private-tour",
+     "multi-day-tour-package-for-banff",
+     "privacy-policy",
+     "privacy-policy-vista-chase",
+     "private-tours",
+     "shared-tours",
+     "shared-tours-banff-yoho",
+     "shared-tours-heart-of-banff",
+     "shared-tours-icefields-jasper",
+     "shuttles",
+     "sunrise-shuttle-to-moraine-lake-and-lake-louise",
+     "terms-and-conditions",
+     "winter-signature-private-tour",
+     "winter-special"
+    ],
+    "derived": "horse emblem on Obsidian Black"
+   }
+  },
+  {
    "id": "brand/horse-emblem-gold",
    "src": "/media/brand/horse-emblem-gold.png",
    "width": 714,
@@ -1822,6 +1910,50 @@
     "pages": [
      "shared-tours"
     ]
+   }
+  },
+  {
+   "id": "brand/icon-192",
+   "src": "/media/brand/icon-192.png",
+   "width": 192,
+   "height": 192,
+   "title": "Browser icon 192px",
+   "alt": "",
+   "collection": "brand",
+   "kind": "brand",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/69089376e89919ea16ef4b89_images%204%20(1).png",
+    "pages": [
+     "about-us",
+     "banff-highlights-tour",
+     "banff-private-tour",
+     "banff-yoho-custom-private-tour",
+     "blog",
+     "contact-us",
+     "faq",
+     "full-day-at-lake-louise-and-moraine-lake",
+     "gallery",
+     "home",
+     "icefields-jasper-private-tour",
+     "jasper-custom-private-tour",
+     "multi-day-tour-package-for-banff",
+     "privacy-policy",
+     "privacy-policy-vista-chase",
+     "private-tours",
+     "shared-tours",
+     "shared-tours-banff-yoho",
+     "shared-tours-heart-of-banff",
+     "shared-tours-icefields-jasper",
+     "shuttles",
+     "sunrise-shuttle-to-moraine-lake-and-lake-louise",
+     "terms-and-conditions",
+     "winter-signature-private-tour",
+     "winter-special"
+    ],
+    "derived": "horse emblem on Obsidian Black"
    }
   },
   {
@@ -6679,6 +6811,247 @@
      "banff-yoho-custom-private-tour",
      "css"
     ]
+   }
+  },
+  {
+   "id": "videos/athabasca-falls",
+   "src": "/media/videos/athabasca-falls.mp4",
+   "poster": "/media/videos/athabasca-falls-poster.webp",
+   "width": 1280,
+   "height": 720,
+   "duration": 15,
+   "title": "Athabasca Falls",
+   "alt": "The Athabasca River pouring through its gorge below Mount Kerkeslin in Jasper National Park",
+   "collection": "videos",
+   "kind": "video",
+   "places": [
+    "jasper",
+    "icefields-parkway",
+    "athabasca-falls"
+   ],
+   "tags": [
+    "summer",
+    "waterfall"
+   ],
+   "source": {
+    "origin": "vista-chase-video-library",
+    "file": "Videos 2/athabasca-falls-on-the-upper-athabasca-river-in-ja-2025-12-17-04-39-47-utc.mov"
+   }
+  },
+  {
+   "id": "videos/athabasca-falls-rainbow",
+   "src": "/media/videos/athabasca-falls-rainbow.mp4",
+   "poster": "/media/videos/athabasca-falls-rainbow-poster.webp",
+   "width": 1280,
+   "height": 720,
+   "duration": 15,
+   "title": "Rainbow over Athabasca Falls",
+   "alt": "Spray and a rainbow over Athabasca Falls in summer",
+   "collection": "videos",
+   "kind": "video",
+   "places": [
+    "jasper",
+    "icefields-parkway",
+    "athabasca-falls"
+   ],
+   "tags": [
+    "summer",
+    "waterfall"
+   ],
+   "source": {
+    "origin": "vista-chase-video-library",
+    "file": "Videos 2/summer-in-athabasca-falls-jasper-national-park-c-2026-02-27-01-43-22-utc.mp4"
+   }
+  },
+  {
+   "id": "videos/emerald-lake-canoes",
+   "src": "/media/videos/emerald-lake-canoes.mp4",
+   "poster": "/media/videos/emerald-lake-canoes-poster.webp",
+   "width": 1280,
+   "height": 720,
+   "duration": 15,
+   "title": "Emerald Lake canoes",
+   "alt": "Red canoes at the Emerald Lake dock, with the lodge across the water in Yoho National Park",
+   "collection": "videos",
+   "kind": "video",
+   "places": [
+    "yoho",
+    "emerald-lake"
+   ],
+   "tags": [
+    "summer",
+    "paddling"
+   ],
+   "source": {
+    "origin": "vista-chase-video-library",
+    "file": "Videos 2/emerald-lakeyoho-national-park-in-canada-emerald-l-2025-12-17-23-54-53-utc.mov"
+   }
+  },
+  {
+   "id": "videos/emerald-lake-lodge",
+   "src": "/media/videos/emerald-lake-lodge.mp4",
+   "poster": "/media/videos/emerald-lake-lodge-poster.webp",
+   "width": 1280,
+   "height": 720,
+   "duration": 13,
+   "title": "Emerald Lake Lodge",
+   "alt": "Emerald Lake Lodge mirrored in calm jade water in Yoho National Park",
+   "collection": "videos",
+   "kind": "video",
+   "places": [
+    "yoho",
+    "emerald-lake"
+   ],
+   "tags": [
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-video-library",
+    "file": "Videos 2/emerald-lake-yoho-national-park-in-canada-emerald-l-2025-12-17-04-11-21-utc.mov"
+   }
+  },
+  {
+   "id": "videos/fairmont-banff-springs-winter",
+   "src": "/media/videos/fairmont-banff-springs-winter.mp4",
+   "poster": "/media/videos/fairmont-banff-springs-winter-poster.webp",
+   "width": 1280,
+   "height": 720,
+   "duration": 6.88,
+   "title": "Fairmont Banff Springs in winter",
+   "alt": "The Fairmont Banff Springs hotel in falling snow, framed by frosted trees",
+   "collection": "videos",
+   "kind": "video",
+   "places": [
+    "banff"
+   ],
+   "tags": [
+    "winter",
+    "hotel"
+   ],
+   "source": {
+    "origin": "vista-chase-video-library",
+    "file": "Videos 2/snowy-resort-hotel-castle-in-the-canadian-rocky-mo-2025-12-17-05-32-07-utc.mov"
+   }
+  },
+  {
+   "id": "videos/grizzly-bear-cub-jasper",
+   "src": "/media/videos/grizzly-bear-cub-jasper.mp4",
+   "poster": "/media/videos/grizzly-bear-cub-jasper-poster.webp",
+   "width": 1280,
+   "height": 720,
+   "duration": 13.75,
+   "title": "Grizzly bear and cub",
+   "alt": "A grizzly bear and her cub walking along a forest road in Jasper National Park",
+   "collection": "videos",
+   "kind": "video",
+   "places": [
+    "jasper"
+   ],
+   "tags": [
+    "wildlife",
+    "bear"
+   ],
+   "source": {
+    "origin": "vista-chase-video-library",
+    "file": "Videos 2/grizzly-bear-with-cub-walk-on-a-road-in-jasper-nat-2025-12-17-23-30-00-utc.mov"
+   }
+  },
+  {
+   "id": "videos/lake-louise-summer",
+   "src": "/media/videos/lake-louise-summer.mp4",
+   "srcHd": "/media/videos/lake-louise-summer-1080.mp4",
+   "poster": "/media/videos/lake-louise-summer-poster.webp",
+   "width": 1280,
+   "height": 720,
+   "duration": 15,
+   "title": "Lake Louise in summer",
+   "alt": "Turquoise Lake Louise below Victoria Glacier, with walkers on the lakeshore path",
+   "collection": "videos",
+   "kind": "video",
+   "places": [
+    "lake-louise",
+    "banff"
+   ],
+   "tags": [
+    "summer"
+   ],
+   "source": {
+    "origin": "vista-chase-video-library",
+    "file": "Videos 2/summer-in-lake-louise-banff-national-park-canada-2026-02-09-17-44-25-utc.mp4"
+   }
+  },
+  {
+   "id": "videos/maligne-lake-cruise",
+   "src": "/media/videos/maligne-lake-cruise.mp4",
+   "poster": "/media/videos/maligne-lake-cruise-poster.webp",
+   "width": 1280,
+   "height": 720,
+   "duration": 15,
+   "title": "Maligne Lake cruise",
+   "alt": "A cruise boat crossing Maligne Lake below snow-capped peaks in Jasper National Park",
+   "collection": "videos",
+   "kind": "video",
+   "places": [
+    "jasper",
+    "maligne",
+    "maligne-lake",
+    "spirit-island"
+   ],
+   "tags": [
+    "summer",
+    "boat"
+   ],
+   "source": {
+    "origin": "vista-chase-video-library",
+    "file": "Videos 2/tourist-boat-cruising-maligne-lake-with-snow-cappe-2026-04-22-19-12-18-utc.mov"
+   }
+  },
+  {
+   "id": "videos/sunwapta-falls",
+   "src": "/media/videos/sunwapta-falls.mp4",
+   "poster": "/media/videos/sunwapta-falls-poster.webp",
+   "width": 1280,
+   "height": 720,
+   "duration": 15,
+   "title": "Sunwapta Falls",
+   "alt": "Sunwapta Falls dropping into a forested canyon on the Icefields Parkway",
+   "collection": "videos",
+   "kind": "video",
+   "places": [
+    "jasper",
+    "icefields-parkway",
+    "sunwapta-falls"
+   ],
+   "tags": [
+    "summer",
+    "waterfall"
+   ],
+   "source": {
+    "origin": "vista-chase-video-library",
+    "file": "Videos 2/upper-sunwapta-falls-in-jasper-national-park-canad-2025-12-17-11-17-34-utc.mov"
+   }
+  },
+  {
+   "id": "videos/vermilion-lakes",
+   "src": "/media/videos/vermilion-lakes.mp4",
+   "poster": "/media/videos/vermilion-lakes-poster.webp",
+   "width": 1280,
+   "height": 676,
+   "duration": 7.38,
+   "title": "Vermilion Lakes",
+   "alt": "Vermilion Lakes and a snow-dusted Mount Rundle on a cloudy day near Banff",
+   "collection": "videos",
+   "kind": "video",
+   "places": [
+    "banff",
+    "vermilion-lakes"
+   ],
+   "tags": [
+    "autumn"
+   ],
+   "source": {
+    "origin": "vista-chase-video-library",
+    "file": "Videos/Vermillion-lakes-banff-national-park-landscape-in-winter-2025-12-17-16-06-05-utc.mov"
    }
   }
  ]

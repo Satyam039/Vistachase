@@ -5,10 +5,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { ScrollReveal } from "./ScrollReveal";
+import { AmbientVideo } from "@/components/cinematic/AmbientVideo";
 
 export interface MediaStoryProps {
   media: string;
   mediaType?: "image" | "video";
+  /** Video stories: poster frame (also the still shown with reduced motion). */
+  poster?: string;
   eyebrow: string;
   title: string;
   description: string;
@@ -22,6 +25,7 @@ export interface MediaStoryProps {
 export function MediaStory({
   media,
   mediaType = "image",
+  poster,
   eyebrow,
   title,
   description,
@@ -39,15 +43,12 @@ export function MediaStory({
       {/* Background Media Container */}
       <div className="absolute inset-0 z-0 overflow-hidden">
         {mediaType === "video" ? (
-          <video
-            autoPlay
-            muted
-            loop
-            playsInline
+          <AmbientVideo
+            src={media}
+            poster={poster}
             className="w-full h-full object-cover scale-105 transition-transform duration-1000 ease-out"
-          >
-            <source src={media} type="video/mp4" />
-          </video>
+            buttonClassName="bottom-6 right-6"
+          />
         ) : (
           <Image
             src={media}

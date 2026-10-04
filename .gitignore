@@ -42,3 +42,12 @@ next-env.d.ts
 
 # Raw photo library (872 MB). Optimized copies live in backend/media (scripts/media/build-media.mjs).
 /Images/
+# Raw video clips (about 2 GB). Web encodes live in backend/media/videos.
+/Videos/
+/Videos 2/
+
+# Accessibility audit output (npm run a11y)
+frontend/a11y-report/
+
+# Sandbox temp copies left beside files written by native tools
+*.sb-*

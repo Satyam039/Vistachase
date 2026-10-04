@@ -35,7 +35,7 @@ export default function ContactUsPage() {
         {/* Contact Info (5 Cols) */}
         <div className="lg:col-span-5 space-y-8">
           <div className="space-y-3">
-            <span className="text-xs uppercase tracking-widest text-ocean-500 font-bold">Bow Valley Headquarters</span>
+            <span className="text-xs uppercase tracking-widest text-ocean-600 font-bold">Bow Valley Headquarters</span>
             <h2 className="text-2xl sm:text-3xl font-serif font-light text-obsidian-900">
               Based in Canmore &amp; Banff, Alberta
             </h2>
@@ -64,7 +64,7 @@ export default function ContactUsPage() {
               </div>
               <div className="text-sm space-y-1">
                 <p className="font-bold text-obsidian-900">Telephone Support</p>
-                <a href="tel:+18257349456" className="text-ocean-500 hover:underline font-semibold block text-base">
+                <a href="tel:+18257349456" className="text-ocean-600 hover:underline font-semibold block text-base">
                   +1 (825) 734-9456
                 </a>
                 <p className="text-xs text-slate-500">Lines open 6:00 AM – 9:00 PM Mountain Time</p>
@@ -77,7 +77,7 @@ export default function ContactUsPage() {
               </div>
               <div className="text-sm space-y-1">
                 <p className="font-bold text-obsidian-900">Email Concierge</p>
-                <a href="mailto:info@vistachase.com" className="text-ocean-500 hover:underline font-semibold block text-base">
+                <a href="mailto:info@vistachase.com" className="text-ocean-600 hover:underline font-semibold block text-base">
                   info@vistachase.com
                 </a>
                 <p className="text-xs text-slate-500">Fast response within 2 business hours</p>
@@ -99,8 +99,8 @@ export default function ContactUsPage() {
             <form className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700">Full Name</label>
-                  <input
+                  <label htmlFor="app-contact-us-full-name" className="text-xs font-bold uppercase tracking-wider text-slate-700">Full Name</label>
+                  <input id="app-contact-us-full-name" autoComplete="name"
                     type="text"
                     placeholder="Sarah Jenkins"
                     className="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-ocean-500"
@@ -108,8 +108,8 @@ export default function ContactUsPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700">Email Address</label>
-                  <input
+                  <label htmlFor="app-contact-us-email-address" className="text-xs font-bold uppercase tracking-wider text-slate-700">Email Address</label>
+                  <input id="app-contact-us-email-address" autoComplete="email"
                     type="email"
                     placeholder="sarah@example.com"
                     className="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-ocean-500"
@@ -118,8 +118,8 @@ export default function ContactUsPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700">Phone Number (Optional)</label>
-                <input
+                <label htmlFor="app-contact-us-phone-number-optional" className="text-xs font-bold uppercase tracking-wider text-slate-700">Phone Number (Optional)</label>
+                <input id="app-contact-us-phone-number-optional" autoComplete="tel"
                   type="tel"
                   placeholder="+1 (403) 555-0192"
                   className="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-ocean-500"
@@ -127,8 +127,8 @@ export default function ContactUsPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700">Message / Tour Inquiry</label>
-                <textarea
+                <label htmlFor="app-contact-us-message-tour-inquiry" className="text-xs font-bold uppercase tracking-wider text-slate-700">Message / Tour Inquiry</label>
+                <textarea id="app-contact-us-message-tour-inquiry"
                   rows={4}
                   placeholder="Inquiring about private sunrise tour for 4 guests on July 14..."
                   className="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-ocean-500"

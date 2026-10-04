@@ -86,7 +86,7 @@ export default async function DestinationsPage() {
                   <span className="text-xs text-slate-500 font-medium">
                     {dest.tours.length} {dest.tours.length === 1 ? "Experience" : "Experiences"} Available
                   </span>
-                  <span className="inline-flex items-center gap-1 text-xs font-bold text-ocean-500 group-hover:translate-x-1 transition-transform">
+                  <span className="inline-flex items-center gap-1 text-xs font-bold text-ocean-600 group-hover:translate-x-1 transition-transform">
                     <span>Explore Story</span>
                     <ChevronRight className="w-4 h-4" />
                   </span>

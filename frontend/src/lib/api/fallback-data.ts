@@ -15,7 +15,8 @@ type CatalogFields =
   | "crossSells"
   | "vehicleOptions"
   | "metaTitle"
-  | "metaDescription";
+  | "metaDescription"
+  | "videos";
 
 /** Fills the imported-catalog fields the hand-written fallback tours don't carry. */
 function withCatalogDefaults(
@@ -38,6 +39,7 @@ function withCatalogDefaults(
       : [],
     metaTitle: null,
     metaDescription: null,
+    videos: [],
     ...tour,
   };
 }

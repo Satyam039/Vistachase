@@ -30,8 +30,23 @@
     overflow-x: hidden;
   }
 
-  html {
-    scroll-behavior: smooth;
+  /* Smooth scrolling only for visitors who haven't asked for reduced motion. */
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+
+  /* Reduced motion: stop animations and transitions site-wide (WCAG 2.3.3). */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
@@ -91,6 +106,12 @@
 .ocean-teal-btn:hover {
   background-color: #2a757e;
   transform: translateY(-2px);
+}
+
+/* Golden Summit fill for primary actions on dark pages (login, account, admin, concierge).
+   Dark text on it is about 10:1. */
+.gold-gradient {
+  background: linear-gradient(135deg, #ffe085 0%, #f5bf03 55%, #daa500 100%);
 }
 
 .gold-text-gradient {

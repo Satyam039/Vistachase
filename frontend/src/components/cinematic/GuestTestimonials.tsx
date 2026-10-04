@@ -102,9 +102,9 @@ export function GuestTestimonials() {
 
             <div className="mt-8 pt-6 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h4 className="text-lg font-bold text-white font-display">
+                <h3 className="text-lg font-bold text-white font-display">
                   {active.author}
-                </h4>
+                </h3>
                 <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-400 mt-0.5">
                   <span className="text-summit-300 font-medium">{active.tripType}</span>
                   <span>•</span>

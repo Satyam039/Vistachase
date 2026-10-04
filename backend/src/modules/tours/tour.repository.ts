@@ -1,5 +1,7 @@
 import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/db/prisma";
+import { PRODUCT_MAP } from "@/modules/bokun/product-map";
+import { videosFor, type PageVideo } from "@/modules/media/media.repository";
 import { getExpiredHeldSeats, liveCapacity } from "@/modules/reservations/reservation.repository";
 
 export interface TourFact {
@@ -51,6 +53,8 @@ export interface TourWithAvailability {
   whatToBring: string[];
   featuredImage: string;
   galleryImages: string[];
+  /** Background clips of the places the tour visits (backend/media/videos), best match first. */
+  videos: PageVideo[];
   basePrice: number;
   currency: string;
   minGroupSize: number;
@@ -111,6 +115,11 @@ function json<T>(value: string | null | undefined, fallback: T): T {
   }
 }
 
+function tourVideos(slug: string): PageVideo[] {
+  const mapped = PRODUCT_MAP.find((p) => p.slug === slug);
+  return mapped ? videosFor(mapped.places, mapped.season) : [];
+}
+
 function toTourDto(t: TourRow, expiredHeld: Map<string, number>): TourWithAvailability {
   return {
     id: t.id,
@@ -126,6 +135,7 @@ function toTourDto(t: TourRow, expiredHeld: Map<string, number>): TourWithAvaila
     whatToBring: json(t.whatToBring, []),
     featuredImage: t.featuredImage,
     galleryImages: json(t.galleryImages, []),
+    videos: tourVideos(t.slug),
     basePrice: t.basePrice,
     currency: t.currency,
     minGroupSize: t.minGroupSize,

@@ -82,7 +82,8 @@
     "peyto-lake",
     "athabasca-glacier",
     "columbia-icefield",
-    "athabasca-falls"
+    "athabasca-falls",
+    "sunwapta-falls"
    ],
    "season": "summer"
   },
@@ -100,7 +101,8 @@
     "lake-louise",
     "peyto-lake",
     "bow-lake",
-    "johnston-canyon"
+    "johnston-canyon",
+    "banff"
    ],
    "season": "winter"
   },
@@ -139,7 +141,8 @@
     "peyto-lake",
     "columbia-icefield",
     "athabasca-glacier",
-    "athabasca-falls"
+    "athabasca-falls",
+    "sunwapta-falls"
    ],
    "season": "summer"
   },
@@ -157,7 +160,8 @@
     "bow-lake",
     "peyto-lake",
     "lake-louise",
-    "johnston-canyon"
+    "johnston-canyon",
+    "banff"
    ],
    "season": "winter"
   },
@@ -197,7 +201,8 @@
     "medicine-lake",
     "maligne-canyon",
     "athabasca-falls",
-    "jasper"
+    "jasper",
+    "sunwapta-falls"
    ],
    "season": "all"
   },

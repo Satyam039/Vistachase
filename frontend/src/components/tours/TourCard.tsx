@@ -87,12 +87,14 @@ export function TourCard({
   tour,
   seats = 1,
   date,
+  headingLevel = 3,
 }: {
   tour: TourWithAvailability;
   seats?: number;
   date?: string;
   headingLevel?: 2 | 3;
 }) {
+  const TitleTag = headingLevel === 2 ? "h2" : "h3";
   const priceLabel = tour.priceUnit === "GROUP" ? "Per group from" : "Per guest from";
   const status = availability(tour, seats, date);
   const price = fromPrice(tour);
@@ -138,22 +140,22 @@ export function TourCard({
           <div className="space-y-2">
             <div className="flex items-center gap-3 text-xs text-slate-500">
               <span className="flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5 text-ocean-500" />
+                <Clock className="w-3.5 h-3.5 text-ocean-600" />
                 <span>{durationLabel(tour)}</span>
               </span>
               <span>•</span>
               <span className="flex items-center gap-1">
-                <Users className="w-3.5 h-3.5 text-ocean-500" />
+                <Users className="w-3.5 h-3.5 text-ocean-600" />
                 <span>{groupLabel(tour)}</span>
               </span>
             </div>
 
-            <h3 className="text-xl font-serif font-medium text-obsidian-900 group-hover:text-ocean-500 transition-colors leading-snug">
+            <TitleTag className="text-xl font-serif font-medium text-obsidian-900 group-hover:text-ocean-600 transition-colors leading-snug">
               <Link href={`/${tour.slug}`}>
                 <span className="absolute inset-0 z-10" />
                 {tour.title}
               </Link>
-            </h3>
+            </TitleTag>
 
             <p className="text-xs sm:text-sm text-slate-600 line-clamp-2 leading-relaxed">
               {tour.summary}
@@ -166,7 +168,7 @@ export function TourCard({
       <div className="p-6 pt-0 mt-auto">
         <div className="pt-4 border-t border-slate-100 flex items-end justify-between">
           <div>
-            <span className="text-[11px] uppercase tracking-wider text-slate-400 block">{priceLabel}</span>
+            <span className="text-[11px] uppercase tracking-wider text-slate-500 block">{priceLabel}</span>
             <div className="flex items-baseline gap-1">
               <span className="text-2xl font-serif font-light text-obsidian-900">{money(price)}</span>
               <span className="text-xs font-semibold text-slate-500">{tour.currency}</span>
@@ -188,7 +190,7 @@ export function TourCard({
               {status.text}
             </span>
 
-            <span className="inline-flex items-center gap-1 text-xs font-bold text-ocean-500 group-hover:translate-x-0.5 transition-transform">
+            <span className="inline-flex items-center gap-1 text-xs font-bold text-ocean-600 group-hover:translate-x-0.5 transition-transform">
               <span>View Experience</span>
               <ArrowUpRight className="w-3.5 h-3.5" />
             </span>

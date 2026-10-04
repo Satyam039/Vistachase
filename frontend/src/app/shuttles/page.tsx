@@ -69,7 +69,7 @@ export default async function ShuttlesPage() {
             >
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-slate-100 pb-6">
                 <div className="space-y-2">
-                  <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-ocean-500">
+                  <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-ocean-600">
                     <Compass className="w-4 h-4" />
                     <span>Corridor: {route.origin} ➔ {route.destination}</span>
                   </div>
@@ -80,7 +80,7 @@ export default async function ShuttlesPage() {
                 </div>
 
                 <div className="shrink-0 flex md:flex-col items-end justify-between md:justify-center p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                  <span className="text-xs uppercase tracking-wider text-slate-400">Round-Trip From</span>
+                  <span className="text-xs uppercase tracking-wider text-slate-500">Round-Trip From</span>
                   <div className="flex items-baseline gap-1">
                     <span className="text-3xl font-serif font-light text-obsidian-900">
                       ${route.departures[0]?.price || 89}
@@ -110,10 +110,10 @@ export default async function ShuttlesPage() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-bold text-obsidian-900 uppercase tracking-wider flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-ocean-500" />
+                    <Calendar className="w-4 h-4 text-ocean-600" />
                     <span>Scheduled Departures (Live Seat Inventory)</span>
                   </h3>
-                  <span className="text-xs text-slate-400">Instant Bókun Reservation</span>
+                  <span className="text-xs text-slate-500">Instant Bókun Reservation</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">

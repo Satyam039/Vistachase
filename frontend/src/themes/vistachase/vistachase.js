@@ -402,6 +402,12 @@ export const vistachaseTheme = {
       },
       "status:error": {
         "--color-error": "light-dark(#a58b86, #c0a5a1)"
+      },
+      "base": {
+        ":focus-within": {
+          "outline": "var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color)",
+          "outlineOffset": "2px"
+        }
       }
     },
     "text-area": {
@@ -413,6 +419,12 @@ export const vistachaseTheme = {
       },
       "status:error": {
         "--color-error": "light-dark(#a58b86, #c0a5a1)"
+      },
+      "base": {
+        ":focus-within": {
+          "outline": "var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color)",
+          "outlineOffset": "2px"
+        }
       }
     },
     "number-input": {
@@ -435,6 +447,12 @@ export const vistachaseTheme = {
       },
       "status:error": {
         "--color-error": "light-dark(#a58b86, #c0a5a1)"
+      },
+      "base": {
+        ":focus-within": {
+          "outline": "var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color)",
+          "outlineOffset": "2px"
+        }
       }
     },
     "time-input": {
@@ -457,6 +475,12 @@ export const vistachaseTheme = {
       },
       "status:error": {
         "--color-error": "light-dark(#a58b86, #c0a5a1)"
+      },
+      "base": {
+        ":focus-within": {
+          "outline": "var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color)",
+          "outlineOffset": "2px"
+        }
       }
     },
     "multi-selector": {
@@ -500,6 +524,16 @@ export const vistachaseTheme = {
     "section": {
       "base": {
         "padding": "var(--spacing-3)"
+      }
+    },
+    "app-shell-header": {
+      "base": {
+        "zIndex": "40"
+      }
+    },
+    "layout": {
+      "height:auto": {
+        "minHeight": "auto"
       }
     }
   },

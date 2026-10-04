@@ -86,6 +86,8 @@ Every image the site uses is in `backend/media` and served by the backend at `/m
 | badges | 10 | Review and partner badges |
 | icons | 30 | Live-site icons and decorative graphics |
 
+**Videos** (`media/videos`, 10 clips, 56 MB, from 2 GB of 4K source): each clip is a muted H.264 MP4 at 720p (about 2.5 Mbit/s, trimmed to a 7–15 s loop) with a WebP poster; the home-page hero clip also has a 1080p encode for large screens. They are encoded with Apple's AVFoundation (`scripts/media/transcode-video.swift`, run by `build-media.mjs`), so no ffmpeg is needed. Clips: Lake Louise (home hero), Vermilion Lakes and Fairmont Banff Springs in winter (Banff), Emerald Lake canoes and lodge (Yoho), Athabasca Falls (two), Sunwapta Falls, Maligne Lake cruise, and a grizzly with her cub (Jasper). Left out: bighorn sheep filmed in Badlands National Park (South Dakota, USA). Where they play: the home hero, the Banff and Icefields stories on the home page, destination heroes (Banff, Lake Louise, Yoho, Jasper) and the first gallery slides of each tour (clips of the places it visits, in its season). They load only when on screen, pause off screen, have a pause button, and stay on the poster with reduced motion or data saver.
+
 Each product page shows its live-site photos first, then library photos of the places it visits (`places` and `season` in the mapping table). Destination pages, the gallery and the home page use library photos that match their copy.
 
 Photo library coverage: 72 landscapes, 15 wildlife, 16 fleet, 15 people. Places: banff 69, moraine-lake 18, icefields-parkway 17, jasper 14, lake-louise 13, bow-lake 9, yoho 9, maligne 7, waterton 6, maligne-lake 5, bow-valley-parkway 4, canmore 4, larch-valley 4, peyto-lake 4, vermilion-lakes 3, emerald-lake 3, lake-ohara 3, spirit-island 3.
@@ -94,7 +96,7 @@ Gaps worth filling with new photography: only 11 winter photos (the two winter t
 
 Left out of the library: `ChatGPT Image Sep 9, 2026 at 09_06_26 PM.png` (AI-generated SUVs on a mountain road), `lake-5870800_1280(1).jpg` (duplicate of lake-5870800_1280.jpg), `moraine-lake-2026-03-17-20-13-39-utc(1).jpg` (duplicate of moraine-lake-2026-03-17-20-13-39-utc.jpg), `新疆.jpg` (Winter river (filename says Xinjiang, China)).
 
-To rebuild after adding photos to `Images/` (and describing them in `backend/scripts/media/photo-catalog.json`):
+To rebuild after adding photos to `Images/` or clips to `Videos/` (described in `backend/scripts/media/photo-catalog.json` and `video-catalog.json`; videos need macOS for the AVFoundation encoder):
 
 ```bash
 cd backend && node scripts/media/build-media.mjs && npm run prisma:seed

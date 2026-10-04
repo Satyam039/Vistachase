@@ -66,7 +66,7 @@ export default function FAQPage() {
             className="p-8 rounded-3xl bg-white border border-slate-200/90 shadow-sm space-y-3 hover:shadow-md transition-shadow"
           >
             <h2 className="text-xl font-serif font-medium text-obsidian-900 flex items-start gap-3">
-              <span className="w-6 h-6 rounded-full bg-ocean-500/15 text-ocean-500 flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold font-sans">
+              <span className="w-6 h-6 rounded-full bg-ocean-500/15 text-ocean-600 flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold font-sans">
                 Q
               </span>
               <span>{faq.q}</span>

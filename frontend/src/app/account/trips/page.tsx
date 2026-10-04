@@ -334,6 +334,7 @@ export default function MyTripsPage() {
             <form onSubmit={handleLookupSingleBooking} className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <input
                 type="text"
+                aria-label="Booking reference"
                 placeholder="Booking Ref (e.g. VC-2026-98412)"
                 value={searchRef}
                 onChange={(e) => setSearchRef(e.target.value)}
@@ -342,6 +343,8 @@ export default function MyTripsPage() {
               />
               <input
                 type="email"
+                aria-label="Email used for the booking"
+                autoComplete="email"
                 placeholder="Customer Email"
                 value={searchEmail}
                 onChange={(e) => setSearchEmail(e.target.value)}
@@ -356,7 +359,7 @@ export default function MyTripsPage() {
               </button>
             </form>
             {lookupError && (
-              <p className="text-sm text-red-400 mt-3 flex items-center gap-2">
+              <p role="alert" className="text-sm text-red-400 mt-3 flex items-center gap-2">
                 <AlertCircle className="w-4 h-4" />
                 <span>{lookupError}</span>
               </p>
@@ -657,14 +660,17 @@ export default function MyTripsPage() {
               <form onSubmit={handleSubmitReview} className="space-y-4">
                 {/* Rating selection */}
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1.5">Overall Rating</label>
-                  <div className="flex items-center gap-2">
+                  <span id="review-rating-label" className="block text-xs font-medium text-slate-300 mb-1.5">Overall Rating</span>
+                  <div role="radiogroup" aria-labelledby="review-rating-label" className="flex items-center gap-2">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <button
                         type="button"
                         key={star}
+                        role="radio"
+                        aria-checked={reviewRating === star}
+                        aria-label={`${star} ${star === 1 ? "star" : "stars"}`}
                         onClick={() => setReviewRating(star)}
-                        className="p-1 hover:scale-110 transition-transform"
+                        className="p-1 rounded hover:scale-110 transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-summit-500"
                       >
                         <Star
                           className={`w-6 h-6 ${
@@ -675,15 +681,15 @@ export default function MyTripsPage() {
                         />
                       </button>
                     ))}
-                    <span className="text-sm font-semibold text-gold-400 ml-2">
+                    <span className="text-sm font-semibold text-gold-400 ml-2" aria-hidden="true">
                       {reviewRating} of 5 Stars
                     </span>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">Headline / Title</label>
-                  <input
+                  <label htmlFor="app-account-trips-headline-title" className="block text-xs font-medium text-slate-300 mb-1">Headline / Title</label>
+                  <input id="app-account-trips-headline-title"
                     type="text"
                     required
                     placeholder="e.g. Unforgettable day at Moraine Lake with Vista Chase!"
@@ -694,8 +700,8 @@ export default function MyTripsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">Your Review</label>
-                  <textarea
+                  <label htmlFor="app-account-trips-your-review" className="block text-xs font-medium text-slate-300 mb-1">Your Review</label>
+                  <textarea id="app-account-trips-your-review"
                     rows={4}
                     required
                     placeholder="Tell other travelers about your experience, punctuality, driver, and scenic views..."

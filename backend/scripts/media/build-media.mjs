@@ -9,7 +9,11 @@
 //    scripts/media/live-site-images.json. Each is downloaded once and sorted into
 //    media/{brand,badges,icons,site,blog}. Photos become WebP; logos, badges and
 //    icons keep their PNG/SVG format.
-// 3. media/manifest.json lists every file with its size, alt text, places and tags,
+// 3. Videos: the business's video clips (repo-root Videos/ and "Videos 2/" by default), described in
+//    scripts/media/video-catalog.json. Each becomes a muted H.264 MP4 for the web (720p, about
+//    2.5 Mbit/s, trimmed to its loop), a 1080p version when it is a hero clip, and a WebP poster.
+//    Encoding uses AVFoundation through scripts/media/transcode-video.swift (macOS).
+// 4. media/manifest.json lists every file with its size, alt text, places and tags,
 //    plus the original source (file name or Webflow URL) so content can be remapped.
 //
 // Re-running is incremental: existing outputs are reused unless --force is passed.
@@ -17,7 +21,11 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import sharp from "sharp";
+
+const run = promisify(execFile);
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const backendDir = path.resolve(here, "../..");
@@ -30,6 +38,7 @@ const arg = (name) => {
   return i >= 0 ? args[i + 1] : undefined;
 };
 const photosDir = path.resolve(arg("--photos") ?? path.join(backendDir, "../Images"));
+const videosRoot = path.resolve(arg("--videos") ?? path.join(backendDir, ".."));
 const only = arg("--only");
 const force = args.includes("--force");
 
@@ -245,6 +254,30 @@ async function buildSite() {
         .png({ compressionLevel: 9 })
         .toFile(outPath);
     }
+    // Browser icons from the gold horse emblem (square), on the brand's Obsidian background.
+    const emblem = path.join(mediaDir, "brand/horse-emblem-gold.png");
+    for (const [name, size] of [["favicon-32", 32], ["icon-192", 192], ["apple-touch-icon", 180]]) {
+      const iconPath = path.join(mediaDir, `brand/${name}.png`);
+      if (force || !(await exists(iconPath))) {
+        const inner = Math.round(size * 0.8);
+        const mark = await sharp(emblem).resize(inner, inner, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } }).toBuffer();
+        await sharp({ create: { width: size, height: size, channels: 4, background: "#1c1f23" } })
+          .composite([{ input: mark, gravity: "center" }])
+          .png({ compressionLevel: 9 })
+          .toFile(iconPath);
+      }
+      entries.push({
+        ...logo,
+        id: `brand/${name}`,
+        src: `/media/brand/${name}.png`,
+        width: size,
+        height: size,
+        title: `Browser icon ${size}px`,
+        alt: "",
+        source: { ...logo.source, derived: "horse emblem on Obsidian Black" },
+      });
+    }
+
     entries.push({
       ...logo,
       id: "brand/horse-mark",
@@ -261,13 +294,85 @@ async function buildSite() {
   return entries;
 }
 
+async function transcoder() {
+  const source = path.join(here, "transcode-video.swift");
+  const binary = path.join(cacheDir, "transcode-video");
+  const [src, bin] = await Promise.all([fs.stat(source), fs.stat(binary).catch(() => null)]);
+  if (!bin || bin.mtimeMs < src.mtimeMs) {
+    await fs.mkdir(cacheDir, { recursive: true });
+    console.log("compiling transcode-video.swift…");
+    await run("swiftc", ["-O", "-suppress-warnings", source, "-o", binary]);
+  }
+  return binary;
+}
+
+async function buildVideos() {
+  const catalog = JSON.parse(await fs.readFile(path.join(here, "video-catalog.json"), "utf8"));
+  const binary = await transcoder();
+  const entries = [];
+  for (const video of catalog) {
+    if (video.exclude) continue;
+    const src = path.join(videosRoot, video.file);
+    const rel = `videos/${video.id}.mp4`;
+    const relHd = `videos/${video.id}-1080.mp4`;
+    const relPoster = `videos/${video.id}-poster.webp`;
+    await fs.mkdir(path.join(mediaDir, "videos"), { recursive: true });
+    const encode = async (out, width, bitrate) => {
+      const poster = path.join(cacheDir, `${video.id}-${width}.jpg`);
+      const { stdout } = await run(binary, [
+        src, out, poster,
+        "--width", String(width), "--bitrate", String(bitrate),
+        "--start", String(video.start ?? 0), "--duration", String(video.duration ?? 12), "--poster-at", "1",
+      ]);
+      return { ...JSON.parse(stdout.trim().split("\n").pop()), poster };
+    };
+    const outPath = path.join(mediaDir, rel);
+    let info;
+    if (force || !(await exists(outPath))) {
+      if (!(await exists(src))) {
+        console.warn(`  missing source: ${video.file}`);
+        continue;
+      }
+      info = await encode(outPath, 1280, 2_500_000);
+      const hd = video.hero ? await encode(path.join(mediaDir, relHd), 1920, 5_000_000) : null;
+      // Poster: the sharpest frame available, as WebP.
+      await sharp((hd ?? info).poster).webp({ quality: 78 }).toFile(path.join(mediaDir, relPoster));
+    } else {
+      const previous = (await exists(manifestPath))
+        ? JSON.parse(await fs.readFile(manifestPath, "utf8")).assets.find((a) => a.id === `videos/${video.id}`)
+        : null;
+      info = previous ?? (await sharp(path.join(mediaDir, relPoster)).metadata());
+    }
+    entries.push({
+      id: `videos/${video.id}`,
+      src: `/media/${rel}`,
+      ...(video.hero ? { srcHd: `/media/${relHd}` } : {}),
+      poster: `/media/${relPoster}`,
+      width: info.width,
+      height: info.height,
+      duration: info.duration ?? video.duration,
+      title: video.title,
+      alt: video.alt,
+      collection: "videos",
+      kind: "video",
+      places: video.places,
+      tags: video.tags,
+      source: { origin: "vista-chase-video-library", file: video.file },
+    });
+    console.log(`  ${video.id}`);
+  }
+  console.log(`videos: ${entries.length}`);
+  return entries;
+}
+
 const manifestPath = path.join(mediaDir, "manifest.json");
 const previous = (await exists(manifestPath)) ? JSON.parse(await fs.readFile(manifestPath, "utf8")).assets : [];
 const keep = (collections) => previous.filter((a) => collections.includes(a.collection));
 
-const photos = only === "site" ? keep(["photos"]) : await buildPhotos();
-const site = only === "photos" ? keep(["brand", "badges", "icons", "site", "blog"]) : await buildSite();
-const assets = [...photos, ...site].sort((a, b) => a.id.localeCompare(b.id));
+const photos = only && only !== "photos" ? keep(["photos"]) : await buildPhotos();
+const site = only && only !== "site" ? keep(["brand", "badges", "icons", "site", "blog"]) : await buildSite();
+const videos = only && only !== "videos" ? keep(["videos"]) : await buildVideos();
+const assets = [...photos, ...site, ...videos].sort((a, b) => a.id.localeCompare(b.id));
 
 await fs.writeFile(
   manifestPath,

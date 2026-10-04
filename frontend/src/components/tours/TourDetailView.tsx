@@ -27,7 +27,9 @@ import {
   CheckCircle2,
   Compass,
   Send,
+  Play,
 } from "lucide-react";
+import { AmbientVideo } from "@/components/cinematic/AmbientVideo";
 import {
   TourCard,
   departureFits,
@@ -38,7 +40,7 @@ import {
   priceUnitLabel,
   reviewsLabel,
 } from "@/components/tours/TourCard";
-import type { DepartureAvailability, TourSection, TourWithAvailability } from "@/lib/api/types";
+import type { DepartureAvailability, PageVideo, TourSection, TourWithAvailability } from "@/lib/api/types";
 
 const CATEGORY = {
   SHARED: { label: "Shared Tours", href: "/shared-tours", sub: "Small Group · Max 12 Guests" },
@@ -76,7 +78,7 @@ function TourSectionBlock({ section }: { section: TourSection }) {
           {section.items.map((item) => (
             <li key={item} className="flex items-start gap-2.5">
               {isExcluded ? (
-                <X className="w-4 h-4 mt-0.5 shrink-0 text-slate-400" />
+                <X className="w-4 h-4 mt-0.5 shrink-0 text-slate-500" aria-hidden="true" />
               ) : (
                 <Check className="w-4 h-4 mt-0.5 shrink-0 text-emerald-600" />
               )}
@@ -90,7 +92,7 @@ function TourSectionBlock({ section }: { section: TourSection }) {
           {section.stops.map((stop) => (
             <div key={stop.name} className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm space-y-1.5">
               <div className="flex items-center gap-2 font-medium text-obsidian-900">
-                <MapPin className="w-4 h-4 text-ocean-500 shrink-0" />
+                <MapPin className="w-4 h-4 text-ocean-600 shrink-0" />
                 <span>{stop.name}</span>
               </div>
               <p className="text-sm text-slate-600 leading-relaxed">{stop.text}</p>
@@ -103,7 +105,7 @@ function TourSectionBlock({ section }: { section: TourSection }) {
           {section.steps.map((step) => (
             <li key={`${step.time}-${step.text}`} className="pl-6 relative">
               <span className="absolute -left-[7px] top-1.5 w-3 h-3 rounded-full bg-ocean-500" />
-              <span className="text-xs uppercase tracking-widest text-ocean-500 font-bold block">{step.time || "Then"}</span>
+              <span className="text-xs uppercase tracking-widest text-ocean-600 font-bold block">{step.time || "Then"}</span>
               <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{step.text}</p>
             </li>
           ))}
@@ -190,7 +192,7 @@ function EnquiryPanel({ tour }: { tour: TourWithAvailability }) {
                 }`}
               >
                 <span className="font-semibold block">{v.label}</span>
-                <span className="text-xs text-slate-500">Up to {v.seats} guests</span>
+                <span className="text-xs text-slate-600">Up to {v.seats} guests</span>
               </button>
             ))}
           </div>
@@ -211,7 +213,7 @@ function EnquiryPanel({ tour }: { tour: TourWithAvailability }) {
           href="/concierge"
           className="w-full py-3 rounded-xl font-medium text-xs text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 flex items-center justify-center gap-2 transition-colors"
         >
-          <Sparkles className="w-4 h-4 text-ocean-500" />
+          <Sparkles className="w-4 h-4 text-ocean-600" />
           <span>Plan with the AI Concierge</span>
         </Link>
       </div>
@@ -234,7 +236,7 @@ function PartySizeStepper({
     <div className="space-y-2">
       <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-700">
         <span>Guests</span>
-        <span className="text-slate-400 font-normal normal-case tracking-normal">{hint}</span>
+        <span className="text-slate-500 font-normal normal-case tracking-normal">{hint}</span>
       </div>
       <div className="flex items-center justify-between p-2 rounded-xl border border-slate-300 bg-slate-50">
         <button
@@ -279,6 +281,11 @@ export function TourDetailView({
   const unitLabel = priceUnitLabel(tour);
 
   const images = Array.from(new Set([tour.featuredImage, ...tour.galleryImages].filter(Boolean)));
+  // Gallery slides: the tour's clips first (backend/media/videos), then its photos.
+  const slides: ({ kind: "video"; video: PageVideo } | { kind: "image"; src: string })[] = [
+    ...tour.videos.map((video) => ({ kind: "video" as const, video })),
+    ...images.map((src) => ({ kind: "image" as const, src })),
+  ];
   const [selectedPhoto, setSelectedPhoto] = useState(0);
 
   // Booking state (Connected to Bókun System of Record)
@@ -364,16 +371,16 @@ export function TourDetailView({
       <section className="bg-ocean-900 text-white pt-24 pb-12 px-4 sm:px-6 lg:px-12 border-b border-white/10">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Breadcrumb nav */}
-          <nav className="flex items-center gap-2 text-xs uppercase tracking-widest text-slate-400">
-            <Link href="/" className="hover:text-white transition-colors">
+          <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-x-2 text-xs uppercase tracking-widest text-slate-300">
+            <Link href="/" className="inline-flex min-h-6 items-center hover:text-white transition-colors">
               Home
             </Link>
-            <ChevronRight className="w-3 h-3 text-slate-600" />
-            <Link href={categoryInfo.href} className="hover:text-white transition-colors">
+            <ChevronRight className="w-3 h-3 text-slate-500" aria-hidden="true" />
+            <Link href={categoryInfo.href} className="inline-flex min-h-6 items-center hover:text-white transition-colors">
               {categoryInfo.label}
             </Link>
-            <ChevronRight className="w-3 h-3 text-slate-600" />
-            <span className="text-summit-300 truncate max-w-[200px] sm:max-w-none">{tour.title}</span>
+            <ChevronRight className="w-3 h-3 text-slate-500" aria-hidden="true" />
+            <span aria-current="page" className="text-summit-300 truncate max-w-[200px] sm:max-w-none">{tour.title}</span>
           </nav>
 
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
@@ -383,7 +390,7 @@ export function TourDetailView({
                   <MapPin className="w-3.5 h-3.5 text-summit-500" />
                   {tour.destination.name}
                 </span>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-ocean-500/20 text-ocean-500 text-xs font-semibold border border-ocean-500/30">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-ocean-500/20 text-ocean-300 text-xs font-semibold border border-ocean-500/30">
                   {categoryInfo.sub}
                 </span>
                 <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-white/5 text-xs text-slate-300 border border-white/10">
@@ -444,30 +451,77 @@ export function TourDetailView({
             {/* Visual Photo Gallery */}
             <div className="space-y-4">
               <div className="relative aspect-[16/10] w-full rounded-3xl overflow-hidden shadow-2xl bg-slate-900 border border-black/5">
-                <Image
-                  src={images[selectedPhoto] || tour.featuredImage}
-                  alt={tour.title}
-                  fill
-                  priority
-                  className="object-cover transition-transform duration-700 hover:scale-105"
-                  sizes="(max-width: 1024px) 100vw, 700px"
-                />
+                {(() => {
+                  const slide = slides[selectedPhoto] ?? slides[0];
+                  if (slide?.kind === "video") {
+                    return (
+                      <>
+                        {/* Poster as the optimized main image, the clip plays over it */}
+                        <Image
+                          src={slide.video.poster}
+                          alt={slide.video.alt}
+                          fill
+                          priority
+                          className="object-cover"
+                          sizes="(max-width: 1024px) 100vw, 700px"
+                        />
+                        <AmbientVideo
+                          key={slide.video.id}
+                          src={slide.video.src}
+                          srcHd={slide.video.srcHd}
+                          poster={slide.video.poster}
+                          className="absolute inset-0 h-full w-full object-cover"
+                        />
+                      </>
+                    );
+                  }
+                  return (
+                    <Image
+                      src={slide?.src || tour.featuredImage}
+                      alt={tour.title}
+                      fill
+                      priority
+                      className="object-cover transition-transform duration-700 hover:scale-105"
+                      sizes="(max-width: 1024px) 100vw, 700px"
+                    />
+                  );
+                })()}
                 <div className="absolute bottom-4 left-4 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-md text-white text-xs font-medium">
-                  {selectedPhoto + 1} of {images.length} · Vista Chase Certified Experience
+                  {selectedPhoto + 1} of {slides.length} · Vista Chase Certified Experience
                 </div>
               </div>
 
-              {images.length > 1 && (
+              {slides.length > 1 && (
                 <div className="grid grid-cols-4 gap-3">
-                  {images.map((img, idx) => (
+                  {slides.map((slide, idx) => (
                     <button
-                      key={idx}
+                      key={slide.kind === "video" ? slide.video.id : slide.src}
+                      type="button"
+                      aria-label={
+                        slide.kind === "video"
+                          ? `Play video: ${slide.video.title}`
+                          : `Show photo ${idx + 1} of ${slides.length}`
+                      }
+                      aria-pressed={selectedPhoto === idx}
                       onClick={() => setSelectedPhoto(idx)}
                       className={`relative aspect-[4/3] rounded-xl overflow-hidden border-2 transition-all ${
                         selectedPhoto === idx ? "border-summit-500 scale-[0.98] ring-2 ring-summit-500/40" : "border-transparent opacity-70 hover:opacity-100"
                       }`}
                     >
-                      <Image src={img} alt="" fill className="object-cover" sizes="150px" />
+                      <Image
+                        src={slide.kind === "video" ? slide.video.poster : slide.src}
+                        alt=""
+                        fill
+                        className="object-cover"
+                        sizes="150px"
+                      />
+                      {slide.kind === "video" && (
+                        <span className="absolute inset-0 flex items-center justify-center bg-black/25" aria-hidden="true">
+                          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-obsidian-900">
+                            <Play className="h-4 w-4 translate-x-px" />
+                          </span>
+                        </span>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -477,7 +531,7 @@ export function TourDetailView({
             {/* Experience Narrative */}
             <div className="space-y-6">
               <div className="space-y-2">
-                <span className="text-xs uppercase tracking-widest text-ocean-500 font-bold">The Experience</span>
+                <span className="text-xs uppercase tracking-widest text-ocean-600 font-bold">The Experience</span>
                 <h2 className="text-3xl sm:text-4xl font-light font-serif text-obsidian-900">
                   {isPrivate ? "Your Day, Handcrafted to Your Mountain Rhythm" : "Small Groups, Greater Mountain Discoveries"}
                 </h2>
@@ -497,7 +551,7 @@ export function TourDetailView({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {tour.highlights.map((highlight, idx) => (
                     <div key={idx} className="flex items-start gap-3">
-                      <div className="w-6 h-6 rounded-full bg-ocean-500/15 text-ocean-500 flex items-center justify-center shrink-0 mt-0.5">
+                      <div className="w-6 h-6 rounded-full bg-ocean-500/15 text-ocean-600 flex items-center justify-center shrink-0 mt-0.5">
                         <Check className="w-3.5 h-3.5" />
                       </div>
                       <span className="text-sm font-medium text-slate-800 leading-snug">{highlight}</span>
@@ -514,7 +568,7 @@ export function TourDetailView({
                   <Car className="w-6 h-6" />
                 </div>
                 <div>
-                  <span className="text-xs uppercase tracking-widest text-ocean-500 font-bold block">
+                  <span className="text-xs uppercase tracking-widest text-ocean-300 font-bold block">
                     Luxury Mountain Fleet
                   </span>
                   <h3 className="text-xl font-serif font-light text-white">
@@ -567,13 +621,13 @@ export function TourDetailView({
 
                 <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm space-y-4">
                   <h4 className="text-base font-serif font-medium text-obsidian-900 flex items-center gap-2">
-                    <Compass className="w-4 h-4 text-ocean-500" /> What to Bring
+                    <Compass className="w-4 h-4 text-ocean-600" /> What to Bring
                   </h4>
                   <ul className="space-y-2 text-xs sm:text-sm text-slate-700">
                     {tour.whatToBring.length > 0 ? (
                       tour.whatToBring.map((item, idx) => (
                         <li key={idx} className="flex items-start gap-2">
-                          <span className="text-ocean-500 mt-1">•</span>
+                          <span className="text-ocean-600 mt-1">•</span>
                           <span>{item}</span>
                         </li>
                       ))
@@ -593,7 +647,7 @@ export function TourDetailView({
             {/* Guest Reviews */}
             <div className="space-y-6 pt-4">
               <div className="space-y-1">
-                <span className="text-xs uppercase tracking-widest text-ocean-500 font-bold">Verified Travelers</span>
+                <span className="text-xs uppercase tracking-widest text-ocean-600 font-bold">Verified Travelers</span>
                 <h3 className="text-2xl font-serif font-light text-obsidian-900">What Guests Are Saying</h3>
               </div>
               <div className="p-8 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4">
@@ -617,7 +671,7 @@ export function TourDetailView({
             {faqs.length > 0 && (
             <div className="space-y-6 pt-4">
               <div className="space-y-1">
-                <span className="text-xs uppercase tracking-widest text-ocean-500 font-bold">Answers</span>
+                <span className="text-xs uppercase tracking-widest text-ocean-600 font-bold">Answers</span>
                 <h3 className="text-2xl font-serif font-light text-obsidian-900">Frequently Asked Questions</h3>
               </div>
               <div className="space-y-3">
@@ -625,12 +679,12 @@ export function TourDetailView({
                   <div key={idx} className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
                     <button
                       onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                      className="w-full p-5 text-left flex items-center justify-between gap-4 font-medium text-slate-900 text-sm hover:text-ocean-500 transition-colors"
+                      className="w-full p-5 text-left flex items-center justify-between gap-4 font-medium text-slate-900 text-sm hover:text-ocean-600 transition-colors"
                     >
                       <span>{faq.q}</span>
                       <ChevronDown
                         className={`w-4 h-4 shrink-0 transition-transform duration-300 ${
-                          openFaq === idx ? "rotate-180 text-ocean-500" : "text-slate-400"
+                          openFaq === idx ? "rotate-180 text-ocean-600" : "text-slate-400"
                         }`}
                       />
                     </button>
@@ -650,7 +704,7 @@ export function TourDetailView({
           <div className="lg:col-span-5 lg:sticky lg:top-24 space-y-6">
             <div className="rounded-3xl bg-white border border-slate-200 shadow-xl p-6 sm:p-8 space-y-6">
               <div className="space-y-2 border-b border-slate-100 pb-5">
-                <span className="text-xs uppercase tracking-widest text-ocean-500 font-bold block">
+                <span className="text-xs uppercase tracking-widest text-ocean-600 font-bold block">
                   {isEnquiry ? "Request a Tailored Quote" : "Reserve Departure"}
                 </span>
                 <div className="flex items-baseline justify-between">
@@ -690,10 +744,11 @@ export function TourDetailView({
               ) : (
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
+                    <label htmlFor="tour-departure" className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
                       Choose Departure Date
                     </label>
                     <select
+                      id="tour-departure"
                       value={selectedDepartureId}
                       onChange={(e) => setSelectedDepartureId(e.target.value)}
                       className="w-full p-3.5 rounded-xl border border-slate-300 bg-white text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-ocean-500"
@@ -746,7 +801,7 @@ export function TourDetailView({
                       href="/concierge"
                       className="w-full py-3 rounded-xl font-medium text-xs text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 flex items-center justify-center gap-2 transition-colors"
                     >
-                      <Sparkles className="w-4 h-4 text-ocean-500" />
+                      <Sparkles className="w-4 h-4 text-ocean-600" />
                       <span>Custom Inquiries &amp; Concierge</span>
                     </Link>
                   </div>
@@ -764,7 +819,7 @@ export function TourDetailView({
                   <span>Free cancellation up to 24 hours before your tour</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Info className="w-4 h-4 text-ocean-500 shrink-0" />
+                  <Info className="w-4 h-4 text-ocean-600 shrink-0" />
                   <span>Bókun Booking of Record · WhatsApp Live Tracking</span>
                 </div>
               </div>
@@ -777,7 +832,7 @@ export function TourDetailView({
       {related.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pb-20 space-y-8">
           <div className="space-y-1">
-            <span className="text-xs uppercase tracking-widest text-ocean-500 font-bold">Keep Exploring</span>
+            <span className="text-xs uppercase tracking-widest text-ocean-600 font-bold">Keep Exploring</span>
             <h2 className="text-2xl sm:text-3xl font-serif font-light text-obsidian-900">Explore More</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -91,7 +91,7 @@ export default function PickupFinderPage() {
                 {town === "ALL" ? "All Locations" : town}
               </button>
             ))}
-            <span className="text-xs text-slate-400 ml-auto">
+            <span className="text-xs text-slate-500 ml-auto">
               Found {filteredPickups.length} verified pickup {filteredPickups.length === 1 ? "point" : "points"}
             </span>
           </div>
@@ -129,14 +129,14 @@ export default function PickupFinderPage() {
                     <span className="px-3 py-1 rounded-full bg-forest-50 text-forest-800 text-xs font-bold border border-forest-100">
                       {loc.town}
                     </span>
-                    <span className="text-xs text-slate-400 font-mono">
+                    <span className="text-xs text-slate-500 font-mono">
                       {loc.latitude.toFixed(4)}°N, {Math.abs(loc.longitude).toFixed(4)}°W
                     </span>
                   </div>
 
-                  <h3 className="text-lg font-bold text-forest-950 group-hover:text-forest-700 transition-colors">
+                  <h2 className="text-lg font-bold text-forest-950 group-hover:text-forest-700 transition-colors">
                     {loc.name}
-                  </h3>
+                  </h2>
 
                   <p className="text-xs text-slate-600 flex items-start gap-1.5">
                     <MapPin className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />

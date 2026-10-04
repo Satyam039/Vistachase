@@ -30,6 +30,11 @@ const nextConfig = {
         source: '/media/:path*',
         destination: `${BACKEND_URL}/media/:path*`,
       },
+      // Browsers still ask for /favicon.ico directly.
+      {
+        source: '/favicon.ico',
+        destination: `${BACKEND_URL}/media/brand/favicon-32.png`,
+      },
     ];
   },
   async headers() {

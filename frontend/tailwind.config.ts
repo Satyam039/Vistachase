@@ -25,8 +25,8 @@ const config: Config = {
           900: "#0c1f21",
           800: "#14363a",
           700: "#1e5258",
-          600: "#2a757e",
-          500: "#3a9ca6", // Primary Ocean Teal
+          600: "#257780", // Ocean Teal for text and controls on light surfaces (5.2:1 on white, AA)
+          500: "#3a9ca6", // Primary Ocean Teal (3.2:1 on white: icons, large shapes, dark surfaces)
           400: "#5ab0ba",
           300: "#84c7ce",
           200: "#b5e1e6",
@@ -63,7 +63,7 @@ const config: Config = {
           850: "#10292c",
           800: "#14363a",
           700: "#1e5258",
-          600: "#2a757e",
+          600: "#257780",
           500: "#3a9ca6",
           400: "#5ab0ba",
           300: "#84c7ce",
@@ -103,9 +103,14 @@ const config: Config = {
         card: "0 10px 30px -5px rgba(28, 31, 35, 0.08)",
         glow: "0 0 25px rgba(245, 191, 3, 0.35)",
       },
+      // Decorative motion stops on its own within 5 seconds (WCAG 2.2.2 Pause, Stop, Hide):
+      // Tailwind's ping/pulse/bounce default to infinite. animate-spin (loading) is left as is.
       animation: {
-        "pulse-slow": "pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-        "float": "float 6s ease-in-out infinite",
+        ping: "ping 1s cubic-bezier(0, 0, 0.2, 1) 4",
+        pulse: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) 2",
+        bounce: "bounce 1s 4",
+        "pulse-slow": "pulse 4s cubic-bezier(0.4, 0, 0.6, 1) 1",
+        "float": "float 5s ease-in-out 1",
       },
       keyframes: {
         float: {

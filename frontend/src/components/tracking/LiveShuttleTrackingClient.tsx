@@ -207,7 +207,7 @@ export default function LiveShuttleTrackingClient({
       </header>
 
       {/* Main Grid */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6">
 
         {/* LEFT COLUMN: Map & Telemetry (7 cols) */}
         <div className="lg:col-span-7 flex flex-col gap-6">
@@ -640,7 +640,7 @@ export default function LiveShuttleTrackingClient({
 
         </div>
 
-      </main>
+      </div>
 
       {/* Footer */}
       <footer className="mt-auto border-t border-forest-800/60 bg-ocean-950 py-6 px-4 text-center text-xs text-slate-500">

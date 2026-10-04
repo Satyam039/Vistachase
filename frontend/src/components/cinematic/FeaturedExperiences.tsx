@@ -142,10 +142,10 @@ export function FeaturedExperiences() {
                   <div>
                     {/* Rating & Duration Meta */}
                     <div className="flex items-center justify-between text-xs text-slate-500 mb-2.5">
-                      <div className="flex items-center gap-1 text-summit-600 font-bold">
-                        <Star className="w-3.5 h-3.5 fill-summit-500" />
+                      <div className="flex items-center gap-1 text-obsidian-900 font-bold">
+                        <Star className="w-3.5 h-3.5 text-summit-500 fill-summit-500" aria-hidden="true" />
                         <span>{tour.rating}</span>
-                        <span className="text-slate-400 font-normal">({tour.reviewCount})</span>
+                        <span className="text-slate-500 font-normal">({tour.reviewCount})</span>
                       </div>
                       <div className="flex items-center gap-1 text-slate-600">
                         <Clock className="w-3.5 h-3.5" />

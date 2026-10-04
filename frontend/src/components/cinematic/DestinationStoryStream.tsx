@@ -5,8 +5,9 @@ import { MediaStory, MediaStoryProps } from "./MediaStory";
 
 const DESTINATION_STORIES: MediaStoryProps[] = [
   {
-    media: "/media/site/image-2025-11-04t210434-975.webp",
-    mediaType: "image",
+    media: "/media/videos/vermilion-lakes.mp4",
+    mediaType: "video",
+    poster: "/media/videos/vermilion-lakes-poster.webp",
     eyebrow: "01 • BANFF NATIONAL PARK",
     title: "Where the mountains become the journey.",
     description: "Towering limestone peaks, winding alpine valleys, and hidden lookouts. Experience Banff with private guides who know every secret turn of the Bow Valley.",
@@ -37,8 +38,9 @@ const DESTINATION_STORIES: MediaStoryProps[] = [
     badge: "Guaranteed Access",
   },
   {
-    media: "/media/brand/horse-rider-background.png",
-    mediaType: "image",
+    media: "/media/videos/athabasca-falls.mp4",
+    mediaType: "video",
+    poster: "/media/videos/athabasca-falls-poster.webp",
     eyebrow: "04 • ICEFIELDS PARKWAY & JASPER",
     title: "A road through another world.",
     description: "Over 230 kilometers of glaciers, plunging waterfalls, and weeping walls. Traverse North America’s most spectacular mountain highway in comfort.",

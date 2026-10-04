@@ -253,9 +253,10 @@ export default function MornbyOperationsPage() {
               <Calendar className="w-3.5 h-3.5 text-gold-400" />
               <input
                 type="date"
+                aria-label="Operations date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="bg-transparent text-white font-mono text-xs focus:outline-none"
+                className="bg-transparent text-white font-mono text-xs rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-summit-500"
               />
             </div>
 
@@ -439,10 +440,11 @@ export default function MornbyOperationsPage() {
 
                         <td className="py-3.5 px-4">
                           <select
+                            aria-label="Run status"
                             value={run.status}
                             disabled={updatingRunId === run.id}
                             onChange={(e) => handleStatusChange(run.id, e.target.value)}
-                            className={`px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase border cursor-pointer ${statusObj.color} focus:outline-none`}
+                            className={`px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase border cursor-pointer ${statusObj.color} focus:outline-none focus-visible:ring-2 focus-visible:ring-summit-500`}
                           >
                             {RUN_STATUSES.map((s) => (
                               <option key={s.value} value={s.value} className="bg-slate-900 text-white">

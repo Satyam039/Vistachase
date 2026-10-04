@@ -64,7 +64,7 @@ export default function LoginPage() {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
         <div className="bg-white py-8 px-6 shadow-card rounded-3xl border border-slate-200 sm:px-10 space-y-6">
           {errorMsg && (
-            <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
+            <div role="alert" className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{errorMsg}</span>
             </div>
@@ -72,10 +72,10 @@ export default function LoginPage() {
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700">Email Address</label>
+              <label htmlFor="app-login-email-address" className="text-xs font-bold text-slate-700">Email Address</label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
+                <input id="app-login-email-address" autoComplete="email"
                   type="email"
                   required
                   value={email}
@@ -87,10 +87,10 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700">Password</label>
+              <label htmlFor="app-login-password" className="text-xs font-bold text-slate-700">Password</label>
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
+                <input id="app-login-password" autoComplete="current-password"
                   type="password"
                   required
                   value={password}

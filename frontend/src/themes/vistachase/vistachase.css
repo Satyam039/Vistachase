@@ -553,6 +553,11 @@
     --color-error: light-dark(#a58b86, #c0a5a1);
   }
 
+  .astryx-text-input:focus-within {
+    outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color);
+    outline-offset: 2px;
+  }
+
   .astryx-text-area[data-status="success"] {
     --color-success: light-dark(#7f977e, #99b298);
   }
@@ -563,6 +568,11 @@
 
   .astryx-text-area[data-status="error"] {
     --color-error: light-dark(#a58b86, #c0a5a1);
+  }
+
+  .astryx-text-area:focus-within {
+    outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color);
+    outline-offset: 2px;
   }
 
   .astryx-number-input[data-status="success"] {
@@ -589,6 +599,11 @@
     --color-error: light-dark(#a58b86, #c0a5a1);
   }
 
+  .astryx-date-input:focus-within {
+    outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color);
+    outline-offset: 2px;
+  }
+
   .astryx-time-input[data-status="success"] {
     --color-success: light-dark(#7f977e, #99b298);
   }
@@ -611,6 +626,11 @@
 
   .astryx-selector[data-status="error"] {
     --color-error: light-dark(#a58b86, #c0a5a1);
+  }
+
+  .astryx-selector:focus-within {
+    outline: var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color);
+    outline-offset: 2px;
   }
 
   .astryx-multi-selector[data-status="success"] {
@@ -655,6 +675,14 @@
 
   .astryx-section {
     --astryx-section-padding: var(--spacing-3);
+  }
+
+  .astryx-app-shell-header {
+    z-index: 40;
+  }
+
+  .astryx-layout[data-height="auto"] {
+    min-height: auto;
   }
 
   .astryx-text[data-color="primary"] { color: var(--color-text-primary); }

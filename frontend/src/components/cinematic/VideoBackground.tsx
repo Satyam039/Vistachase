@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Image from "next/image";
+import { AmbientVideo } from "@/components/cinematic/AmbientVideo";
 
 interface VideoBackgroundProps {
   videoSrc?: string;
+  videoSrcHd?: string;
   posterSrc: string;
   alt?: string;
   overlayOpacity?: number;
@@ -14,14 +16,13 @@ interface VideoBackgroundProps {
 
 export function VideoBackground({
   videoSrc,
+  videoSrcHd,
   posterSrc,
   alt = "Canadian Rockies scenic view",
   overlayOpacity = 0.55,
   className = "",
   children,
 }: VideoBackgroundProps) {
-  const [videoLoaded, setVideoLoaded] = useState(false);
-
   return (
     <div className={`relative overflow-hidden ${className}`}>
       {/* Poster image fallback / initial render */}
@@ -32,25 +33,13 @@ export function VideoBackground({
         priority
         sizes="100vw"
         className={`object-cover transition-opacity duration-1000 ${
-          videoLoaded && videoSrc ? "opacity-0" : "opacity-100"
+          videoSrc ? "opacity-0" : "opacity-100"
         }`}
       />
 
       {/* Video layer if provided */}
       {videoSrc && (
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          poster={posterSrc}
-          onCanPlayThrough={() => setVideoLoaded(true)}
-          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
-            videoLoaded ? "opacity-100" : "opacity-0"
-          }`}
-        >
-          <source src={videoSrc} type="video/mp4" />
-        </video>
+        <AmbientVideo src={videoSrc} srcHd={videoSrcHd} poster={posterSrc} className="absolute inset-0 w-full h-full object-cover" />
       )}
 
       {/* Cinematic dark scrim overlay */}

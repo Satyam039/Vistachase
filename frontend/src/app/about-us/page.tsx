@@ -38,7 +38,7 @@ export default function AboutUsPage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-20 space-y-20">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-6">
-            <span className="text-xs uppercase tracking-widest text-ocean-500 font-bold">Our Heritage</span>
+            <span className="text-xs uppercase tracking-widest text-ocean-600 font-bold">Our Heritage</span>
             <h2 className="text-3xl sm:text-4xl font-light font-serif text-obsidian-900 leading-tight">
               Why We Built Vista Chase: Elevating the Rockies Experience
             </h2>
@@ -114,7 +114,7 @@ export default function AboutUsPage() {
         {/* 04. CALL TO ACTION */}
         <div className="p-10 rounded-3xl bg-ocean-900 text-white flex flex-col md:flex-row md:items-center justify-between gap-6 border border-white/10">
           <div className="space-y-2 max-w-xl">
-            <span className="text-xs uppercase tracking-widest text-ocean-500 font-bold">Ready to Explore?</span>
+            <span className="text-xs uppercase tracking-widest text-ocean-300 font-bold">Ready to Explore?</span>
             <h3 className="text-2xl sm:text-3xl font-serif font-light text-white">
               Discover the Canadian Rockies Your Way
             </h3>

@@ -1,7 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { getTourBySlug } from "@/modules/tours/tour.repository";
 import { PRODUCT_MAP } from "@/modules/bokun/product-map";
-import { getMediaAssets } from "@/modules/media/media.repository";
+import fs from "node:fs";
+import path from "node:path";
+import { MEDIA_DIR, getMediaAssets } from "@/modules/media/media.repository";
 import { getShuttleRoutes } from "@/modules/shuttles/shuttle.repository";
 import prisma from "@/lib/db/prisma";
 
@@ -54,6 +56,23 @@ describe("Phase 2: URL Preservation & Customer Experience", () => {
     for (const slug of ["banff-yoho-custom-private-tour", "jasper-custom-private-tour", "multi-day-tour-package-for-banff"]) {
       expect((await getTourBySlug(slug))?.bookingMode, slug).toBe("ENQUIRY");
     }
+  });
+
+  it("gives tours clips of the places they visit, in season, from backend media", async () => {
+    const media = new Map(getMediaAssets().map((a) => [a.src, a]));
+    for (const slug of PRESERVED_SLUGS) {
+      const tour = await getTourBySlug(slug);
+      for (const video of tour!.videos) {
+        const asset = media.get(video.src);
+        expect(asset?.collection, `${slug}: ${video.src}`).toBe("videos");
+        expect(fs.existsSync(path.join(MEDIA_DIR, video.poster.replace(/^\/media\//, ""))), `${slug}: ${video.poster}`).toBe(true);
+      }
+    }
+    const winter = await getTourBySlug("winter-special");
+    expect(winter!.videos.length).toBeGreaterThan(0);
+    for (const v of winter!.videos) expect(media.get(v.src)?.tags).toContain("winter");
+    const summer = await getTourBySlug("shared-tours-icefields-jasper");
+    for (const v of summer!.videos) expect(media.get(v.src)?.tags).not.toContain("winter");
   });
 
   it("maps every live product once, and serves every tour image from backend media", async () => {

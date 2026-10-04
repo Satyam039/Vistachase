@@ -76,7 +76,7 @@ export function VerifiedAwardSection() {
                     className="object-contain"
                   />
                 </div>
-                <p className="text-xs uppercase tracking-widest text-slate-400 font-bold">
+                <p className="text-xs uppercase tracking-widest text-slate-500 font-bold">
                   OFFICIAL ACCREDITATION
                 </p>
                 <p className="text-sm font-medium text-slate-700 mt-1">

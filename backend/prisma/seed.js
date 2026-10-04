@@ -1,5 +1,6 @@
 const { PrismaClient } = require("@prisma/client");
 const bcrypt = require("bcryptjs");
+const QRCode = require("qrcode");
 const catalog = require("./catalog/load-catalog");
 
 const prisma = new PrismaClient();
@@ -405,7 +406,8 @@ async function main() {
       status: "CONFIRMED",
       specialRequests: "Window seats preferred, anniversary trip.",
       voucherCode: "VC-VOUCH-7891",
-      qrCodeUrl: "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=VC-2026-98412",
+      // Generated locally like real bookings (booking.repository.ts); no third-party QR service
+      qrCodeUrl: await QRCode.toDataURL("VC-2026-98412", { margin: 1, width: 300 }),
       items: {
         create: [
           {

@@ -89,18 +89,19 @@ export default async function VoucherPage({
         {/* Voucher Barcode & References */}
         <div className="bg-forest-900/10 p-6 flex flex-col sm:flex-row items-center justify-between gap-6 border-b border-slate-200">
           <div className="space-y-1 text-center sm:text-left">
-            <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Booking Reference</span>
+            <span className="text-xs text-slate-600 font-bold uppercase tracking-wider">Booking Reference</span>
             <p className="text-2xl font-bold font-mono text-forest-950">{booking.bookingReference}</p>
-            <p className="text-xs text-slate-600">Voucher Code: <strong className="font-mono text-gold-600">{booking.voucherCode}</strong></p>
+            <p className="text-xs text-slate-600">Voucher Code: <strong className="font-mono text-obsidian-900">{booking.voucherCode}</strong></p>
           </div>
 
           {booking.qrCodeUrl && (
             <div className="p-3 bg-white border border-slate-300 rounded-2xl shadow-sm text-center">
               <Image
                 src={booking.qrCodeUrl}
-                alt="Boarding Pass QR Code"
+                alt={`Boarding pass QR code for booking ${booking.bookingReference}`}
                 width={120}
                 height={120}
+                unoptimized
                 className="rounded-lg mx-auto"
               />
               <span className="text-[10px] font-mono text-slate-500 mt-1 block">Scan at Vehicle</span>

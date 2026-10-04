@@ -129,6 +129,8 @@ type AddOnId = (typeof ADD_ONS)[number]["id"];
 
 const GST_RATE = 0.05; // Alberta GST
 const HOLD_SECONDS = 600;
+// Warn this long before a hold ends and offer to renew it (WCAG 2.2.1 asks for at least 20s).
+const HOLD_WARNING_SECONDS = 120;
 const NARROW_HOST_WIDTH = 900;
 const MAX_INFANTS = 4;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -387,6 +389,13 @@ export function BookingCheckoutClient({
     }
   };
 
+  /** Renew the hold for another full period: release the current one, then hold again. */
+  const extendHold = async () => {
+    if (!holdToken) return;
+    await releaseHold(holdToken, holdSeats);
+    await placeHold();
+  };
+
   // ── Derived totals ─────────────────────────────────────────────────────────
 
   const selectedAddOns = ADD_ONS.filter((addOn) => addOns[addOn.id]).map((addOn) => {
@@ -541,20 +550,38 @@ export function BookingCheckoutClient({
 
   // ── Summary ────────────────────────────────────────────────────────────────
 
+  // The banner is a live region (role="status"), so the ticking countdown is hidden from
+  // assistive tech: screen readers get the expiry time once, then the 2-minute warning, instead
+  // of an announcement every second. Near the end the hold can be renewed (WCAG 2.2.1).
+  const holdEndsSoon = remainingSeconds > 0 && remainingSeconds <= HOLD_WARNING_SECONDS;
+  const holdLabel = isVehicle ? "Vehicle held" : `${holdSeats} ${holdSeats === 1 ? "seat" : "seats"} held`;
+  const holdUntil = holdExpiresAt
+    ? new Date(holdExpiresAt).toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit" })
+    : "";
   const holdStatus = holdToken ? (
     <Banner
       status="success"
       icon={<Icon icon={Timer} size="sm" />}
       title={
-        isVehicle
-          ? `Vehicle held · ${formatCountdown(remainingSeconds)}`
-          : `${holdSeats} ${holdSeats === 1 ? "seat" : "seats"} held · ${formatCountdown(remainingSeconds)}`
+        <>
+          {holdLabel} <span aria-hidden="true">· {formatCountdown(remainingSeconds)}</span>
+          <span className="sr-only">until {holdUntil}</span>
+        </>
       }
-      description="Complete your booking before the timer ends to keep them."
+      description={
+        holdEndsSoon
+          ? "Less than 2 minutes left on your hold. Keep your seats for another 10 minutes, or complete your booking."
+          : "Complete your booking before the timer ends to keep them."
+      }
+      endContent={
+        holdEndsSoon ? (
+          <Button label="Hold for 10 more minutes" size="sm" onClick={extendHold} isDisabled={isPlacingHold} />
+        ) : undefined
+      }
     />
   ) : (
     <Text type="supporting" color="secondary">
-      Free cancellation up to 48 hours before departure · Instant digital boarding pass
+      Free cancellation up to 24 hours before departure · Instant digital boarding pass
     </Text>
   );
 

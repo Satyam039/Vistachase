@@ -88,6 +88,26 @@ Astryx setup (already done, don't redo):
 - CSS cascade layers: order is declared in `src/app/layers.css` (imported first in layout.tsx):
   `reset, tw-preflight, astryx-base, astryx-theme`, with Tailwind utilities unlayered. Keep it that way.
 
+Accessibility (WCAG 2.2 AA) — `npm run a11y` (frontend + backend running, Chrome installed) audits every
+route at 320px and 1440px: axe WCAG 2.0–2.2 A/AA, reflow at 320px, Tab order (visible focus, focus hidden
+behind the sticky header, traps). Report in `a11y-report/summary.md`. Keep it at zero findings:
+- Text colour: brand Ocean Teal `ocean-500` (#3A9CA6) is 3.2:1 on white, so never use it for text on light
+  surfaces: use `ocean-600` (#257780). On dark surfaces use `ocean-300`/`ocean-400`. `slate-400` text only
+  on dark surfaces; on white use `slate-500` or darker. Gold (`summit-*`) is a fill, not a text colour on light.
+- The sticky header sits at z-index 40 (theme `app-shell-header`) and SiteFrame sets `scroll-padding-top`
+  from its height, so focused elements never land under it. Don't give page sections a z-index above 40.
+- Don't add a `<main>`: AppShell renders the main landmark and the skip link.
+- Form fields: a `<label htmlFor>` tied to every control (or `aria-label`), `autoComplete` on identity
+  fields, errors in `role="alert"`. Icon-only buttons need `aria-label`.
+- Motion: Tailwind ping/pulse/bounce are finite (tailwind.config.ts); reduced motion turns animation off
+  (globals.css).
+- Video: clips live in `backend/media/videos` (MP4 + `-poster.webp`, `-1080.mp4` for hero clips) and come
+  from the API: `tour.videos` (clips of the places a tour visits) and `destination.heroVideo`. Play them only
+  through `cinematic/AmbientVideo` (`src`, `srcHd`, `poster`): it loads when on screen, pauses off screen, has
+  a pause button, and stays on the poster with reduced motion or data saver. Inside it the parent must be
+  `position: relative`.
+- Client-component pages set their title in a sibling `layout.tsx` (every page needs its own title).
+
 Building pages from templates (https://astryx.atmeta.com/templates):
 1. Pick the template: `npm run astryx -- build "<what the page does>"`, or choose one by id from
    `npm run astryx -- template --list --type page` (for example checkout-wizard, product-detail,

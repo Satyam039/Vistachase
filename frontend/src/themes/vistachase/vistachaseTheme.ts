@@ -48,4 +48,25 @@ export const vistachaseTheme = defineTheme({
     '--color-icon-accent': ['#3a9ca6', '#6cc9d2'], // brand teal; icons need 3:1
     '--color-on-accent': ['#ffffff', '#0e2a2d'],
   },
+
+  components: {
+    // The sticky site header must stay above page content while scrolling: the cinematic
+    // sections create stacking contexts (z-10), which otherwise paint over the header and
+    // hide keyboard focus in it (WCAG 2.4.11 Focus Not Obscured).
+    'app-shell-header': {
+      base: {zIndex: '40'},
+    },
+    // A page Layout that grows with its content (height="auto") must not also stretch to
+    // min-height: 100%: inside the site's auto-height AppShell that pushed the footer out of
+    // the scrollable area (its bottom links could not be reached on /search and /book).
+    layout: {
+      'height:auto': {minHeight: 'auto'},
+    },
+    // Form fields: on keyboard focus Astryx only tints the 1px border. Add the same 2px focus
+    // outline buttons use (--focus-outline-* tokens), so focus is clearly visible (WCAG 2.4.7).
+    'text-input': {base: {':focus-within': {outline: 'var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color)', outlineOffset: '2px'}}},
+    'text-area': {base: {':focus-within': {outline: 'var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color)', outlineOffset: '2px'}}},
+    'date-input': {base: {':focus-within': {outline: 'var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color)', outlineOffset: '2px'}}},
+    selector: {base: {':focus-within': {outline: 'var(--focus-outline-width) var(--focus-outline-style) var(--focus-outline-color)', outlineOffset: '2px'}}},
+  },
 });
