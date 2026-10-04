@@ -5,7 +5,44 @@ import type {
   TourWithAvailability,
 } from "@/lib/api/types";
 
-export const FALLBACK_TOURS: TourWithAvailability[] = [
+type CatalogFields =
+  | "bokunExperienceId"
+  | "bookingMode"
+  | "priceUnit"
+  | "facts"
+  | "tabs"
+  | "faqs"
+  | "crossSells"
+  | "vehicleOptions"
+  | "metaTitle"
+  | "metaDescription";
+
+/** Fills the imported-catalog fields the hand-written fallback tours don't carry. */
+function withCatalogDefaults(
+  tour: Omit<TourWithAvailability, CatalogFields> & Partial<Pick<TourWithAvailability, CatalogFields>>
+): TourWithAvailability {
+  const perGroup = tour.category === "PRIVATE" || tour.category === "MULTIDAY";
+  return {
+    bokunExperienceId: null,
+    bookingMode: "BOKUN",
+    priceUnit: perGroup ? "GROUP" : "PERSON",
+    facts: [],
+    tabs: [],
+    faqs: [],
+    crossSells: [],
+    vehicleOptions: perGroup
+      ? [
+          { id: "suv", label: "Luxury SUV", seats: 6 },
+          { id: "van", label: "Executive van", seats: 13 },
+        ]
+      : [],
+    metaTitle: null,
+    metaDescription: null,
+    ...tour,
+  };
+}
+
+export const FALLBACK_TOURS: TourWithAvailability[] = ([
   {
     id: "banff-highlights-tour",
     slug: "banff-highlights-tour",
@@ -204,7 +241,7 @@ export const FALLBACK_TOURS: TourWithAvailability[] = [
       },
     ],
   },
-];
+] satisfies Parameters<typeof withCatalogDefaults>[0][]).map(withCatalogDefaults);
 
 export const FALLBACK_SHUTTLES: ShuttleWithDepartures[] = [
   {

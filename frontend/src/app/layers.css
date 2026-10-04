@@ -6,7 +6,7 @@
  *   reset         Astryx :where() reset (lowest)
  *   tw-preflight  Tailwind base/preflight + our base styles (globals.css)
  *   astryx-base   Astryx component styles
- *   astryx-theme  Stone theme tokens + component overrides (themes/stone/stone.css)
+ *   astryx-theme  Vista Chase theme (extends Stone) tokens + component overrides (themes/vistachase/vistachase.css)
  *
  * Tailwind components/utilities stay unlayered, so existing utility classes keep winning.
  */

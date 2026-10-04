@@ -39,7 +39,7 @@ router.get("/search", async (req, res) => {
     // Filter by keyword
     if (keyword) {
       tours = tours.filter((t) => {
-        const text = `${t.title} ${t.summary} ${t.description} ${t.destination.name}`.toLowerCase();
+        const text = `${t.title} ${t.summary} ${t.description} ${t.destination.name} ${t.highlights.join(" ")}`.toLowerCase();
         return text.includes(keyword);
       });
     }

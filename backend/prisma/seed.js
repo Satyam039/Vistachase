@@ -1,5 +1,6 @@
 const { PrismaClient } = require("@prisma/client");
 const bcrypt = require("bcryptjs");
+const catalog = require("./catalog/load-catalog");
 
 const prisma = new PrismaClient();
 
@@ -76,7 +77,7 @@ async function main() {
   });
 
   // 3. Destinations
-  const destBanff = await prisma.destination.create({
+  await prisma.destination.create({
     data: {
       slug: "banff-national-park",
       name: "Banff National Park",
@@ -118,7 +119,7 @@ async function main() {
     },
   });
 
-  const destJasper = await prisma.destination.create({
+  await prisma.destination.create({
     data: {
       slug: "jasper-national-park",
       name: "Jasper National Park & Icefields",
@@ -132,7 +133,7 @@ async function main() {
     },
   });
 
-  const destYoho = await prisma.destination.create({
+  await prisma.destination.create({
     data: {
       slug: "yoho-national-park",
       name: "Yoho National Park",
@@ -259,237 +260,16 @@ async function main() {
     },
   });
 
-  // 6. Tours (Preserving exact URLs!)
-  const tourBanffHighlights = await prisma.tour.create({
-    data: {
-      slug: "banff-highlights-tour",
-      title: "Lake Louise, Moraine Lake & Banff Highlights Tour",
-      category: "SHARED",
-      durationHours: 8.0,
-      summary: "Canada's #6 Best Experience by TripAdvisor. Small group shared tour to Lake Louise, Moraine Lake, Bow Falls & Surprise Corner.",
-      description: "Join Canada's highest rated small-group experience. With a maximum of 12 guests per luxury transit van, you will experience the iconic turquoise waters of Moraine Lake and Lake Louise with guaranteed access, skip parking headaches, and hear authentic Canadian Rockies history from our passionate local guides.",
-      inclusions: JSON.stringify([
-        "Guaranteed commercial access to Moraine Lake Road",
-        "Round-trip hotel pickup & drop-off in Banff & Canmore",
-        "Complimentary hot beverages & bottled spring water",
-        "Expert certified interpretive guide",
-        "High-definition binoculars & wildlife spotting",
-      ]),
-      exclusions: JSON.stringify([
-        "Parks Canada Discovery Pass (can be added at checkout)",
-        "Guide gratuities (optional)",
-        "Lunch (can be pre-ordered)",
-      ]),
-      highlights: JSON.stringify([
-        "Moraine Lake Rockpile & Canoes (2 hours)",
-        "Lake Louise Shoreline & Chateau (1.5 hours)",
-        "Surprise Corner View of Fairmont Banff Springs",
-        "Bow Falls & Two Jack Lake scenic drive",
-      ]),
-      whatToBring: JSON.stringify([
-        "Sturdy walking shoes or hiking sneakers",
-        "Layered clothing (weather changes rapidly in mountains)",
-        "Camera or smartphone",
-        "Water bottle & sunglasses",
-      ]),
-      featuredImage: "https://images.unsplash.com/photo-1503614472-8c93d56e92ce?q=80&w=1200&auto=format&fit=crop",
-      galleryImages: JSON.stringify([
-        "https://images.unsplash.com/photo-1536152470836-b943b246224c?q=80&w=1000&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?q=80&w=1000&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1000&auto=format&fit=crop",
-      ]),
-      basePrice: 189.0,
-      currency: "CAD",
-      minGroupSize: 1,
-      maxGroupSize: 12,
-      isFeatured: true,
-      rating: 5.0,
-      reviewCount: 742,
-      destinationId: destBanff.id,
-    },
-  });
-
-  const tourBanffPrivate = await prisma.tour.create({
-    data: {
-      slug: "banff-private-tour",
-      title: "Luxury Private SUV Tour: Banff & Lake Louise",
-      category: "PRIVATE",
-      durationHours: 8.0,
-      summary: "Your day, your way. Full-size luxury SUV (GMC Yukon XL / Suburban) with dedicated guide for up to 6 guests.",
-      description: "Discover the Canadian Rockies in total comfort, privacy, and flexibility. Set your own departure time, adjust stops based on weather and your interests, and enjoy personalized attention from a dedicated local interpretive specialist.",
-      inclusions: JSON.stringify([
-        "Full-size Luxury SUV with leather seating & climate control",
-        "Private certified Rockies interpretive guide",
-        "Door-to-door hotel pickup anywhere in Banff or Canmore",
-        "Guaranteed Moraine Lake commercial permits",
-        "Gourmet snacks, hot drinks & cold refreshments",
-      ]),
-      exclusions: JSON.stringify(["National Park entry pass"]),
-      highlights: JSON.stringify([
-        "Exclusive flexible itinerary customized to your family",
-        "Moraine Lake & Lake Louise VIP access",
-        "Hidden wildlife corridors off the beaten path",
-        "Johnston Canyon Lower Falls or Bow Valley Parkway",
-      ]),
-      whatToBring: JSON.stringify(["Comfortable footwear, sun protection, light jacket"]),
-      featuredImage: "https://images.unsplash.com/photo-1536152470836-b943b246224c?q=80&w=1200&auto=format&fit=crop",
-      galleryImages: JSON.stringify([
-        "https://images.unsplash.com/photo-1503614472-8c93d56e92ce?q=80&w=1000&auto=format&fit=crop",
-      ]),
-      basePrice: 1250.0,
-      currency: "CAD",
-      minGroupSize: 1,
-      maxGroupSize: 6,
-      isFeatured: true,
-      rating: 5.0,
-      reviewCount: 318,
-      destinationId: destBanff.id,
-    },
-  });
-
-  const tourBanffYoho = await prisma.tour.create({
-    data: {
-      slug: "banff-yoho-custom-private-tour",
-      title: "Banff & Yoho National Parks Custom Private Tour",
-      category: "PRIVATE",
-      durationHours: 9.0,
-      summary: "Cross the Continental Divide to Emerald Lake, Natural Bridge & Takakkaw Falls with private luxury transport.",
-      description: "Combine the highlights of Banff with the serene majesty of Yoho National Park. Stand beneath the second tallest waterfall in Canada and marvel at the emerald waters nestled among towering peaks.",
-      inclusions: JSON.stringify([
-        "Private luxury van or SUV transportation",
-        "Expert certified private guide",
-        "Hotel pickup and drop-off",
-        "All permits and parking arrangements",
-      ]),
-      exclusions: JSON.stringify(["Lunch, gratuities"]),
-      highlights: JSON.stringify([
-        "Emerald Lake shoreline walk and historical lodge",
-        "Natural Bridge spanning the Kicking Horse River",
-        "Takakkaw Falls 373-meter vertical drop",
-        "Spiral Tunnels train engineering viewpoint",
-      ]),
-      whatToBring: JSON.stringify(["Rain jacket, walking shoes, camera"]),
-      featuredImage: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1200&auto=format&fit=crop",
-      galleryImages: JSON.stringify([
-        "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?q=80&w=1000&auto=format&fit=crop",
-      ]),
-      basePrice: 1395.0,
-      currency: "CAD",
-      minGroupSize: 1,
-      maxGroupSize: 7,
-      isFeatured: false,
-      rating: 4.9,
-      reviewCount: 145,
-      destinationId: destYoho.id,
-    },
-  });
-
-  await prisma.tour.create({
-    data: {
-      slug: "icefields-jasper-private-tour",
-      title: "Icefields Parkway & Jasper Full-Day Private Tour",
-      category: "PRIVATE",
-      durationHours: 10.0,
-      summary: "Traverse one of National Geographic's top 10 scenic drives on Earth. Peyto Lake, Bow Lake & Columbia Icefield.",
-      description: "The Icefields Parkway connects Lake Louise to Jasper through a breathtaking corridor of over 100 glaciers, hanging valleys, and waterfalls. Enjoy private transport with frequent scenic photo stops at Bow Lake, the wolf-head shaped Peyto Lake viewpoint, and the Athabasca Glacier.",
-      inclusions: JSON.stringify([
-        "Luxury SUV with panoramic viewing windows",
-        "Private guide and glacier narration",
-        "Complimentary hot chocolate, tea & coffee",
-        "Door-to-door hotel transport",
-      ]),
-      exclusions: JSON.stringify(["Ice Explorer glacier vehicle ticket (optional)"]),
-      highlights: JSON.stringify([
-        "Peyto Lake wolf-shaped panoramic viewpoint",
-        "Bow Lake & historic Num-Ti-Jah Lodge",
-        "Columbia Icefield Discovery Centre & Athabasca Glacier",
-        "Weeping Wall & Sunwapta Falls",
-      ]),
-      whatToBring: JSON.stringify(["Warm jacket, sturdy footwear, sunglasses"]),
-      featuredImage: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=1200&auto=format&fit=crop",
-      galleryImages: JSON.stringify([
-        "https://images.unsplash.com/photo-1503614472-8c93d56e92ce?q=80&w=1000&auto=format&fit=crop",
-      ]),
-      basePrice: 1650.0,
-      currency: "CAD",
-      minGroupSize: 1,
-      maxGroupSize: 6,
-      isFeatured: true,
-      rating: 5.0,
-      reviewCount: 198,
-      destinationId: destJasper.id,
-    },
-  });
-
-  await prisma.tour.create({
-    data: {
-      slug: "jasper-custom-private-tour",
-      title: "Jasper National Park Custom Private Tour",
-      category: "PRIVATE",
-      durationHours: 8.0,
-      summary: "Customizable private tour exploring Maligne Lake, Spirit Island cruise access, and Maligne Canyon.",
-      description: "Experience the rugged northern wonder of Jasper National Park at your pace. Take a cruise to legendary Spirit Island, walk along the limestone gorge of Maligne Canyon, and spot elk and bighorn sheep.",
-      inclusions: JSON.stringify([
-        "Private SUV transportation",
-        "Certified local interpretive guide",
-        "Hotel pickup in Jasper, Lake Louise, or Banff",
-      ]),
-      exclusions: JSON.stringify(["Maligne Lake cruise ticket, meals"]),
-      highlights: JSON.stringify([
-        "Maligne Canyon 50-meter deep gorges",
-        "Medicine Lake mysterious disappearing waters",
-        "Maligne Lake & optional Spirit Island cruise",
-      ]),
-      whatToBring: JSON.stringify(["Hiking boots, windbreaker, camera"]),
-      featuredImage: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1200&auto=format&fit=crop",
-      galleryImages: JSON.stringify([]),
-      basePrice: 1450.0,
-      currency: "CAD",
-      minGroupSize: 1,
-      maxGroupSize: 6,
-      isFeatured: false,
-      rating: 4.9,
-      reviewCount: 88,
-      destinationId: destJasper.id,
-    },
-  });
-
-  await prisma.tour.create({
-    data: {
-      slug: "multi-day-tour-package-for-banff",
-      title: "Complete Canadian Rockies 3-Day Luxury Adventure Package",
-      category: "MULTIDAY",
-      durationHours: 24.0,
-      summary: "All-inclusive multi-day itinerary. Airport pickup in Calgary, guaranteed Lake Louise & Moraine Lake, and Yoho Park.",
-      description: "Save more, stress less. We handle every detail: Calgary International Airport (YYC) pickup, luxury hotel transfers, guaranteed sunrise shuttle to Moraine Lake, Lake Louise shoreline time, Yoho National Park private excursions, and return airport drop-off. One vehicle, one dedicated team, zero logistical worries.",
-      inclusions: JSON.stringify([
-        "Calgary Airport (YYC) private round-trip transfers",
-        "3 full days of curated private & small-group guiding",
-        "Guaranteed Moraine Lake & Lake Louise access",
-        "Complimentary hot beverages & fresh snacks daily",
-        "All national park permits & vehicle passes",
-      ]),
-      exclusions: JSON.stringify(["Hotel accommodations, evening dinners"]),
-      highlights: JSON.stringify([
-        "Day 1: Calgary Airport pickup & Banff orientation",
-        "Day 2: Sunrise Moraine Lake & Lake Louise VIP experience",
-        "Day 3: Yoho National Park & Icefields Parkway highlights",
-      ]),
-      whatToBring: JSON.stringify(["Weekend luggage, all-weather mountain apparel"]),
-      featuredImage: "https://images.unsplash.com/photo-1503614472-8c93d56e92ce?q=80&w=1200&auto=format&fit=crop",
-      galleryImages: JSON.stringify([
-        "https://images.unsplash.com/photo-1536152470836-b943b246224c?q=80&w=1000&auto=format&fit=crop",
-      ]),
-      basePrice: 2890.0,
-      currency: "CAD",
-      minGroupSize: 2,
-      maxGroupSize: 8,
-      isFeatured: true,
-      rating: 5.0,
-      reviewCount: 94,
-      destinationId: destBanff.id,
-    },
-  });
+  // 6. Tours: the 13 live vistachase.com products, at their live URLs (prisma/catalog)
+  const destinationIds = Object.fromEntries(
+    (await prisma.destination.findMany({ select: { id: true, slug: true } })).map((d) => [d.slug, d.id]),
+  );
+  const tours = {};
+  for (const [index, product] of catalog.products.entries()) {
+    tours[product.slug] = await prisma.tour.create({ data: catalog.toTourData(product, index, destinationIds) });
+  }
+  const tourBanffHighlights = tours["banff-highlights-tour"];
+  const tourBanffPrivate = tours["banff-private-tour"];
 
   // 7. Tour Departures (Upcoming real scheduled departures)
   const today = new Date();
@@ -511,7 +291,7 @@ async function main() {
         capacityTotal: 12,
         capacityBooked: 4,
         capacityHeld: 0,
-        price: 189.0,
+        price: 199.0,
         status: "ACTIVE",
       },
     });
@@ -528,7 +308,7 @@ async function main() {
         capacityTotal: 14,
         capacityBooked: 6,
         capacityHeld: 0,
-        price: 89.0,
+        price: 125.0,
         status: "ACTIVE",
       },
     });
@@ -544,7 +324,7 @@ async function main() {
         capacityTotal: 14,
         capacityBooked: 2,
         capacityHeld: 0,
-        price: 75.0,
+        price: 99.0,
         status: "ACTIVE",
       },
     });
@@ -560,7 +340,7 @@ async function main() {
         capacityTotal: 6,
         capacityBooked: 0,
         capacityHeld: 0,
-        price: 1250.0,
+        price: 999.0,
         status: "ACTIVE",
       },
     });
@@ -617,10 +397,10 @@ async function main() {
       childrenCount: 0,
       infantsCount: 0,
       totalSeats: 2,
-      subtotal: 378.0,
-      tax: 18.9,
+      subtotal: 398.0,
+      tax: 19.9,
       addOnsTotal: 25.0,
-      totalAmount: 421.9,
+      totalAmount: 442.9,
       currency: "CAD",
       status: "CONFIRMED",
       specialRequests: "Window seats preferred, anniversary trip.",
@@ -638,7 +418,7 @@ async function main() {
       payments: {
         create: [
           {
-            amount: 421.9,
+            amount: 442.9,
             currency: "CAD",
             provider: "mock",
             transactionId: "txn_mock_98412_approved",

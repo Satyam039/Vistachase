@@ -46,7 +46,8 @@ export async function getTourBySlug(slug: string): Promise<TourWithAvailability 
     console.warn(`[Catalog] Backend unavailable for slug ${slug}, serving authoritative fallback`);
   }
 
-  return FALLBACK_TOURS.find((t) => t.slug === slug) ?? FALLBACK_TOURS[0] ?? null;
+  // Only a matching tour: product pages live at top-level URLs, so an unknown slug must 404.
+  return FALLBACK_TOURS.find((t) => t.slug === slug) ?? null;
 }
 
 export async function getShuttleRoutes(): Promise<ShuttleWithDepartures[]> {

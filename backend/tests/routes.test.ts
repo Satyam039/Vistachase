@@ -11,16 +11,44 @@ describe("Phase 2: URL Preservation & Customer Experience", () => {
     "icefields-jasper-private-tour",
     "jasper-custom-private-tour",
     "multi-day-tour-package-for-banff",
+    "shared-tours-heart-of-banff",
+    "shared-tours-banff-yoho",
+    "shared-tours-icefields-jasper",
+    "winter-special",
+    "winter-signature-private-tour",
+    "sunrise-shuttle-to-moraine-lake-and-lake-louise",
+    "full-day-at-lake-louise-and-moraine-lake",
   ];
 
-  it("preserves all critical existing Vista Chase tour URLs", async () => {
+  it("preserves every live vistachase.com product URL with its page content", async () => {
     for (const slug of PRESERVED_SLUGS) {
       const tour = await getTourBySlug(slug);
       expect(tour, `Tour with slug ${slug} must exist`).not.toBeNull();
       expect(tour?.title.length).toBeGreaterThan(5);
       expect(tour?.basePrice).toBeGreaterThan(0);
-      expect(tour?.inclusions.length).toBeGreaterThan(0);
+      expect(tour?.metaTitle, `${slug} meta title`).toBeTruthy();
+      expect(tour?.facts.length, `${slug} facts`).toBeGreaterThan(0);
+      expect(tour?.tabs.length, `${slug} tabs`).toBeGreaterThanOrEqual(3);
+      expect(tour?.faqs.length, `${slug} FAQs`).toBeGreaterThan(0);
+      expect(tour?.featuredImage).toMatch(/^https:\/\//);
     }
+  });
+
+  it("sells private tours and the multi-day package per group, everything else per guest", async () => {
+    for (const slug of PRESERVED_SLUGS) {
+      const tour = await getTourBySlug(slug);
+      const perGroup = tour?.category === "PRIVATE" || tour?.category === "MULTIDAY";
+      expect(tour?.priceUnit, slug).toBe(perGroup ? "GROUP" : "PERSON");
+      expect(tour?.vehicleOptions.length, slug).toBe(perGroup ? 2 : 0);
+    }
+  });
+
+  it("marks products without a Bokun experience as enquiry-only", async () => {
+    for (const slug of PRESERVED_SLUGS) {
+      const tour = await getTourBySlug(slug);
+      expect(tour?.bookingMode, slug).toBe(tour?.bokunExperienceId ? "BOKUN" : "ENQUIRY");
+    }
+    expect((await getTourBySlug("multi-day-tour-package-for-banff"))?.bookingMode).toBe("ENQUIRY");
   });
 
   it("provides shuttle products with guaranteed access details", async () => {

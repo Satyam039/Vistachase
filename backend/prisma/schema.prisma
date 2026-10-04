@@ -61,6 +61,18 @@ model Tour {
   isFeatured      Boolean         @default(false)
   rating          Float           @default(5.0)
   reviewCount     Int             @default(0)
+  // Catalog content imported from the live site (backend/prisma/catalog/products.json)
+  bokunExperienceId String?
+  bookingMode     String          @default("BOKUN") // BOKUN (instant booking), ENQUIRY (request form)
+  priceUnit       String          @default("PERSON") // PERSON, GROUP (whole vehicle)
+  facts           String          @default("[]") // JSON [{label, value}]
+  tabs            String          @default("[]") // JSON [{label, sections: [{heading, body[], items[], steps[{time,text}], note}]}]
+  faqs            String          @default("[]") // JSON [{question, answer}]
+  crossSells      String          @default("[]") // JSON array of tour slugs
+  vehicleOptions  String          @default("[]") // JSON [{id, label, seats}] for PRIVATE / MULTIDAY
+  sortOrder       Int             @default(0)
+  metaTitle       String?
+  metaDescription String?
   destinationId   String
   destination     Destination     @relation(fields: [destinationId], references: [id], onDelete: Cascade)
   createdAt       DateTime        @default(now())

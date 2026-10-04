@@ -4,7 +4,7 @@ import "./layers.css";
 import "./fonts.css";
 import "@astryxdesign/core/reset.css";
 import "@astryxdesign/core/astryx.css";
-import "@/themes/stone/stone.css";
+import "@/themes/vistachase/vistachase.css";
 import "./globals.css";
 import { AstryxThemeProvider } from "@/components/providers/AstryxThemeProvider";
 import { SiteFrame } from "@/components/layout/SiteFrame";
