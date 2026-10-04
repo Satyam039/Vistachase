@@ -65,7 +65,7 @@ function TourSectionBlock({ section }: { section: TourSection }) {
   const isExcluded = /exclude|not included/i.test(section.heading);
   return (
     <div className="space-y-4">
-      {section.heading && <h3 className="text-xl font-serif font-medium text-[#1C1F23]">{section.heading}</h3>}
+      {section.heading && <h3 className="text-xl font-serif font-medium text-obsidian-900">{section.heading}</h3>}
       {section.body.map((paragraph) => (
         <p key={paragraph} className="text-slate-700 leading-relaxed text-base whitespace-pre-line">
           {paragraph}
@@ -89,8 +89,8 @@ function TourSectionBlock({ section }: { section: TourSection }) {
         <div className="space-y-3">
           {section.stops.map((stop) => (
             <div key={stop.name} className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm space-y-1.5">
-              <div className="flex items-center gap-2 font-medium text-[#1C1F23]">
-                <MapPin className="w-4 h-4 text-[#3A9CA6] shrink-0" />
+              <div className="flex items-center gap-2 font-medium text-obsidian-900">
+                <MapPin className="w-4 h-4 text-ocean-500 shrink-0" />
                 <span>{stop.name}</span>
               </div>
               <p className="text-sm text-slate-600 leading-relaxed">{stop.text}</p>
@@ -99,11 +99,11 @@ function TourSectionBlock({ section }: { section: TourSection }) {
         </div>
       )}
       {section.steps.length > 0 && (
-        <ol className="relative border-l-2 border-[#3A9CA6]/30 ml-2 space-y-5">
+        <ol className="relative border-l-2 border-ocean-500/30 ml-2 space-y-5">
           {section.steps.map((step) => (
             <li key={`${step.time}-${step.text}`} className="pl-6 relative">
-              <span className="absolute -left-[7px] top-1.5 w-3 h-3 rounded-full bg-[#3A9CA6]" />
-              <span className="text-xs uppercase tracking-widest text-[#3A9CA6] font-bold block">{step.time || "Then"}</span>
+              <span className="absolute -left-[7px] top-1.5 w-3 h-3 rounded-full bg-ocean-500" />
+              <span className="text-xs uppercase tracking-widest text-ocean-500 font-bold block">{step.time || "Then"}</span>
               <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{step.text}</p>
             </li>
           ))}
@@ -134,7 +134,7 @@ function TourTabs({ tour }: { tour: TourWithAvailability }) {
             aria-controls="tour-tab-panel"
             onClick={() => setActive(idx)}
             className={`px-4 py-3 text-xs font-bold uppercase tracking-widest whitespace-nowrap border-b-2 -mb-px transition-colors ${
-              idx === active ? "border-[#3A9CA6] text-[#1C1F23]" : "border-transparent text-slate-500 hover:text-[#1C1F23]"
+              idx === active ? "border-ocean-500 text-obsidian-900" : "border-transparent text-slate-500 hover:text-obsidian-900"
             }`}
           >
             {t.label}
@@ -162,9 +162,9 @@ function EnquiryPanel({ tour }: { tour: TourWithAvailability }) {
 
   return (
     <div className="space-y-4">
-      <div className="p-4 rounded-2xl bg-[#3A9CA6]/10 border border-[#3A9CA6]/30 text-[#1C1F23] text-xs space-y-1.5">
+      <div className="p-4 rounded-2xl bg-ocean-500/10 border border-ocean-500/30 text-obsidian-900 text-xs space-y-1.5">
         <div className="flex items-center gap-2 font-bold">
-          <Calendar className="w-4 h-4 text-[#257780]" />
+          <Calendar className="w-4 h-4 text-ocean-600" />
           <span>Built Around Your Dates</span>
         </div>
         <p className="text-slate-700">
@@ -185,7 +185,7 @@ function EnquiryPanel({ tour }: { tour: TourWithAvailability }) {
                 onClick={() => setVehicleId(v.id)}
                 className={`p-3 rounded-xl border text-left text-sm transition-colors ${
                   v.id === vehicleId
-                    ? "border-[#3A9CA6] bg-[#3A9CA6]/10 text-[#1C1F23]"
+                    ? "border-ocean-500 bg-ocean-500/10 text-obsidian-900"
                     : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
                 }`}
               >
@@ -202,7 +202,7 @@ function EnquiryPanel({ tour }: { tour: TourWithAvailability }) {
       <div className="space-y-3 pt-2">
         <Link
           href={`/contact-us?${params.toString()}`}
-          className="w-full py-4 rounded-xl font-bold text-xs uppercase tracking-widest text-[#1C1F23] golden-summit-btn flex items-center justify-center gap-2 shadow-lg transition-all"
+          className="w-full py-4 rounded-xl font-bold text-xs uppercase tracking-widest text-obsidian-900 golden-summit-btn flex items-center justify-center gap-2 shadow-lg transition-all"
         >
           <Send className="w-4 h-4" />
           <span>Request This Tour</span>
@@ -211,7 +211,7 @@ function EnquiryPanel({ tour }: { tour: TourWithAvailability }) {
           href="/concierge"
           className="w-full py-3 rounded-xl font-medium text-xs text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 flex items-center justify-center gap-2 transition-colors"
         >
-          <Sparkles className="w-4 h-4 text-[#3A9CA6]" />
+          <Sparkles className="w-4 h-4 text-ocean-500" />
           <span>Plan with the AI Concierge</span>
         </Link>
       </div>
@@ -357,11 +357,11 @@ export function TourDetailView({
         ];
 
   return (
-    <div className="min-h-screen bg-[#F9F9F7] text-[#1C1F23]">
+    <div className="min-h-screen bg-obsidian-50 text-obsidian-900">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* 01. EDITORIAL HEADER & BREADCRUMBS */}
-      <section className="bg-[#0C1F21] text-white pt-24 pb-12 px-4 sm:px-6 lg:px-12 border-b border-white/10">
+      <section className="bg-ocean-900 text-white pt-24 pb-12 px-4 sm:px-6 lg:px-12 border-b border-white/10">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Breadcrumb nav */}
           <nav className="flex items-center gap-2 text-xs uppercase tracking-widest text-slate-400">
@@ -373,21 +373,21 @@ export function TourDetailView({
               {categoryInfo.label}
             </Link>
             <ChevronRight className="w-3 h-3 text-slate-600" />
-            <span className="text-[#FFE085] truncate max-w-[200px] sm:max-w-none">{tour.title}</span>
+            <span className="text-summit-300 truncate max-w-[200px] sm:max-w-none">{tour.title}</span>
           </nav>
 
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
             <div className="space-y-3 max-w-3xl">
               <div className="flex flex-wrap items-center gap-2.5">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-[#FFE085] text-xs font-semibold uppercase tracking-wider border border-white/15">
-                  <MapPin className="w-3.5 h-3.5 text-[#F5BF03]" />
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-summit-300 text-xs font-semibold uppercase tracking-wider border border-white/15">
+                  <MapPin className="w-3.5 h-3.5 text-summit-500" />
                   {tour.destination.name}
                 </span>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#3A9CA6]/20 text-[#3A9CA6] text-xs font-semibold border border-[#3A9CA6]/30">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-ocean-500/20 text-ocean-500 text-xs font-semibold border border-ocean-500/30">
                   {categoryInfo.sub}
                 </span>
                 <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-white/5 text-xs text-slate-300 border border-white/10">
-                  <Star className="w-3.5 h-3.5 fill-[#F5BF03] text-[#F5BF03]" />
+                  <Star className="w-3.5 h-3.5 fill-summit-500 text-summit-500" />
                   <span className="font-bold text-white">{tour.rating.toFixed(1)}</span>
                   <span className="text-slate-400">({reviewsLabel(tour)})</span>
                 </div>
@@ -409,7 +409,7 @@ export function TourDetailView({
               </span>
               <div className="flex items-baseline lg:justify-end gap-1.5">
                 <span className="text-3xl sm:text-4xl font-light text-white font-serif">{money(price)}</span>
-                <span className="text-xs font-semibold text-[#FFE085] tracking-wider">{tour.currency} + GST</span>
+                <span className="text-xs font-semibold text-summit-300 tracking-wider">{tour.currency} + GST</span>
               </div>
               <span className="text-[11px] text-emerald-400 block mt-1 flex items-center lg:justify-end gap-1">
                 <CheckCircle2 className="w-3.5 h-3.5" /> Free cancellation up to 24 hours before
@@ -420,11 +420,11 @@ export function TourDetailView({
       </section>
 
       {/* 02. KEY FACTS STRIP */}
-      <section className="bg-[#1C1F23] text-white border-b border-white/10 py-5 px-4 sm:px-6 lg:px-12">
+      <section className="bg-obsidian-900 text-white border-b border-white/10 py-5 px-4 sm:px-6 lg:px-12">
         <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 text-sm">
           {facts.map((fact) => (
             <div key={fact.label} className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center shrink-0 text-[#FFE085]">
+              <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center shrink-0 text-summit-300">
                 <fact.icon className="w-5 h-5" />
               </div>
               <div>
@@ -464,7 +464,7 @@ export function TourDetailView({
                       key={idx}
                       onClick={() => setSelectedPhoto(idx)}
                       className={`relative aspect-[4/3] rounded-xl overflow-hidden border-2 transition-all ${
-                        selectedPhoto === idx ? "border-[#F5BF03] scale-[0.98] ring-2 ring-[#F5BF03]/40" : "border-transparent opacity-70 hover:opacity-100"
+                        selectedPhoto === idx ? "border-summit-500 scale-[0.98] ring-2 ring-summit-500/40" : "border-transparent opacity-70 hover:opacity-100"
                       }`}
                     >
                       <Image src={img} alt="" fill className="object-cover" sizes="150px" />
@@ -477,8 +477,8 @@ export function TourDetailView({
             {/* Experience Narrative */}
             <div className="space-y-6">
               <div className="space-y-2">
-                <span className="text-xs uppercase tracking-widest text-[#3A9CA6] font-bold">The Experience</span>
-                <h2 className="text-3xl sm:text-4xl font-light font-serif text-[#1C1F23]">
+                <span className="text-xs uppercase tracking-widest text-ocean-500 font-bold">The Experience</span>
+                <h2 className="text-3xl sm:text-4xl font-light font-serif text-obsidian-900">
                   {isPrivate ? "Your Day, Handcrafted to Your Mountain Rhythm" : "Small Groups, Greater Mountain Discoveries"}
                 </h2>
               </div>
@@ -490,14 +490,14 @@ export function TourDetailView({
             {/* Destination Highlights */}
             {tour.highlights.length > 0 && (
               <div className="space-y-6 p-8 rounded-3xl bg-white border border-slate-200/80 shadow-sm">
-                <h3 className="text-xl font-serif font-medium text-[#1C1F23] flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-[#F5BF03]" />
+                <h3 className="text-xl font-serif font-medium text-obsidian-900 flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-summit-500" />
                   <span>Curated Tour Highlights</span>
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {tour.highlights.map((highlight, idx) => (
                     <div key={idx} className="flex items-start gap-3">
-                      <div className="w-6 h-6 rounded-full bg-[#3A9CA6]/15 text-[#3A9CA6] flex items-center justify-center shrink-0 mt-0.5">
+                      <div className="w-6 h-6 rounded-full bg-ocean-500/15 text-ocean-500 flex items-center justify-center shrink-0 mt-0.5">
                         <Check className="w-3.5 h-3.5" />
                       </div>
                       <span className="text-sm font-medium text-slate-800 leading-snug">{highlight}</span>
@@ -508,13 +508,13 @@ export function TourDetailView({
             )}
 
             {/* Vehicle & Mountain Comfort Showcase */}
-            <div className="p-8 rounded-3xl bg-[#0C1F21] text-white space-y-6 border border-white/10">
+            <div className="p-8 rounded-3xl bg-ocean-900 text-white space-y-6 border border-white/10">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-[#FFE085]">
+                <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-summit-300">
                   <Car className="w-6 h-6" />
                 </div>
                 <div>
-                  <span className="text-xs uppercase tracking-widest text-[#3A9CA6] font-bold block">
+                  <span className="text-xs uppercase tracking-widest text-ocean-500 font-bold block">
                     Luxury Mountain Fleet
                   </span>
                   <h3 className="text-xl font-serif font-light text-white">
@@ -532,16 +532,16 @@ export function TourDetailView({
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2 border-t border-white/10 text-xs text-slate-300">
                 <div className="flex items-center gap-1.5">
-                  <Check className="w-3.5 h-3.5 text-[#F5BF03]" /> Leather Seating
+                  <Check className="w-3.5 h-3.5 text-summit-500" /> Leather Seating
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <Check className="w-3.5 h-3.5 text-[#F5BF03]" /> Panoramic Glass
+                  <Check className="w-3.5 h-3.5 text-summit-500" /> Panoramic Glass
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <Check className="w-3.5 h-3.5 text-[#F5BF03]" /> Climate Control
+                  <Check className="w-3.5 h-3.5 text-summit-500" /> Climate Control
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <Check className="w-3.5 h-3.5 text-[#F5BF03]" /> Onboard Wi-Fi
+                  <Check className="w-3.5 h-3.5 text-summit-500" /> Onboard Wi-Fi
                 </div>
               </div>
             </div>
@@ -552,7 +552,7 @@ export function TourDetailView({
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                 <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm space-y-4">
-                  <h4 className="text-base font-serif font-medium text-[#1C1F23] flex items-center gap-2">
+                  <h4 className="text-base font-serif font-medium text-obsidian-900 flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" /> What&apos;s Included
                   </h4>
                   <ul className="space-y-2 text-xs sm:text-sm text-slate-700">
@@ -566,14 +566,14 @@ export function TourDetailView({
                 </div>
 
                 <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm space-y-4">
-                  <h4 className="text-base font-serif font-medium text-[#1C1F23] flex items-center gap-2">
-                    <Compass className="w-4 h-4 text-[#3A9CA6]" /> What to Bring
+                  <h4 className="text-base font-serif font-medium text-obsidian-900 flex items-center gap-2">
+                    <Compass className="w-4 h-4 text-ocean-500" /> What to Bring
                   </h4>
                   <ul className="space-y-2 text-xs sm:text-sm text-slate-700">
                     {tour.whatToBring.length > 0 ? (
                       tour.whatToBring.map((item, idx) => (
                         <li key={idx} className="flex items-start gap-2">
-                          <span className="text-[#3A9CA6] mt-1">•</span>
+                          <span className="text-ocean-500 mt-1">•</span>
                           <span>{item}</span>
                         </li>
                       ))
@@ -593,13 +593,13 @@ export function TourDetailView({
             {/* Guest Reviews */}
             <div className="space-y-6 pt-4">
               <div className="space-y-1">
-                <span className="text-xs uppercase tracking-widest text-[#3A9CA6] font-bold">Verified Travelers</span>
-                <h3 className="text-2xl font-serif font-light text-[#1C1F23]">What Guests Are Saying</h3>
+                <span className="text-xs uppercase tracking-widest text-ocean-500 font-bold">Verified Travelers</span>
+                <h3 className="text-2xl font-serif font-light text-obsidian-900">What Guests Are Saying</h3>
               </div>
               <div className="p-8 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4">
-                <div className="flex items-center gap-1 text-[#F5BF03]">
+                <div className="flex items-center gap-1 text-summit-500">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-[#F5BF03]" />
+                    <Star key={i} className="w-4 h-4 fill-summit-500" />
                   ))}
                 </div>
                 <blockquote className="text-base sm:text-lg italic text-slate-700 font-serif leading-relaxed">
@@ -607,7 +607,7 @@ export function TourDetailView({
                   knowledgeable, and got us the most incredible photos before the crowds arrived.&rdquo;
                 </blockquote>
                 <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
-                  <span className="font-semibold text-[#1C1F23]">Emily &amp; Jason R.</span>
+                  <span className="font-semibold text-obsidian-900">Emily &amp; Jason R.</span>
                   <span>TripAdvisor Verified Guest · Summer 2025</span>
                 </div>
               </div>
@@ -617,20 +617,20 @@ export function TourDetailView({
             {faqs.length > 0 && (
             <div className="space-y-6 pt-4">
               <div className="space-y-1">
-                <span className="text-xs uppercase tracking-widest text-[#3A9CA6] font-bold">Answers</span>
-                <h3 className="text-2xl font-serif font-light text-[#1C1F23]">Frequently Asked Questions</h3>
+                <span className="text-xs uppercase tracking-widest text-ocean-500 font-bold">Answers</span>
+                <h3 className="text-2xl font-serif font-light text-obsidian-900">Frequently Asked Questions</h3>
               </div>
               <div className="space-y-3">
                 {faqs.map((faq, idx) => (
                   <div key={idx} className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
                     <button
                       onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                      className="w-full p-5 text-left flex items-center justify-between gap-4 font-medium text-slate-900 text-sm hover:text-[#3A9CA6] transition-colors"
+                      className="w-full p-5 text-left flex items-center justify-between gap-4 font-medium text-slate-900 text-sm hover:text-ocean-500 transition-colors"
                     >
                       <span>{faq.q}</span>
                       <ChevronDown
                         className={`w-4 h-4 shrink-0 transition-transform duration-300 ${
-                          openFaq === idx ? "rotate-180 text-[#3A9CA6]" : "text-slate-400"
+                          openFaq === idx ? "rotate-180 text-ocean-500" : "text-slate-400"
                         }`}
                       />
                     </button>
@@ -650,12 +650,12 @@ export function TourDetailView({
           <div className="lg:col-span-5 lg:sticky lg:top-24 space-y-6">
             <div className="rounded-3xl bg-white border border-slate-200 shadow-xl p-6 sm:p-8 space-y-6">
               <div className="space-y-2 border-b border-slate-100 pb-5">
-                <span className="text-xs uppercase tracking-widest text-[#3A9CA6] font-bold block">
+                <span className="text-xs uppercase tracking-widest text-ocean-500 font-bold block">
                   {isEnquiry ? "Request a Tailored Quote" : "Reserve Departure"}
                 </span>
                 <div className="flex items-baseline justify-between">
                   <div>
-                    <span className="text-3xl font-light font-serif text-[#1C1F23]">{money(price)}</span>
+                    <span className="text-3xl font-light font-serif text-obsidian-900">{money(price)}</span>
                     <span className="text-xs text-slate-500 ml-1.5">{unitLabel} CAD</span>
                   </div>
                   {!isEnquiry && (
@@ -696,7 +696,7 @@ export function TourDetailView({
                     <select
                       value={selectedDepartureId}
                       onChange={(e) => setSelectedDepartureId(e.target.value)}
-                      className="w-full p-3.5 rounded-xl border border-slate-300 bg-white text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#3A9CA6]"
+                      className="w-full p-3.5 rounded-xl border border-slate-300 bg-white text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-ocean-500"
                     >
                       {tour.departures.map((d) => (
                         <option key={d.id} value={d.id} disabled={!departureFits(tour, d, 1)}>
@@ -728,7 +728,7 @@ export function TourDetailView({
                     </div>
                     <div className="pt-2 border-t border-slate-200 flex items-center justify-between font-bold text-slate-900 text-sm">
                       <span>Total Estimated</span>
-                      <span className="text-base text-[#1C1F23] font-serif">{money(calculatedTotal)} CAD</span>
+                      <span className="text-base text-obsidian-900 font-serif">{money(calculatedTotal)} CAD</span>
                     </div>
                   </div>
 
@@ -736,7 +736,7 @@ export function TourDetailView({
                   <div className="space-y-3 pt-2">
                     <Link
                       href={`/book?departureId=${encodeURIComponent(selectedDepartureId || tour.departures[0]?.id || "")}&guests=${partySize}`}
-                      className="w-full py-4 rounded-xl font-bold text-xs uppercase tracking-widest text-[#1C1F23] golden-summit-btn flex items-center justify-center gap-2 shadow-lg transition-all"
+                      className="w-full py-4 rounded-xl font-bold text-xs uppercase tracking-widest text-obsidian-900 golden-summit-btn flex items-center justify-center gap-2 shadow-lg transition-all"
                     >
                       <span>Book Your Experience</span>
                       <ChevronRight className="w-4 h-4" />
@@ -746,7 +746,7 @@ export function TourDetailView({
                       href="/concierge"
                       className="w-full py-3 rounded-xl font-medium text-xs text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 flex items-center justify-center gap-2 transition-colors"
                     >
-                      <Sparkles className="w-4 h-4 text-[#3A9CA6]" />
+                      <Sparkles className="w-4 h-4 text-ocean-500" />
                       <span>Custom Inquiries &amp; Concierge</span>
                     </Link>
                   </div>
@@ -764,7 +764,7 @@ export function TourDetailView({
                   <span>Free cancellation up to 24 hours before your tour</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Info className="w-4 h-4 text-[#3A9CA6] shrink-0" />
+                  <Info className="w-4 h-4 text-ocean-500 shrink-0" />
                   <span>Bókun Booking of Record · WhatsApp Live Tracking</span>
                 </div>
               </div>
@@ -777,8 +777,8 @@ export function TourDetailView({
       {related.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pb-20 space-y-8">
           <div className="space-y-1">
-            <span className="text-xs uppercase tracking-widest text-[#3A9CA6] font-bold">Keep Exploring</span>
-            <h2 className="text-2xl sm:text-3xl font-serif font-light text-[#1C1F23]">Explore More</h2>
+            <span className="text-xs uppercase tracking-widest text-ocean-500 font-bold">Keep Exploring</span>
+            <h2 className="text-2xl sm:text-3xl font-serif font-light text-obsidian-900">Explore More</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {related.map((t) => (

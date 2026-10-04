@@ -80,9 +80,9 @@ export const vistachaseTheme = {
     "--duration-slow-min": "525ms",
     "--duration-slow": "700ms",
     "--duration-slow-max": "935ms",
-    "--font-family-body": "var(--font-figtree), Figtree, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif",
-    "--font-family-heading": "var(--font-brand-heading), var(--font-stone-heading), Montserrat, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif",
-    "--font-family-code": "var(--font-jetbrains-mono), \"JetBrains Mono\", \"SF Mono\", Monaco, Consolas, monospace",
+    "--font-family-body": "var(--font-plex-sans), \"IBM Plex Sans\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif",
+    "--font-family-heading": "var(--font-plex-sans), \"IBM Plex Sans\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif",
+    "--font-family-code": "var(--font-plex-mono), \"IBM Plex Mono\", \"SF Mono\", Monaco, Consolas, monospace",
     "--color-syntax-keyword": "light-dark(#645a72, #b2a7c1)",
     "--color-syntax-string": "light-dark(#4e6357, #9bb19a)",
     "--color-syntax-comment": "light-dark(#5e5e5e, #ababb0)",
@@ -648,20 +648,20 @@ export const vistachaseTheme = {
         "ratio": 1.25
       },
       "body": {
-        "family": "var(--font-figtree)",
-        "fallbacks": "Figtree, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif"
+        "family": "var(--font-plex-sans)",
+        "fallbacks": "\"IBM Plex Sans\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif"
       },
       "heading": {
-        "family": "var(--font-brand-heading)",
-        "fallbacks": "var(--font-stone-heading), Montserrat, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif",
+        "family": "var(--font-plex-sans)",
+        "fallbacks": "\"IBM Plex Sans\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif",
         "weights": {
           "3": "bold",
           "4": "bold"
         }
       },
       "code": {
-        "family": "var(--font-jetbrains-mono)",
-        "fallbacks": "\"JetBrains Mono\", \"SF Mono\", Monaco, Consolas, monospace"
+        "family": "var(--font-plex-mono)",
+        "fallbacks": "\"IBM Plex Mono\", \"SF Mono\", Monaco, Consolas, monospace"
       }
     },
     "motion": {

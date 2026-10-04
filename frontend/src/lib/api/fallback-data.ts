@@ -6,7 +6,7 @@ import type {
 } from "@/lib/api/types";
 
 type CatalogFields =
-  | "bokunExperienceId"
+  | "bokunId"
   | "bookingMode"
   | "priceUnit"
   | "facts"
@@ -23,7 +23,7 @@ function withCatalogDefaults(
 ): TourWithAvailability {
   const perGroup = tour.category === "PRIVATE" || tour.category === "MULTIDAY";
   return {
-    bokunExperienceId: null,
+    bokunId: null,
     bookingMode: "BOKUN",
     priceUnit: perGroup ? "GROUP" : "PERSON",
     facts: [],
@@ -74,11 +74,12 @@ export const FALLBACK_TOURS: TourWithAvailability[] = ([
       "Parks Canada Pass (or purchase at gate)",
     ],
     featuredImage:
-      "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/690a1613098a903d97414ebd_Image%20-%202025-11-04T210434.975.png",
+      "/media/photos/moraine-lake-red-canoes.webp",
     galleryImages: [
-      "https://cdn.prod.website-files.com/66045d65f543fe7fe5bf3b3b/661a357eb4520970ef37baae_Lake%20Moraine-min.jpg",
-      "https://cdn.prod.website-files.com/66045d65f543fe7fe5bf3b3b/661f77d337ee36fafe108e42_vsc-2023-oct-22.jpg",
-      "https://cdn.prod.website-files.com/66045d65f543fe7fe5bf3b3b/66187747e7a83d3e698eaef9_vsc-2023-oct-123.jpg",
+      "/media/photos/crowfoot-mountain-meadow.webp",
+      "/media/photos/moraine-lake-reflection-morning.webp",
+      "/media/photos/lake-louise-boathouse.webp",
+      "/media/photos/bow-glacier-falls-cirque-peak.webp",
     ],
     basePrice: 189,
     currency: "CAD",
@@ -151,10 +152,12 @@ export const FALLBACK_TOURS: TourWithAvailability[] = ([
       "Camera for family portraits",
     ],
     featuredImage:
-      "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/69108a62d2ab543e335612b6_dcb45221eefae27970a0c11f4f7fc0eb3edb65d1%20(1).jpg",
+      "/media/site/peyto-lake-torqoise-blue-water.webp",
     galleryImages: [
-      "https://cdn.prod.website-files.com/66045d65f543fe7fe5bf3b3b/661a357eb4520970ef37baae_Lake%20Moraine-min.jpg",
-      "https://cdn.prod.website-files.com/66045d65f543fe7fe5bf3b3b/66187747e7a83d3e698eaef9_vsc-2023-oct-123.jpg",
+      "/media/site/native-on-lake-louise.webp",
+      "/media/photos/moraine-lake-reflection-morning.webp",
+      "/media/photos/lake-louise-boathouse.webp",
+      "/media/photos/bow-glacier-falls-cirque-peak.webp",
     ],
     basePrice: 1250,
     currency: "CAD",
@@ -209,9 +212,12 @@ export const FALLBACK_TOURS: TourWithAvailability[] = ([
     ],
     whatToBring: ["Warm jacket or windbreaker", "Sturdy footwear", "Sunglasses"],
     featuredImage:
-      "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/691010a937bd1626bd437647_Horse%20Background%20Image%20V3.png",
+      "/media/site/icefields-parkway-winters.webp",
     galleryImages: [
-      "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=1000&auto=format&fit=crop",
+      "/media/site/bow-lake-before-freezing.webp",
+      "/media/photos/athabasca-glacier.webp",
+      "/media/photos/bow-glacier-falls-cirque-peak.webp",
+      "/media/photos/peyto-lake.webp",
     ],
     basePrice: 1450,
     currency: "CAD",
@@ -321,7 +327,7 @@ export const FALLBACK_DESTINATIONS: DestinationSummary[] = [
     description:
       "Canada's first national park, featuring dramatic limestone peaks, pristine glacial waters, Bow Falls, and the historic alpine town of Banff.",
     heroImage:
-      "https://images.unsplash.com/photo-1503614472-8c93d56e92ce?q=80&w=1600&auto=format&fit=crop",
+      "/media/photos/vermilion-lakes-mount-rundle.webp",
     isFeatured: true,
     metaTitle: "Banff National Park Tours & Shuttles | Vista Chase",
     metaDescription:
@@ -340,7 +346,7 @@ export const FALLBACK_DESTINATIONS: DestinationSummary[] = [
     description:
       "The crown jewels of the Canadian Rockies. Turquoise waters, Victoria Glacier, and the Valley of the Ten Peaks with guaranteed commercial corridor access.",
     heroImage:
-      "https://cdn.prod.website-files.com/66045d65f543fe7fe5bf3b3b/661a357eb4520970ef37baae_Lake%20Moraine-min.jpg",
+      "/media/photos/lake-louise-sunrise.webp",
     isFeatured: true,
     metaTitle: "Moraine Lake & Lake Louise Shuttles | Vista Chase",
     metaDescription:
@@ -359,7 +365,7 @@ export const FALLBACK_DESTINATIONS: DestinationSummary[] = [
     description:
       "A dramatic landscape of towering waterfalls, Emerald Lake's tranquil jade waters, and ancient natural stone bridges.",
     heroImage:
-      "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1600&auto=format&fit=crop",
+      "/media/photos/emerald-lake-island.webp",
     isFeatured: true,
     metaTitle: "Yoho National Park Tours | Vista Chase",
     metaDescription: "Explore Emerald Lake, Takakkaw Falls, and Natural Bridge with Vista Chase.",
@@ -376,7 +382,7 @@ export const FALLBACK_DESTINATIONS: DestinationSummary[] = [
     description:
       "One of the world's most spectacular mountain highways, connecting Lake Louise to Jasper past ancient glaciers and emerald alpine lakes.",
     heroImage:
-      "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=1600&auto=format&fit=crop",
+      "/media/photos/icefields-parkway-crowfoot.webp",
     isFeatured: true,
     metaTitle: "Icefields Parkway Tours | Vista Chase",
     metaDescription: "Private expeditions to Peyto Lake, Bow Lake, and the Athabasca Glacier.",

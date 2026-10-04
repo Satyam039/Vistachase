@@ -44,7 +44,7 @@ export function WhyTravelersLove() {
       {/* Background Horse Emblem Watermark */}
       <div className="absolute right-[-80px] top-1/2 -translate-y-1/2 w-[550px] h-[550px] opacity-5 pointer-events-none">
         <Image
-          src="https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6907ce5d58aa3223085833b6_4a63d88a7f5330f9765fc90768f76f2c323f34d3.png"
+          src="/media/brand/horse-emblem-gold.png"
           alt="Vista Chase Emblem"
           fill
           className="object-contain"
@@ -79,7 +79,7 @@ export function WhyTravelersLove() {
               <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-white/10 group">
                 <div className="relative h-[480px] sm:h-[540px] w-full">
                   <Image
-                    src="https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6907d17f97c5c1e84eff3593_Feature%20Image%20(1).png"
+                    src="/media/site/feature-image-1.webp"
                     alt="Vista Chase Certified Mountain Guide"
                     fill
                     sizes="(max-width: 1024px) 100vw, 40vw"

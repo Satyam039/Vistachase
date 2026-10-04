@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { getTourBySlug } from "@/modules/tours/tour.repository";
+import { PRODUCT_MAP } from "@/modules/bokun/product-map";
+import { getMediaAssets } from "@/modules/media/media.repository";
 import { getShuttleRoutes } from "@/modules/shuttles/shuttle.repository";
 import prisma from "@/lib/db/prisma";
 
@@ -30,7 +32,7 @@ describe("Phase 2: URL Preservation & Customer Experience", () => {
       expect(tour?.facts.length, `${slug} facts`).toBeGreaterThan(0);
       expect(tour?.tabs.length, `${slug} tabs`).toBeGreaterThanOrEqual(3);
       expect(tour?.faqs.length, `${slug} FAQs`).toBeGreaterThan(0);
-      expect(tour?.featuredImage).toMatch(/^https:\/\//);
+      expect(tour?.featuredImage).toMatch(/^\/media\//);
     }
   });
 
@@ -43,12 +45,27 @@ describe("Phase 2: URL Preservation & Customer Experience", () => {
     }
   });
 
-  it("marks products without a Bokun experience as enquiry-only", async () => {
+  it("takes booking mode and Bokun ID from the product mapping table", async () => {
+    for (const product of PRODUCT_MAP) {
+      const tour = await getTourBySlug(product.slug);
+      expect(tour?.bookingMode, product.slug).toBe(product.bookingMode);
+      expect(tour?.bokunId ?? null, product.slug).toBe(product.bokunId);
+    }
+    for (const slug of ["banff-yoho-custom-private-tour", "jasper-custom-private-tour", "multi-day-tour-package-for-banff"]) {
+      expect((await getTourBySlug(slug))?.bookingMode, slug).toBe("ENQUIRY");
+    }
+  });
+
+  it("maps every live product once, and serves every tour image from backend media", async () => {
+    expect(PRODUCT_MAP.map((p) => p.slug).sort()).toEqual([...PRESERVED_SLUGS].sort());
+    const media = new Set(getMediaAssets().map((a) => a.src));
     for (const slug of PRESERVED_SLUGS) {
       const tour = await getTourBySlug(slug);
-      expect(tour?.bookingMode, slug).toBe(tour?.bokunExperienceId ? "BOKUN" : "ENQUIRY");
+      for (const src of [tour!.featuredImage, ...tour!.galleryImages]) {
+        expect(src, slug).toMatch(/^\/media\//);
+        expect(media.has(src), `${slug}: ${src}`).toBe(true);
+      }
     }
-    expect((await getTourBySlug("multi-day-tour-package-for-banff"))?.bookingMode).toBe("ENQUIRY");
   });
 
   it("provides shuttle products with guaranteed access details", async () => {

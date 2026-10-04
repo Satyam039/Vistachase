@@ -175,9 +175,9 @@ export default function LiveShuttleTrackingClient({
   const targetY = toSvgY(telemetry.destinationCoordinates.latitude);
 
   return (
-    <div className="min-h-screen bg-[#07130F] text-slate-100 flex flex-col selection:bg-gold-500 selection:text-forest-950">
+    <div className="min-h-screen bg-ocean-950 text-slate-100 flex flex-col selection:bg-gold-500 selection:text-forest-950">
       {/* Top Luxury Navigation Header */}
-      <header className="sticky top-0 z-50 bg-[#07130F]/90 backdrop-blur-md border-b border-forest-800/60 px-4 sm:px-8 py-3.5 flex items-center justify-between">
+      <header className="sticky top-0 z-50 bg-ocean-950/90 backdrop-blur-md border-b border-forest-800/60 px-4 sm:px-8 py-3.5 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link href="/" className="flex items-center gap-2 group">
             <span className="font-serif font-bold text-xl tracking-wider text-white group-hover:text-gold-300 transition-colors">
@@ -213,7 +213,7 @@ export default function LiveShuttleTrackingClient({
         <div className="lg:col-span-7 flex flex-col gap-6">
 
           {/* Status Header Banner */}
-          <div className="bg-[#0C1E18] rounded-2xl p-5 border border-forest-800/60 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="bg-ocean-900 rounded-2xl p-5 border border-forest-800/60 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-1.5">
                 <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase border ${statusStyle.bg}`}>
@@ -249,9 +249,9 @@ export default function LiveShuttleTrackingClient({
           </div>
 
           {/* Interactive Topographic Vector Map */}
-          <div className="relative bg-[#050C0A] rounded-3xl border border-forest-800/80 shadow-2xl overflow-hidden min-h-[380px] sm:min-h-[460px] flex flex-col">
+          <div className="relative bg-ocean-950 rounded-3xl border border-forest-800/80 shadow-2xl overflow-hidden min-h-[380px] sm:min-h-[460px] flex flex-col">
             <div className="absolute top-4 left-4 z-20 flex items-center gap-2">
-              <div className="px-3 py-1.5 rounded-xl bg-[#07130F]/90 backdrop-blur-md border border-forest-700/60 text-xs font-semibold text-slate-200 flex items-center gap-2 shadow-lg">
+              <div className="px-3 py-1.5 rounded-xl bg-ocean-950/90 backdrop-blur-md border border-forest-700/60 text-xs font-semibold text-slate-200 flex items-center gap-2 shadow-lg">
                 <Compass className="w-3.5 h-3.5 text-gold-400" />
                 <span>Bow Valley Parkway • Trans-Canada Hwy 1</span>
               </div>
@@ -260,7 +260,7 @@ export default function LiveShuttleTrackingClient({
             <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
               <button
                 onClick={() => setMapZoom(mapZoom === "route" ? "vehicle" : "route")}
-                className="px-3 py-1.5 rounded-xl bg-[#07130F]/90 backdrop-blur-md border border-forest-700/60 text-xs font-semibold text-gold-300 hover:text-white transition-colors shadow-lg flex items-center gap-1.5"
+                className="px-3 py-1.5 rounded-xl bg-ocean-950/90 backdrop-blur-md border border-forest-700/60 text-xs font-semibold text-gold-300 hover:text-white transition-colors shadow-lg flex items-center gap-1.5"
               >
                 <Navigation className="w-3.5 h-3.5 text-gold-400" />
                 <span>{mapZoom === "route" ? "Follow Vehicle" : "Full Route"}</span>
@@ -420,7 +420,7 @@ export default function LiveShuttleTrackingClient({
             </div>
 
             {/* Map Telemetry Footer */}
-            <div className="bg-[#07130F]/95 border-t border-forest-800/80 px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="bg-ocean-950/95 border-t border-forest-800/80 px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-4 text-slate-300">
                 <div className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
@@ -441,7 +441,7 @@ export default function LiveShuttleTrackingClient({
           </div>
 
           {/* Pickup Instructions Box */}
-          <div className="bg-[#0C1E18] rounded-2xl p-5 border border-forest-800/60 shadow-xl space-y-3">
+          <div className="bg-ocean-900 rounded-2xl p-5 border border-forest-800/60 shadow-xl space-y-3">
             <div className="flex items-start gap-3">
               <div className="w-9 h-9 rounded-xl bg-gold-500/10 border border-gold-500/30 text-gold-400 flex items-center justify-center shrink-0 mt-0.5">
                 <MapPin className="w-5 h-5" />
@@ -477,7 +477,7 @@ export default function LiveShuttleTrackingClient({
         <div className="lg:col-span-5 flex flex-col gap-6">
 
           {/* Guide Card */}
-          <div className="bg-[#0C1E18] rounded-2xl p-6 border border-forest-800/60 shadow-xl space-y-4">
+          <div className="bg-ocean-900 rounded-2xl p-6 border border-forest-800/60 shadow-xl space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-xs uppercase tracking-widest text-gold-400 font-bold">
                 Your Certified Guide &amp; Chauffeur
@@ -536,7 +536,7 @@ export default function LiveShuttleTrackingClient({
           </div>
 
           {/* Vehicle Specs */}
-          <div className="bg-[#0C1E18] rounded-2xl p-6 border border-forest-800/60 shadow-xl space-y-4">
+          <div className="bg-ocean-900 rounded-2xl p-6 border border-forest-800/60 shadow-xl space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Car className="w-4 h-4 text-gold-400" />
@@ -575,7 +575,7 @@ export default function LiveShuttleTrackingClient({
           </div>
 
           {/* Route Progression Timeline */}
-          <div className="bg-[#0C1E18] rounded-2xl p-6 border border-forest-800/60 shadow-xl space-y-4">
+          <div className="bg-ocean-900 rounded-2xl p-6 border border-forest-800/60 shadow-xl space-y-4">
             <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
               Route Progression
             </h3>
@@ -618,7 +618,7 @@ export default function LiveShuttleTrackingClient({
           </div>
 
           {/* Canadian Rockies Alpine Conditions */}
-          <div className="bg-[#0C1E18] rounded-2xl p-5 border border-forest-800/60 shadow-xl space-y-3">
+          <div className="bg-ocean-900 rounded-2xl p-5 border border-forest-800/60 shadow-xl space-y-3">
             <div className="flex items-center justify-between text-xs">
               <span className="font-bold text-slate-300 uppercase tracking-wider">
                 Destination Weather
@@ -643,7 +643,7 @@ export default function LiveShuttleTrackingClient({
       </main>
 
       {/* Footer */}
-      <footer className="mt-auto border-t border-forest-800/60 bg-[#050C0A] py-6 px-4 text-center text-xs text-slate-500">
+      <footer className="mt-auto border-t border-forest-800/60 bg-ocean-950 py-6 px-4 text-center text-xs text-slate-500">
         <p>© 2026 Vista Chase Canadian Rockies. All rights reserved. Parks Canada Commercial License #PC-BANFF-2026-VC.</p>
         <p className="mt-1">For urgent trip adjustments or flight delays, contact 24/7 Dispatch at +1 (825) 734-9456.</p>
       </footer>

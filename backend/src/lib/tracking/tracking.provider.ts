@@ -172,7 +172,7 @@ export class MockLiveTrackingProvider implements ILiveTrackingProvider {
     const driver = activeRun?.driver || {
       publicName: "Marc",
       name: "Marc Tremblay",
-      photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=400&auto=format&fit=crop",
+      photoUrl: null as string | null,
       phone: "+1 (825) 734-9456",
     };
 
@@ -258,7 +258,8 @@ export class MockLiveTrackingProvider implements ILiveTrackingProvider {
       vehicleName: vehicle.name,
       licensePlate: vehicle.licensePlate,
       driverName: driver.publicName || driver.name,
-      driverPhoto: driver.photoUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=400&auto=format&fit=crop",
+      // No guide photos yet: fall back to the Vista Chase emblem (backend/media).
+      driverPhoto: driver.photoUrl || "/media/brand/horse-emblem-gold.png",
       driverPhone: driver.phone,
       status,
       statusLabel,

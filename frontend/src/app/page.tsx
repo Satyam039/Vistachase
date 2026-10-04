@@ -21,7 +21,7 @@ export const metadata = {
       "Ranked #6 Experience in Canada by TripAdvisor 2025. Explore Banff, Lake Louise & Moraine Lake in comfort.",
     images: [
       {
-        url: "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/690fe8161931736580e464ee_Hero%20Background%20Image%203.webp",
+        url: "/media/site/hero-background-image-3.webp",
         width: 1200,
         height: 630,
         alt: "Vista Chase Canadian Rockies",

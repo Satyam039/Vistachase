@@ -58,8 +58,8 @@ export interface TourWithAvailability {
   isFeatured: boolean;
   rating: number;
   reviewCount: number;
-  /** Bokun experience the live site sells this product through (null for enquiry-only products). */
-  bokunExperienceId: string | null;
+  /** Bokun experience ID from the product mapping table; null until Vista Chase provides it. */
+  bokunId: string | null;
   bookingMode: "BOKUN" | "ENQUIRY";
   /** PERSON: price per guest. GROUP: price per vehicle / private group. */
   priceUnit: "PERSON" | "GROUP";
@@ -133,7 +133,7 @@ function toTourDto(t: TourRow, expiredHeld: Map<string, number>): TourWithAvaila
     isFeatured: t.isFeatured,
     rating: t.rating,
     reviewCount: t.reviewCount,
-    bokunExperienceId: t.bokunExperienceId,
+    bokunId: t.bokunId,
     bookingMode: t.bookingMode === "ENQUIRY" ? "ENQUIRY" : "BOKUN",
     priceUnit: t.priceUnit === "GROUP" ? "GROUP" : "PERSON",
     facts: json(t.facts, []),

@@ -8,27 +8,27 @@ import { ScrollReveal } from "./ScrollReveal";
 const PARTNER_LOGOS = [
   {
     name: "Google Reviews",
-    src: "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/691ad50ffd3777dc4cf0e156_Google%20logo.png",
+    src: "/media/badges/google-logo.png",
     height: 38,
   },
   {
     name: "TripAdvisor",
-    src: "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/691ace89e156673a0f597a5f_Tripadvisor_idSto8f0HB_1.png",
+    src: "/media/badges/tripadvisor-logo.png",
     height: 34,
   },
   {
     name: "Viator",
-    src: "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/691acec025274569c3f0e5be_viator-seeklogo.png",
+    src: "/media/badges/viator-logo.png",
     height: 32,
   },
   {
     name: "GetYourGuide",
-    src: "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/691ad59089e29176ffcb2c69_Get%20Your%20Guide%20Logo.png",
+    src: "/media/badges/get-your-guide-logo.png",
     height: 34,
   },
   {
     name: "Expedia",
-    src: "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/691ad3bed15dec1a3f088e4b_expedia-logo-png-transparent.png",
+    src: "/media/badges/expedia-logo.png",
     height: 30,
   },
 ];

@@ -22,7 +22,7 @@ export function CinematicHero({
   eyebrow = "VISTA CHASE • CANADIAN ROCKIES",
   title = "Discover the Canadian Rockies Your Way",
   subtitle = "Whether you want the freedom of a luxury private SUV tour, the fun of a shared small group adventure, or guaranteed shuttles to Moraine Lake and Lake Louise — Vista Chase makes it effortless, scenic, and unforgettable.",
-  posterImage = "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/690fe8161931736580e464ee_Hero%20Background%20Image%203.webp",
+  posterImage = "/media/site/hero-background-image-3.webp",
   videoSrc,
   primaryCtaLabel = "Explore Experiences",
   primaryCtaHref = "#experiences",

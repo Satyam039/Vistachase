@@ -5,7 +5,7 @@ import { MediaStory, MediaStoryProps } from "./MediaStory";
 
 const DESTINATION_STORIES: MediaStoryProps[] = [
   {
-    media: "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/690a1613098a903d97414ebd_Image%20-%202025-11-04T210434.975.png",
+    media: "/media/site/image-2025-11-04t210434-975.webp",
     mediaType: "image",
     eyebrow: "01 • BANFF NATIONAL PARK",
     title: "Where the mountains become the journey.",
@@ -16,7 +16,7 @@ const DESTINATION_STORIES: MediaStoryProps[] = [
     badge: "Most Popular",
   },
   {
-    media: "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/68e75d2241160e7b6fe97901_Lake-Louise-from-Fairmont-Chateau.webp",
+    media: "/media/photos/lake-louise-from-chateau.webp",
     mediaType: "image",
     eyebrow: "02 • LAKE LOUISE",
     title: "The colour of the Rockies, in its purest form.",
@@ -26,7 +26,7 @@ const DESTINATION_STORIES: MediaStoryProps[] = [
     alignment: "right",
   },
   {
-    media: "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/68e75d228ead1330ef50075f_Moraine-Lake-Perfect-Reflection.webp",
+    media: "/media/photos/moraine-lake-perfect-reflection.webp",
     mediaType: "image",
     eyebrow: "03 • MORAINE LAKE",
     title: "Arrive before the crowds. Stay for the moment.",
@@ -37,7 +37,7 @@ const DESTINATION_STORIES: MediaStoryProps[] = [
     badge: "Guaranteed Access",
   },
   {
-    media: "https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/691010a937bd1626bd437647_Horse%20Background%20Image%20V3.png",
+    media: "/media/brand/horse-rider-background.png",
     mediaType: "image",
     eyebrow: "04 • ICEFIELDS PARKWAY & JASPER",
     title: "A road through another world.",

@@ -40,12 +40,12 @@ const FAQS = [
 
 export default function FAQPage() {
   return (
-    <div className="min-h-screen bg-[#F9F9F7] text-[#1C1F23]">
+    <div className="min-h-screen bg-obsidian-50 text-obsidian-900">
       {/* 01. EDITORIAL HERO BANNER */}
-      <section className="bg-[#0C1F21] text-white pt-24 pb-16 px-4 sm:px-6 lg:px-12 text-center relative overflow-hidden border-b border-white/10">
+      <section className="bg-ocean-900 text-white pt-24 pb-16 px-4 sm:px-6 lg:px-12 text-center relative overflow-hidden border-b border-white/10">
         <div className="max-w-4xl mx-auto space-y-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-[#FFE085] text-xs font-semibold uppercase tracking-wider border border-white/15">
-            <HelpCircle className="w-3.5 h-3.5 text-[#F5BF03]" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-summit-300 text-xs font-semibold uppercase tracking-wider border border-white/15">
+            <HelpCircle className="w-3.5 h-3.5 text-summit-500" />
             <span>Guest Information &amp; Advice</span>
           </div>
           <h1 className="text-4xl sm:text-6xl font-light font-serif tracking-tight text-white leading-[1.1]">
@@ -65,8 +65,8 @@ export default function FAQPage() {
             key={index}
             className="p-8 rounded-3xl bg-white border border-slate-200/90 shadow-sm space-y-3 hover:shadow-md transition-shadow"
           >
-            <h2 className="text-xl font-serif font-medium text-[#1C1F23] flex items-start gap-3">
-              <span className="w-6 h-6 rounded-full bg-[#3A9CA6]/15 text-[#3A9CA6] flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold font-sans">
+            <h2 className="text-xl font-serif font-medium text-obsidian-900 flex items-start gap-3">
+              <span className="w-6 h-6 rounded-full bg-ocean-500/15 text-ocean-500 flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold font-sans">
                 Q
               </span>
               <span>{faq.q}</span>
@@ -76,14 +76,14 @@ export default function FAQPage() {
         ))}
 
         {/* Support Help Banner */}
-        <div className="mt-12 p-8 rounded-3xl bg-[#0C1F21] text-white flex flex-col sm:flex-row sm:items-center justify-between gap-6 border border-white/10">
+        <div className="mt-12 p-8 rounded-3xl bg-ocean-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-6 border border-white/10">
           <div className="space-y-1">
-            <span className="text-xs uppercase tracking-widest text-[#FFE085] font-bold">Have a specific question?</span>
+            <span className="text-xs uppercase tracking-widest text-summit-300 font-bold">Have a specific question?</span>
             <h3 className="text-xl font-serif font-light text-white">Our Banff concierge team is ready to help</h3>
           </div>
           <Link
             href="/contact-us"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest text-[#1C1F23] golden-summit-btn shrink-0"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest text-obsidian-900 golden-summit-btn shrink-0"
           >
             <span>Contact Concierge</span>
             <ChevronRight className="w-4 h-4" />

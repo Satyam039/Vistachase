@@ -42,7 +42,7 @@ model Destination {
 model Tour {
   id              String          @id @default(cuid())
   slug            String          @unique
-  bokunId         String?         @unique // Bókun Product Key e.g. "1142134"
+  bokunId         String?         @unique // Bokun experience ID, from prisma/catalog/product-map.json (null until provided)
   title           String
   category        String          @default("SHARED") // SHARED, PRIVATE, SHUTTLE, MULTIDAY
   durationHours   Float
@@ -62,7 +62,6 @@ model Tour {
   rating          Float           @default(5.0)
   reviewCount     Int             @default(0)
   // Catalog content imported from the live site (backend/prisma/catalog/products.json)
-  bokunExperienceId String?
   bookingMode     String          @default("BOKUN") // BOKUN (instant booking), ENQUIRY (request form)
   priceUnit       String          @default("PERSON") // PERSON, GROUP (whole vehicle)
   facts           String          @default("[]") // JSON [{label, value}]
