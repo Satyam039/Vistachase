@@ -176,6 +176,7 @@ export interface BookingDetail {
   currency: string;
   status: string;
   qrCodeUrl: string | null;
+  trackingToken?: string | null;
   pickupCustomText: string | null;
   pickupStop: { name: string; town: string; instructions: string } | null;
   items: { id: string; name: string; price: number; quantity: number }[];

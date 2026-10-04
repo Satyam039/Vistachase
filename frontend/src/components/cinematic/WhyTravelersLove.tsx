@@ -1,0 +1,128 @@
+"use client";
+
+import React from "react";
+import Image from "next/image";
+import { CheckCircle2, ShieldCheck, HeartHandshake, Mountain, Sparkles, Clock } from "lucide-react";
+import { ScrollReveal } from "./ScrollReveal";
+
+const REASONS = [
+  {
+    icon: ShieldCheck,
+    title: "Hassle-Free Access",
+    description: "We handle all timing, commercial access permits, and Parks Canada logistics so you bypass roadside congestion.",
+  },
+  {
+    icon: Sparkles,
+    title: "Luxury SUVs & Clean Shuttles",
+    description: "Full-size GMC Yukon Denali XL VIPs and modern Mercedes-Benz Sprinter Executive vans maintained to pristine standards.",
+  },
+  {
+    icon: Mountain,
+    title: "Local Certified Guides",
+    description: "Intimate mountain history, wildlife safety, geology stories, and unhurried photo assistance from local residents.",
+  },
+  {
+    icon: HeartHandshake,
+    title: "Eco-Friendly Footprint",
+    description: "Shared routes and efficient passenger groupings minimize national park congestion and reduce carbon per traveler.",
+  },
+  {
+    icon: CheckCircle2,
+    title: "Top-Ranked Hospitality",
+    description: "Recognized as TripAdvisor’s #6 Experience in all of Canada with over 800+ verified five-star reviews.",
+  },
+  {
+    icon: Clock,
+    title: "Flexible 48-Hour Guarantee",
+    description: "Instant digital vouchers, secure automated payments, and complete flexibility outside 48 hours.",
+  },
+];
+
+export function WhyTravelersLove() {
+  return (
+    <section className="py-24 sm:py-32 bg-ocean-950 text-white relative overflow-hidden">
+      {/* Background Horse Emblem Watermark */}
+      <div className="absolute right-[-80px] top-1/2 -translate-y-1/2 w-[550px] h-[550px] opacity-5 pointer-events-none">
+        <Image
+          src="https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6907ce5d58aa3223085833b6_4a63d88a7f5330f9765fc90768f76f2c323f34d3.png"
+          alt="Vista Chase Emblem"
+          fill
+          className="object-contain"
+        />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 sm:px-12 relative z-10">
+        {/* Section Header */}
+        <div className="max-w-3xl mb-16">
+          <ScrollReveal delay={100} yOffset={16}>
+            <div className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold tracking-[0.2em] uppercase text-summit-400 mb-3">
+              <span>THE VISTA CHASE STANDARD</span>
+            </div>
+          </ScrollReveal>
+          <ScrollReveal delay={200} yOffset={20}>
+            <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white font-display">
+              Why Travelers Choose Vista Chase
+            </h2>
+          </ScrollReveal>
+          <ScrollReveal delay={300} yOffset={16}>
+            <p className="mt-4 text-base sm:text-lg text-slate-300 font-light leading-relaxed">
+              Awarded TripAdvisor’s Travelers’ Choice Best of the Best 2025. Here is how we redefine the Canadian Rockies journey.
+            </p>
+          </ScrollReveal>
+        </div>
+
+        {/* 2-Column Layout: Visual + 6 Pillars */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          {/* Left Column: Certified Guide Image Card */}
+          <div className="lg:col-span-5">
+            <ScrollReveal delay={200} yOffset={28}>
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-white/10 group">
+                <div className="relative h-[480px] sm:h-[540px] w-full">
+                  <Image
+                    src="https://cdn.prod.website-files.com/68b7e25c3eb9527f343084ae/6907d17f97c5c1e84eff3593_Feature%20Image%20(1).png"
+                    alt="Vista Chase Certified Mountain Guide"
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 40vw"
+                    className="object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-ocean-950 via-transparent to-transparent opacity-80" />
+                </div>
+                {/* Overlay Badge */}
+                <div className="absolute bottom-6 left-6 right-6 p-5 rounded-xl glass-panel-alpine text-white">
+                  <p className="text-xs uppercase tracking-widest text-summit-400 font-semibold mb-1">
+                    CANMORE & BANFF NATIVE TEAM
+                  </p>
+                  <p className="text-sm font-light text-slate-200">
+                    &ldquo;Our guides don&apos;t just drive — they unlock hidden perspectives most visitors drive right past.&rdquo;
+                  </p>
+                </div>
+              </div>
+            </ScrollReveal>
+          </div>
+
+          {/* Right Column: 6 Grid Pillars */}
+          <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {REASONS.map((reason, idx) => {
+              const Icon = reason.icon;
+              return (
+                <ScrollReveal key={idx} delay={100 * (idx + 1)} yOffset={20}>
+                  <div className="p-6 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 transition-all duration-300 hover:-translate-y-1">
+                    <div className="w-10 h-10 rounded-lg bg-summit-500/10 border border-summit-500/30 flex items-center justify-center text-summit-400 mb-4">
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-lg font-bold text-white font-display mb-2">
+                      {reason.title}
+                    </h3>
+                    <p className="text-sm text-slate-300 font-light leading-relaxed">
+                      {reason.description}
+                    </p>
+                  </div>
+                </ScrollReveal>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}

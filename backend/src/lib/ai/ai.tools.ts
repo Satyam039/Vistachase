@@ -1,0 +1,415 @@
+import prisma from "@/lib/db/prisma";
+import { getLiveTrackingProvider } from "@/lib/tracking/tracking.provider";
+import { getMapsProvider } from "@/lib/maps/maps.provider";
+
+export interface ToolExecutionContext {
+  isStaff?: boolean;
+  userEmail?: string;
+  role?: string;
+}
+
+export interface ToolResult {
+  toolName: string;
+  success: boolean;
+  data?: unknown;
+  error?: string;
+}
+
+// ---------------------------------------------------------------------------
+// 1. Customer-Facing Safe Tools
+// ---------------------------------------------------------------------------
+
+export async function searchTours(args: { query?: string; category?: string }) {
+  const tours = await prisma.tour.findMany({
+    where: {
+      ...(args.category ? { category: args.category.toUpperCase() } : {}),
+      ...(args.query
+        ? {
+            OR: [
+              { title: { contains: args.query } },
+              { summary: { contains: args.query } },
+            ],
+          }
+        : {}),
+    },
+    select: {
+      id: true,
+      slug: true,
+      bokunId: true,
+      title: true,
+      category: true,
+      durationHours: true,
+      basePrice: true,
+      currency: true,
+      rating: true,
+      summary: true,
+    },
+    take: 6,
+  });
+
+  return tours;
+}
+
+export async function getTourDetails(args: { tourSlugOrBokunId: string }) {
+  const tour = await prisma.tour.findFirst({
+    where: {
+      OR: [
+        { slug: args.tourSlugOrBokunId },
+        { bokunId: args.tourSlugOrBokunId },
+        { id: args.tourSlugOrBokunId },
+      ],
+    },
+    include: {
+      destination: true,
+    },
+  });
+
+  if (!tour) return null;
+
+  return {
+    title: tour.title,
+    category: tour.category,
+    durationHours: tour.durationHours,
+    basePrice: tour.basePrice,
+    currency: tour.currency,
+    summary: tour.summary,
+    description: tour.description,
+    inclusions: JSON.parse(tour.inclusions || "[]"),
+    exclusions: JSON.parse(tour.exclusions || "[]"),
+    highlights: JSON.parse(tour.highlights || "[]"),
+    whatToBring: JSON.parse(tour.whatToBring || "[]"),
+  };
+}
+
+export async function checkBokunAvailability(args: { date: string; tourSlug?: string }) {
+  const departures = await prisma.tourDeparture.findMany({
+    where: {
+      date: args.date,
+      status: "ACTIVE",
+      ...(args.tourSlug
+        ? {
+            tour: { slug: args.tourSlug },
+          }
+        : {}),
+    },
+    include: {
+      tour: true,
+      shuttleRoute: true,
+    },
+    take: 5,
+  });
+
+  return departures.map((d) => ({
+    departureId: d.id,
+    date: d.date,
+    departureTime: d.departureTime,
+    tourTitle: d.tour?.title || d.shuttleRoute?.name,
+    capacityTotal: d.capacityTotal,
+    availableSeats: Math.max(0, d.capacityTotal - (d.capacityBooked + d.capacityHeld)),
+    pricePerPerson: d.price,
+    currency: d.currency,
+  }));
+}
+
+export async function getBooking(args: { bookingReference: string; customerEmail?: string }) {
+  const booking = await prisma.booking.findFirst({
+    where: {
+      bookingReference: args.bookingReference,
+      ...(args.customerEmail ? { customerEmail: args.customerEmail } : {}),
+    },
+    include: {
+      tourDeparture: {
+        include: {
+          tour: true,
+          shuttleRoute: true,
+        },
+      },
+      pickupStop: true,
+    },
+  });
+
+  if (!booking) return null;
+
+  return {
+    bookingReference: booking.bookingReference,
+    customerName: booking.customerName,
+    tourTitle: booking.tourDeparture.tour?.title || booking.tourDeparture.shuttleRoute?.name,
+    departureDate: booking.tourDeparture.date,
+    departureTime: booking.tourDeparture.departureTime,
+    pickupLocation: booking.pickupStop?.name || booking.pickupCustomText || "Banff Station",
+    pickupTime: booking.pickupTime || booking.tourDeparture.departureTime,
+    totalSeats: booking.totalSeats,
+    status: booking.status,
+    voucherCode: booking.voucherCode,
+    isBoarded: booking.isBoarded,
+  };
+}
+
+export async function getPickup(args: { hotelNameQuery: string }) {
+  const mapsProvider = getMapsProvider();
+  const stops = await mapsProvider.searchPickups(args.hotelNameQuery);
+  return stops.slice(0, 5);
+}
+
+export async function getLiveTracking(args: { tokenOrRef: string }) {
+  const trackingProvider = getLiveTrackingProvider();
+  const telemetry = await trackingProvider.getTrackingTelemetry(args.tokenOrRef);
+  if (!telemetry) return null;
+
+  return {
+    status: telemetry.status,
+    statusLabel: telemetry.statusLabel,
+    statusDescription: telemetry.statusDescription,
+    estimatedArrivalMinutes: telemetry.estimatedArrivalMinutes,
+    pickupStopName: telemetry.pickupStopName,
+    vehicleName: telemetry.vehicleName,
+    licensePlate: telemetry.licensePlate,
+    driverName: telemetry.driverName,
+    speedKmh: telemetry.vehicleCoordinates.speedKmh,
+    heading: telemetry.vehicleCoordinates.heading,
+  };
+}
+
+export async function getETA(args: { tokenOrRef: string }) {
+  const tracking = await getLiveTracking(args);
+  if (!tracking) return null;
+
+  return {
+    estimatedMinutesRemaining: tracking.estimatedArrivalMinutes,
+    status: tracking.status,
+    statusDescription: tracking.statusDescription,
+    pickupLocation: tracking.pickupStopName,
+  };
+}
+
+export async function getOperationalStatus(args: { bookingReference: string }) {
+  const booking = await prisma.booking.findUnique({
+    where: { bookingReference: args.bookingReference },
+    include: {
+      tourDeparture: {
+        include: {
+          operationRuns: {
+            include: {
+              vehicle: true,
+              driver: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!booking) return null;
+
+  const run = booking.tourDeparture.operationRuns[0];
+  return {
+    bookingReference: booking.bookingReference,
+    runStatus: run?.status || "PLANNED",
+    isBoarded: booking.isBoarded,
+    vehicle: run?.vehicle?.name || "Assigned Prior to Departure",
+    driver: run?.driver?.publicName || "Certified Naturalist Guide",
+  };
+}
+
+// ---------------------------------------------------------------------------
+// 2. Staff-Facing Operations AI Assistant Tools (Staff Authorization Enforced)
+// ---------------------------------------------------------------------------
+
+export async function getTodaysDepartures(args: { date?: string }, ctx: ToolExecutionContext) {
+  if (!ctx.isStaff) {
+    throw new Error("UNAUTHORIZED: Operations staff credentials required to view daily dispatch rosters.");
+  }
+
+  const date = args.date || new Date().toISOString().split("T")[0];
+  const departures = await prisma.tourDeparture.findMany({
+    where: { date },
+    include: {
+      tour: true,
+      shuttleRoute: true,
+      operationRuns: {
+        include: {
+          vehicle: true,
+          driver: true,
+          bookings: true,
+        },
+      },
+      bookings: true,
+    },
+    orderBy: { departureTime: "asc" },
+  });
+
+  return departures.map((d) => ({
+    departureId: d.id,
+    departureTime: d.departureTime,
+    title: d.tour?.title || d.shuttleRoute?.name,
+    capacityTotal: d.capacityTotal,
+    capacityBooked: d.capacityBooked,
+    runsCount: d.operationRuns.length,
+    activeRunStatus: d.operationRuns[0]?.status || "PLANNED",
+    assignedVehicle: d.operationRuns[0]?.vehicle?.name || "Unassigned",
+    assignedDriver: d.operationRuns[0]?.driver?.name || "Unassigned",
+  }));
+}
+
+export async function getPendingPickups(args: { runId?: string; date?: string }, ctx: ToolExecutionContext) {
+  if (!ctx.isStaff) {
+    throw new Error("UNAUTHORIZED: Operations staff credentials required.");
+  }
+
+  const today = args.date || new Date().toISOString().split("T")[0];
+
+  const pendingRunBookings = await prisma.runBooking.findMany({
+    where: {
+      isBoarded: false,
+      ...(args.runId ? { runId: args.runId } : { run: { date: today } }),
+    },
+    include: {
+      run: {
+        include: { vehicle: true, driver: true },
+      },
+      booking: {
+        include: { pickupStop: true },
+      },
+    },
+    orderBy: { pickupOrder: "asc" },
+  });
+
+  return pendingRunBookings.map((rb) => ({
+    runName: rb.run.name,
+    pickupOrder: rb.pickupOrder,
+    customerName: rb.booking.customerName,
+    customerPhone: rb.booking.customerPhone,
+    seats: rb.booking.totalSeats,
+    pickupLocation: rb.booking.pickupStop?.name || rb.booking.pickupCustomText,
+    pickupTime: rb.booking.pickupTime,
+    vehicle: rb.run.vehicle?.name,
+  }));
+}
+
+export async function getBoardingStatus(args: { departureId?: string; date?: string }, ctx: ToolExecutionContext) {
+  if (!ctx.isStaff) {
+    throw new Error("UNAUTHORIZED: Operations staff credentials required.");
+  }
+
+  const date = args.date || new Date().toISOString().split("T")[0];
+  const bookings = await prisma.booking.findMany({
+    where: {
+      status: "CONFIRMED",
+      tourDeparture: args.departureId ? { id: args.departureId } : { date },
+    },
+    select: {
+      id: true,
+      bookingReference: true,
+      customerName: true,
+      totalSeats: true,
+      isBoarded: true,
+      boardedAt: true,
+      pickupCustomText: true,
+    },
+  });
+
+  const totalPassengers = bookings.reduce((sum, b) => sum + b.totalSeats, 0);
+  const boardedPassengers = bookings.filter((b) => b.isBoarded).reduce((sum, b) => sum + b.totalSeats, 0);
+
+  return {
+    date,
+    totalPassengers,
+    boardedPassengers,
+    pendingPassengers: totalPassengers - boardedPassengers,
+    passengers: bookings,
+  };
+}
+
+export async function getVehicleAssignments(args: { date?: string }, ctx: ToolExecutionContext) {
+  if (!ctx.isStaff) {
+    throw new Error("UNAUTHORIZED: Operations staff credentials required.");
+  }
+
+  const date = args.date || new Date().toISOString().split("T")[0];
+  const runs = await prisma.operationRun.findMany({
+    where: { date },
+    include: {
+      vehicle: true,
+      driver: true,
+      tourDeparture: {
+        include: { tour: true, shuttleRoute: true },
+      },
+    },
+  });
+
+  return runs.map((r) => ({
+    runName: r.name,
+    status: r.status,
+    vehicle: r.vehicle ? `${r.vehicle.name} (${r.vehicle.licensePlate})` : "Unassigned",
+    driver: r.driver ? `${r.driver.name} (${r.driver.phone})` : "Unassigned",
+    tour: r.tourDeparture.tour?.title || r.tourDeparture.shuttleRoute?.name,
+  }));
+}
+
+export async function getDelayedDepartures(_args: Record<string, unknown>, ctx: ToolExecutionContext) {
+  if (!ctx.isStaff) {
+    throw new Error("UNAUTHORIZED: Operations staff credentials required.");
+  }
+
+  const delayedRuns = await prisma.operationRun.findMany({
+    where: { status: "DELAYED" },
+    include: {
+      vehicle: true,
+      driver: true,
+      tourDeparture: { include: { tour: true } },
+    },
+  });
+
+  return delayedRuns.map((r) => ({
+    runId: r.id,
+    runName: r.name,
+    tour: r.tourDeparture.tour?.title,
+    notes: r.notes || "Traffic / weather delay flagged by dispatch.",
+    vehicle: r.vehicle?.name,
+    driver: r.driver?.name,
+  }));
+}
+
+// ---------------------------------------------------------------------------
+// Tool Execution Dispatcher
+// ---------------------------------------------------------------------------
+export async function executeAiTool(toolName: string, args: Record<string, any>, ctx: ToolExecutionContext): Promise<ToolResult> {
+  try {
+    switch (toolName) {
+      // Customer tools
+      case "searchTours":
+        return { toolName, success: true, data: await searchTours(args) };
+      case "getTourDetails":
+        return { toolName, success: true, data: await getTourDetails(args as any) };
+      case "checkBokunAvailability":
+        return { toolName, success: true, data: await checkBokunAvailability(args as any) };
+      case "getBooking":
+        return { toolName, success: true, data: await getBooking(args as any) };
+      case "getPickup":
+        return { toolName, success: true, data: await getPickup(args as any) };
+      case "getLiveTracking":
+        return { toolName, success: true, data: await getLiveTracking(args as any) };
+      case "getETA":
+        return { toolName, success: true, data: await getETA(args as any) };
+      case "getOperationalStatus":
+        return { toolName, success: true, data: await getOperationalStatus(args as any) };
+
+      // Staff operations tools
+      case "getTodaysDepartures":
+        return { toolName, success: true, data: await getTodaysDepartures(args, ctx) };
+      case "getPendingPickups":
+        return { toolName, success: true, data: await getPendingPickups(args, ctx) };
+      case "getBoardingStatus":
+        return { toolName, success: true, data: await getBoardingStatus(args, ctx) };
+      case "getVehicleAssignments":
+        return { toolName, success: true, data: await getVehicleAssignments(args, ctx) };
+      case "getDelayedDepartures":
+        return { toolName, success: true, data: await getDelayedDepartures(args, ctx) };
+
+      default:
+        return { toolName, success: false, error: `Unrecognized tool '${toolName}'` };
+    }
+  } catch (error: any) {
+    return { toolName, success: false, error: error.message };
+  }
+}

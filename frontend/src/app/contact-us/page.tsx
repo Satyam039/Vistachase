@@ -1,4 +1,4 @@
-import { MapPin, Phone, Mail, Clock, MessageSquare } from "lucide-react";
+import { MapPin, Phone, Mail, Clock, MessageSquare, ShieldCheck, ChevronRight } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -12,118 +12,137 @@ export const metadata: Metadata = {
 
 export default function ContactUsPage() {
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      <section className="bg-forest-950 text-white py-16 px-4 sm:px-6 lg:px-8 text-center">
-        <div className="max-w-4xl mx-auto space-y-4">
-          <span className="text-xs uppercase tracking-widest font-bold text-gold-400">We&apos;re Here to Help</span>
-          <h1 className="text-3xl sm:text-5xl font-bold font-display text-white">
+    <div className="min-h-screen bg-[#F9F9F7] text-[#1C1F23]">
+      {/* 01. EDITORIAL HERO BANNER */}
+      <section className="bg-[#0C1F21] text-white pt-24 pb-16 px-4 sm:px-6 lg:px-12 text-center relative overflow-hidden border-b border-white/10">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-[#FFE085] text-xs font-semibold uppercase tracking-wider border border-white/15">
+            <MessageSquare className="w-3.5 h-3.5 text-[#F5BF03]" />
+            <span>Canadian Rockies Concierge Base</span>
+          </div>
+          <h1 className="text-4xl sm:text-6xl font-light font-serif tracking-tight text-white leading-[1.1]">
             Contact Vista Chase
           </h1>
-          <p className="text-slate-300 max-w-2xl mx-auto text-base">
-            Have questions about Moraine Lake road closures, pickup timing, or private SUV tours? Our local team is here 7 days a week.
+          <p className="text-slate-300 text-base sm:text-lg leading-relaxed font-sans max-w-2xl mx-auto">
+            Have questions about Moraine Lake road closures, pickup timing, or custom private SUV charters? Our local
+            team is here 7 days a week.
           </p>
         </div>
       </section>
 
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 flex-1 w-full grid grid-cols-1 md:grid-cols-2 gap-12">
-        {/* Contact Info */}
-        <div className="space-y-8">
-          <div className="space-y-4">
-            <h2 className="text-2xl font-bold font-display text-forest-950">Canadian Rockies Base</h2>
+      {/* 02. CONTACT INFORMATION & FORM */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-16 grid grid-cols-1 lg:grid-cols-12 gap-12">
+        {/* Contact Info (5 Cols) */}
+        <div className="lg:col-span-5 space-y-8">
+          <div className="space-y-3">
+            <span className="text-xs uppercase tracking-widest text-[#3A9CA6] font-bold">Bow Valley Headquarters</span>
+            <h2 className="text-2xl sm:text-3xl font-serif font-light text-[#1C1F23]">
+              Based in Canmore &amp; Banff, Alberta
+            </h2>
             <p className="text-slate-600 text-sm leading-relaxed">
-              Our operations office is located in Canmore, minutes from Banff National Park gates. We operate pickups across Canmore, Banff, and Lake Louise.
+              Our operations office is located in Canmore, minutes from the Banff National Park gates. We operate
+              daily departures across Canmore, Banff, and Lake Louise.
             </p>
           </div>
 
           <div className="space-y-4">
-            <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm flex items-start gap-4">
-              <div className="p-2.5 rounded-lg bg-forest-50 text-forest-800 shrink-0">
-                <MapPin className="w-5 h-5 text-forest-700" />
+            <div className="p-6 rounded-3xl bg-white border border-slate-200/90 shadow-sm flex items-start gap-4">
+              <div className="p-3 rounded-2xl bg-[#0C1F21] text-[#FFE085] shrink-0">
+                <MapPin className="w-5 h-5" />
               </div>
-              <div className="text-sm">
-                <p className="font-bold text-forest-950">Office Address</p>
-                <p className="text-slate-600">121 Bow Meadows Crescent #110, Canmore, AB T1W 2W8, Canada</p>
+              <div className="text-sm space-y-1">
+                <p className="font-bold text-[#1C1F23]">Office Address</p>
+                <p className="text-slate-600 text-xs sm:text-sm">
+                  121 Bow Meadows Crescent #110, Canmore, AB T1W 2W8, Canada
+                </p>
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm flex items-start gap-4">
-              <div className="p-2.5 rounded-lg bg-forest-50 text-forest-800 shrink-0">
-                <Phone className="w-5 h-5 text-forest-700" />
+            <div className="p-6 rounded-3xl bg-white border border-slate-200/90 shadow-sm flex items-start gap-4">
+              <div className="p-3 rounded-2xl bg-[#0C1F21] text-[#FFE085] shrink-0">
+                <Phone className="w-5 h-5" />
               </div>
-              <div className="text-sm">
-                <p className="font-bold text-forest-950">Telephone</p>
-                <a href="tel:+18257349456" className="text-slate-600 hover:text-gold-600 font-medium">
+              <div className="text-sm space-y-1">
+                <p className="font-bold text-[#1C1F23]">Telephone Support</p>
+                <a href="tel:+18257349456" className="text-[#3A9CA6] hover:underline font-semibold block text-base">
                   +1 (825) 734-9456
                 </a>
-                <p className="text-xs text-slate-500 mt-0.5">Lines open 6:00 AM - 9:00 PM Mountain Time</p>
+                <p className="text-xs text-slate-500">Lines open 6:00 AM – 9:00 PM Mountain Time</p>
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm flex items-start gap-4">
-              <div className="p-2.5 rounded-lg bg-forest-50 text-forest-800 shrink-0">
-                <Mail className="w-5 h-5 text-forest-700" />
+            <div className="p-6 rounded-3xl bg-white border border-slate-200/90 shadow-sm flex items-start gap-4">
+              <div className="p-3 rounded-2xl bg-[#0C1F21] text-[#FFE085] shrink-0">
+                <Mail className="w-5 h-5" />
               </div>
-              <div className="text-sm">
-                <p className="font-bold text-forest-950">Email Inquiries</p>
-                <a href="mailto:info@vistachase.com" className="text-slate-600 hover:text-gold-600 font-medium">
+              <div className="text-sm space-y-1">
+                <p className="font-bold text-[#1C1F23]">Email Concierge</p>
+                <a href="mailto:info@vistachase.com" className="text-[#3A9CA6] hover:underline font-semibold block text-base">
                   info@vistachase.com
                 </a>
+                <p className="text-xs text-slate-500">Fast response within 2 business hours</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Contact Form */}
-        <div className="p-8 rounded-3xl bg-white border border-slate-200 shadow-card space-y-6">
-          <div>
-            <h3 className="text-xl font-bold font-display text-forest-950">Send an Inquiry</h3>
-            <p className="text-xs text-slate-500 mt-1">We typically reply within 2 business hours.</p>
+        {/* Contact Form (7 Cols) */}
+        <div className="lg:col-span-7">
+          <div className="p-8 sm:p-10 rounded-3xl bg-white border border-slate-200 shadow-lg space-y-6">
+            <div className="space-y-1 border-b border-slate-100 pb-5">
+              <h3 className="text-2xl font-serif font-light text-[#1C1F23]">Send a Direct Message</h3>
+              <p className="text-xs text-slate-500">
+                Reach our local Bow Valley tour specialists for advice, group inquiries, or custom itineraries.
+              </p>
+            </div>
+
+            <form className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700">Full Name</label>
+                  <input
+                    type="text"
+                    placeholder="Sarah Jenkins"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#3A9CA6]"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700">Email Address</label>
+                  <input
+                    type="email"
+                    placeholder="sarah@example.com"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#3A9CA6]"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-700">Phone Number (Optional)</label>
+                <input
+                  type="tel"
+                  placeholder="+1 (403) 555-0192"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#3A9CA6]"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-700">Message / Tour Inquiry</label>
+                <textarea
+                  rows={4}
+                  placeholder="Inquiring about private sunrise tour for 4 guests on July 14..."
+                  className="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#3A9CA6]"
+                />
+              </div>
+
+              <button
+                type="button"
+                className="w-full py-4 rounded-xl font-bold text-xs uppercase tracking-widest text-[#1C1F23] golden-summit-btn shadow-lg transition-all"
+              >
+                Submit Inquiry to Concierge
+              </button>
+            </form>
           </div>
-
-          <form className="space-y-4">
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-700">Full Name</label>
-              <input
-                type="text"
-                placeholder="Sarah Jenkins"
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-forest-800"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-700">Email Address</label>
-              <input
-                type="email"
-                placeholder="sarah@example.com"
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-forest-800"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-700">Phone Number (Optional)</label>
-              <input
-                type="tel"
-                placeholder="+1 (403) 555-0192"
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-forest-800"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-700">Message / Tour Inquiry</label>
-              <textarea
-                rows={4}
-                placeholder="Inquiring about sunrise shuttle for 4 people on July 14..."
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-forest-800"
-              />
-            </div>
-
-            <button
-              type="button"
-              className="w-full py-3 rounded-xl font-bold text-sm text-forest-950 gold-gradient hover:opacity-95 transition-opacity"
-            >
-              Submit Message
-            </button>
-          </form>
         </div>
       </section>
     </div>

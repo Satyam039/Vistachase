@@ -13,6 +13,8 @@ import {
   Phone,
   QrCode,
   CheckCircle2,
+  Navigation,
+  ArrowUpRight,
 } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -108,6 +110,30 @@ export default async function VoucherPage({
 
         {/* Passenger & Schedule Details */}
         <div className="p-6 sm:p-8 space-y-6">
+          {/* Live Shuttle Tracking CTA */}
+          <div className="p-4 sm:p-5 bg-gradient-to-r from-forest-950 to-slate-900 text-white rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 border border-gold-400/40 shadow-lg">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gold-500/20 border border-gold-400/40 flex items-center justify-center text-gold-400 shrink-0">
+                <Navigation className="w-5 h-5 animate-pulse" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs uppercase tracking-widest font-bold text-gold-400">Live GPS Tracking</span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                </div>
+                <p className="text-xs text-slate-300 mt-0.5">
+                  Track your assigned shuttle vehicle, driver GPS location, and real-time ETA.
+                </p>
+              </div>
+            </div>
+            <Link
+              href={`/track/${booking.trackingToken || booking.bookingReference}`}
+              className="shrink-0 px-4 py-2.5 rounded-xl bg-gold-500 hover:bg-gold-400 text-forest-950 font-bold text-xs transition-colors flex items-center gap-2 shadow-glow"
+            >
+              <span>Track Shuttle Live</span>
+              <ArrowUpRight className="w-4 h-4" />
+            </Link>
+          </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
             <div>
               <span className="text-slate-500 block uppercase font-medium">Lead Guest</span>

@@ -28,6 +28,10 @@ yarn-error.log*
 # Prisma
 backend/prisma/*.db
 backend/prisma/*.db-journal
+prisma/*.db
+prisma/*.db-journal
+*.db
+*.db-journal
 
 # Local uploads
 backend/public/uploads

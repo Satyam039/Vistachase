@@ -8,6 +8,14 @@ async function main() {
   console.log("🌲 Seeding Vista Chase Canadian Rockies Platform...");
 
   // 1. Clean existing records in correct order
+  await prisma.whatsAppNotification.deleteMany();
+  await prisma.runBooking.deleteMany();
+  await prisma.trackingSession.deleteMany();
+  await prisma.vehiclePosition.deleteMany();
+  await prisma.operationRun.deleteMany();
+  await prisma.vehicle.deleteMany();
+  await prisma.driver.deleteMany();
+  await prisma.bokunSyncLog.deleteMany();
   await prisma.auditLog.deleteMany();
   await prisma.review.deleteMany();
   await prisma.payment.deleteMany();
@@ -421,9 +429,154 @@ async function main() {
     },
   });
 
+  // 8. Fleet Vehicles
+  const sprinter4 = await prisma.vehicle.create({
+    data: {
+      name: "Mercedes-Benz Sprinter Executive #4",
+      type: "VAN_14",
+      capacity: 14,
+      licensePlate: "ALBERTA • 7VC-894",
+      vinNumber: "WD3PF4CC2KP098412",
+      trackingDeviceId: "GPS-VC-004",
+      isActive: true,
+      status: "ASSIGNED",
+    },
+  });
+
+  const sprinter2 = await prisma.vehicle.create({
+    data: {
+      name: "Mercedes-Benz Sprinter VIP #2",
+      type: "VAN_14",
+      capacity: 14,
+      licensePlate: "ALBERTA • 5VC-201",
+      vinNumber: "WD3PF4CC2KP098201",
+      trackingDeviceId: "GPS-VC-002",
+      isActive: true,
+      status: "AVAILABLE",
+    },
+  });
+
+  const yukon1 = await prisma.vehicle.create({
+    data: {
+      name: "GMC Yukon Denali XL VIP #1",
+      type: "SUV_6",
+      capacity: 6,
+      licensePlate: "ALBERTA • 8VC-772",
+      vinNumber: "1GKS2CKJ8NR184772",
+      trackingDeviceId: "GPS-VC-001",
+      isActive: true,
+      status: "AVAILABLE",
+    },
+  });
+
+  // 9. Naturalist Guides & Drivers
+  const driverMarc = await prisma.driver.create({
+    data: {
+      name: "Marc Tremblay",
+      publicName: "Marc",
+      email: "marc@vistachase.com",
+      phone: "+1-825-734-9456",
+      licenseClass: "Class 4 Commercial",
+      bio: "Parks Canada certified master naturalist with 1,400+ Rockies expeditions.",
+      photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=400&auto=format&fit=crop",
+      rating: 4.98,
+      isActive: true,
+    },
+  });
+
+  const driverSarah = await prisma.driver.create({
+    data: {
+      name: "Sarah MacLeod",
+      publicName: "Sarah",
+      email: "sarah.m@vistachase.com",
+      phone: "+1-825-734-9457",
+      licenseClass: "Class 4 Commercial",
+      bio: "Senior alpine wildlife specialist and certified Lake Louise interpretive guide.",
+      photoUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=400&auto=format&fit=crop",
+      rating: 4.99,
+      isActive: true,
+    },
+  });
+
+  // 10. Map live Bókun Product IDs (Roadmap p.4)
+  await prisma.tour.updateMany({
+    where: { slug: "banff-highlights-tour" },
+    data: { bokunId: "1142134" },
+  });
+
+  await prisma.tour.updateMany({
+    where: { slug: "banff-private-tour" },
+    data: { bokunId: "1167962" },
+  });
+
+  await prisma.tour.updateMany({
+    where: { slug: "icefields-jasper-private-tour" },
+    data: { bokunId: "856008" },
+  });
+
+  // 11. Mornby Operations Run for Today's Departures
+  const todayStr = new Date().toISOString().split("T")[0];
+  const operationRun = await prisma.operationRun.create({
+    data: {
+      name: "Run 1 - Lake Louise & Moraine Explorer",
+      date: todayStr,
+      departureTime: "08:30",
+      tourDepartureId: sampleDeparture.id,
+      vehicleId: sprinter4.id,
+      driverId: driverMarc.id,
+      status: "DISPATCHED",
+      notes: "Clear alpine conditions. Pre-trip vehicle inspection complete at Canmore fleet depot.",
+    },
+  });
+
+  // 12. Run Booking Manifest Link
+  await prisma.runBooking.create({
+    data: {
+      runId: operationRun.id,
+      bookingId: sampleBooking.id,
+      pickupOrder: 1,
+      isBoarded: false,
+      notes: "Pick up at Fairmont Banff Springs Main Motor Court. Anniversary couple.",
+    },
+  });
+
+  // 13. Secure Live GPS Tracking Session
+  const trackingToken = "4c75291326d8a68f983439c4291bcdfe92c5deaaecaf03d1be8d721b248f3d2a";
+  await prisma.trackingSession.create({
+    data: {
+      runId: operationRun.id,
+      token: trackingToken,
+      isActive: true,
+      expiresAt: new Date(Date.now() + 12 * 60 * 60 * 1000),
+    },
+  });
+
+  // Update sample booking with tracking token
+  await prisma.booking.update({
+    where: { id: sampleBooking.id },
+    data: {
+      trackingToken,
+      trackingTokenExpiresAt: new Date(Date.now() + 12 * 60 * 60 * 1000),
+      bokunBookingId: "BK-VC-2026-98412",
+    },
+  });
+
+  // 14. Initial Live GPS Coordinates
+  await prisma.vehiclePosition.create({
+    data: {
+      vehicleId: sprinter4.id,
+      latitude: 51.1352,
+      longitude: -115.4215,
+      heading: 315,
+      speedKmh: 72,
+    },
+  });
+
   console.log("✅ Seed completed successfully!");
   console.log(`- Sample Admin: admin@vistachase.com / VistaChaseAdmin2026!`);
   console.log(`- Sample Booking: ${sampleBooking.bookingReference} (Voucher: ${sampleBooking.voucherCode})`);
+  console.log(`- Sample Run: ${operationRun.name} (Vehicle: ${sprinter4.name}, Driver: ${driverMarc.name})`);
+  console.log(`- Sample Live Tracking: /track/${trackingToken}`);
 }
 
 main()

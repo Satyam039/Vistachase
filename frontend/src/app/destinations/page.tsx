@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getDestinations } from "@/lib/api/catalog";
-import { MapPin, ChevronRight } from "lucide-react";
+import { MapPin, ChevronRight, Compass } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -17,65 +17,82 @@ export default async function DestinationsPage() {
   const destinations = await getDestinations();
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      <section className="bg-forest-950 text-white py-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-forest-900 border border-gold-400/40 text-gold-300 text-xs font-semibold">
-            <MapPin className="w-4 h-4 text-gold-400" />
+    <div className="min-h-screen bg-[#F9F9F7] text-[#1C1F23]">
+      {/* 01. EDITORIAL HERO BANNER */}
+      <section className="bg-[#0C1F21] text-white pt-24 pb-16 px-4 sm:px-6 lg:px-12 relative overflow-hidden border-b border-white/10">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-[#FFE085] text-xs font-semibold uppercase tracking-wider border border-white/15">
+            <Compass className="w-3.5 h-3.5 text-[#F5BF03]" />
             <span>Canadian Rockies Destination Guide</span>
           </div>
-          <h1 className="text-3xl sm:text-5xl font-bold font-display text-white">
-            Iconic Mountain Destinations
-          </h1>
-          <p className="text-slate-300 max-w-2xl text-base leading-relaxed">
-            From the turquoise waters of Moraine Lake to the glaciers of the Icefields Parkway, discover the world-renowned landscapes we guide every day.
-          </p>
+
+          <div className="max-w-3xl space-y-4">
+            <h1 className="text-4xl sm:text-6xl font-light font-serif tracking-tight text-white leading-[1.1]">
+              Iconic Mountain Destinations
+            </h1>
+            <p className="text-slate-300 text-base sm:text-lg leading-relaxed font-sans">
+              From the turquoise waters of Moraine Lake to the ancient glaciers of the Icefields Parkway, discover
+              the world-renowned alpine landscapes we guide every day.
+            </p>
+          </div>
         </div>
       </section>
 
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex-1 w-full">
+      {/* 02. DESTINATION CARDS GRID */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {destinations.map((dest) => (
-            <div
+            <article
               key={dest.id}
-              className="rounded-2xl bg-white border border-slate-200 overflow-hidden shadow-card hover:shadow-xl transition-all flex flex-col justify-between group"
+              className="group relative rounded-3xl overflow-hidden bg-white border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-[#3A9CA6]/40 transition-all duration-300 flex flex-col justify-between"
             >
-              <div className="relative h-60 w-full overflow-hidden">
-                <Image
-                  src={dest.heroImage}
-                  alt={dest.name}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-forest-950/80 backdrop-blur-md text-gold-300 text-xs font-semibold">
-                  {dest.province}
-                </div>
-              </div>
+              <div>
+                <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-900">
+                  <Image
+                    src={dest.heroImage}
+                    alt={dest.name}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 400px"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-80" />
 
-              <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
-                <div className="space-y-2">
-                  <h2 className="text-xl font-bold text-forest-950 group-hover:text-forest-700 transition-colors">
-                    <Link href={`/destinations/${dest.slug}`}>{dest.name}</Link>
-                  </h2>
-                  <p className="text-sm text-slate-600 line-clamp-3 leading-relaxed">
+                  <div className="absolute top-4 left-4">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1C1F23]/80 backdrop-blur-md text-[#FFE085] text-xs font-semibold uppercase tracking-wider border border-white/10">
+                      <MapPin className="w-3 h-3 text-[#F5BF03]" />
+                      {dest.province}
+                    </span>
+                  </div>
+
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <h2 className="text-2xl font-serif font-light text-white leading-tight">
+                      <Link href={`/destinations/${dest.slug}`}>
+                        <span className="absolute inset-0 z-10" />
+                        {dest.name}
+                      </Link>
+                    </h2>
+                  </div>
+                </div>
+
+                <div className="p-6 space-y-3">
+                  <p className="text-xs sm:text-sm text-slate-600 line-clamp-3 leading-relaxed">
                     {dest.description}
                   </p>
                 </div>
+              </div>
 
+              <div className="p-6 pt-0 mt-auto">
                 <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-                  <span className="text-xs text-slate-500">
-                    {dest.tours.length} {dest.tours.length === 1 ? "Tour" : "Tours"} Available
+                  <span className="text-xs text-slate-500 font-medium">
+                    {dest.tours.length} {dest.tours.length === 1 ? "Experience" : "Experiences"} Available
                   </span>
-                  <Link
-                    href={`/destinations/${dest.slug}`}
-                    className="text-xs font-bold text-forest-800 hover:text-gold-600 flex items-center gap-1 transition-colors"
-                  >
-                    <span>Explore Destination</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </Link>
+                  <span className="inline-flex items-center gap-1 text-xs font-bold text-[#3A9CA6] group-hover:translate-x-1 transition-transform">
+                    <span>Explore Story</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </span>
                 </div>
               </div>
-            </div>
+            </article>
           ))}
         </div>
       </section>
