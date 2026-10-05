@@ -333,21 +333,28 @@ export default function ConciergePage() {
 
                 <div className="space-y-3 max-w-[85%] sm:max-w-xl">
                   <div
-                    className={`p-4 rounded-2xl text-sm leading-relaxed ${
+                    className={`p-4 rounded-2xl text-sm leading-relaxed backdrop-blur-md shadow-xl transition-all ${
                       isUser
-                        ? "bg-summit-500 text-slate-950 font-medium rounded-tr-none shadow-glow"
+                        ? "bg-gradient-to-r from-summit-400 to-summit-500 text-obsidian-950 font-semibold rounded-tr-none shadow-glow"
                         : m.hasSafetyRefusal
-                        ? "bg-amber-950/70 border border-amber-600/80 text-amber-100 rounded-tl-none shadow-xl"
-                        : "bg-obsidian-900 border border-slate-800 text-slate-200 rounded-tl-none shadow-xl"
+                        ? "bg-amber-950/80 border border-amber-500/80 text-amber-100 rounded-tl-none shadow-xl"
+                        : "bg-white/10 border border-white/20 text-white rounded-tl-none shadow-xl"
                     }`}
                   >
                     {m.hasSafetyRefusal && (
-                      <div className="flex items-center gap-1.5 text-xs text-amber-400 font-bold mb-2">
+                      <div className="flex items-center gap-1.5 text-xs text-amber-300 font-bold mb-2">
                         <ShieldAlert className="w-4 h-4" />
                         <span>SECURITY GUARDRAIL TRIGGERED</span>
                       </div>
                     )}
-                    <p className="whitespace-pre-line">{m.text}</p>
+                    <p
+                      className={`whitespace-pre-line text-sm leading-relaxed ${
+                        isUser ? "text-obsidian-950 font-semibold" : "text-white font-normal"
+                      }`}
+                      style={{ color: isUser ? "#0c1f21" : "#ffffff" }}
+                    >
+                      {m.text}
+                    </p>
                   </div>
 
                   {/* Interactive Companion Cards */}
@@ -454,7 +461,8 @@ export default function ConciergePage() {
               }
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              className="w-full bg-transparent text-sm text-white placeholder-slate-500 focus:outline-none"
+              className="w-full bg-transparent text-sm text-white placeholder-slate-400 focus:outline-none"
+              style={{ color: "#ffffff" }}
             />
             <button
               type="submit"

@@ -305,7 +305,7 @@ export function GlobalVoiceAssistantDrawer() {
                 onToggle={toggleListening}
                 size="md"
               />
-              <div className="text-[11px] text-slate-400 mt-2 font-medium">
+              <div className="text-[11px] text-slate-300 mt-2 font-medium" style={{ color: "#cbd5e1" }}>
                 {voiceState === "listening"
                   ? "Listening... Tap orb to submit or pause"
                   : voiceState === "thinking"
@@ -318,7 +318,7 @@ export function GlobalVoiceAssistantDrawer() {
 
             {/* Conversation Log Stream */}
             <div
-              className="flex-1 overflow-y-auto p-4 space-y-4 text-xs focus:outline-none"
+              className="flex-1 overflow-y-auto p-4 space-y-4 text-xs focus:outline-none ai-voice-drawer"
               tabIndex={0}
               role="log"
               aria-live="polite"
@@ -328,21 +328,28 @@ export function GlobalVoiceAssistantDrawer() {
                 return (
                   <div key={m.id} className={`flex gap-2.5 ${isUser ? "justify-end" : "justify-start"}`}>
                     {!isUser && (
-                      <div className="w-6 h-6 rounded-lg bg-obsidian-900 border border-slate-700 flex items-center justify-center text-summit-400 flex-shrink-0 mt-0.5">
+                      <div className="w-6 h-6 rounded-lg bg-obsidian-900 border border-slate-700 flex items-center justify-center text-summit-400 flex-shrink-0 mt-0.5 shadow-sm">
                         <Sparkles className="w-3.5 h-3.5" />
                       </div>
                     )}
                     <div className="space-y-2 max-w-[85%]">
                       <div
-                        className={`p-3 rounded-2xl leading-relaxed ${
+                        className={`p-3.5 rounded-2xl leading-relaxed backdrop-blur-md shadow-lg transition-all ${
                           isUser
-                            ? "bg-summit-500 text-slate-950 font-medium rounded-tr-none shadow-md"
+                            ? "bg-gradient-to-r from-summit-400 to-summit-500 text-obsidian-950 font-semibold rounded-tr-none"
                             : m.hasSafetyRefusal
-                            ? "bg-amber-950/70 border border-amber-600/80 text-amber-100 rounded-tl-none"
-                            : "bg-obsidian-900 border border-slate-800 text-slate-200 rounded-tl-none shadow-md"
+                            ? "bg-amber-950/80 border border-amber-500/80 text-amber-100 rounded-tl-none"
+                            : "bg-white/10 border border-white/20 text-white rounded-tl-none"
                         }`}
                       >
-                        <p>{m.text}</p>
+                        <p
+                          className={`text-xs leading-relaxed ${
+                            isUser ? "text-obsidian-950 font-semibold" : "text-white font-normal"
+                          }`}
+                          style={{ color: isUser ? "#0c1f21" : "#ffffff" }}
+                        >
+                          {m.text}
+                        </p>
                       </div>
 
                       {/* Visual Companion Cards */}
@@ -374,7 +381,8 @@ export function GlobalVoiceAssistantDrawer() {
                   placeholder={voiceState === "listening" ? "Listening to your voice..." : "Ask or book with AI Concierge..."}
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
-                  className="w-full bg-transparent text-xs text-white placeholder-slate-500 focus:outline-none"
+                  className="w-full bg-transparent text-xs text-white placeholder-slate-400 focus:outline-none"
+                  style={{ color: "#ffffff" }}
                 />
                 <button
                   type="submit"

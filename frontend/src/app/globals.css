@@ -120,6 +120,13 @@
   -webkit-text-fill-color: transparent;
 }
 
+/* AI Voice Assistant high-contrast text guarantee */
+.ai-voice-drawer p,
+.ai-voice-drawer span,
+.ai-voice-drawer input {
+  color: inherit;
+}
+
 /* StyleX app styles (stylex.create in src/) are emitted here by @stylexjs/postcss-plugin,
    in layers after reset, tw-preflight, astryx-base and astryx-theme. */
 @stylex;
