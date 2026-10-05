@@ -27,6 +27,17 @@ export function ScrollReveal({
       return;
     }
 
+    const currentEl = elementRef.current;
+    if (currentEl) {
+      // Check if element is already within viewport on mount
+      const rect = currentEl.getBoundingClientRect();
+      const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+      if (rect.top < viewportHeight + 60) {
+        setIsVisible(true);
+        return;
+      }
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -35,20 +46,25 @@ export function ScrollReveal({
         }
       },
       {
-        threshold: 0.12,
-        rootMargin: "0px 0px -40px 0px",
+        threshold: 0.02,
+        rootMargin: "60px 0px 60px 0px",
       }
     );
 
-    const currentEl = elementRef.current;
     if (currentEl) {
       observer.observe(currentEl);
     }
 
+    // Safety fallback: ensure content is never permanently hidden
+    const safetyTimer = setTimeout(() => {
+      setIsVisible(true);
+    }, 1000 + delay);
+
     return () => {
       if (currentEl) observer.unobserve(currentEl);
+      clearTimeout(safetyTimer);
     };
-  }, []);
+  }, [delay]);
 
   return (
     <div

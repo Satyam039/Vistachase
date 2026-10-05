@@ -38,63 +38,50 @@ export function AmbientVideo({
   buttonClassName?: string;
 }) {
   const ref = useRef<HTMLVideoElement>(null);
-  const [inView, setInView] = useState(false);
-  const [load, setLoad] = useState(false);
-  const [playing, setPlaying] = useState(false);
+  const [playing, setPlaying] = useState(true);
   const [userPaused, setUserPaused] = useState(false);
-  // The visitor pressed Play themselves: that wins over reduced motion and data saver.
-  const [userPlayed, setUserPlayed] = useState(false);
-  const [allowed, setAllowed] = useState(false);
 
-  // Decide once on the client whether motion is welcome.
-  useEffect(() => {
-    setAllowed(!prefersReducedMotion() && !saveData());
-  }, []);
-
-  // Watch visibility; start downloading the first time the clip comes near the viewport.
+  // Play / pause based on viewport visibility
   useEffect(() => {
     const video = ref.current;
     if (!video) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setInView(entry.isIntersecting);
-        // With reduced motion or data saver, nothing downloads until the visitor presses Play.
-        if (entry.isIntersecting && allowed) setLoad(true);
-      },
-      { rootMargin: "200px 0px", threshold: 0.15 }
-    );
-    observer.observe(video);
-    return () => observer.disconnect();
-  }, [allowed]);
 
-  // The <source> elements are added lazily, so tell the element to pick them up.
-  useEffect(() => {
-    if (load) ref.current?.load();
-  }, [load]);
-
-  // Play while visible (unless paused by the visitor or motion isn't wanted); pause otherwise.
-  useEffect(() => {
-    const video = ref.current;
-    if (!video || !load) return;
-    if ((allowed || userPlayed) && inView && !userPaused) {
-      video.play().then(
-        () => setPlaying(true),
-        () => setPlaying(false)
-      );
-    } else if (!video.paused) {
+    // Check if user prefers reduced motion
+    if (prefersReducedMotion()) {
       video.pause();
       setPlaying(false);
+      setUserPaused(true);
+      return;
     }
-  }, [allowed, userPlayed, inView, userPaused, load]);
+
+    // Try starting video on mount
+    video.play().catch(() => {
+      // Browser autoplay policy might require interaction
+      setPlaying(false);
+    });
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!ref.current) return;
+        if (entry.isIntersecting && !userPaused) {
+          ref.current.play().catch(() => {});
+        } else if (!entry.isIntersecting) {
+          ref.current.pause();
+        }
+      },
+      { rootMargin: "200px 0px", threshold: 0.1 }
+    );
+
+    observer.observe(video);
+    return () => observer.disconnect();
+  }, [userPaused]);
 
   const toggle = () => {
     const video = ref.current;
     if (!video) return;
     if (video.paused) {
-      // The play effect starts it once the sources are in place.
       setUserPaused(false);
-      setUserPlayed(true);
-      setLoad(true);
+      video.play().then(() => setPlaying(true)).catch(() => {});
     } else {
       setUserPaused(true);
       video.pause();
@@ -106,17 +93,20 @@ export function AmbientVideo({
     <>
       <video
         ref={ref}
+        autoPlay
         muted
         loop
         playsInline
-        preload="none"
+        preload="metadata"
         poster={poster}
         aria-hidden="true"
         tabIndex={-1}
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
         className={className}
       >
-        {load && srcHd && <source src={srcHd} type="video/mp4" media="(min-width: 1024px)" />}
-        {load && <source src={src} type="video/mp4" />}
+        {srcHd && <source src={srcHd} type="video/mp4" media="(min-width: 1024px)" />}
+        <source src={src} type="video/mp4" />
       </video>
       <button
         type="button"

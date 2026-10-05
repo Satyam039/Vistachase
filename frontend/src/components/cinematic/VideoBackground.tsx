@@ -32,9 +32,7 @@ export function VideoBackground({
         fill
         priority
         sizes="100vw"
-        className={`object-cover transition-opacity duration-1000 ${
-          videoSrc ? "opacity-0" : "opacity-100"
-        }`}
+        className="object-cover opacity-100"
       />
 
       {/* Video layer if provided */}

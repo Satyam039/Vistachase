@@ -9,6 +9,7 @@ const router = Router();
 router.post("/", async (req, res) => {
   try {
     const messages: ChatMessage[] = req.body?.messages || [];
+    const sessionState = req.body?.sessionState;
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: "Invalid messages array." });
@@ -17,7 +18,7 @@ router.post("/", async (req, res) => {
     const aiProvider = getAIProvider();
 
     // 1. Send chat to AI provider (with built-in credit card refusal guardrail)
-    const response = await aiProvider.chat(messages);
+    const response = await aiProvider.chat(messages, sessionState);
 
     const staff = getAuthenticatedStaff(req, ["ADMIN", "OPERATOR", "DISPATCHER"]);
     const toolContext = {
@@ -42,6 +43,9 @@ router.post("/", async (req, res) => {
       hasSafetyRefusal: response.hasSafetyRefusal || false,
       toolCalls: response.toolCalls || [],
       toolResults: toolExecutionResults,
+      sessionState: response.sessionState,
+      data: response.data,
+      checkoutUrl: response.checkoutUrl,
     });
   } catch (error: any) {
     console.error("Concierge route error:", error);

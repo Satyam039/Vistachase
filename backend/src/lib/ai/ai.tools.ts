@@ -1,6 +1,8 @@
 import prisma from "@/lib/db/prisma";
 import { getLiveTrackingProvider } from "@/lib/tracking/tracking.provider";
 import { getMapsProvider } from "@/lib/maps/maps.provider";
+import { createReservationHold } from "@/modules/reservations/reservation.repository";
+import { createBooking } from "@/modules/bookings/booking.repository";
 
 export interface ToolExecutionContext {
   isStaff?: boolean;
@@ -211,6 +213,158 @@ export async function getOperationalStatus(args: { bookingReference: string }) {
   };
 }
 
+export async function getAvailableDates(args: { tourSlug?: string }) {
+  const today = new Date().toISOString().split("T")[0];
+  const departures = await prisma.tourDeparture.findMany({
+    where: {
+      date: { gte: today },
+      status: "ACTIVE",
+      ...(args.tourSlug ? { tour: { slug: args.tourSlug } } : {}),
+    },
+    include: {
+      tour: true,
+      shuttleRoute: true,
+    },
+    orderBy: [{ date: "asc" }, { departureTime: "asc" }],
+    take: 20,
+  });
+
+  return departures
+    .map((d) => {
+      const remaining = Math.max(0, d.capacityTotal - (d.capacityBooked + d.capacityHeld));
+      return {
+        departureId: d.id,
+        date: d.date,
+        departureTime: d.departureTime,
+        title: d.tour?.title || d.shuttleRoute?.name,
+        slug: d.tour?.slug,
+        availableSeats: remaining,
+        price: d.price,
+        currency: d.currency,
+      };
+    })
+    .filter((d) => d.availableSeats > 0);
+}
+
+export async function createVoiceReservationHold(args: {
+  departureId: string;
+  seatsCount: number;
+  customerName: string;
+  customerEmail: string;
+  customerPhone?: string;
+}) {
+  if (!args.departureId || !args.seatsCount || !args.customerName || !args.customerEmail) {
+    return {
+      success: false,
+      error: "Missing required booking details (departureId, seatsCount, customerName, customerEmail).",
+    };
+  }
+
+  const result = await createReservationHold({
+    departureId: args.departureId,
+    seatsCount: args.seatsCount,
+    customerName: args.customerName,
+    customerEmail: args.customerEmail,
+    customerPhone: args.customerPhone || "+1-825-734-9456",
+    holdDurationSeconds: 600, // 10 minutes
+  });
+
+  if (!result.success) {
+    return {
+      success: false,
+      error: result.error || "Unable to hold seats for selected departure.",
+    };
+  }
+
+  const checkoutUrl = `/book?departureId=${encodeURIComponent(args.departureId)}&holdToken=${encodeURIComponent(
+    result.holdToken!
+  )}&guests=${encodeURIComponent(args.seatsCount)}`;
+
+  return {
+    success: true,
+    holdToken: result.holdToken,
+    expiresAt: result.expiresAt,
+    remainingSeconds: result.remainingSeconds || 600,
+    seatsHeld: result.seatsHeld,
+    isVehicle: result.isVehicle,
+    checkoutUrl,
+  };
+}
+
+export async function createVoiceBookingPaymentIntent(args: {
+  departureId: string;
+  holdToken?: string;
+  seatsCount: number;
+  customerName: string;
+  customerEmail: string;
+  customerPhone?: string;
+  pickupLocation?: string;
+}) {
+  const checkoutUrl = `/book?departureId=${encodeURIComponent(args.departureId)}${
+    args.holdToken ? `&holdToken=${encodeURIComponent(args.holdToken)}` : ""
+  }&guests=${encodeURIComponent(args.seatsCount)}`;
+
+  return {
+    success: true,
+    checkoutUrl,
+    securityNotice:
+      "PCI-DSS Level 1 Encrypted: Enter card details strictly via checkout link. Voice concierges never collect card numbers.",
+    amountEstimated: args.seatsCount,
+  };
+}
+
+export async function confirmVoiceBooking(args: {
+  departureId: string;
+  holdToken?: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone?: string;
+  pickupLocation?: string;
+  adultsCount?: number;
+  childrenCount?: number;
+  paymentProvider?: "mock" | "stripe";
+}) {
+  let pickupStopId: string | undefined = undefined;
+  if (args.pickupLocation) {
+    const maps = getMapsProvider();
+    const stops = await maps.searchPickups(args.pickupLocation);
+    if (stops.length > 0) {
+      pickupStopId = stops[0].id;
+    }
+  }
+
+  const result = await createBooking({
+    departureId: args.departureId,
+    holdToken: args.holdToken,
+    customerName: args.customerName,
+    customerEmail: args.customerEmail,
+    customerPhone: args.customerPhone || "+1-825-734-9456",
+    pickupStopId,
+    pickupCustomText: pickupStopId ? undefined : args.pickupLocation,
+    adultsCount: args.adultsCount || 1,
+    childrenCount: args.childrenCount || 0,
+    infantsCount: 0,
+    paymentProvider: args.paymentProvider || "mock",
+  });
+
+  if (!result.success || !result.booking) {
+    return {
+      success: false,
+      error: result.error || "Failed to finalize booking.",
+    };
+  }
+
+  return {
+    success: true,
+    bookingReference: result.booking.bookingReference,
+    voucherCode: result.booking.voucherCode,
+    totalAmount: result.booking.totalAmount,
+    currency: result.booking.currency,
+    status: result.booking.status,
+    voucherUrl: `/booking/${encodeURIComponent(result.booking.bookingReference)}/voucher`,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // 2. Staff-Facing Operations AI Assistant Tools (Staff Authorization Enforced)
 // ---------------------------------------------------------------------------
@@ -382,11 +536,21 @@ export async function executeAiTool(toolName: string, args: Record<string, any>,
       case "getTourDetails":
         return { toolName, success: true, data: await getTourDetails(args as any) };
       case "checkBokunAvailability":
+      case "checkAvailability":
         return { toolName, success: true, data: await checkBokunAvailability(args as any) };
+      case "getAvailableDates":
+        return { toolName, success: true, data: await getAvailableDates(args as any) };
       case "getBooking":
         return { toolName, success: true, data: await getBooking(args as any) };
       case "getPickup":
+      case "findPickup":
         return { toolName, success: true, data: await getPickup(args as any) };
+      case "createVoiceReservationHold":
+        return { toolName, success: true, data: await createVoiceReservationHold(args as any) };
+      case "createVoiceBookingPaymentIntent":
+        return { toolName, success: true, data: await createVoiceBookingPaymentIntent(args as any) };
+      case "confirmVoiceBooking":
+        return { toolName, success: true, data: await confirmVoiceBooking(args as any) };
       case "getLiveTracking":
         return { toolName, success: true, data: await getLiveTracking(args as any) };
       case "getETA":

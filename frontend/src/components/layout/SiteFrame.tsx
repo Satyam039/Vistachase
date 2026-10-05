@@ -32,6 +32,7 @@ import {
 import { Bus, Calendar, CalendarDays, CarFront, Compass, MapPin, Sparkles, User, Users } from "lucide-react";
 import { BrandMark } from "@/components/brand/BrandMark";
 import { SiteFooter } from "@/components/layout/SiteFooter";
+import { GlobalVoiceAssistantDrawer } from "@/components/voice/GlobalVoiceAssistantDrawer";
 
 type MegaItem = { title: string; description: string; href: string; icon: IconType };
 
@@ -270,6 +271,7 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
     >
       {children}
       <SiteFooter />
+      <GlobalVoiceAssistantDrawer />
     </AppShell>
   );
 }

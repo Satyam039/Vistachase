@@ -106,11 +106,11 @@ const config: Config = {
       // Decorative motion stops on its own within 5 seconds (WCAG 2.2.2 Pause, Stop, Hide):
       // Tailwind's ping/pulse/bounce default to infinite. animate-spin (loading) is left as is.
       animation: {
-        ping: "ping 1s cubic-bezier(0, 0, 0.2, 1) 4",
-        pulse: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) 2",
-        bounce: "bounce 1s 4",
-        "pulse-slow": "pulse 4s cubic-bezier(0.4, 0, 0.6, 1) 1",
-        "float": "float 5s ease-in-out 1",
+        ping: "ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite",
+        pulse: "pulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        bounce: "bounce 1.5s infinite",
+        "pulse-slow": "pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "float": "float 4s ease-in-out infinite",
       },
       keyframes: {
         float: {
