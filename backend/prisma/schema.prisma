@@ -8,16 +8,17 @@ generator client {
 }
 
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
+  id           String     @id @default(cuid())
+  email        String     @unique
   passwordHash String
   name         String
   phone        String?
-  role         String    @default("CUSTOMER") // ADMIN, OPERATOR, DISPATCHER, CUSTOMER
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  role         String     @default("CUSTOMER") // ADMIN, OPERATOR, DISPATCHER, CUSTOMER, AFFILIATE
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
   bookings     Booking[]
   auditLogs    AuditLog[]
+  affiliate    Affiliate?
 
   @@index([email])
 }
@@ -48,12 +49,12 @@ model Tour {
   durationHours   Float
   summary         String
   description     String
-  inclusions      String          // JSON array string
-  exclusions      String          // JSON array string
-  highlights      String          // JSON array string
-  whatToBring     String          // JSON array string
+  inclusions      String // JSON array string
+  exclusions      String // JSON array string
+  highlights      String // JSON array string
+  whatToBring     String // JSON array string
   featuredImage   String
-  galleryImages   String          // JSON array string
+  galleryImages   String // JSON array string
   basePrice       Float
   currency        String          @default("CAD")
   minGroupSize    Int             @default(1)
@@ -86,15 +87,15 @@ model Tour {
 }
 
 model ShuttleRoute {
-  id              String          @id @default(cuid())
-  slug            String          @unique
-  name            String
-  origin          String
-  destination     String
-  isReturn        Boolean         @default(true)
-  description     String
-  notes           String?
-  departures      TourDeparture[]
+  id          String          @id @default(cuid())
+  slug        String          @unique
+  name        String
+  origin      String
+  destination String
+  isReturn    Boolean         @default(true)
+  description String
+  notes       String?
+  departures  TourDeparture[]
 
   @@index([slug])
 }
@@ -102,7 +103,7 @@ model ShuttleRoute {
 model ShuttleStop {
   id           String    @id @default(cuid())
   name         String
-  town         String    // Banff, Canmore, Lake Louise, Calgary
+  town         String // Banff, Canmore, Lake Louise, Calgary
   address      String
   latitude     Float
   longitude    Float
@@ -120,9 +121,9 @@ model TourDeparture {
   tour           Tour?             @relation(fields: [tourId], references: [id], onDelete: Cascade)
   shuttleRouteId String?
   shuttleRoute   ShuttleRoute?     @relation(fields: [shuttleRouteId], references: [id], onDelete: Cascade)
-  date           String            // YYYY-MM-DD
-  departureTime  String            // e.g. "05:00", "08:30"
-  returnTime     String?           // e.g. "10:30", "16:30"
+  date           String // YYYY-MM-DD
+  departureTime  String // e.g. "05:00", "08:30"
+  returnTime     String? // e.g. "10:30", "16:30"
   capacityTotal  Int               @default(14)
   capacityBooked Int               @default(0)
   capacityHeld   Int               @default(0)
@@ -160,6 +161,8 @@ model ReservationHold {
 model Booking {
   id                     String                 @id @default(cuid())
   bookingReference       String                 @unique // e.g. VC-2026-89412
+  affiliateId            String? // partner whose ?ref= link brought this booking
+  affiliate              Affiliate?             @relation(fields: [affiliateId], references: [id], onDelete: SetNull)
   bokunBookingId         String?                @unique // Bókun external confirmation reference
   customerId             String?
   customer               User?                  @relation(fields: [customerId], references: [id], onDelete: SetNull)
@@ -198,6 +201,7 @@ model Booking {
   whatsappNotifications  WhatsAppNotification[]
 
   @@index([bookingReference])
+  @@index([affiliateId])
   @@index([bokunBookingId])
   @@index([trackingToken])
   @@index([customerEmail])
@@ -205,12 +209,12 @@ model Booking {
 }
 
 model BookingAddOn {
-  id        String   @id @default(cuid())
+  id        String  @id @default(cuid())
   bookingId String
-  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   name      String
   price     Float
-  quantity  Int      @default(1)
+  quantity  Int     @default(1)
 }
 
 model Payment {
@@ -219,9 +223,9 @@ model Payment {
   booking       Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   amount        Float
   currency      String   @default("CAD")
-  provider      String   // mock, stripe
+  provider      String // mock, stripe
   transactionId String   @unique
-  status        String   // SUCCEEDED, PENDING, REFUNDED
+  status        String // SUCCEEDED, PENDING, REFUNDED
   createdAt     DateTime @default(now())
 
   @@index([transactionId])
@@ -252,7 +256,7 @@ model Review {
 
 model Vehicle {
   id               String            @id @default(cuid())
-  name             String            // e.g. "Mercedes-Benz Sprinter Executive #4"
+  name             String // e.g. "Mercedes-Benz Sprinter Executive #4"
   type             String            @default("VAN_14") // VAN_14, SUV_6, COACH_24
   capacity         Int               @default(14)
   licensePlate     String            @unique // e.g. "ALBERTA • 7VC-894"
@@ -270,10 +274,10 @@ model Vehicle {
 
 model Driver {
   id           String         @id @default(cuid())
-  name         String         // Legal full name (internal operations)
-  publicName   String         // Customer-visible name (e.g. "Marc")
+  name         String // Legal full name (internal operations)
+  publicName   String // Customer-visible name (e.g. "Marc")
   email        String         @unique
-  phone        String         // Internal contact phone
+  phone        String // Internal contact phone
   licenseClass String         @default("Class 4")
   bio          String?
   photoUrl     String?
@@ -288,9 +292,9 @@ model Driver {
 
 model OperationRun {
   id              String           @id @default(cuid())
-  name            String           // e.g. "Run 1 - Morning Lake Louise Express"
-  date            String           // YYYY-MM-DD
-  departureTime   String?          // e.g. "05:00"
+  name            String // e.g. "Run 1 - Morning Lake Louise Express"
+  date            String // YYYY-MM-DD
+  departureTime   String? // e.g. "05:00"
   tourDepartureId String
   tourDeparture   TourDeparture    @relation(fields: [tourDepartureId], references: [id], onDelete: Cascade)
   vehicleId       String?
@@ -367,10 +371,10 @@ model WhatsAppNotification {
 
 model BokunSyncLog {
   id            String   @id @default(cuid())
-  syncType      String   // "POLL", "WEBHOOK", "CSV_IMPORT"
+  syncType      String // "POLL", "WEBHOOK", "CSV_IMPORT"
   recordsSynced Int      @default(0)
   status        String   @default("SUCCESS")
-  details       String?  // JSON or error log
+  details       String? // JSON or error log
   createdAt     DateTime @default(now())
 }
 
@@ -388,12 +392,32 @@ model AuditLog {
   id         String   @id @default(cuid())
   userId     String?
   user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  action     String   // e.g. "HOLD_CREATED", "CAPACITY_OVERRIDE", "BOOKING_REFUNDED"
-  entityType String   // "Booking", "TourDeparture", "User"
+  action     String // e.g. "HOLD_CREATED", "CAPACITY_OVERRIDE", "BOOKING_REFUNDED"
+  entityType String // "Booking", "TourDeparture", "User"
   entityId   String
-  details    String   // JSON string
+  details    String // JSON string
   ipAddress  String?
   createdAt  DateTime @default(now())
 
   @@index([entityType, entityId])
+}
+
+// Partner program: hotels, agents and creators who refer bookings with their ?ref= link.
+// Each partner maps to a Bokun booking channel once Vista Chase's Bokun API access exists.
+model Affiliate {
+  id             String    @id @default(cuid())
+  userId         String    @unique
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code           String    @unique // referral code used in ?ref=CODE links
+  name           String // business or creator name
+  type           String    @default("HOTEL") // HOTEL, AGENT, CREATOR, OTHER
+  website        String?
+  status         String    @default("PENDING") // PENDING, ACTIVE, SUSPENDED
+  commissionRate Float     @default(0.1)
+  bokunChannelId String? // Bokun booking channel for this partner (placeholder until API access)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  bookings       Booking[]
+
+  @@index([status])
 }

@@ -1,4 +1,8 @@
+import Image from "next/image";
 import Link from "next/link";
+import { AmbientVideo } from "@/components/cinematic/AmbientVideo";
+import { TourCard } from "@/components/tours/TourCard";
+import { serviceById } from "@/lib/services";
 import {
   Compass,
   AlertTriangle,
@@ -11,7 +15,7 @@ import {
   ChevronRight,
   ArrowRight,
 } from "lucide-react";
-import { getShuttleRoutes } from "@/lib/api/catalog";
+import { getShuttleRoutes, getTours } from "@/lib/api/catalog";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -24,13 +28,24 @@ export const metadata: Metadata = {
 };
 
 export default async function ShuttlesPage() {
-  const routes = await getShuttleRoutes();
+  const [routes, shuttles] = await Promise.all([getShuttleRoutes(), getTours({ category: "SHUTTLE" })]);
+  const service = serviceById("shuttles");
 
   return (
     <div className="min-h-screen bg-obsidian-50 text-obsidian-900">
       {/* 01. EDITORIAL HERO BANNER */}
-      <section className="bg-ocean-900 text-white pt-24 pb-16 px-4 sm:px-6 lg:px-12 relative overflow-hidden border-b border-white/10">
-        <div className="max-w-7xl mx-auto space-y-6">
+      <section className="bg-ocean-900 text-white pt-24 pb-16 px-4 sm:px-6 lg:px-12 relative overflow-hidden border-b border-white/10 lg:min-h-[70vh] lg:flex lg:items-end">
+        {/* Moraine Lake still, with the Lake Louise clip playing over it */}
+        <Image src={service.image} alt="" fill priority sizes="100vw" className="object-cover opacity-45" />
+        <AmbientVideo
+          src="/media/videos/lake-louise-summer.mp4"
+          srcHd="/media/videos/lake-louise-summer-1080.mp4"
+          poster="/media/videos/lake-louise-summer-poster.webp"
+          className="absolute inset-0 h-full w-full object-cover opacity-45"
+          buttonClassName="top-24 right-6"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-ocean-950 via-ocean-950/70 to-ocean-950/30" />
+        <div className="relative z-10 max-w-7xl mx-auto w-full space-y-6">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-summit-300 text-xs font-semibold uppercase tracking-wider border border-white/15">
             <ShieldCheck className="w-4 h-4 text-summit-500" />
             <span>Official Parks Canada Commercial Access Partner</span>
@@ -44,9 +59,31 @@ export default async function ShuttlesPage() {
               Private vehicle access to Moraine Lake is completely closed to the general public. Our commercial
               shuttles guarantee your entrance with door-to-door hotel pickups in Banff, Canmore, and Lake Louise.
             </p>
+            <ul className="grid gap-2.5 pt-2 sm:grid-cols-2" aria-label="Why take our shuttle">
+              {service.reasons.map((reason) => (
+                <li key={reason} className="flex items-start gap-2 text-base text-slate-100">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-summit-500" aria-hidden="true" />
+                  <span>{reason}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </section>
+
+      {/* 02. BOOKABLE SHUTTLES (the live site's two shuttle products) */}
+      {shuttles.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-16" aria-labelledby="shuttle-products">
+          <h2 id="shuttle-products" className="text-3xl font-light text-obsidian-900 mb-8">
+            Choose your shuttle
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {shuttles.map((tour) => (
+              <TourCard key={tour.id} tour={tour} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* 02. MORAINE LAKE ACCESS ADVISORY */}
       <section className="bg-summit-300/20 border-b border-summit-500/30 py-4 px-4 sm:px-6 lg:px-12">
@@ -127,7 +164,7 @@ export default async function ShuttlesPage() {
                           {dep.date} • {dep.departureTime}
                         </span>
                         <span
-                          className={`px-2.5 py-0.5 rounded-full font-semibold text-[11px] ${
+                          className={`px-2.5 py-0.5 rounded-full font-semibold text-xs ${
                             dep.seatsAvailable > 3
                               ? "bg-emerald-100 text-emerald-800"
                               : dep.seatsAvailable > 0

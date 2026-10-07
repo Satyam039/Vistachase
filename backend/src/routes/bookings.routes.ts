@@ -43,6 +43,8 @@ router.post("/", async (req, res) => {
       infantsCount: parseInt(infantsCount || "0", 10),
       specialRequests,
       addOns: addOns || [],
+      // Partner referral: the frontend stores ?ref=<code> in this cookie for 30 days.
+      affiliateCode: typeof req.cookies?.vc_ref === "string" ? req.cookies.vc_ref : undefined,
       paymentProvider: paymentProvider || "mock",
     });
 

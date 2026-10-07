@@ -1,113 +1,87 @@
-"use client";
+// TripAdvisor Best of the Best 2025 award with the headline numbers. Numbers count up as they
+// scroll into view (MotionRuntime, data-count-to); the final value is in the markup, so it is
+// what screen readers, search engines and reduced-motion visitors get.
+// Figures match the live site: 10,000+ travellers, 5.0 from 1,000+ reviews, #6 in Canada.
 
-import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight, Award, Trophy, Users, MapPin, Calendar } from "lucide-react";
-import { ScrollReveal } from "./ScrollReveal";
+import { ArrowUpRight } from "lucide-react";
 
 const STATS = [
-  { value: "10k+", label: "Happy Travelers", icon: Users },
-  { value: "#6", label: "Best Experience in Canada", icon: Trophy },
-  { value: "25+", label: "Alpine Destinations", icon: MapPin },
-  { value: "4.9★", label: "Over 800+ Reviews", icon: Award },
+  { to: 10000, suffix: "+", label: "travellers guided through the Rockies" },
+  { to: 6, prefix: "#", label: "experience in Canada, TripAdvisor 2025" },
+  { to: 5, decimals: 1, label: "average rating from our guests" },
+  { to: 1000, suffix: "+", label: "verified reviews" },
 ];
+
+const TRIPADVISOR_URL =
+  "https://www.tripadvisor.ca/Attraction_Review-g154911-d26518659-Reviews-Vista_Chase-Banff_Banff_National_Park_Alberta.html";
 
 export function VerifiedAwardSection() {
   return (
-    <section className="py-20 sm:py-28 bg-white border-b border-black/5 overflow-hidden">
-      <div className="max-w-7xl mx-auto px-6 sm:px-12">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
-          {/* Left Text Narrative */}
-          <div className="lg:col-span-7">
-            <ScrollReveal delay={100} yOffset={16}>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-ocean-50 text-ocean-700 text-xs font-bold tracking-widest uppercase mb-4">
-                <Trophy className="w-3.5 h-3.5 text-summit-600" />
-                <span>TripAdvisor Travelers’ Choice 2025</span>
-              </div>
-            </ScrollReveal>
-
-            <ScrollReveal delay={200} yOffset={20}>
-              <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-obsidian-900 font-display leading-[1.15]">
-                Creating Canada’s Best Travel Memories
-              </h2>
-            </ScrollReveal>
-
-            <ScrollReveal delay={300} yOffset={16}>
-              <p className="mt-6 text-base sm:text-lg text-slate-600 font-light leading-relaxed">
-                Proudly recognized among <strong>Canada’s Top 10 Experiences</strong> by the TripAdvisor Travelers’ Choice Best of the Best Awards 2025, our shared tour experience ranked <strong>#6 in the entire country</strong> based on outstanding traveler reviews and ratings.
-              </p>
-              <p className="mt-3 text-base sm:text-lg text-slate-600 font-light leading-relaxed">
-                Join thousands of happy guests who have explored the Canadian Rockies with Vista Chase through unhurried pacing, luxury vehicles, and award-winning mountain guides. Out of 8 million global listings, fewer than 1% achieve this milestone.
-              </p>
-            </ScrollReveal>
-
-            <ScrollReveal delay={400} yOffset={16}>
-              <div className="mt-8 flex flex-wrap items-center gap-4">
-                <Link
-                  href="/banff-highlights-tour"
-                  className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-md golden-summit-btn text-base font-bold group"
-                >
-                  <span>Book the Best Tour</span>
-                  <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                </Link>
-                <Link
-                  href="https://www.tripadvisor.ca/Attraction_Review-g154911-d26518659-Reviews-Vista_Chase-Banff_Banff_National_Park_Alberta.html"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-5 py-3.5 rounded-md text-sm font-semibold text-slate-700 hover:text-ocean-600 transition-colors"
-                >
-                  <span>Verify on TripAdvisor</span>
-                  <ArrowUpRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-            </ScrollReveal>
-          </div>
-
-          {/* Right Badge Display */}
-          <div className="lg:col-span-5 flex justify-center">
-            <ScrollReveal delay={250} yOffset={24}>
-              <div className="relative p-8 sm:p-10 rounded-2xl bg-frost-white border border-black/5 shadow-xl text-center max-w-sm">
-                <div className="relative w-56 h-56 mx-auto mb-4">
-                  <Image
-                    src="/media/badges/tripadvisor-best-of-the-best-2025.png"
-                    alt="TripAdvisor Best of the Best 2025 #6 Canada"
-                    fill
-                    className="object-contain"
-                  />
-                </div>
-                <p className="text-xs uppercase tracking-widest text-slate-500 font-bold">
-                  OFFICIAL ACCREDITATION
-                </p>
-                <p className="text-sm font-medium text-slate-700 mt-1">
-                  Ranked #6 in All of Canada
-                </p>
-              </div>
-            </ScrollReveal>
+    <section aria-labelledby="award-heading" className="overflow-hidden bg-obsidian-50 py-20 sm:py-28">
+      <div className="mx-auto grid max-w-7xl items-center gap-14 px-page lg:grid-cols-12">
+        <div className="lg:col-span-7">
+          <p className="mb-3 text-sm uppercase tracking-[0.22em] text-ocean-600" data-reveal>
+            TripAdvisor Travellers&rsquo; Choice · Best of the Best 2025
+          </p>
+          <h2 id="award-heading" className="text-balance text-3xl font-light leading-[1.1] tracking-tight text-obsidian-900 sm:text-4xl lg:text-5xl" data-reveal>
+            Ranked the #6 experience in all of Canada
+          </h2>
+          <p className="mt-6 max-w-2xl text-lg font-light leading-relaxed text-slate-600" data-reveal>
+            Our shared Banff tour was named one of Canada&rsquo;s top 10 experiences in TripAdvisor&rsquo;s
+            Best of the Best awards, chosen from traveller reviews. Fewer than 1% of the 8 million listings
+            worldwide earn it.
+          </p>
+          <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4" data-reveal>
+            <Link href="/banff-highlights-tour" className="golden-summit-btn inline-flex h-12 items-center gap-2 rounded-full px-7 text-base">
+              Book the award-winning tour
+              <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+            <a
+              href={TRIPADVISOR_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 border-b border-ocean-600 pb-0.5 text-base text-obsidian-900"
+            >
+              Read our TripAdvisor reviews
+              <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+              <span className="sr-only">(opens in a new tab)</span>
+            </a>
           </div>
         </div>
 
-        {/* 4 Verified Metric Counters */}
-        <div className="mt-16 pt-12 border-t border-slate-200/80 grid grid-cols-2 md:grid-cols-4 gap-8">
-          {STATS.map((stat, idx) => {
-            const Icon = stat.icon;
+        <div className="flex justify-center lg:col-span-5" data-reveal="scale">
+          <div className="relative aspect-square w-full max-w-sm rounded-full bg-white p-12 shadow-[0_40px_80px_-40px_rgba(12,31,33,0.35)] ring-1 ring-obsidian-900/5">
+            <Image
+              src="/media/badges/tripadvisor-best-of-the-best-2025.png"
+              alt="Tripadvisor Travelers' Choice award badge"
+              fill
+              sizes="384px"
+              className="object-contain p-14"
+            />
+          </div>
+        </div>
+
+        <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-[2rem] bg-obsidian-900/[0.07] lg:col-span-12 lg:grid-cols-4" data-stagger>
+          {STATS.map((s) => {
+            const final = `${s.prefix ?? ""}${s.to.toLocaleString("en-CA", { minimumFractionDigits: s.decimals ?? 0 })}${s.suffix ?? ""}`;
             return (
-              <ScrollReveal key={idx} delay={100 * (idx + 1)} yOffset={16}>
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-10 h-10 rounded-full bg-summit-500/10 flex items-center justify-center text-summit-600 mb-2">
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <span className="text-3xl sm:text-4xl font-extrabold text-obsidian-900 font-display">
-                    {stat.value}
-                  </span>
-                  <span className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
-                    {stat.label}
-                  </span>
-                </div>
-              </ScrollReveal>
+              <div key={s.label} className="flex flex-col-reverse bg-white px-6 py-8 sm:px-8">
+                <dt className="mt-2 text-sm leading-snug text-slate-600">{s.label}</dt>
+                <dd
+                  className="text-4xl font-light tabular-nums text-obsidian-900 sm:text-5xl"
+                  data-count-to={s.to}
+                  data-count-prefix={s.prefix}
+                  data-count-suffix={s.suffix}
+                  data-count-decimals={s.decimals}
+                >
+                  {final}
+                </dd>
+              </div>
             );
           })}
-        </div>
+        </dl>
       </div>
     </section>
   );

@@ -19,58 +19,58 @@ export const vistachaseTheme = {
   tokens: {
     "--font-size-4xs": "0.3125rem",
     "--font-size-3xs": "0.375rem",
-    "--font-size-2xs": "0.4375rem",
-    "--font-size-xs": "0.5625rem",
-    "--font-size-sm": "0.6875rem",
-    "--font-size-base": "0.875rem",
-    "--font-size-lg": "1.125rem",
-    "--font-size-xl": "1.375rem",
-    "--font-size-2xl": "1.6875rem",
-    "--font-size-3xl": "2.125rem",
-    "--font-size-4xl": "2.6875rem",
-    "--font-size-5xl": "3.3125rem",
+    "--font-size-2xs": "0.5rem",
+    "--font-size-xs": "0.625rem",
+    "--font-size-sm": "0.75rem",
+    "--font-size-base": "0.9375rem",
+    "--font-size-lg": "1.1875rem",
+    "--font-size-xl": "1.4375rem",
+    "--font-size-2xl": "1.8125rem",
+    "--font-size-3xl": "2.3125rem",
+    "--font-size-4xl": "2.875rem",
+    "--font-size-5xl": "3.5625rem",
     "--text-heading-1-size": "var(--font-size-2xl)",
     "--text-heading-1-weight": "var(--font-weight-semibold)",
-    "--text-heading-1-leading": "1.3333",
+    "--text-heading-1-leading": "1.3793",
     "--text-heading-2-size": "var(--font-size-xl)",
     "--text-heading-2-weight": "var(--font-weight-semibold)",
-    "--text-heading-2-leading": "1.4545",
+    "--text-heading-2-leading": "1.3913",
     "--text-heading-3-size": "var(--font-size-lg)",
-    "--text-heading-3-weight": "var(--font-weight-bold)",
-    "--text-heading-3-leading": "1.5556",
+    "--text-heading-3-weight": "var(--font-weight-medium)",
+    "--text-heading-3-leading": "1.4737",
     "--text-heading-4-size": "var(--font-size-base)",
-    "--text-heading-4-weight": "var(--font-weight-bold)",
-    "--text-heading-4-leading": "1.4286",
+    "--text-heading-4-weight": "var(--font-weight-medium)",
+    "--text-heading-4-leading": "1.6",
     "--text-heading-5-size": "var(--font-size-sm)",
     "--text-heading-5-weight": "var(--font-weight-semibold)",
-    "--text-heading-5-leading": "1.4545",
+    "--text-heading-5-leading": "1.6667",
     "--text-heading-6-size": "var(--font-size-xs)",
     "--text-heading-6-weight": "var(--font-weight-semibold)",
-    "--text-heading-6-leading": "1.7778",
+    "--text-heading-6-leading": "1.6",
     "--text-body-size": "var(--font-size-base)",
     "--text-body-weight": "var(--font-weight-normal)",
-    "--text-body-leading": "1.4286",
+    "--text-body-leading": "1.6",
     "--text-large-size": "var(--font-size-lg)",
     "--text-large-weight": "var(--font-weight-semibold)",
-    "--text-large-leading": "1.5556",
+    "--text-large-leading": "1.4737",
     "--text-label-size": "var(--font-size-base)",
     "--text-label-weight": "var(--font-weight-medium)",
-    "--text-label-leading": "1.4286",
+    "--text-label-leading": "1.6",
     "--text-code-size": "var(--font-size-base)",
     "--text-code-weight": "var(--font-weight-normal)",
-    "--text-code-leading": "1.4286",
+    "--text-code-leading": "1.6",
     "--text-supporting-size": "var(--font-size-sm)",
     "--text-supporting-weight": "var(--font-weight-normal)",
-    "--text-supporting-leading": "1.4545",
+    "--text-supporting-leading": "1.6667",
     "--text-display-1-size": "var(--font-size-5xl)",
     "--text-display-1-weight": "var(--font-weight-normal)",
-    "--text-display-1-leading": "1.283",
+    "--text-display-1-leading": "1.2632",
     "--text-display-2-size": "var(--font-size-4xl)",
     "--text-display-2-weight": "var(--font-weight-normal)",
-    "--text-display-2-leading": "1.2093",
+    "--text-display-2-leading": "1.2174",
     "--text-display-3-size": "var(--font-size-3xl)",
     "--text-display-3-weight": "var(--font-weight-normal)",
-    "--text-display-3-leading": "1.2941",
+    "--text-display-3-leading": "1.2973",
     "--duration-fast-min": "95ms",
     "--duration-fast": "125ms",
     "--duration-fast-max": "165ms",
@@ -187,7 +187,9 @@ export const vistachaseTheme = {
     "--shadow-inset-selected": "inset 0px 0px 0px 2px #28282A50",
     "--shadow-inset-success": "inset 0px 0px 0px 2px #83838a30",
     "--shadow-inset-warning": "inset 0px 0px 0px 2px #83838a30",
-    "--shadow-inset-error": "inset 0px 0px 0px 2px #83838a30"
+    "--shadow-inset-error": "inset 0px 0px 0px 2px #83838a30",
+    "--font-weight-semibold": "500",
+    "--font-weight-bold": "500"
   },
   localTokens: {
     "--vc-page-margin-x": "40px"
@@ -571,7 +573,7 @@ export const vistachaseTheme = {
         "value": {
           "typography": {
             "scale": {
-              "base": 14,
+              "base": 15,
               "ratio": 1.15
             }
           },
@@ -593,7 +595,7 @@ export const vistachaseTheme = {
         "value": {
           "typography": {
             "scale": {
-              "base": 14,
+              "base": 15,
               "ratio": 1.2
             }
           },
@@ -631,7 +633,7 @@ export const vistachaseTheme = {
         "value": {
           "typography": {
             "scale": {
-              "base": 15,
+              "base": 17,
               "ratio": 1.25
             }
           },
@@ -678,7 +680,7 @@ export const vistachaseTheme = {
   __axes: {
     "typography": {
       "scale": {
-        "base": 14,
+        "base": 15,
         "ratio": 1.25
       },
       "body": {
@@ -689,8 +691,8 @@ export const vistachaseTheme = {
         "family": "var(--font-plex-sans)",
         "fallbacks": "\"IBM Plex Sans\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif",
         "weights": {
-          "3": "bold",
-          "4": "bold"
+          "3": "medium",
+          "4": "medium"
         }
       },
       "code": {

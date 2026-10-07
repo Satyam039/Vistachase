@@ -8,13 +8,14 @@ import { ShuttleStory } from "@/components/cinematic/ShuttleStory";
 import { ActivityTicketsStory } from "@/components/cinematic/ActivityTicketsStory";
 import { SharedVsPrivateSlider } from "@/components/cinematic/SharedVsPrivateSlider";
 import { ServiceComparisonMatrix } from "@/components/cinematic/ServiceComparisonMatrix";
+import { TopExperiences } from "@/components/home/TopExperiences";
 import { DestinationStoryStream } from "@/components/cinematic/DestinationStoryStream";
 import { WhyTravelersLove } from "@/components/cinematic/WhyTravelersLove";
-import { FeaturedExperiences } from "@/components/cinematic/FeaturedExperiences";
 import { GuestTestimonials } from "@/components/cinematic/GuestTestimonials";
 import { LiveTrackingTeaser } from "@/components/cinematic/LiveTrackingTeaser";
 import { TrustBar } from "@/components/cinematic/TrustBar";
 import { CinematicFinalCta } from "@/components/cinematic/CinematicFinalCta";
+import { getTours } from "@/lib/api/catalog";
 
 export const metadata = {
   title: "Vista Chase | Luxury Private Tours & Shuttles • Banff & Lake Louise",
@@ -35,7 +36,9 @@ export const metadata = {
   },
 };
 
-export default function HomePage() {
+export default async function HomePage() {
+  const tours = await getTours();
+
   return (
     <div className="flex flex-col w-full bg-obsidian-50 selection:bg-summit-500 selection:text-obsidian-900">
       {/* 01: Full-Screen Cinematic Hero with Verified Rating Slider */}
@@ -69,8 +72,8 @@ export default function HomePage() {
       {/* 09: Complete Service Comparison Matrix */}
       <ServiceComparisonMatrix />
 
-      {/* 10: Featured Experiences with Real Bókun Departure Availability */}
-      <FeaturedExperiences />
+      {/* 10: Top Experiences with Live Catalog Rail & Filter Chips */}
+      <TopExperiences tours={tours} />
 
       {/* 11: Continuous Scroll-Driven Destination Story Stream */}
       <DestinationStoryStream />

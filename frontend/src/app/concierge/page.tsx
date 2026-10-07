@@ -221,7 +221,7 @@ export default function ConciergePage() {
             <div>
               <h1 className="font-display font-bold text-base sm:text-lg text-white flex items-center gap-2">
                 <span>AI Rockies Voice Concierge</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 font-mono uppercase">
+                <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 font-mono uppercase">
                   Bókun Connected
                 </span>
               </h1>

@@ -5,7 +5,8 @@
 // A product keeps the photos its live page used (mapped from their Webflow URLs to the local
 // copies), then gets more photos from the Vista Chase photo library that show the places the
 // product visits (product-map.json "places"), in the right season.
-const products = require("./products.json");
+// Imported from the live site, plus products the new site adds (Banff activity tickets).
+const products = [...require("./products.json"), ...require("./extra-products.json")];
 const productMap = require("./product-map.json");
 const { assets: media } = require("../../media/manifest.json");
 
@@ -38,6 +39,7 @@ const libraryByStem = new Map(
  * in the Vista Chase library (same file name), the library's higher-resolution copy wins.
  */
 function localImage(url) {
+  if (url.startsWith("/media/")) return url; // already a backend media path (extra products)
   const asset = mediaByUrl.get(url);
   if (!asset) throw new Error(`No local copy of ${url}; rebuild media (scripts/media/build-media.mjs)`);
   return (libraryByStem.get(stem(url)) ?? asset).src;
@@ -154,7 +156,8 @@ function toTourData(product, index, destinationIds) {
     minGroupSize: 1,
     maxGroupSize: maxGroupSize(product),
     isFeatured: FEATURED.has(product.slug),
-    rating: product.rating || 5,
+    // New products have no reviews yet: rating 0 and no count, so pages show no stars for them.
+    rating: product.rating ?? 0,
     reviewCount: product.reviewCountLabel ? parseInt(product.reviewCountLabel.replace(/\D/g, ""), 10) : 0,
     bokunId: map.bokunId,
     bookingMode: map.bookingMode,

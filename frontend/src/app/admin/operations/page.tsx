@@ -299,7 +299,7 @@ export default function MornbyOperationsPage() {
         {stats && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="bg-ocean-900 p-4 rounded-2xl border border-forest-800/80 shadow-lg">
-              <span className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block">
+              <span className="text-xs uppercase tracking-widest text-slate-400 font-bold block">
                 Active Vehicle Runs
               </span>
               <p className="text-2xl font-serif font-bold text-white mt-1">
@@ -308,7 +308,7 @@ export default function MornbyOperationsPage() {
             </div>
 
             <div className="bg-ocean-900 p-4 rounded-2xl border border-forest-800/80 shadow-lg">
-              <span className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block">
+              <span className="text-xs uppercase tracking-widest text-slate-400 font-bold block">
                 Boarding Manifest
               </span>
               <p className="text-2xl font-serif font-bold text-emerald-400 mt-1">
@@ -318,7 +318,7 @@ export default function MornbyOperationsPage() {
             </div>
 
             <div className="bg-ocean-900 p-4 rounded-2xl border border-forest-800/80 shadow-lg">
-              <span className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block">
+              <span className="text-xs uppercase tracking-widest text-slate-400 font-bold block">
                 Fleet Deployed
               </span>
               <p className="text-2xl font-serif font-bold text-gold-400 mt-1">
@@ -328,7 +328,7 @@ export default function MornbyOperationsPage() {
             </div>
 
             <div className="bg-ocean-900 p-4 rounded-2xl border border-forest-800/80 shadow-lg">
-              <span className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block">
+              <span className="text-xs uppercase tracking-widest text-slate-400 font-bold block">
                 Departures Scheduled
               </span>
               <p className="text-2xl font-serif font-bold text-white mt-1">
@@ -373,7 +373,7 @@ export default function MornbyOperationsPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-ocean-950 text-slate-400 uppercase tracking-wider font-mono text-[10px] border-b border-forest-800">
+                <thead className="bg-ocean-950 text-slate-400 uppercase tracking-wider font-mono text-xs border-b border-forest-800">
                   <tr>
                     <th className="py-3.5 px-4">Time &amp; Run Name</th>
                     <th className="py-3.5 px-4">Tour / Bókun ID</th>
@@ -395,18 +395,18 @@ export default function MornbyOperationsPage() {
                       <tr key={run.id} className="hover:bg-forest-900/30 transition-colors">
                         <td className="py-3.5 px-4">
                           <div className="font-bold text-white text-sm">{run.name}</div>
-                          <span className="text-[11px] font-mono text-gold-400">{run.departureTime || "08:30"}</span>
+                          <span className="text-xs font-mono text-gold-400">{run.departureTime || "08:30"}</span>
                         </td>
 
                         <td className="py-3.5 px-4 text-slate-300">
                           <p className="line-clamp-1">Lake Louise &amp; Moraine Lake Explorer</p>
-                          <span className="text-[10px] font-mono text-slate-500">BÓKUN: #1142134</span>
+                          <span className="text-xs font-mono text-slate-500">BÓKUN: #1142134</span>
                         </td>
 
                         <td className="py-3.5 px-4">
                           <div className="flex items-center gap-2">
                             <span className="font-mono font-bold text-white">{passengerCount} / {capacity}</span>
-                            <span className="text-[10px] text-slate-400">({boardedCount} Boarded)</span>
+                            <span className="text-xs text-slate-400">({boardedCount} Boarded)</span>
                           </div>
                           <div className="w-24 bg-forest-950 h-1.5 rounded-full overflow-hidden mt-1 border border-forest-800">
                             <div
@@ -420,7 +420,7 @@ export default function MornbyOperationsPage() {
                           {run.vehicle ? (
                             <div>
                               <p className="text-white font-semibold">{run.vehicle.name}</p>
-                              <span className="text-[10px] font-mono text-gold-300">{run.vehicle.licensePlate}</span>
+                              <span className="text-xs font-mono text-gold-300">{run.vehicle.licensePlate}</span>
                             </div>
                           ) : (
                             <span className="text-slate-500 italic">Unassigned</span>
@@ -431,7 +431,7 @@ export default function MornbyOperationsPage() {
                           {run.driver ? (
                             <div>
                               <p className="text-white font-semibold">{run.driver.name}</p>
-                              <span className="text-[10px] text-slate-400">{run.driver.phone}</span>
+                              <span className="text-xs text-slate-400">{run.driver.phone}</span>
                             </div>
                           ) : (
                             <span className="text-slate-500 italic">Unassigned</span>
@@ -444,7 +444,7 @@ export default function MornbyOperationsPage() {
                             value={run.status}
                             disabled={updatingRunId === run.id}
                             onChange={(e) => handleStatusChange(run.id, e.target.value)}
-                            className={`px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase border cursor-pointer ${statusObj.color} focus:outline-none focus-visible:ring-2 focus-visible:ring-summit-500`}
+                            className={`px-2.5 py-1 rounded-full text-xs font-bold tracking-wider uppercase border cursor-pointer ${statusObj.color} focus:outline-none focus-visible:ring-2 focus-visible:ring-summit-500`}
                           >
                             {RUN_STATUSES.map((s) => (
                               <option key={s.value} value={s.value} className="bg-slate-900 text-white">
@@ -491,7 +491,7 @@ export default function MornbyOperationsPage() {
               <div className="p-6 border-b border-forest-800/80 flex items-center justify-between">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-gold-950 text-gold-300 border border-gold-800/40">
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase bg-gold-950 text-gold-300 border border-gold-800/40">
                       Mornby Run Manifest
                     </span>
                     <span className="text-xs font-mono text-slate-400">
@@ -554,7 +554,7 @@ export default function MornbyOperationsPage() {
                               <span className="text-xs font-mono text-gold-300 bg-gold-950/60 px-2 py-0.5 rounded border border-gold-800/40">
                                 {rb.booking.totalSeats} Guests
                               </span>
-                              <span className="text-[11px] font-mono text-slate-400">
+                              <span className="text-xs font-mono text-slate-400">
                                 #{rb.booking.bookingReference}
                               </span>
                             </div>
@@ -565,12 +565,12 @@ export default function MornbyOperationsPage() {
                             </p>
 
                             {rb.booking.specialRequests && (
-                              <p className="text-[11px] text-amber-300 italic">
+                              <p className="text-xs text-amber-300 italic">
                                 Note: {rb.booking.specialRequests}
                               </p>
                             )}
 
-                            <div className="flex items-center gap-4 text-[11px] text-slate-400 pt-1">
+                            <div className="flex items-center gap-4 text-xs text-slate-400 pt-1">
                               <a href={`tel:${rb.booking.customerPhone}`} className="hover:text-gold-300 flex items-center gap-1">
                                 <Phone className="w-3 h-3 text-emerald-400" />
                                 <span>{rb.booking.customerPhone}</span>

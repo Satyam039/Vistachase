@@ -247,7 +247,7 @@ export default async function DestinationDetailPage({
                       sizes="(max-width: 768px) 100vw, 400px"
                     />
                     <div className="absolute top-4 left-4">
-                      <span className="text-[11px] font-bold uppercase tracking-widest text-summit-300 bg-obsidian-900/80 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
+                      <span className="text-xs font-bold uppercase tracking-widest text-summit-300 bg-obsidian-900/80 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
                         {tour.category}
                       </span>
                     </div>
@@ -282,7 +282,7 @@ export default async function DestinationDetailPage({
                 <div className="p-6 pt-0 mt-auto">
                   <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
                     <div>
-                      <span className="text-[11px] uppercase tracking-wider text-slate-500 block">From</span>
+                      <span className="text-xs uppercase tracking-wider text-slate-500 block">From</span>
                       <div className="flex items-baseline gap-1">
                         <span className="text-2xl font-serif font-light text-obsidian-900">${tour.basePrice}</span>
                         <span className="text-xs font-semibold text-slate-500">{tour.currency}</span>

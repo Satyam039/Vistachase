@@ -6,7 +6,7 @@ export interface BokunProduct {
   id: string;
   slug: string;
   title: string;
-  category: "SHARED" | "PRIVATE" | "SHUTTLE" | "MULTIDAY";
+  category: "SHARED" | "PRIVATE" | "SHUTTLE" | "MULTIDAY" | "TICKET";
   durationHours: number;
   capacity: number;
   basePrice: number;

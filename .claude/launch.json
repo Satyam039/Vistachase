@@ -1,0 +1,18 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dev:frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev:frontend"
+      ],
+      "port": 3000
+    },
+    {
+      "name": "frontend (already running)",
+      "url": "http://localhost:3000"
+    }
+  ]
+}

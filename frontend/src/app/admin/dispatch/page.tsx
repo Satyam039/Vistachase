@@ -295,7 +295,7 @@ export default function DispatchBoardPage() {
                     {/* Capacity & Boarding Progress */}
                     <div className="grid grid-cols-2 gap-4 lg:w-96">
                       <div className="bg-forest-900 p-3 rounded-xl border border-forest-800">
-                        <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1">
+                        <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
                           <span>Capacity Booked</span>
                           <span className="font-bold text-white font-mono">
                             {manifest.capacityBooked} / {manifest.capacityTotal}
@@ -310,7 +310,7 @@ export default function DispatchBoardPage() {
                       </div>
 
                       <div className="bg-forest-900 p-3 rounded-xl border border-forest-800">
-                        <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1">
+                        <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
                           <span>Boarded Guests</span>
                           <span className="font-bold text-emerald-400 font-mono">
                             {manifest.boardedPassengers} / {manifest.totalPassengers}
@@ -349,7 +349,7 @@ export default function DispatchBoardPage() {
                                   <span>{stop.stopName}</span>
                                 </h3>
                                 {stop.address && (
-                                  <p className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
+                                  <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
                                     <MapPin className="w-3 h-3 text-gold-400" />
                                     <span>{stop.address}</span>
                                   </p>
@@ -364,7 +364,7 @@ export default function DispatchBoardPage() {
                                   <span>Pickup: {stop.pickupTime}</span>
                                 </div>
                               )}
-                              <span className="px-2 py-0.5 rounded bg-forest-800 text-slate-300 text-[11px]">
+                              <span className="px-2 py-0.5 rounded bg-forest-800 text-slate-300 text-xs">
                                 {stop.bookings.reduce((sum, b) => sum + b.totalSeats, 0)} Seats
                               </span>
                             </div>
@@ -373,7 +373,7 @@ export default function DispatchBoardPage() {
                           {/* Stop Passengers Table */}
                           <div className="overflow-x-auto">
                             <table className="w-full text-left text-xs">
-                              <thead className="text-[10px] uppercase text-slate-500 border-b border-forest-800/40 pb-2">
+                              <thead className="text-xs uppercase text-slate-500 border-b border-forest-800/40 pb-2">
                                 <tr>
                                   <th className="py-2 px-3">Status</th>
                                   <th className="py-2 px-3">Guest Name</th>
@@ -396,12 +396,12 @@ export default function DispatchBoardPage() {
                                     >
                                       <td className="py-2.5 px-3">
                                         {p.isBoarded ? (
-                                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">
+                                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">
                                             <CheckCircle2 className="w-3 h-3" />
                                             <span>BOARDED</span>
                                           </span>
                                         ) : (
-                                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-forest-800 text-slate-400">
+                                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-forest-800 text-slate-400">
                                             <Circle className="w-3 h-3" />
                                             <span>WAITING</span>
                                           </span>
@@ -434,7 +434,7 @@ export default function DispatchBoardPage() {
                                         <button
                                           onClick={() => handleToggleBoarding(p.id, p.isBoarded)}
                                           disabled={isUpdating}
-                                          className={`px-3 py-1 rounded-lg text-[11px] font-semibold transition-all inline-flex items-center gap-1.5 ${
+                                          className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all inline-flex items-center gap-1.5 ${
                                             p.isBoarded
                                               ? "bg-forest-800 hover:bg-forest-700 text-slate-300 border border-forest-700"
                                               : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm"

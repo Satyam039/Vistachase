@@ -136,7 +136,7 @@ export function VoiceBookingCardStream({
               <Calendar className="w-3.5 h-3.5" />
               <span>Available Departures (Bókun Live)</span>
             </span>
-            <span className="text-[10px] text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-800">
+            <span className="text-xs text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-800">
               Guaranteed Seats
             </span>
           </div>
@@ -152,7 +152,7 @@ export function VoiceBookingCardStream({
                   <div className="font-bold text-white text-xs group-hover:text-summit-300 transition-colors">
                     {dep.title || "Scheduled Departure"}
                   </div>
-                  <div className="text-[11px] text-slate-400 flex items-center gap-2">
+                  <div className="text-xs text-slate-400 flex items-center gap-2">
                     <span className="flex items-center gap-1">
                       <Clock className="w-3 h-3 text-slate-500" />
                       {dep.date} at {dep.departureTime}
@@ -167,7 +167,7 @@ export function VoiceBookingCardStream({
                   <div className="text-xs font-bold font-mono text-summit-400">
                     ${dep.price} {dep.currency}
                   </div>
-                  <span className="text-[10px] text-ocean-400 group-hover:underline flex items-center gap-0.5 justify-end">
+                  <span className="text-xs text-ocean-400 group-hover:underline flex items-center gap-0.5 justify-end">
                     Select <ArrowRight className="w-2.5 h-2.5" />
                   </span>
                 </div>
@@ -196,11 +196,11 @@ export function VoiceBookingCardStream({
                   <div className="text-xs font-bold text-white group-hover:text-summit-300">
                     {stop.name}
                   </div>
-                  <div className="text-[11px] text-slate-400">
+                  <div className="text-xs text-slate-400">
                     {stop.address}, {stop.town}
                   </div>
                 </div>
-                <span className="text-[10px] text-summit-400 border border-summit-500/40 rounded px-2 py-0.5">
+                <span className="text-xs text-summit-400 border border-summit-500/40 rounded px-2 py-0.5">
                   Confirm Pickup
                 </span>
               </div>
@@ -250,7 +250,7 @@ export function VoiceBookingCardStream({
             </Link>
           )}
 
-          <div className="text-[10px] text-center text-slate-400">
+          <div className="text-xs text-center text-slate-400">
             🔒 PCI-DSS Level 1 Certified • 256-Bit SSL Encrypted • Bókun System of Record
           </div>
         </div>
@@ -275,10 +275,10 @@ export function VoiceBookingCardStream({
             </div>
             <div className="space-y-0.5 text-xs">
               <div className="font-bold text-white">{data.tourTitle || "Vista Chase Journey"}</div>
-              <div className="text-[11px] text-slate-400">
+              <div className="text-xs text-slate-400">
                 {data.date} • Pickup: {data.pickup || "Designated Stop"}
               </div>
-              <div className="text-[10px] text-emerald-400">
+              <div className="text-xs text-emerald-400">
                 Voucher Code: {data.voucherCode || "VC-BOARDING-PASS"}
               </div>
             </div>
@@ -304,7 +304,7 @@ export function VoiceBookingCardStream({
             </Link>
           </div>
 
-          <div className="text-[10px] text-slate-400 flex items-center gap-1.5">
+          <div className="text-xs text-slate-400 flex items-center gap-1.5">
             <CheckCircle2 className="w-3 h-3 text-emerald-400 flex-shrink-0" />
             <span>WhatsApp T-60 live GPS tracking corridor activated for this booking.</span>
           </div>
@@ -330,7 +330,7 @@ export function VoiceBookingCardStream({
             <div className="font-bold text-white">{data.vehicle || "Mercedes-Benz Sprinter Executive #4"}</div>
             <div>Driver / Guide: {data.driver || "Marc Tremblay (Certified Guide)"}</div>
             {data.licensePlate && (
-              <div className="text-[11px] text-slate-400 font-mono">Plate: {data.licensePlate}</div>
+              <div className="text-xs text-slate-400 font-mono">Plate: {data.licensePlate}</div>
             )}
           </div>
 

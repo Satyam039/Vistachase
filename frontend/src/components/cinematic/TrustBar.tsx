@@ -1,65 +1,38 @@
-"use client";
+// Where travellers review and book Vista Chase, as a slow continuous marquee. It pauses on
+// hover or focus, and with reduced motion it becomes a static wrapped row (globals.css). The
+// second copy of the logos is only there to make the loop seamless, so it is hidden from
+// assistive technology.
 
-import React from "react";
 import Image from "next/image";
-import { Star } from "lucide-react";
-import { ScrollReveal } from "./ScrollReveal";
 
 const PARTNER_LOGOS = [
-  {
-    name: "Google Reviews",
-    src: "/media/badges/google-logo.png",
-    height: 38,
-  },
-  {
-    name: "TripAdvisor",
-    src: "/media/badges/tripadvisor-logo.png",
-    height: 34,
-  },
-  {
-    name: "Viator",
-    src: "/media/badges/viator-logo.png",
-    height: 32,
-  },
-  {
-    name: "GetYourGuide",
-    src: "/media/badges/get-your-guide-logo.png",
-    height: 34,
-  },
-  {
-    name: "Expedia",
-    src: "/media/badges/expedia-logo.png",
-    height: 30,
-  },
+  { name: "Google Reviews", src: "/media/badges/google-logo.png" },
+  { name: "TripAdvisor", src: "/media/badges/tripadvisor-logo.png" },
+  { name: "Viator", src: "/media/badges/viator-logo.png" },
+  { name: "GetYourGuide", src: "/media/badges/get-your-guide-logo.png" },
+  { name: "Expedia", src: "/media/badges/expedia-logo.png" },
 ];
 
 export function TrustBar() {
+  const row = (hidden: boolean) => (
+    <ul className="flex shrink-0 items-center gap-16 pr-16 sm:gap-24 sm:pr-24" aria-hidden={hidden || undefined}>
+      {[...PARTNER_LOGOS, ...PARTNER_LOGOS].map((logo, i) => (
+        <li key={`${logo.name}-${i}`} className="relative flex h-10 w-32 items-center justify-center sm:w-40">
+          <Image src={logo.src} alt={hidden || i >= PARTNER_LOGOS.length ? "" : logo.name} width={160} height={40} className="max-h-9 object-contain opacity-70 grayscale" />
+        </li>
+      ))}
+    </ul>
+  );
   return (
-    <section className="py-12 bg-white border-b border-black/5">
-      <div className="max-w-7xl mx-auto px-6 sm:px-12 text-center">
-        <ScrollReveal delay={100} yOffset={12}>
-          <div className="flex items-center justify-center gap-2 mb-6 text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-widest">
-            <span className="w-1.5 h-1.5 rounded-full bg-summit-500" />
-            <span>Reviewed & Trusted By Travellers Worldwide</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-summit-500" />
-          </div>
-        </ScrollReveal>
-
-        <ScrollReveal delay={200} yOffset={16}>
-          <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-14 opacity-80 grayscale hover:grayscale-0 transition-all duration-500">
-            {PARTNER_LOGOS.map((logo, i) => (
-              <div key={i} className="relative h-10 w-28 sm:w-36 flex items-center justify-center">
-                <Image
-                  src={logo.src}
-                  alt={logo.name}
-                  width={140}
-                  height={logo.height}
-                  className="object-contain max-h-9"
-                />
-              </div>
-            ))}
-          </div>
-        </ScrollReveal>
+    <section aria-labelledby="trust-heading" className="border-y border-obsidian-900/[0.06] bg-white py-12">
+      <h2 id="trust-heading" className="mb-8 px-page text-center text-sm uppercase tracking-[0.22em] text-slate-600">
+        Reviewed and booked by travellers on
+      </h2>
+      <div className="vc-marquee relative overflow-hidden [mask-image:linear-gradient(90deg,transparent,#000_12%,#000_88%,transparent)]">
+        <div className="vc-marquee-track flex w-max">
+          {row(false)}
+          {row(true)}
+        </div>
       </div>
     </section>
   );

@@ -108,7 +108,7 @@ export default function GalleryPage() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
                 <div className="space-y-1">
-                  <span className="text-[11px] font-bold text-summit-300 uppercase tracking-wider bg-black/40 backdrop-blur-sm px-2.5 py-0.5 rounded-full border border-white/20">
+                  <span className="text-xs font-bold text-summit-300 uppercase tracking-wider bg-black/40 backdrop-blur-sm px-2.5 py-0.5 rounded-full border border-white/20">
                     {photo.category}
                   </span>
                   <p className="text-sm font-medium text-white pt-1">{photo.caption}</p>

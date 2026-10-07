@@ -87,6 +87,27 @@ const config: Config = {
           dark: "#0c1f21",
         }
       },
+      // The site reads light and large: no bold weights (bold/semibold/extrabold/black are medium)
+      // and every text size one step larger than Tailwind's defaults.
+      fontWeight: {
+        semibold: "500",
+        bold: "500",
+        extrabold: "500",
+        black: "500",
+      },
+      fontSize: {
+        xs: ["0.8125rem", { lineHeight: "1.15rem" }],
+        sm: ["0.9375rem", { lineHeight: "1.4rem" }],
+        base: ["1.0625rem", { lineHeight: "1.65rem" }],
+        lg: ["1.1875rem", { lineHeight: "1.8rem" }],
+        xl: ["1.375rem", { lineHeight: "1.9rem" }],
+        "2xl": ["1.625rem", { lineHeight: "2.15rem" }],
+        "3xl": ["2rem", { lineHeight: "2.5rem" }],
+        "4xl": ["2.5rem", { lineHeight: "2.9rem" }],
+        "5xl": ["3.25rem", { lineHeight: "1.1" }],
+        "6xl": ["4rem", { lineHeight: "1.05" }],
+        "7xl": ["4.75rem", { lineHeight: "1.05" }],
+      },
       fontFamily: {
         ...astryxThemeExtension.fontFamily,
         // IBM Plex Sans everywhere: the "serif", "display" and "editorial" styles used by the

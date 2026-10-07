@@ -1,5 +1,6 @@
 import { getTours } from "@/lib/api/catalog";
 import { TourGallery } from "@/components/tours/TourGallery";
+import { serviceById } from "@/lib/services";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -21,6 +22,7 @@ export default async function PrivateToursPage() {
       ctaLabel="Plan with the concierge"
       ctaHref="/concierge"
       tours={tours}
+      service={serviceById("private")}
     />
   );
 }

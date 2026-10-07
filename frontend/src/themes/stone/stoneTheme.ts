@@ -424,7 +424,7 @@ export const stoneTheme = defineTheme({
       {
         when: {width: {below: 'sm'}},
         value: {
-          typography: {scale: {base: 14, ratio: 1.15}},
+          typography: {scale: {base: 15, ratio: 1.15}},
           tokens: {'--radius-page': '0.75rem'},
           localTokens: {'--vc-page-margin-x': '16px'},
         },
@@ -432,7 +432,7 @@ export const stoneTheme = defineTheme({
       {
         when: {width: {from: 'sm', below: 'md'}},
         value: {
-          typography: {scale: {base: 14, ratio: 1.2}},
+          typography: {scale: {base: 15, ratio: 1.2}},
           tokens: {'--radius-page': '1rem'},
           localTokens: {'--vc-page-margin-x': '24px'},
         },
@@ -447,7 +447,7 @@ export const stoneTheme = defineTheme({
       {
         when: {width: {from: 'xl', below: '2xl'}},
         value: {
-          typography: {scale: {base: 15, ratio: 1.25}},
+          typography: {scale: {base: 17, ratio: 1.25}},
           localTokens: {'--vc-page-margin-x': '48px'},
         },
       },
