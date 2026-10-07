@@ -10,39 +10,41 @@ import Image from "next/image";
  *   white    full lockup in white, for dark surfaces
  *   emblem   square horse emblem
  */
-export function BrandMark({ size = 32, variant = "default" }: { size?: number; variant?: "default" | "white" | "emblem" }) {
+export function BrandMark({ size = 36, variant = "default" }: { size?: number; variant?: "default" | "white" | "emblem" | "dark" }) {
   if (variant === "white") {
     return (
       <Image
-        src="/media/brand/logo-white.png"
+        src="/media/brand/horse-emblem-vector-white.svg"
         alt="Vista Chase Luxury Canadian Rockies Tours"
-        width={Math.round(size * 3.4)}
-        height={size}
-        className="object-contain h-9 w-auto"
-        priority
-      />
-    );
-  }
-
-  if (variant === "emblem") {
-    return (
-      <Image
-        src="/media/brand/horse-emblem-gold.png"
-        alt="Vista Chase Horse Emblem"
         width={size}
         height={size}
-        className="object-contain"
+        className="object-contain w-auto"
         priority
       />
     );
   }
 
+  if (variant === "dark") {
+    return (
+      <Image
+        src="/media/brand/horse-emblem-vector-dark.svg"
+        alt="Vista Chase Luxury Canadian Rockies Tours"
+        width={size}
+        height={size}
+        className="object-contain w-auto"
+        priority
+      />
+    );
+  }
+
+  // Default & emblem: Official Master Gold Horse Vector
   return (
     <Image
-      src="/media/brand/horse-mark.png"
-      alt=""
-      width={Math.round((size * 96) / 76)}
+      src="/media/brand/horse-emblem-vector-gold.svg"
+      alt="Vista Chase Canadian Rockies"
+      width={size}
       height={size}
+      className="object-contain drop-shadow-sm"
       priority
     />
   );

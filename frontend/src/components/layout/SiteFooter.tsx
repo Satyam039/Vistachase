@@ -40,6 +40,7 @@ const LEGAL_LINKS: FooterLink[] = [
   { label: "Terms & conditions", href: "/terms-and-conditions" },
   { label: "Privacy policy", href: "/privacy-policy" },
   { label: "FAQ & cancellation", href: "/faq" },
+  { label: "Affiliates & Bókun agents", href: "/affiliates" },
   { label: "Staff portal", href: "/admin" },
 ];
 

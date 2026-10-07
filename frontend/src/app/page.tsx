@@ -2,7 +2,12 @@ import React from "react";
 import { CinematicHero } from "@/components/cinematic/CinematicHero";
 import { VerifiedAwardSection } from "@/components/cinematic/VerifiedAwardSection";
 import { PlanAheadGuaranteedAccess } from "@/components/cinematic/PlanAheadGuaranteedAccess";
-import { ExperienceCategories } from "@/components/cinematic/ExperienceCategories";
+import { SharedTourStory } from "@/components/cinematic/SharedTourStory";
+import { PrivateTourStory } from "@/components/cinematic/PrivateTourStory";
+import { ShuttleStory } from "@/components/cinematic/ShuttleStory";
+import { ActivityTicketsStory } from "@/components/cinematic/ActivityTicketsStory";
+import { SharedVsPrivateSlider } from "@/components/cinematic/SharedVsPrivateSlider";
+import { ServiceComparisonMatrix } from "@/components/cinematic/ServiceComparisonMatrix";
 import { DestinationStoryStream } from "@/components/cinematic/DestinationStoryStream";
 import { WhyTravelersLove } from "@/components/cinematic/WhyTravelersLove";
 import { FeaturedExperiences } from "@/components/cinematic/FeaturedExperiences";
@@ -33,7 +38,7 @@ export const metadata = {
 export default function HomePage() {
   return (
     <div className="flex flex-col w-full bg-obsidian-50 selection:bg-summit-500 selection:text-obsidian-900">
-      {/* 01: Full-Screen Cinematic Hero */}
+      {/* 01: Full-Screen Cinematic Hero with Verified Rating Slider */}
       <CinematicHero
         videoSrc="/media/videos/lake-louise-summer.mp4"
         videoSrcHd="/media/videos/lake-louise-summer-1080.mp4"
@@ -43,31 +48,46 @@ export default function HomePage() {
       {/* 02: Official TripAdvisor Best of the Best #6 Canada Award */}
       <VerifiedAwardSection />
 
-      {/* 03: Plan Ahead & Guaranteed Access (Avoid Parking Restrictions) */}
+      {/* 03: Plan Ahead & Guaranteed Access (Avoid Moraine Lake Parking Restrictions) */}
       <PlanAheadGuaranteedAccess />
 
-      {/* 04: Four Experience Pillars (Private, Shared, Shuttles, Multi-Day) */}
-      <ExperienceCategories />
+      {/* 04: Shared Small-Group Tours Storytelling */}
+      <SharedTourStory />
 
-      {/* 05: Continuous Scroll-Driven Destination Story Stream */}
-      <DestinationStoryStream />
+      {/* 05: Private Luxury Tours Storytelling */}
+      <PrivateTourStory />
 
-      {/* 06: Why Travelers Choose Vista Chase (6 Core Pillars) */}
-      <WhyTravelersLove />
+      {/* 06: Shuttle Service Storytelling */}
+      <ShuttleStory />
 
-      {/* 07: Featured Experiences with Bókun Availability */}
+      {/* 07: Rockies Attraction & Activity Tickets */}
+      <ActivityTicketsStory />
+
+      {/* 08: Shared vs Private Interactive Pointer / Slider */}
+      <SharedVsPrivateSlider />
+
+      {/* 09: Complete Service Comparison Matrix */}
+      <ServiceComparisonMatrix />
+
+      {/* 10: Featured Experiences with Real Bókun Departure Availability */}
       <FeaturedExperiences />
 
-      {/* 08: Verified Traveler Testimonials & Reviews */}
+      {/* 11: Continuous Scroll-Driven Destination Story Stream */}
+      <DestinationStoryStream />
+
+      {/* 12: Why Travelers Choose Vista Chase (6 Core Pillars) */}
+      <WhyTravelersLove />
+
+      {/* 13: Verified Traveler Testimonials & Reviews */}
       <GuestTestimonials />
 
-      {/* 09: Live GPS Corridor Tracking Teaser (WhatsApp T-60) */}
+      {/* 14: Live GPS Corridor Tracking Teaser (WhatsApp T-60 Dispatch) */}
       <LiveTrackingTeaser />
 
-      {/* 10: Verified Partner & OTA Trust Bar */}
+      {/* 15: Verified Partner & OTA Trust Bar */}
       <TrustBar />
 
-      {/* 11: Final Cinematic Rockies Call to Action */}
+      {/* 16: Final Cinematic Rockies Call to Action */}
       <CinematicFinalCta />
     </div>
   );

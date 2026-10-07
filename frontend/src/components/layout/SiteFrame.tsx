@@ -29,10 +29,11 @@ import {
   TopNavMegaMenuItem,
   TopNavMenu,
 } from "@astryxdesign/core/TopNav";
-import { Bus, Calendar, CalendarDays, CarFront, Compass, MapPin, Sparkles, User, Users } from "lucide-react";
+import { Bus, Calendar, CalendarDays, CarFront, Compass, MapPin, Sparkles, User, Users, Menu } from "lucide-react";
 import { BrandMark } from "@/components/brand/BrandMark";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { GlobalVoiceAssistantDrawer } from "@/components/voice/GlobalVoiceAssistantDrawer";
+import { LuxurySideDrawer } from "@/components/layout/LuxurySideDrawer";
 
 type MegaItem = { title: string; description: string; href: string; icon: IconType };
 
@@ -170,10 +171,12 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? "/";
   const isActive = (href: string) => isActivePath(pathname, href);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [isSideDrawerOpen, setIsSideDrawerOpen] = useState(false);
 
   // Links route client-side, so close the drawer once the new page is showing.
   useEffect(() => {
     setIsMobileNavOpen(false);
+    setIsSideDrawerOpen(false);
   }, [pathname]);
 
   // The header is sticky, so anything scrolled into view under it would be hidden. Reserve its
@@ -196,37 +199,53 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AppShell
-      height="auto"
-      variant="section"
-      contentPadding={0}
-      mobileNav={{
-        breakpoint: "lg",
-        isOpen: isMobileNavOpen,
-        onOpenChange: setIsMobileNavOpen,
-        content: <SiteMobileNav pathname={pathname} />,
-      }}
-      banner={
-        <Banner
-          status="info"
-          container="section"
-          title="Moraine Lake Road is closed to private vehicles"
-          description="Vista Chase shuttles and tours have guaranteed access."
-          endContent={<Button label="Find your hotel pickup" size="sm" href="/pickup-finder" />}
-          isDismissable
-        />
-      }
-      topNav={
-        <TopNav
-          label="Vista Chase main navigation"
-          heading={
-            <TopNavHeading
-              heading="Vista Chase"
-              subheading="Canadian Rockies · Banff"
-              headingHref="/"
-              logo={<BrandMark />}
-            />
-          }
+    <>
+      <LuxurySideDrawer isOpen={isSideDrawerOpen} onClose={() => setIsSideDrawerOpen(false)} />
+      <AppShell
+        height="auto"
+        variant="section"
+        contentPadding={0}
+        mobileNav={{
+          breakpoint: "lg",
+          isOpen: isMobileNavOpen,
+          onOpenChange: (open) => {
+            setIsMobileNavOpen(open);
+            if (open) setIsSideDrawerOpen(true);
+          },
+          content: <SiteMobileNav pathname={pathname} />,
+        }}
+        banner={
+          <Banner
+            status="info"
+            container="section"
+            title="Moraine Lake Road is closed to private vehicles"
+            description="Vista Chase shuttles and tours have guaranteed access."
+            endContent={<Button label="Find your hotel pickup" size="sm" href="/pickup-finder" />}
+            isDismissable
+          />
+        }
+        topNav={
+          <TopNav
+            label="Vista Chase main navigation"
+            heading={
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsSideDrawerOpen(true)}
+                  aria-label="Open luxury side menu"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-300/80 hover:border-ocean-500 hover:bg-ocean-50/70 text-xs font-semibold uppercase tracking-wider text-obsidian-900 transition-all mr-1"
+                >
+                  <Menu className="w-3.5 h-3.5 text-ocean-600" />
+                  <span className="hidden sm:inline">Menu</span>
+                </button>
+                <TopNavHeading
+                  heading="Vista Chase"
+                  subheading="Canadian Rockies · Banff"
+                  headingHref="/"
+                  logo={<BrandMark />}
+                />
+              </div>
+            }
           centerContent={
             <>
               <ExperiencesMegaMenu />
@@ -273,5 +292,6 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
       <SiteFooter />
       <GlobalVoiceAssistantDrawer />
     </AppShell>
+    </>
   );
 }
