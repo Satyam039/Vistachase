@@ -37,6 +37,24 @@ router.post("/", async (req, res) => {
       }
     }
 
+    // 3. Surface pickup search results as the "pickups" card when the provider sent no card of its own
+    let data = response.data;
+    const pickupResult = toolExecutionResults.find(
+      (r) => (r.toolName === "findPickup" || r.toolName === "getPickup") && r.success && Array.isArray(r.data),
+    );
+    if (!data && pickupResult && pickupResult.data.length > 0) {
+      data = {
+        type: "pickups",
+        stops: pickupResult.data.map((s: any) => ({
+          id: s.id,
+          name: s.name,
+          town: s.town,
+          address: s.address,
+          instructions: s.instructions,
+        })),
+      };
+    }
+
     return res.json({
       success: true,
       message: response.message,
@@ -44,7 +62,7 @@ router.post("/", async (req, res) => {
       toolCalls: response.toolCalls || [],
       toolResults: toolExecutionResults,
       sessionState: response.sessionState,
-      data: response.data,
+      data,
       checkoutUrl: response.checkoutUrl,
     });
   } catch (error: any) {

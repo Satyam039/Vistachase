@@ -147,9 +147,38 @@ export async function getBooking(args: { bookingReference: string; customerEmail
   };
 }
 
-export async function getPickup(args: { hotelNameQuery: string }) {
+// Words that carry no signal when matching a free-text question against stop names.
+const PICKUP_QUERY_STOPWORDS = new Set([
+  "where", "what", "which", "pick", "pickup", "pickups", "picked", "from", "your", "you", "near",
+  "hotel", "hotels", "stop", "stops", "stay", "staying", "offer", "there", "with", "the", "and", "for",
+]);
+
+/**
+ * Finds pickup stops for either an exact hotel name ("Fairmont Banff Springs") or a free-text
+ * question ("Where do you pick up in Banff?"). The orchestrator sends `query`; `hotelNameQuery`
+ * is kept for direct tool callers.
+ */
+export async function getPickup(args: { query?: string; hotelNameQuery?: string; town?: string }) {
   const mapsProvider = getMapsProvider();
-  const stops = await mapsProvider.searchPickups(args.hotelNameQuery);
+  const query = String(args.query ?? args.hotelNameQuery ?? "").trim();
+
+  let stops = await mapsProvider.searchPickups(query, args.town);
+
+  if (stops.length === 0 && query) {
+    const lower = query.toLowerCase();
+    const allStops = await mapsProvider.getAllPickups();
+    const towns = [...new Set(allStops.map((s) => s.town))];
+    const town = args.town ?? towns.find((t) => lower.includes(t.toLowerCase()));
+    const townWords = new Set(town ? town.toLowerCase().split(/\s+/) : []);
+    const tokens = (lower.match(/[a-z0-9]+/g) ?? []).filter(
+      (t) => t.length > 2 && !PICKUP_QUERY_STOPWORDS.has(t) && !townWords.has(t),
+    );
+
+    const inTown = town ? allStops.filter((s) => s.town === town) : allStops;
+    const byName = tokens.length ? inTown.filter((s) => tokens.some((t) => s.name.toLowerCase().includes(t))) : [];
+    stops = byName.length > 0 ? byName : town ? inTown : [];
+  }
+
   return stops.slice(0, 5);
 }
 
