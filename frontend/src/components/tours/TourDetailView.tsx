@@ -443,6 +443,76 @@ export function TourDetailView({
         </div>
       </section>
 
+      {/* 02.5 STICKY SECTION NAVIGATION BAR (Viator-Style IA) */}
+      <nav
+        aria-label="Experience details navigation"
+        className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm py-2 px-4 sm:px-6 lg:px-12 transition-all"
+      >
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-1">
+            <a
+              href="#overview"
+              className="px-3 py-1.5 rounded-full text-xs font-semibold text-slate-700 hover:text-obsidian-900 hover:bg-slate-100 whitespace-nowrap transition-colors"
+            >
+              Overview
+            </a>
+            <a
+              href="#highlights"
+              className="px-3 py-1.5 rounded-full text-xs font-semibold text-slate-700 hover:text-obsidian-900 hover:bg-slate-100 whitespace-nowrap transition-colors"
+            >
+              Highlights
+            </a>
+            <a
+              href="#inclusions"
+              className="px-3 py-1.5 rounded-full text-xs font-semibold text-slate-700 hover:text-obsidian-900 hover:bg-slate-100 whitespace-nowrap transition-colors"
+            >
+              Inclusions &amp; Exclusions
+            </a>
+            <a
+              href="#fleet"
+              className="px-3 py-1.5 rounded-full text-xs font-semibold text-slate-700 hover:text-obsidian-900 hover:bg-slate-100 whitespace-nowrap transition-colors"
+            >
+              Fleet Comfort
+            </a>
+            <a
+              href="#cancellation-policy"
+              className="px-3 py-1.5 rounded-full text-xs font-semibold text-slate-700 hover:text-obsidian-900 hover:bg-slate-100 whitespace-nowrap transition-colors"
+            >
+              Cancellation Policy
+            </a>
+            <a
+              href="#guest-reviews"
+              className="px-3 py-1.5 rounded-full text-xs font-semibold text-slate-700 hover:text-obsidian-900 hover:bg-slate-100 whitespace-nowrap transition-colors"
+            >
+              Reviews
+            </a>
+            {faqs.length > 0 && (
+              <a
+                href="#faq"
+                className="px-3 py-1.5 rounded-full text-xs font-semibold text-slate-700 hover:text-obsidian-900 hover:bg-slate-100 whitespace-nowrap transition-colors"
+              >
+                FAQ
+              </a>
+            )}
+          </div>
+
+          <div className="hidden md:flex items-center gap-3 shrink-0">
+            <div className="text-right">
+              <span className="text-[10px] uppercase text-slate-500 block leading-tight">From</span>
+              <span className="text-base font-serif font-light text-obsidian-900 leading-tight">
+                {money(price)} {tour.currency}
+              </span>
+            </div>
+            <a
+              href="#tour-booking-panel"
+              className="px-4 py-2 rounded-lg golden-summit-btn text-obsidian-900 text-xs font-semibold uppercase tracking-wider shadow-sm"
+            >
+              Book Now
+            </a>
+          </div>
+        </div>
+      </nav>
+
       {/* 03. MAIN EDITORIAL CONTENT + STICKY BÓKUN BOOKING PANEL */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
@@ -529,7 +599,7 @@ export function TourDetailView({
             </div>
 
             {/* Experience Narrative */}
-            <div className="space-y-6">
+            <div id="overview" className="space-y-6 scroll-mt-24">
               <div className="space-y-2">
                 <span className="text-xs uppercase tracking-widest text-ocean-600 font-bold">The Experience</span>
                 <h2 className="text-3xl sm:text-4xl font-light font-serif text-obsidian-900">
@@ -543,7 +613,7 @@ export function TourDetailView({
 
             {/* Destination Highlights */}
             {tour.highlights.length > 0 && (
-              <div className="space-y-6 p-8 rounded-3xl bg-white border border-slate-200/80 shadow-sm">
+              <div id="highlights" className="space-y-6 p-8 rounded-3xl bg-white border border-slate-200/80 shadow-sm scroll-mt-24">
                 <h3 className="text-xl font-serif font-medium text-obsidian-900 flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-summit-500" />
                   <span>Curated Tour Highlights</span>
@@ -562,7 +632,7 @@ export function TourDetailView({
             )}
 
             {/* Vehicle & Mountain Comfort Showcase */}
-            <div className="p-8 rounded-3xl bg-ocean-900 text-white space-y-6 border border-white/10">
+            <div id="fleet" className="p-8 rounded-3xl bg-ocean-900 text-white space-y-6 border border-white/10 scroll-mt-24">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-summit-300">
                   <Car className="w-6 h-6" />
@@ -601,51 +671,87 @@ export function TourDetailView({
             </div>
 
             {/* Live product page tabs: Overview / Inclusions / Itinerary / Seasonal */}
-            {tour.tabs.length > 0 ? (
-              <TourTabs tour={tour} />
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm space-y-4">
-                  <h4 className="text-base font-serif font-medium text-obsidian-900 flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" /> What&apos;s Included
-                  </h4>
-                  <ul className="space-y-2 text-xs sm:text-sm text-slate-700">
-                    {tour.inclusions.map((item, idx) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <span className="text-emerald-600 mt-1">•</span>
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm space-y-4">
-                  <h4 className="text-base font-serif font-medium text-obsidian-900 flex items-center gap-2">
-                    <Compass className="w-4 h-4 text-ocean-600" /> What to Bring
-                  </h4>
-                  <ul className="space-y-2 text-xs sm:text-sm text-slate-700">
-                    {tour.whatToBring.length > 0 ? (
-                      tour.whatToBring.map((item, idx) => (
+            <div id="inclusions" className="scroll-mt-24">
+              {tour.tabs.length > 0 ? (
+                <TourTabs tour={tour} />
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                  <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm space-y-4">
+                    <h4 className="text-base font-serif font-medium text-obsidian-900 flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" /> What&apos;s Included
+                    </h4>
+                    <ul className="space-y-2 text-xs sm:text-sm text-slate-700">
+                      {tour.inclusions.map((item, idx) => (
                         <li key={idx} className="flex items-start gap-2">
-                          <span className="text-ocean-600 mt-1">•</span>
+                          <span className="text-emerald-600 mt-1">•</span>
                           <span>{item}</span>
                         </li>
-                      ))
-                    ) : (
-                      <>
-                        <li className="flex items-start gap-2">• Comfortable layered walking clothing</li>
-                        <li className="flex items-start gap-2">• Sturdy footwear or hiking shoes</li>
-                        <li className="flex items-start gap-2">• Camera or smartphone for alpine photos</li>
-                        <li className="flex items-start gap-2">• Parks Canada Discovery Pass (if owned)</li>
-                      </>
-                    )}
-                  </ul>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm space-y-4">
+                    <h4 className="text-base font-serif font-medium text-obsidian-900 flex items-center gap-2">
+                      <Compass className="w-4 h-4 text-ocean-600" /> What to Bring
+                    </h4>
+                    <ul className="space-y-2 text-xs sm:text-sm text-slate-700">
+                      {tour.whatToBring.length > 0 ? (
+                        tour.whatToBring.map((item, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <span className="text-ocean-600 mt-1">•</span>
+                            <span>{item}</span>
+                          </li>
+                        ))
+                      ) : (
+                        <>
+                          <li className="flex items-start gap-2">• Comfortable layered walking clothing</li>
+                          <li className="flex items-start gap-2">• Sturdy footwear or hiking shoes</li>
+                          <li className="flex items-start gap-2">• Camera or smartphone for alpine photos</li>
+                          <li className="flex items-start gap-2">• Parks Canada Discovery Pass (if owned)</li>
+                        </>
+                      )}
+                    </ul>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Cancellation Policy (Authoritative) */}
+            <div id="cancellation-policy" className="p-8 rounded-3xl bg-emerald-50/70 border border-emerald-200/80 space-y-4 scroll-mt-24">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="text-xs uppercase tracking-widest text-emerald-800 font-bold block">
+                    Authoritative Policy
+                  </span>
+                  <h3 className="text-xl font-serif font-medium text-obsidian-900">
+                    Free Cancellation Up to 24 Hours
+                  </h3>
                 </div>
               </div>
-            )}
+              <p className="text-slate-700 text-sm leading-relaxed">
+                Cancel up to 24 hours before your scheduled departure date/time for a full 100% refund.
+                Cancellations within 24 hours of departure or guest no-shows are non-refundable. If Parks Canada closes
+                access roads or severe alpine weather prevents safe travel, departures are rescheduled or fully refunded
+                promptly.
+              </p>
+              <div className="flex flex-wrap items-center gap-4 pt-2 border-t border-emerald-200/60 text-xs text-emerald-900 font-medium">
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Full Refund Before 24h
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Weather Guarantee
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> No Hidden Rebooking Fees
+                </span>
+              </div>
+            </div>
 
             {/* Guest Reviews */}
-            <div className="space-y-6 pt-4">
+            <div id="guest-reviews" className="space-y-6 pt-4 scroll-mt-24">
               <div className="space-y-1">
                 <span className="text-xs uppercase tracking-widest text-ocean-600 font-bold">Verified Travelers</span>
                 <h3 className="text-2xl font-serif font-light text-obsidian-900">What Guests Are Saying</h3>
@@ -669,7 +775,7 @@ export function TourDetailView({
 
             {/* FAQ Accordion (from the live product page) */}
             {faqs.length > 0 && (
-            <div className="space-y-6 pt-4">
+            <div id="faq" className="space-y-6 pt-4 scroll-mt-24">
               <div className="space-y-1">
                 <span className="text-xs uppercase tracking-widest text-ocean-600 font-bold">Answers</span>
                 <h3 className="text-2xl font-serif font-light text-obsidian-900">Frequently Asked Questions</h3>
@@ -701,7 +807,7 @@ export function TourDetailView({
           </div>
 
           {/* RIGHT 5 COLUMNS: STICKY BÓKUN BOOKING PANEL */}
-          <div className="lg:col-span-5 lg:sticky lg:top-24 space-y-6">
+          <div id="tour-booking-panel" className="lg:col-span-5 lg:sticky lg:top-24 space-y-6 scroll-mt-24">
             <div className="rounded-3xl bg-white border border-slate-200 shadow-xl p-6 sm:p-8 space-y-6">
               <div className="space-y-2 border-b border-slate-100 pb-5">
                 <span className="text-xs uppercase tracking-widest text-ocean-600 font-bold block">
@@ -842,6 +948,29 @@ export function TourDetailView({
           </div>
         </section>
       )}
+
+      {/* 05. MOBILE STICKY BOTTOM BOOKING BAR */}
+      <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-4 py-3 shadow-[0_-8px_24px_rgba(0,0,0,0.12)] flex items-center justify-between gap-4">
+        <div>
+          <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider block">
+            {tour.priceUnit === "GROUP" ? "Per Group From" : "From"}
+          </span>
+          <div className="flex items-baseline gap-1">
+            <span className="text-xl font-serif font-light text-obsidian-900">{money(price)}</span>
+            <span className="text-xs text-slate-600 font-medium">{tour.currency}</span>
+          </div>
+          <span className="text-[10px] text-emerald-700 font-medium block">
+            Free 24h cancellation
+          </span>
+        </div>
+        <a
+          href="#tour-booking-panel"
+          className="px-6 py-3 rounded-xl golden-summit-btn text-obsidian-900 font-bold text-xs uppercase tracking-wider shadow-md shrink-0 flex items-center gap-1.5"
+        >
+          <span>Reserve Now</span>
+          <ChevronRight className="w-4 h-4" />
+        </a>
+      </div>
     </div>
   );
 }

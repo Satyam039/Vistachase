@@ -1,6 +1,6 @@
 {
  "generatedBy": "scripts/media/build-media.mjs",
- "count": 334,
+ "count": 390,
  "assets": [
   {
    "id": "badges/civitatis-logo",
@@ -7052,6 +7052,1037 @@
    "source": {
     "origin": "vista-chase-video-library",
     "file": "Videos/Vermillion-lakes-banff-national-park-landscape-in-winter-2025-12-17-16-06-05-utc.mov"
+   }
+  },
+  {
+   "id": "brand-horse-emblem-guide",
+   "src": "/media/brand/horse-emblem-guide.pdf",
+   "width": null,
+   "height": null,
+   "title": "Horse Emblem Guide",
+   "alt": "Official Vista Chase asset: horse emblem guide",
+   "collection": "brand",
+   "kind": "brand",
+   "places": [],
+   "tags": [
+    "brand"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "horse-emblem-guide.pdf"
+   }
+  },
+  {
+   "id": "brand-horse-emblem-master-dark",
+   "src": "/media/brand/horse-emblem-master-dark.png",
+   "width": 8334,
+   "height": 8334,
+   "title": "Horse Emblem Master Dark",
+   "alt": "Official Vista Chase asset: horse emblem master dark",
+   "collection": "brand",
+   "kind": "brand",
+   "places": [],
+   "tags": [
+    "brand"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "horse-emblem-master-dark.png"
+   }
+  },
+  {
+   "id": "brand-horse-emblem-master-gold",
+   "src": "/media/brand/horse-emblem-master-gold.png",
+   "width": 8334,
+   "height": 8334,
+   "title": "Horse Emblem Master Gold",
+   "alt": "Official Vista Chase asset: horse emblem master gold",
+   "collection": "brand",
+   "kind": "brand",
+   "places": [],
+   "tags": [
+    "brand"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "horse-emblem-master-gold.png"
+   }
+  },
+  {
+   "id": "brand-horse-emblem-master-white",
+   "src": "/media/brand/horse-emblem-master-white.png",
+   "width": 8334,
+   "height": 8334,
+   "title": "Horse Emblem Master White",
+   "alt": "Official Vista Chase asset: horse emblem master white",
+   "collection": "brand",
+   "kind": "brand",
+   "places": [],
+   "tags": [
+    "brand"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "horse-emblem-master-white.png"
+   }
+  },
+  {
+   "id": "brand-horse-emblem-vector-dark",
+   "src": "/media/brand/horse-emblem-vector-dark.svg",
+   "width": null,
+   "height": null,
+   "title": "Horse Emblem Vector Dark",
+   "alt": "Official Vista Chase asset: horse emblem vector dark",
+   "collection": "brand",
+   "kind": "brand",
+   "places": [],
+   "tags": [
+    "brand"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "horse-emblem-vector-dark.svg"
+   }
+  },
+  {
+   "id": "brand-horse-emblem-vector-gold",
+   "src": "/media/brand/horse-emblem-vector-gold.eps",
+   "width": null,
+   "height": null,
+   "title": "Horse Emblem Vector Gold",
+   "alt": "Official Vista Chase asset: horse emblem vector gold",
+   "collection": "brand",
+   "kind": "brand",
+   "places": [],
+   "tags": [
+    "brand"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "horse-emblem-vector-gold.eps"
+   }
+  },
+  {
+   "id": "brand-horse-emblem-vector-gold",
+   "src": "/media/brand/horse-emblem-vector-gold.svg",
+   "width": null,
+   "height": null,
+   "title": "Horse Emblem Vector Gold",
+   "alt": "Official Vista Chase asset: horse emblem vector gold",
+   "collection": "brand",
+   "kind": "brand",
+   "places": [],
+   "tags": [
+    "brand"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "horse-emblem-vector-gold.svg"
+   }
+  },
+  {
+   "id": "brand-horse-emblem-vector-white",
+   "src": "/media/brand/horse-emblem-vector-white.svg",
+   "width": null,
+   "height": null,
+   "title": "Horse Emblem Vector White",
+   "alt": "Official Vista Chase asset: horse emblem vector white",
+   "collection": "brand",
+   "kind": "brand",
+   "places": [],
+   "tags": [
+    "brand"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "horse-emblem-vector-white.svg"
+   }
+  },
+  {
+   "id": "photos-banff-gondola-ground-terminal",
+   "src": "/media/photos/banff-gondola-ground-terminal.jpg",
+   "width": 600,
+   "height": 667,
+   "title": "Banff Gondola Ground Terminal",
+   "alt": "Official Vista Chase asset: banff gondola ground terminal",
+   "collection": "photos",
+   "kind": "destinations",
+   "places": [
+    "banff"
+   ],
+   "tags": [
+    "destinations"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "banff-gondola-ground-terminal.jpg"
+   }
+  },
+  {
+   "id": "photos-banff-gondola-summit",
+   "src": "/media/photos/banff-gondola-summit.jpg",
+   "width": 5587,
+   "height": 3736,
+   "title": "Banff Gondola Summit",
+   "alt": "Official Vista Chase asset: banff gondola summit",
+   "collection": "photos",
+   "kind": "destinations",
+   "places": [
+    "banff"
+   ],
+   "tags": [
+    "destinations"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "banff-gondola-summit.jpg"
+   }
+  },
+  {
+   "id": "photos-banff-lake-reflection-master",
+   "src": "/media/photos/banff-lake-reflection-master.jpg",
+   "width": 6720,
+   "height": 4480,
+   "title": "Banff Lake Reflection Master",
+   "alt": "Official Vista Chase asset: banff lake reflection master",
+   "collection": "photos",
+   "kind": "destinations",
+   "places": [
+    "banff"
+   ],
+   "tags": [
+    "destinations"
+   ],
+   "source": {
+    "origin": "repository",
+    "file": "banff-lake-reflection-master.jpg"
+   }
+  },
+  {
+   "id": "photos-banff-winter-scenic-trail",
+   "src": "/media/photos/banff-winter-scenic-trail.jpg",
+   "width": 4000,
+   "height": 2252,
+   "title": "Banff Winter Scenic Trail",
+   "alt": "Official Vista Chase asset: banff winter scenic trail",
+   "collection": "photos",
+   "kind": "destinations",
+   "places": [
+    "banff"
+   ],
+   "tags": [
+    "destinations"
+   ],
+   "source": {
+    "origin": "repository",
+    "file": "banff-winter-scenic-trail.jpg"
+   }
+  },
+  {
+   "id": "photos-canadian-rockies-vista-1346",
+   "src": "/media/photos/canadian-rockies-vista-1346.jpg",
+   "width": 6240,
+   "height": 4160,
+   "title": "Canadian Rockies Vista 1346",
+   "alt": "Official Vista Chase asset: canadian rockies vista 1346",
+   "collection": "photos",
+   "kind": "photos",
+   "places": [],
+   "tags": [
+    "photos"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "canadian-rockies-vista-1346.jpg"
+   }
+  },
+  {
+   "id": "photos-canadian-rockies-vista-2585",
+   "src": "/media/photos/canadian-rockies-vista-2585.jpg",
+   "width": 6720,
+   "height": 4480,
+   "title": "Canadian Rockies Vista 2585",
+   "alt": "Official Vista Chase asset: canadian rockies vista 2585",
+   "collection": "photos",
+   "kind": "photos",
+   "places": [],
+   "tags": [
+    "photos"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "canadian-rockies-vista-2585.jpg"
+   }
+  },
+  {
+   "id": "photos-canadian-rockies-vista-3609",
+   "src": "/media/photos/canadian-rockies-vista-3609.jpg",
+   "width": 8192,
+   "height": 5464,
+   "title": "Canadian Rockies Vista 3609",
+   "alt": "Official Vista Chase asset: canadian rockies vista 3609",
+   "collection": "photos",
+   "kind": "photos",
+   "places": [],
+   "tags": [
+    "photos"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "canadian-rockies-vista-3609.jpg"
+   }
+  },
+  {
+   "id": "photos-canadian-rockies-vista-3715",
+   "src": "/media/photos/canadian-rockies-vista-3715.jpg",
+   "width": 8192,
+   "height": 5464,
+   "title": "Canadian Rockies Vista 3715",
+   "alt": "Official Vista Chase asset: canadian rockies vista 3715",
+   "collection": "photos",
+   "kind": "photos",
+   "places": [],
+   "tags": [
+    "photos"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "canadian-rockies-vista-3715.jpg"
+   }
+  },
+  {
+   "id": "photos-canadian-rockies-vista-5015",
+   "src": "/media/photos/canadian-rockies-vista-5015.jpg",
+   "width": 8192,
+   "height": 5464,
+   "title": "Canadian Rockies Vista 5015",
+   "alt": "Official Vista Chase asset: canadian rockies vista 5015",
+   "collection": "photos",
+   "kind": "photos",
+   "places": [],
+   "tags": [
+    "photos"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "canadian-rockies-vista-5015.jpg"
+   }
+  },
+  {
+   "id": "photos-canadian-rockies-vista-5046",
+   "src": "/media/photos/canadian-rockies-vista-5046.jpg",
+   "width": 8192,
+   "height": 5464,
+   "title": "Canadian Rockies Vista 5046",
+   "alt": "Official Vista Chase asset: canadian rockies vista 5046",
+   "collection": "photos",
+   "kind": "photos",
+   "places": [],
+   "tags": [
+    "photos"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "canadian-rockies-vista-5046.jpg"
+   }
+  },
+  {
+   "id": "photos-canadian-rockies-vista-5105",
+   "src": "/media/photos/canadian-rockies-vista-5105.jpg",
+   "width": 8192,
+   "height": 5464,
+   "title": "Canadian Rockies Vista 5105",
+   "alt": "Official Vista Chase asset: canadian rockies vista 5105",
+   "collection": "photos",
+   "kind": "photos",
+   "places": [],
+   "tags": [
+    "photos"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "canadian-rockies-vista-5105.jpg"
+   }
+  },
+  {
+   "id": "photos-canadian-rockies-vista-5562",
+   "src": "/media/photos/canadian-rockies-vista-5562.jpg",
+   "width": 8192,
+   "height": 5464,
+   "title": "Canadian Rockies Vista 5562",
+   "alt": "Official Vista Chase asset: canadian rockies vista 5562",
+   "collection": "photos",
+   "kind": "photos",
+   "places": [],
+   "tags": [
+    "photos"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "canadian-rockies-vista-5562.jpg"
+   }
+  },
+  {
+   "id": "photos-canadian-rockies-vista-7848",
+   "src": "/media/photos/canadian-rockies-vista-7848.jpg",
+   "width": 5760,
+   "height": 3840,
+   "title": "Canadian Rockies Vista 7848",
+   "alt": "Official Vista Chase asset: canadian rockies vista 7848",
+   "collection": "photos",
+   "kind": "photos",
+   "places": [],
+   "tags": [
+    "photos"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "canadian-rockies-vista-7848.jpg"
+   }
+  },
+  {
+   "id": "photos-canadian-rockies-vista-8525",
+   "src": "/media/photos/canadian-rockies-vista-8525.jpg",
+   "width": 3347,
+   "height": 2497,
+   "title": "Canadian Rockies Vista 8525",
+   "alt": "Official Vista Chase asset: canadian rockies vista 8525",
+   "collection": "photos",
+   "kind": "photos",
+   "places": [],
+   "tags": [
+    "photos"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "canadian-rockies-vista-8525.jpg"
+   }
+  },
+  {
+   "id": "photos-canadian-rockies-vista-8531",
+   "src": "/media/photos/canadian-rockies-vista-8531.jpg",
+   "width": 4054,
+   "height": 2697,
+   "title": "Canadian Rockies Vista 8531",
+   "alt": "Official Vista Chase asset: canadian rockies vista 8531",
+   "collection": "photos",
+   "kind": "photos",
+   "places": [],
+   "tags": [
+    "photos"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "canadian-rockies-vista-8531.jpg"
+   }
+  },
+  {
+   "id": "photos-columbia-icefield-athabasca-glacier-master",
+   "src": "/media/photos/columbia-icefield-athabasca-glacier-master.jpg",
+   "width": 6006,
+   "height": 4004,
+   "title": "Columbia Icefield Athabasca Glacier Master",
+   "alt": "Official Vista Chase asset: columbia icefield athabasca glacier master",
+   "collection": "photos",
+   "kind": "destinations",
+   "places": [
+    "columbia"
+   ],
+   "tags": [
+    "destinations"
+   ],
+   "source": {
+    "origin": "repository",
+    "file": "columbia-icefield-athabasca-glacier-master.jpg"
+   }
+  },
+  {
+   "id": "photos-columbia-icefield-ice-explorer-guide",
+   "src": "/media/photos/columbia-icefield-ice-explorer-guide.jpg",
+   "width": 6273,
+   "height": 4182,
+   "title": "Columbia Icefield Ice Explorer Guide",
+   "alt": "Official Vista Chase asset: columbia icefield ice explorer guide",
+   "collection": "photos",
+   "kind": "fleet",
+   "places": [],
+   "tags": [
+    "fleet"
+   ],
+   "source": {
+    "origin": "repository",
+    "file": "columbia-icefield-ice-explorer-guide.jpg"
+   }
+  },
+  {
+   "id": "photos-columbia-icefield-ice-explorer",
+   "src": "/media/photos/columbia-icefield-ice-explorer.jpg",
+   "width": 3648,
+   "height": 2432,
+   "title": "Columbia Icefield Ice Explorer",
+   "alt": "Official Vista Chase asset: columbia icefield ice explorer",
+   "collection": "photos",
+   "kind": "fleet",
+   "places": [],
+   "tags": [
+    "fleet"
+   ],
+   "source": {
+    "origin": "repository",
+    "file": "columbia-icefield-ice-explorer.jpg"
+   }
+  },
+  {
+   "id": "photos-columbia-icefield-skywalk-guests",
+   "src": "/media/photos/columbia-icefield-skywalk-guests.jpg",
+   "width": 5971,
+   "height": 3981,
+   "title": "Columbia Icefield Skywalk Guests",
+   "alt": "Official Vista Chase asset: columbia icefield skywalk guests",
+   "collection": "photos",
+   "kind": "tours",
+   "places": [],
+   "tags": [
+    "tours"
+   ],
+   "source": {
+    "origin": "repository",
+    "file": "columbia-icefield-skywalk-guests.jpg"
+   }
+  },
+  {
+   "id": "photos-golden-skybridge-axe-throwing",
+   "src": "/media/photos/golden-skybridge-axe-throwing.jpg",
+   "width": 2560,
+   "height": 1707,
+   "title": "Golden Skybridge Axe Throwing",
+   "alt": "Official Vista Chase asset: golden skybridge axe throwing",
+   "collection": "photos",
+   "kind": "tours",
+   "places": [],
+   "tags": [
+    "tours"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "golden-skybridge-axe-throwing.jpg"
+   }
+  },
+  {
+   "id": "photos-golden-skybridge-canyon",
+   "src": "/media/photos/golden-skybridge-canyon.jpg",
+   "width": 8019,
+   "height": 5349,
+   "title": "Golden Skybridge Canyon",
+   "alt": "Official Vista Chase asset: golden skybridge canyon",
+   "collection": "photos",
+   "kind": "destinations",
+   "places": [
+    "golden"
+   ],
+   "tags": [
+    "destinations"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "golden-skybridge-canyon.jpg"
+   }
+  },
+  {
+   "id": "photos-lake-minnewanka-boat",
+   "src": "/media/photos/lake-minnewanka-boat.jpg",
+   "width": 8083,
+   "height": 6060,
+   "title": "Lake Minnewanka Boat",
+   "alt": "Official Vista Chase asset: lake minnewanka boat",
+   "collection": "photos",
+   "kind": "destinations",
+   "places": [
+    "lake"
+   ],
+   "tags": [
+    "destinations"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "lake-minnewanka-boat.jpg"
+   }
+  },
+  {
+   "id": "photos-lake-minnewanka-classic-cruise",
+   "src": "/media/photos/lake-minnewanka-classic-cruise.jpg",
+   "width": 6606,
+   "height": 4404,
+   "title": "Lake Minnewanka Classic Cruise",
+   "alt": "Official Vista Chase asset: lake minnewanka classic cruise",
+   "collection": "photos",
+   "kind": "tours",
+   "places": [],
+   "tags": [
+    "tours"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "lake-minnewanka-classic-cruise.jpg"
+   }
+  },
+  {
+   "id": "photos-maligne-lake-cruise-panoramic",
+   "src": "/media/photos/maligne-lake-cruise-panoramic.jpg",
+   "width": 5580,
+   "height": 3720,
+   "title": "Maligne Lake Cruise Panoramic",
+   "alt": "Official Vista Chase asset: maligne lake cruise panoramic",
+   "collection": "photos",
+   "kind": "tours",
+   "places": [],
+   "tags": [
+    "tours"
+   ],
+   "source": {
+    "origin": "repository",
+    "file": "maligne-lake-cruise-panoramic.jpg"
+   }
+  },
+  {
+   "id": "photos-maligne-lake-cruiseboat",
+   "src": "/media/photos/maligne-lake-cruiseboat.jpg",
+   "width": 6720,
+   "height": 4480,
+   "title": "Maligne Lake Cruiseboat",
+   "alt": "Official Vista Chase asset: maligne lake cruiseboat",
+   "collection": "photos",
+   "kind": "tours",
+   "places": [],
+   "tags": [
+    "tours"
+   ],
+   "source": {
+    "origin": "repository",
+    "file": "maligne-lake-cruiseboat.jpg"
+   }
+  },
+  {
+   "id": "photos-maligne-lake-highspirits-boat",
+   "src": "/media/photos/maligne-lake-highspirits-boat.jpg",
+   "width": 6418,
+   "height": 4279,
+   "title": "Maligne Lake Highspirits Boat",
+   "alt": "Official Vista Chase asset: maligne lake highspirits boat",
+   "collection": "photos",
+   "kind": "destinations",
+   "places": [
+    "maligne"
+   ],
+   "tags": [
+    "destinations"
+   ],
+   "source": {
+    "origin": "repository",
+    "file": "maligne-lake-highspirits-boat.jpg"
+   }
+  },
+  {
+   "id": "photos-pursuit-sherps-snowcoach-01",
+   "src": "/media/photos/pursuit-sherps-snowcoach-01.jpg",
+   "width": 8192,
+   "height": 5464,
+   "title": "Pursuit Sherps Snowcoach 01",
+   "alt": "Official Vista Chase asset: pursuit sherps snowcoach 01",
+   "collection": "photos",
+   "kind": "fleet",
+   "places": [],
+   "tags": [
+    "fleet"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "pursuit-sherps-snowcoach-01.jpg"
+   }
+  },
+  {
+   "id": "photos-pursuit-sherps-snowcoach-02",
+   "src": "/media/photos/pursuit-sherps-snowcoach-02.jpg",
+   "width": 8192,
+   "height": 5464,
+   "title": "Pursuit Sherps Snowcoach 02",
+   "alt": "Official Vista Chase asset: pursuit sherps snowcoach 02",
+   "collection": "photos",
+   "kind": "fleet",
+   "places": [],
+   "tags": [
+    "fleet"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "pursuit-sherps-snowcoach-02.jpg"
+   }
+  },
+  {
+   "id": "photos-pursuit-sherps-snowcoach-03",
+   "src": "/media/photos/pursuit-sherps-snowcoach-03.jpg",
+   "width": 8192,
+   "height": 5464,
+   "title": "Pursuit Sherps Snowcoach 03",
+   "alt": "Official Vista Chase asset: pursuit sherps snowcoach 03",
+   "collection": "photos",
+   "kind": "fleet",
+   "places": [],
+   "tags": [
+    "fleet"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "pursuit-sherps-snowcoach-03.jpg"
+   }
+  },
+  {
+   "id": "photos-pursuit-sherps-snowcoach-04",
+   "src": "/media/photos/pursuit-sherps-snowcoach-04.jpg",
+   "width": 8192,
+   "height": 5464,
+   "title": "Pursuit Sherps Snowcoach 04",
+   "alt": "Official Vista Chase asset: pursuit sherps snowcoach 04",
+   "collection": "photos",
+   "kind": "fleet",
+   "places": [],
+   "tags": [
+    "fleet"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "pursuit-sherps-snowcoach-04.jpg"
+   }
+  },
+  {
+   "id": "photos-rockies-alpine-panorama-master",
+   "src": "/media/photos/rockies-alpine-panorama-master.jpg",
+   "width": 5673,
+   "height": 3782,
+   "title": "Rockies Alpine Panorama Master",
+   "alt": "Official Vista Chase asset: rockies alpine panorama master",
+   "collection": "photos",
+   "kind": "photos",
+   "places": [],
+   "tags": [
+    "photos"
+   ],
+   "source": {
+    "origin": "repository",
+    "file": "rockies-alpine-panorama-master.jpg"
+   }
+  },
+  {
+   "id": "videos-athabasca-falls-poster",
+   "src": "/media/videos/athabasca-falls-poster.webp",
+   "width": 1280,
+   "height": 720,
+   "title": "Athabasca Falls Poster",
+   "alt": "Official Vista Chase asset: athabasca falls poster",
+   "collection": "videos",
+   "kind": "video",
+   "places": [],
+   "tags": [
+    "video"
+   ],
+   "source": {
+    "origin": "repository",
+    "file": "athabasca-falls-poster.webp"
+   }
+  },
+  {
+   "id": "videos-athabasca-falls-rainbow-poster",
+   "src": "/media/videos/athabasca-falls-rainbow-poster.webp",
+   "width": 1280,
+   "height": 720,
+   "title": "Athabasca Falls Rainbow Poster",
+   "alt": "Official Vista Chase asset: athabasca falls rainbow poster",
+   "collection": "videos",
+   "kind": "video",
+   "places": [],
+   "tags": [
+    "video"
+   ],
+   "source": {
+    "origin": "repository",
+    "file": "athabasca-falls-rainbow-poster.webp"
+   }
+  },
+  {
+   "id": "videos-banff-gondola-scenic-broll",
+   "src": "/media/videos/banff-gondola-scenic-broll.mp4",
+   "width": null,
+   "height": null,
+   "title": "Banff Gondola Scenic Broll",
+   "alt": "Official Vista Chase asset: banff gondola scenic broll",
+   "collection": "videos",
+   "kind": "video",
+   "places": [],
+   "tags": [
+    "video"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "banff-gondola-scenic-broll.mp4"
+   },
+   "duration": 15
+  },
+  {
+   "id": "videos-columbia-icefield-awareness-reel-15s",
+   "src": "/media/videos/columbia-icefield-awareness-reel-15s.mp4",
+   "width": null,
+   "height": null,
+   "title": "Columbia Icefield Awareness Reel 15s",
+   "alt": "Official Vista Chase asset: columbia icefield awareness reel 15s",
+   "collection": "videos",
+   "kind": "video_hero",
+   "places": [],
+   "tags": [
+    "video_hero"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "columbia-icefield-awareness-reel-15s.mp4"
+   },
+   "duration": 15
+  },
+  {
+   "id": "videos-columbia-icefield-master",
+   "src": "/media/videos/columbia-icefield-master.mp4",
+   "width": null,
+   "height": null,
+   "title": "Columbia Icefield Master",
+   "alt": "Official Vista Chase asset: columbia icefield master",
+   "collection": "videos",
+   "kind": "video",
+   "places": [],
+   "tags": [
+    "video"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "columbia-icefield-master.mp4"
+   },
+   "duration": 15
+  },
+  {
+   "id": "videos-emerald-lake-canoes-poster",
+   "src": "/media/videos/emerald-lake-canoes-poster.webp",
+   "width": 1280,
+   "height": 720,
+   "title": "Emerald Lake Canoes Poster",
+   "alt": "Official Vista Chase asset: emerald lake canoes poster",
+   "collection": "videos",
+   "kind": "video",
+   "places": [],
+   "tags": [
+    "video"
+   ],
+   "source": {
+    "origin": "repository",
+    "file": "emerald-lake-canoes-poster.webp"
+   }
+  },
+  {
+   "id": "videos-emerald-lake-lodge-poster",
+   "src": "/media/videos/emerald-lake-lodge-poster.webp",
+   "width": 1280,
+   "height": 720,
+   "title": "Emerald Lake Lodge Poster",
+   "alt": "Official Vista Chase asset: emerald lake lodge poster",
+   "collection": "videos",
+   "kind": "video",
+   "places": [],
+   "tags": [
+    "video"
+   ],
+   "source": {
+    "origin": "repository",
+    "file": "emerald-lake-lodge-poster.webp"
+   }
+  },
+  {
+   "id": "videos-fairmont-banff-springs-winter-poster",
+   "src": "/media/videos/fairmont-banff-springs-winter-poster.webp",
+   "width": 1280,
+   "height": 720,
+   "title": "Fairmont Banff Springs Winter Poster",
+   "alt": "Official Vista Chase asset: fairmont banff springs winter poster",
+   "collection": "videos",
+   "kind": "video",
+   "places": [],
+   "tags": [
+    "video"
+   ],
+   "source": {
+    "origin": "repository",
+    "file": "fairmont-banff-springs-winter-poster.webp"
+   }
+  },
+  {
+   "id": "videos-glacier-skywalk-master",
+   "src": "/media/videos/glacier-skywalk-master.mp4",
+   "width": null,
+   "height": null,
+   "title": "Glacier Skywalk Master",
+   "alt": "Official Vista Chase asset: glacier skywalk master",
+   "collection": "videos",
+   "kind": "video",
+   "places": [],
+   "tags": [
+    "video"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "glacier-skywalk-master.mp4"
+   },
+   "duration": 15
+  },
+  {
+   "id": "videos-grizzly-bear-cub-jasper-poster",
+   "src": "/media/videos/grizzly-bear-cub-jasper-poster.webp",
+   "width": 1280,
+   "height": 720,
+   "title": "Grizzly Bear Cub Jasper Poster",
+   "alt": "Official Vista Chase asset: grizzly bear cub jasper poster",
+   "collection": "videos",
+   "kind": "video",
+   "places": [],
+   "tags": [
+    "video"
+   ],
+   "source": {
+    "origin": "repository",
+    "file": "grizzly-bear-cub-jasper-poster.webp"
+   }
+  },
+  {
+   "id": "videos-lake-louise-summer-1080",
+   "src": "/media/videos/lake-louise-summer-1080.mp4",
+   "width": null,
+   "height": null,
+   "title": "Lake Louise Summer 1080",
+   "alt": "Official Vista Chase asset: lake louise summer 1080",
+   "collection": "videos",
+   "kind": "video_hero",
+   "places": [],
+   "tags": [
+    "video_hero"
+   ],
+   "source": {
+    "origin": "repository",
+    "file": "lake-louise-summer-1080.mp4"
+   },
+   "duration": 15
+  },
+  {
+   "id": "videos-lake-louise-summer-poster",
+   "src": "/media/videos/lake-louise-summer-poster.webp",
+   "width": 1920,
+   "height": 1080,
+   "title": "Lake Louise Summer Poster",
+   "alt": "Official Vista Chase asset: lake louise summer poster",
+   "collection": "videos",
+   "kind": "video_hero",
+   "places": [],
+   "tags": [
+    "video_hero"
+   ],
+   "source": {
+    "origin": "repository",
+    "file": "lake-louise-summer-poster.webp"
+   }
+  },
+  {
+   "id": "videos-lake-minnewanka-cruise-master",
+   "src": "/media/videos/lake-minnewanka-cruise-master.mp4",
+   "width": null,
+   "height": null,
+   "title": "Lake Minnewanka Cruise Master",
+   "alt": "Official Vista Chase asset: lake minnewanka cruise master",
+   "collection": "videos",
+   "kind": "video",
+   "places": [],
+   "tags": [
+    "video"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "lake-minnewanka-cruise-master.mp4"
+   },
+   "duration": 15
+  },
+  {
+   "id": "videos-maligne-lake-cruise-poster",
+   "src": "/media/videos/maligne-lake-cruise-poster.webp",
+   "width": 1280,
+   "height": 720,
+   "title": "Maligne Lake Cruise Poster",
+   "alt": "Official Vista Chase asset: maligne lake cruise poster",
+   "collection": "videos",
+   "kind": "video",
+   "places": [],
+   "tags": [
+    "video"
+   ],
+   "source": {
+    "origin": "repository",
+    "file": "maligne-lake-cruise-poster.webp"
+   }
+  },
+  {
+   "id": "videos-pursuit-rockies-cinematic-reel-15s",
+   "src": "/media/videos/pursuit-rockies-cinematic-reel-15s.mp4",
+   "width": null,
+   "height": null,
+   "title": "Pursuit Rockies Cinematic Reel 15s",
+   "alt": "Official Vista Chase asset: pursuit rockies cinematic reel 15s",
+   "collection": "videos",
+   "kind": "video_hero",
+   "places": [],
+   "tags": [
+    "video_hero"
+   ],
+   "source": {
+    "origin": "repository",
+    "file": "pursuit-rockies-cinematic-reel-15s.mp4"
+   },
+   "duration": 15
+  },
+  {
+   "id": "videos-sunwapta-falls-poster",
+   "src": "/media/videos/sunwapta-falls-poster.webp",
+   "width": 1280,
+   "height": 720,
+   "title": "Sunwapta Falls Poster",
+   "alt": "Official Vista Chase asset: sunwapta falls poster",
+   "collection": "videos",
+   "kind": "video",
+   "places": [],
+   "tags": [
+    "video"
+   ],
+   "source": {
+    "origin": "repository",
+    "file": "sunwapta-falls-poster.webp"
+   }
+  },
+  {
+   "id": "videos-vermilion-lakes-poster",
+   "src": "/media/videos/vermilion-lakes-poster.webp",
+   "width": 1280,
+   "height": 675,
+   "title": "Vermilion Lakes Poster",
+   "alt": "Official Vista Chase asset: vermilion lakes poster",
+   "collection": "videos",
+   "kind": "video",
+   "places": [],
+   "tags": [
+    "video"
+   ],
+   "source": {
+    "origin": "repository",
+    "file": "vermilion-lakes-poster.webp"
    }
   }
  ]
