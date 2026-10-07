@@ -151,14 +151,14 @@ export default function PickupFinderPage() {
 
                   {/* Available Shuttles from this point */}
                   <div className="space-y-1.5 pt-1">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                       Routes Serving This Location:
                     </span>
                     <div className="flex flex-wrap gap-1.5">
                       {loc.shuttleLines.map((line, idx) => (
                         <span
                           key={idx}
-                          className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-[11px] font-medium"
+                          className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-medium"
                         >
                           {line}
                         </span>

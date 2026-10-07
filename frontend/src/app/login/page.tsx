@@ -30,6 +30,8 @@ export default function LoginPage() {
       } else {
         if (data.user?.role === "ADMIN" || data.user?.role === "OPERATOR" || data.user?.role === "DISPATCHER") {
           router.push("/admin");
+        } else if (data.user?.role === "AFFILIATE") {
+          router.push("/partners/dashboard");
         } else {
           router.push("/account/trips");
         }
@@ -112,7 +114,7 @@ export default function LoginPage() {
 
           {/* Quick Demo Logins for Testing */}
           <div className="border-t border-slate-100 pt-4 space-y-2">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block text-center">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block text-center">
               Quick Development Demo Logins
             </span>
             <div className="grid grid-cols-2 gap-2 text-xs">

@@ -4,7 +4,8 @@
   "bokunId: the Bokun experience (product) ID. Placeholder (null) until Vista Chase provides the IDs; fill each one in and reseed (npm run prisma:seed). Bokun API keys go in .env (BOKUN_*).",
   "bookingMode: BOKUN = instant booking through Bokun; ENQUIRY = request form (custom itineraries, multi-day).",
   "mornbyTour: the tour name in Mornby (mornby.com > Tours). mornbyMatch 'proposed' means matched by name and route and needs confirming by operations; 'none' means Mornby has no matching tour yet.",
-  "places / season: used to pick each product's gallery photos from backend/media (see prisma/catalog/load-catalog.js)."
+  "places / season: used to pick each product's gallery photos from backend/media (see prisma/catalog/load-catalog.js).",
+  "TICKET products (Banff activity tickets) are new: not on the live site, content in extra-products.json. They take requests (ENQUIRY) until their Bokun IDs exist; then set bookingMode to BOKUN."
  ],
  "bokun": {
   "onlineSalesChannelId": null
@@ -256,12 +257,68 @@
     "canmore"
    ],
    "season": "all"
+  },
+  {
+   "slug": "banff-gondola-tickets",
+   "url": null,
+   "category": "TICKET",
+   "bookingMode": "ENQUIRY",
+   "bokunId": null,
+   "destination": "banff-national-park",
+   "mornbyTour": null,
+   "mornbyMatch": "none",
+   "places": [
+    "banff"
+   ],
+   "season": "all"
+  },
+  {
+   "slug": "lake-minnewanka-cruise-tickets",
+   "url": null,
+   "category": "TICKET",
+   "bookingMode": "ENQUIRY",
+   "bokunId": null,
+   "destination": "banff-national-park",
+   "mornbyTour": null,
+   "mornbyMatch": "none",
+   "places": [
+    "lake-minnewanka",
+    "banff"
+   ],
+   "season": "all"
+  },
+  {
+   "slug": "columbia-icefield-skywalk-tickets",
+   "url": null,
+   "category": "TICKET",
+   "bookingMode": "ENQUIRY",
+   "bokunId": null,
+   "destination": "jasper-national-park",
+   "mornbyTour": "Columbia Icefield Adventure - Skywalk + 4 Stops",
+   "mornbyMatch": "proposed",
+   "places": [
+    "columbia-icefield",
+    "athabasca-glacier",
+    "icefields-parkway",
+    "jasper"
+   ],
+   "season": "all"
+  },
+  {
+   "slug": "banff-upper-hot-springs-tickets",
+   "url": null,
+   "category": "TICKET",
+   "bookingMode": "ENQUIRY",
+   "bokunId": null,
+   "destination": "banff-national-park",
+   "mornbyTour": null,
+   "mornbyMatch": "none",
+   "places": [
+    "banff",
+    "vermilion-lakes"
+   ],
+   "season": "all"
   }
  ],
- "mornbyOnly": [
-  {
-   "mornbyTour": "Columbia Icefield Adventure - Skywalk + 4 Stops",
-   "note": "Shared tour in Mornby with no page on vistachase.com. Decide whether it gets a page."
-  }
- ]
+ "mornbyOnly": []
 }

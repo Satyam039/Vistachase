@@ -3,6 +3,7 @@ import QRCode from "qrcode";
 import { getPaymentProvider } from "@/lib/payment/payment.provider";
 import { getEmailProvider } from "@/lib/email/email.provider";
 import { fareSubtotal, isVehicleDeparture, partySizeError, seatsToReserve } from "@/modules/pricing/departure-pricing";
+import { findActiveAffiliateByCode } from "@/modules/affiliates/affiliate.repository";
 
 export interface BookingAddOnInput {
   name: string;
@@ -26,6 +27,8 @@ export interface CreateBookingInput {
   specialRequests?: string;
   addOns?: BookingAddOnInput[];
   paymentProvider?: "mock" | "stripe";
+  /** Referral code from the vc_ref cookie; credited only to an ACTIVE partner. */
+  affiliateCode?: string;
 }
 
 export interface BookingResult {
@@ -124,6 +127,7 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingR
       data: {
         bookingReference,
         customerId: input.customerId,
+        affiliateId: (await findActiveAffiliateByCode(input.affiliateCode))?.id ?? null,
         customerName: input.customerName,
         customerEmail: input.customerEmail,
         customerPhone: input.customerPhone,

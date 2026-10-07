@@ -183,14 +183,14 @@ export default function LiveShuttleTrackingClient({
             <span className="font-serif font-bold text-xl tracking-wider text-white group-hover:text-gold-300 transition-colors">
               VISTA CHASE
             </span>
-            <span className="text-[10px] tracking-widest text-gold-400 font-semibold uppercase px-2 py-0.5 rounded bg-gold-950/60 border border-gold-800/40">
+            <span className="text-xs tracking-widest text-gold-400 font-semibold uppercase px-2 py-0.5 rounded bg-gold-950/60 border border-gold-800/40">
               LIVE CONCIERGE
             </span>
           </Link>
         </div>
 
         <div className="flex items-center gap-3 text-xs">
-          <div className="hidden sm:flex items-center gap-2 text-slate-400 bg-forest-950/80 px-3 py-1.5 rounded-full border border-forest-800/50 font-mono text-[11px]">
+          <div className="hidden sm:flex items-center gap-2 text-slate-400 bg-forest-950/80 px-3 py-1.5 rounded-full border border-forest-800/50 font-mono text-xs">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             <span>GPS 10Hz TELEMETRY LIVE</span>
           </div>
@@ -235,7 +235,7 @@ export default function LiveShuttleTrackingClient({
             {/* Prominent ETA Dial */}
             <div className="shrink-0 flex items-center gap-3 bg-forest-950/80 px-4 py-3 rounded-xl border border-gold-500/30">
               <div className="text-right">
-                <span className="text-[10px] uppercase tracking-widest text-gold-400 font-bold block">
+                <span className="text-xs uppercase tracking-widest text-gold-400 font-bold block">
                   ESTIMATED ARRIVAL
                 </span>
                 <span className="text-2xl sm:text-3xl font-bold font-serif text-white">
@@ -432,7 +432,7 @@ export default function LiveShuttleTrackingClient({
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 text-slate-400 font-mono text-[11px]">
+              <div className="flex items-center gap-3 text-slate-400 font-mono text-xs">
                 <span>LAT: {telemetry.vehicleCoordinates.latitude.toFixed(4)}°N</span>
                 <span>LNG: {Math.abs(telemetry.vehicleCoordinates.longitude).toFixed(4)}°W</span>
                 <span>UPDATED: {lastUpdated.toLocaleTimeString()}</span>
@@ -482,7 +482,7 @@ export default function LiveShuttleTrackingClient({
               <span className="text-xs uppercase tracking-widest text-gold-400 font-bold">
                 Your Certified Guide &amp; Chauffeur
               </span>
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-400 bg-emerald-950/50 px-2 py-0.5 rounded-full border border-emerald-800/40">
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-400 bg-emerald-950/50 px-2 py-0.5 rounded-full border border-emerald-800/40">
                 <ShieldCheck className="w-3.5 h-3.5" />
                 Parks Canada Certified
               </span>
@@ -553,7 +553,7 @@ export default function LiveShuttleTrackingClient({
               <p className="text-sm font-bold text-white">
                 {telemetry.vehicleName}
               </p>
-              <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-300 pt-1">
+              <div className="grid grid-cols-2 gap-2 text-xs text-slate-300 pt-1">
                 <div className="flex items-center gap-1.5">
                   <Wifi className="w-3.5 h-3.5 text-gold-400" />
                   <span>Starlink Wi-Fi Onboard</span>
@@ -584,7 +584,7 @@ export default function LiveShuttleTrackingClient({
               {telemetry.routeWaypoints.map((wp, idx) => (
                 <div key={idx} className="relative flex items-start gap-4 text-xs">
                   <div
-                    className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 z-10 text-[10px] font-bold ${
+                    className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 z-10 text-xs font-bold ${
                       wp.isCurrent
                         ? "bg-gold-500 text-forest-950 ring-4 ring-gold-500/20 animate-pulse"
                         : wp.isPassed
@@ -607,7 +607,7 @@ export default function LiveShuttleTrackingClient({
                       {wp.name}
                     </p>
                     {wp.isCurrent && (
-                      <span className="text-[10px] text-gold-400 font-mono block mt-0.5">
+                      <span className="text-xs text-gold-400 font-mono block mt-0.5">
                         Current Position / Proximity
                       </span>
                     )}
@@ -628,11 +628,11 @@ export default function LiveShuttleTrackingClient({
 
             <div className="grid grid-cols-2 gap-3 text-xs">
               <div className="p-3 rounded-xl bg-forest-950/60 border border-forest-800/40">
-                <span className="text-[10px] text-slate-400 uppercase font-mono block">Lake Louise / Moraine</span>
+                <span className="text-xs text-slate-400 uppercase font-mono block">Lake Louise / Moraine</span>
                 <span className="text-base font-bold text-white">14°C • Crystal Clear</span>
               </div>
               <div className="p-3 rounded-xl bg-forest-950/60 border border-forest-800/40">
-                <span className="text-[10px] text-slate-400 uppercase font-mono block">Alpine Wildlife Activity</span>
+                <span className="text-xs text-slate-400 uppercase font-mono block">Alpine Wildlife Activity</span>
                 <span className="text-base font-bold text-gold-400">High • Elk / Bears</span>
               </div>
             </div>

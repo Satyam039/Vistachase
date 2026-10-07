@@ -500,12 +500,12 @@ export default function MyTripsPage() {
                           Pickup: {b.pickupStop ? b.pickupStop.name : b.pickupCustomText || "Banff Central Dispatch Point"}
                         </span>
                         {b.pickupStop?.address && (
-                          <span className="block text-[11px] text-slate-400">
+                          <span className="block text-xs text-slate-400">
                             {b.pickupStop.address}, {b.pickupStop.town}
                           </span>
                         )}
                         {b.pickupTime && (
-                          <span className="block text-gold-400 text-[11px] font-medium mt-0.5">
+                          <span className="block text-gold-400 text-xs font-medium mt-0.5">
                             Scheduled Pickup: {b.pickupTime}
                           </span>
                         )}

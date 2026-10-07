@@ -70,11 +70,11 @@ export function LiveTrackingTeaser() {
                 <div className="relative h-48 w-full rounded-xl bg-ocean-950/80 border border-white/10 overflow-hidden p-4 flex flex-col justify-between">
                   <div className="flex justify-between items-start text-xs">
                     <div>
-                      <p className="text-[10px] uppercase tracking-wider text-slate-400">PICKUP HOTEL</p>
+                      <p className="text-xs uppercase tracking-wider text-slate-400">PICKUP HOTEL</p>
                       <p className="font-bold text-white">Fairmont Banff Springs</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-[10px] uppercase tracking-wider text-summit-400">ESTIMATED ARRIVAL</p>
+                      <p className="text-xs uppercase tracking-wider text-summit-400">ESTIMATED ARRIVAL</p>
                       <p className="font-bold text-summit-400 font-mono text-base">05:00 AM</p>
                     </div>
                   </div>
@@ -86,9 +86,9 @@ export function LiveTrackingTeaser() {
                     </div>
                     <div className="flex-1">
                       <p className="text-xs font-bold text-white">Mercedes-Benz Sprinter #4</p>
-                      <p className="text-[11px] text-slate-400">Driver: Marc Tremblay • Plate: 7VC-894</p>
+                      <p className="text-xs text-slate-400">Driver: Marc Tremblay • Plate: 7VC-894</p>
                     </div>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                    <span className="px-2 py-0.5 rounded text-xs font-bold uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                       ON THE WAY
                     </span>
                   </div>

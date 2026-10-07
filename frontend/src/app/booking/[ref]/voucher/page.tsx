@@ -70,7 +70,7 @@ export default async function VoucherPage({
         {/* Pass Header */}
         <div className="bg-forest-950 text-white p-6 sm:p-8 flex items-center justify-between border-b border-gold-400/30">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-forest-900 text-gold-300 text-[11px] font-bold uppercase tracking-wider mb-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-forest-900 text-gold-300 text-xs font-bold uppercase tracking-wider mb-2">
               <ShieldCheck className="w-3.5 h-3.5 text-gold-400" />
               <span>Official Commercial Boarding Pass</span>
             </div>
@@ -78,7 +78,7 @@ export default async function VoucherPage({
             <p className="text-xs text-slate-300 mt-1">Parks Canada Commercial Permit Authorized</p>
           </div>
           <div className="text-right">
-            <span className="text-[10px] text-slate-400 uppercase tracking-widest font-mono">STATUS</span>
+            <span className="text-xs text-slate-400 uppercase tracking-widest font-mono">STATUS</span>
             <p className="text-sm font-bold text-emerald-400 flex items-center gap-1 justify-end">
               <CheckCircle2 className="w-4 h-4" />
               <span>CONFIRMED</span>
@@ -104,7 +104,7 @@ export default async function VoucherPage({
                 unoptimized
                 className="rounded-lg mx-auto"
               />
-              <span className="text-[10px] font-mono text-slate-500 mt-1 block">Scan at Vehicle</span>
+              <span className="text-xs font-mono text-slate-500 mt-1 block">Scan at Vehicle</span>
             </div>
           )}
         </div>
@@ -168,7 +168,7 @@ export default async function VoucherPage({
                 <strong>Meeting Point:</strong> {booking.pickupStop.instructions}
               </p>
             )}
-            <p className="text-[11px] text-amber-800 pt-1">
+            <p className="text-xs text-amber-800 pt-1">
               ⚠️ Please arrive at the meeting point <strong>10 minutes prior</strong> ({departure.departureTime}). Vehicles depart promptly to meet Parks Canada checkpoint schedules.
             </p>
           </div>

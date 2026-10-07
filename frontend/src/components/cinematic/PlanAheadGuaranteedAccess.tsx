@@ -15,19 +15,20 @@ const AVATARS = [
 
 export function PlanAheadGuaranteedAccess() {
   return (
-    <section className="py-24 sm:py-32 bg-frost-white border-b border-black/5 overflow-hidden">
+    <section className="py-20 sm:py-28 bg-white overflow-hidden">
       <div className="max-w-7xl mx-auto px-6 sm:px-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
           {/* Left: Atmospheric Image with Floating Guarantee Card */}
           <div className="lg:col-span-6 relative">
             <ScrollReveal delay={150} yOffset={24}>
-              <div className="relative h-[480px] sm:h-[560px] w-full rounded-2xl overflow-hidden shadow-2xl">
+              <div className="relative h-[480px] sm:h-[600px] w-full rounded-[2rem] overflow-hidden" data-reveal="clip">
                 <Image
                   src="/media/site/about-image-1.webp"
                   alt="Red canoes docked at Moraine Lake shoreline"
                   fill
                   sizes="(max-width: 1024px) 100vw, 50vw"
                   className="object-cover"
+                  data-parallax="10"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-ocean-950/70 via-transparent to-transparent" />
               </div>
@@ -39,11 +40,11 @@ export function PlanAheadGuaranteedAccess() {
                     <ShieldCheck className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-xs uppercase font-bold tracking-wider text-ocean-700">
+                    <p className="text-xs uppercase  tracking-wider text-ocean-700">
                       OFFICIAL COMMERCIAL PERMITS
                     </p>
-                    <p className="text-sm font-semibold text-obsidian-900">
-                      100% Guaranteed Lake Access
+                    <p className="text-sm  text-obsidian-900">
+                      Guaranteed Moraine Lake access
                     </p>
                   </div>
                 </div>
@@ -54,14 +55,14 @@ export function PlanAheadGuaranteedAccess() {
           {/* Right: Urgent Problem & Solution Narrative */}
           <div className="lg:col-span-6">
             <ScrollReveal delay={200} yOffset={16}>
-              <div className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold tracking-[0.2em] uppercase text-ocean-600 mb-3">
+              <div className="inline-flex items-center gap-2 text-xs sm:text-sm  tracking-[0.2em] uppercase text-ocean-600 mb-3">
                 <AlertCircle className="w-4 h-4 text-amber-500" />
                 <span>PLAN AHEAD & TRAVEL SMART</span>
               </div>
             </ScrollReveal>
 
             <ScrollReveal delay={300} yOffset={20}>
-              <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-obsidian-900 font-display leading-[1.15]">
+              <h2 className="text-balance text-3xl font-light leading-[1.1] tracking-tight text-obsidian-900 sm:text-4xl lg:text-5xl">
                 Avoid the Moraine Lake Parking Restrictions
               </h2>
             </ScrollReveal>
@@ -81,12 +82,12 @@ export function PlanAheadGuaranteedAccess() {
                 <div className="flex -space-x-2 overflow-hidden">
                   {AVATARS.map((src, i) => (
                     <div key={i} className="inline-block h-9 w-9 rounded-full ring-2 ring-white overflow-hidden relative">
-                      <Image src={src} alt="Traveler" fill className="object-cover" />
+                      <Image src={src} alt="" fill className="object-cover" />
                     </div>
                   ))}
                 </div>
                 <div>
-                  <span className="text-sm font-bold text-obsidian-900">10,000+ Travelers</span>
+                  <span className="text-sm  text-obsidian-900">10,000+ Travelers</span>
                   <p className="text-xs text-slate-500">Safely guided through the Canadian Rockies</p>
                 </div>
               </div>
@@ -97,14 +98,14 @@ export function PlanAheadGuaranteedAccess() {
               <div className="mt-8 flex flex-wrap items-center gap-4">
                 <Link
                   href="/shuttles"
-                  className="inline-flex items-center gap-2 px-7 py-3.5 rounded-md golden-summit-btn text-base font-bold group"
+                  className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full golden-summit-btn text-base  group"
                 >
                   <span>View Guaranteed Shuttles</span>
                   <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                 </Link>
                 <Link
                   href="/private-tours"
-                  className="inline-flex items-center gap-2 px-5 py-3.5 rounded-md text-sm font-semibold text-slate-700 hover:text-ocean-600 transition-colors"
+                  className="inline-flex items-center gap-2 px-5 py-3.5 rounded-md text-sm  text-slate-700 hover:text-ocean-600 transition-colors"
                 >
                   <span>Explore Private SUV Tours</span>
                 </Link>

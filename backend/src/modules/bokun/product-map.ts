@@ -1,5 +1,6 @@
 import productMap from "../../../prisma/catalog/product-map.json";
 import catalog from "../../../prisma/catalog/products.json";
+import extraCatalog from "../../../prisma/catalog/extra-products.json";
 
 /**
  * The product mapping table (prisma/catalog/product-map.json): website page ↔ Bokun
@@ -9,7 +10,7 @@ import catalog from "../../../prisma/catalog/products.json";
 export interface MappedProduct {
   slug: string;
   url: string;
-  category: "SHARED" | "PRIVATE" | "SHUTTLE" | "MULTIDAY";
+  category: "SHARED" | "PRIVATE" | "SHUTTLE" | "MULTIDAY" | "TICKET";
   bookingMode: "BOKUN" | "ENQUIRY";
   bokunId: string | null;
   destination: string;
@@ -20,7 +21,7 @@ export interface MappedProduct {
 }
 
 export const PRODUCT_MAP = productMap.products as MappedProduct[];
-export const CATALOG = catalog as { slug: string; title: string; priceFrom: number | null; priceUnit: string; facts: { label: string; value: string }[] }[];
+export const CATALOG = [...catalog, ...extraCatalog] as { slug: string; title: string; priceFrom: number | null; priceUnit: string; facts: { label: string; value: string }[] }[];
 
 const PENDING = "pending:";
 

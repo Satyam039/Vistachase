@@ -90,7 +90,7 @@ export function VoiceAssistantOrb({
         ) : state === "thinking" ? (
           <div className="flex flex-col items-center gap-1">
             <Loader2 className={`${iconSizes} animate-spin text-cyan-300`} />
-            <span className="text-[9px] font-mono tracking-widest text-cyan-200 uppercase font-bold">
+            <span className="text-xs font-mono tracking-widest text-cyan-200 uppercase font-bold">
               AI
             </span>
           </div>

@@ -28,12 +28,13 @@ Astryx setup (already done, don't redo):
   `forest-*` / `gold-*` names are aliases of the brand scales.
 - Responsive scale lives in the theme's `adaptations`, one rule per Astryx width tier
   (body px / H1 px / page radius / page margin), measured in the browser except the 768–1023 row:
-    375 (<640)       14 / 21 / 12px / 16px
-    750 (640–767)    14 / 24 / 16px / 24px
-    768–1023         14 / 27 / 20px / 32px   (type same as root)
-    1200 (1024–1279) 14 / 27 / 24px / 40px   ← root values
-    1440 (1280–1535) 15 / 29 / 24px / 48px
-    1920 (>=1536)    16 / 31 / 32px / 64px
+    375 (<640)       15 / 23 / 12px / 16px
+    750 (640–767)    15 / 26 / 16px / 24px
+    768–1023         15 / 29 / 20px / 32px   (type same as root)
+    1200 (1024–1279) 15 / 29 / 24px / 40px   ← root values
+    1440 (1280–1535) 16 / 31 / 24px / 48px
+    1920 (>=1536)    17 / 33 / 32px / 64px
+  (body px raised one step on 2026-10-07; H1 px are the scale's computed heading-1 sizes)
   Touch screens (any width) get 36/40/44px controls. Spacing, color, elevation and motion are
   intentionally fixed at every width (Astryx guideline); adapt page regions with Layout/AppShell
   (`npm run astryx -- docs layout`, "Responsive contract"), not by scaling tokens.
@@ -55,9 +56,24 @@ Astryx setup (already done, don't redo):
   StyleX app layers sit after astryx-theme; Tailwind utilities stay unlayered on top. Babel builds are
   slower than SWC (about 3x). `package.json` browserslist pins Next 15's default modern targets so Babel
   doesn't down-compile async code.
-- Site frame: `src/components/layout/SiteFrame.tsx` (from the shell-top-nav template) + `SiteFooter.tsx`.
-  Below 1024px the bar is only logo + icon-only AI Concierge + menu; everything else, including the
-  Book tours action, lives in the MobileNav drawer (explicit `mobileNav.content`, closes on route change).
+- Site frame: `src/components/layout/SiteFrame.tsx` + `SiteFooter.tsx`, laid out like Bentley's: "Menu"
+  button on the left at every width (`SiteMenu.tsx`: full-height Astryx Dialog from the left, large light
+  section names, the hovered section's links beside them, sections expand in place on phones), the brand
+  absolutely centred in the bar (not TopNav `centerContent`: Astryx hides that slot on narrow screens and
+  adds its own "Open navigation" toggle), actions on the right. SiteFrame publishes `--vc-header-h` for
+  sticky in-page bars. Menu sections live in `MENU_SECTIONS`.
+- Type reads light and large: no bold anywhere (Tailwind bold/semibold/extrabold/black and the Astryx
+  `--font-weight-semibold|bold` tokens are 500), Tailwind text sizes one step up (xs 13 … 7xl 76px), Astryx
+  base 15px (tiers 15/15/15/15/16/17). Don't add `text-[10px]`-style tiny sizes; `text-xs` is the minimum.
+- Services (`src/lib/services.ts`): the five services (shared, private, shuttles, multi-day, Banff activity
+  tickets) with "why choose" reasons and background clip/photo. Used by the home hero (`ServicesHero`:
+  rotating, pausable, accessible carousel with each service's tours, ratings and prices), the category
+  pages (`TourGallery service=`) and the Experiences section.
+- Prices: `src/lib/pricing.ts` + `components/pricing/PriceTag.tsx`. The struck "original" price is a fixed
+  markup over the offer price (`ORIGINAL_PRICE_MARKUP`, Vista Chase's choice; 0 turns it off). Products
+  without a price (basePrice 0, e.g. tickets before Bokun) show "Price on request". Pure tour helpers
+  (fromPrice, labels) live in `src/lib/tours.ts` so server pages can call them; TourCard re-exports them.
+- Reviews: show stars/counts only when `reviewCount > 0`; say "1,000+" only when the count is that high.
 - `/book` checkout: `src/components/booking/BookingCheckoutClient.tsx` (from the checkout-wizard template).
   Steps Party → Contact → Pickup & extras → Review & pay; continuing past Contact places the 10-minute
   seat hold; a hold passed in as `?holdToken=` (AI concierge) is adopted with its real remaining time.
@@ -65,6 +81,17 @@ Astryx setup (already done, don't redo):
   `/search` uses `TourSearch` (library template: in-place filtering synced to the URL, grouped by category,
   sort, empty state); `/shared-tours` and `/private-tours` use `TourGallery` (product-gallery template).
   Seat counts come from the backend, which ignores expired holds, so they are live everywhere.
+- Product page body (`TourSections.tsx`), Viator-style: sticky "On this page" bar (Overview, What's included,
+  What to expect, Meeting & pickup, Additional info, Cancellation policy, FAQ, Reviews) over stacked sections
+  built from `tour.tabs`; reviews load from `/api/reviews?tourId=`. The header carries the free-cancellation
+  badge and "good to know" chips (only true ones), and phones get a fixed booking bar that publishes
+  `--vc-bottom-bar-h` so the floating voice button sits above it.
+- Banff activity tickets: category `TICKET`, `/banff-activity-tickets`; content in
+  `backend/prisma/catalog/extra-products.json` (not on the live site), ENQUIRY with prices on request until
+  their Bokun products exist.
+- Partner program: `/partners` (apply), `/partners/login`, `/partners/dashboard` (link builder, totals,
+  referred bookings without guest details), `/admin/partners` (approve/suspend). `src/middleware.ts` stores
+  `?ref=CODE` in the `vc_ref` cookie for 30 days; the backend credits bookings to ACTIVE partners only.
 - Tour detail pages: every product is served by the top-level `src/app/[slug]/page.tsx` at its live
   vistachase.com URL (static routes win; unknown slugs 404; `/tours/<slug>` 308-redirects there). Metadata
   comes from the tour's imported `metaTitle` / `metaDescription`. They render `TourDetailView` (product-detail
@@ -101,6 +128,20 @@ behind the sticky header, traps). Report in `a11y-report/summary.md`. Keep it at
   fields, errors in `role="alert"`. Icon-only buttons need `aria-label`.
 - Motion: Tailwind ping/pulse/bounce are finite (tailwind.config.ts); reduced motion turns animation off
   (globals.css).
+- Scroll motion system (`src/components/motion`, CSS in globals.css), opt-in by data attribute so server
+  components can use it: `data-reveal[="fade"|"scale"|"left"|"right"|"clip"]`, `data-reveal-delay="ms"`,
+  `data-stagger` (children in turn), `data-parallax="6|10|16"` (media inside an overflow-hidden frame),
+  `data-count-to` (+ `-prefix/-suffix/-decimals`; put the final value in the markup), `data-scroll-fade`
+  (hero content fading out). `MotionRuntime` (mounted in SiteFrame) arms it; nothing is hidden without JS
+  or with reduced motion. The revealed flag is the `data-shown` attribute, not a class, because React
+  rewrites className on re-render. Parallax/progress use CSS scroll timelines with a JS fallback.
+  Components: `Rail` (horizontal snap rail with arrow buttons), `StickyStory` (pinned media + scrolling
+  chapters). Don't reintroduce `ScrollReveal` wrappers in new code.
+- Page structure follows the OTA research (GetYourGuide, Viator, Expedia, Civitatis): home = hero →
+  HeroSearch → TrustRow → TopExperiences rail → categories bento → destinations StickyStory → proof →
+  CTA; category = breadcrumb hero → stats strip → sticky sort bar → grid → TrustRow → other ways rail;
+  product = breadcrumb/title/rating → ProductGallery mosaic → key facts → TourSections + sticky booking →
+  "You might also like" rail. Ratings and counts are always real catalog values; cancellation is 24 hours.
 - Video: clips live in `backend/media/videos` (MP4 + `-poster.webp`, `-1080.mp4` for hero clips) and come
   from the API: `tour.videos` (clips of the places a tour visits) and `destination.heroVideo`. Play them only
   through `cinematic/AmbientVideo` (`src`, `srcHd`, `poster`): it loads when on screen, pauses off screen, has

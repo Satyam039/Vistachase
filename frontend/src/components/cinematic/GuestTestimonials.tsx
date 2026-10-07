@@ -1,8 +1,5 @@
-"use client";
-
-import React, { useState } from "react";
-import { Star, Quote, ChevronLeft, ChevronRight, Award } from "lucide-react";
-import { ScrollReveal } from "./ScrollReveal";
+import { Award, Quote, Star } from "lucide-react";
+import { Rail } from "@/components/motion/Rail";
 
 interface Testimonial {
   author: string;
@@ -50,91 +47,71 @@ const TESTIMONIALS: Testimonial[] = [
   },
 ];
 
+const TRIPADVISOR_URL =
+  "https://www.tripadvisor.ca/Attraction_Review-g154911-d26518659-Reviews-Vista_Chase-Banff_Banff_National_Park_Alberta.html";
+
+// Review wall (TripAdvisor / Civitatis pattern): the score summary on the left, guest reviews in
+// a swipeable rail beside it, each with trip, source and rating.
 export function GuestTestimonials() {
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  const prevSlide = () => {
-    setActiveIndex((prev) => (prev === 0 ? TESTIMONIALS.length - 1 : prev - 1));
-  };
-
-  const nextSlide = () => {
-    setActiveIndex((prev) => (prev === TESTIMONIALS.length - 1 ? 0 : prev + 1));
-  };
-
-  const active = TESTIMONIALS[activeIndex];
-
   return (
-    <section className="py-24 sm:py-32 bg-ocean-950 text-white relative overflow-hidden">
-      <div className="max-w-6xl mx-auto px-6 sm:px-12 relative z-10">
-        {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <ScrollReveal delay={100} yOffset={16}>
-            <span className="text-xs sm:text-sm font-semibold tracking-[0.25em] uppercase text-summit-400">
-              TRAVELER PERSPECTIVES
+    <section aria-labelledby="reviews-heading" className="overflow-hidden bg-ocean-950 py-20 text-white sm:py-28">
+      <div className="mx-auto grid max-w-7xl gap-12 px-page lg:grid-cols-[20rem_minmax(0,1fr)] lg:gap-16">
+        <div data-reveal>
+          <p className="mb-3 text-sm uppercase tracking-[0.22em] text-summit-300">Guest reviews</p>
+          <h2 id="reviews-heading" className="text-balance text-3xl font-light leading-[1.1] tracking-tight text-white sm:text-4xl">
+            Stories from the Rockies
+          </h2>
+          <div className="mt-8 flex items-end gap-4">
+            <span className="text-7xl font-light leading-none tabular-nums">5.0</span>
+            <span className="pb-1.5">
+              <span className="flex gap-0.5" aria-hidden="true">
+                {[0, 1, 2, 3, 4].map((i) => (
+                  <Star key={i} className="h-4 w-4 fill-summit-500 text-summit-500" />
+                ))}
+              </span>
+              <span className="mt-1 block text-sm text-slate-300">
+                <span className="sr-only">out of 5, </span>from 1,000+ reviews
+              </span>
             </span>
-          </ScrollReveal>
-          <ScrollReveal delay={200} yOffset={20}>
-            <h2 className="mt-2 text-3xl sm:text-5xl font-bold font-display text-white">
-              Genuine Stories from the Rockies
-            </h2>
-          </ScrollReveal>
-          <ScrollReveal delay={300} yOffset={16}>
-            <p className="mt-3 text-slate-300 text-sm sm:text-base font-light">
-              Over 800+ five-star verified guest reflections on TripAdvisor and Google.
-            </p>
-          </ScrollReveal>
+          </div>
+          <p className="mt-6 inline-flex items-center gap-2 text-sm text-slate-300">
+            <Award className="h-4 w-4 text-summit-400" aria-hidden="true" />
+            Travellers&rsquo; Choice Best of the Best 2025
+          </p>
+          <a
+            href={TRIPADVISOR_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-8 inline-flex items-center gap-2 border-b border-summit-500 pb-1 text-base"
+          >
+            Read all reviews on TripAdvisor
+            <span className="sr-only">(opens in a new tab)</span>
+          </a>
         </div>
 
-        {/* Featured Testimonial Card */}
-        <ScrollReveal delay={350} yOffset={24}>
-          <div className="relative p-8 sm:p-14 rounded-2xl glass-panel-alpine border border-white/10 shadow-2xl">
-            <Quote className="w-12 h-12 text-summit-500/20 absolute top-8 right-8" />
-
-            <div className="flex items-center gap-1.5 text-summit-400 mb-6">
-              {[...Array(active.rating)].map((_, i) => (
-                <Star key={i} className="w-5 h-5 fill-summit-500 text-summit-500" />
-              ))}
-            </div>
-
-            <p className="text-xl sm:text-2xl md:text-3xl font-light text-slate-100 leading-relaxed italic font-serif">
-              &ldquo;{active.body}&rdquo;
-            </p>
-
-            <div className="mt-8 pt-6 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h3 className="text-lg font-bold text-white font-display">
-                  {active.author}
-                </h3>
-                <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-400 mt-0.5">
-                  <span className="text-summit-300 font-medium">{active.tripType}</span>
-                  <span>•</span>
-                  <span>{active.source}</span>
-                </div>
+        <Rail label="Guest reviews" tone="dark" itemClassName="w-[85%] sm:w-[60%] lg:w-[48%]">
+          {TESTIMONIALS.map((t) => (
+            <figure key={t.author} className="flex h-full flex-col rounded-[1.75rem] border border-white/10 bg-white/[0.05] p-7 sm:p-8">
+              <div className="flex items-center justify-between">
+                <span className="flex gap-0.5" role="img" aria-label={`${t.rating} out of 5 stars`}>
+                  {Array.from({ length: t.rating }).map((_, i) => (
+                    <Star key={i} className="h-4 w-4 fill-summit-500 text-summit-500" aria-hidden="true" />
+                  ))}
+                </span>
+                <Quote className="h-8 w-8 text-white/15" aria-hidden="true" />
               </div>
-
-              {/* Slider Arrows */}
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={prevSlide}
-                  aria-label="Previous testimonial"
-                  className="w-11 h-11 rounded-full border border-white/20 hover:border-summit-500 hover:bg-summit-500 hover:text-obsidian-900 flex items-center justify-center transition-colors text-white"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <div className="text-xs font-semibold text-slate-400 px-2">
-                  {activeIndex + 1} / {TESTIMONIALS.length}
-                </div>
-                <button
-                  onClick={nextSlide}
-                  aria-label="Next testimonial"
-                  className="w-11 h-11 rounded-full border border-white/20 hover:border-summit-500 hover:bg-summit-500 hover:text-obsidian-900 flex items-center justify-center transition-colors text-white"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </ScrollReveal>
+              <blockquote className="mt-5 flex-1 text-lg font-light leading-relaxed text-slate-100">
+                <p className="text-slate-100">&ldquo;{t.body}&rdquo;</p>
+              </blockquote>
+              <figcaption className="mt-6 border-t border-white/10 pt-5">
+                <span className="block text-base text-white">{t.author}</span>
+                <span className="mt-0.5 block text-sm text-slate-300">
+                  {t.tripType} · {t.source}
+                </span>
+              </figcaption>
+            </figure>
+          ))}
+        </Rail>
       </div>
     </section>
   );
