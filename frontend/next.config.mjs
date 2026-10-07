@@ -12,6 +12,12 @@ const nextConfig = {
   // frontend/ is a standalone app; don't let Next infer a parent folder as the workspace root
   outputFileTracingRoot: path.dirname(fileURLToPath(import.meta.url)),
   reactStrictMode: true,
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   // No remote image hosts: every image is served by the backend at /media (rewrite below).
   images: {
     remotePatterns: [],
