@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 
-export type UserRole = "ADMIN" | "OPERATOR" | "DISPATCHER" | "CUSTOMER";
+export type UserRole = "ADMIN" | "OPERATOR" | "DISPATCHER" | "CUSTOMER" | "AFFILIATE";
 
 export interface TokenPayload {
   userId: string;

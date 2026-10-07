@@ -268,14 +268,14 @@ export default function AdminDashboardPage() {
                       </td>
                       <td className="py-3.5 px-4">
                         <div className="text-white text-xs font-semibold">{b.customerName}</div>
-                        <div className="text-[11px] text-slate-400">{b.customerEmail}</div>
+                        <div className="text-xs text-slate-400">{b.customerEmail}</div>
                       </td>
                       <td className="py-3.5 px-4 text-xs text-slate-200">
                         {b.tourDeparture?.tour?.title || b.tourDeparture?.shuttleRoute?.name || "Rockies Tour"}
                       </td>
                       <td className="py-3.5 px-4 text-xs">
                         <div>{b.tourDeparture?.date}</div>
-                        <div className="text-[11px] text-slate-400">{b.tourDeparture?.departureTime || "08:00 AM"}</div>
+                        <div className="text-xs text-slate-400">{b.tourDeparture?.departureTime || "08:00 AM"}</div>
                       </td>
                       <td className="py-3.5 px-4 text-xs font-mono">{b.totalSeats}</td>
                       <td className="py-3.5 px-4 text-xs font-mono text-white">
@@ -283,7 +283,7 @@ export default function AdminDashboardPage() {
                       </td>
                       <td className="py-3.5 px-4">
                         <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          className={`text-xs font-bold px-2 py-0.5 rounded-full ${
                             b.status === "CONFIRMED"
                               ? "bg-emerald-950 text-emerald-400 border border-emerald-800"
                               : b.status === "CANCELLED"

@@ -47,6 +47,24 @@ describe("Phase 2: URL Preservation & Customer Experience", () => {
     }
   });
 
+  it("adds the four Banff activity tickets as enquiry products with prices on request", async () => {
+    const tickets = PRODUCT_MAP.filter((p) => p.category === "TICKET");
+    expect(tickets.map((p) => p.slug).sort()).toEqual([
+      "banff-gondola-tickets",
+      "banff-upper-hot-springs-tickets",
+      "columbia-icefield-skywalk-tickets",
+      "lake-minnewanka-cruise-tickets",
+    ]);
+    for (const t of tickets) {
+      const tour = await getTourBySlug(t.slug);
+      expect(tour?.category, t.slug).toBe("TICKET");
+      expect(tour?.bookingMode, t.slug).toBe("ENQUIRY");
+      expect(tour?.basePrice, t.slug).toBe(0); // on request until Bokun prices exist
+      expect(tour?.reviewCount, t.slug).toBe(0); // no invented reviews
+      expect(tour?.featuredImage).toMatch(/^\/media\//);
+    }
+  });
+
   it("takes booking mode and Bokun ID from the product mapping table", async () => {
     for (const product of PRODUCT_MAP) {
       const tour = await getTourBySlug(product.slug);
@@ -76,7 +94,8 @@ describe("Phase 2: URL Preservation & Customer Experience", () => {
   });
 
   it("maps every live product once, and serves every tour image from backend media", async () => {
-    expect(PRODUCT_MAP.map((p) => p.slug).sort()).toEqual([...PRESERVED_SLUGS].sort());
+    const live = PRODUCT_MAP.filter((p) => p.category !== "TICKET").map((p) => p.slug);
+    expect(live.sort()).toEqual([...PRESERVED_SLUGS].sort());
     const media = new Set(getMediaAssets().map((a) => a.src));
     for (const slug of PRESERVED_SLUGS) {
       const tour = await getTourBySlug(slug);

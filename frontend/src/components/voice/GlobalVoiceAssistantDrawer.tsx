@@ -222,7 +222,7 @@ export function GlobalVoiceAssistantDrawer() {
             stopSpeaking();
           }}
           aria-label="Open AI Voice Assistant"
-          className="fixed bottom-6 right-6 z-40 p-3.5 rounded-full bg-gradient-to-r from-obsidian-950 via-forest-950 to-obsidian-900 border-2 border-summit-500/80 text-summit-400 hover:text-summit-300 shadow-2xl hover:scale-105 hover:shadow-glow transition-all duration-300 flex items-center gap-2.5 group"
+          className="fixed bottom-[calc(1.5rem+var(--vc-bottom-bar-h,0px))] right-6 z-40 p-3.5 rounded-full bg-gradient-to-r from-obsidian-950 via-forest-950 to-obsidian-900 border-2 border-summit-500/80 text-summit-400 hover:text-summit-300 shadow-2xl hover:scale-105 hover:shadow-glow transition-all duration-300 flex items-center gap-2.5 group"
         >
           <div className="relative flex items-center justify-center">
             <span className="absolute -inset-1 rounded-full bg-summit-500/30 animate-ping group-hover:bg-summit-500/50" />
@@ -253,11 +253,11 @@ export function GlobalVoiceAssistantDrawer() {
                 <div>
                   <h2 className="text-xs font-bold text-white flex items-center gap-1.5 uppercase tracking-wider">
                     <span>AI Voice Concierge</span>
-                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-mono">
+                    <span className="text-xs px-1.5 py-0.2 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-mono">
                       LIVE
                     </span>
                   </h2>
-                  <p className="text-[10px] text-slate-400">Lake Louise, Moraine Lake &amp; Banff</p>
+                  <p className="text-xs text-slate-400">Lake Louise, Moraine Lake &amp; Banff</p>
                 </div>
               </div>
 
@@ -305,7 +305,7 @@ export function GlobalVoiceAssistantDrawer() {
                 onToggle={toggleListening}
                 size="md"
               />
-              <div className="text-[11px] text-slate-300 mt-2 font-medium" style={{ color: "#cbd5e1" }}>
+              <div className="text-xs text-slate-300 mt-2 font-medium" style={{ color: "#cbd5e1" }}>
                 {voiceState === "listening"
                   ? "Listening... Tap orb to submit or pause"
                   : voiceState === "thinking"
@@ -393,7 +393,7 @@ export function GlobalVoiceAssistantDrawer() {
                   <Send className="w-3.5 h-3.5" />
                 </button>
               </form>
-              <div className="flex items-center justify-between mt-2 text-[9px] text-slate-400 px-1">
+              <div className="flex items-center justify-between mt-2 text-xs text-slate-400 px-1">
                 <span className="flex items-center gap-1">
                   <ShieldCheck className="w-3 h-3 text-emerald-400" />
                   <span>Card security enforced</span>

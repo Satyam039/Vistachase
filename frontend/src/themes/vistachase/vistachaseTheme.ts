@@ -21,10 +21,12 @@ export const vistachaseTheme = defineTheme({
   name: 'vistachase',
   extends: stoneTheme,
 
-  // typography is a scale input, so extends replaces it: keep Stone's scale and set every
-  // family to the Vista Chase typeface, IBM Plex Sans (self-hosted, src/app/fonts.css).
+  // typography is a scale input, so extends replaces it. Every family is the Vista Chase
+  // typeface, IBM Plex Sans (self-hosted, src/app/fonts.css). The site reads light and large:
+  // base 15px (one step above Stone; the width tiers in stoneTheme.ts go 15/15/15/15/16/17)
+  // and no bold anywhere (bold/semibold tokens are medium, below).
   typography: {
-    scale: {base: 14, ratio: 1.25},
+    scale: {base: 15, ratio: 1.25},
     body: {
       family: 'var(--font-plex-sans)',
       fallbacks: '"IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
@@ -32,7 +34,7 @@ export const vistachaseTheme = defineTheme({
     heading: {
       family: 'var(--font-plex-sans)',
       fallbacks: '"IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-      weights: {3: 'bold', 4: 'bold'},
+      weights: {3: 'medium', 4: 'medium'},
     },
     code: {
       family: 'var(--font-plex-mono)',
@@ -47,6 +49,9 @@ export const vistachaseTheme = defineTheme({
     '--color-text-accent': ['#226d75', '#7fd3db'],
     '--color-icon-accent': ['#3a9ca6', '#6cc9d2'], // brand teal; icons need 3:1
     '--color-on-accent': ['#ffffff', '#0e2a2d'],
+    // No bold type: emphasis comes from size, not weight.
+    '--font-weight-semibold': '500',
+    '--font-weight-bold': '500',
   },
 
   components: {

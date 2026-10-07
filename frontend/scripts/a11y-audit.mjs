@@ -52,6 +52,10 @@ async function routes() {
     "/shared-tours",
     "/private-tours",
     "/shuttles",
+    "/banff-activity-tickets",
+    "/partners",
+    "/partners/login",
+    "/partners/dashboard",
     "/search",
     "/destinations",
     ...destinations.map((d) => `/destinations/${d.slug}`),
@@ -69,6 +73,7 @@ async function routes() {
     "/admin",
     "/admin/dispatch",
     "/admin/operations",
+    "/admin/partners",
     "/this-page-does-not-exist",
   ];
 }

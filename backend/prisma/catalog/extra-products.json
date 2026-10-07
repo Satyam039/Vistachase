@@ -1,0 +1,600 @@
+[
+ {
+  "slug": "banff-gondola-tickets",
+  "category": "TICKET",
+  "destination": "banff-national-park",
+  "bokunId": null,
+  "bookingMode": "ENQUIRY",
+  "title": "Banff Gondola Tickets",
+  "metaTitle": "Banff Gondola Tickets | Sulphur Mountain Summit Views – Vista Chase",
+  "metaDescription": "Ride the Banff Gondola to the top of Sulphur Mountain for 360° views over six mountain ranges. Add tickets to your Vista Chase tour or book them on their own.",
+  "rating": null,
+  "reviewCountLabel": null,
+  "facts": [
+   {
+    "label": "Location",
+    "value": "Sulphur Mountain, Banff"
+   },
+   {
+    "label": "Duration",
+    "value": "Allow 2–3 hours"
+   },
+   {
+    "label": "Summit",
+    "value": "2,281 m"
+   },
+   {
+    "label": "Season",
+    "value": "Year round"
+   }
+  ],
+  "priceFrom": null,
+  "priceUnit": "person",
+  "overview": {
+   "heading": "Banff from above",
+   "paragraphs": [
+    "The Banff Gondola carries you up Sulphur Mountain to a summit with views across the Bow Valley, Banff town and six mountain ranges. At the top, the boardwalk leads to Sanson's Peak and its historic weather station, and the summit building has viewing decks, exhibits and places to eat."
+   ]
+  },
+  "includes": [
+   "Return gondola ride",
+   "Access to the summit boardwalk and viewing decks",
+   "Help choosing a time slot that fits your tour day"
+  ],
+  "excludes": [
+   "Meals at the summit",
+   "Transport to the gondola base, unless added to a Vista Chase tour"
+  ],
+  "whyTravelersLove": null,
+  "highlights": [],
+  "stops": [
+   {
+    "name": "Sulphur Mountain summit",
+    "text": "Viewing decks over the Bow Valley, Mount Rundle and the town of Banff."
+   },
+   {
+    "name": "Sanson's Peak boardwalk",
+    "text": "A short boardwalk along the ridge to the historic weather observatory."
+   }
+  ],
+  "itinerary": null,
+  "seasonal": [],
+  "tabs": [
+   {
+    "label": "Overview",
+    "sections": [
+     {
+      "heading": "Banff from above",
+      "body": [
+       "The Banff Gondola carries you up Sulphur Mountain to a summit with views across the Bow Valley, Banff town and six mountain ranges. At the top, the boardwalk leads to Sanson's Peak and its historic weather station, and the summit building has viewing decks, exhibits and places to eat."
+      ],
+      "items": [],
+      "steps": [],
+      "stops": [],
+      "note": null
+     },
+     {
+      "heading": "Price includes",
+      "body": [],
+      "items": [
+       "Return gondola ride",
+       "Access to the summit boardwalk and viewing decks",
+       "Help choosing a time slot that fits your tour day"
+      ],
+      "steps": [],
+      "stops": [],
+      "note": null
+     },
+     {
+      "heading": "Price excludes",
+      "body": [],
+      "items": [
+       "Meals at the summit",
+       "Transport to the gondola base, unless added to a Vista Chase tour"
+      ],
+      "steps": [],
+      "stops": [],
+      "note": null
+     }
+    ]
+   },
+   {
+    "label": "Inclusions",
+    "sections": [
+     {
+      "heading": "What you'll see",
+      "body": [],
+      "items": [],
+      "steps": [],
+      "stops": [
+       {
+        "name": "Sulphur Mountain summit",
+        "text": "Viewing decks over the Bow Valley, Mount Rundle and the town of Banff."
+       },
+       {
+        "name": "Sanson's Peak boardwalk",
+        "text": "A short boardwalk along the ridge to the historic weather observatory."
+       }
+      ],
+      "note": null
+     }
+    ]
+   },
+   {
+    "label": "Seasonal",
+    "sections": [
+     {
+      "heading": "Seasons and times",
+      "body": [
+       "Seasons, opening hours and sailing or ride times are set by the operator and change through the year. Tell us your date and we confirm availability and the best time slot around your plans.",
+       "Free cancellation up to 24 hours before your date for a full refund."
+      ],
+      "items": [],
+      "steps": [],
+      "stops": [],
+      "note": null
+     }
+    ]
+   }
+  ],
+  "faqs": [
+   {
+    "question": "How do I get tickets?",
+    "answer": "Send a request with your date and party size. We confirm availability and price, and can add the tickets to any Vista Chase tour on the same day."
+   },
+   {
+    "question": "What is the cancellation policy?",
+    "answer": "Free cancellation up to 24 hours before your date for a full refund."
+   }
+  ],
+  "crossSells": [],
+  "images": [
+   "/media/site/banff-gondola-hike.webp"
+  ],
+  "_note": "Not on the live vistachase.com site: written for the new site's Banff activity tickets. Prices are on request until the Bokun products exist."
+ },
+ {
+  "slug": "lake-minnewanka-cruise-tickets",
+  "category": "TICKET",
+  "destination": "banff-national-park",
+  "bokunId": null,
+  "bookingMode": "ENQUIRY",
+  "title": "Lake Minnewanka Cruise Tickets",
+  "metaTitle": "Lake Minnewanka Cruise Tickets | Banff's Largest Lake – Vista Chase",
+  "metaDescription": "Cruise Lake Minnewanka, the largest lake in Banff National Park, with live commentary on its history and wildlife. Add tickets to your Vista Chase tour.",
+  "rating": null,
+  "reviewCountLabel": null,
+  "facts": [
+   {
+    "label": "Location",
+    "value": "Lake Minnewanka, near Banff"
+   },
+   {
+    "label": "Duration",
+    "value": "About 1 hour"
+   },
+   {
+    "label": "Lake",
+    "value": "Largest in Banff National Park"
+   },
+   {
+    "label": "Season",
+    "value": "Summer season (dates vary)"
+   }
+  ],
+  "priceFrom": null,
+  "priceUnit": "person",
+  "overview": {
+   "heading": "Out on the Lake of the Spirits",
+   "paragraphs": [
+    "Lake Minnewanka, “Lake of the Spirits” in Stoney Nakoda, stretches deep between the Palliser and Fairholme ranges. The cruise heads out toward Devil's Gap with commentary on the lake's history, its drowned townsite and the wildlife along the shore."
+   ]
+  },
+  "includes": [
+   "Lake cruise with live commentary",
+   "Help choosing a sailing that fits your tour day"
+  ],
+  "excludes": [
+   "Transport to the lake, unless added to a Vista Chase tour",
+   "Food and drinks"
+  ],
+  "whyTravelersLove": null,
+  "highlights": [],
+  "stops": [
+   {
+    "name": "Devil's Gap",
+    "text": "The narrows at the far end of the lake, framed by steep peaks."
+   },
+   {
+    "name": "Lake Minnewanka marina",
+    "text": "Boarding point, a short drive from Banff."
+   }
+  ],
+  "itinerary": null,
+  "seasonal": [],
+  "tabs": [
+   {
+    "label": "Overview",
+    "sections": [
+     {
+      "heading": "Out on the Lake of the Spirits",
+      "body": [
+       "Lake Minnewanka, “Lake of the Spirits” in Stoney Nakoda, stretches deep between the Palliser and Fairholme ranges. The cruise heads out toward Devil's Gap with commentary on the lake's history, its drowned townsite and the wildlife along the shore."
+      ],
+      "items": [],
+      "steps": [],
+      "stops": [],
+      "note": null
+     },
+     {
+      "heading": "Price includes",
+      "body": [],
+      "items": [
+       "Lake cruise with live commentary",
+       "Help choosing a sailing that fits your tour day"
+      ],
+      "steps": [],
+      "stops": [],
+      "note": null
+     },
+     {
+      "heading": "Price excludes",
+      "body": [],
+      "items": [
+       "Transport to the lake, unless added to a Vista Chase tour",
+       "Food and drinks"
+      ],
+      "steps": [],
+      "stops": [],
+      "note": null
+     }
+    ]
+   },
+   {
+    "label": "Inclusions",
+    "sections": [
+     {
+      "heading": "What you'll see",
+      "body": [],
+      "items": [],
+      "steps": [],
+      "stops": [
+       {
+        "name": "Devil's Gap",
+        "text": "The narrows at the far end of the lake, framed by steep peaks."
+       },
+       {
+        "name": "Lake Minnewanka marina",
+        "text": "Boarding point, a short drive from Banff."
+       }
+      ],
+      "note": null
+     }
+    ]
+   },
+   {
+    "label": "Seasonal",
+    "sections": [
+     {
+      "heading": "Seasons and times",
+      "body": [
+       "Seasons, opening hours and sailing or ride times are set by the operator and change through the year. Tell us your date and we confirm availability and the best time slot around your plans.",
+       "Free cancellation up to 24 hours before your date for a full refund."
+      ],
+      "items": [],
+      "steps": [],
+      "stops": [],
+      "note": null
+     }
+    ]
+   }
+  ],
+  "faqs": [
+   {
+    "question": "How do I get tickets?",
+    "answer": "Send a request with your date and party size. We confirm availability and price, and can add the tickets to any Vista Chase tour on the same day."
+   },
+   {
+    "question": "What is the cancellation policy?",
+    "answer": "Free cancellation up to 24 hours before your date for a full refund."
+   }
+  ],
+  "crossSells": [],
+  "images": [
+   "/media/site/lake-minnewanka-icy.webp"
+  ],
+  "_note": "Not on the live vistachase.com site: written for the new site's Banff activity tickets. Prices are on request until the Bokun products exist."
+ },
+ {
+  "slug": "columbia-icefield-skywalk-tickets",
+  "category": "TICKET",
+  "destination": "jasper-national-park",
+  "bokunId": null,
+  "bookingMode": "ENQUIRY",
+  "title": "Columbia Icefield Skywalk Tickets",
+  "metaTitle": "Columbia Icefield Skywalk Tickets | Glass Walkway on the Icefields Parkway – Vista Chase",
+  "metaDescription": "Walk out on the glass-floored Columbia Icefield Skywalk above the Sunwapta Valley on the Icefields Parkway. Add tickets to your Icefields Parkway tour.",
+  "rating": null,
+  "reviewCountLabel": null,
+  "facts": [
+   {
+    "label": "Location",
+    "value": "Icefields Parkway, Jasper National Park"
+   },
+   {
+    "label": "Duration",
+    "value": "Allow about 1 hour"
+   },
+   {
+    "label": "Nearby",
+    "value": "Athabasca Glacier"
+   },
+   {
+    "label": "Season",
+    "value": "Spring to fall (dates vary)"
+   }
+  ],
+  "priceFrom": null,
+  "priceUnit": "person",
+  "overview": {
+   "heading": "A glass floor above the valley",
+   "paragraphs": [
+    "The Skywalk is a cliff-edge walkway with a glass floor, high above the Sunwapta Valley near the Columbia Icefield. It pairs naturally with the Athabasca Glacier and our Icefields Parkway tours, and can be combined with the Ice Explorer ride onto the glacier."
+   ]
+  },
+  "includes": [
+   "Skywalk entry",
+   "Help pairing it with an Icefields Parkway tour"
+  ],
+  "excludes": [
+   "Ice Explorer glacier ride (ask us to add it)",
+   "Meals"
+  ],
+  "whyTravelersLove": null,
+  "highlights": [],
+  "stops": [
+   {
+    "name": "Skywalk glass platform",
+    "text": "The walkway's glass-floored viewing platform above the Sunwapta Valley."
+   },
+   {
+    "name": "Athabasca Glacier",
+    "text": "The glacier's toe, visible from the Icefield Discovery Centre across the highway."
+   }
+  ],
+  "itinerary": null,
+  "seasonal": [],
+  "tabs": [
+   {
+    "label": "Overview",
+    "sections": [
+     {
+      "heading": "A glass floor above the valley",
+      "body": [
+       "The Skywalk is a cliff-edge walkway with a glass floor, high above the Sunwapta Valley near the Columbia Icefield. It pairs naturally with the Athabasca Glacier and our Icefields Parkway tours, and can be combined with the Ice Explorer ride onto the glacier."
+      ],
+      "items": [],
+      "steps": [],
+      "stops": [],
+      "note": null
+     },
+     {
+      "heading": "Price includes",
+      "body": [],
+      "items": [
+       "Skywalk entry",
+       "Help pairing it with an Icefields Parkway tour"
+      ],
+      "steps": [],
+      "stops": [],
+      "note": null
+     },
+     {
+      "heading": "Price excludes",
+      "body": [],
+      "items": [
+       "Ice Explorer glacier ride (ask us to add it)",
+       "Meals"
+      ],
+      "steps": [],
+      "stops": [],
+      "note": null
+     }
+    ]
+   },
+   {
+    "label": "Inclusions",
+    "sections": [
+     {
+      "heading": "What you'll see",
+      "body": [],
+      "items": [],
+      "steps": [],
+      "stops": [
+       {
+        "name": "Skywalk glass platform",
+        "text": "The walkway's glass-floored viewing platform above the Sunwapta Valley."
+       },
+       {
+        "name": "Athabasca Glacier",
+        "text": "The glacier's toe, visible from the Icefield Discovery Centre across the highway."
+       }
+      ],
+      "note": null
+     }
+    ]
+   },
+   {
+    "label": "Seasonal",
+    "sections": [
+     {
+      "heading": "Seasons and times",
+      "body": [
+       "Seasons, opening hours and sailing or ride times are set by the operator and change through the year. Tell us your date and we confirm availability and the best time slot around your plans.",
+       "Free cancellation up to 24 hours before your date for a full refund."
+      ],
+      "items": [],
+      "steps": [],
+      "stops": [],
+      "note": null
+     }
+    ]
+   }
+  ],
+  "faqs": [
+   {
+    "question": "How do I get tickets?",
+    "answer": "Send a request with your date and party size. We confirm availability and price, and can add the tickets to any Vista Chase tour on the same day."
+   },
+   {
+    "question": "What is the cancellation policy?",
+    "answer": "Free cancellation up to 24 hours before your date for a full refund."
+   }
+  ],
+  "crossSells": [],
+  "images": [],
+  "_note": "Not on the live vistachase.com site: written for the new site's Banff activity tickets. Prices are on request until the Bokun products exist."
+ },
+ {
+  "slug": "banff-upper-hot-springs-tickets",
+  "category": "TICKET",
+  "destination": "banff-national-park",
+  "bokunId": null,
+  "bookingMode": "ENQUIRY",
+  "title": "Banff Upper Hot Springs Tickets",
+  "metaTitle": "Banff Upper Hot Springs Tickets | Mountain-View Hot Pool – Vista Chase",
+  "metaDescription": "Soak in the Banff Upper Hot Springs, a natural hot pool on Sulphur Mountain with views of Mount Rundle. Add entry to your Vista Chase day.",
+  "rating": null,
+  "reviewCountLabel": null,
+  "facts": [
+   {
+    "label": "Location",
+    "value": "Sulphur Mountain, Banff"
+   },
+   {
+    "label": "Duration",
+    "value": "Allow 1–2 hours"
+   },
+   {
+    "label": "Operated by",
+    "value": "Parks Canada"
+   },
+   {
+    "label": "Season",
+    "value": "Year round"
+   }
+  ],
+  "priceFrom": null,
+  "priceUnit": "person",
+  "overview": {
+   "heading": "Warm water, mountain views",
+   "paragraphs": [
+    "The Upper Hot Springs pool sits on the slope of Sulphur Mountain above Banff, fed by natural hot spring water and facing Mount Rundle. It is an easy, relaxing way to end a day of sightseeing, in summer or with snow all around in winter."
+   ]
+  },
+  "includes": [
+   "Hot springs pool entry",
+   "Help fitting a visit around your tour"
+  ],
+  "excludes": [
+   "Towel and locker rental",
+   "Transport, unless added to a Vista Chase tour"
+  ],
+  "whyTravelersLove": null,
+  "highlights": [],
+  "stops": [
+   {
+    "name": "Upper Hot Springs pool",
+    "text": "An outdoor hot pool facing Mount Rundle."
+   }
+  ],
+  "itinerary": null,
+  "seasonal": [],
+  "tabs": [
+   {
+    "label": "Overview",
+    "sections": [
+     {
+      "heading": "Warm water, mountain views",
+      "body": [
+       "The Upper Hot Springs pool sits on the slope of Sulphur Mountain above Banff, fed by natural hot spring water and facing Mount Rundle. It is an easy, relaxing way to end a day of sightseeing, in summer or with snow all around in winter."
+      ],
+      "items": [],
+      "steps": [],
+      "stops": [],
+      "note": null
+     },
+     {
+      "heading": "Price includes",
+      "body": [],
+      "items": [
+       "Hot springs pool entry",
+       "Help fitting a visit around your tour"
+      ],
+      "steps": [],
+      "stops": [],
+      "note": null
+     },
+     {
+      "heading": "Price excludes",
+      "body": [],
+      "items": [
+       "Towel and locker rental",
+       "Transport, unless added to a Vista Chase tour"
+      ],
+      "steps": [],
+      "stops": [],
+      "note": null
+     }
+    ]
+   },
+   {
+    "label": "Inclusions",
+    "sections": [
+     {
+      "heading": "What you'll see",
+      "body": [],
+      "items": [],
+      "steps": [],
+      "stops": [
+       {
+        "name": "Upper Hot Springs pool",
+        "text": "An outdoor hot pool facing Mount Rundle."
+       }
+      ],
+      "note": null
+     }
+    ]
+   },
+   {
+    "label": "Seasonal",
+    "sections": [
+     {
+      "heading": "Seasons and times",
+      "body": [
+       "Seasons, opening hours and sailing or ride times are set by the operator and change through the year. Tell us your date and we confirm availability and the best time slot around your plans.",
+       "Free cancellation up to 24 hours before your date for a full refund."
+      ],
+      "items": [],
+      "steps": [],
+      "stops": [],
+      "note": null
+     }
+    ]
+   }
+  ],
+  "faqs": [
+   {
+    "question": "How do I get tickets?",
+    "answer": "Send a request with your date and party size. We confirm availability and price, and can add the tickets to any Vista Chase tour on the same day."
+   },
+   {
+    "question": "What is the cancellation policy?",
+    "answer": "Free cancellation up to 24 hours before your date for a full refund."
+   }
+  ],
+  "crossSells": [],
+  "images": [],
+  "_note": "Not on the live vistachase.com site: written for the new site's Banff activity tickets. Prices are on request until the Bokun products exist."
+ }
+]

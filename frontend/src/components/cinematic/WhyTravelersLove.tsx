@@ -29,12 +29,12 @@ const REASONS = [
   {
     icon: CheckCircle2,
     title: "Top-Ranked Hospitality",
-    description: "Recognized as TripAdvisor’s #6 Experience in all of Canada with over 800+ verified five-star reviews.",
+    description: "Named TripAdvisor’s #6 experience in Canada, rated 5.0 from more than 1,000 reviews.",
   },
   {
     icon: Clock,
-    title: "Flexible 48-Hour Guarantee",
-    description: "Instant digital vouchers, secure automated payments, and complete flexibility outside 48 hours.",
+    title: "Free cancellation",
+    description: "A full refund when you cancel at least 24 hours before your tour, with your voucher sent by email.",
   },
 ];
 
@@ -45,7 +45,7 @@ export function WhyTravelersLove() {
       <div className="absolute right-[-80px] top-1/2 -translate-y-1/2 w-[550px] h-[550px] opacity-5 pointer-events-none">
         <Image
           src="/media/brand/horse-emblem-gold.png"
-          alt="Vista Chase Emblem"
+          alt=""
           fill
           className="object-contain"
         />
@@ -55,12 +55,12 @@ export function WhyTravelersLove() {
         {/* Section Header */}
         <div className="max-w-3xl mb-16">
           <ScrollReveal delay={100} yOffset={16}>
-            <div className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold tracking-[0.2em] uppercase text-summit-400 mb-3">
+            <div className="inline-flex items-center gap-2 text-xs sm:text-sm  tracking-[0.2em] uppercase text-summit-400 mb-3">
               <span>THE VISTA CHASE STANDARD</span>
             </div>
           </ScrollReveal>
           <ScrollReveal delay={200} yOffset={20}>
-            <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white font-display">
+            <h2 className="text-balance text-3xl font-light leading-[1.1] tracking-tight text-white sm:text-4xl lg:text-5xl">
               Why Travelers Choose Vista Chase
             </h2>
           </ScrollReveal>
@@ -76,20 +76,21 @@ export function WhyTravelersLove() {
           {/* Left Column: Certified Guide Image Card */}
           <div className="lg:col-span-5">
             <ScrollReveal delay={200} yOffset={28}>
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-white/10 group">
+              <div className="relative rounded-[2rem] overflow-hidden border border-white/10 group">
                 <div className="relative h-[480px] sm:h-[540px] w-full">
                   <Image
                     src="/media/site/feature-image-1.webp"
                     alt="Vista Chase Certified Mountain Guide"
                     fill
                     sizes="(max-width: 1024px) 100vw, 40vw"
-                    className="object-cover transition-transform duration-700 group-hover:scale-105"
+                    className="object-cover"
+                    data-parallax="10"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-ocean-950 via-transparent to-transparent opacity-80" />
                 </div>
                 {/* Overlay Badge */}
                 <div className="absolute bottom-6 left-6 right-6 p-5 rounded-xl glass-panel-alpine text-white">
-                  <p className="text-xs uppercase tracking-widest text-summit-400 font-semibold mb-1">
+                  <p className="text-xs uppercase tracking-widest text-summit-400  mb-1">
                     CANMORE & BANFF NATIVE TEAM
                   </p>
                   <p className="text-sm font-light text-slate-200">
@@ -106,11 +107,11 @@ export function WhyTravelersLove() {
               const Icon = reason.icon;
               return (
                 <ScrollReveal key={idx} delay={100 * (idx + 1)} yOffset={20}>
-                  <div className="p-6 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 transition-all duration-300 hover:-translate-y-1">
+                  <div className="h-full p-6 rounded-3xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 transition-all duration-300 hover:-translate-y-1">
                     <div className="w-10 h-10 rounded-lg bg-summit-500/10 border border-summit-500/30 flex items-center justify-center text-summit-400 mb-4">
                       <Icon className="w-5 h-5" />
                     </div>
-                    <h3 className="text-lg font-bold text-white font-display mb-2">
+                    <h3 className="text-lg  text-white font-display mb-2">
                       {reason.title}
                     </h3>
                     <p className="text-sm text-slate-300 font-light leading-relaxed">

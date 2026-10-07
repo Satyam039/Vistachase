@@ -28,6 +28,7 @@ async function main() {
   await prisma.shuttleRoute.deleteMany();
   await prisma.tour.deleteMany();
   await prisma.destination.deleteMany();
+  await prisma.affiliate.deleteMany();
   await prisma.user.deleteMany();
   await prisma.mediaAsset.deleteMany();
 
@@ -382,11 +383,26 @@ async function main() {
     await prisma.review.create({ data: r });
   }
 
+  // Demo partner (affiliate): a Banff hotel sharing ?ref=BANFFLODGE links. The sample booking
+  // below is credited to it so the partner dashboard has data.
+  const partnerUser = await prisma.user.create({
+    data: {
+      email: "partner.demo@example.com",
+      passwordHash: await bcrypt.hash("PartnerDemo2026!", 10),
+      name: "Demo Partner",
+      role: "AFFILIATE",
+    },
+  });
+  const demoPartner = await prisma.affiliate.create({
+    data: { userId: partnerUser.id, name: "Banff Lodge (demo)", code: "BANFFLODGE", type: "HOTEL", status: "ACTIVE", commissionRate: 0.1 },
+  });
+
   // 9. Sample Confirmed Booking with Digital Voucher
   const sampleDeparture = departures[0];
   const sampleBooking = await prisma.booking.create({
     data: {
       bookingReference: "VC-2026-98412",
+      affiliateId: demoPartner.id,
       customerId: traveler.id,
       customerName: "Sarah Jenkins",
       customerEmail: "sarah.traveler@example.com",
@@ -562,6 +578,7 @@ async function main() {
 
   console.log("✅ Seed completed successfully!");
   console.log(`- Sample Admin: admin@vistachase.com / VistaChaseAdmin2026!`);
+  console.log(`- Demo Partner: partner.demo@example.com / PartnerDemo2026! (ref code BANFFLODGE)`);
   console.log(`- Sample Booking: ${sampleBooking.bookingReference} (Voucher: ${sampleBooking.voucherCode})`);
   console.log(`- Sample Run: ${operationRun.name} (Vehicle: ${sprinter4.name}, Driver: ${driverMarc.name})`);
   console.log(`- Sample Live Tracking: /track/${trackingToken}`);

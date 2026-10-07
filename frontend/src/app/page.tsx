@@ -1,11 +1,16 @@
 import React from "react";
-import { CinematicHero } from "@/components/cinematic/CinematicHero";
-import { VerifiedAwardSection } from "@/components/cinematic/VerifiedAwardSection";
-import { PlanAheadGuaranteedAccess } from "@/components/cinematic/PlanAheadGuaranteedAccess";
+import { ServicesHero, type HeroSlide } from "@/components/cinematic/ServicesHero";
+import { fromPrice, priceUnitLabel } from "@/lib/tours";
+import { getTours } from "@/lib/api/catalog";
+import { SERVICES } from "@/lib/services";
+import { HeroSearch } from "@/components/home/HeroSearch";
+import { TrustRow } from "@/components/home/TrustRow";
+import { TopExperiences } from "@/components/home/TopExperiences";
 import { ExperienceCategories } from "@/components/cinematic/ExperienceCategories";
 import { DestinationStoryStream } from "@/components/cinematic/DestinationStoryStream";
+import { PlanAheadGuaranteedAccess } from "@/components/cinematic/PlanAheadGuaranteedAccess";
 import { WhyTravelersLove } from "@/components/cinematic/WhyTravelersLove";
-import { FeaturedExperiences } from "@/components/cinematic/FeaturedExperiences";
+import { VerifiedAwardSection } from "@/components/cinematic/VerifiedAwardSection";
 import { GuestTestimonials } from "@/components/cinematic/GuestTestimonials";
 import { LiveTrackingTeaser } from "@/components/cinematic/LiveTrackingTeaser";
 import { TrustBar } from "@/components/cinematic/TrustBar";
@@ -30,44 +35,43 @@ export const metadata = {
   },
 };
 
-export default function HomePage() {
+export default async function HomePage() {
+  // Each hero slide lists its service's tours with rating, reviews and price.
+  const tours = await getTours();
+  const slides: HeroSlide[] = SERVICES.map((service) => ({
+    ...service,
+    tours: tours
+      .filter((t) => t.category === service.category)
+      .slice(0, 3)
+      .map((t) => ({
+        slug: t.slug,
+        title: t.title,
+        rating: t.rating,
+        reviewCount: t.reviewCount,
+        price: fromPrice(t),
+        unit: t.category === "TICKET" ? "per ticket" : priceUnitLabel(t),
+      })),
+  }));
+
+  // Page order follows the booking sites the redesign studied (GetYourGuide, Viator, Expedia,
+  // Civitatis): search first, reassurance, the most-booked experiences, browse by style and by
+  // place, proof (award, reviews), then a closing call to action.
   return (
-    <div className="flex flex-col w-full bg-obsidian-50 selection:bg-summit-500 selection:text-obsidian-900">
-      {/* 01: Full-Screen Cinematic Hero */}
-      <CinematicHero
-        videoSrc="/media/videos/lake-louise-summer.mp4"
-        videoSrcHd="/media/videos/lake-louise-summer-1080.mp4"
-        posterImage="/media/videos/lake-louise-summer-poster.webp"
-      />
-
-      {/* 02: Official TripAdvisor Best of the Best #6 Canada Award */}
-      <VerifiedAwardSection />
-
-      {/* 03: Plan Ahead & Guaranteed Access (Avoid Parking Restrictions) */}
-      <PlanAheadGuaranteedAccess />
-
-      {/* 04: Four Experience Pillars (Private, Shared, Shuttles, Multi-Day) */}
+    <div className="flex w-full flex-col bg-white selection:bg-summit-500 selection:text-obsidian-900">
+      <ServicesHero slides={slides} />
+      <div className="bg-white">
+        <HeroSearch />
+        <TrustRow />
+      </div>
+      <TopExperiences tours={tours} />
       <ExperienceCategories />
-
-      {/* 05: Continuous Scroll-Driven Destination Story Stream */}
       <DestinationStoryStream />
-
-      {/* 06: Why Travelers Choose Vista Chase (6 Core Pillars) */}
+      <PlanAheadGuaranteedAccess />
       <WhyTravelersLove />
-
-      {/* 07: Featured Experiences with Bókun Availability */}
-      <FeaturedExperiences />
-
-      {/* 08: Verified Traveler Testimonials & Reviews */}
+      <VerifiedAwardSection />
       <GuestTestimonials />
-
-      {/* 09: Live GPS Corridor Tracking Teaser (WhatsApp T-60) */}
       <LiveTrackingTeaser />
-
-      {/* 10: Verified Partner & OTA Trust Bar */}
       <TrustBar />
-
-      {/* 11: Final Cinematic Rockies Call to Action */}
       <CinematicFinalCta />
     </div>
   );
