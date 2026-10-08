@@ -57,8 +57,9 @@ Astryx setup (already done, don't redo):
   slower than SWC (about 3x). `package.json` browserslist pins Next 15's default modern targets so Babel
   doesn't down-compile async code.
 - Site frame: `src/components/layout/SiteFrame.tsx` + `SiteFooter.tsx`, laid out like Bentley's: "Menu"
-  button on the left at every width (`SiteMenu.tsx`: full-height Astryx Dialog from the left, large light
-  section names, the hovered section's links beside them, sections expand in place on phones), the brand
+  button on the left at every width (`SiteMenu.tsx`: native <dialog>, near-black panel from the left over
+  the page dimmed and blurred (`.vc-menu` in globals.css), large light section names, the hovered section's
+  links beside them, sections expand in place on phones), the brand
   absolutely centred in the bar (not TopNav `centerContent`: Astryx hides that slot on narrow screens and
   adds its own "Open navigation" toggle), actions on the right. SiteFrame publishes `--vc-header-h` for
   sticky in-page bars. Menu sections live in `MENU_SECTIONS`.
