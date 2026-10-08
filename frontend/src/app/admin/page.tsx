@@ -142,7 +142,7 @@ export default function AdminDashboardPage() {
               type="button"
               onClick={fetchMetrics}
               disabled={loading}
-              className="inline-flex h-11 items-center gap-2 rounded-full border border-obsidian-900/15 bg-white px-4 text-sm text-obsidian-900 hover:bg-obsidian-50 disabled:opacity-60"
+              className="inline-flex h-11 items-center gap-2 rounded-full border border-obsidian-900/10 bg-white px-4 text-sm text-obsidian-900 hover:bg-obsidian-50 disabled:opacity-60"
             >
               <RefreshCw className={`h-4 w-4 ${loading ? "motion-safe:animate-spin" : ""}`} aria-hidden="true" />
               Refresh
@@ -202,7 +202,7 @@ export default function AdminDashboardPage() {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Reference, guest or tour"
-                  className="h-11 w-full rounded-full border border-obsidian-900/15 bg-obsidian-50 pl-10 pr-4 text-sm text-obsidian-900 placeholder:text-slate-500 focus:border-ocean-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-ocean-600/30"
+                  className="h-11 w-full rounded-full border border-obsidian-900/10 bg-obsidian-50 pl-10 pr-4 text-sm text-obsidian-900 placeholder:text-slate-500 focus:border-ocean-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-ocean-600/30"
                 />
               </label>
             </div>

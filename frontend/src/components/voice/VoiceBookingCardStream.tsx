@@ -125,7 +125,7 @@ export function VoiceBookingCardStream({ data, checkoutUrl, hasSafetyRefusal, on
                     <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-slate-600">
                       <Clock className="h-3 w-3" aria-hidden="true" />
                       {shortDate(dep.date)} · {dep.departureTime}
-                      <span className="text-emerald-700">{dep.availableSeats} seats left</span>
+                      <span className="text-emerald-700">{dep.availableSeats > 0 ? "Available" : "Sold out"}</span>
                     </span>
                   </span>
                   <span className="shrink-0 text-right">
@@ -223,7 +223,7 @@ export function VoiceBookingCardStream({ data, checkoutUrl, hasSafetyRefusal, on
                 View voucher
               </Link>
             )}
-            <Link href="/pickup-finder" className="inline-flex h-10 items-center gap-1.5 rounded-full border border-obsidian-900/15 px-4 text-sm text-obsidian-900 hover:bg-obsidian-50">
+            <Link href="/pickup-finder" className="inline-flex h-10 items-center gap-1.5 rounded-full border border-obsidian-900/10 px-4 text-sm text-obsidian-900 hover:bg-obsidian-50">
               <MapPin className="h-4 w-4" aria-hidden="true" />
               Pickup directions
             </Link>

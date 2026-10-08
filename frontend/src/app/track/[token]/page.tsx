@@ -53,7 +53,7 @@ export default async function TrackPage({ params }: TrackPageProps) {
             href="https://wa.me/18257349456"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-obsidian-900/15 px-5 text-sm text-obsidian-900 hover:bg-obsidian-50"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-obsidian-900/10 px-5 text-sm text-obsidian-900 hover:bg-obsidian-50"
           >
             <MessageSquare className="h-4 w-4" aria-hidden="true" /> WhatsApp us
             <span className="sr-only">(opens in a new tab)</span>

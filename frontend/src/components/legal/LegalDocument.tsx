@@ -23,9 +23,9 @@ export function LegalDocument({ title, intro, sections, current }: { title: stri
   return (
     <div className="bg-obsidian-50 text-obsidian-900">
       <section aria-label="Introduction" className="border-b border-obsidian-900/[0.06] bg-white">
-        <div className="mx-auto max-w-5xl px-page pb-10 pt-10 sm:pt-14">
+        <div className="mx-auto max-w-5xl px-page pb-10 pt-10 text-center sm:pt-14">
           <nav aria-label="Breadcrumb" className="mb-5">
-            <ol className="flex items-center gap-1.5 text-sm text-slate-600">
+            <ol className="flex items-center justify-center gap-1.5 text-sm text-slate-600">
               <li>
                 <Link href="/" className="hover:text-obsidian-900 hover:underline">
                   Home
@@ -40,7 +40,7 @@ export function LegalDocument({ title, intro, sections, current }: { title: stri
             </ol>
           </nav>
           <h1 className="text-4xl font-light tracking-tight text-obsidian-900 sm:text-5xl">{title}</h1>
-          {intro && <p className="mt-4 max-w-3xl text-lg font-light leading-relaxed text-slate-700">{intro}</p>}
+          {intro && <p className="mx-auto mt-4 max-w-3xl text-lg font-light leading-relaxed text-slate-700">{intro}</p>}
         </div>
       </section>
 
@@ -91,7 +91,7 @@ export function LegalDocument({ title, intro, sections, current }: { title: stri
             <ul className="mt-3 flex flex-wrap gap-2">
               {RELATED.filter((r) => r.href !== current).map((r) => (
                 <li key={r.href}>
-                  <Link href={r.href} className="inline-flex h-10 items-center rounded-full border border-obsidian-900/15 px-4 text-sm text-obsidian-900 hover:bg-obsidian-50">
+                  <Link href={r.href} className="inline-flex h-10 items-center rounded-full border border-obsidian-900/10 px-4 text-sm text-obsidian-900 hover:bg-obsidian-50">
                     {r.label}
                   </Link>
                 </li>

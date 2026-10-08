@@ -1,4 +1,4 @@
-// TripAdvisor Best of the Best 2025 award with the headline numbers. Numbers count up as they
+// TripAdvisor Best of the Best 2026 award with the headline numbers. Numbers count up as they
 // scroll into view (MotionRuntime, data-count-to); the final value is in the markup, so it is
 // what screen readers, search engines and reduced-motion visitors get.
 // Figures match the live site: 10,000+ travellers, 5.0 from 1,000+ reviews, #6 in Canada.
@@ -10,7 +10,7 @@ import { ArrowUpRight } from "lucide-react";
 
 const STATS = [
   { to: 10000, suffix: "+", label: "travellers guided through the Rockies" },
-  { to: 6, prefix: "#", label: "experience in Canada, TripAdvisor 2025" },
+  { to: 6, prefix: "#", label: "experience in Canada, TripAdvisor 2026" },
   { to: 5, decimals: 1, label: "average rating from our guests" },
   { to: 1000, suffix: "+", label: "verified reviews" },
 ];
@@ -24,7 +24,7 @@ export function VerifiedAwardSection() {
       <div className="mx-auto grid max-w-7xl items-center gap-14 px-page lg:grid-cols-12">
         <div className="lg:col-span-7">
           <p className="mb-3 text-sm uppercase tracking-[0.22em] text-ocean-600" data-reveal>
-            TripAdvisor Travellers&rsquo; Choice · Best of the Best 2025
+            TripAdvisor Travellers&rsquo; Choice · Best of the Best 2026
           </p>
           <h2 id="award-heading" className="text-balance text-3xl font-light leading-[1.1] tracking-tight text-obsidian-900 sm:text-4xl lg:text-5xl" data-reveal>
             Ranked the #6 experience in all of Canada

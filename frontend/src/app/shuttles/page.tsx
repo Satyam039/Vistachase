@@ -5,6 +5,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { SEATS_MESSAGE } from "@/lib/policy";
 import type { Metadata } from "next";
 import { AlertTriangle, CalendarCheck, CheckCircle2, ChevronRight, Clock, MapPin, Sunrise, TicketCheck } from "lucide-react";
 import { AmbientVideo } from "@/components/cinematic/AmbientVideo";
@@ -46,7 +47,7 @@ export default async function ShuttlesPage() {
   return (
     <div className="bg-obsidian-50 text-obsidian-900">
       {/* Hero */}
-      <section className="relative isolate flex min-h-[78vh] items-end overflow-hidden bg-ocean-950 text-white">
+      <section className="relative isolate flex min-h-[78vh] items-end overflow-hidden bg-obsidian-950 text-white">
         <Image src="/media/photos/moraine-lake-perfect-reflection.webp" alt="" fill priority sizes="100vw" className="-z-10 object-cover" />
         <AmbientVideo
           src="/media/videos/lake-louise-summer.mp4"
@@ -55,11 +56,11 @@ export default async function ShuttlesPage() {
           className="absolute inset-0 -z-10 h-full w-full object-cover"
           once
         />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/60 to-ocean-950/10" />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/45 to-ocean-950/10" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-r from-ocean-950/70 to-transparent" />
-        <div className="mx-auto w-full max-w-7xl px-page pb-14 pt-24" data-scroll-fade>
+        <div className="mx-auto flex w-full flex-col items-center text-center max-w-7xl px-page pb-14 pt-24" data-scroll-fade>
           <nav aria-label="Breadcrumb" className="mb-6">
-            <ol className="flex items-center gap-1.5 text-sm text-slate-200">
+            <ol className="flex items-center justify-center gap-1.5 text-sm text-slate-200">
               <li>
                 <Link href="/" className="hover:text-white hover:underline">
                   Home
@@ -73,10 +74,10 @@ export default async function ShuttlesPage() {
               </li>
             </ol>
           </nav>
-          <h1 className="max-w-4xl text-balance text-4xl font-light leading-[1.05] tracking-tight text-white sm:text-6xl lg:text-7xl motion-safe:animate-[fadeUp_900ms_ease-out]">
+          <h1 className="mx-auto max-w-4xl text-balance text-4xl font-light leading-[1.05] tracking-tight text-white sm:text-6xl lg:text-7xl motion-safe:animate-[fadeUp_900ms_ease-out]">
             The shuttle to Moraine Lake and Lake Louise
           </h1>
-          <p className="mt-5 max-w-2xl text-lg font-light leading-relaxed text-white/85 motion-safe:animate-[fadeUp_1100ms_ease-out]">
+          <p className="mx-auto mt-5 max-w-2xl text-lg font-light leading-relaxed text-white/85 motion-safe:animate-[fadeUp_1100ms_ease-out]">
             Moraine Lake Road is closed to private cars, but our shuttles still go. Sunrise and day departures from Canmore and Banff,
             June to October.
           </p>
@@ -100,7 +101,7 @@ export default async function ShuttlesPage() {
       {/* The two shuttles */}
       {shuttles.length > 0 && (
         <section aria-labelledby="shuttles-heading" className="mx-auto max-w-7xl px-page py-16 sm:py-20">
-          <div className="mb-10 max-w-3xl" data-reveal>
+          <div className="mx-auto mb-10 max-w-3xl text-center" data-reveal>
             <p className="mb-3 text-sm uppercase tracking-[0.22em] text-ocean-600">Two ways to go</p>
             <h2 id="shuttles-heading" className="text-balance text-3xl font-light leading-[1.1] tracking-tight text-obsidian-900 sm:text-4xl lg:text-5xl">
               Sunrise or the day shuttle
@@ -119,11 +120,12 @@ export default async function ShuttlesPage() {
       {/* Departure picker */}
       <section id="departures" aria-labelledby="departures-heading" className="scroll-mt-32 border-y border-obsidian-900/[0.06] bg-white py-16 sm:py-20">
         <div className="mx-auto max-w-7xl px-page">
-          <div className="mb-10 max-w-3xl" data-reveal>
+          <div className="mx-auto mb-10 max-w-3xl text-center" data-reveal>
             <p className="mb-3 text-sm uppercase tracking-[0.22em] text-ocean-600">Upcoming departures</p>
             <h2 id="departures-heading" className="text-balance text-3xl font-light leading-[1.1] tracking-tight text-obsidian-900 sm:text-4xl">
               Pick your date
             </h2>
+            <p className="mt-3 text-base text-slate-600">{SEATS_MESSAGE}. Choose a date to hold your seats.</p>
           </div>
           <div className="space-y-10">
             {routes.map((route) => (
@@ -148,8 +150,8 @@ export default async function ShuttlesPage() {
                           <span className="block text-lg text-obsidian-900">{date}</span>
                           <span className="block text-sm text-slate-600">{dep.departureTime}</span>
                           <span className="mt-2 block text-base text-obsidian-900">${dep.price}</span>
-                          <span className={`mt-1 block text-xs ${open ? (dep.seatsAvailable <= 3 ? "text-amber-800" : "text-emerald-800") : "text-red-700"}`}>
-                            {open ? `${dep.seatsAvailable} seats left` : "Sold out"}
+                          <span className={`mt-1 block text-xs ${open ? "text-emerald-800" : "text-red-700"}`}>
+                            {open ? "Available" : "Sold out"}
                           </span>
                         </>
                       );
@@ -158,7 +160,7 @@ export default async function ShuttlesPage() {
                           {open ? (
                             <Link
                               href={`/book?departureId=${dep.id}`}
-                              aria-label={`Book ${route.name}, ${day} ${date} at ${dep.departureTime}, $${dep.price}, ${dep.seatsAvailable} seats left`}
+                              aria-label={`Book ${route.name}, ${day} ${date} at ${dep.departureTime}, $${dep.price}, available`}
                               className="block w-32 rounded-2xl border border-obsidian-900/10 bg-white px-4 py-3.5 text-center transition-[border-color,box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:border-ocean-600/50 hover:shadow-[0_16px_30px_-22px_rgba(12,31,33,0.5)]"
                             >
                               {body}
@@ -204,7 +206,7 @@ export default async function ShuttlesPage() {
           <ol className="mt-6 space-y-3" data-stagger>
             {STEPS.map(({ icon: Icon, title, body }, i) => (
               <li key={title} className="flex items-start gap-4 rounded-2xl bg-white p-5 ring-1 ring-obsidian-900/[0.07]">
-                <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-ocean-950 text-summit-400">
+                <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-obsidian-950 text-summit-400">
                   <Icon className="h-5 w-5" aria-hidden="true" />
                 </span>
                 <span>

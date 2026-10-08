@@ -68,7 +68,7 @@ export function GlobalVoiceAssistantDrawer() {
           open ? "pointer-events-none opacity-0" : ""
         }`}
       >
-        <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-summit-500 text-obsidian-900">
+        <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-summit-200 text-obsidian-900">
           <Sparkles className="h-5 w-5" aria-hidden="true" />
         </span>
         <span className="text-sm max-sm:sr-only">Ask AI concierge</span>

@@ -1,6 +1,6 @@
 // About Vista Chase, structured like the "About" pages of the booking sites studied (photo hero,
 // numbers, story, values, fleet, recognition) in the brand system. Figures are the ones used across
-// the live site: since 2018, 10,000+ guests, 5.0 from 1,000+ reviews, #6 in Canada (2025).
+// the live site: since 2018, 10,000+ guests, 5.0 from 1,000+ reviews, #6 in Canada (2026).
 
 import Image from "next/image";
 import { AwardSeal } from "@/components/brand/AwardSeal";
@@ -11,7 +11,7 @@ import { ArrowUpRight, ChevronRight, HeartHandshake, MountainSnow, ShieldCheck, 
 export const metadata: Metadata = {
   title: "About Vista Chase | Banff's Top-Rated Tour & Shuttle Operator",
   description:
-    "Founded in 2018 in Canmore. TripAdvisor Best of the Best 2025 (#6 experience in Canada). Our story, local guides and fleet for the Canadian Rockies.",
+    "Founded in 2018 in Canmore. TripAdvisor Best of the Best 2026 (#6 experience in Canada). Our story, local guides and fleet for the Canadian Rockies.",
   alternates: { canonical: "/about-us" },
 };
 
@@ -19,7 +19,7 @@ const STATS = [
   { to: 2018, label: "guiding the Rockies since", plain: true },
   { to: 10000, suffix: "+", label: "guests guided" },
   { to: 5, decimals: 1, label: "average rating, 1,000+ reviews" },
-  { to: 6, prefix: "#", label: "experience in Canada, TripAdvisor 2025" },
+  { to: 6, prefix: "#", label: "experience in Canada, TripAdvisor 2026" },
 ];
 
 const VALUES = [
@@ -47,12 +47,12 @@ export default function AboutUsPage() {
   return (
     <div className="bg-obsidian-50 text-obsidian-900">
       {/* Hero */}
-      <section className="relative isolate flex min-h-[70vh] items-end overflow-hidden bg-ocean-950 text-white">
+      <section className="relative isolate flex min-h-[70vh] items-end overflow-hidden bg-obsidian-950 text-white">
         <Image src="/media/photos/three-sisters-canmore.webp" alt="" fill priority sizes="100vw" className="-z-10 object-cover" data-parallax="10" />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/55 to-ocean-950/10" />
-        <div className="mx-auto w-full max-w-7xl px-page pb-14 pt-24" data-scroll-fade>
+        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/40 to-ocean-950/10" />
+        <div className="mx-auto flex w-full flex-col items-center text-center max-w-7xl px-page pb-14 pt-24" data-scroll-fade>
           <nav aria-label="Breadcrumb" className="mb-6">
-            <ol className="flex items-center gap-1.5 text-sm text-slate-200">
+            <ol className="flex items-center justify-center gap-1.5 text-sm text-slate-200">
               <li>
                 <Link href="/" className="hover:text-white hover:underline">
                   Home
@@ -67,10 +67,10 @@ export default function AboutUsPage() {
             </ol>
           </nav>
           <p className="text-sm uppercase tracking-[0.22em] text-summit-300 motion-safe:animate-[fadeUp_700ms_ease-out]">Our story</p>
-          <h1 className="mt-3 max-w-4xl text-balance text-4xl font-light leading-[1.05] tracking-tight text-white sm:text-6xl lg:text-7xl motion-safe:animate-[fadeUp_900ms_ease-out]">
+          <h1 className="mx-auto mt-3 max-w-4xl text-balance text-4xl font-light leading-[1.05] tracking-tight text-white sm:text-6xl lg:text-7xl motion-safe:animate-[fadeUp_900ms_ease-out]">
             Local guides, from the heart of the Bow Valley
           </h1>
-          <p className="mt-5 max-w-2xl text-lg font-light leading-relaxed text-white/85 motion-safe:animate-[fadeUp_1100ms_ease-out]">
+          <p className="mx-auto mt-5 max-w-2xl text-lg font-light leading-relaxed text-white/85 motion-safe:animate-[fadeUp_1100ms_ease-out]">
             Vista Chase began in Canmore with a simple idea: the Rockies deserve to be seen calmly, comfortably and with
             someone who knows them.
           </p>
@@ -142,7 +142,7 @@ export default function AboutUsPage() {
       {/* Values */}
       <section aria-labelledby="values-heading" className="bg-white py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-page">
-          <div className="mb-12 max-w-3xl" data-reveal>
+          <div className="mx-auto mb-12 max-w-3xl text-center" data-reveal>
             <p className="mb-3 text-sm uppercase tracking-[0.22em] text-ocean-600">What we stand for</p>
             <h2 id="values-heading" className="text-balance text-3xl font-light leading-[1.1] tracking-tight text-obsidian-900 sm:text-4xl lg:text-5xl">
               The Vista Chase way
@@ -151,7 +151,7 @@ export default function AboutUsPage() {
           <ul className="grid gap-5 md:grid-cols-3" data-stagger>
             {VALUES.map(({ icon: Icon, title, body }) => (
               <li key={title} className="rounded-[1.75rem] bg-obsidian-50 p-7 ring-1 ring-obsidian-900/[0.06] sm:p-8">
-                <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-ocean-950 text-summit-400">
+                <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-obsidian-950 text-summit-400">
                   <Icon className="h-5 w-5" aria-hidden="true" />
                 </span>
                 <h3 className="mt-6 text-2xl font-light text-obsidian-900">{title}</h3>
@@ -164,7 +164,7 @@ export default function AboutUsPage() {
 
       {/* Fleet */}
       <section aria-labelledby="fleet-heading" className="mx-auto max-w-7xl px-page py-20 sm:py-28">
-        <div className="mb-12 max-w-3xl" data-reveal>
+        <div className="mx-auto mb-12 max-w-3xl text-center" data-reveal>
           <p className="mb-3 text-sm uppercase tracking-[0.22em] text-ocean-600">Our fleet</p>
           <h2 id="fleet-heading" className="text-balance text-3xl font-light leading-[1.1] tracking-tight text-obsidian-900 sm:text-4xl lg:text-5xl">
             Comfortable vehicles, sized for the day
@@ -189,7 +189,7 @@ export default function AboutUsPage() {
       </section>
 
       {/* Recognition */}
-      <section aria-labelledby="award-heading" className="bg-ocean-950 py-20 text-white sm:py-24">
+      <section aria-labelledby="award-heading" className="bg-obsidian-950 py-20 text-white sm:py-24">
         <div className="mx-auto grid max-w-7xl items-center gap-10 px-page md:grid-cols-[auto_minmax(0,1fr)] md:gap-14">
           <span className="flex h-44 w-44 items-center justify-center rounded-[1.75rem] bg-white p-5" data-reveal="scale">
             <AwardSeal size="md" />
@@ -200,7 +200,7 @@ export default function AboutUsPage() {
               Named the #6 experience in all of Canada
             </h2>
             <p className="mt-4 max-w-2xl text-lg font-light leading-relaxed text-white/80">
-              Our shared Banff tour was chosen in TripAdvisor&rsquo;s 2025 Best of the Best awards, based on traveller
+              Our shared Banff tour was chosen in TripAdvisor&rsquo;s 2026 Best of the Best awards, based on traveller
               reviews.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
@@ -224,7 +224,7 @@ export default function AboutUsPage() {
 
       {/* Ways to explore */}
       <section aria-labelledby="explore-heading" className="mx-auto max-w-7xl px-page py-20 sm:py-24">
-        <h2 id="explore-heading" className="mb-8 text-3xl font-light tracking-tight text-obsidian-900 sm:text-4xl" data-reveal>
+        <h2 id="explore-heading" className="mb-8 text-center text-3xl font-light tracking-tight text-obsidian-900 sm:text-4xl" data-reveal>
           Explore with us
         </h2>
         <ul className="grid gap-4 sm:grid-cols-3" data-stagger>

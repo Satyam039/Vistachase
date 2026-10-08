@@ -61,7 +61,7 @@ export default function PickupFinderPage() {
   return (
     <div className="bg-obsidian-50 text-obsidian-900">
       {/* Hero */}
-      <section className="relative isolate flex min-h-[46vh] items-end overflow-hidden bg-ocean-950 text-white">
+      <section className="relative isolate flex min-h-[46vh] items-end overflow-hidden bg-obsidian-950 text-white">
         <Image
           src="/media/photos/fairmont-banff-springs.webp"
           alt=""
@@ -71,10 +71,10 @@ export default function PickupFinderPage() {
           className="-z-10 object-cover"
           data-parallax="10"
         />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/60 to-ocean-950/20" />
-        <div className="mx-auto w-full max-w-6xl px-page pb-24 pt-20">
+        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/45 to-ocean-950/20" />
+        <div className="mx-auto flex w-full max-w-6xl flex-col items-center px-page pb-24 pt-20 text-center">
           <nav aria-label="Breadcrumb" className="mb-6">
-            <ol className="flex items-center gap-1.5 text-sm text-slate-200">
+            <ol className="flex items-center justify-center gap-1.5 text-sm text-slate-200">
               <li>
                 <Link href="/" className="hover:text-white hover:underline">
                   Home
@@ -88,10 +88,10 @@ export default function PickupFinderPage() {
               </li>
             </ol>
           </nav>
-          <h1 className="max-w-3xl text-balance text-4xl font-light leading-[1.05] tracking-tight text-white sm:text-6xl motion-safe:animate-[fadeUp_900ms_ease-out]">
+          <h1 className="mx-auto max-w-3xl text-balance text-4xl font-light leading-[1.05] tracking-tight text-white sm:text-6xl motion-safe:animate-[fadeUp_900ms_ease-out]">
             Find your hotel pickup
           </h1>
-          <p className="mt-4 max-w-2xl text-lg font-light leading-relaxed text-white/85 motion-safe:animate-[fadeUp_1100ms_ease-out]">
+          <p className="mx-auto mt-4 max-w-2xl text-lg font-light leading-relaxed text-white/85 motion-safe:animate-[fadeUp_1100ms_ease-out]">
             Search your hotel to see your pickup point and where to wait in
             Banff, Canmore and Lake Louise.
           </p>
@@ -112,7 +112,7 @@ export default function PickupFinderPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Your hotel, e.g. Fairmont, Caribou Lodge, Coast Canmore"
-              className="h-14 w-full rounded-full border border-obsidian-900/15 bg-obsidian-50 pl-14 pr-5 text-base text-obsidian-900 placeholder:text-slate-500 focus:border-ocean-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-ocean-600/30"
+              className="h-14 w-full rounded-full border border-obsidian-900/10 bg-obsidian-50 pl-14 pr-5 text-base text-obsidian-900 placeholder:text-slate-500 focus:border-ocean-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-ocean-600/30"
             />
           </label>
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -130,7 +130,7 @@ export default function PickupFinderPage() {
                   className={`min-h-11 rounded-full border px-5 text-sm transition-colors ${
                     town === t
                       ? "border-obsidian-900 bg-obsidian-900 text-white"
-                      : "border-obsidian-900/15 bg-white text-obsidian-900 hover:border-obsidian-900/40"
+                      : "border-obsidian-900/10 bg-white text-obsidian-900 hover:border-obsidian-900/40"
                   }`}
                 >
                   {t === "All" ? "All towns" : t}
@@ -172,7 +172,7 @@ export default function PickupFinderPage() {
                   setQuery("");
                   setTown("All");
                 }}
-                className="inline-flex h-11 items-center rounded-full border border-obsidian-900/15 px-5 text-sm text-obsidian-900 hover:bg-obsidian-50"
+                className="inline-flex h-11 items-center rounded-full border border-obsidian-900/10 px-5 text-sm text-obsidian-900 hover:bg-obsidian-50"
               >
                 Show all pickup points
               </button>
@@ -313,7 +313,7 @@ export default function PickupFinderPage() {
         aria-labelledby="tips-heading"
         className="mx-auto max-w-6xl px-page pb-20"
       >
-        <div className="grid gap-6 rounded-[1.75rem] bg-ocean-950 p-7 text-white sm:p-9 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+        <div className="grid gap-6 rounded-[1.75rem] bg-obsidian-950 p-7 text-white sm:p-9 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
           <div>
             <h2 id="tips-heading" className="text-2xl font-light text-white">
               On the day

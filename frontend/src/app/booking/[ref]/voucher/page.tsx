@@ -110,7 +110,7 @@ export default async function VoucherPage({ params }: { params: Promise<{ ref: s
   return (
     <div className="min-h-screen bg-obsidian-50 text-obsidian-900 print:bg-white">
       {/* Confirmation band */}
-      <section className={`print:hidden ${cancelled ? "bg-red-50" : "bg-ocean-950"} `}>
+      <section className={`print:hidden ${cancelled ? "bg-red-50" : "bg-obsidian-950"} `}>
         <div className="mx-auto flex max-w-6xl flex-col gap-6 px-page pb-10 pt-8 sm:pb-12 md:flex-row md:items-end md:justify-between">
           <div>
             <Link
@@ -210,7 +210,7 @@ export default async function VoucherPage({ params }: { params: Promise<{ ref: s
           <div className="relative h-px" aria-hidden="true">
             <span className="absolute -left-4 -top-4 h-8 w-8 rounded-full bg-obsidian-50 print:hidden" />
             <span className="absolute -right-4 -top-4 h-8 w-8 rounded-full bg-obsidian-50 print:hidden" />
-            <span className="absolute inset-x-8 top-0 border-t-2 border-dashed border-obsidian-900/15" />
+            <span className="absolute inset-x-8 top-0 border-t-2 border-dashed border-obsidian-900/10" />
           </div>
 
           <ul aria-label="Trip details" className="grid gap-x-8 gap-y-5 p-6 sm:grid-cols-2 sm:p-8">
@@ -259,7 +259,7 @@ export default async function VoucherPage({ params }: { params: Promise<{ ref: s
           </section>
 
           {!cancelled && (
-            <section aria-labelledby="tracking-heading" className="rounded-[1.75rem] bg-ocean-950 p-6 text-white sm:p-7 print:hidden">
+            <section aria-labelledby="tracking-heading" className="rounded-[1.75rem] bg-obsidian-950 p-6 text-white sm:p-7 print:hidden">
               <h2 id="tracking-heading" className="flex items-center gap-2 text-lg text-white">
                 <Navigation className="h-5 w-5 text-summit-400" aria-hidden="true" />
                 Track your vehicle on the day

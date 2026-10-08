@@ -45,7 +45,7 @@ export function AdminHeader({
                 href={href}
                 aria-current={isCurrent ? "page" : undefined}
                 className={`inline-flex h-12 shrink-0 items-center gap-2 border-b-2 px-4 text-sm transition-colors ${
-                  isCurrent ? "border-ocean-600 text-obsidian-900" : "border-transparent text-slate-600 hover:border-obsidian-900/20 hover:text-obsidian-900"
+                  isCurrent ? "border-ocean-600 text-obsidian-900" : "border-transparent text-slate-600 hover:border-obsidian-900/15 hover:text-obsidian-900"
                 }`}
               >
                 <Icon className="h-4 w-4" aria-hidden="true" />

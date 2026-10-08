@@ -1,15 +1,15 @@
 "use client";
 
-// Bentley-style site menu: a "Menu" button at the left of the header opens a full-height
-// panel from the left. Large, light section names on the left; the links of the section you
-// point at (or focus) appear beside them. On phones the sections expand in place instead.
-// Built on Astryx Dialog, so focus is trapped inside, Escape closes it, and focus returns to
-// the Menu button.
+// Premium site menu: the "Menu" button opens a near-black full-height panel from the left over
+// the page, which stays visible behind a dark tint and a light blur. Large, light section names on
+// the left; the links of the section you point at (or focus) appear beside them. On phones the
+// sections expand in place. Native <dialog>: focus stays inside, Escape or a click on the page
+// closes it, focus returns to the Menu button. Opening and closing animate (globals.css .vc-menu);
+// with reduced motion it simply appears.
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Dialog } from "@astryxdesign/core/Dialog";
 import { ArrowRight, ChevronDown, Menu, Phone, Sparkles, X } from "lucide-react";
 import { BrandMark } from "@/components/brand/BrandMark";
 
@@ -25,7 +25,7 @@ export const MENU_SECTIONS: MenuSection[] = [
       { title: "Private tours", description: "Your own vehicle and guide, your pace", href: "/private-tours" },
       { title: "Shuttles", description: "Guaranteed Moraine Lake & Lake Louise access", href: "/shuttles" },
       { title: "Multi-day packages", description: "2–7 days across the Rockies, airport transfers", href: "/multi-day-tour-package-for-banff" },
-      { title: "Banff activity tickets", description: "Gondola, lake cruise, Skywalk, hot springs", href: "/banff-activity-tickets" },
+      { title: "Banff activity tickets", description: "Gondola, Icefield, lake cruises, hot springs", href: "/banff-activity-tickets" },
     ],
   },
   {
@@ -70,16 +70,42 @@ export const MENU_SECTIONS: MenuSection[] = [
   },
 ];
 
+// Open/close timing, shared with the CSS in globals.css (.vc-menu).
+const CLOSE_MS = 320;
+
 export function SiteMenu() {
   const pathname = usePathname();
+  const dialog = useRef<HTMLDialogElement>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [closing, setClosing] = useState(false);
   const [active, setActive] = useState(MENU_SECTIONS[0].id);
   const [expanded, setExpanded] = useState<string | null>(null);
 
+  const open = () => {
+    const el = dialog.current;
+    if (!el || el.open) return;
+    setClosing(false);
+    setIsOpen(true);
+    el.showModal();
+    document.documentElement.style.overflow = "hidden"; // the page behind doesn't scroll
+  };
+
+  // Close with the exit animation, then really close (focus returns to the Menu button).
+  const close = useCallback(() => {
+    const el = dialog.current;
+    if (!el || !el.open) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    setClosing(true);
+    window.setTimeout(() => {
+      el.close();
+      setClosing(false);
+    }, reduce ? 0 : CLOSE_MS);
+  }, []);
+
   // Links route client-side, so close the menu once the new page shows.
   useEffect(() => {
-    setIsOpen(false);
-  }, [pathname]);
+    close();
+  }, [pathname, close]);
 
   const section = MENU_SECTIONS.find((s) => s.id === active) ?? MENU_SECTIONS[0];
 
@@ -87,76 +113,90 @@ export function SiteMenu() {
     <>
       <button
         type="button"
-        onClick={() => setIsOpen(true)}
+        onClick={open}
         aria-haspopup="dialog"
         aria-expanded={isOpen}
         className="inline-flex h-11 items-center gap-2.5 rounded-full px-3 text-sm uppercase tracking-[0.18em] text-obsidian-900 hover:bg-obsidian-900/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-600"
       >
         <Menu className="h-5 w-5" aria-hidden="true" />
-        <span>Menu</span>
+        {/* Icon-only on phones so the centred brand name has room; still announced as "Menu". */}
+        <span className="max-sm:sr-only">Menu</span>
       </button>
 
-      <Dialog
-        isOpen={isOpen}
-        onOpenChange={setIsOpen}
-        position={{ top: 0, bottom: 0, start: 0 }}
-        width="min(880px, 100vw)"
-        maxHeight="100dvh"
-        padding={0}
+      {/* Native modal dialog: focus is contained, Escape closes, the page behind is inert and its
+          ::backdrop is a dark tint over a light blur (globals.css .vc-menu). */}
+      <dialog
+        ref={dialog}
+        aria-label="Site menu"
+        data-closing={closing || undefined}
+        onCancel={(e) => {
+          e.preventDefault();
+          close();
+        }}
+        onClose={() => {
+          setIsOpen(false);
+          document.documentElement.style.overflow = "";
+        }}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) close(); // a click on the blurred page closes the menu
+        }}
+        className="vc-menu"
       >
-        <nav aria-label="Site menu" className="flex h-[100dvh] flex-col bg-obsidian-50 text-obsidian-900">
+        <nav aria-label="Site menu" className="vc-menu-panel flex h-[100dvh] w-[min(880px,calc(100vw-3.5rem))] flex-col bg-obsidian-950 text-white">
           {/* Top row: close + brand, like the header it replaces */}
-          <div className="flex items-center justify-between border-b border-obsidian-900/10 px-5 py-4 sm:px-8">
+          <div className="flex items-center justify-between px-5 py-4 sm:px-10 sm:py-6">
             <button
               type="button"
-              onClick={() => setIsOpen(false)}
-              className="inline-flex h-11 items-center gap-2.5 rounded-full px-3 text-sm uppercase tracking-[0.18em] hover:bg-obsidian-900/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-600"
+              onClick={close}
+              className="inline-flex h-11 items-center gap-2.5 rounded-full px-3 text-sm uppercase tracking-[0.18em] text-white/80 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-summit-300"
             >
               <X className="h-5 w-5" aria-hidden="true" />
               <span>Close</span>
             </button>
-            <Link href="/" className="inline-flex items-center gap-2 rounded-md text-lg">
-              <BrandMark size={28} />
+            <Link href="/" className="inline-flex items-center gap-2.5 rounded-md text-lg text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-summit-300">
+              <BrandMark size={26} variant="white" />
               <span>Vista Chase</span>
             </Link>
           </div>
 
           <div className="flex-1 overflow-y-auto">
             {/* Desktop and tablet: sections on the left, the hovered/focused section's links on the right */}
-            <div className="hidden min-h-full md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
-              <ul className="space-y-1 border-r border-obsidian-900/10 px-8 py-10">
-                {MENU_SECTIONS.map((s) => (
-                  <li key={s.id}>
+            <div className="hidden min-h-full md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
+              <ul className="space-y-2 px-10 py-12">
+                {MENU_SECTIONS.map((s, i) => (
+                  <li key={s.id} className="vc-menu-item" style={{ "--i": i } as React.CSSProperties}>
                     <button
                       type="button"
                       onMouseEnter={() => setActive(s.id)}
                       onFocus={() => setActive(s.id)}
                       onClick={() => setActive(s.id)}
                       aria-current={active === s.id ? "true" : undefined}
-                      className={`group flex w-full items-center justify-between rounded-lg px-3 py-3 text-left text-3xl font-light transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-ocean-600 ${
-                        active === s.id ? "text-obsidian-900" : "text-slate-600 hover:text-obsidian-900"
+                      className={`group flex w-full items-center justify-between py-2.5 text-left text-4xl font-light tracking-tight transition-colors duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-summit-300 ${
+                        active === s.id ? "text-white" : "text-white/45 hover:text-white/80"
                       }`}
                     >
                       <span>{s.title}</span>
                       <ArrowRight
-                        className={`h-5 w-5 transition-transform ${active === s.id ? "translate-x-0 opacity-100" : "-translate-x-2 opacity-0"}`}
+                        className={`h-5 w-5 text-summit-300 transition-[transform,opacity] duration-300 ${active === s.id ? "translate-x-0 opacity-100" : "-translate-x-2 opacity-0"}`}
                         aria-hidden="true"
                       />
                     </button>
                   </li>
                 ))}
               </ul>
-              <div className="px-8 py-10" aria-live="polite">
-                <p className="mb-6 text-xs uppercase tracking-[0.2em] text-slate-600">{section.title}</p>
-                <ul className="space-y-1">
+              <div className="border-l border-white/[0.08] px-10 py-12" aria-live="polite">
+                <p className="mb-6 text-xs uppercase tracking-[0.24em] text-white/50">{section.title}</p>
+                <ul key={section.id} className="vc-menu-links space-y-1">
                   {section.links.map((link) => (
                     <li key={link.href}>
                       <Link
                         href={link.href}
-                        className="block rounded-lg px-3 py-3 hover:bg-obsidian-900/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ocean-600"
+                        className="group block py-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-summit-300"
                       >
-                        <span className="block text-xl font-light">{link.title}</span>
-                        {link.description && <span className="mt-0.5 block text-sm text-slate-600">{link.description}</span>}
+                        <span className="text-xl font-light text-white/90 underline decoration-transparent underline-offset-[6px] transition-colors group-hover:text-white group-hover:decoration-summit-300/60">
+                          {link.title}
+                        </span>
+                        {link.description && <span className="mt-1 block text-sm text-white/50">{link.description}</span>}
                       </Link>
                     </li>
                   ))}
@@ -165,25 +205,25 @@ export function SiteMenu() {
             </div>
 
             {/* Phones: each section expands in place */}
-            <ul className="divide-y divide-obsidian-900/10 md:hidden">
-              {MENU_SECTIONS.map((s) => {
-                const open = expanded === s.id;
+            <ul className="divide-y divide-white/[0.08] px-5 md:hidden">
+              {MENU_SECTIONS.map((s, i) => {
+                const isExpanded = expanded === s.id;
                 return (
-                  <li key={s.id}>
+                  <li key={s.id} className="vc-menu-item" style={{ "--i": i } as React.CSSProperties}>
                     <button
                       type="button"
-                      onClick={() => setExpanded(open ? null : s.id)}
-                      aria-expanded={open}
+                      onClick={() => setExpanded(isExpanded ? null : s.id)}
+                      aria-expanded={isExpanded}
                       aria-controls={`menu-section-${s.id}`}
-                      className="flex w-full items-center justify-between px-5 py-5 text-left text-2xl font-light focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ocean-600"
+                      className="flex w-full items-center justify-between py-5 text-left text-2xl font-light text-white focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-summit-300"
                     >
                       <span>{s.title}</span>
-                      <ChevronDown className={`h-5 w-5 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden="true" />
+                      <ChevronDown className={`h-5 w-5 text-white/60 transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`} aria-hidden="true" />
                     </button>
-                    <ul id={`menu-section-${s.id}`} hidden={!open} className="pb-4">
+                    <ul id={`menu-section-${s.id}`} hidden={!isExpanded} className="pb-4">
                       {s.links.map((link) => (
                         <li key={link.href}>
-                          <Link href={link.href} className="block px-8 py-3 text-lg font-light text-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ocean-600">
+                          <Link href={link.href} className="block py-3 pl-3 text-lg font-light text-white/75 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-summit-300">
                             {link.title}
                           </Link>
                         </li>
@@ -196,27 +236,21 @@ export function SiteMenu() {
           </div>
 
           {/* Bottom row: book, call, concierge */}
-          <div className="flex flex-wrap items-center gap-3 border-t border-obsidian-900/10 px-5 py-5 sm:px-8">
-            <Link href="/banff-highlights-tour" className="golden-summit-btn inline-flex h-11 items-center rounded-md px-6 text-sm uppercase tracking-[0.14em]">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-white/[0.08] px-5 py-5 sm:px-10 sm:py-6">
+            <Link href="/banff-highlights-tour" className="golden-summit-btn inline-flex h-11 items-center rounded-full px-6 text-sm">
               Book a tour
             </Link>
-            <a
-              href="tel:+18257349456"
-              className="inline-flex h-11 items-center gap-2 rounded-md px-3 text-sm text-obsidian-900 hover:bg-obsidian-900/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ocean-600"
-            >
+            <a href="tel:+18257349456" className="inline-flex h-11 items-center gap-2 text-sm text-white/75 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-summit-300">
               <Phone className="h-4 w-4" aria-hidden="true" />
               +1 (825) 734-9456
             </a>
-            <Link
-              href="/concierge"
-              className="inline-flex h-11 items-center gap-2 rounded-md px-3 text-sm text-obsidian-900 hover:bg-obsidian-900/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ocean-600"
-            >
+            <Link href="/concierge" className="inline-flex h-11 items-center gap-2 text-sm text-white/75 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-summit-300">
               <Sparkles className="h-4 w-4" aria-hidden="true" />
               Ask the AI concierge
             </Link>
           </div>
         </nav>
-      </Dialog>
+      </dialog>
     </>
   );
 }

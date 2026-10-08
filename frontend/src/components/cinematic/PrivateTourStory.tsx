@@ -36,7 +36,7 @@ const PRIVATE_BENEFITS = [
 
 export function PrivateTourStory() {
   return (
-    <section id="private-tours" className="py-24 sm:py-32 bg-ocean-950 text-white relative overflow-hidden border-b border-white/10">
+    <section id="private-tours" className="py-24 sm:py-32 bg-obsidian-950 text-white relative overflow-hidden border-b border-white/10">
       {/* Background Ambient Glow */}
       <div className="absolute top-1/4 -right-40 w-96 h-96 bg-summit-500/10 rounded-full blur-3xl pointer-events-none" />
 

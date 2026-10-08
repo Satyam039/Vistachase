@@ -35,10 +35,10 @@ export function FaqBrowser({ items, topics, compact = false }: { items: FaqItem[
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search: pickup, cancellation, Moraine Lake…"
-            className="h-14 w-full rounded-full border border-obsidian-900/15 bg-white pl-14 pr-5 text-base text-obsidian-900 shadow-[0_12px_30px_-20px_rgba(12,31,33,0.4)] placeholder:text-slate-500 focus:border-ocean-600 focus:outline-none focus:ring-2 focus:ring-ocean-600/30"
+            className="h-14 w-full rounded-full border border-obsidian-900/10 bg-white pl-14 pr-5 text-base text-obsidian-900 shadow-[0_12px_30px_-20px_rgba(12,31,33,0.4)] placeholder:text-slate-500 focus:border-ocean-600 focus:outline-none focus:ring-2 focus:ring-ocean-600/30"
           />
         </label>
-        <div role="group" aria-label="Filter by topic" className="vc-rail -mx-page flex gap-2 overflow-x-auto px-page">
+        <div role="group" aria-label="Filter by topic" className="vc-rail -mx-page flex gap-2 overflow-x-auto px-page [&>*:first-child]:ml-auto [&>*:last-child]:mr-auto">
           {["All", ...topics].map((t) => (
             <button
               key={t}
@@ -46,7 +46,7 @@ export function FaqBrowser({ items, topics, compact = false }: { items: FaqItem[
               aria-pressed={topic === t}
               onClick={() => setTopic(t)}
               className={`min-h-11 shrink-0 rounded-full border px-5 text-sm transition-colors ${
-                topic === t ? "border-obsidian-900 bg-obsidian-900 text-white" : "border-obsidian-900/15 bg-white text-obsidian-900 hover:border-obsidian-900/40"
+                topic === t ? "border-obsidian-900 bg-obsidian-900 text-white" : "border-obsidian-900/10 bg-white text-obsidian-900 hover:border-obsidian-900/40"
               }`}
             >
               {t}
@@ -67,7 +67,7 @@ export function FaqBrowser({ items, topics, compact = false }: { items: FaqItem[
               <Sparkles className="h-4 w-4" aria-hidden="true" />
               Ask the concierge
             </Link>
-            <Link href="/contact-us" className="inline-flex h-11 items-center rounded-full border border-obsidian-900/15 px-5 text-sm text-obsidian-900 hover:bg-obsidian-50">
+            <Link href="/contact-us" className="inline-flex h-11 items-center rounded-full border border-obsidian-900/10 px-5 text-sm text-obsidian-900 hover:bg-obsidian-50">
               Contact us
             </Link>
           </div>
@@ -81,7 +81,7 @@ export function FaqBrowser({ items, topics, compact = false }: { items: FaqItem[
               <li
                 key={item.q}
                 className={`rounded-2xl border bg-white transition-[border-color,box-shadow] duration-300 ${
-                  isOpen ? "border-ocean-600/40 shadow-[0_18px_40px_-28px_rgba(12,31,33,0.45)]" : "border-obsidian-900/10 hover:border-obsidian-900/25"
+                  isOpen ? "border-ocean-600/40 shadow-[0_18px_40px_-28px_rgba(12,31,33,0.45)]" : "border-obsidian-900/10 hover:border-obsidian-900/15"
                 }`}
               >
                 <h3>

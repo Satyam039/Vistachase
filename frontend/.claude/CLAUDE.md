@@ -57,8 +57,9 @@ Astryx setup (already done, don't redo):
   slower than SWC (about 3x). `package.json` browserslist pins Next 15's default modern targets so Babel
   doesn't down-compile async code.
 - Site frame: `src/components/layout/SiteFrame.tsx` + `SiteFooter.tsx`, laid out like Bentley's: "Menu"
-  button on the left at every width (`SiteMenu.tsx`: full-height Astryx Dialog from the left, large light
-  section names, the hovered section's links beside them, sections expand in place on phones), the brand
+  button on the left at every width (`SiteMenu.tsx`: native <dialog>, near-black panel from the left over
+  the page dimmed and blurred (`.vc-menu` in globals.css), large light section names, the hovered section's
+  links beside them, sections expand in place on phones), the brand
   absolutely centred in the bar (not TopNav `centerContent`: Astryx hides that slot on narrow screens and
   adds its own "Open navigation" toggle), actions on the right. SiteFrame publishes `--vc-header-h` for
   sticky in-page bars. Menu sections live in `MENU_SECTIONS`.
@@ -165,11 +166,22 @@ behind the sticky header, traps). Report in `a11y-report/summary.md`. Keep it at
 - Live tracking is private: `/track/<token>` opens only with a tracking-session token or a booking's unexpired
   `trackingToken`, never a booking reference or id. The public `/api/bookings?ref=` lookup (voucher) omits the token,
   `POST /api/track/:id/notify` is staff-only, and the concierge reaches tracking only after its email check
-  (`getTelemetryForVerifiedBooking`). Award: Tripadvisor Travelers' Choice Best of the Best 2025, shown with
-  `components/brand/AwardSeal.tsx` (the live site's badge image says 2026 and is not used).
+  (`getTelemetryForVerifiedBooking`). Award: Tripadvisor Travelers' Choice Best of the Best 2026, shown with
+  `components/brand/AwardSeal.tsx` (the year matches the live site's badge).
 - Announcement strip: `components/layout/AnnouncementBar.tsx`, rendered above (not inside) the sticky header so it
   scrolls away. Closing is stored in localStorage and applied before paint by `ANNOUNCE_SCRIPT`
   (`src/lib/announcement.ts`, inlined in the root layout). Bump `ANNOUNCEMENT.id` when the message changes.
+- Alignment: section headings are centred on the page axis (eyebrow, title, intro, main link/button):
+  `SectionHeading` is centred by default, page heroes are centred. Content below stays left-aligned
+  (cards, forms, tables, long text, product-page sections). Split photo/text sections keep their column
+  alignment. Centre chip rows with overflow-safe auto margins (`[&>*:first-child]:ml-auto
+  [&>*:last-child]:mr-auto`), never `justify-center`, which clips the first chips when the row overflows.
+- Dark surfaces: one neutral near-black, `bg-obsidian-950`, for dark sections, heroes, cards and the menu
+  (not the teal `ocean-950`, which stays only in photo scrims). Gold accents on dark: `summit-200/300`.
+- No fake information: reviews come only from `/api/reviews` (guests reviewing a real booking, shown by
+  `components/reviews/ReviewSlider.tsx`); never hard-code quotes. Availability reads `SEATS_MESSAGE`,
+  never a seat count. Ticket times are "Time we request", not promises; prices stay on request until
+  confirmed.
 - Client-component pages set their title in a sibling `layout.tsx` (every page needs its own title).
 
 Building pages from templates (https://astryx.atmeta.com/templates):

@@ -113,7 +113,7 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
   return (
     <section
       aria-label="Vista Chase: tours in the Canadian Rockies"
-      className="relative isolate flex min-h-[max(42rem,calc(100svh-var(--vc-header-h,80px)))] flex-col overflow-hidden bg-ocean-950 text-white"
+      className="relative isolate flex min-h-[max(42rem,calc(100svh-var(--vc-header-h,80px)))] flex-col overflow-hidden bg-obsidian-950 text-white"
     >
       {/* Background: each service's photo cross-fades with a slow zoom; the active clip plays. */}
       <div className="absolute inset-0 -z-10">
@@ -145,8 +145,8 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
           />
         )}
         {/* Scrims: soft at the top, centre darkened for the headline, strong at the foot. */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-ocean-950/55 via-ocean-950/40 to-ocean-950/90" />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(6,19,20,0.55),transparent_75%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-ocean-950/45 via-ocean-950/30 to-ocean-950/85" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(6,19,20,0.45),transparent_75%)]" />
       </div>
 
       {/* One centred column in three groups with even spacing (GetYourGuide / Airbnb hero

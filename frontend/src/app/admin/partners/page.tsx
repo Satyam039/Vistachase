@@ -97,7 +97,7 @@ export default function AdminPartnersPage() {
             type="button"
             onClick={load}
             disabled={loading}
-            className="inline-flex h-11 items-center gap-2 rounded-full border border-obsidian-900/15 bg-white px-4 text-sm text-obsidian-900 hover:bg-obsidian-50 disabled:opacity-60"
+            className="inline-flex h-11 items-center gap-2 rounded-full border border-obsidian-900/10 bg-white px-4 text-sm text-obsidian-900 hover:bg-obsidian-50 disabled:opacity-60"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? "motion-safe:animate-spin" : ""}`} aria-hidden="true" />
             Refresh
@@ -130,7 +130,7 @@ export default function AdminPartnersPage() {
                     aria-pressed={filter === f}
                     onClick={() => setFilter(f)}
                     className={`inline-flex h-10 items-center gap-1.5 rounded-full border px-4 text-sm ${
-                      filter === f ? "border-obsidian-900 bg-obsidian-900 text-white" : "border-obsidian-900/15 bg-white text-obsidian-900 hover:border-obsidian-900/40"
+                      filter === f ? "border-obsidian-900 bg-obsidian-900 text-white" : "border-obsidian-900/10 bg-white text-obsidian-900 hover:border-obsidian-900/40"
                     }`}
                   >
                     {f === "ALL" ? "All" : label(f)}

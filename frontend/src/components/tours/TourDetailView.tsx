@@ -24,8 +24,9 @@ import {
   Send,
 } from "lucide-react";
 import { Dropdown } from "@/components/forms/Dropdown";
+import { DepartureCalendar } from "@/components/booking/DepartureCalendar";
 import { PriceTag } from "@/components/pricing/PriceTag";
-import { cancellationShort } from "@/lib/policy";
+import { cancellationShort, SEATS_MESSAGE } from "@/lib/policy";
 import { Rail } from "@/components/motion/Rail";
 import { ProductGallery, type GallerySlide } from "@/components/tours/ProductGallery";
 import { TourSectionNav, TourSections } from "@/components/tours/TourSections";
@@ -227,7 +228,7 @@ export function TourDetailView({
     ...rest.map((src) => ({ kind: "image" as const, src })),
   ];
 
-  // Booking state (Connected to Bókun System of Record)
+  // Booking state
   const isVehicle = isVehicleTour(tour);
   const bookableDepartures = tour.departures.filter((d) => departureFits(tour, d, 1));
   const [selectedDepartureId, setSelectedDepartureId] = useState(bookableDepartures[0]?.id ?? "");
@@ -376,7 +377,7 @@ export function TourDetailView({
             </div>
           </div>
           <a
-            href="#cancellation-policy"
+            href="#cancellation"
             className="inline-flex shrink-0 items-center gap-2 self-start rounded-full bg-emerald-50 px-4 py-2 text-base text-emerald-900 ring-1 ring-emerald-200 hover:bg-emerald-100 lg:self-auto"
           >
             <CheckCircle2 className="h-5 w-5 text-emerald-700" aria-hidden="true" />
@@ -483,22 +484,12 @@ export function TourDetailView({
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <Dropdown
-                    id="tour-departure"
-                    label="Departure date"
-                    labelClassName="mb-2 block text-sm text-slate-700"
+                  <DepartureCalendar
+                    departures={tour.departures}
+                    isBookable={(d) => departureFits(tour, d, 1)}
                     value={selectedDepartureId}
                     onChange={setSelectedDepartureId}
-                    options={tour.departures.map((d) => ({
-                      value: d.id,
-                      label: formatDeparture(d),
-                      description: departureFits(tour, d, 1)
-                        ? isVehicle
-                          ? `$${d.price} per vehicle`
-                          : `${d.seatsAvailable} seats left · $${d.price} CAD`
-                        : "Sold out",
-                      disabled: !departureFits(tour, d, 1),
-                    }))}
+                    describe={(d) => (isVehicle ? `$${d.price} per vehicle` : `${SEATS_MESSAGE} · $${d.price} CAD per guest`)}
                   />
 
                   {/* Guests / Party Size */}

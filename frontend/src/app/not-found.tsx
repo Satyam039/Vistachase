@@ -20,16 +20,16 @@ const LINKS = [
 export default function NotFound() {
   return (
     <div className="bg-obsidian-50">
-      <section className="relative isolate overflow-hidden bg-ocean-950">
+      <section className="relative isolate overflow-hidden bg-obsidian-950">
         <Image src="/media/photos/moraine-lake-classic.webp" alt="" fill priority sizes="100vw" className="-z-10 object-cover opacity-60" />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/50 to-ocean-950/20" aria-hidden="true" />
-        <div className="mx-auto max-w-5xl px-page pb-14 pt-20 sm:pb-20 sm:pt-28">
+        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/40 to-ocean-950/20" aria-hidden="true" />
+        <div className="mx-auto flex max-w-5xl flex-col items-center px-page pb-14 pt-20 text-center sm:pb-20 sm:pt-28">
           <p className="inline-flex rounded-full bg-white/15 px-3 py-1 text-sm text-white backdrop-blur">Error 404</p>
-          <h1 className="mt-4 max-w-2xl text-4xl font-light tracking-tight text-white sm:text-5xl">This trail doesn&apos;t lead anywhere</h1>
-          <p className="mt-4 max-w-xl text-lg font-light leading-relaxed text-white/85">
+          <h1 className="mx-auto mt-4 max-w-2xl text-4xl font-light tracking-tight text-white sm:text-5xl">This trail doesn&apos;t lead anywhere</h1>
+          <p className="mx-auto mt-4 max-w-xl text-lg font-light leading-relaxed text-white/85">
             The link may be out of date, or the page has moved. Search our tours or pick up one of the paths below.
           </p>
-          <form action="/search" method="get" role="search" className="mt-8 flex max-w-xl items-center gap-2 rounded-full bg-white p-1.5 pl-5 shadow-lg">
+          <form action="/search" method="get" role="search" className="mx-auto mt-8 flex w-full max-w-xl items-center gap-2 rounded-full bg-white p-1.5 pl-5 text-left shadow-lg">
             <Search className="h-5 w-5 shrink-0 text-slate-600" aria-hidden="true" />
             <label htmlFor="nf-q" className="sr-only">
               Search tours
@@ -43,7 +43,7 @@ export default function NotFound() {
       </section>
 
       <section aria-labelledby="nf-links" className="mx-auto max-w-5xl px-page py-12 sm:py-16">
-        <h2 id="nf-links" className="text-2xl font-light text-obsidian-900">
+        <h2 id="nf-links" className="text-center text-2xl font-light text-obsidian-900">
           Popular with travellers
         </h2>
         <ul className="mt-6 grid gap-4 sm:grid-cols-2" data-stagger>

@@ -27,7 +27,7 @@ export function AnnouncementBar() {
   };
 
   return (
-    <aside aria-label="Announcement" className="vc-announce relative bg-ocean-950 text-white">
+    <aside aria-label="Announcement" className="vc-announce relative bg-obsidian-950 text-white">
       <div className="mx-auto flex min-h-11 max-w-7xl items-center gap-3 py-0.5 pl-4 pr-1 text-sm lg:pl-9 lg:pr-5">
         <Info className="hidden h-4 w-4 shrink-0 text-summit-400 sm:block" aria-hidden="true" />
         <p className="min-w-0 flex-1 leading-snug text-white">

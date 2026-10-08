@@ -36,12 +36,12 @@ export default async function ContactUsPage({ searchParams }: { searchParams: Pr
   return (
     <div className="bg-obsidian-50 text-obsidian-900">
       {/* Hero */}
-      <section className="relative isolate flex min-h-[52vh] items-end overflow-hidden bg-ocean-950 text-white">
+      <section className="relative isolate flex min-h-[52vh] items-end overflow-hidden bg-obsidian-950 text-white">
         <Image src="/media/photos/bow-lake-reflection.webp" alt="" fill priority sizes="100vw" className="-z-10 object-cover" data-parallax="10" />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/60 to-ocean-950/20" />
-        <div className="mx-auto w-full max-w-7xl px-page pb-12 pt-24" data-scroll-fade>
+        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/45 to-ocean-950/20" />
+        <div className="mx-auto flex w-full flex-col items-center text-center max-w-7xl px-page pb-12 pt-24" data-scroll-fade>
           <nav aria-label="Breadcrumb" className="mb-6">
-            <ol className="flex items-center gap-1.5 text-sm text-slate-200">
+            <ol className="flex items-center justify-center gap-1.5 text-sm text-slate-200">
               <li>
                 <Link href="/" className="hover:text-white hover:underline">
                   Home
@@ -55,10 +55,10 @@ export default async function ContactUsPage({ searchParams }: { searchParams: Pr
               </li>
             </ol>
           </nav>
-          <h1 className="max-w-3xl text-balance text-4xl font-light leading-[1.05] tracking-tight text-white sm:text-6xl motion-safe:animate-[fadeUp_900ms_ease-out]">
+          <h1 className="mx-auto max-w-3xl text-balance text-4xl font-light leading-[1.05] tracking-tight text-white sm:text-6xl motion-safe:animate-[fadeUp_900ms_ease-out]">
             {requested ? "Request this tour" : "Talk to a local"}
           </h1>
-          <p className="mt-4 max-w-2xl text-lg font-light leading-relaxed text-white/85 motion-safe:animate-[fadeUp_1100ms_ease-out]">
+          <p className="mx-auto mt-4 max-w-2xl text-lg font-light leading-relaxed text-white/85 motion-safe:animate-[fadeUp_1100ms_ease-out]">
             {requested
               ? `Tell us your dates for ${requested.title} and we'll reply with availability and a price.`
               : "Questions about Moraine Lake access, pickups or a custom private day? Our Canmore team is here to help."}
@@ -76,7 +76,7 @@ export default async function ContactUsPage({ searchParams }: { searchParams: Pr
                   href={href}
                   className="group flex items-center gap-4 rounded-[1.5rem] bg-white p-5 ring-1 ring-obsidian-900/[0.07] transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_40px_-28px_rgba(12,31,33,0.5)]"
                 >
-                  <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-summit-500 text-obsidian-900">
+                  <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-summit-200 text-obsidian-900">
                     <Icon className="h-5 w-5" aria-hidden="true" />
                   </span>
                   <span className="min-w-0 flex-1">
@@ -90,7 +90,7 @@ export default async function ContactUsPage({ searchParams }: { searchParams: Pr
             ))}
           </ul>
 
-          <div className="rounded-[1.5rem] bg-ocean-950 p-6 text-white" data-reveal>
+          <div className="rounded-[1.5rem] bg-obsidian-950 p-6 text-white" data-reveal>
             <p className="flex items-center gap-2 text-sm text-summit-300">
               <MapPin className="h-4 w-4" aria-hidden="true" />
               Our office

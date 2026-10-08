@@ -83,7 +83,7 @@ const LEGAL: FooterLink[] = [
   { label: "Terms", href: "/terms-and-conditions" },
   { label: "Privacy", href: "/privacy-policy" },
   { label: "Cancellation policy", href: "/cancellation-policy" },
-  { label: "Affiliates & Bókun agents", href: "/affiliates" },
+  { label: "Travel trade & agents", href: "/affiliates" },
   { label: "Staff portal", href: "/admin" },
 ];
 
@@ -182,7 +182,7 @@ export function SiteFooter() {
   };
 
   return (
-    <div className="bg-ocean-950 text-white">
+    <div className="bg-obsidian-950 text-white">
       {/* 1. Closing banner */}
       {!task && (
       <div className="mx-auto max-w-7xl px-page pt-12 sm:pt-16">
@@ -199,7 +199,7 @@ export function SiteFooter() {
             className="-z-10 object-cover"
             data-parallax="10"
           />
-          <div className="absolute inset-0 -z-10 bg-gradient-to-r from-ocean-950/90 via-ocean-950/65 to-ocean-950/20" />
+          <div className="absolute inset-0 -z-10 bg-gradient-to-r from-ocean-950/80 via-ocean-950/65 to-ocean-950/20" />
           <div className="max-w-xl">
             <p className="text-sm uppercase tracking-[0.22em] text-summit-300">Plan your Rockies day</p>
             <h2 id="footer-plan-heading" className="mt-3 text-balance text-3xl font-light leading-tight tracking-tight text-white sm:text-5xl">
@@ -257,7 +257,7 @@ export function SiteFooter() {
             <AwardMark />
             <span className="min-w-0">
               <span className="block whitespace-nowrap text-base text-white">#6 experience in Canada</span>
-              <span className="block whitespace-nowrap text-xs text-white/70">TripAdvisor Best of the Best 2025</span>
+              <span className="block whitespace-nowrap text-xs text-white/70">TripAdvisor Best of the Best 2026</span>
               <span className="mt-1.5 flex items-center gap-1.5 whitespace-nowrap text-sm text-white/85">
                 <span className="flex" aria-hidden="true">
                   {[0, 1, 2, 3, 4].map((i) => (
@@ -278,7 +278,7 @@ export function SiteFooter() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={`${s.name} (opens in a new tab)`}
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/15 text-white/80 transition-all duration-300 hover:-translate-y-0.5 hover:border-summit-500 hover:bg-summit-500 hover:text-obsidian-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-summit-500"
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/15 text-white/80 transition-all duration-300 hover:-translate-y-0.5 hover:border-summit-200 hover:bg-summit-200 hover:text-obsidian-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-summit-500"
                 >
                   <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] fill-current" aria-hidden="true">
                     <path d={s.path} />
@@ -300,7 +300,7 @@ export function SiteFooter() {
       <div className="mx-auto max-w-7xl px-page">
         <ul className="grid gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 sm:grid-cols-3" aria-label="Booking with Vista Chase">
           {PROMISES.map(({ icon: Icon, text }) => (
-            <li key={text} className="flex items-center gap-3.5 bg-ocean-950 px-5 py-5">
+            <li key={text} className="flex items-center gap-3.5 bg-obsidian-950 px-5 py-5">
               <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-summit-500/15 text-summit-400">
                 <Icon className="h-5 w-5" aria-hidden="true" />
               </span>

@@ -41,7 +41,7 @@ export function LiveTrackingTeaser() {
         {/* Replica of the tracking page's status card (decorative). */}
         <div className="lg:col-span-6" data-reveal="right" aria-hidden="true">
           <div className="rounded-[2rem] bg-white p-3 shadow-2xl">
-            <div className="rounded-[1.5rem] bg-ocean-950 p-6 sm:p-8">
+            <div className="rounded-[1.5rem] bg-obsidian-950 p-6 sm:p-8">
               <p className="flex items-center gap-2 text-sm text-white/70">
                 <span className="relative inline-flex h-2.5 w-2.5">
                   <span className="absolute inset-0 rounded-full bg-ocean-400 opacity-60 motion-safe:animate-ping" />
@@ -76,7 +76,7 @@ export function LiveTrackingTeaser() {
                 <span className="block text-base">Pickup at 05:00</span>
                 <span className="block truncate text-sm text-slate-600">Main Motor Court entrance</span>
               </span>
-              <span className="rounded-md border border-obsidian-900/15 px-2 py-0.5 font-mono text-sm">7VC-894</span>
+              <span className="rounded-md border border-obsidian-900/10 px-2 py-0.5 font-mono text-sm">7VC-894</span>
             </div>
           </div>
         </div>

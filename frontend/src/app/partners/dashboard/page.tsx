@@ -84,7 +84,7 @@ export default function PartnerDashboardPage() {
               Referral code <span className="font-mono">{affiliate.code}</span> · {Math.round(affiliate.commissionRate * 100)}% commission
             </p>
           </div>
-          <button type="button" onClick={signOut} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-obsidian-900/15 bg-white px-5 text-sm hover:bg-obsidian-50">
+          <button type="button" onClick={signOut} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-obsidian-900/10 bg-white px-5 text-sm hover:bg-obsidian-50">
             <LogOut className="h-4 w-4" aria-hidden="true" /> Sign out
           </button>
         </div>

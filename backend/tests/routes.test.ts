@@ -47,13 +47,17 @@ describe("Phase 2: URL Preservation & Customer Experience", () => {
     }
   });
 
-  it("adds the four Banff activity tickets as enquiry products with prices on request", async () => {
+  it("adds the Banff & Jasper activity tickets as enquiry products with prices on request", async () => {
     const tickets = PRODUCT_MAP.filter((p) => p.category === "TICKET");
     expect(tickets.map((p) => p.slug).sort()).toEqual([
       "banff-gondola-tickets",
       "banff-upper-hot-springs-tickets",
+      "columbia-icefield-adventure-tickets",
       "columbia-icefield-skywalk-tickets",
+      "ice-odyssey-tickets",
       "lake-minnewanka-cruise-tickets",
+      "maligne-lake-cruise-tickets",
+      "open-top-touring-tickets",
     ]);
     for (const t of tickets) {
       const tour = await getTourBySlug(t.slug);

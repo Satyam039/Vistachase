@@ -43,7 +43,7 @@ type SortValue = (typeof SORTS)[number]["value"];
 const KEYWORD_URL_DELAY_MS = 300;
 const EMPTY: SearchFilters = { q: "", category: "ALL", destination: "ALL", seats: 1, date: "" };
 const CONTROL =
-  "h-11 w-full appearance-none rounded-full border border-obsidian-900/15 bg-white pl-10 pr-4 text-sm text-obsidian-900 focus:border-ocean-600 focus:outline-none focus:ring-2 focus:ring-ocean-600/30";
+  "h-11 w-full appearance-none rounded-full border border-obsidian-900/10 bg-white pl-10 pr-4 text-sm text-obsidian-900 focus:border-ocean-600 focus:outline-none focus:ring-2 focus:ring-ocean-600/30";
 
 function todayIso() {
   const now = new Date();
@@ -132,9 +132,9 @@ export function TourSearch({
     <div className="bg-obsidian-50 text-obsidian-900">
       {/* Header + keyword */}
       <section className="border-b border-obsidian-900/[0.06] bg-white">
-        <div className="mx-auto max-w-7xl px-page pb-8 pt-10 sm:pt-14">
+        <div className="mx-auto max-w-7xl px-page pb-8 pt-10 text-center sm:pt-14">
           <nav aria-label="Breadcrumb" className="mb-5">
-            <ol className="flex items-center gap-1.5 text-sm text-slate-600">
+            <ol className="flex items-center justify-center gap-1.5 text-sm text-slate-600">
               <li>
                 <Link href="/" className="hover:text-obsidian-900 hover:underline">
                   Home
@@ -149,9 +149,9 @@ export function TourSearch({
             </ol>
           </nav>
           <h1 className="text-balance text-4xl font-light leading-[1.05] tracking-tight text-obsidian-900 sm:text-5xl">Find your Rockies tour</h1>
-          <p className="mt-3 max-w-2xl text-lg font-light text-slate-600">Tours, shuttles and tickets across Banff, Lake Louise, Moraine Lake, Yoho and Jasper.</p>
+          <p className="mx-auto mt-3 max-w-2xl text-lg font-light text-slate-600">Tours, shuttles and tickets across Banff, Lake Louise, Moraine Lake, Yoho and Jasper.</p>
 
-          <label className="relative mt-7 block max-w-3xl">
+          <label className="relative mx-auto mt-7 block max-w-3xl text-left">
             <span className="sr-only">Search tours</span>
             <Search className="pointer-events-none absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" aria-hidden="true" />
             <input
@@ -159,11 +159,11 @@ export function TourSearch({
               value={filters.q}
               onChange={(e) => update({ q: e.target.value })}
               placeholder="Search Moraine Lake, sunrise, Icefields…"
-              className="h-14 w-full rounded-full border border-obsidian-900/15 bg-white pl-14 pr-5 text-base text-obsidian-900 shadow-[0_12px_30px_-20px_rgba(12,31,33,0.4)] placeholder:text-slate-500 focus:border-ocean-600 focus:outline-none focus:ring-2 focus:ring-ocean-600/30"
+              className="h-14 w-full rounded-full border border-obsidian-900/10 bg-white pl-14 pr-5 text-base text-obsidian-900 shadow-[0_12px_30px_-20px_rgba(12,31,33,0.4)] placeholder:text-slate-500 focus:border-ocean-600 focus:outline-none focus:ring-2 focus:ring-ocean-600/30"
             />
           </label>
 
-          <div role="group" aria-label="Filter by type" className="vc-rail -mx-page mt-5 flex gap-2 overflow-x-auto px-page">
+          <div role="group" aria-label="Filter by type" className="vc-rail -mx-page mt-5 flex gap-2 overflow-x-auto px-page [&>*:first-child]:ml-auto [&>*:last-child]:mr-auto">
             {categories.map((c) => (
               <button
                 key={c}
@@ -171,7 +171,7 @@ export function TourSearch({
                 aria-pressed={filters.category === c}
                 onClick={() => update({ category: c })}
                 className={`min-h-11 shrink-0 rounded-full border px-5 text-sm transition-colors ${
-                  filters.category === c ? "border-obsidian-900 bg-obsidian-900 text-white" : "border-obsidian-900/15 bg-white text-obsidian-900 hover:border-obsidian-900/40"
+                  filters.category === c ? "border-obsidian-900 bg-obsidian-900 text-white" : "border-obsidian-900/10 bg-white text-obsidian-900 hover:border-obsidian-900/40"
                 }`}
               >
                 {c === "ALL" ? "All experiences" : CATEGORY_LABELS[c]}
@@ -228,7 +228,7 @@ export function TourSearch({
           <button
             type="button"
             onClick={() => setFilters(EMPTY)}
-            className="mb-6 inline-flex h-10 items-center gap-1.5 rounded-full border border-obsidian-900/15 bg-white px-4 text-sm text-obsidian-900 hover:bg-obsidian-100"
+            className="mb-6 inline-flex h-10 items-center gap-1.5 rounded-full border border-obsidian-900/10 bg-white px-4 text-sm text-obsidian-900 hover:bg-obsidian-100"
           >
             <X className="h-4 w-4" aria-hidden="true" />
             Clear filters
@@ -246,7 +246,7 @@ export function TourSearch({
               <button type="button" onClick={() => setFilters(EMPTY)} className="golden-summit-btn inline-flex h-11 items-center rounded-full px-6 text-sm">
                 Clear filters
               </button>
-              <Link href="/concierge" className="inline-flex h-11 items-center rounded-full border border-obsidian-900/15 px-6 text-sm text-obsidian-900 hover:bg-obsidian-50">
+              <Link href="/concierge" className="inline-flex h-11 items-center rounded-full border border-obsidian-900/10 px-6 text-sm text-obsidian-900 hover:bg-obsidian-50">
                 Ask the concierge
               </Link>
             </div>

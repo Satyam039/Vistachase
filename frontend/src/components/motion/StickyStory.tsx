@@ -105,7 +105,7 @@ export function StickyStory({ chapters, tone = "dark" }: { chapters: StoryChapte
                   {c.facts.map((f) => (
                     <li
                       key={f}
-                      className={`rounded-full border px-3.5 py-1.5 text-sm ${dark ? "border-white/20 text-slate-200" : "border-obsidian-900/15 text-obsidian-700"}`}
+                      className={`rounded-full border px-3.5 py-1.5 text-sm ${dark ? "border-white/20 text-slate-200" : "border-obsidian-900/10 text-obsidian-700"}`}
                     >
                       {f}
                     </li>

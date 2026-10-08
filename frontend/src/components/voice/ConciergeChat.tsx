@@ -288,7 +288,7 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
                     <button
                       type="button"
                       onClick={() => send(text)}
-                      className="flex w-full items-center gap-3 rounded-2xl border border-obsidian-900/10 px-4 py-3 text-left text-sm text-obsidian-900 transition-colors hover:border-obsidian-900/25 hover:bg-obsidian-50"
+                      className="flex w-full items-center gap-3 rounded-2xl border border-obsidian-900/10 px-4 py-3 text-left text-sm text-obsidian-900 transition-colors hover:border-obsidian-900/15 hover:bg-obsidian-50"
                     >
                       <Icon className="h-4 w-4 shrink-0 text-ocean-600" aria-hidden="true" />
                       {text}
@@ -354,7 +354,7 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
               <button
                 type="button"
                 onClick={stopSpeaking}
-                className="inline-flex h-9 items-center gap-2 rounded-full border border-obsidian-900/15 bg-white px-4 text-sm text-obsidian-900 shadow-sm hover:bg-obsidian-50"
+                className="inline-flex h-9 items-center gap-2 rounded-full border border-obsidian-900/10 bg-white px-4 text-sm text-obsidian-900 shadow-sm hover:bg-obsidian-50"
               >
                 <Square className="h-3.5 w-3.5 fill-current" aria-hidden="true" />
                 Stop reading
@@ -366,7 +366,7 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
               e.preventDefault();
               send(input);
             }}
-            className="rounded-[1.75rem] border border-obsidian-900/15 bg-white p-2 shadow-[0_8px_30px_-12px_rgba(12,31,33,0.25)] focus-within:border-obsidian-900/30"
+            className="rounded-[1.75rem] border border-obsidian-900/10 bg-white p-2 shadow-[0_8px_30px_-12px_rgba(12,31,33,0.25)] focus-within:border-obsidian-900/30"
           >
             <label htmlFor={`concierge-input-${variant}`} className="sr-only">
               Message the concierge

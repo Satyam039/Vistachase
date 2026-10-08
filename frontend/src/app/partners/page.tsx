@@ -31,12 +31,12 @@ const STEPS = ["Apply below and get your referral code.", "Once approved, copy l
 export default function PartnersPage() {
   return (
     <div className="bg-obsidian-50 text-obsidian-900">
-      <section className="relative isolate flex min-h-[64vh] items-end overflow-hidden bg-ocean-950 text-white">
+      <section className="relative isolate flex min-h-[64vh] items-end overflow-hidden bg-obsidian-950 text-white">
         <Image src="/media/photos/lake-louise-from-chateau.webp" alt="" fill priority sizes="100vw" className="-z-10 object-cover" data-parallax="10" />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/70 to-ocean-950/25" />
-        <div className="mx-auto w-full max-w-7xl px-page pb-14 pt-24" data-scroll-fade>
+        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/55 to-ocean-950/25" />
+        <div className="mx-auto flex w-full flex-col items-center text-center max-w-7xl px-page pb-14 pt-24" data-scroll-fade>
           <nav aria-label="Breadcrumb" className="mb-6">
-            <ol className="flex items-center gap-1.5 text-sm text-slate-200">
+            <ol className="flex items-center justify-center gap-1.5 text-sm text-slate-200">
               <li>
                 <Link href="/" className="hover:text-white hover:underline">
                   Home
@@ -50,10 +50,10 @@ export default function PartnersPage() {
               </li>
             </ol>
           </nav>
-          <h1 className="max-w-3xl text-balance text-4xl font-light leading-[1.05] tracking-tight text-white sm:text-6xl motion-safe:animate-[fadeUp_900ms_ease-out]">
+          <h1 className="mx-auto max-w-3xl text-balance text-4xl font-light leading-[1.05] tracking-tight text-white sm:text-6xl motion-safe:animate-[fadeUp_900ms_ease-out]">
             Recommend the Rockies. Earn on every booking.
           </h1>
-          <p className="mt-5 max-w-2xl text-lg font-light leading-relaxed text-white/85 motion-safe:animate-[fadeUp_1100ms_ease-out]">
+          <p className="mx-auto mt-5 max-w-2xl text-lg font-light leading-relaxed text-white/85 motion-safe:animate-[fadeUp_1100ms_ease-out]">
             For hotels, travel agents and creators. Share your link, your guests book top-rated tours and shuttles, and you earn commission.
           </p>
           <div className="mt-7 flex flex-wrap gap-3 motion-safe:animate-[fadeUp_1300ms_ease-out]">
@@ -68,7 +68,7 @@ export default function PartnersPage() {
       </section>
 
       <section aria-labelledby="benefits-heading" className="mx-auto max-w-7xl px-page py-20 sm:py-24">
-        <div className="mb-10 max-w-3xl" data-reveal>
+        <div className="mx-auto mb-10 max-w-3xl text-center" data-reveal>
           <p className="mb-3 text-sm uppercase tracking-[0.22em] text-ocean-600">Why partner with us</p>
           <h2 id="benefits-heading" className="text-balance text-3xl font-light leading-[1.1] tracking-tight text-obsidian-900 sm:text-4xl lg:text-5xl">
             Simple links, real earnings
@@ -77,7 +77,7 @@ export default function PartnersPage() {
         <ul className="grid gap-5 md:grid-cols-3" data-stagger>
           {BENEFITS.map(({ icon: Icon, title, text }) => (
             <li key={title} className="rounded-[1.75rem] bg-white p-7 ring-1 ring-obsidian-900/[0.07]">
-              <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-ocean-950 text-summit-400">
+              <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-obsidian-950 text-summit-400">
                 <Icon className="h-5 w-5" aria-hidden="true" />
               </span>
               <h3 className="mt-6 text-2xl font-light text-obsidian-900">{title}</h3>
@@ -87,9 +87,9 @@ export default function PartnersPage() {
         </ul>
       </section>
 
-      <section aria-labelledby="who-heading" className="bg-ocean-950 py-20 text-white sm:py-24">
+      <section aria-labelledby="who-heading" className="bg-obsidian-950 py-20 text-white sm:py-24">
         <div className="mx-auto max-w-7xl px-page">
-          <h2 id="who-heading" className="mb-10 text-3xl font-light tracking-tight text-white sm:text-4xl" data-reveal>
+          <h2 id="who-heading" className="mb-10 text-center text-3xl font-light tracking-tight text-white sm:text-4xl" data-reveal>
             Who it&rsquo;s for
           </h2>
           <ul className="grid gap-5 md:grid-cols-3" data-stagger>
@@ -105,13 +105,13 @@ export default function PartnersPage() {
       </section>
 
       <section aria-labelledby="how-heading" className="mx-auto max-w-7xl px-page py-20 sm:py-24">
-        <h2 id="how-heading" className="mb-10 text-3xl font-light tracking-tight text-obsidian-900 sm:text-4xl" data-reveal>
+        <h2 id="how-heading" className="mb-10 text-center text-3xl font-light tracking-tight text-obsidian-900 sm:text-4xl" data-reveal>
           How it works
         </h2>
         <ol className="grid gap-5 md:grid-cols-3" data-stagger>
           {STEPS.map((step, i) => (
             <li key={step} className="flex gap-4 rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07]">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-summit-500 text-obsidian-900" aria-hidden="true">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-summit-200 text-obsidian-900" aria-hidden="true">
                 {i + 1}
               </span>
               <span className="pt-1.5 text-base text-obsidian-900">{step}</span>

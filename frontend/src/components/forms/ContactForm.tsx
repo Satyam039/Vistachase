@@ -10,7 +10,7 @@ import { Dropdown } from "@/components/forms/Dropdown";
 
 type Fields = "name" | "email" | "phone" | "message" | "date" | "guests";
 const FIELD =
-  "h-12 w-full rounded-xl border border-obsidian-900/15 bg-white px-4 text-base text-obsidian-900 placeholder:text-slate-400 focus:border-ocean-600 focus:outline-none focus:ring-2 focus:ring-ocean-600/30 aria-[invalid=true]:border-red-600";
+  "h-12 w-full rounded-xl border border-obsidian-900/10 bg-white px-4 text-base text-obsidian-900 placeholder:text-slate-400 focus:border-ocean-600 focus:outline-none focus:ring-2 focus:ring-ocean-600/30 aria-[invalid=true]:border-red-600";
 
 export function ContactForm({
   tours,

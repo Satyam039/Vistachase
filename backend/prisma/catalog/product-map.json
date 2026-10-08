@@ -318,6 +318,70 @@
     "vermilion-lakes"
    ],
    "season": "all"
+  },
+  {
+   "slug": "open-top-touring-tickets",
+   "url": null,
+   "category": "TICKET",
+   "bookingMode": "ENQUIRY",
+   "bokunId": null,
+   "destination": "banff-national-park",
+   "mornbyTour": null,
+   "mornbyMatch": "none",
+   "places": [
+    "banff",
+    "vermilion-lakes"
+   ],
+   "season": "all"
+  },
+  {
+   "slug": "columbia-icefield-adventure-tickets",
+   "url": null,
+   "category": "TICKET",
+   "bookingMode": "ENQUIRY",
+   "bokunId": null,
+   "destination": "jasper-national-park",
+   "mornbyTour": null,
+   "mornbyMatch": "none",
+   "places": [
+    "columbia-icefield",
+    "athabasca-glacier",
+    "icefields-parkway",
+    "jasper"
+   ],
+   "season": "all"
+  },
+  {
+   "slug": "ice-odyssey-tickets",
+   "url": null,
+   "category": "TICKET",
+   "bookingMode": "ENQUIRY",
+   "bokunId": null,
+   "destination": "jasper-national-park",
+   "mornbyTour": null,
+   "mornbyMatch": "none",
+   "places": [
+    "columbia-icefield",
+    "athabasca-glacier",
+    "icefields-parkway"
+   ],
+   "season": "all"
+  },
+  {
+   "slug": "maligne-lake-cruise-tickets",
+   "url": null,
+   "category": "TICKET",
+   "bookingMode": "ENQUIRY",
+   "bokunId": null,
+   "destination": "jasper-national-park",
+   "mornbyTour": null,
+   "mornbyMatch": "none",
+   "places": [
+    "spirit-island",
+    "maligne-lake",
+    "jasper"
+   ],
+   "season": "all"
   }
  ],
  "mornbyOnly": []

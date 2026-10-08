@@ -205,14 +205,14 @@ export default function OperationsPage() {
               type="date"
               value={selectedDate}
               onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
-              className="h-11 rounded-full border border-obsidian-900/15 bg-white px-4 text-sm text-obsidian-900 focus:border-ocean-600 focus:outline-none focus:ring-2 focus:ring-ocean-600/30"
+              className="h-11 rounded-full border border-obsidian-900/10 bg-white px-4 text-sm text-obsidian-900 focus:border-ocean-600 focus:outline-none focus:ring-2 focus:ring-ocean-600/30"
             />
             <button
               type="button"
               onClick={() => fetchDashboard(selectedDate)}
               aria-label="Refresh"
               disabled={loading}
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-obsidian-900/15 bg-white hover:bg-obsidian-50 disabled:opacity-60"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-obsidian-900/10 bg-white hover:bg-obsidian-50 disabled:opacity-60"
             >
               <RefreshCw className={`h-4 w-4 ${loading ? "motion-safe:animate-spin" : ""}`} aria-hidden="true" />
             </button>
@@ -357,7 +357,7 @@ export default function OperationsPage() {
                                   <Link
                                     href={`/track/${run.trackingSession.token}`}
                                     target="_blank"
-                                    className="inline-flex h-10 items-center gap-1.5 rounded-full border border-obsidian-900/15 px-4 text-sm hover:bg-obsidian-50"
+                                    className="inline-flex h-10 items-center gap-1.5 rounded-full border border-obsidian-900/10 px-4 text-sm hover:bg-obsidian-50"
                                   >
                                     <Navigation className="h-3.5 w-3.5" aria-hidden="true" /> Live map
                                     <span className="sr-only">for {run.name} (opens in a new tab)</span>
@@ -406,7 +406,7 @@ export default function OperationsPage() {
                 <button
                   type="button"
                   onClick={() => post(`/api/operations/runs/${selected.run.id}/optimize-pickups`).catch(() => setError("Couldn't reorder pickups."))}
-                  className="inline-flex h-10 items-center gap-1.5 rounded-full border border-obsidian-900/15 px-4 text-sm hover:bg-obsidian-50"
+                  className="inline-flex h-10 items-center gap-1.5 rounded-full border border-obsidian-900/10 px-4 text-sm hover:bg-obsidian-50"
                 >
                   <Sliders className="h-3.5 w-3.5" aria-hidden="true" /> Order east to west
                 </button>
@@ -453,7 +453,7 @@ export default function OperationsPage() {
                         type="button"
                         onClick={() => post("/api/operations/runs/check-in", { runBookingId: rb.id, isBoarded: !rb.isBoarded }).catch(() => setError("Couldn't update check-in."))}
                         className={`inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full px-4 text-sm ${
-                          rb.isBoarded ? "border border-obsidian-900/15 bg-white text-obsidian-900 hover:bg-obsidian-50" : "bg-ocean-600 text-white hover:bg-ocean-700"
+                          rb.isBoarded ? "border border-obsidian-900/10 bg-white text-obsidian-900 hover:bg-obsidian-50" : "bg-ocean-600 text-white hover:bg-ocean-700"
                         }`}
                       >
                         {rb.isBoarded ? <CheckCircle2 className="h-4 w-4 text-ocean-600" aria-hidden="true" /> : <Circle className="h-4 w-4" aria-hidden="true" />}

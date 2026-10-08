@@ -1,7 +1,7 @@
 import React from "react";
 import { ServicesHero, type HeroSlide } from "@/components/cinematic/ServicesHero";
 import { fromPrice, priceUnitLabel } from "@/lib/tours";
-import { getTours } from "@/lib/api/catalog";
+import { getCategoryExtras, getTours } from "@/lib/api/catalog";
 import { SERVICES } from "@/lib/services";
 import { TrustRow } from "@/components/home/TrustRow";
 import { TopExperiences } from "@/components/home/TopExperiences";
@@ -17,11 +17,11 @@ import { TrustBar } from "@/components/cinematic/TrustBar";
 export const metadata = {
   title: "Vista Chase | Luxury Private Tours & Shuttles • Banff & Lake Louise",
   description:
-    "Banff's premier tour operator. Ranked #6 Experience in Canada by TripAdvisor Best of the Best 2025. Guaranteed Moraine Lake access, luxury private SUV tours & shuttles.",
+    "Banff's premier tour operator. Ranked #6 Experience in Canada by TripAdvisor Best of the Best 2026. Guaranteed Moraine Lake access, luxury private SUV tours & shuttles.",
   openGraph: {
     title: "Vista Chase | Canadian Rockies Luxury Tours & Shuttles",
     description:
-      "Ranked #6 Experience in Canada by TripAdvisor 2025. Explore Banff, Lake Louise & Moraine Lake in comfort.",
+      "Ranked #6 Experience in Canada by TripAdvisor 2026. Explore Banff, Lake Louise & Moraine Lake in comfort.",
     images: [
       {
         url: "/media/site/hero-background-image-3.webp",
@@ -36,6 +36,8 @@ export const metadata = {
 export default async function HomePage() {
   // Each hero slide lists its service's tours with rating, reviews and price.
   const tours = await getTours();
+  // Real guest reviews (left against a booking) for the review slider.
+  const { reviews } = await getCategoryExtras(tours);
   const slides: HeroSlide[] = SERVICES.map((service) => ({
     ...service,
     tours: tours
@@ -64,7 +66,7 @@ export default async function HomePage() {
       <PlanAheadGuaranteedAccess />
       <WhyTravelersLove />
       <VerifiedAwardSection />
-      <GuestTestimonials />
+      <GuestTestimonials reviews={reviews} />
       <LiveTrackingTeaser />
       <TrustBar />
     </div>

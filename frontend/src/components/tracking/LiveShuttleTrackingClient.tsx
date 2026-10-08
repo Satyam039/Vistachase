@@ -161,7 +161,7 @@ export default function LiveShuttleTrackingClient({ initialTelemetry, token }: {
             type="button"
             onClick={() => refresh(true)}
             disabled={refreshing}
-            className="inline-flex h-11 items-center gap-2 rounded-full border border-obsidian-900/15 bg-white px-5 text-sm text-obsidian-900 hover:bg-obsidian-50 disabled:opacity-60"
+            className="inline-flex h-11 items-center gap-2 rounded-full border border-obsidian-900/10 bg-white px-5 text-sm text-obsidian-900 hover:bg-obsidian-50 disabled:opacity-60"
           >
             <RefreshCw className={`h-4 w-4 ${refreshing ? "motion-safe:animate-spin" : ""}`} aria-hidden="true" />
             Refresh
@@ -171,7 +171,7 @@ export default function LiveShuttleTrackingClient({ initialTelemetry, token }: {
         <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_24rem]">
           {/* Status + map */}
           <div className="space-y-6">
-            <section aria-labelledby="status-h" className="rounded-[1.75rem] bg-ocean-950 p-6 text-white sm:p-8">
+            <section aria-labelledby="status-h" className="rounded-[1.75rem] bg-obsidian-950 p-6 text-white sm:p-8">
               <div className="flex flex-wrap items-start justify-between gap-6">
                 <div className="min-w-0 flex-1" role="status" aria-live="polite" aria-atomic="true">
                   <h2 id="status-h" className="text-2xl font-light text-white sm:text-3xl">
@@ -247,7 +247,7 @@ export default function LiveShuttleTrackingClient({ initialTelemetry, token }: {
                 Your driver
               </h2>
               <div className="mt-3 flex items-center gap-4">
-                <span className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full bg-ocean-950 ring-1 ring-obsidian-900/10">
+                <span className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full bg-obsidian-950 ring-1 ring-obsidian-900/10">
                   <Image src={t.driverPhoto} alt="" fill sizes="56px" className="object-cover" />
                 </span>
                 <p className="min-w-0 text-xl text-obsidian-900">{t.driverName}</p>
@@ -256,7 +256,7 @@ export default function LiveShuttleTrackingClient({ initialTelemetry, token }: {
                 <CarFront className="mt-0.5 h-5 w-5 shrink-0 text-ocean-600" aria-hidden="true" />
                 <div className="min-w-0">
                   <p className="text-base text-obsidian-900">{t.vehicleName}</p>
-                  <p className="mt-1 inline-flex rounded-md border border-obsidian-900/15 bg-white px-2 py-0.5 font-mono text-sm tracking-wide text-obsidian-900">
+                  <p className="mt-1 inline-flex rounded-md border border-obsidian-900/10 bg-white px-2 py-0.5 font-mono text-sm tracking-wide text-obsidian-900">
                     {t.licensePlate}
                   </p>
                 </div>
@@ -269,7 +269,7 @@ export default function LiveShuttleTrackingClient({ initialTelemetry, token }: {
                   href={whatsapp}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-obsidian-900/15 px-4 text-sm text-obsidian-900 hover:bg-obsidian-50"
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-obsidian-900/10 px-4 text-sm text-obsidian-900 hover:bg-obsidian-50"
                 >
                   <MessageSquare className="h-4 w-4" aria-hidden="true" /> WhatsApp
                   <span className="sr-only">(opens in a new tab)</span>

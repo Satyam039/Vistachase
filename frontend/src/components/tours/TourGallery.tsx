@@ -6,7 +6,7 @@
 //   → sticky sort bar with the result count → card grid → reassurance → guest reviews rail
 //   → FAQ (from the category's own tours) → other ways to explore
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -34,6 +34,7 @@ import { TrustRow } from "@/components/home/TrustRow";
 import { PinnedHorizontal } from "@/components/motion/PinnedHorizontal";
 import { Rail } from "@/components/motion/Rail";
 import { FaqBrowser } from "@/components/faq/FaqBrowser";
+import { ReviewSlider } from "@/components/reviews/ReviewSlider";
 import type { CategoryReview } from "@/lib/api/catalog";
 import { fromPrice } from "@/lib/tours";
 import { SERVICES, type Service } from "@/lib/services";
@@ -74,6 +75,7 @@ export function TourGallery({
   service,
   reviews = [],
   faqs = [],
+  signature,
 }: {
   heading: string;
   intro: string;
@@ -85,6 +87,8 @@ export function TourGallery({
   /** Real reviews of this category's tours (getCategoryExtras). */
   reviews?: CategoryReview[];
   faqs?: { question: string; answer: string }[];
+  /** Optional side-by-side of the category's signature days, shown above the full list. */
+  signature?: ReactNode;
 }) {
   const [sort, setSort] = useState<SortKey>("recommended");
 
@@ -127,7 +131,7 @@ export function TourGallery({
       {/* Hero (GetYourGuide / Viator category pattern): breadcrumb, rating, title, one-line lede and
           the CTA; the "why choose" reasons sit in a frosted chip row along the bottom (a swipeable
           rail on phones). The longer intro lives in the strip below, not over the photo. */}
-      <section className="relative isolate flex min-h-[34rem] flex-col justify-end overflow-hidden bg-ocean-950 text-white sm:min-h-[40rem] lg:min-h-[78vh]">
+      <section className="relative isolate flex min-h-[34rem] flex-col justify-end overflow-hidden bg-obsidian-950 text-white sm:min-h-[40rem] lg:min-h-[78vh]">
         {service && (
           <div className="absolute inset-0 -z-10">
             <Image src={service.image} alt="" fill priority sizes="100vw" className="object-cover" data-parallax="10" />
@@ -139,9 +143,9 @@ export function TourGallery({
           </div>
         )}
 
-        <div className="mx-auto w-full max-w-7xl px-page pt-20" data-scroll-fade>
+        <div className="mx-auto flex w-full max-w-7xl flex-col items-center px-page pt-20 text-center" data-scroll-fade>
           <nav aria-label="Breadcrumb" className="mb-5">
-            <ol className="flex items-center gap-1.5 text-sm text-slate-200">
+            <ol className="flex items-center justify-center gap-1.5 text-sm text-slate-200">
               <li>
                 <Link href="/" className="hover:text-white hover:underline">
                   Home
@@ -174,11 +178,11 @@ export function TourGallery({
             </p>
           )}
 
-          <h1 className="max-w-4xl text-balance text-[clamp(2.25rem,9.5vw,2.75rem)] font-light leading-[1.05] tracking-tight text-white sm:text-6xl lg:text-7xl motion-safe:animate-[fadeUp_900ms_ease-out]">
+          <h1 className="mx-auto max-w-4xl text-balance text-[clamp(2.25rem,9.5vw,2.75rem)] font-light leading-[1.05] tracking-tight text-white sm:text-6xl lg:text-7xl motion-safe:animate-[fadeUp_900ms_ease-out]">
             {heading}
           </h1>
           {service && (
-            <p className="mt-3 max-w-xl text-base font-light leading-snug text-slate-100 sm:mt-4 sm:text-lg lg:text-xl motion-safe:animate-[fadeUp_1100ms_ease-out]">
+            <p className="mx-auto mt-3 max-w-xl text-base font-light leading-snug text-slate-100 sm:mt-4 sm:text-lg lg:text-xl motion-safe:animate-[fadeUp_1100ms_ease-out]">
               {shortTagline(service.tagline)}
             </p>
           )}
@@ -189,7 +193,7 @@ export function TourGallery({
         </div>
 
         {service && (
-          <div className="mt-10 border-t border-white/10 bg-ocean-950/35 backdrop-blur-md sm:mt-12">
+          <div className="mt-10 border-t border-white/10 bg-obsidian-950/35 backdrop-blur-md sm:mt-12">
             <ul
               aria-label={`Why choose ${service.title.toLowerCase()}`}
               // Focusable so keyboard users can scroll the chips on phones (like Rail).
@@ -231,6 +235,8 @@ export function TourGallery({
           </dl>
         </div>
       </section>
+
+      {signature}
 
       {/* Results */}
       <section
@@ -301,7 +307,7 @@ export function TourGallery({
           className="overflow-hidden py-16 sm:py-20"
         >
           <div className="mx-auto max-w-7xl px-page">
-            <div className="mb-8 max-w-2xl" data-reveal>
+            <div className="mx-auto mb-8 max-w-2xl text-center" data-reveal>
               <p className="mb-3 text-sm uppercase tracking-[0.22em] text-ocean-600">
                 Guest reviews
               </p>
@@ -312,7 +318,7 @@ export function TourGallery({
                 What guests say
               </h2>
               {rating !== null && (
-                <p className="mt-3 flex items-center gap-2 text-base text-slate-600">
+                <p className="mt-3 flex items-center justify-center gap-2 text-base text-slate-600">
                   <Star
                     className="h-4 w-4 fill-summit-500 text-summit-500"
                     aria-hidden="true"
@@ -323,95 +329,7 @@ export function TourGallery({
                 </p>
               )}
             </div>
-            {reviews.length > 3 ? (
-              <Rail
-                label="Guest reviews"
-                itemClassName="w-[82vw] max-w-[24rem] sm:w-[24rem]"
-              >
-                {reviews.map((r) => (
-                  <figure
-                    key={r.id}
-                    className="flex h-full flex-col rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07] transition-shadow hover:shadow-md"
-                  >
-                    <p
-                      className="flex items-center gap-1"
-                      role="img"
-                      aria-label={`${r.rating} out of 5`}
-                    >
-                      {Array.from({ length: 5 }, (_, i) => (
-                        <Star
-                          key={i}
-                          className={`h-4 w-4 ${i < r.rating ? "fill-summit-500 text-summit-500" : "text-slate-300"}`}
-                          aria-hidden="true"
-                        />
-                      ))}
-                    </p>
-                    <blockquote className="mt-4 flex-1">
-                      <p className="text-lg font-light text-obsidian-900">
-                        {r.title}
-                      </p>
-                      <p className="mt-2 line-clamp-5 text-base leading-relaxed text-slate-700">
-                        {r.body}
-                      </p>
-                    </blockquote>
-                    <figcaption className="mt-5 border-t border-obsidian-900/[0.06] pt-4 text-sm text-slate-600">
-                      <span className="text-obsidian-900">{r.authorName}</span>{" "}
-                      · {r.date}
-                      <Link
-                        href={`/${r.tourSlug}`}
-                        className="mt-1 block truncate text-ocean-600 underline-offset-4 hover:underline"
-                      >
-                        {r.tourTitle}
-                      </Link>
-                    </figcaption>
-                  </figure>
-                ))}
-              </Rail>
-            ) : (
-              <div
-                className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
-                data-stagger
-              >
-                {reviews.map((r) => (
-                  <figure
-                    key={r.id}
-                    className="flex h-full flex-col rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07] transition-shadow hover:shadow-md"
-                  >
-                    <p
-                      className="flex items-center gap-1"
-                      role="img"
-                      aria-label={`${r.rating} out of 5`}
-                    >
-                      {Array.from({ length: 5 }, (_, i) => (
-                        <Star
-                          key={i}
-                          className={`h-4 w-4 ${i < r.rating ? "fill-summit-500 text-summit-500" : "text-slate-300"}`}
-                          aria-hidden="true"
-                        />
-                      ))}
-                    </p>
-                    <blockquote className="mt-4 flex-1">
-                      <p className="text-lg font-light text-obsidian-900">
-                        {r.title}
-                      </p>
-                      <p className="mt-2 line-clamp-5 text-base leading-relaxed text-slate-700">
-                        {r.body}
-                      </p>
-                    </blockquote>
-                    <figcaption className="mt-5 border-t border-obsidian-900/[0.06] pt-4 text-sm text-slate-600">
-                      <span className="text-obsidian-900">{r.authorName}</span>{" "}
-                      · {r.date}
-                      <Link
-                        href={`/${r.tourSlug}`}
-                        className="mt-1 block truncate text-ocean-600 underline-offset-4 hover:underline"
-                      >
-                        {r.tourTitle}
-                      </Link>
-                    </figcaption>
-                  </figure>
-                ))}
-              </div>
-            )}
+            <ReviewSlider reviews={reviews} />
           </div>
         </section>
       )}
@@ -437,7 +355,7 @@ export function TourGallery({
               </p>
               <Link
                 href="/faq"
-                className="mt-5 inline-flex h-11 items-center gap-2 rounded-full border border-obsidian-900/15 px-5 text-sm text-obsidian-900 hover:bg-obsidian-50"
+                className="mt-5 inline-flex h-11 items-center gap-2 rounded-full border border-obsidian-900/10 px-5 text-sm text-obsidian-900 hover:bg-obsidian-50"
               >
                 All FAQs <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
@@ -459,14 +377,14 @@ export function TourGallery({
       <PinnedHorizontal
         label="Other ways to explore"
         heading={
-          <>
+          <div className="text-center">
             <p className="mb-3 text-sm uppercase tracking-[0.22em] text-ocean-600">
               Keep exploring
             </p>
             <h2 className="text-3xl font-light tracking-tight text-obsidian-900 sm:text-4xl lg:text-5xl">
               Other ways to explore
             </h2>
-          </>
+          </div>
         }
         itemClassName="w-[24rem] xl:w-[26rem]"
       >
