@@ -1,4 +1,4 @@
-import { getTours } from "@/lib/api/catalog";
+import { getCategoryExtras, getTours } from "@/lib/api/catalog";
 import { TourGallery } from "@/components/tours/TourGallery";
 import { serviceById } from "@/lib/services";
 import type { Metadata } from "next";
@@ -14,6 +14,7 @@ export const metadata: Metadata = {
 
 export default async function SharedToursPage() {
   const tours = await getTours({ category: "SHARED" });
+  const { reviews, faqs } = await getCategoryExtras(tours);
 
   return (
     <TourGallery
@@ -22,6 +23,8 @@ export default async function SharedToursPage() {
       ctaLabel="Find a departure"
       ctaHref="/search?category=SHARED"
       tours={tours}
+      reviews={reviews}
+      faqs={faqs}
       service={serviceById("shared")}
     />
   );

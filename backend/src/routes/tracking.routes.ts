@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { getLiveTrackingProvider } from "@/lib/tracking/tracking.provider";
 import { dispatchShuttleTrackingAlert } from "@/lib/whatsapp/whatsapp.provider";
+import { getAuthenticatedStaff } from "@/lib/auth/admin-guard";
 
 const router = Router();
 
@@ -31,8 +32,13 @@ router.get("/:token", async (req, res) => {
 });
 
 // POST /api/track/:token/notify (Simulate/Trigger T-60 WhatsApp message)
+// Staff only: it issues the tracking token and messages the guest, so it must never be open to
+// anyone holding a booking reference.
 router.post("/:token/notify", async (req, res) => {
   try {
+    if (!getAuthenticatedStaff(req, ["ADMIN", "OPERATOR", "DISPATCHER"])) {
+      return res.status(403).json({ success: false, error: "Access denied. Staff privileges required." });
+    }
     const token = req.params.token;
     const origin = req.headers.origin || "http://localhost:3000";
     const result = await dispatchShuttleTrackingAlert(token, origin);

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ANNOUNCE_SCRIPT } from "@/lib/announcement";
 // CSS order matters: layer order first, fonts, then Astryx reset + components, the Stone theme, then Tailwind.
 import "./layers.css";
 import "./fonts.css";
@@ -88,6 +89,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Before paint: keep a closed announcement closed on reload (no flash). */}
+        <script dangerouslySetInnerHTML={{ __html: ANNOUNCE_SCRIPT }} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

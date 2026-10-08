@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getTours } from "@/lib/api/catalog";
+import { getCategoryExtras, getTours } from "@/lib/api/catalog";
 import { TourGallery } from "@/components/tours/TourGallery";
 import { serviceById } from "@/lib/services";
 
@@ -12,6 +12,7 @@ export const metadata: Metadata = {
 
 export default async function BanffActivityTicketsPage() {
   const tours = await getTours({ category: "TICKET" });
+  const { reviews, faqs } = await getCategoryExtras(tours);
   return (
     <TourGallery
       heading="Banff activity tickets"
@@ -19,6 +20,8 @@ export default async function BanffActivityTicketsPage() {
       ctaLabel="Ask the concierge"
       ctaHref="/concierge"
       tours={tours}
+      reviews={reviews}
+      faqs={faqs}
       service={serviceById("tickets")}
     />
   );

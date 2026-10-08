@@ -289,17 +289,18 @@ export async function cancelBooking(reference: string, customerEmail?: string) {
       return { success: false, error: "Booking is already cancelled" };
     }
 
-    // 48-Hour Cancellation Policy Check
+    // Cancellation policy (vistachase.com legal terms): cancel at least 72 hours before departure.
+    // 1–6 guests: full refund. 7+ guests and multi-day: refund minus the 20% non-refundable deposit.
     const departureDateStr = booking.tourDeparture.date;
     const departureTimeStr = booking.tourDeparture.departureTime || "08:00";
     const departureDateTime = new Date(`${departureDateStr}T${departureTimeStr}`);
     const now = new Date();
     const hoursDifference = (departureDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
 
-    if (hoursDifference < 48) {
+    if (hoursDifference < 72) {
       return {
         success: false,
-        error: `Cancellation window closed. Bookings must be cancelled at least 48 hours before departure. This departure is in ${Math.max(0, Math.round(hoursDifference))} hours.`,
+        error: `Cancellation window closed. Bookings can be cancelled for a refund up to 72 hours before departure. This departure is in ${Math.max(0, Math.round(hoursDifference))} hours.`,
       };
     }
 
@@ -328,8 +329,9 @@ export async function cancelBooking(reference: string, customerEmail?: string) {
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #072019;">
           <h2 style="color: #991b1b;">Reservation Cancelled</h2>
-          <p>Your booking <strong>${booking.bookingReference}</strong> for <strong>${booking.tourDeparture.tour?.title || "Vista Chase Rockies Tour"}</strong> on ${booking.tourDeparture.date} has been cancelled in accordance with our 48-hour policy.</p>
-          <p>If you have any questions, our 24/7 concierge is available at bookings@vistachase.com.</p>
+          <p>Your booking <strong>${booking.bookingReference}</strong> for <strong>${booking.tourDeparture.tour?.title || "Vista Chase Rockies Tour"}</strong> on ${booking.tourDeparture.date} has been cancelled under our 72-hour cancellation policy.</p>
+          <p>Bookings of 1–6 guests are refunded in full. For groups of 7 or more and multi-day trips, the 20% deposit is non-refundable and the rest is refunded. Approved refunds reach your original payment method within 5–10 business days.</p>
+          <p>Questions? Email support@vistachase.com or call +1 (825) 734-9456 (6 a.m. – 9 p.m. Mountain Time).</p>
         </div>
       `,
     }).catch((e) => console.error("Cancellation email error:", e));

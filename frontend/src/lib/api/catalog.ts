@@ -175,3 +175,42 @@ export async function getBookingByReference(reference: string): Promise<BookingD
     (d) => d?.booking ?? null
   );
 }
+
+export interface CategoryReview {
+  id: string;
+  authorName: string;
+  rating: number;
+  title: string;
+  body: string;
+  date: string;
+  isFeatured?: boolean;
+  tourTitle: string;
+  tourSlug: string;
+}
+
+/** Real guest reviews and FAQs of a category's tours (category pages): featured, highest rated first. */
+export async function getCategoryExtras(tours: TourWithAvailability[]) {
+  const lists = await Promise.all(
+    tours.map(async (t) => {
+      const data = await apiGetOrNull<{ reviews: Omit<CategoryReview, "tourTitle" | "tourSlug">[] }>("/api/reviews", { tourId: t.id }).catch(() => null);
+      return (data?.reviews ?? []).map((r) => ({ ...r, tourTitle: t.title, tourSlug: t.slug }));
+    }),
+  );
+  const reviews = lists
+    .flat()
+    .sort((a, b) => Number(Boolean(b.isFeatured)) - Number(Boolean(a.isFeatured)) || b.rating - a.rating)
+    .slice(0, 8);
+  const seen = new Set<string>();
+  const faqs = tours
+    .flatMap((t) => t.faqs ?? [])
+    .filter((f) => {
+      const key = f.question.trim().toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, 6)
+    // The imported live-site copy has stray spaces before punctuation ("11 hours ,").
+    .map((f) => ({ question: f.question.replace(/\s+([,.;:!?])/g, "$1"), answer: f.answer.replace(/[ \t]+([,.;:!?])/g, "$1") }));
+  return { reviews, faqs };
+}

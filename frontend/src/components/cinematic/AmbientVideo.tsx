@@ -32,14 +32,25 @@ export function AmbientVideo({
   poster,
   className = "",
   buttonClassName = "bottom-4 right-4",
+  paused,
+  once = false,
 }: AmbientVideoSource & {
   className?: string;
   /** Where the pause button sits inside the (positioned) parent. */
   buttonClassName?: string;
+  /**
+   * Controlled mode: the parent owns a visible pause control (e.g. the home hero's single
+   * pause button for rotation + video), so no button is rendered here and this prop decides.
+   */
+  paused?: boolean;
+  /** Play the clip a single time and rest on its last frame, with no button (category heroes). */
+  once?: boolean;
 }) {
   const ref = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(true);
-  const [userPaused, setUserPaused] = useState(false);
+  const [ownPaused, setUserPaused] = useState(false);
+  const controlled = paused !== undefined || once;
+  const userPaused = paused !== undefined ? paused : ownPaused;
 
   // Play / pause based on viewport visibility
   useEffect(() => {
@@ -51,6 +62,11 @@ export function AmbientVideo({
       video.pause();
       setPlaying(false);
       setUserPaused(true);
+      return;
+    }
+
+    if (userPaused) {
+      video.pause();
       return;
     }
 
@@ -95,7 +111,7 @@ export function AmbientVideo({
         ref={ref}
         autoPlay
         muted
-        loop
+        loop={!once}
         playsInline
         preload="metadata"
         poster={poster}
@@ -108,6 +124,7 @@ export function AmbientVideo({
         {srcHd && <source src={srcHd} type="video/mp4" media="(min-width: 1024px)" />}
         <source src={src} type="video/mp4" />
       </video>
+      {!controlled && (
       <button
         type="button"
         onClick={toggle}
@@ -116,6 +133,7 @@ export function AmbientVideo({
       >
         {playing ? <Pause className="h-4 w-4" aria-hidden="true" /> : <Play className="h-4 w-4" aria-hidden="true" />}
       </button>
+      )}
     </>
   );
 }

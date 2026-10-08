@@ -182,6 +182,7 @@ export async function getPickup(args: { query?: string; hotelNameQuery?: string;
   return stops.slice(0, 5);
 }
 
+// Token only: a booking reference no longer opens live location (see tracking.provider.ts).
 export async function getLiveTracking(args: { tokenOrRef: string }) {
   const trackingProvider = getLiveTrackingProvider();
   const telemetry = await trackingProvider.getTrackingTelemetry(args.tokenOrRef);

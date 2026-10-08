@@ -39,7 +39,7 @@ describe("Phase 5: Customer Portal, My Trips & Reviews", () => {
     });
     futureDepartureId = futureDep.id;
 
-    // 3. Create imminent departure (< 48h away, e.g. tomorrow)
+    // 3. Create imminent departure (< 72h away)
     const imminentDate = new Date();
     imminentDate.setHours(imminentDate.getHours() + 12);
     const imminentDateStr = imminentDate.toISOString().split("T")[0];
@@ -121,7 +121,7 @@ describe("Phase 5: Customer Portal, My Trips & Reviews", () => {
     expect(trips.some((t) => t.bookingReference === validBookingRef)).toBe(true);
   });
 
-  it("enforces 48-hour cancellation policy: rejects cancellation within 48 hours", async () => {
+  it("enforces the 72-hour cancellation policy: rejects cancellation within 72 hours", async () => {
     const res = await cancelBooking(imminentBookingRef, testCustomerEmail);
     expect(res.success).toBe(false);
     expect(res.error).toContain("Cancellation window closed");
@@ -131,7 +131,7 @@ describe("Phase 5: Customer Portal, My Trips & Reviews", () => {
     expect(b?.status).toBe("CONFIRMED");
   });
 
-  it("allows cancellation outside 48 hours and releases tour capacity atomically", async () => {
+  it("allows cancellation outside 72 hours and releases tour capacity atomically", async () => {
     const res = await cancelBooking(validBookingRef, testCustomerEmail);
     expect(res.success).toBe(true);
     expect(res.booking?.status).toBe("CANCELLED");

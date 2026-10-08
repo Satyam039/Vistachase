@@ -141,12 +141,35 @@ behind the sticky header, traps). Report in `a11y-report/summary.md`. Keep it at
   HeroSearch → TrustRow → TopExperiences rail → categories bento → destinations StickyStory → proof →
   CTA; category = breadcrumb hero → stats strip → sticky sort bar → grid → TrustRow → other ways rail;
   product = breadcrumb/title/rating → ProductGallery mosaic → key facts → TourSections + sticky booking →
-  "You might also like" rail. Ratings and counts are always real catalog values; cancellation is 24 hours.
+  "You might also like" rail. Ratings and counts are always real catalog values. Cancellation is the legal 72-hour policy (`src/lib/policy.ts`; full text at `/cancellation-policy`, groups of 7+ and multi-day keep the 20% deposit, tickets follow the operator).
 - Video: clips live in `backend/media/videos` (MP4 + `-poster.webp`, `-1080.mp4` for hero clips) and come
   from the API: `tour.videos` (clips of the places a tour visits) and `destination.heroVideo`. Play them only
-  through `cinematic/AmbientVideo` (`src`, `srcHd`, `poster`): it loads when on screen, pauses off screen, has
-  a pause button, and stays on the poster with reduced motion or data saver. Inside it the parent must be
+  through `cinematic/AmbientVideo` (`src`, `srcHd`, `poster`): it loads when on screen, pauses off screen and
+  stays on the poster with reduced motion or data saver. Hero, story and gallery clips use `once` (play a single
+  pass, no pause button: the owner's choice); the home hero uses the controlled `paused` prop. Product galleries
+  lead with the tour's own photo; clips (matched by place) come after it. Inside it the parent must be
   `position: relative`.
+- Maps: `components/tracking/LiveMap.tsx` uses MapLibre GL with OpenFreeMap's Positron style (free, no API key,
+  OpenStreetMap data, attribution kept). It is imported only by `/track/[token]`; if WebGL fails the page falls
+  back to the drawn `RouteMap`. Marker elements stay `aria-hidden` with no popups (popups make them tab stops).
+- Time: departures are Mountain Time. Use `departureInstant()` / `canCancelFree()` from `src/lib/policy.ts`, never
+  `new Date(`${date}T${time}`)` (that reads the device's zone). Contact: support@vistachase.com, +1 825-734-9456,
+  lines open 6 a.m. – 9 p.m. MT (no "24/7").
+- Staff pages share `components/admin/AdminHeader.tsx` (header, section tabs, `StaffSignIn`).
+- Dropdowns: always `components/forms/Dropdown.tsx` (never a native <select> or the Astryx Selector): one look and
+  one keyboard model everywhere (WAI-ARIA select-only combobox; portalled panel that flips above near the bottom;
+  `searchable` adds a filter field; `name` adds a hidden input for plain forms). Variants: field, pill, bare.
+- Text over photos (cards): put `<div className="vc-scrim" aria-hidden="true" />` in the image layer (globals.css):
+  a Gaussian blur over the bottom half that fades toward the middle, with a dark tint. `vc-scrim-tall` (62%) /
+  `vc-scrim-full` (78%) when the text block is taller.
+- Live tracking is private: `/track/<token>` opens only with a tracking-session token or a booking's unexpired
+  `trackingToken`, never a booking reference or id. The public `/api/bookings?ref=` lookup (voucher) omits the token,
+  `POST /api/track/:id/notify` is staff-only, and the concierge reaches tracking only after its email check
+  (`getTelemetryForVerifiedBooking`). Award: Tripadvisor Travelers' Choice Best of the Best 2025, shown with
+  `components/brand/AwardSeal.tsx` (the live site's badge image says 2026 and is not used).
+- Announcement strip: `components/layout/AnnouncementBar.tsx`, rendered above (not inside) the sticky header so it
+  scrolls away. Closing is stored in localStorage and applied before paint by `ANNOUNCE_SCRIPT`
+  (`src/lib/announcement.ts`, inlined in the root layout). Bump `ANNOUNCEMENT.id` when the message changes.
 - Client-component pages set their title in a sibling `layout.tsx` (every page needs its own title).
 
 Building pages from templates (https://astryx.atmeta.com/templates):

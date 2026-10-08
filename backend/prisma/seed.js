@@ -246,7 +246,7 @@ async function main() {
       name: "Moraine Lake Sunrise Shuttle",
       origin: "Banff / Canmore",
       destination: "Moraine Lake & Rockpile",
-      description: "Guaranteed sunrise departure arriving before first light. Witness the iconic pink and golden alpine glow reflecting off the Ten Peaks with hot coffee and cocoa.",
+      description: "Guaranteed sunrise departure that reaches Moraine Lake before first light, then Lake Louise. Parks Canada entry, a local guide, bottled water and a hot drink included.",
       notes: "Private vehicle road is closed by Parks Canada. Guaranteed commercial access.",
     },
   });
@@ -257,8 +257,8 @@ async function main() {
       name: "Lake Louise & Moraine Lake Direct Shuttle",
       origin: "Banff / Canmore / Lake Louise Village",
       destination: "Lake Louise & Moraine Lake",
-      description: "Hop between both world-famous lakes without waiting in crowded park-and-ride lines. Direct round-trip door-to-door hotel service.",
-      notes: "Includes both Moraine Lake and Lake Louise stops with 2 hours free time at each.",
+      description: "Day shuttle to Moraine Lake and Lake Louise without the park-and-ride lines. Round trip from Canmore, Banff and Lake Louise (Samson Mall).",
+      notes: "Includes both Moraine Lake and Lake Louise stops.",
     },
   });
 
@@ -303,11 +303,13 @@ async function main() {
   for (const date of dates) {
     await prisma.tourDeparture.create({
       data: {
+        // Linked to the product too, so its card, product page, search and the concierge see the dates.
         shuttleRouteId: routeSunrise.id,
+        tourId: tours["sunrise-shuttle-to-moraine-lake-and-lake-louise"].id,
         date,
         departureTime: "05:00",
         returnTime: "09:30",
-        capacityTotal: 14,
+        capacityTotal: 12,
         capacityBooked: 6,
         capacityHeld: 0,
         price: 125.0,
@@ -320,10 +322,11 @@ async function main() {
     await prisma.tourDeparture.create({
       data: {
         shuttleRouteId: routeConnector.id,
+        tourId: tours["full-day-at-lake-louise-and-moraine-lake"].id,
         date,
         departureTime: "09:00",
         returnTime: "14:00",
-        capacityTotal: 14,
+        capacityTotal: 12,
         capacityBooked: 2,
         capacityHeld: 0,
         price: 99.0,

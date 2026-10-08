@@ -1,304 +1,224 @@
+// Destination page: full-bleed video hero, the place's highlights, every tour that visits it (its own
+// tours plus tours from other areas that stop there, e.g. Lake Louise on the Banff tours) using the
+// shared TourCard, and the other destinations.
+
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { getDestinationBySlug } from "@/lib/api/catalog";
-import { MapPin, ChevronRight, Clock, Users, Sparkles, ArrowRight, ShieldCheck } from "lucide-react";
 import type { Metadata } from "next";
+import { ArrowUpRight, ChevronRight, Sparkles } from "lucide-react";
 import { AmbientVideo } from "@/components/cinematic/AmbientVideo";
+import { TourCard } from "@/components/tours/TourCard";
+import { TrustRow } from "@/components/home/TrustRow";
+import { Rail } from "@/components/motion/Rail";
+import { getDestinationBySlug, getDestinations, getTours } from "@/lib/api/catalog";
 
-const DESTINATION_STORIES: Record<
-  string,
-  {
-    tagline: string;
-    landmarks: { name: string; description: string; image: string }[];
-  }
-> = {
-  banff: {
-    tagline: "Where the Rockies Begin",
-    landmarks: [
-      {
-        name: "Bow Falls & Surprise Corner",
-        description: "The thundering glacier-fed cascades beneath the historic Fairmont Banff Springs Hotel.",
-        image: "/media/photos/bow-falls.webp",
-      },
-      {
-        name: "Johnston Canyon Lower & Upper Falls",
-        description: "Suspended catwalks hugging deep limestone canyon walls and dramatic turquoise pools.",
-        image: "/media/photos/johnston-canyon.webp",
-      },
-      {
-        name: "Mount Norquay & Vermilion Lakes",
-        description: "Panoramic alpine lookouts reflecting Mount Rundle in tranquil wetland waters.",
-        image: "/media/photos/bow-falls.webp",
-      },
+type Highlight = { name: string; body: string; image: string };
+
+// Highlights per destination slug, and the words that mark a tour as visiting it.
+const STORIES: Record<string, { tagline: string; match: string[]; highlights: Highlight[] }> = {
+  "banff-national-park": {
+    tagline: "Where the Rockies begin",
+    match: ["banff"],
+    highlights: [
+      { name: "Bow Falls & Surprise Corner", body: "Glacier-fed falls below the Fairmont Banff Springs, and the lookout that frames them.", image: "/media/photos/bow-falls.webp" },
+      { name: "Johnston Canyon", body: "Catwalks along limestone canyon walls to the Lower and Upper Falls.", image: "/media/photos/johnston-canyon.webp" },
+      { name: "Vermilion Lakes", body: "Mount Rundle reflected in quiet wetland waters just outside town.", image: "/media/photos/vermilion-lakes-mount-rundle.webp" },
     ],
   },
   "lake-louise": {
-    tagline: "The Crown Jewels of the Canadian Rockies",
-    landmarks: [
-      {
-        name: "Moraine Lake & Valley of the Ten Peaks",
-        description: "The world's most recognizable glacier-fed turquoise waters. Guaranteed commercial access with Vista Chase.",
-        image: "/media/photos/moraine-lake-perfect-reflection.webp",
-      },
-      {
-        name: "Lake Louise & Victoria Glacier",
-        description: "Iconic alpine shoreline, red canoes, and dramatic peaks flanking the Fairmont Chateau.",
-        image: "/media/photos/lake-louise-red-canoes.webp",
-      },
-      {
-        name: "Morant's Curve Scenic Lookout",
-        description: "The historic Bow River railway bend where Canadian Pacific trains wind through mountain majesty.",
-        image: "/media/photos/morants-curve-summer.webp",
-      },
+    tagline: "The jewel of the Rockies",
+    match: ["lake louise"],
+    highlights: [
+      { name: "Lake Louise & Victoria Glacier", body: "Turquoise water, red canoes and the glacier above the Fairmont Chateau.", image: "/media/photos/lake-louise-red-canoes.webp" },
+      { name: "The view from the Big Beehive", body: "The whole lake from above, a classic hike from the shoreline.", image: "/media/photos/lake-louise-from-big-beehive.webp" },
+      { name: "Morant's Curve", body: "The famous bend in the Bow River where trains wind below the peaks.", image: "/media/photos/morants-curve-summer.webp" },
     ],
   },
-  yoho: {
-    tagline: "A World of Cascades & Emerald Waters",
-    landmarks: [
-      {
-        name: "Emerald Lake",
-        description: "Vivid jade waters enclosed by the President Range, offering quiet morning walking paths.",
-        image: "/media/photos/emerald-lake-island.webp",
-      },
-      {
-        name: "Natural Bridge",
-        description: "An ancient rock formation carved by the relentless force of the Kicking Horse River.",
-        image: "/media/photos/natural-bridge.webp",
-      },
+  "moraine-lake": {
+    tagline: "The Valley of the Ten Peaks",
+    match: ["moraine"],
+    highlights: [
+      { name: "The Rockpile viewpoint", body: "The short climb to the view of the Ten Peaks over turquoise water.", image: "/media/photos/moraine-lake-rockpile-view.webp" },
+      { name: "Canoes on Moraine Lake", body: "Red canoes on the glacier-fed lake in the early morning.", image: "/media/photos/moraine-lake-red-canoes.webp" },
+      { name: "Larch Valley", body: "Golden larches in late September above the lake.", image: "/media/photos/larch-valley-hike.webp" },
     ],
   },
-  "icefields-parkway": {
-    tagline: "A Road Through Another World",
-    landmarks: [
-      {
-        name: "Peyto Lake & Bow Summit",
-        description: "The iconic wolf-shaped glacial lake viewed from the highest highway elevation in the Canadian national parks.",
-        image: "/media/photos/peyto-lake.webp",
-      },
-      {
-        name: "Columbia Icefield & Athabasca Glacier",
-        description: "The largest sub-polar icefield in North America, feeding water to three distinct oceans.",
-        image: "/media/photos/athabasca-glacier.webp",
-      },
+  "yoho-national-park": {
+    tagline: "Waterfalls and emerald water",
+    match: ["yoho", "emerald lake"],
+    highlights: [
+      { name: "Emerald Lake", body: "Green water ringed by the President Range, with a lakeside walking path.", image: "/media/photos/emerald-lake-island.webp" },
+      { name: "Natural Bridge", body: "A rock arch carved by the Kicking Horse River.", image: "/media/photos/natural-bridge.webp" },
+      { name: "Wapta Falls", body: "A broad curtain of water on the Kicking Horse River.", image: "/media/photos/wapta-falls.webp" },
+    ],
+  },
+  "jasper-national-park": {
+    tagline: "Glaciers and wild country",
+    match: ["jasper", "icefield"],
+    highlights: [
+      { name: "Peyto Lake", body: "The wolf-shaped glacial lake seen from Bow Summit on the Icefields Parkway.", image: "/media/photos/peyto-lake.webp" },
+      { name: "Columbia Icefield", body: "The Athabasca Glacier, a tongue of the largest icefield in the Rockies.", image: "/media/photos/athabasca-glacier.webp" },
+      { name: "Athabasca Falls", body: "The Athabasca River forced through a narrow limestone gorge.", image: "/media/photos/athabasca-falls.webp" },
+      { name: "Spirit Island", body: "The tiny island on Maligne Lake, reached by boat.", image: "/media/photos/spirit-island.webp" },
     ],
   },
 };
 
-export async function generateMetadata({
-  params: paramsPromise,
-}: {
-  params: Promise<{ slug: string }>;
-}): Promise<Metadata> {
-  const params = await paramsPromise;
-  const dest = await getDestinationBySlug(params.slug);
-  if (!dest) return { title: "Destination Not Found | Vista Chase" };
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const dest = await getDestinationBySlug(slug);
+  if (!dest) return { title: "Destination not found | Vista Chase" };
   return {
     title: dest.metaTitle || `${dest.name} Tours & Shuttles | Vista Chase`,
     description: dest.metaDescription || dest.description,
-    alternates: {
-      canonical: `/destinations/${dest.slug}`,
-    },
+    alternates: { canonical: `/destinations/${dest.slug}` },
   };
 }
 
-export default async function DestinationDetailPage({
-  params: paramsPromise,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-  const params = await paramsPromise;
-  const dest = await getDestinationBySlug(params.slug);
-
+export default async function DestinationDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const [dest, allTours, destinations] = await Promise.all([getDestinationBySlug(slug), getTours(), getDestinations()]);
   if (!dest) notFound();
 
-  const story = DESTINATION_STORIES[dest.slug] || {
-    tagline: `Discover ${dest.name}`,
-    landmarks: [],
-  };
+  const story = STORIES[dest.slug] ?? { tagline: dest.name, match: [dest.name.toLowerCase()], highlights: [] };
+  const visits = (text: string) => story.match.some((m) => text.toLowerCase().includes(m));
+  const tours = allTours
+    .filter((t) => t.destination.slug === dest.slug || visits(`${t.title} ${t.summary} ${t.description}`))
+    .sort((a, b) => Number(b.destination.slug === dest.slug) - Number(a.destination.slug === dest.slug) || b.reviewCount - a.reviewCount);
+  const others = destinations.filter((d) => d.slug !== dest.slug);
 
   return (
-    <div className="min-h-screen bg-obsidian-50 text-obsidian-900">
-      {/* 01. CINEMATIC DESTINATION HERO */}
-      <section className="relative bg-ocean-900 text-white pt-28 pb-20 px-4 sm:px-6 lg:px-12 overflow-hidden border-b border-white/10">
-        <div className="absolute inset-0 z-0">
-          <Image
-            src={dest.heroImage}
-            alt={dest.name}
-            fill
-            priority
-            className="object-cover opacity-35"
-            sizes="100vw"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-ocean-900 via-ocean-900/70 to-transparent" />
+    <div className="bg-obsidian-50 text-obsidian-900">
+      {/* Hero */}
+      <section className="relative isolate flex min-h-[72vh] items-end overflow-hidden bg-ocean-950 text-white">
+        <div className="absolute inset-0 -z-10">
+          <Image src={dest.heroImage} alt="" fill priority sizes="100vw" className="object-cover" data-parallax="10" />
         </div>
+        {/* Outside the -z-10 layer so its pause button stacks above the hero text; the video and
+            the scrim stay behind it. */}
         {dest.heroVideo && (
-          // Same 35% opacity as the photo over the dark hero, so text contrast is unchanged.
-          <AmbientVideo
-            src={dest.heroVideo.src}
-            srcHd={dest.heroVideo.srcHd}
-            poster={dest.heroVideo.poster}
-            className="absolute inset-0 z-0 h-full w-full object-cover opacity-35"
-            buttonClassName="bottom-4 right-4"
-          />
+          <AmbientVideo src={dest.heroVideo.src} srcHd={dest.heroVideo.srcHd} poster={dest.heroVideo.poster} className="absolute inset-0 -z-10 h-full w-full object-cover" once />
         )}
-
-        <div className="relative z-10 max-w-7xl mx-auto space-y-6">
-          <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-x-2 text-xs uppercase tracking-widest text-slate-300">
-            <Link href="/" className="inline-flex min-h-6 items-center hover:text-white transition-colors">
-              Home
-            </Link>
-            <ChevronRight className="w-3 h-3 text-slate-500" aria-hidden="true" />
-            <Link href="/destinations" className="inline-flex min-h-6 items-center hover:text-white transition-colors">
-              Destinations
-            </Link>
-            <ChevronRight className="w-3 h-3 text-slate-500" aria-hidden="true" />
-            <span aria-current="page" className="text-summit-300">{dest.name}</span>
+        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/55 to-ocean-950/10" />
+        <div className="mx-auto w-full max-w-7xl px-page pb-14 pt-24" data-scroll-fade>
+          <nav aria-label="Breadcrumb" className="mb-6">
+            <ol className="flex flex-wrap items-center gap-1.5 text-sm text-slate-200">
+              <li>
+                <Link href="/" className="hover:text-white hover:underline">
+                  Home
+                </Link>
+              </li>
+              <li aria-hidden="true">
+                <ChevronRight className="h-3.5 w-3.5" />
+              </li>
+              <li>
+                <Link href="/destinations" className="hover:text-white hover:underline">
+                  Destinations
+                </Link>
+              </li>
+              <li aria-hidden="true">
+                <ChevronRight className="h-3.5 w-3.5" />
+              </li>
+              <li aria-current="page" className="text-white">
+                {dest.name}
+              </li>
+            </ol>
           </nav>
-
-          <div className="max-w-3xl space-y-4">
-            <span className="text-xs uppercase tracking-widest text-ocean-300 font-bold block">
-              {story.tagline}
-            </span>
-            <h1 className="text-4xl sm:text-6xl font-light font-serif tracking-tight text-white leading-[1.1]">
-              {dest.name}
-            </h1>
-            <p className="text-slate-300 text-base sm:text-lg leading-relaxed font-sans max-w-2xl">
-              {dest.description}
-            </p>
-          </div>
+          <p className="text-sm uppercase tracking-[0.22em] text-summit-300 motion-safe:animate-[fadeUp_700ms_ease-out]">
+            {story.tagline} · {dest.province}
+          </p>
+          <h1 className="mt-3 max-w-4xl text-balance text-4xl font-light leading-[1.05] tracking-tight text-white sm:text-6xl lg:text-7xl motion-safe:animate-[fadeUp_900ms_ease-out]">
+            {dest.name}
+          </h1>
+          <p className="mt-5 max-w-2xl text-lg font-light leading-relaxed text-white/85 motion-safe:animate-[fadeUp_1100ms_ease-out]">{dest.description}</p>
+          <a href="#tours" className="golden-summit-btn mt-7 inline-flex h-12 items-center gap-2 rounded-full px-6 text-base motion-safe:animate-[fadeUp_1300ms_ease-out]">
+            See {tours.length} {tours.length === 1 ? "tour" : "tours"} that go here
+          </a>
         </div>
       </section>
 
-      {/* 02. LANDMARKS & HIGHLIGHTS STORY */}
-      {story.landmarks.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-16 space-y-8">
-          <div className="space-y-2">
-            <span className="text-xs uppercase tracking-widest text-ocean-600 font-bold">Iconic Sights</span>
-            <h2 className="text-3xl sm:text-4xl font-light font-serif text-obsidian-900">
-              What Makes {dest.name} Unforgettable
+      {/* Highlights */}
+      {story.highlights.length > 0 && (
+        <section aria-labelledby="highlights-heading" className="mx-auto max-w-7xl px-page py-20 sm:py-24">
+          <div className="mb-10 max-w-3xl" data-reveal>
+            <p className="mb-3 text-sm uppercase tracking-[0.22em] text-ocean-600">Highlights</p>
+            <h2 id="highlights-heading" className="text-balance text-3xl font-light leading-[1.1] tracking-tight text-obsidian-900 sm:text-4xl lg:text-5xl">
+              What to see in {dest.name.split(" & ")[0]}
             </h2>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {story.landmarks.map((landmark, idx) => (
-              <div
-                key={idx}
-                className="rounded-3xl bg-white border border-slate-200/90 overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between"
-              >
-                <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-900">
-                  <Image
-                    src={landmark.image}
-                    alt={landmark.name}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, 400px"
-                  />
+          <ul className={`grid gap-5 sm:grid-cols-2 ${story.highlights.length > 3 ? "lg:grid-cols-4" : "lg:grid-cols-3"}`} data-stagger>
+            {story.highlights.map((h) => (
+              <li key={h.name} className="group overflow-hidden rounded-[1.75rem] bg-white ring-1 ring-obsidian-900/[0.07]">
+                <div className="relative aspect-[4/3] overflow-hidden">
+                  <Image src={h.image} alt={h.name} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-cover transition-transform duration-[1.2s] ease-out group-hover:scale-105" />
                 </div>
-                <div className="p-6 space-y-2">
-                  <h3 className="text-lg font-serif font-medium text-obsidian-900">{landmark.name}</h3>
-                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">{landmark.description}</p>
+                <div className="p-6">
+                  <h3 className="text-xl font-light text-obsidian-900">{h.name}</h3>
+                  <p className="mt-2 text-base font-light leading-relaxed text-slate-700">{h.body}</p>
                 </div>
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
         </section>
       )}
 
-      {/* 03. BOOKABLE EXPERIENCES IN THIS DESTINATION */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-16 space-y-8 border-t border-slate-200/70">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-          <div className="space-y-1">
-            <span className="text-xs uppercase tracking-widest text-ocean-600 font-bold">Curated Tours &amp; Shuttles</span>
-            <h2 className="text-3xl font-light font-serif text-obsidian-900">Experiences in {dest.name}</h2>
+      {/* Tours */}
+      <section id="tours" aria-labelledby="tours-heading" className="scroll-mt-32 border-t border-obsidian-900/[0.06] bg-white py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-page">
+          <div className="mb-10 max-w-3xl" data-reveal>
+            <p className="mb-3 text-sm uppercase tracking-[0.22em] text-ocean-600">Tours &amp; shuttles</p>
+            <h2 id="tours-heading" className="text-balance text-3xl font-light leading-[1.1] tracking-tight text-obsidian-900 sm:text-4xl lg:text-5xl">
+              Tours that visit {dest.name.split(" & ")[0]}
+            </h2>
           </div>
-          <span className="text-xs text-slate-500 font-medium">Bókun System of Record Integration</span>
+          {tours.length === 0 ? (
+            <div className="mx-auto max-w-xl rounded-[1.75rem] bg-obsidian-50 p-10 text-center">
+              <Sparkles className="mx-auto h-8 w-8 text-summit-600" aria-hidden="true" />
+              <p className="mt-4 text-xl font-light text-obsidian-900">We can plan a private day here</p>
+              <p className="mt-2 text-base text-slate-600">Tell us your dates and we&rsquo;ll build a route around this destination.</p>
+              <Link href="/contact-us" className="golden-summit-btn mt-6 inline-flex h-11 items-center rounded-full px-6 text-sm">
+                Request a private tour
+              </Link>
+            </div>
+          ) : (
+            <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8" data-stagger>
+              {tours.map((t) => (
+                <li key={t.id}>
+                  <TourCard tour={t} />
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
+      </section>
 
-        {dest.tours.length === 0 ? (
-          <div className="p-12 text-center bg-white rounded-3xl border border-slate-200 shadow-sm max-w-xl mx-auto space-y-4">
-            <Sparkles className="w-8 h-8 text-summit-500 mx-auto" />
-            <h3 className="text-xl font-serif text-obsidian-900">Upcoming Seasonal Departures</h3>
-            <p className="text-slate-600 text-sm leading-relaxed">
-              Our upcoming seasonal tours for {dest.name} are being scheduled. Connect with our AI concierge or team
-              for private charter arrangements.
-            </p>
-            <Link
-              href="/concierge"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider text-obsidian-900 golden-summit-btn"
-            >
-              Ask AI Concierge
-            </Link>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {dest.tours.map((tour) => (
-              <article
-                key={tour.id}
-                className="group relative rounded-3xl overflow-hidden bg-white border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-ocean-500/40 transition-all duration-300 flex flex-col justify-between"
+      <TrustRow />
+
+      {/* Other destinations */}
+      <section aria-labelledby="others-heading" className="overflow-hidden py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-page">
+          <h2 id="others-heading" className="mb-8 text-3xl font-light tracking-tight text-obsidian-900 sm:text-4xl" data-reveal>
+            More of the Rockies
+          </h2>
+          <Rail label="Other destinations" itemClassName="w-[78vw] max-w-[22rem] sm:w-[20rem]">
+            {others.map((d) => (
+              <Link
+                key={d.slug}
+                href={`/destinations/${d.slug}`}
+                className="group relative flex aspect-[4/5] flex-col justify-end overflow-hidden rounded-[1.75rem] p-6 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ocean-600"
               >
-                <div>
-                  <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-900">
-                    <Image
-                      src={tour.featuredImage}
-                      alt={tour.title}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                      sizes="(max-width: 768px) 100vw, 400px"
-                    />
-                    <div className="absolute top-4 left-4">
-                      <span className="text-xs font-bold uppercase tracking-widest text-summit-300 bg-obsidian-900/80 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
-                        {tour.category}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="p-6 space-y-3">
-                    <div className="flex items-center gap-3 text-xs text-slate-500">
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5 text-ocean-600" />
-                        <span>{tour.durationHours} Hours</span>
-                      </span>
-                      <span>•</span>
-                      <span className="flex items-center gap-1">
-                        <Users className="w-3.5 h-3.5 text-ocean-600" />
-                        <span>Max {tour.maxGroupSize}</span>
-                      </span>
-                    </div>
-
-                    <h3 className="text-xl font-serif font-medium text-obsidian-900 group-hover:text-ocean-600 transition-colors leading-snug">
-                      <Link href={`/${tour.slug}`}>
-                        <span className="absolute inset-0 z-10" />
-                        {tour.title}
-                      </Link>
-                    </h3>
-
-                    <p className="text-xs sm:text-sm text-slate-600 line-clamp-2 leading-relaxed">
-                      {tour.summary}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-6 pt-0 mt-auto">
-                  <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-                    <div>
-                      <span className="text-xs uppercase tracking-wider text-slate-500 block">From</span>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-2xl font-serif font-light text-obsidian-900">${tour.basePrice}</span>
-                        <span className="text-xs font-semibold text-slate-500">{tour.currency}</span>
-                      </div>
-                    </div>
-
-                    <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider text-obsidian-900 golden-summit-btn shadow-sm">
-                      <span>Reserve</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </span>
-                  </div>
-                </div>
-              </article>
+                <Image src={d.heroImage} alt="" fill sizes="20rem" className="object-cover transition-transform duration-[1.2s] ease-out group-hover:scale-[1.06]" />
+                <span className="vc-scrim" aria-hidden="true" />
+                <span className="relative text-2xl font-light">{d.name}</span>
+                <span className="relative mt-2 inline-flex items-center gap-1.5 text-sm text-slate-200">
+                  Explore
+                  <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true" />
+                </span>
+              </Link>
             ))}
-          </div>
-        )}
+          </Rail>
+        </div>
       </section>
     </div>
   );

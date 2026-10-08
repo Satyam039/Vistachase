@@ -35,7 +35,7 @@ export function TopExperiences({ tours }: { tours: TourWithAvailability[] }) {
           id="top-experiences"
           eyebrow="Top-rated in the Rockies"
           title="Experiences travellers love"
-          intro="Rated 5.0 by more than a thousand guests. Free cancellation up to 24 hours before every tour."
+          intro="Rated 5.0 by more than a thousand guests. Free cancellation up to 72 hours before every tour."
           link={{ label: "See all experiences", href: "/search" }}
         />
 

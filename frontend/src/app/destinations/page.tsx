@@ -1,100 +1,91 @@
+// Destinations, in the "Top destinations" pattern of the booking sites studied: photo hero, then
+// large image tiles (bento) with parallax and the number of tours based there (places visited on
+// other destinations' tours, like Lake Louise, show no count).
+
 import Image from "next/image";
 import Link from "next/link";
-import { getDestinations } from "@/lib/api/catalog";
-import { MapPin, ChevronRight, Compass } from "lucide-react";
 import type { Metadata } from "next";
+import { ArrowUpRight, ChevronRight, MapPin } from "lucide-react";
+import { getDestinations } from "@/lib/api/catalog";
 
 export const metadata: Metadata = {
   title: "Canadian Rockies Destinations | Banff, Lake Louise, Moraine Lake & Jasper | Vista Chase",
-  description:
-    "Explore the top destinations in the Canadian Rockies with Vista Chase: Moraine Lake, Lake Louise, Banff National Park, Jasper, Yoho, and Icefields Parkway.",
-  alternates: {
-    canonical: "/destinations",
-  },
+  description: "Moraine Lake, Lake Louise, Banff, Yoho and Jasper national parks: where Vista Chase tours go and how to see them.",
+  alternates: { canonical: "/destinations" },
 };
+
+// Tile sizes for the bento grid on large screens (first two large).
+const SPAN = ["lg:col-span-4 lg:row-span-2", "lg:col-span-2 lg:row-span-2", "lg:col-span-2", "lg:col-span-2", "lg:col-span-2"];
 
 export default async function DestinationsPage() {
   const destinations = await getDestinations();
 
   return (
-    <div className="min-h-screen bg-obsidian-50 text-obsidian-900">
-      {/* 01. EDITORIAL HERO BANNER */}
-      <section className="bg-ocean-900 text-white pt-24 pb-16 px-4 sm:px-6 lg:px-12 relative overflow-hidden border-b border-white/10">
-        <div className="max-w-7xl mx-auto space-y-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-summit-300 text-xs font-semibold uppercase tracking-wider border border-white/15">
-            <Compass className="w-3.5 h-3.5 text-summit-500" />
-            <span>Canadian Rockies Destination Guide</span>
-          </div>
-
-          <div className="max-w-3xl space-y-4">
-            <h1 className="text-4xl sm:text-6xl font-light font-serif tracking-tight text-white leading-[1.1]">
-              Iconic Mountain Destinations
-            </h1>
-            <p className="text-slate-300 text-base sm:text-lg leading-relaxed font-sans">
-              From the turquoise waters of Moraine Lake to the ancient glaciers of the Icefields Parkway, discover
-              the world-renowned alpine landscapes we guide every day.
-            </p>
-          </div>
+    <div className="bg-obsidian-50 text-obsidian-900">
+      <section className="relative isolate flex min-h-[56vh] items-end overflow-hidden bg-ocean-950 text-white">
+        <Image src="/media/photos/peyto-lake.webp" alt="" fill priority sizes="100vw" className="-z-10 object-cover" data-parallax="10" />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/55 to-ocean-950/10" />
+        <div className="mx-auto w-full max-w-7xl px-page pb-12 pt-24" data-scroll-fade>
+          <nav aria-label="Breadcrumb" className="mb-6">
+            <ol className="flex items-center gap-1.5 text-sm text-slate-200">
+              <li>
+                <Link href="/" className="hover:text-white hover:underline">
+                  Home
+                </Link>
+              </li>
+              <li aria-hidden="true">
+                <ChevronRight className="h-3.5 w-3.5" />
+              </li>
+              <li aria-current="page" className="text-white">
+                Destinations
+              </li>
+            </ol>
+          </nav>
+          <h1 className="max-w-3xl text-balance text-4xl font-light leading-[1.05] tracking-tight text-white sm:text-6xl motion-safe:animate-[fadeUp_900ms_ease-out]">
+            Where our tours go
+          </h1>
+          <p className="mt-4 max-w-2xl text-lg font-light leading-relaxed text-white/85 motion-safe:animate-[fadeUp_1100ms_ease-out]">
+            Five of the Canadian Rockies&rsquo; great places, from Moraine Lake&rsquo;s Ten Peaks to Jasper&rsquo;s Spirit Island.
+          </p>
         </div>
       </section>
 
-      {/* 02. DESTINATION CARDS GRID */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {destinations.map((dest) => (
-            <article
-              key={dest.id}
-              className="group relative rounded-3xl overflow-hidden bg-white border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-ocean-500/40 transition-all duration-300 flex flex-col justify-between"
-            >
-              <div>
-                <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-900">
-                  <Image
-                    src={dest.heroImage}
-                    alt={dest.name}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 400px"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-80" />
-
-                  <div className="absolute top-4 left-4">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-obsidian-900/80 backdrop-blur-md text-summit-300 text-xs font-semibold uppercase tracking-wider border border-white/10">
-                      <MapPin className="w-3 h-3 text-summit-500" />
-                      {dest.province}
+      <section aria-label="Destinations" className="mx-auto max-w-7xl px-page py-14 sm:py-20">
+        <ul className="grid auto-rows-[22rem] grid-cols-1 gap-5 sm:grid-cols-2 lg:auto-rows-[18rem] lg:grid-cols-6" data-stagger>
+          {destinations.map((d, i) => {
+            const count = d.tours.length;
+            const href = `/destinations/${d.slug}`;
+            return (
+              <li key={d.id} className={`${SPAN[i] ?? "lg:col-span-2"} ${i === 0 ? "sm:col-span-2" : ""}`}>
+                <Link
+                  href={href}
+                  className="group relative flex h-full flex-col justify-end overflow-hidden rounded-[2rem] p-6 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ocean-600 sm:p-7"
+                >
+                  <div className="absolute inset-0 -z-0 overflow-hidden">
+                    <div className="absolute inset-0 transition-transform duration-[1.4s] ease-out group-hover:scale-[1.06]">
+                      <Image src={d.heroImage} alt="" fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 60vw" className="object-cover" data-parallax="6" />
+                    </div>
+                    <div className="vc-scrim" aria-hidden="true" />
+                  </div>
+                  <div className="relative">
+                    <p className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-sm text-white backdrop-blur-md">
+                      <MapPin className="h-3.5 w-3.5 text-summit-300" aria-hidden="true" />
+                      {d.province}
+                    </p>
+                    <h2 className={`font-light leading-tight text-white ${i < 2 ? "text-3xl sm:text-4xl" : "text-2xl"}`}>{d.name}</h2>
+                    {i < 2 && <p className="mt-2 max-w-md text-base font-light leading-relaxed text-white/85 line-clamp-2">{d.description}</p>}
+                    <span className="mt-4 inline-flex items-center gap-1.5 text-sm text-white">
+                      <span className="border-b border-summit-500 pb-0.5">
+                        {count > 0 ? `${count} ${count === 1 ? "tour" : "tours"} · Explore` : "Explore"}
+                      </span>
+                      <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true" />
                     </span>
                   </div>
-
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <h2 className="text-2xl font-serif font-light text-white leading-tight">
-                      <Link href={`/destinations/${dest.slug}`}>
-                        <span className="absolute inset-0 z-10" />
-                        {dest.name}
-                      </Link>
-                    </h2>
-                  </div>
-                </div>
-
-                <div className="p-6 space-y-3">
-                  <p className="text-xs sm:text-sm text-slate-600 line-clamp-3 leading-relaxed">
-                    {dest.description}
-                  </p>
-                </div>
-              </div>
-
-              <div className="p-6 pt-0 mt-auto">
-                <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-                  <span className="text-xs text-slate-500 font-medium">
-                    {dest.tours.length} {dest.tours.length === 1 ? "Experience" : "Experiences"} Available
-                  </span>
-                  <span className="inline-flex items-center gap-1 text-xs font-bold text-ocean-600 group-hover:translate-x-1 transition-transform">
-                    <span>Explore Story</span>
-                    <ChevronRight className="w-4 h-4" />
-                  </span>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
       </section>
     </div>
   );

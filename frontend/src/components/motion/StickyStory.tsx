@@ -49,7 +49,7 @@ export function StickyStory({ chapters, tone = "dark" }: { chapters: StoryChapte
   return (
     <div className="relative lg:grid lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:gap-16">
       {/* Pinned media frame (large screens) */}
-      <div className="hidden lg:block" aria-hidden="true">
+      <div className="hidden lg:block">
         <div className="sticky top-[calc(var(--vc-header-h,80px)+2rem)] h-[calc(100vh-var(--vc-header-h,80px)-4rem)] overflow-hidden rounded-[2rem]">
           {chapters.map((c, i) => (
             <div
@@ -60,13 +60,13 @@ export function StickyStory({ chapters, tone = "dark" }: { chapters: StoryChapte
             >
               <Image src={c.image} alt="" fill sizes="55vw" className="object-cover" />
               {c.video && i === active && (
-                <AmbientVideo src={c.video.src} poster={c.video.poster} className="absolute inset-0 h-full w-full object-cover" buttonClassName="bottom-5 right-5" />
+                <AmbientVideo src={c.video.src} poster={c.video.poster} className="absolute inset-0 h-full w-full object-cover" once />
               )}
             </div>
           ))}
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
           {/* chapter counter */}
-          <div className="pointer-events-none absolute bottom-6 left-6 flex items-center gap-3 text-white">
+          <div className="pointer-events-none absolute bottom-6 left-6 flex items-center gap-3 text-white" aria-hidden="true">
             <span className="text-5xl font-light tabular-nums">{String(active + 1).padStart(2, "0")}</span>
             <span className="text-sm text-white/80">/ {String(chapters.length).padStart(2, "0")}</span>
           </div>
@@ -94,10 +94,7 @@ export function StickyStory({ chapters, tone = "dark" }: { chapters: StoryChapte
             <div className="relative mb-6 aspect-[4/3] overflow-hidden rounded-3xl lg:hidden" data-reveal="clip">
               <Image src={c.image} alt={c.imageAlt} fill sizes="100vw" className="object-cover" />
             </div>
-            <div
-              className={`transition-opacity duration-700 ${i === active ? "lg:opacity-100" : "lg:opacity-40"}`}
-              data-reveal
-            >
+            <div data-reveal>
               <p className={`text-sm uppercase tracking-[0.22em] ${dark ? "text-summit-300" : "text-ocean-600"}`}>{c.eyebrow}</p>
               <h3 className={`mt-3 text-3xl font-light leading-tight sm:text-4xl lg:text-5xl ${dark ? "text-white" : "text-obsidian-900"}`}>
                 {c.title}
