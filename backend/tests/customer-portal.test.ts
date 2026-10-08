@@ -164,6 +164,8 @@ describe("Phase 5: Customer Portal, My Trips & Reviews", () => {
       },
     });
 
+    const before = await prisma.tour.findUnique({ where: { id: testTourId } });
+
     const result = await createReview({
       bookingReference: reviewBookingRef,
       rating: 5,
@@ -188,5 +190,44 @@ describe("Phase 5: Customer Portal, My Trips & Reviews", () => {
     // Verify review list
     const tourReviews = await getTourReviews(testTourId);
     expect(tourReviews.some((r) => r.bookingId !== null)).toBe(true);
+    // Only reviews left against a booking are public; seeded samples are not.
+    expect(tourReviews.every((r) => r.bookingId !== null)).toBe(true);
+
+    // A tour with a published count (e.g. 1,000+ from TripAdvisor and Google) keeps it.
+    const after = await prisma.tour.findUnique({ where: { id: testTourId } });
+    if (before!.reviewCount > 1) {
+      expect(after!.reviewCount).toBe(before!.reviewCount);
+      expect(after!.rating).toBe(before!.rating);
+    }
+  });
+
+  it("starts a new product's rating from its first real review", async () => {
+    const tour = await prisma.tour.update({ where: { id: testTourId }, data: { reviewCount: 0, rating: 0 } });
+    const ref = `VC-REV-${Math.floor(10000 + Math.random() * 90000)}`;
+    await prisma.booking.create({
+      data: {
+        bookingReference: ref,
+        customerName: "New Product Reviewer",
+        customerEmail: testCustomerEmail,
+        customerPhone: "+14035550199",
+        tourDepartureId: futureDepartureId,
+        adultsCount: 1,
+        childrenCount: 0,
+        infantsCount: 0,
+        totalSeats: 1,
+        subtotal: 155,
+        tax: 7.75,
+        totalAmount: 162.75,
+        currency: "CAD",
+        status: "CONFIRMED",
+        voucherCode: `VOUCH-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+      },
+    });
+    const result = await createReview({ bookingReference: ref, rating: 4, title: "Good day", body: "A good day out." });
+    expect(result.success).toBe(true);
+    const updated = await prisma.tour.findUnique({ where: { id: tour.id } });
+    const real = await prisma.review.count({ where: { tourId: tour.id, bookingId: { not: null } } });
+    expect(updated!.reviewCount).toBe(real);
+    expect(updated!.rating).toBeGreaterThan(0);
   });
 });
