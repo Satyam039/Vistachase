@@ -1,127 +1,57 @@
-"use client";
+// "Why travellers choose us" (Viator / GetYourGuide reassurance grid on a dark band): a photo
+// with one plain fact, six reasons beside it. Every reason is a catalog fact, an FAQ answer or the
+// legal cancellation policy; nothing here is marketing that isn't backed elsewhere on the site.
 
-import React from "react";
 import Image from "next/image";
-import { CheckCircle2, ShieldCheck, HeartHandshake, Mountain, Sparkles, Clock } from "lucide-react";
-import { ScrollReveal } from "./ScrollReveal";
+import { BadgeCheck, CalendarCheck, CarFront, MapPin, MountainSnow, Users } from "lucide-react";
 
 const REASONS = [
-  {
-    icon: ShieldCheck,
-    title: "Hassle-Free Access",
-    description: "We handle all timing, commercial access permits, and Parks Canada logistics so you bypass roadside congestion.",
-  },
-  {
-    icon: Sparkles,
-    title: "Luxury SUVs & Clean Shuttles",
-    description: "Full-size GMC Yukon Denali XL VIPs and modern Mercedes-Benz Sprinter Executive vans maintained to pristine standards.",
-  },
-  {
-    icon: Mountain,
-    title: "Local Certified Guides",
-    description: "Intimate mountain history, wildlife safety, geology stories, and unhurried photo assistance from local residents.",
-  },
-  {
-    icon: HeartHandshake,
-    title: "Eco-Friendly Footprint",
-    description: "Shared routes and efficient passenger groupings minimize national park congestion and reduce carbon per traveler.",
-  },
-  {
-    icon: CheckCircle2,
-    title: "Top-Ranked Hospitality",
-    description: "Named TripAdvisor’s #6 experience in Canada, rated 5.0 from more than 1,000 reviews.",
-  },
-  {
-    icon: Clock,
-    title: "Free cancellation",
-    description: "A full refund when you cancel at least 24 hours before your tour, with your voucher sent by email.",
-  },
+  { icon: MountainSnow, title: "Guaranteed lake access", body: "Private cars can't drive to Moraine Lake. As a commercial operator, we still can." },
+  { icon: Users, title: "Small groups", body: "Never more than 12 guests on a shared tour, so there's time for every photo stop." },
+  { icon: CarFront, title: "Your own vehicle", body: "Private tours in a luxury SUV for up to 6 or an executive van for up to 13." },
+  { icon: MapPin, title: "Hotel pickup", body: "Doorstep pickup from more than 25 hotels and lodges in Banff, Canmore and Lake Louise." },
+  { icon: BadgeCheck, title: "Rated 5.0", body: "Ranked the #6 experience in Canada on Tripadvisor, from more than 1,000 reviews." },
+  { icon: CalendarCheck, title: "Free cancellation", body: "A full refund when you cancel at least 72 hours before your tour." },
 ];
 
 export function WhyTravelersLove() {
   return (
-    <section className="py-24 sm:py-32 bg-ocean-950 text-white relative overflow-hidden">
-      {/* Background Horse Emblem Watermark */}
-      <div className="absolute right-[-80px] top-1/2 -translate-y-1/2 w-[550px] h-[550px] opacity-5 pointer-events-none">
-        <Image
-          src="/media/brand/horse-emblem-gold.png"
-          alt=""
-          fill
-          className="object-contain"
-        />
+    <section aria-labelledby="why-heading" className="relative overflow-hidden bg-obsidian-950 py-20 text-white sm:py-28">
+      <div className="pointer-events-none absolute -right-20 top-1/2 h-[34rem] w-[34rem] -translate-y-1/2 opacity-[0.04]" aria-hidden="true">
+        <Image src="/media/brand/horse-emblem-gold.png" alt="" fill sizes="34rem" className="object-contain" />
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 sm:px-12 relative z-10">
-        {/* Section Header */}
-        <div className="max-w-3xl mb-16">
-          <ScrollReveal delay={100} yOffset={16}>
-            <div className="inline-flex items-center gap-2 text-xs sm:text-sm  tracking-[0.2em] uppercase text-summit-400 mb-3">
-              <span>THE VISTA CHASE STANDARD</span>
-            </div>
-          </ScrollReveal>
-          <ScrollReveal delay={200} yOffset={20}>
-            <h2 className="text-balance text-3xl font-light leading-[1.1] tracking-tight text-white sm:text-4xl lg:text-5xl">
-              Why Travelers Choose Vista Chase
-            </h2>
-          </ScrollReveal>
-          <ScrollReveal delay={300} yOffset={16}>
-            <p className="mt-4 text-base sm:text-lg text-slate-300 font-light leading-relaxed">
-              Awarded TripAdvisor’s Travelers’ Choice Best of the Best 2025. Here is how we redefine the Canadian Rockies journey.
-            </p>
-          </ScrollReveal>
+      <div className="relative mx-auto max-w-7xl px-page">
+        <div className="mx-auto mb-14 max-w-3xl text-center" data-reveal>
+          <p className="mb-3 text-sm uppercase tracking-[0.22em] text-summit-400">Why Vista Chase</p>
+          <h2 id="why-heading" className="text-balance text-3xl font-light leading-[1.1] tracking-tight text-white sm:text-4xl lg:text-5xl">
+            Why travellers choose us
+          </h2>
+          <p className="mt-4 text-lg font-light leading-relaxed text-slate-300">Local guides, small groups and the lakes you can no longer drive to yourself.</p>
         </div>
 
-        {/* 2-Column Layout: Visual + 6 Pillars */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          {/* Left Column: Certified Guide Image Card */}
+        <div className="grid items-center gap-12 lg:grid-cols-12">
           <div className="lg:col-span-5">
-            <ScrollReveal delay={200} yOffset={28}>
-              <div className="relative rounded-[2rem] overflow-hidden border border-white/10 group">
-                <div className="relative h-[480px] sm:h-[540px] w-full">
-                  <Image
-                    src="/media/site/feature-image-1.webp"
-                    alt="Vista Chase Certified Mountain Guide"
-                    fill
-                    sizes="(max-width: 1024px) 100vw, 40vw"
-                    className="object-cover"
-                    data-parallax="10"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-ocean-950 via-transparent to-transparent opacity-80" />
-                </div>
-                {/* Overlay Badge */}
-                <div className="absolute bottom-6 left-6 right-6 p-5 rounded-xl glass-panel-alpine text-white">
-                  <p className="text-xs uppercase tracking-widest text-summit-400  mb-1">
-                    CANMORE & BANFF NATIVE TEAM
-                  </p>
-                  <p className="text-sm font-light text-slate-200">
-                    &ldquo;Our guides don&apos;t just drive — they unlock hidden perspectives most visitors drive right past.&rdquo;
-                  </p>
-                </div>
+            <div className="relative overflow-hidden rounded-[2rem]" data-reveal="clip">
+              <div className="relative h-[28rem] sm:h-[34rem]">
+                <Image src="/media/site/feature-image-1.webp" alt="A Vista Chase guide with guests in the Rockies" fill sizes="(max-width: 1024px) 100vw, 40vw" className="object-cover" data-parallax="10" />
+                <div className="vc-scrim" aria-hidden="true" />
               </div>
-            </ScrollReveal>
+              <p className="absolute inset-x-6 bottom-6 text-lg font-light text-white">Small-group, private and shuttle tours, run from Canmore.</p>
+            </div>
           </div>
 
-          {/* Right Column: 6 Grid Pillars */}
-          <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {REASONS.map((reason, idx) => {
-              const Icon = reason.icon;
-              return (
-                <ScrollReveal key={idx} delay={100 * (idx + 1)} yOffset={20}>
-                  <div className="h-full p-6 rounded-3xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 transition-all duration-300 hover:-translate-y-1">
-                    <div className="w-10 h-10 rounded-lg bg-summit-500/10 border border-summit-500/30 flex items-center justify-center text-summit-400 mb-4">
-                      <Icon className="w-5 h-5" />
-                    </div>
-                    <h3 className="text-lg  text-white font-display mb-2">
-                      {reason.title}
-                    </h3>
-                    <p className="text-sm text-slate-300 font-light leading-relaxed">
-                      {reason.description}
-                    </p>
-                  </div>
-                </ScrollReveal>
-              );
-            })}
-          </div>
+          <ul className="grid gap-4 sm:grid-cols-2 lg:col-span-7" data-stagger>
+            {REASONS.map(({ icon: Icon, title, body }) => (
+              <li key={title} className="h-full rounded-[1.5rem] bg-white/[0.04] p-6 ring-1 ring-white/10 transition-[background-color,transform] duration-300 hover:-translate-y-1 hover:bg-white/[0.07]">
+                <span className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-summit-500/15 text-summit-400">
+                  <Icon className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <h3 className="text-lg text-white">{title}</h3>
+                <p className="mt-1.5 text-base font-light leading-relaxed text-slate-300">{body}</p>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </section>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { AlertCircle, CheckCircle2, Send } from "lucide-react";
+import { Dropdown } from "@/components/forms/Dropdown";
 
 const TYPES = [
   { value: "HOTEL", label: "Hotel, lodge or rental host" },
@@ -49,7 +50,7 @@ export function PartnerApplyForm() {
 
   if (status === "done") {
     return (
-      <div role="status" className="space-y-3 rounded-3xl border border-emerald-200 bg-emerald-50 p-8 text-emerald-900">
+      <div role="status" className="space-y-3 rounded-[1.75rem] bg-emerald-50 p-8 text-emerald-900 ring-1 ring-emerald-200">
         <p className="flex items-center gap-2 text-2xl font-light">
           <CheckCircle2 className="h-6 w-6" aria-hidden="true" /> Application received
         </p>
@@ -73,7 +74,7 @@ export function PartnerApplyForm() {
   const described = (name: string) => (fields[name]?.length ? `partner-${name}-error` : undefined);
 
   return (
-    <form onSubmit={submit} className="space-y-5 rounded-3xl border border-slate-200 bg-white p-6 sm:p-8" noValidate>
+    <form onSubmit={submit} className="space-y-5 rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:p-8" noValidate>
       {error && (
         <p role="alert" className="flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
           <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -101,16 +102,13 @@ export function PartnerApplyForm() {
           <input id="partner-password" name="password" type="password" required minLength={8} autoComplete="new-password" className={field} aria-describedby={described("password")} aria-invalid={!!fields.password} />
           {err("password")}
         </div>
-        <div className="space-y-1.5">
-          <label htmlFor="partner-type" className="text-sm text-slate-700">What best describes you?</label>
-          <select id="partner-type" name="type" defaultValue="HOTEL" className={field}>
-            {TYPES.map((t) => (
-              <option key={t.value} value={t.value}>
-                {t.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <Dropdown
+          id="partner-type"
+          name="type"
+          defaultValue="HOTEL"
+          label="What best describes you?"
+          options={TYPES.map((t) => ({ value: t.value, label: t.label }))}
+        />
         <div className="space-y-1.5">
           <label htmlFor="partner-website" className="text-sm text-slate-700">Website (optional)</label>
           <input id="partner-website" name="website" type="url" placeholder="https://" autoComplete="url" className={field} aria-describedby={described("website")} aria-invalid={!!fields.website} />
@@ -120,7 +118,7 @@ export function PartnerApplyForm() {
       <button
         type="submit"
         disabled={status === "sending"}
-        className="golden-summit-btn inline-flex h-12 items-center gap-2 rounded-md px-7 text-sm uppercase tracking-[0.14em] disabled:opacity-60"
+        className="golden-summit-btn inline-flex h-12 items-center gap-2 rounded-full px-7 text-base disabled:opacity-60"
       >
         <Send className="h-4 w-4" aria-hidden="true" />
         {status === "sending" ? "Sending…" : "Apply to partner"}

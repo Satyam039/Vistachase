@@ -1,45 +1,13 @@
-const { execSync } = require('child_process');
-const path = require('path');
-const backendDir = path.join(__dirname, '..');
+// Production start: apply pending migrations (safe to run on every start; Prisma takes a lock),
+// then start the API. The Prisma client is generated at build time. The catalog is loaded once
+// with `npm run prisma:seed` on an empty database; demo data never runs in production.
+const { execSync } = require("child_process");
+const path = require("path");
 
-console.log('[Vista Chase Production Startup] Preparing database...');
 try {
-  execSync('node scripts/prepare-db.js', { stdio: 'inherit', cwd: backendDir });
-  console.log('[Vista Chase Production Startup] Pushing schema to database...');
-  execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit', cwd: backendDir });
-  
-  // Seed if needed
-  try {
-    const { PrismaClient } = require('@prisma/client');
-    const prisma = new PrismaClient();
-    prisma.user.count().then(async (count) => {
-      if (count === 0) {
-        console.log('[Vista Chase Production Startup] Fresh database detected. Seeding initial catalog and operations data...');
-        execSync('node -r dotenv/config prisma/seed.js', { stdio: 'inherit', cwd: backendDir });
-      } else {
-        console.log(`[Vista Chase Production Startup] Database already populated (${count} users found). Skipping seed.`);
-      }
-      await prisma.$disconnect();
-      startServer();
-    }).catch(async (err) => {
-      console.warn('[Vista Chase Production Startup] User check warning, running seed just in case:', err.message);
-      try {
-        execSync('node -r dotenv/config prisma/seed.js', { stdio: 'inherit', cwd: backendDir });
-      } catch (seedErr) {
-        console.warn('Seed execution notice:', seedErr.message);
-      }
-      startServer();
-    });
-  } catch (dbErr) {
-    console.warn('[Vista Chase Production Startup] Direct check skipped:', dbErr.message);
-    startServer();
-  }
+  execSync("npx prisma migrate deploy", { stdio: "inherit", cwd: path.join(__dirname, "..") });
 } catch (err) {
-  console.error('[Vista Chase Production Startup] Startup preparation error:', err);
-  startServer();
+  console.error("[start] Database migrations failed:", err.message);
+  process.exit(1);
 }
-
-function startServer() {
-  console.log('[Vista Chase Production Startup] Starting Express application server...');
-  require('../dist/server.js');
-}
+require("../dist/server.js");

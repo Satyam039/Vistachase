@@ -57,8 +57,9 @@ Astryx setup (already done, don't redo):
   slower than SWC (about 3x). `package.json` browserslist pins Next 15's default modern targets so Babel
   doesn't down-compile async code.
 - Site frame: `src/components/layout/SiteFrame.tsx` + `SiteFooter.tsx`, laid out like Bentley's: "Menu"
-  button on the left at every width (`SiteMenu.tsx`: full-height Astryx Dialog from the left, large light
-  section names, the hovered section's links beside them, sections expand in place on phones), the brand
+  button on the left at every width (`SiteMenu.tsx`: native <dialog>, near-black panel from the left over
+  the page dimmed and blurred (`.vc-menu` in globals.css), large light section names, the hovered section's
+  links beside them, sections expand in place on phones), the brand
   absolutely centred in the bar (not TopNav `centerContent`: Astryx hides that slot on narrow screens and
   adds its own "Open navigation" toggle), actions on the right. SiteFrame publishes `--vc-header-h` for
   sticky in-page bars. Menu sections live in `MENU_SECTIONS`.
@@ -141,12 +142,46 @@ behind the sticky header, traps). Report in `a11y-report/summary.md`. Keep it at
   HeroSearch → TrustRow → TopExperiences rail → categories bento → destinations StickyStory → proof →
   CTA; category = breadcrumb hero → stats strip → sticky sort bar → grid → TrustRow → other ways rail;
   product = breadcrumb/title/rating → ProductGallery mosaic → key facts → TourSections + sticky booking →
-  "You might also like" rail. Ratings and counts are always real catalog values; cancellation is 24 hours.
+  "You might also like" rail. Ratings and counts are always real catalog values. Cancellation is the legal 72-hour policy (`src/lib/policy.ts`; full text at `/cancellation-policy`, groups of 7+ and multi-day keep the 20% deposit, tickets follow the operator).
 - Video: clips live in `backend/media/videos` (MP4 + `-poster.webp`, `-1080.mp4` for hero clips) and come
   from the API: `tour.videos` (clips of the places a tour visits) and `destination.heroVideo`. Play them only
-  through `cinematic/AmbientVideo` (`src`, `srcHd`, `poster`): it loads when on screen, pauses off screen, has
-  a pause button, and stays on the poster with reduced motion or data saver. Inside it the parent must be
+  through `cinematic/AmbientVideo` (`src`, `srcHd`, `poster`): it loads when on screen, pauses off screen and
+  stays on the poster with reduced motion or data saver. Hero, story and gallery clips use `once` (play a single
+  pass, no pause button: the owner's choice); the home hero uses the controlled `paused` prop. Product galleries
+  lead with the tour's own photo; clips (matched by place) come after it. Inside it the parent must be
   `position: relative`.
+- Maps: `components/tracking/LiveMap.tsx` uses MapLibre GL with OpenFreeMap's Positron style (free, no API key,
+  OpenStreetMap data, attribution kept). It is imported only by `/track/[token]`; if WebGL fails the page falls
+  back to the drawn `RouteMap`. Marker elements stay `aria-hidden` with no popups (popups make them tab stops).
+- Time: departures are Mountain Time. Use `departureInstant()` / `canCancelFree()` from `src/lib/policy.ts`, never
+  `new Date(`${date}T${time}`)` (that reads the device's zone). Contact: support@vistachase.com, +1 825-734-9456,
+  lines open 6 a.m. – 9 p.m. MT (no "24/7").
+- Staff pages share `components/admin/AdminHeader.tsx` (header, section tabs, `StaffSignIn`).
+- Dropdowns: always `components/forms/Dropdown.tsx` (never a native <select> or the Astryx Selector): one look and
+  one keyboard model everywhere (WAI-ARIA select-only combobox; portalled panel that flips above near the bottom;
+  `searchable` adds a filter field; `name` adds a hidden input for plain forms). Variants: field, pill, bare.
+- Text over photos (cards): put `<div className="vc-scrim" aria-hidden="true" />` in the image layer (globals.css):
+  a Gaussian blur over the bottom half that fades toward the middle, with a dark tint. `vc-scrim-tall` (62%) /
+  `vc-scrim-full` (78%) when the text block is taller.
+- Live tracking is private: `/track/<token>` opens only with a tracking-session token or a booking's unexpired
+  `trackingToken`, never a booking reference or id. The public `/api/bookings?ref=` lookup (voucher) omits the token,
+  `POST /api/track/:id/notify` is staff-only, and the concierge reaches tracking only after its email check
+  (`getTelemetryForVerifiedBooking`). Award: Tripadvisor Travelers' Choice Best of the Best 2026, shown with
+  `components/brand/AwardSeal.tsx` (the year matches the live site's badge).
+- Announcement strip: `components/layout/AnnouncementBar.tsx`, rendered above (not inside) the sticky header so it
+  scrolls away. Closing is stored in localStorage and applied before paint by `ANNOUNCE_SCRIPT`
+  (`src/lib/announcement.ts`, inlined in the root layout). Bump `ANNOUNCEMENT.id` when the message changes.
+- Alignment: section headings are centred on the page axis (eyebrow, title, intro, main link/button):
+  `SectionHeading` is centred by default, page heroes are centred. Content below stays left-aligned
+  (cards, forms, tables, long text, product-page sections). Split photo/text sections keep their column
+  alignment. Centre chip rows with overflow-safe auto margins (`[&>*:first-child]:ml-auto
+  [&>*:last-child]:mr-auto`), never `justify-center`, which clips the first chips when the row overflows.
+- Dark surfaces: one neutral near-black, `bg-obsidian-950`, for dark sections, heroes, cards and the menu
+  (not the teal `ocean-950`, which stays only in photo scrims). Gold accents on dark: `summit-200/300`.
+- No fake information: reviews come only from `/api/reviews` (guests reviewing a real booking, shown by
+  `components/reviews/ReviewSlider.tsx`); never hard-code quotes. Availability reads `SEATS_MESSAGE`,
+  never a seat count. Ticket times are "Time we request", not promises; prices stay on request until
+  confirmed.
 - Client-component pages set their title in a sibling `layout.tsx` (every page needs its own title).
 
 Building pages from templates (https://astryx.atmeta.com/templates):

@@ -1,4 +1,5 @@
 import prisma from "@/lib/db/prisma";
+import { dateOnly, formatDateOnly, formatTimeOfDay } from "@/lib/utils/time";
 
 export async function getAdminMetrics() {
   const [
@@ -35,22 +36,21 @@ export async function getAdminMetrics() {
     }),
   ]);
 
-  const totalRevenue = revenueAgg._sum.amount || 0;
-
+  // Amounts are stored in cents; the dashboard shows dollars.
   return {
     totalBookings,
     confirmedBookings,
     totalUsers,
     totalDepartures,
     activeHoldsCount,
-    totalRevenue: Math.round(totalRevenue * 100) / 100,
-    recentBookings,
+    totalRevenue: (revenueAgg._sum.amount || 0) / 100,
+    recentBookings: recentBookings.map((b) => ({ ...b, subtotal: b.subtotal / 100, tax: b.tax / 100, addOnsTotal: b.addOnsTotal / 100, totalAmount: b.totalAmount / 100 })),
   };
 }
 
 export async function getDispatchManifest(date: string) {
   const departures = await prisma.tourDeparture.findMany({
-    where: { date },
+    where: { date: dateOnly(date) },
     include: {
       tour: true,
       shuttleRoute: true,
@@ -79,7 +79,7 @@ export async function getDispatchManifest(date: string) {
         stopsMap.set(stopKey, {
           stopName,
           address,
-          pickupTime,
+          pickupTime: pickupTime instanceof Date ? pickupTime.toISOString() : pickupTime,
           bookings: [],
         });
       }
@@ -94,8 +94,8 @@ export async function getDispatchManifest(date: string) {
 
     return {
       departureId: dep.id,
-      date: dep.date,
-      departureTime: dep.departureTime,
+      date: formatDateOnly(dep.date),
+      departureTime: formatTimeOfDay(dep.departureTime),
       title: dep.tour?.title || dep.shuttleRoute?.name || "Rockies Shuttle Service",
       capacityTotal: dep.capacityTotal,
       capacityBooked: dep.capacityBooked,

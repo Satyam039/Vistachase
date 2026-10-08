@@ -18,7 +18,7 @@ router.get("/", async (req, res) => {
 
     return res.json({ success: true, count: tours.length, tours });
   } catch (error: unknown) {
-    return res.status(500).json({ success: false, error: (error as Error).message || "Failed to load tours" });
+    return res.status(500).json({ success: false, error: "Failed to load tours" });
   }
 });
 
@@ -67,7 +67,7 @@ router.get("/search", async (req, res) => {
 
     return res.json({ success: true, count: tours.length, tours });
   } catch (error: unknown) {
-    return res.status(500).json({ success: false, error: (error as Error).message || "Search failed" });
+    return res.status(500).json({ success: false, error: "Search failed" });
   }
 });
 
@@ -79,7 +79,7 @@ router.get("/:slug", async (req, res) => {
     }
     return res.json({ success: true, tour });
   } catch (error: unknown) {
-    return res.status(500).json({ success: false, error: (error as Error).message || "Failed to load tour" });
+    return res.status(500).json({ success: false, error: "Failed to load tour" });
   }
 });
 

@@ -1,12 +1,17 @@
 import { execSync } from "node:child_process";
 import path from "node:path";
+import { testDatabaseUrl } from "./test-database-url";
 
-// Tests write bookings, holds, reviews and departures, so they run against their own SQLite
-// file (prisma/test.db), created and seeded fresh for every run. The dev database the site
-// reads (prisma/dev.db) is never touched.
+// Resets and seeds the test database once per run. Fails the run with the real error if the
+// database can't be prepared, instead of letting every test fail on its own.
 export default function setup() {
   const cwd = path.resolve(__dirname, "..");
-  const env = { ...process.env, DATABASE_URL: "file:./test.db" };
-  execSync("npx prisma db push --skip-generate --force-reset --accept-data-loss", { cwd, env, stdio: "ignore" });
-  execSync("node prisma/seed.js", { cwd, env, stdio: "ignore" });
+  const url = testDatabaseUrl();
+  const env = { ...process.env, DATABASE_URL: url };
+
+  console.log(`Setting up test database ${new URL(url).host}${new URL(url).pathname}…`);
+  // Same migrations production applies (prisma migrate deploy), so a missing migration fails here.
+  execSync("npx prisma migrate reset --force --skip-seed --skip-generate", { cwd, env, stdio: "inherit" });
+  execSync("node prisma/seed.js", { cwd, env, stdio: "inherit" });
+  execSync("node prisma/seed-fixtures.js", { cwd, env: { ...env, NODE_ENV: "test" }, stdio: "inherit" });
 }

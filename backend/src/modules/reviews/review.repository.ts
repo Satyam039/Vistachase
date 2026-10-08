@@ -1,4 +1,5 @@
 import prisma from "@/lib/db/prisma";
+import { dateOnly, todayInMountainTime } from "@/lib/utils/time";
 
 export interface CreateReviewInput {
   bookingReference: string;
@@ -37,8 +38,12 @@ export async function createReview(input: CreateReviewInput): Promise<ReviewResu
     },
   });
 
-  if (!booking) {
+if (!booking) {
     return { success: false, error: "Verified booking not found for this reference" };
+  }
+  
+  if (booking.status !== "COMPLETED") {
+    return { success: false, error: "Reviews can only be submitted after the trip has been completed" };
   }
 
   if (booking.review) {
@@ -51,7 +56,6 @@ export async function createReview(input: CreateReviewInput): Promise<ReviewResu
   }
 
   const now = new Date();
-  const dateFormatted = now.toLocaleDateString("en-US", { month: "long", year: "numeric" });
   const author = input.authorName || booking.customerName;
 
   const result = await prisma.$transaction(async (tx) => {
@@ -64,27 +68,30 @@ export async function createReview(input: CreateReviewInput): Promise<ReviewResu
         title: input.title,
         body: input.body,
         isVerified: true,
-        date: dateFormatted,
+        date: dateOnly(todayInMountainTime(now)),
       },
     });
 
-    // Recalculate average rating & reviewsCount for the tour
+    // Tours imported from the live site carry the published rating and count (e.g. 5.0 from 1,000+
+    // reviews across TripAdvisor and Google). Those stay until the reviews left here outnumber
+    // them; only then do the tour's figures come from these reviews. Seeded samples never count.
     const agg = await tx.review.aggregate({
-      where: { tourId },
+      where: { tourId, bookingId: { not: null } },
       _avg: { rating: true },
       _count: { rating: true },
     });
+    const realCount = agg._count.rating || 1;
+    const tour = await tx.tour.findUnique({ where: { id: tourId }, select: { reviewCount: true } });
 
-    const newAvg = agg._avg.rating ? Math.round(agg._avg.rating * 10) / 10 : input.rating;
-    const newCount = agg._count.rating || 1;
-
-    await tx.tour.update({
-      where: { id: tourId },
-      data: {
-        rating: newAvg,
-        reviewCount: newCount,
-      },
-    });
+    if (!tour || tour.reviewCount < realCount) {
+      await tx.tour.update({
+        where: { id: tourId },
+        data: {
+          rating: agg._avg.rating ? Math.round(agg._avg.rating * 10) / 10 : input.rating,
+          reviewCount: realCount,
+        },
+      });
+    }
 
     return review;
   });
@@ -98,14 +105,18 @@ export async function createReview(input: CreateReviewInput): Promise<ReviewResu
       rating: result.rating,
       title: result.title,
       body: result.body,
-      date: result.date,
+      date: result.date.toISOString().split('T')[0],
     },
   };
 }
 
+/**
+ * Public reviews of a tour: only those written by a guest against a real booking. Seeded sample
+ * reviews have no booking and are never shown to customers.
+ */
 export async function getTourReviews(tourId: string) {
   return await prisma.review.findMany({
-    where: { tourId },
+    where: { tourId, bookingId: { not: null } },
     orderBy: { createdAt: "desc" },
   });
 }

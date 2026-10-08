@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import prisma from "@/lib/db/prisma";
-import { getBokunOperationsProvider } from "@/modules/bokun/bokun.provider";
+import { getBokunOperationsProvider, LiveBokunOperationsProvider } from "@/modules/bokun/bokun.provider";
+import { dateOnly, formatTimeOfDay } from "@/lib/utils/time";
 import { PRODUCT_MAP, bokunReadiness, slugForBokunId } from "@/modules/bokun/product-map";
 
 describe("Bókun Operations & Integration Layer", () => {
@@ -29,27 +30,33 @@ describe("Bókun Operations & Integration Layer", () => {
     if (readiness.productIdsMissing.length > 0) expect(readiness.ready).toBe(false);
   });
 
-  it("synchronizes incoming Bókun bookings and prevents duplicate records (Idempotency)", async () => {
-    const provider = getBokunOperationsProvider();
-    const uniqueSuffix = Date.now().toString().slice(-4);
-    const testDate = `2026-11-${uniqueSuffix}`;
+  it("never invents bookings or departures while Bókun isn't connected (mock provider)", async () => {
+    const before = await prisma.tourDeparture.count();
+    const result = await getBokunOperationsProvider().syncTodaysBookings("2026-11-20");
+    expect(result).toEqual({ syncedCount: 0, updatedCount: 0, errors: [] });
+    expect(await prisma.tourDeparture.count()).toBe(before);
+  });
 
-    // 1. Initial sync
-    const firstSync = await provider.syncTodaysBookings(testDate);
-    expect(firstSync.errors.length).toBe(0);
-    expect(firstSync.syncedCount).toBeGreaterThan(0);
+  it("syncs one day of Bókun availability into departures without duplicating them (live provider, stubbed API)", async () => {
+    const mapped = PRODUCT_MAP.find((p) => p.slug === "banff-highlights-tour")!;
+    const live = new LiveBokunOperationsProvider();
+    (live as any).client = {
+      getAvailabilities: async (id: string) =>
+        id === mapped.bokunId
+          ? [{ date: Date.parse("2027-03-09T00:00:00Z"), startTime: "07:45", availabilityCount: 11, bookedParticipants: 0, defaultRateId: 1, rates: [{ id: 1 }], pricesByRate: [{ activityRateId: 1, pricePerCategoryUnit: [{ id: 1, amount: { amount: 199 } }] }] }]
+          : [],
+      fetch: async () => ({ pricingCategories: [{ id: 1, title: "Adults" }] }),
+    };
 
-    // 2. Second sync for same date should update, not create duplicate bookings
-    const secondSync = await provider.syncTodaysBookings(testDate);
-    expect(secondSync.errors.length).toBe(0);
-    expect(secondSync.syncedCount).toBe(0); // No new duplicates
-    expect(secondSync.updatedCount).toBe(firstSync.syncedCount);
+    const first = await live.syncTodaysBookings("2027-03-09");
+    expect(first).toEqual({ syncedCount: 1, updatedCount: 0, errors: [] });
 
-    // Verify sync log was recorded
-    const log = await prisma.bokunSyncLog.findFirst({
-      orderBy: { createdAt: "desc" },
-    });
-    expect(log).toBeDefined();
-    expect(log?.status).toBe("SUCCESS");
+    const second = await live.syncTodaysBookings("2027-03-09");
+    expect(second).toEqual({ syncedCount: 0, updatedCount: 1, errors: [] });
+
+    const departures = await prisma.tourDeparture.findMany({ where: { date: dateOnly("2027-03-09"), tour: { slug: mapped.slug } } });
+    expect(departures).toHaveLength(1);
+    expect(departures[0].price).toBe(19900); // $199 from Bókun, stored in cents
+    expect(formatTimeOfDay(departures[0].departureTime)).toBe("07:45");
   });
 });

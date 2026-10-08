@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import prisma from "@/lib/db/prisma";
+import { dateOnly, todayInMountainTime } from "@/lib/utils/time";
 
 export interface WhatsAppMessagePayload {
   toPhoneNumber: string;
@@ -160,19 +161,24 @@ export class MetaCloudWhatsAppProvider implements IWhatsAppProvider {
           messaging_product: "whatsapp",
           recipient_type: "individual",
           to: cleanPhone,
-          type: "text",
-          text: {
-            preview_url: true,
-            body:
-              `🏔️ Vista Chase Canadian Rockies\n\n` +
-              `Good morning, ${payload.customerName}!\n` +
-              `Your private shuttle for ${payload.tourName} is preparing for departure.\n\n` +
-              `📍 Pickup Location: ${payload.pickupLocation}\n` +
-              `⏰ Estimated Pickup: ${payload.pickupTime}\n` +
-              `🚐 Vehicle: ${payload.vehicleName} • Plate: ${payload.licensePlate}\n` +
-              `👤 Guide: ${payload.driverName}\n\n` +
-              `Tap below to track your driver's live GPS location:\n` +
-              `${payload.trackingUrl}`,
+type: "template",
+          template: {
+            name: "vista_chase_pickup",
+            language: { code: "en_US" },
+            components: [
+              {
+                type: "body",
+                parameters: [
+                  { type: "text", text: payload.customerName },
+                  { type: "text", text: payload.tourName },
+                  { type: "text", text: payload.pickupLocation },
+                  { type: "text", text: payload.pickupTime },
+                  { type: "text", text: payload.vehicleName },
+                  { type: "text", text: payload.driverName },
+                  { type: "text", text: payload.trackingUrl }
+                ]
+              }
+            ]
           },
         }),
       });
@@ -299,7 +305,7 @@ export async function dispatchShuttleTrackingAlert(
       customerName: booking.customerName,
       tourName: tourTitle,
       pickupLocation: stopName,
-      pickupTime: booking.pickupTime || departure.departureTime,
+      pickupTime: booking.pickupTime || departure.departureTime.toISOString(),
       vehicleName: activeRun?.vehicle?.name || "Mercedes-Benz Sprinter Executive #4",
       licensePlate: activeRun?.vehicle?.licensePlate || "ALBERTA • 7VC-894",
       driverName: activeRun?.driver?.publicName || activeRun?.driver?.name || "Marc Tremblay",
@@ -339,12 +345,12 @@ export async function dispatchT60ScheduledBatch(): Promise<{
   dispatched: number;
   skipped: number;
 }> {
-  const today = new Date().toISOString().split("T")[0];
+  const today = todayInMountainTime();
 
-  // Find all confirmed departures for today
+  // Find all confirmed departures for today (Banff's operating day)
   const departures = await prisma.tourDeparture.findMany({
     where: {
-      date: today,
+      date: dateOnly(today),
       status: { not: "CANCELLED" },
     },
     include: {

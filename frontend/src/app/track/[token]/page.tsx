@@ -1,13 +1,10 @@
-import React from "react";
 import Link from "next/link";
 import type { Metadata } from "next";
-import LiveShuttleTrackingClient, { TrackingTelemetry } from "@/components/tracking/LiveShuttleTrackingClient";
-import { Phone, MessageSquare, ArrowLeft, ShieldAlert } from "lucide-react";
+import { MapPinOff, MessageSquare, Phone } from "lucide-react";
+import LiveShuttleTrackingClient, { type TrackingTelemetry } from "@/components/tracking/LiveShuttleTrackingClient";
 
 interface TrackPageProps {
-  params: Promise<{
-    token: string;
-  }>;
+  params: Promise<{ token: string }>;
 }
 
 export const dynamic = "force-dynamic";
@@ -15,10 +12,7 @@ export const dynamic = "force-dynamic";
 async function fetchTelemetry(token: string): Promise<TrackingTelemetry | null> {
   try {
     const backendUrl = (process.env.BACKEND_URL || "http://localhost:4000").replace(/\/$/, "");
-    const res = await fetch(`${backendUrl}/api/track/${token}`, {
-      cache: "no-store",
-    });
-
+    const res = await fetch(`${backendUrl}/api/track/${encodeURIComponent(token)}`, { cache: "no-store" });
     if (!res.ok) return null;
     const data = await res.json();
     return data.telemetry || null;
@@ -30,74 +24,51 @@ async function fetchTelemetry(token: string): Promise<TrackingTelemetry | null> 
 export async function generateMetadata({ params }: TrackPageProps): Promise<Metadata> {
   const { token } = await params;
   const telemetry = await fetchTelemetry(token);
-
-  if (!telemetry) {
-    return {
-      title: "Live Shuttle Tracking | Vista Chase Canadian Rockies",
-      description: "Real-time GPS shuttle tracking portal for Banff and Lake Louise.",
-    };
-  }
-
   return {
-    title: `Live Shuttle Tracking • ${telemetry.vehicleName} (#${telemetry.bookingReference}) | Vista Chase`,
-    description: `Track your Vista Chase alpine shuttle to ${telemetry.pickupStopName} in real-time.`,
+    title: telemetry ? `Track your pickup · ${telemetry.bookingReference} | Vista Chase` : "Track your pickup | Vista Chase",
+    robots: { index: false, follow: false },
   };
 }
 
 export default async function TrackPage({ params }: TrackPageProps) {
   const { token } = await params;
   const telemetry = await fetchTelemetry(token);
+  if (telemetry) return <LiveShuttleTrackingClient initialTelemetry={telemetry} token={token} />;
 
-  if (!telemetry) {
-    return (
-      <div className="min-h-screen bg-ocean-950 text-slate-100 flex flex-col items-center justify-center p-4">
-        <div className="max-w-md w-full bg-ocean-900 rounded-3xl p-8 border border-forest-800/80 shadow-2xl text-center space-y-6">
-          <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 mx-auto flex items-center justify-center">
-            <ShieldAlert className="w-8 h-8" />
-          </div>
-
-          <div className="space-y-2">
-            <h1 className="text-2xl font-serif font-bold text-white tracking-tight">
-              Tracking Session Concluded
-            </h1>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              This GPS tracking session is inactive, completed, or unrecognized. Tracking links remain active from 2 hours before departure until 3 hours after tour conclusion.
-            </p>
-          </div>
-
-          <div className="p-4 rounded-xl bg-forest-950/80 border border-forest-800/60 text-xs text-slate-300 space-y-3">
-            <p className="font-semibold text-white">Need immediate assistance with your ride?</p>
-            <div className="flex flex-col gap-2">
-              <a
-                href="tel:+18257349456"
-                className="py-2.5 px-3 rounded-lg bg-forest-900 hover:bg-forest-800 text-white font-semibold flex items-center justify-center gap-2 border border-forest-700/60 transition-colors"
-              >
-                <Phone className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Call 24/7 Dispatch (+1 825-734-9456)</span>
-              </a>
-              <a
-                href="https://wa.me/18257349456"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="py-2.5 px-3 rounded-lg bg-emerald-950 hover:bg-emerald-900 text-emerald-200 font-semibold flex items-center justify-center gap-2 border border-emerald-800/60 transition-colors"
-              >
-                <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Contact WhatsApp Concierge</span>
-              </a>
-            </div>
-          </div>
-
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-xs font-semibold text-gold-400 hover:text-gold-300 transition-colors"
+  return (
+    <div className="bg-obsidian-50 px-page py-16 sm:py-24">
+      <div className="mx-auto max-w-lg rounded-[1.75rem] bg-white p-8 text-center ring-1 ring-obsidian-900/[0.07] sm:p-10">
+        <span className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-ocean-50 text-ocean-700">
+          <MapPinOff className="h-6 w-6" aria-hidden="true" />
+        </span>
+        <h1 className="mt-5 text-3xl font-light tracking-tight text-obsidian-900">Tracking isn&apos;t live right now</h1>
+        <p className="mt-3 text-base leading-relaxed text-slate-600">
+          This link has ended or isn&apos;t recognised. Tracking opens shortly before your pickup; we send the link by text and email.
+        </p>
+        <div className="mt-7 grid gap-3 sm:grid-cols-2">
+          <a href="tel:+18257349456" className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-ocean-600 px-5 text-sm text-white hover:bg-ocean-700">
+            <Phone className="h-4 w-4" aria-hidden="true" /> Call us
+          </a>
+          <a
+            href="https://wa.me/18257349456"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-obsidian-900/10 px-5 text-sm text-obsidian-900 hover:bg-obsidian-50"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Return to Vista Chase Home</span>
-          </Link>
+            <MessageSquare className="h-4 w-4" aria-hidden="true" /> WhatsApp us
+            <span className="sr-only">(opens in a new tab)</span>
+          </a>
         </div>
+        <p className="mt-6 text-sm text-slate-600">
+          <Link href="/account/trips" className="text-ocean-600 underline underline-offset-4">
+            My trips
+          </Link>{" "}
+          ·{" "}
+          <Link href="/pickup-finder" className="text-ocean-600 underline underline-offset-4">
+            Find your pickup point
+          </Link>
+        </p>
       </div>
-    );
-  }
-
-  return <LiveShuttleTrackingClient initialTelemetry={telemetry} token={token} />;
+    </div>
+  );
 }

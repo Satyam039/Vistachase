@@ -1,14 +1,22 @@
 "use client";
 
+// Sign in for guests, partners and staff. Each role lands on its own page afterwards.
+// Demo account shortcuts exist only in local development: they are compiled out of production
+// builds so no credentials ship to the browser.
+
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Lock, Mail, ChevronRight, AlertCircle, ShieldCheck } from "lucide-react";
+import { AlertCircle, Eye, EyeOff } from "lucide-react";
+import { AUTH_FIELD, AuthShell } from "@/components/forms/AuthShell";
+
+const DEV = process.env.NODE_ENV !== "production";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -16,133 +24,107 @@ export default function LoginPage() {
     e.preventDefault();
     setErrorMsg("");
     setLoading(true);
-
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-
       const data = await res.json();
       if (!res.ok || !data.success) {
-        setErrorMsg(data.error || "Login failed");
+        setErrorMsg(data.error || "That email and password don't match.");
+      } else if (["ADMIN", "OPERATOR", "DISPATCHER"].includes(data.user?.role)) {
+        router.push("/admin");
+      } else if (data.user?.role === "AFFILIATE") {
+        router.push("/partners/dashboard");
       } else {
-        if (data.user?.role === "ADMIN" || data.user?.role === "OPERATOR" || data.user?.role === "DISPATCHER") {
-          router.push("/admin");
-        } else if (data.user?.role === "AFFILIATE") {
-          router.push("/partners/dashboard");
-        } else {
-          router.push("/account/trips");
-        }
+        router.push("/account/trips");
       }
     } catch {
-      setErrorMsg("Network error during login");
+      setErrorMsg("We couldn't reach the server. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  const fillDemo = (demoEmail: string, demoPass: string) => {
-    setEmail(demoEmail);
-    setPassword(demoPass);
-  };
-
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center space-y-2">
-        <Link href="/" className="inline-flex items-center gap-2">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center text-forest-950 shadow-glow font-bold text-xl">
-            VC
-          </div>
-          <span className="font-display font-bold text-2xl tracking-wider text-forest-950">
-            VISTA CHASE
-          </span>
-        </Link>
-        <h1 className="text-2xl font-bold font-display text-forest-950">Guest &amp; Staff Login</h1>
-        <p className="text-xs text-slate-500">Access your confirmed trips, vouchers, or dispatcher dashboard.</p>
-      </div>
-
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
-        <div className="bg-white py-8 px-6 shadow-card rounded-3xl border border-slate-200 sm:px-10 space-y-6">
-          {errorMsg && (
-            <div role="alert" className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{errorMsg}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-1">
-              <label htmlFor="app-login-email-address" className="text-xs font-bold text-slate-700">Email Address</label>
-              <div className="relative">
-                <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input id="app-login-email-address" autoComplete="email"
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-forest-800"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <label htmlFor="app-login-password" className="text-xs font-bold text-slate-700">Password</label>
-              <div className="relative">
-                <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input id="app-login-password" autoComplete="current-password"
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-forest-800"
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 rounded-xl font-bold text-sm text-forest-950 gold-gradient hover:opacity-95 shadow transition-all disabled:opacity-50"
-            >
-              {loading ? "Signing in..." : "Sign In to Account"}
-            </button>
-          </form>
-
-          {/* Quick Demo Logins for Testing */}
-          <div className="border-t border-slate-100 pt-4 space-y-2">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block text-center">
-              Quick Development Demo Logins
-            </span>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <button
-                type="button"
-                onClick={() => fillDemo("sarah.traveler@example.com", "Traveler2026!")}
-                className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-left font-medium text-slate-700"
-              >
-                👤 Guest (Sarah J.)
-              </button>
-              <button
-                type="button"
-                onClick={() => fillDemo("admin@vistachase.com", "VistaChaseAdmin2026!")}
-                className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-left font-medium text-slate-700"
-              >
-                🛡️ Admin Portal
-              </button>
-            </div>
-          </div>
-
-          <div className="text-center text-xs text-slate-600 pt-2 border-t border-slate-100">
-            Don&apos;t have an account?{" "}
-            <Link href="/register" className="font-bold text-forest-800 hover:text-gold-600">
-              Create an account
+    <AuthShell
+      title="Welcome back"
+      intro="Sign in to see your trips, vouchers and pickup times."
+      footer={
+        <>
+          New to Vista Chase?{" "}
+          <Link href="/register" className="text-ocean-700 underline underline-offset-2 hover:text-ocean-900">
+            Create an account
+          </Link>
+        </>
+      }
+    >
+      <form onSubmit={handleLogin} className="space-y-5">
+        {errorMsg && (
+          <p role="alert" className="flex items-center gap-2 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-800">
+            <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+            {errorMsg}
+          </p>
+        )}
+        <label className="block">
+          <span className="mb-1.5 block text-sm text-slate-700">Email</span>
+          <input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className={AUTH_FIELD} />
+        </label>
+        <label className="block">
+          <span className="mb-1.5 flex items-baseline justify-between text-sm text-slate-700">
+            Password
+            <Link href="/forgot-password" className="text-ocean-700 underline underline-offset-2 hover:text-ocean-900">
+              Forgot password?
             </Link>
+          </span>
+          <span className="relative block">
+            <input
+              type={showPassword ? "text" : "password"}
+              required
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={`${AUTH_FIELD} pr-12`}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((s) => !s)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              className="absolute right-1.5 top-1/2 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg text-slate-600 hover:bg-obsidian-50"
+            >
+              {showPassword ? <EyeOff className="h-5 w-5" aria-hidden="true" /> : <Eye className="h-5 w-5" aria-hidden="true" />}
+            </button>
+          </span>
+        </label>
+        <button type="submit" disabled={loading} className="golden-summit-btn h-12 w-full rounded-full text-base disabled:opacity-60">
+          {loading ? "Signing in…" : "Sign in"}
+        </button>
+      </form>
+
+      {DEV && (
+        <div className="mt-6 rounded-2xl border border-dashed border-obsidian-900/15 p-4">
+          <p className="text-sm text-slate-600">Local development only: fill a demo account</p>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            {[
+              { label: "Demo guest", email: "sarah.traveler@example.com", password: "Traveler2026!" },
+              { label: "Demo admin", email: "admin@vistachase.com", password: "VistaChaseAdmin2026!" },
+            ].map((d) => (
+              <button
+                key={d.label}
+                type="button"
+                onClick={() => {
+                  setEmail(d.email);
+                  setPassword(d.password);
+                }}
+                className="h-10 rounded-full border border-obsidian-900/10 text-sm text-obsidian-900 hover:bg-obsidian-50"
+              >
+                {d.label}
+              </button>
+            ))}
           </div>
         </div>
-      </div>
-    </div>
+      )}
+    </AuthShell>
   );
 }

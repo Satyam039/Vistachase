@@ -1,5 +1,5 @@
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -7,13 +7,105 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum Role {
+  ADMIN
+  OPERATOR
+  DISPATCHER
+  CUSTOMER
+  AFFILIATE
+}
+
+enum BookingStatus {
+  CONFIRMED
+  PENDING_PAYMENT
+  CANCELLED
+  REFUNDED
+  COMPLETED
+  PAID_UNSYNCED
+}
+
+enum HoldStatus {
+  ACTIVE
+  EXPIRED
+  CONVERTED
+  RELEASED
+}
+
+enum VehicleStatus {
+  AVAILABLE
+  ASSIGNED
+  IN_SERVICE
+  MAINTENANCE
+}
+
+enum RunStatus {
+  PLANNED
+  READY
+  DISPATCHED
+  BOARDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  DELAYED
+}
+
+enum AffiliateStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+}
+
+enum EnquiryStatus {
+  NEW
+  REPLIED
+  CLOSED
+}
+
+enum PaymentStatus {
+  SUCCEEDED
+  PENDING
+  REFUNDED
+  FAILED
+}
+
+enum TourCategory {
+  SHARED
+  PRIVATE
+  SHUTTLE
+  MULTIDAY
+  TICKET
+}
+
+enum TourBookingMode {
+  BOKUN
+  ENQUIRY
+}
+
+enum TourPriceUnit {
+  PERSON
+  GROUP
+}
+
+enum DepartureStatus {
+  ACTIVE
+  FULL
+  CANCELLED
+}
+
+
 model User {
   id           String     @id @default(cuid())
   email        String     @unique
   passwordHash String
   name         String
   phone        String?
-  role         String     @default("CUSTOMER") // ADMIN, OPERATOR, DISPATCHER, CUSTOMER, AFFILIATE
+role         Role @default(CUSTOMER) // ADMIN, OPERATOR, DISPATCHER, CUSTOMER, AFFILIATE
+  failedLoginAttempts Int @default(0)
+  lockedUntil         DateTime?
+  emailVerified       Boolean @default(false)
+  verificationToken   String?
+  resetToken          String?
+  resetTokenExpiry    DateTime?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   bookings     Booking[]
@@ -45,17 +137,17 @@ model Tour {
   slug            String          @unique
   bokunId         String?         @unique // Bokun experience ID, from prisma/catalog/product-map.json (null until provided)
   title           String
-  category        String          @default("SHARED") // SHARED, PRIVATE, SHUTTLE, MULTIDAY
+  category        TourCategory    @default(SHARED) // SHARED, PRIVATE, SHUTTLE, MULTIDAY
   durationHours   Float
   summary         String
   description     String
-  inclusions      String // JSON array string
-  exclusions      String // JSON array string
-  highlights      String // JSON array string
-  whatToBring     String // JSON array string
+  inclusions      Json // JSON array string
+  exclusions      Json // JSON array string
+  highlights      Json // JSON array string
+  whatToBring     Json // JSON array string
   featuredImage   String
-  galleryImages   String // JSON array string
-  basePrice       Float
+  galleryImages   Json // JSON array string
+  basePrice       Int
   currency        String          @default("CAD")
   minGroupSize    Int             @default(1)
   maxGroupSize    Int             @default(14)
@@ -63,13 +155,13 @@ model Tour {
   rating          Float           @default(5.0)
   reviewCount     Int             @default(0)
   // Catalog content imported from the live site (backend/prisma/catalog/products.json)
-  bookingMode     String          @default("BOKUN") // BOKUN (instant booking), ENQUIRY (request form)
-  priceUnit       String          @default("PERSON") // PERSON, GROUP (whole vehicle)
-  facts           String          @default("[]") // JSON [{label, value}]
-  tabs            String          @default("[]") // JSON [{label, sections: [{heading, body[], items[], steps[{time,text}], note}]}]
-  faqs            String          @default("[]") // JSON [{question, answer}]
-  crossSells      String          @default("[]") // JSON array of tour slugs
-  vehicleOptions  String          @default("[]") // JSON [{id, label, seats}] for PRIVATE / MULTIDAY
+  bookingMode     TourBookingMode @default(BOKUN) // BOKUN (instant booking), ENQUIRY (request form)
+  priceUnit       TourPriceUnit   @default(PERSON) // PERSON, GROUP (whole vehicle)
+  facts           Json          @default("[]") // JSON [{label, value}]
+  tabs            Json          @default("[]") // JSON [{label, sections: [{heading, body[], items[], steps[{time,text}], note}]}]
+  faqs            Json          @default("[]") // JSON [{question, answer}]
+  crossSells      Json          @default("[]") // JSON array of tour slugs
+  vehicleOptions  Json          @default("[]") // JSON [{id, label, seats}] for PRIVATE / MULTIDAY
   sortOrder       Int             @default(0)
   metaTitle       String?
   metaDescription String?
@@ -121,15 +213,16 @@ model TourDeparture {
   tour           Tour?             @relation(fields: [tourId], references: [id], onDelete: Cascade)
   shuttleRouteId String?
   shuttleRoute   ShuttleRoute?     @relation(fields: [shuttleRouteId], references: [id], onDelete: Cascade)
-  date           String // YYYY-MM-DD
-  departureTime  String // e.g. "05:00", "08:30"
-  returnTime     String? // e.g. "10:30", "16:30"
+  date           DateTime // YYYY-MM-DD
+  departureTime  DateTime // e.g. "05:00", "08:30"
+  returnTime     DateTime? // e.g. "10:30", "16:30"
   capacityTotal  Int               @default(14)
   capacityBooked Int               @default(0)
   capacityHeld   Int               @default(0)
-  price          Float
+  price          Int // cents: per guest (adult), or per vehicle for private tours
+  childPrice     Int? // cents per child, when Bókun prices children differently
   currency       String            @default("CAD")
-  status         String            @default("ACTIVE") // ACTIVE, FULL, CANCELLED
+  status         DepartureStatus @default(ACTIVE) // ACTIVE, FULL, CANCELLED
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
   holds          ReservationHold[]
@@ -151,7 +244,7 @@ model ReservationHold {
   customerEmail   String
   customerPhone   String?
   expiresAt       DateTime
-  status          String        @default("ACTIVE") // ACTIVE, EXPIRED, CONVERTED, RELEASED
+  status          HoldStatus @default(ACTIVE) // ACTIVE, EXPIRED, CONVERTED, RELEASED
   createdAt       DateTime      @default(now())
 
   @@index([holdToken])
@@ -164,6 +257,8 @@ model Booking {
   affiliateId            String? // partner whose ?ref= link brought this booking
   affiliate              Affiliate?             @relation(fields: [affiliateId], references: [id], onDelete: SetNull)
   bokunBookingId         String?                @unique // Bókun external confirmation reference
+  adminNotes             String?                // Staff-only notes (admin booking screen)
+  reviewRequestedAt      DateTime?              // When the post-trip review email went out (sent once)
   customerId             String?
   customer               User?                  @relation(fields: [customerId], references: [id], onDelete: SetNull)
   customerName           String
@@ -179,12 +274,12 @@ model Booking {
   childrenCount          Int                    @default(0)
   infantsCount           Int                    @default(0)
   totalSeats             Int
-  subtotal               Float
-  tax                    Float                  @default(0.0)
-  addOnsTotal            Float                  @default(0.0)
-  totalAmount            Float
+  subtotal               Int
+  tax                    Int                  @default(0)
+  addOnsTotal            Int                  @default(0)
+  totalAmount            Int
   currency               String                 @default("CAD")
-  status                 String                 @default("CONFIRMED") // CONFIRMED, PENDING_PAYMENT, CANCELLED, COMPLETED
+  status                 BookingStatus @default(CONFIRMED) // CONFIRMED, PENDING_PAYMENT, CANCELLED, COMPLETED
   specialRequests        String?
   voucherCode            String                 @unique
   qrCodeUrl              String?
@@ -213,7 +308,7 @@ model BookingAddOn {
   bookingId String
   booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   name      String
-  price     Float
+  price     Int
   quantity  Int     @default(1)
 }
 
@@ -221,11 +316,11 @@ model Payment {
   id            String   @id @default(cuid())
   bookingId     String
   booking       Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  amount        Float
+  amount        Int
   currency      String   @default("CAD")
   provider      String // mock, stripe
   transactionId String   @unique
-  status        String // SUCCEEDED, PENDING, REFUNDED
+  status        PaymentStatus
   createdAt     DateTime @default(now())
 
   @@index([transactionId])
@@ -244,7 +339,7 @@ model Review {
   body       String
   isVerified Boolean  @default(true)
   isFeatured Boolean  @default(false)
-  date       String
+  date       DateTime
   createdAt  DateTime @default(now())
 
   @@index([tourId])
@@ -263,7 +358,7 @@ model Vehicle {
   vinNumber        String?
   trackingDeviceId String?           @unique
   isActive         Boolean           @default(true)
-  status           String            @default("AVAILABLE") // AVAILABLE, ASSIGNED, IN_SERVICE, MAINTENANCE
+  status           VehicleStatus @default(AVAILABLE) // AVAILABLE, ASSIGNED, IN_SERVICE, MAINTENANCE
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   runs             OperationRun[]
@@ -293,15 +388,15 @@ model Driver {
 model OperationRun {
   id              String           @id @default(cuid())
   name            String // e.g. "Run 1 - Morning Lake Louise Express"
-  date            String // YYYY-MM-DD
-  departureTime   String? // e.g. "05:00"
+  date            DateTime // YYYY-MM-DD
+  departureTime   DateTime? // e.g. "05:00"
   tourDepartureId String
   tourDeparture   TourDeparture    @relation(fields: [tourDepartureId], references: [id], onDelete: Cascade)
   vehicleId       String?
   vehicle         Vehicle?         @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
   driverId        String?
   driver          Driver?          @relation(fields: [driverId], references: [id], onDelete: SetNull)
-  status          String           @default("PLANNED") // PLANNED, READY, DISPATCHED, BOARDING, IN_PROGRESS, COMPLETED, CANCELLED, DELAYED
+  status          RunStatus @default(PLANNED) // PLANNED, READY, DISPATCHED, BOARDING, IN_PROGRESS, COMPLETED, CANCELLED, DELAYED
   notes           String?
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
@@ -374,7 +469,7 @@ model BokunSyncLog {
   syncType      String // "POLL", "WEBHOOK", "CSV_IMPORT"
   recordsSynced Int      @default(0)
   status        String   @default("SUCCESS")
-  details       String? // JSON or error log
+  details       Json? // JSON or error log
   createdAt     DateTime @default(now())
 }
 
@@ -395,7 +490,7 @@ model AuditLog {
   action     String // e.g. "HOLD_CREATED", "CAPACITY_OVERRIDE", "BOOKING_REFUNDED"
   entityType String // "Booking", "TourDeparture", "User"
   entityId   String
-  details    String // JSON string
+  details    Json // JSON string
   ipAddress  String?
   createdAt  DateTime @default(now())
 
@@ -412,7 +507,7 @@ model Affiliate {
   name           String // business or creator name
   type           String    @default("HOTEL") // HOTEL, AGENT, CREATOR, OTHER
   website        String?
-  status         String    @default("PENDING") // PENDING, ACTIVE, SUSPENDED
+  status         AffiliateStatus @default(PENDING) // PENDING, ACTIVE, SUSPENDED
   commissionRate Float     @default(0.1)
   bokunChannelId String? // Bokun booking channel for this partner (placeholder until API access)
   createdAt      DateTime  @default(now())
@@ -420,4 +515,22 @@ model Affiliate {
   bookings       Booking[]
 
   @@index([status])
+}
+
+// Messages from the contact form and "Request this tour" (custom quotes). The team is emailed a
+// copy; the record keeps it if email delivery fails.
+model Enquiry {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  tourSlug  String?
+  guests    Int?
+  date      DateTime?
+  message   String
+  status    EnquiryStatus @default(NEW) // NEW | REPLIED | CLOSED
+  createdAt DateTime @default(now())
+
+  @@index([status])
+  @@index([createdAt])
 }

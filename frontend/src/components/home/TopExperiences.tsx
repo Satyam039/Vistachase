@@ -35,11 +35,11 @@ export function TopExperiences({ tours }: { tours: TourWithAvailability[] }) {
           id="top-experiences"
           eyebrow="Top-rated in the Rockies"
           title="Experiences travellers love"
-          intro="Rated 5.0 by more than a thousand guests. Free cancellation up to 24 hours before every tour."
+          intro="Rated 5.0 by more than a thousand guests. Free cancellation up to 72 hours before every tour."
           link={{ label: "See all experiences", href: "/search" }}
         />
 
-        <div role="group" aria-label="Filter experiences" className="vc-rail -mx-page mb-8 flex gap-2 overflow-x-auto px-page" data-reveal="fade">
+        <div role="group" aria-label="Filter experiences" className="vc-rail -mx-page mb-8 flex gap-2 overflow-x-auto px-page [&>*:first-child]:ml-auto [&>*:last-child]:mr-auto" data-reveal="fade">
           {FILTERS.map((f) => (
             <button
               key={f.id}
@@ -49,7 +49,7 @@ export function TopExperiences({ tours }: { tours: TourWithAvailability[] }) {
               className={`min-h-11 shrink-0 rounded-full border px-5 text-sm transition-colors ${
                 filter === f.id
                   ? "border-obsidian-900 bg-obsidian-900 text-white"
-                  : "border-obsidian-900/15 bg-white text-obsidian-900 hover:border-obsidian-900/40"
+                  : "border-obsidian-900/10 bg-white text-obsidian-900 hover:border-obsidian-900/40"
               }`}
             >
               {f.label}

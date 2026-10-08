@@ -302,7 +302,7 @@ export class MockAIProvider implements IAIProvider {
     if (CREDIT_CARD_REGEX.test(lastUserMessage) || /card|cvv|expire|visa|mastercard|amex/i.test(lastUserMessage)) {
       return {
         message:
-          "For your security and privacy, our Voice Concierge cannot collect or process payment card details. I have reserved your seats under a 10-minute hold. Please use our secure checkout link to review and finalize your payment safely.",
+          "For your security, the concierge cannot collect or process payment card details. Please don't share them in chat; use our secure checkout link to review and finalize your payment safely.",
         hasSafetyRefusal: true,
       };
     }
@@ -376,6 +376,16 @@ export class MockAIProvider implements IAIProvider {
       if (latestContact.name) state.customerName = latestContact.name;
       if (latestContact.email) state.customerEmail = latestContact.email;
       if (latestContact.phone) state.customerPhone = latestContact.phone;
+    }
+
+    // 3a. Cancellation / refund questions: the legal 72-hour policy (see /cancellation-policy).
+    if (/\b(cancel\w*|refund\w*)\b/.test(lower) && !/\bVC-\d{4}-\w+\b/i.test(lastUserMessage)) {
+      return {
+        message:
+          "Cancel at least 72 hours before your tour for a full refund (groups of 1–6). For groups of 7 or more and multi-day trips, the 20% deposit is non-refundable and the rest is refunded. Within 72 hours, late arrivals and no-shows aren't refunded, and refunds take 5–10 business days. Activity tickets follow the operator's own rules. You can cancel from My trips (/account/trips); the full policy is at /cancellation-policy.",
+        toolCalls: [],
+        sessionState: state,
+      };
     }
 
     // 3. Check for Live Tracking / ETA inquiries
@@ -542,38 +552,11 @@ export class MockAIProvider implements IAIProvider {
       lower.includes("completed payment") ||
       lower.includes("confirm my booking")
     ) {
-      state.stage = "CONFIRMED";
-      const ref = `VC-2026-${Math.floor(10000 + Math.random() * 90000)}`;
-      state.bookingReference = ref;
-      state.voucherCode = `VC-BK-${ref.slice(-5)}`;
-      state.voucherUrl = `/booking/${ref}/voucher`;
-
+      // The assistant never confirms a booking itself: only a completed payment at checkout does,
+      // and the voucher arrives by email with the real reference.
       return {
-        message: `Congratulations, ${state.customerName || "traveler"}! Your reservation is officially confirmed under reference #${ref}. Your digital boarding pass and QR code voucher are ready. We have also registered your mobile number for WhatsApp live tracking 60 minutes before departure.`,
-        toolCalls: [
-          {
-            name: "confirmVoiceBooking",
-            arguments: {
-              departureId: state.departureId || "cmutg855l000x12b4p2hcywbj",
-              holdToken: state.holdToken,
-              customerName: state.customerName || "David Miller",
-              customerEmail: state.customerEmail || "david@example.com",
-              customerPhone: state.customerPhone || "+1-825-734-9456",
-              pickupLocation: state.pickupHotel || "Fairmont Banff Springs Hotel",
-              adultsCount: state.adults || 2,
-            },
-          },
-        ],
+        message: `Thanks${state.customerName ? `, ${state.customerName}` : ""}! Your booking is confirmed as soon as payment goes through at checkout, and we email your voucher and booking reference right away. If you've paid and nothing has arrived within a few minutes, check your spam folder or call us on +1 (825) 734-9456.`,
         sessionState: state,
-        data: {
-          type: "confirmed",
-          bookingReference: ref,
-          voucherCode: state.voucherCode,
-          voucherUrl: state.voucherUrl,
-          tourTitle: state.tourTitle,
-          date: state.date,
-          pickup: state.pickupHotel,
-        },
       };
     }
 
@@ -664,7 +647,7 @@ class GeminiAIProvider implements IAIProvider {
     if (CREDIT_CARD_REGEX.test(lastUserMessage)) {
       return {
         message:
-          "For your security and privacy, our Voice Concierge cannot collect or process payment card details. I have reserved your seats under a 10-minute hold. Please use our secure checkout link to review and finalize your payment safely.",
+          "For your security, the concierge cannot collect or process payment card details. Please don't share them in chat; use our secure checkout link to review and finalize your payment safely.",
         hasSafetyRefusal: true,
       };
     }

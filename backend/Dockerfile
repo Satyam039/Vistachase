@@ -26,8 +26,10 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/media ./media
 COPY --from=builder --chown=api:nodejs /app/dist ./dist
 COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/scripts/start-production.js ./scripts/start-production.js
 
 USER api
 EXPOSE 4000
 
-CMD ["node", "dist/server.js"]
+# Applies pending migrations, then starts the API (the worker overrides this command).
+CMD ["node", "scripts/start-production.js"]

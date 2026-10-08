@@ -73,7 +73,7 @@ export function PriceTag({
           {unit ? ` ${unit}` : ""}
         </span>
         {original && (
-          <span className="ml-1 inline-flex self-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs text-emerald-800">
+          <span className={`ml-1 inline-flex self-center rounded-full px-2.5 py-0.5 text-xs ${tone === "dark" ? "bg-white/10 text-white/80" : "bg-emerald-50 text-emerald-800"}`}>
             Save {savingsPercent(price, original)}%
           </span>
         )}

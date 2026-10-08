@@ -2,7 +2,7 @@
 
 // Product gallery as a mosaic (GetYourGuide / Viator / Expedia): one large frame and four tiles,
 // the last tile opening every photo and clip in a dialog. The large frame shows whichever item
-// is selected; clips play in it (AmbientVideo: pause button, reduced motion, data saver).
+// is selected; clips play once in it (AmbientVideo: reduced motion, data saver).
 // The dialog is the native <dialog> (focus is contained, Esc closes, focus returns).
 
 import { useRef, useState } from "react";
@@ -35,7 +35,7 @@ export function ProductGallery({ slides, title }: { slides: GallerySlide[]; titl
         {main?.kind === "video" ? (
           <>
             <Image src={main.video.poster} alt={main.video.alt} fill priority sizes="(max-width: 640px) 100vw, 60vw" className="object-cover" />
-            <AmbientVideo key={main.video.id} src={main.video.src} srcHd={main.video.srcHd} poster={main.video.poster} className="absolute inset-0 h-full w-full object-cover" />
+            <AmbientVideo key={main.video.id} src={main.video.src} srcHd={main.video.srcHd} poster={main.video.poster} className="absolute inset-0 h-full w-full object-cover" once />
           </>
         ) : (
           <Image src={main?.src ?? ""} alt={title} fill priority sizes="(max-width: 640px) 100vw, 60vw" className="object-cover" />
@@ -90,7 +90,7 @@ export function ProductGallery({ slides, title }: { slides: GallerySlide[]; titl
             type="button"
             onClick={() => dialog.current?.close()}
             aria-label="Close"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-obsidian-900/15 text-obsidian-900 hover:bg-obsidian-100"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-obsidian-900/10 text-obsidian-900 hover:bg-obsidian-100"
           >
             <X className="h-5 w-5" aria-hidden="true" />
           </button>

@@ -1,18 +1,71 @@
+import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
 import { Router } from "express";
 import { getAIProvider, ChatMessage } from "@/lib/ai/ai.provider";
 import { executeAiTool } from "@/lib/ai/ai.tools";
 import { getAuthenticatedStaff } from "@/lib/auth/admin-guard";
+import { isClaudeConfigured, runConciergeAgent } from "@/lib/ai/concierge.agent";
+import type { Request, Response, NextFunction } from "express";
 
 const router = Router();
 
+// Simple per-IP limit so the AI model can't be run up: 30 messages per 10 minutes.
+
+
+function staffContext(req: Request) {
+  const staff = getAuthenticatedStaff(req, ["ADMIN", "OPERATOR", "DISPATCHER"]);
+  return { isStaff: !!staff, role: staff?.role, userEmail: staff?.email };
+}
+
+// POST /api/concierge/stream: Server-Sent Events. Events: status (what the agent is doing),
+// text (reply deltas), done (final payload: message, cards, sessionState), error.
+router.post("/stream", rateLimitMiddleware("concierge", { maxRequests: 30, windowSeconds: 600 }), async (req, res) => {
+  const messages: ChatMessage[] = req.body?.messages || [];
+  if (!Array.isArray(messages) || messages.length === 0) {
+    return res.status(400).json({ error: "Invalid messages array." });
+  }
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache, no-transform");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders?.();
+  const send = (event: string, data: unknown) => res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+
+  try {
+    if (isClaudeConfigured()) {
+      await runConciergeAgent(messages, req.body?.sessionState, staffContext(req), (e) => {
+        if (e.type === "text") send("text", { text: e.text });
+        else if (e.type === "status") send("status", { text: e.text });
+        else send("done", { success: true, ...e.response });
+      });
+    } else {
+      // No AI key configured: the scripted assistant answers in one piece.
+      const response = await getAIProvider().chat(messages, req.body?.sessionState);
+      const ctx = staffContext(req);
+      for (const call of response.toolCalls ?? []) await executeAiTool(call.name, call.arguments, ctx);
+      send("text", { text: response.message });
+      send("done", { success: true, ...response, toolCalls: undefined });
+    }
+  } catch (error) {
+    console.error("Concierge stream error:", error);
+    send("error", { error: "The concierge is unavailable right now. Please try again, or call +1 (825) 734-9456." });
+  } finally {
+    res.end();
+  }
+});
+
 // POST /api/concierge (Chat interaction with safety refusal & tool execution)
-router.post("/", async (req, res) => {
+router.post("/", rateLimitMiddleware("concierge", { maxRequests: 30, windowSeconds: 600 }), async (req, res) => {
   try {
     const messages: ChatMessage[] = req.body?.messages || [];
     const sessionState = req.body?.sessionState;
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: "Invalid messages array." });
+    }
+
+    // Real AI agent when an Anthropic key is configured (tools run inside the agent loop).
+    if (isClaudeConfigured()) {
+      const response = await runConciergeAgent(messages, sessionState, staffContext(req));
+      return res.json({ success: true, ...response, toolCalls: [], toolResults: [] });
     }
 
     const aiProvider = getAIProvider();
@@ -37,6 +90,24 @@ router.post("/", async (req, res) => {
       }
     }
 
+    // 3. Surface pickup search results as the "pickups" card when the provider sent no card of its own
+    let data = response.data;
+    const pickupResult = toolExecutionResults.find(
+      (r) => (r.toolName === "findPickup" || r.toolName === "getPickup") && r.success && Array.isArray(r.data),
+    );
+    if (!data && pickupResult && pickupResult.data.length > 0) {
+      data = {
+        type: "pickups",
+        stops: pickupResult.data.map((s: any) => ({
+          id: s.id,
+          name: s.name,
+          town: s.town,
+          address: s.address,
+          instructions: s.instructions,
+        })),
+      };
+    }
+
     return res.json({
       success: true,
       message: response.message,
@@ -44,7 +115,7 @@ router.post("/", async (req, res) => {
       toolCalls: response.toolCalls || [],
       toolResults: toolExecutionResults,
       sessionState: response.sessionState,
-      data: response.data,
+      data,
       checkoutUrl: response.checkoutUrl,
     });
   } catch (error: any) {
@@ -56,7 +127,7 @@ router.post("/", async (req, res) => {
 });
 
 // POST /api/concierge/tool (Direct Tool Invocation with Validation & RBAC)
-router.post("/tool", async (req, res) => {
+router.post("/tool", rateLimitMiddleware("concierge_tool", { maxRequests: 30, windowSeconds: 600 }), async (req, res) => {
   try {
     const { toolName, args } = req.body ?? {};
     if (!toolName) {
@@ -64,11 +135,16 @@ router.post("/tool", async (req, res) => {
     }
 
     const staff = getAuthenticatedStaff(req, ["ADMIN", "OPERATOR", "DISPATCHER"]);
+    if (!staff) {
+      return res.status(401).json({ error: "UNAUTHORIZED: Staff credentials required." });
+    }
+
     const context = {
-      isStaff: !!staff,
-      role: staff?.role,
-      userEmail: staff?.email,
+      isStaff: true,
+      role: staff.role,
+      userEmail: staff.email,
     };
+
 
     const result = await executeAiTool(toolName, args || {}, context);
     if (!result.success) {
@@ -77,7 +153,7 @@ router.post("/tool", async (req, res) => {
 
     return res.json(result);
   } catch (error: any) {
-    return res.status(500).json({ error: error.message || "Failed to execute AI tool." });
+    return res.status(500).json({ error: "Failed to execute AI tool." });
   }
 });
 

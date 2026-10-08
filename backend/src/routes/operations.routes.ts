@@ -9,8 +9,9 @@ import {
   toggleRunPassengerBoarding,
   getRunManifest,
 } from "@/modules/operations/operations.repository";
-import { getBokunOperationsProvider } from "@/modules/bokun/bokun.provider";
 import prisma from "@/lib/db/prisma";
+import { todayInMountainTime } from "@/lib/utils/time";
+import { syncBokunDepartures } from "@/jobs/tasks";
 
 const router = Router();
 
@@ -26,12 +27,12 @@ router.use((req, res, next) => {
 // 1. Operations Dashboard
 router.get("/dashboard", async (req, res) => {
   try {
-    const date = (req.query.date as string) || new Date().toISOString().split("T")[0];
+    const date = (req.query.date as string) || todayInMountainTime();
     const data = await getOperationsDashboard(date);
     return res.json({ success: true, ...data });
   } catch (error: any) {
     console.error("Operations dashboard error:", error);
-    return res.status(500).json({ error: error.message || "Failed to load operations dashboard." });
+    return res.status(500).json({ error: "Failed to load operations dashboard." });
   }
 });
 
@@ -44,7 +45,7 @@ router.get("/runs/:runId", async (req, res) => {
     }
     return res.json({ success: true, run });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message || "Failed to load run manifest." });
+    return res.status(500).json({ error: "Failed to load run manifest." });
   }
 });
 
@@ -74,7 +75,7 @@ router.post("/runs", async (req, res) => {
     return res.json({ success: true, run });
   } catch (error: any) {
     console.error("Create/update run error:", error);
-    return res.status(500).json({ error: error.message || "Failed to save operational run." });
+    return res.status(500).json({ error: "Failed to save operational run." });
   }
 });
 
@@ -89,7 +90,7 @@ router.post("/runs/:runId/status", async (req, res) => {
     const updated = await updateRunStatus(req.params.runId, status, notes);
     return res.json({ success: true, run: updated });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message || "Failed to update run status." });
+    return res.status(500).json({ error: "Failed to update run status." });
   }
 });
 
@@ -104,7 +105,7 @@ router.post("/runs/:runId/assign-booking", async (req, res) => {
     const assignment = await assignBookingToRun(req.params.runId, bookingId, pickupOrder);
     return res.json({ success: true, assignment });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message || "Failed to assign booking to run." });
+    return res.status(500).json({ error: "Failed to assign booking to run." });
   }
 });
 
@@ -114,7 +115,7 @@ router.post("/runs/:runId/optimize-pickups", async (req, res) => {
     const sequence = await optimizePickupSequence(req.params.runId);
     return res.json({ success: true, sequence });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message || "Failed to optimize pickups." });
+    return res.status(500).json({ error: "Failed to optimize pickups." });
   }
 });
 
@@ -129,19 +130,18 @@ router.post("/runs/check-in", async (req, res) => {
     const updated = await toggleRunPassengerBoarding(runBookingId, isBoarded);
     return res.json({ success: true, runBooking: updated });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message || "Failed to toggle boarding." });
+    return res.status(500).json({ error: "Failed to toggle boarding." });
   }
 });
 
-// 8. Trigger Bókun Synchronization
-router.post("/sync-bokun", async (req, res) => {
+// 8. "Sync now": departure dates, seats and prices for the next 60 days from Bókun.
+router.post("/sync-bokun", async (_req, res) => {
   try {
-    const date = (req.body?.date as string) || new Date().toISOString().split("T")[0];
-    const bokunProvider = getBokunOperationsProvider();
-    const result = await bokunProvider.syncTodaysBookings(date);
+    const result = await syncBokunDepartures();
+    if ("skipped" in result) return res.status(409).json({ error: "Bókun isn't connected yet (BOKUN_ACCESS_KEY / BOKUN_SECRET_KEY)." });
     return res.json({ success: true, result });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message || "Bókun sync failed." });
+    return res.status(500).json({ error: "Bókun sync failed." });
   }
 });
 
@@ -153,7 +153,7 @@ router.get("/fleet", async (_req, res) => {
     });
     return res.json({ success: true, vehicles });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message || "Failed to load fleet." });
+    return res.status(500).json({ error: "Failed to load fleet." });
   }
 });
 
@@ -165,7 +165,7 @@ router.get("/drivers", async (_req, res) => {
     });
     return res.json({ success: true, drivers });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message || "Failed to load drivers." });
+    return res.status(500).json({ error: "Failed to load drivers." });
   }
 });
 

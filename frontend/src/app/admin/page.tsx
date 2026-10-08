@@ -1,18 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
+// Staff overview, in the Vista Chase brand system (light surface, Ocean Teal + Golden Summit,
+// light IBM Plex type) with the structure of modern ops dashboards: greeting header with the
+// date in Canmore, section tabs, KPI cards, a searchable reservations table, and a side column
+// with booking health and shortcuts. Signed-out visitors get a staff sign-in prompt (no staff
+// account details are shown on the page).
+
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { AdminHeader, StaffSignIn } from "@/components/admin/AdminHeader";
 import {
-  TrendingUp,
-  Users,
-  Ticket,
-  Clock,
-  Truck,
   ArrowRight,
-  ShieldCheck,
-  Calendar,
+  ArrowUpRight,
+  Clock,
+  Handshake,
+  LayoutDashboard,
+  Lock,
+  MapPin,
   RefreshCw,
-  AlertCircle,
+  Search,
+  Ticket,
+  TrendingUp,
+  Truck,
+  Users,
+  Workflow,
 } from "lucide-react";
 
 interface AdminMetrics {
@@ -41,13 +52,40 @@ interface AdminMetrics {
   }>;
 }
 
+
+const SHORTCUTS = [
+  { label: "Daily dispatch manifests", body: "Pickup routes and passenger check-in", href: "/admin/dispatch", icon: Truck },
+  { label: "Operations board", body: "Departures, capacity and vehicles", href: "/admin/operations", icon: Workflow },
+  { label: "Partner program", body: "Approve partners and see referrals", href: "/admin/partners", icon: Handshake },
+  { label: "Hotel pickup directory", body: "Banff, Canmore and Lake Louise stops", href: "/pickup-finder", icon: MapPin },
+  { label: "Live inventory", body: "Seats and departures as guests see them", href: "/search", icon: Ticket },
+];
+
+const money = (n: number) => `$${n.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+function statusTone(status: string) {
+  if (status === "CONFIRMED") return "bg-emerald-50 text-emerald-800 ring-emerald-200";
+  if (status === "CANCELLED") return "bg-red-50 text-red-800 ring-red-200";
+  if (status === "PENDING" || status === "HELD") return "bg-amber-50 text-amber-900 ring-amber-200";
+  return "bg-slate-100 text-slate-700 ring-slate-200";
+}
+
 export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState<AdminMetrics | null>(null);
+  const [unauthorized, setUnauthorized] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [greeting, setGreeting] = useState<{ hello: string; date: string } | null>(null);
 
   useEffect(() => {
     fetchMetrics();
+    const now = new Date();
+    const hour = Number(now.toLocaleString("en-CA", { hour: "numeric", hour12: false, timeZone: "America/Edmonton" }));
+    setGreeting({
+      hello: hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening",
+      date: now.toLocaleDateString("en-CA", { weekday: "long", month: "long", day: "numeric", timeZone: "America/Edmonton" }),
+    });
   }, []);
 
   async function fetchMetrics() {
@@ -55,256 +93,226 @@ export default function AdminDashboardPage() {
     setError(null);
     try {
       const res = await fetch("/api/admin/metrics");
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        setError(data.error || "Failed to load metrics. Ensure you are signed in as an Admin or Operator.");
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 401 || res.status === 403) {
+        setUnauthorized(true);
+        setMetrics(null);
+      } else if (!res.ok || !data.success) {
+        setError(data.error || "Couldn't load the dashboard.");
       } else {
+        setUnauthorized(false);
         setMetrics(data.metrics);
       }
     } catch {
-      setError("Unable to connect to Admin API.");
+      setError("Couldn't reach the admin API.");
     } finally {
       setLoading(false);
     }
   }
 
-  return (
-    <div className="min-h-screen bg-forest-950 text-white py-10 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between pb-6 border-b border-forest-800 gap-4">
-          <div>
-            <div className="flex items-center gap-2 text-gold-400 text-xs font-semibold tracking-wider uppercase mb-1">
-              <ShieldCheck className="w-4 h-4" />
-              <span>Operations Management • Vista Chase</span>
-            </div>
-            <h1 className="text-3xl font-display font-bold text-white">Banff Operations &amp; Admin Panel</h1>
-            <p className="text-sm text-slate-400 mt-1">
-              Real-time Canadian Rockies dispatch, inventory capacity, and booking controls.
-            </p>
-          </div>
+  const bookings = useMemo(() => {
+    const list = metrics?.recentBookings ?? [];
+    const q = query.trim().toLowerCase();
+    if (!q) return list;
+    return list.filter((b) =>
+      [b.bookingReference, b.customerName, b.customerEmail, b.tourDeparture?.tour?.title, b.tourDeparture?.shuttleRoute?.name]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(q)),
+    );
+  }, [metrics, query]);
 
-          <div className="flex items-center gap-3">
-            <Link
-              href="/admin/dispatch"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-forest-950 gold-gradient shadow-glow hover:opacity-95 transition-all text-sm"
-            >
-              <Truck className="w-4 h-4" />
-              <span>Open Dispatch Board</span>
-            </Link>
+  const confirmedRate = metrics && metrics.totalBookings > 0 ? Math.round((metrics.confirmedBookings / metrics.totalBookings) * 100) : 0;
+
+  const kpis = [
+    { label: "Revenue", value: metrics ? money(metrics.totalRevenue) : "—", note: "CAD, confirmed bookings", icon: TrendingUp },
+    { label: "Confirmed bookings", value: metrics ? String(metrics.confirmedBookings) : "—", note: metrics ? `of ${metrics.totalBookings} total` : "", icon: Ticket },
+    { label: "Seats on hold", value: metrics ? String(metrics.activeHoldsCount) : "—", note: "10-minute checkout holds", icon: Clock },
+    { label: "Accounts", value: metrics ? String(metrics.totalUsers) : "—", note: "Guests, guides and staff", icon: Users },
+  ];
+
+  return (
+    <div className="min-h-screen bg-obsidian-50 text-obsidian-900">
+      <AdminHeader
+        current="/admin"
+        title={greeting ? greeting.hello : "Welcome"}
+        subtitle={greeting ? `${greeting.date} in Canmore` : "Vista Chase operations"}
+        actions={
+          <>
             <button
+              type="button"
               onClick={fetchMetrics}
               disabled={loading}
-              className="p-2.5 rounded-xl bg-forest-900 border border-forest-800 text-slate-300 hover:text-white hover:border-forest-700 transition-colors"
-              title="Refresh Metrics"
+              className="inline-flex h-11 items-center gap-2 rounded-full border border-obsidian-900/10 bg-white px-4 text-sm text-obsidian-900 hover:bg-obsidian-50 disabled:opacity-60"
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+              <RefreshCw className={`h-4 w-4 ${loading ? "motion-safe:animate-spin" : ""}`} aria-hidden="true" />
+              Refresh
             </button>
-          </div>
-        </div>
-
-        {/* Error Notification / Login reminder */}
-        {error && (
-          <div className="p-4 rounded-2xl bg-amber-950/40 border border-amber-800/60 text-amber-200 text-sm flex items-start justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="font-semibold text-amber-300">{error}</p>
-                <p className="text-xs text-amber-400/80 mt-1">
-                  Tip: Log in with <code className="bg-amber-900/60 px-1 py-0.5 rounded">admin@vistachase.com</code> or <code className="bg-amber-900/60 px-1 py-0.5 rounded">dispatch@vistachase.com</code> to access staff controls.
-                </p>
-              </div>
-            </div>
-            <Link
-              href="/login"
-              className="px-4 py-1.5 rounded-lg bg-amber-400 text-forest-950 font-bold text-xs hover:bg-amber-300 transition-colors whitespace-nowrap"
-            >
-              Sign In to Staff Account
+            <Link href="/admin/dispatch" className="golden-summit-btn inline-flex h-11 items-center gap-2 rounded-full px-5 text-sm">
+              <Truck className="h-4 w-4" aria-hidden="true" />
+              Open dispatch
             </Link>
-          </div>
+          </>
+        }
+      />
+
+      <div className="mx-auto max-w-7xl space-y-8 px-page py-8 sm:py-10">
+        {unauthorized && !loading && <StaffSignIn body="Sign in with your admin or dispatch account to see bookings and operations." />}
+
+        {error && (
+          <p role="alert" className="rounded-2xl bg-red-50 px-5 py-4 text-sm text-red-800 ring-1 ring-red-200">
+            {error}
+          </p>
         )}
 
-        {/* KPI Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-6 rounded-2xl bg-forest-900 border border-forest-800 shadow-xl space-y-2">
-            <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
-              <span>Total Revenue</span>
-              <TrendingUp className="w-4 h-4 text-emerald-400" />
-            </div>
-            <div className="text-3xl font-display font-bold text-white font-mono">
-              ${metrics?.totalRevenue?.toFixed(2) || "0.00"}
-              <span className="text-xs text-slate-400 ml-1.5 font-sans">CAD</span>
-            </div>
-            <div className="text-xs text-emerald-400">Processed via Payment Provider</div>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-forest-900 border border-forest-800 shadow-xl space-y-2">
-            <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
-              <span>Confirmed Bookings</span>
-              <Ticket className="w-4 h-4 text-gold-400" />
-            </div>
-            <div className="text-3xl font-display font-bold text-white font-mono">
-              {metrics?.confirmedBookings || 0}
-            </div>
-            <div className="text-xs text-slate-400">
-              Out of {metrics?.totalBookings || 0} total records
-            </div>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-forest-900 border border-forest-800 shadow-xl space-y-2">
-            <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
-              <span>Active Holds</span>
-              <Clock className="w-4 h-4 text-cyan-400" />
-            </div>
-            <div className="text-3xl font-display font-bold text-white font-mono">
-              {metrics?.activeHoldsCount || 0}
-            </div>
-            <div className="text-xs text-cyan-400">10-minute temporary locks active</div>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-forest-900 border border-forest-800 shadow-xl space-y-2">
-            <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
-              <span>Registered Accounts</span>
-              <Users className="w-4 h-4 text-indigo-400" />
-            </div>
-            <div className="text-3xl font-display font-bold text-white font-mono">
-              {metrics?.totalUsers || 0}
-            </div>
-            <div className="text-xs text-slate-400">Customers, Guides &amp; Dispatchers</div>
-          </div>
-        </div>
-
-        {/* Quick Operations Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Link
-            href="/admin/dispatch"
-            className="p-5 rounded-2xl bg-forest-900/60 border border-forest-800 hover:border-gold-500/50 transition-all group flex items-center justify-between"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gold-400/10 border border-gold-400/30 flex items-center justify-center text-gold-400 group-hover:scale-105 transition-transform">
-                <Truck className="w-5 h-5" />
+        {/* KPIs */}
+        <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Key figures">
+          {kpis.map(({ label, value, note, icon: Icon }) => (
+            <li key={label} className="rounded-[1.5rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07]">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-slate-600">{label}</p>
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-ocean-50 text-ocean-700">
+                  <Icon className="h-5 w-5" aria-hidden="true" />
+                </span>
               </div>
+              {loading ? (
+                <span className="mt-3 block h-9 w-32 rounded-lg bg-obsidian-100 motion-safe:animate-pulse" aria-hidden="true" />
+              ) : (
+                <p className="mt-3 text-3xl font-light tabular-nums text-obsidian-900">{value}</p>
+              )}
+              <p className="mt-1 text-sm text-slate-600">{note}</p>
+            </li>
+          ))}
+        </ul>
+
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+          {/* Reservations */}
+          <section aria-labelledby="reservations-heading" className="overflow-hidden rounded-[1.75rem] bg-white ring-1 ring-obsidian-900/[0.07]">
+            <div className="flex flex-col gap-4 border-b border-obsidian-900/[0.07] p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
               <div>
-                <h2 className="text-sm font-bold text-white group-hover:text-gold-300 transition-colors">
-                  Daily Dispatch Manifests
+                <h2 id="reservations-heading" className="text-xl text-obsidian-900">
+                  Recent reservations
                 </h2>
-                <p className="text-xs text-slate-400">Driver pickup routes &amp; passenger check-in</p>
+                <p className="text-sm text-slate-600">The latest bookings across all tours and shuttles</p>
               </div>
+              <label className="relative block sm:w-72">
+                <span className="sr-only">Search reservations</span>
+                <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" aria-hidden="true" />
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Reference, guest or tour"
+                  className="h-11 w-full rounded-full border border-obsidian-900/10 bg-obsidian-50 pl-10 pr-4 text-sm text-obsidian-900 placeholder:text-slate-500 focus:border-ocean-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-ocean-600/30"
+                />
+              </label>
             </div>
-            <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-gold-400 group-hover:translate-x-1 transition-all" />
-          </Link>
 
-          <Link
-            href="/pickup-finder"
-            className="p-5 rounded-2xl bg-forest-900/60 border border-forest-800 hover:border-emerald-500/50 transition-all group flex items-center justify-between"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-400/10 border border-emerald-400/30 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform">
-                <Calendar className="w-5 h-5" />
-              </div>
-              <div>
-                <h2 className="text-sm font-bold text-white group-hover:text-emerald-300 transition-colors">
-                  Hotel Pickup Directory
-                </h2>
-                <p className="text-xs text-slate-400">25+ Banff, Canmore &amp; Lake Louise stops</p>
-              </div>
-            </div>
-            <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-emerald-400 group-hover:translate-x-1 transition-all" />
-          </Link>
-
-          <Link
-            href="/search"
-            className="p-5 rounded-2xl bg-forest-900/60 border border-forest-800 hover:border-cyan-500/50 transition-all group flex items-center justify-between"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-cyan-400/10 border border-cyan-400/30 flex items-center justify-center text-cyan-400 group-hover:scale-105 transition-transform">
-                <Ticket className="w-5 h-5" />
-              </div>
-              <div>
-                <h2 className="text-sm font-bold text-white group-hover:text-cyan-300 transition-colors">
-                  Inventory &amp; Search Engine
-                </h2>
-                <p className="text-xs text-slate-400">Live seat availability &amp; departures</p>
-              </div>
-            </div>
-            <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-cyan-400 group-hover:translate-x-1 transition-all" />
-          </Link>
-        </div>
-
-        {/* Recent Bookings Table */}
-        <div className="rounded-2xl bg-forest-900 border border-forest-800 shadow-xl overflow-hidden">
-          <div className="p-6 border-b border-forest-800 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-white">Recent Guest Reservations</h2>
-            <span className="text-xs text-slate-400">Showing latest transactions</span>
-          </div>
-
-          {/* Scrollable on narrow screens: focusable so keyboard users can scroll it (WCAG 2.1.1) */}
-          <div
-            className="overflow-x-auto rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-summit-500"
-            tabIndex={0}
-            role="region"
-            aria-label="Latest bookings"
-          >
-            <table className="w-full text-left text-sm text-slate-300">
-              <thead className="bg-forest-950/80 text-xs uppercase text-slate-400 border-b border-forest-800">
-                <tr>
-                  <th className="py-3 px-4">Reference</th>
-                  <th className="py-3 px-4">Guest</th>
-                  <th className="py-3 px-4">Tour / Route</th>
-                  <th className="py-3 px-4">Departure</th>
-                  <th className="py-3 px-4">Seats</th>
-                  <th className="py-3 px-4">Total</th>
-                  <th className="py-3 px-4">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-forest-800/60 font-medium">
-                {metrics?.recentBookings && metrics.recentBookings.length > 0 ? (
-                  metrics.recentBookings.map((b) => (
-                    <tr key={b.id} className="hover:bg-forest-800/40 transition-colors">
-                      <td className="py-3.5 px-4 font-mono text-gold-400 text-xs">
-                        <Link href={`/booking/${b.bookingReference}/voucher`} className="hover:underline">
-                          {b.bookingReference}
-                        </Link>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <div className="text-white text-xs font-semibold">{b.customerName}</div>
-                        <div className="text-xs text-slate-400">{b.customerEmail}</div>
-                      </td>
-                      <td className="py-3.5 px-4 text-xs text-slate-200">
-                        {b.tourDeparture?.tour?.title || b.tourDeparture?.shuttleRoute?.name || "Rockies Tour"}
-                      </td>
-                      <td className="py-3.5 px-4 text-xs">
-                        <div>{b.tourDeparture?.date}</div>
-                        <div className="text-xs text-slate-400">{b.tourDeparture?.departureTime || "08:00 AM"}</div>
-                      </td>
-                      <td className="py-3.5 px-4 text-xs font-mono">{b.totalSeats}</td>
-                      <td className="py-3.5 px-4 text-xs font-mono text-white">
-                        ${b.totalAmount.toFixed(2)}
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span
-                          className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                            b.status === "CONFIRMED"
-                              ? "bg-emerald-950 text-emerald-400 border border-emerald-800"
-                              : b.status === "CANCELLED"
-                              ? "bg-red-950 text-red-400 border border-red-800"
-                              : "bg-forest-800 text-slate-300"
-                          }`}
-                        >
-                          {b.status}
-                        </span>
+            <div className="overflow-x-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ocean-600" tabIndex={0} role="region" aria-label="Reservations table">
+              <table className="w-full min-w-[58rem] text-left text-sm">
+                <thead className="bg-obsidian-50 text-xs uppercase tracking-wider text-slate-600">
+                  <tr>
+                    <th scope="col" className="px-5 py-3 font-normal">Reference</th>
+                    <th scope="col" className="px-5 py-3 font-normal">Guest</th>
+                    <th scope="col" className="px-5 py-3 font-normal">Tour</th>
+                    <th scope="col" className="px-5 py-3 font-normal">Departs</th>
+                    <th scope="col" className="px-5 py-3 text-right font-normal">Seats</th>
+                    <th scope="col" className="px-5 py-3 text-right font-normal">Total</th>
+                    <th scope="col" className="px-5 py-3 font-normal">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-obsidian-900/[0.06]">
+                  {loading ? (
+                    Array.from({ length: 4 }).map((_, i) => (
+                      <tr key={i}>
+                        <td colSpan={7} className="px-5 py-4">
+                          <span className="block h-5 rounded bg-obsidian-100 motion-safe:animate-pulse" aria-hidden="true" />
+                        </td>
+                      </tr>
+                    ))
+                  ) : bookings.length > 0 ? (
+                    bookings.map((b) => (
+                      <tr key={b.id} className="transition-colors hover:bg-ocean-50/50">
+                        <td className="px-5 py-4">
+                          <Link href={`/booking/${b.bookingReference}/voucher`} className="whitespace-nowrap font-mono text-sm text-ocean-700 hover:underline">
+                            {b.bookingReference}
+                          </Link>
+                        </td>
+                        <td className="min-w-[12rem] px-5 py-4">
+                          <span className="block text-obsidian-900">{b.customerName}</span>
+                          <span className="block text-xs text-slate-600">{b.customerEmail}</span>
+                        </td>
+                        <td className="w-[16rem] min-w-[13rem] px-5 py-4 text-obsidian-900">
+                          <span className="line-clamp-2">{b.tourDeparture?.tour?.title || b.tourDeparture?.shuttleRoute?.name || "Tour"}</span>
+                        </td>
+                        <td className="whitespace-nowrap px-5 py-4">
+                          <span className="block text-obsidian-900">{b.tourDeparture?.date}</span>
+                          <span className="block text-xs text-slate-600">{b.tourDeparture?.departureTime}</span>
+                        </td>
+                        <td className="px-5 py-4 text-right tabular-nums">{b.totalSeats}</td>
+                        <td className="whitespace-nowrap px-5 py-4 text-right tabular-nums text-obsidian-900">{money(b.totalAmount)}</td>
+                        <td className="px-5 py-4">
+                          <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs ring-1 ${statusTone(b.status)}`}>
+                            {b.status.charAt(0) + b.status.slice(1).toLowerCase()}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={7} className="px-5 py-12 text-center text-sm text-slate-600">
+                        {query ? `No reservations match “${query}”.` : unauthorized ? "Sign in to see reservations." : "No bookings yet."}
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={7} className="py-8 text-center text-slate-400 text-xs">
-                      {loading ? "Loading bookings..." : "No bookings recorded yet."}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          {/* Side column */}
+          <div className="space-y-6">
+            <section aria-labelledby="health-heading" className="rounded-[1.75rem] bg-ocean-950 p-6 text-white">
+              <h2 id="health-heading" className="text-base text-white">
+                Booking health
+              </h2>
+              <p className="mt-4 text-4xl font-light tabular-nums text-white">{metrics ? `${confirmedRate}%` : "—"}</p>
+              <p className="text-sm text-white/75">of bookings confirmed</p>
+              <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10" role="presentation">
+                <span className="block h-full rounded-full bg-summit-500 transition-[width] duration-700" style={{ width: `${confirmedRate}%` }} />
+              </div>
+              <dl className="mt-5 grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <dt className="text-white/70">Departures</dt>
+                  <dd className="text-lg tabular-nums text-white">{metrics?.totalDepartures ?? "—"}</dd>
+                </div>
+                <div>
+                  <dt className="text-white/70">On hold now</dt>
+                  <dd className="text-lg tabular-nums text-white">{metrics?.activeHoldsCount ?? "—"}</dd>
+                </div>
+              </dl>
+            </section>
+
+            <section aria-labelledby="shortcuts-heading" className="rounded-[1.75rem] bg-white p-2 ring-1 ring-obsidian-900/[0.07]">
+              <h2 id="shortcuts-heading" className="px-4 pb-1 pt-4 text-base text-obsidian-900">
+                Shortcuts
+              </h2>
+              <ul>
+                {SHORTCUTS.map(({ label, body, href, icon: Icon }) => (
+                  <li key={href}>
+                    <Link href={href} className="group flex items-center gap-3.5 rounded-2xl px-4 py-3 transition-colors hover:bg-obsidian-50">
+                      <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-summit-100 text-obsidian-900">
+                        <Icon className="h-4 w-4" aria-hidden="true" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm text-obsidian-900">{label}</span>
+                        <span className="block truncate text-xs text-slate-600">{body}</span>
+                      </span>
+                      <ArrowUpRight className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-obsidian-900" aria-hidden="true" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
           </div>
         </div>
       </div>

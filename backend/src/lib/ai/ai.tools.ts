@@ -3,6 +3,7 @@ import { getLiveTrackingProvider } from "@/lib/tracking/tracking.provider";
 import { getMapsProvider } from "@/lib/maps/maps.provider";
 import { createReservationHold } from "@/modules/reservations/reservation.repository";
 import { createBooking } from "@/modules/bookings/booking.repository";
+import { dateOnly, formatDateOnly, formatTimeOfDay, todayInMountainTime } from "@/lib/utils/time";
 
 export interface ToolExecutionContext {
   isStaff?: boolean;
@@ -24,7 +25,7 @@ export interface ToolResult {
 export async function searchTours(args: { query?: string; category?: string }) {
   const tours = await prisma.tour.findMany({
     where: {
-      ...(args.category ? { category: args.category.toUpperCase() } : {}),
+      ...(args.category ? { category: args.category.toUpperCase() as any } : {}),
       ...(args.query
         ? {
             OR: [
@@ -72,21 +73,21 @@ export async function getTourDetails(args: { tourSlugOrBokunId: string }) {
     title: tour.title,
     category: tour.category,
     durationHours: tour.durationHours,
-    basePrice: tour.basePrice,
+    basePrice: tour.basePrice / 100,
     currency: tour.currency,
     summary: tour.summary,
     description: tour.description,
-    inclusions: JSON.parse(tour.inclusions || "[]"),
-    exclusions: JSON.parse(tour.exclusions || "[]"),
-    highlights: JSON.parse(tour.highlights || "[]"),
-    whatToBring: JSON.parse(tour.whatToBring || "[]"),
+    inclusions: (tour.inclusions as string[]) || [],
+    exclusions: (tour.exclusions as string[]) || [],
+    highlights: (tour.highlights as string[]) || [],
+    whatToBring: (tour.whatToBring as string[]) || [],
   };
 }
 
 export async function checkBokunAvailability(args: { date: string; tourSlug?: string }) {
   const departures = await prisma.tourDeparture.findMany({
     where: {
-      date: args.date,
+      date: new Date(args.date),
       status: "ACTIVE",
       ...(args.tourSlug
         ? {
@@ -103,12 +104,12 @@ export async function checkBokunAvailability(args: { date: string; tourSlug?: st
 
   return departures.map((d) => ({
     departureId: d.id,
-    date: d.date,
-    departureTime: d.departureTime,
+    date: formatDateOnly(d.date),
+    departureTime: formatTimeOfDay(d.departureTime),
     tourTitle: d.tour?.title || d.shuttleRoute?.name,
     capacityTotal: d.capacityTotal,
     availableSeats: Math.max(0, d.capacityTotal - (d.capacityBooked + d.capacityHeld)),
-    pricePerPerson: d.price,
+    pricePerPerson: d.price / 100,
     currency: d.currency,
   }));
 }
@@ -136,8 +137,8 @@ export async function getBooking(args: { bookingReference: string; customerEmail
     bookingReference: booking.bookingReference,
     customerName: booking.customerName,
     tourTitle: booking.tourDeparture.tour?.title || booking.tourDeparture.shuttleRoute?.name,
-    departureDate: booking.tourDeparture.date,
-    departureTime: booking.tourDeparture.departureTime,
+    departureDate: booking.tourDeparture.date.toISOString().split('T')[0],
+    departureTime: formatTimeOfDay(booking.tourDeparture.departureTime),
     pickupLocation: booking.pickupStop?.name || booking.pickupCustomText || "Banff Station",
     pickupTime: booking.pickupTime || booking.tourDeparture.departureTime,
     totalSeats: booking.totalSeats,
@@ -147,12 +148,42 @@ export async function getBooking(args: { bookingReference: string; customerEmail
   };
 }
 
-export async function getPickup(args: { hotelNameQuery: string }) {
+// Words that carry no signal when matching a free-text question against stop names.
+const PICKUP_QUERY_STOPWORDS = new Set([
+  "where", "what", "which", "pick", "pickup", "pickups", "picked", "from", "your", "you", "near",
+  "hotel", "hotels", "stop", "stops", "stay", "staying", "offer", "there", "with", "the", "and", "for",
+]);
+
+/**
+ * Finds pickup stops for either an exact hotel name ("Fairmont Banff Springs") or a free-text
+ * question ("Where do you pick up in Banff?"). The orchestrator sends `query`; `hotelNameQuery`
+ * is kept for direct tool callers.
+ */
+export async function getPickup(args: { query?: string; hotelNameQuery?: string; town?: string }) {
   const mapsProvider = getMapsProvider();
-  const stops = await mapsProvider.searchPickups(args.hotelNameQuery);
+  const query = String(args.query ?? args.hotelNameQuery ?? "").trim();
+
+  let stops = await mapsProvider.searchPickups(query, args.town);
+
+  if (stops.length === 0 && query) {
+    const lower = query.toLowerCase();
+    const allStops = await mapsProvider.getAllPickups();
+    const towns = [...new Set(allStops.map((s) => s.town))];
+    const town = args.town ?? towns.find((t) => lower.includes(t.toLowerCase()));
+    const townWords = new Set(town ? town.toLowerCase().split(/\s+/) : []);
+    const tokens = (lower.match(/[a-z0-9]+/g) ?? []).filter(
+      (t) => t.length > 2 && !PICKUP_QUERY_STOPWORDS.has(t) && !townWords.has(t),
+    );
+
+    const inTown = town ? allStops.filter((s) => s.town === town) : allStops;
+    const byName = tokens.length ? inTown.filter((s) => tokens.some((t) => s.name.toLowerCase().includes(t))) : [];
+    stops = byName.length > 0 ? byName : town ? inTown : [];
+  }
+
   return stops.slice(0, 5);
 }
 
+// Token only: a booking reference no longer opens live location (see tracking.provider.ts).
 export async function getLiveTracking(args: { tokenOrRef: string }) {
   const trackingProvider = getLiveTrackingProvider();
   const telemetry = await trackingProvider.getTrackingTelemetry(args.tokenOrRef);
@@ -214,10 +245,10 @@ export async function getOperationalStatus(args: { bookingReference: string }) {
 }
 
 export async function getAvailableDates(args: { tourSlug?: string }) {
-  const today = new Date().toISOString().split("T")[0];
+  const today = todayInMountainTime();
   const departures = await prisma.tourDeparture.findMany({
     where: {
-      date: { gte: today },
+      date: { gte: dateOnly(today) },
       status: "ACTIVE",
       ...(args.tourSlug ? { tour: { slug: args.tourSlug } } : {}),
     },
@@ -234,12 +265,12 @@ export async function getAvailableDates(args: { tourSlug?: string }) {
       const remaining = Math.max(0, d.capacityTotal - (d.capacityBooked + d.capacityHeld));
       return {
         departureId: d.id,
-        date: d.date,
-        departureTime: d.departureTime,
+        date: formatDateOnly(d.date),
+        departureTime: formatTimeOfDay(d.departureTime),
         title: d.tour?.title || d.shuttleRoute?.name,
         slug: d.tour?.slug,
         availableSeats: remaining,
-        price: d.price,
+        price: d.price / 100,
         currency: d.currency,
       };
     })
@@ -313,57 +344,6 @@ export async function createVoiceBookingPaymentIntent(args: {
   };
 }
 
-export async function confirmVoiceBooking(args: {
-  departureId: string;
-  holdToken?: string;
-  customerName: string;
-  customerEmail: string;
-  customerPhone?: string;
-  pickupLocation?: string;
-  adultsCount?: number;
-  childrenCount?: number;
-  paymentProvider?: "mock" | "stripe";
-}) {
-  let pickupStopId: string | undefined = undefined;
-  if (args.pickupLocation) {
-    const maps = getMapsProvider();
-    const stops = await maps.searchPickups(args.pickupLocation);
-    if (stops.length > 0) {
-      pickupStopId = stops[0].id;
-    }
-  }
-
-  const result = await createBooking({
-    departureId: args.departureId,
-    holdToken: args.holdToken,
-    customerName: args.customerName,
-    customerEmail: args.customerEmail,
-    customerPhone: args.customerPhone || "+1-825-734-9456",
-    pickupStopId,
-    pickupCustomText: pickupStopId ? undefined : args.pickupLocation,
-    adultsCount: args.adultsCount || 1,
-    childrenCount: args.childrenCount || 0,
-    infantsCount: 0,
-    paymentProvider: args.paymentProvider || "mock",
-  });
-
-  if (!result.success || !result.booking) {
-    return {
-      success: false,
-      error: result.error || "Failed to finalize booking.",
-    };
-  }
-
-  return {
-    success: true,
-    bookingReference: result.booking.bookingReference,
-    voucherCode: result.booking.voucherCode,
-    totalAmount: result.booking.totalAmount,
-    currency: result.booking.currency,
-    status: result.booking.status,
-    voucherUrl: `/booking/${encodeURIComponent(result.booking.bookingReference)}/voucher`,
-  };
-}
 
 // ---------------------------------------------------------------------------
 // 2. Staff-Facing Operations AI Assistant Tools (Staff Authorization Enforced)
@@ -374,9 +354,9 @@ export async function getTodaysDepartures(args: { date?: string }, ctx: ToolExec
     throw new Error("UNAUTHORIZED: Operations staff credentials required to view daily dispatch rosters.");
   }
 
-  const date = args.date || new Date().toISOString().split("T")[0];
+  const date = args.date || todayInMountainTime();
   const departures = await prisma.tourDeparture.findMany({
-    where: { date },
+    where: { date: dateOnly(date) },
     include: {
       tour: true,
       shuttleRoute: true,
@@ -394,7 +374,7 @@ export async function getTodaysDepartures(args: { date?: string }, ctx: ToolExec
 
   return departures.map((d) => ({
     departureId: d.id,
-    departureTime: d.departureTime,
+    departureTime: formatTimeOfDay(d.departureTime),
     title: d.tour?.title || d.shuttleRoute?.name,
     capacityTotal: d.capacityTotal,
     capacityBooked: d.capacityBooked,
@@ -410,12 +390,12 @@ export async function getPendingPickups(args: { runId?: string; date?: string },
     throw new Error("UNAUTHORIZED: Operations staff credentials required.");
   }
 
-  const today = args.date || new Date().toISOString().split("T")[0];
+  const today = args.date || todayInMountainTime();
 
   const pendingRunBookings = await prisma.runBooking.findMany({
     where: {
       isBoarded: false,
-      ...(args.runId ? { runId: args.runId } : { run: { date: today } }),
+      ...(args.runId ? { runId: args.runId } : { run: { date: dateOnly(today) } }),
     },
     include: {
       run: {
@@ -445,11 +425,11 @@ export async function getBoardingStatus(args: { departureId?: string; date?: str
     throw new Error("UNAUTHORIZED: Operations staff credentials required.");
   }
 
-  const date = args.date || new Date().toISOString().split("T")[0];
+  const date = args.date || todayInMountainTime();
   const bookings = await prisma.booking.findMany({
     where: {
       status: "CONFIRMED",
-      tourDeparture: args.departureId ? { id: args.departureId } : { date },
+      tourDeparture: args.departureId ? { id: args.departureId } : { date: dateOnly(date) },
     },
     select: {
       id: true,
@@ -479,9 +459,9 @@ export async function getVehicleAssignments(args: { date?: string }, ctx: ToolEx
     throw new Error("UNAUTHORIZED: Operations staff credentials required.");
   }
 
-  const date = args.date || new Date().toISOString().split("T")[0];
+  const date = args.date || todayInMountainTime();
   const runs = await prisma.operationRun.findMany({
-    where: { date },
+    where: { date: dateOnly(date) },
     include: {
       vehicle: true,
       driver: true,
@@ -549,8 +529,6 @@ export async function executeAiTool(toolName: string, args: Record<string, any>,
         return { toolName, success: true, data: await createVoiceReservationHold(args as any) };
       case "createVoiceBookingPaymentIntent":
         return { toolName, success: true, data: await createVoiceBookingPaymentIntent(args as any) };
-      case "confirmVoiceBooking":
-        return { toolName, success: true, data: await confirmVoiceBooking(args as any) };
       case "getLiveTracking":
         return { toolName, success: true, data: await getLiveTracking(args as any) };
       case "getETA":
@@ -574,6 +552,9 @@ export async function executeAiTool(toolName: string, args: Record<string, any>,
         return { toolName, success: false, error: `Unrecognized tool '${toolName}'` };
     }
   } catch (error: any) {
-    return { toolName, success: false, error: error.message };
+    // Permission errors are meant for the caller; anything else stays in the server log.
+    if (typeof error?.message === "string" && error.message.startsWith("UNAUTHORIZED")) return { toolName, success: false, error: error.message };
+    console.error(`AI tool ${toolName} failed:`, error?.message);
+    return { toolName, success: false, error: "That request couldn't be completed." };
   }
 }

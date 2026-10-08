@@ -63,7 +63,7 @@ const CHAPTERS: StoryChapter[] = [
 
 export function DestinationStoryStream() {
   return (
-    <section id="destinations" aria-labelledby="destinations-heading" className="relative bg-ocean-950 py-20 sm:py-28">
+    <section id="destinations" aria-labelledby="destinations-heading" className="relative bg-obsidian-950 py-20 sm:py-28">
       <div className="mx-auto max-w-7xl px-page">
         <SectionHeading
           id="destinations-heading"

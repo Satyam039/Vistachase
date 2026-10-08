@@ -6,7 +6,7 @@
 // panel follows tour.bookingMode: BOKUN tours book scheduled departures through /book; ENQUIRY
 // tours (custom private tours, multi-day) collect a vehicle + party size for a tailored quote.
 
-import { useEffect, useRef, useState, type ComponentType } from "react";
+import { useCallback, useEffect, useRef, useState, type ComponentType } from "react";
 import Link from "next/link";
 import {
   Calendar,
@@ -18,14 +18,18 @@ import {
   Star,
   Users,
   ChevronRight,
+  ChevronDown,
   Coffee,
   CheckCircle2,
   Send,
 } from "lucide-react";
+import { Dropdown } from "@/components/forms/Dropdown";
+import { DepartureCalendar } from "@/components/booking/DepartureCalendar";
 import { PriceTag } from "@/components/pricing/PriceTag";
+import { cancellationShort, SEATS_MESSAGE } from "@/lib/policy";
 import { Rail } from "@/components/motion/Rail";
 import { ProductGallery, type GallerySlide } from "@/components/tours/ProductGallery";
-import { TourSections } from "@/components/tours/TourSections";
+import { TourSectionNav, TourSections } from "@/components/tours/TourSections";
 import {
   TourCard,
   departureFits,
@@ -39,10 +43,11 @@ import {
 import type { DepartureAvailability, TourSection, TourWithAvailability } from "@/lib/api/types";
 
 const CATEGORY = {
-  SHARED: { label: "Shared Tours", href: "/shared-tours", sub: "Small Group · Max 12 Guests" },
-  PRIVATE: { label: "Private Tours", href: "/private-tours", sub: "Private Vehicle · 6 or 13 Guests" },
-  MULTIDAY: { label: "Multi-Day Packages", href: "/search?category=MULTIDAY", sub: "Complete Rockies Itineraries" },
-  SHUTTLE: { label: "Commercial Shuttles", href: "/shuttles", sub: "Guaranteed Access · Door-to-Door" },
+  SHARED: { label: "Shared tours", href: "/shared-tours", sub: "Small group · max 12 guests" },
+  PRIVATE: { label: "Private tours", href: "/private-tours", sub: "Private vehicle · up to 6 or 13 guests" },
+  MULTIDAY: { label: "Multi-day trips", href: "/search?category=MULTIDAY", sub: "2 to 7 days" },
+  SHUTTLE: { label: "Lake shuttles", href: "/shuttles", sub: "Guaranteed lake access · hotel pickup" },
+  TICKET: { label: "Activity tickets", href: "/banff-activity-tickets", sub: "Timed around your tour" },
 } as const;
 
 const money = (amount: number) =>
@@ -181,6 +186,7 @@ function MobileBookingBar({ children }: { children: React.ReactNode }) {
     const el = ref.current;
     if (!el) return;
     const root = document.documentElement;
+    // globals.css adds it to the page's bottom scroll padding (focused elements stay clear of it).
     const update = () => root.style.setProperty("--vc-bottom-bar-h", `${Math.ceil(el.getBoundingClientRect().height)}px`);
     update();
     const observer = new ResizeObserver(update);
@@ -213,13 +219,16 @@ export function TourDetailView({
   const unitLabel = priceUnitLabel(tour);
 
   const images = Array.from(new Set([tour.featuredImage, ...tour.galleryImages].filter(Boolean)));
-  // Gallery slides: the tour's clips first (backend/media/videos), then its photos.
+  // Gallery slides (GetYourGuide / Viator): the product's own lead photo first, then the clips of
+  // places it visits (matched by place, so not always the product itself), then the other photos.
+  const [lead, ...rest] = images;
   const slides: GallerySlide[] = [
+    ...(lead ? [{ kind: "image" as const, src: lead }] : []),
     ...tour.videos.map((video) => ({ kind: "video" as const, video })),
-    ...images.map((src) => ({ kind: "image" as const, src })),
+    ...rest.map((src) => ({ kind: "image" as const, src })),
   ];
 
-  // Booking state (Connected to Bókun System of Record)
+  // Booking state
   const isVehicle = isVehicleTour(tour);
   const bookableDepartures = tour.departures.filter((d) => departureFits(tour, d, 1));
   const [selectedDepartureId, setSelectedDepartureId] = useState(bookableDepartures[0]?.id ?? "");
@@ -274,6 +283,27 @@ export function TourDetailView({
         ]
       : []),
   ];
+
+  // "More below" hint for the booking panel when it scrolls inside itself (short screens).
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [panelMore, setPanelMore] = useState(false);
+  const updatePanelHint = useCallback(() => {
+    const el = panelRef.current;
+    if (!el) return;
+    setPanelMore(el.scrollHeight - el.clientHeight - el.scrollTop > 8);
+  }, []);
+  useEffect(() => {
+    const el = panelRef.current;
+    if (!el) return;
+    updatePanelHint();
+    const ro = new ResizeObserver(updatePanelHint);
+    ro.observe(el);
+    window.addEventListener("resize", updatePanelHint);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", updatePanelHint);
+    };
+  }, [updatePanelHint]);
 
   const calculatedTotal = currentDeparture
     ? isVehicle
@@ -347,11 +377,11 @@ export function TourDetailView({
             </div>
           </div>
           <a
-            href="#cancellation-policy"
+            href="#cancellation"
             className="inline-flex shrink-0 items-center gap-2 self-start rounded-full bg-emerald-50 px-4 py-2 text-base text-emerald-900 ring-1 ring-emerald-200 hover:bg-emerald-100 lg:self-auto"
           >
             <CheckCircle2 className="h-5 w-5 text-emerald-700" aria-hidden="true" />
-            Free cancellation up to 24 hours before
+            {cancellationShort(tour.category)}
           </a>
         </div>
 
@@ -360,20 +390,24 @@ export function TourDetailView({
 
       {/* 02. MAIN CONTENT + STICKY BOOKING PANEL */}
       <section className="mx-auto max-w-7xl px-page pb-16 pt-4">
+        <TourSectionNav />
         <div className="grid grid-cols-1 items-start gap-12 lg:grid-cols-12">
           <div className="space-y-12 lg:col-span-7">
             {/* Key facts as icon rows (Civitatis / Expedia "Features") */}
-            <dl className="grid grid-cols-1 gap-x-8 gap-y-5 rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:grid-cols-2 sm:p-8" data-stagger>
+            <ul aria-label="Key facts" className="grid grid-cols-1 gap-x-8 gap-y-5 rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:grid-cols-2 sm:p-8" data-stagger>
               {facts.map((fact) => (
-                <div key={fact.label} className="flex items-start gap-3.5">
+                <li key={fact.label} className="flex items-start gap-3.5">
                   <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-ocean-50 text-ocean-700">
                     <fact.icon className="h-5 w-5" aria-hidden="true" />
                   </span>
                   <span>
-                    <dt className="text-sm text-slate-600">{fact.label}</dt>
-                    <dd className="text-base text-obsidian-900">{fact.value}</dd>
+                    <span className="block text-sm text-slate-600">
+                      {fact.label}
+                      <span className="sr-only">:</span>
+                    </span>
+                    <span className="block text-base text-obsidian-900">{fact.value}</span>
                   </span>
-                </div>
+                </li>
               ))}
               {[
                 "Mobile voucher",
@@ -382,29 +416,32 @@ export function TourDetailView({
               ]
                 .filter((x): x is string => Boolean(x))
                 .map((chip) => (
-                  <div key={chip} className="flex items-start gap-3.5">
+                  <li key={chip} className="flex items-start gap-3.5">
                     <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
                       <Check className="h-5 w-5" aria-hidden="true" />
                     </span>
-                    <span>
-                      <dt className="sr-only">Included</dt>
-                      <dd className="pt-2.5 text-base text-obsidian-900">{chip}</dd>
-                    </span>
-                  </div>
+                    <span className="pt-2.5 text-base text-obsidian-900">{chip}</span>
+                  </li>
                 ))}
-            </dl>
+            </ul>
 
             {/* Viator-style sections with a sticky "On this page" bar */}
             <TourSections tour={tour} />
           </div>
 
           {/* RIGHT 5 COLUMNS: STICKY BÓKUN BOOKING PANEL */}
-          <div id="booking" className="lg:col-span-5 lg:sticky lg:top-[calc(var(--vc-header-h,96px)+5rem)] space-y-6 scroll-mt-40">
-            <div className="rounded-[1.75rem] bg-white ring-1 ring-obsidian-900/[0.07] shadow-[0_30px_60px_-35px_rgba(12,31,33,0.4)] p-6 sm:p-8 space-y-6">
+          <div id="booking" className="relative lg:col-span-5 lg:sticky lg:top-[calc(var(--vc-header-h,96px)+6.25rem)] scroll-mt-40">
+            {/* On short screens the sticky panel can be taller than the viewport: it is capped at
+                the space left below the header and scrolls inside, with a "more below" hint. */}
+            <div
+              ref={panelRef}
+              onScroll={updatePanelHint}
+              className="rounded-[1.75rem] bg-white ring-1 ring-obsidian-900/[0.07] shadow-[0_30px_60px_-35px_rgba(12,31,33,0.4)] p-6 sm:p-8 space-y-6 lg:max-h-[calc(100vh-var(--vc-header-h,96px)-11.75rem)] lg:overflow-y-auto lg:overscroll-contain lg:scroll-pb-24 [scrollbar-width:thin]"
+            >
               <div className="space-y-3 border-b border-slate-100 pb-5">
                 <PriceTag
                   price={price}
-                  currency={`${tour.currency} + GST`}
+                  currency={tour.currency}
                   unit={tour.category === "TICKET" ? "per ticket" : unitLabel}
                   lead={isEnquiry ? "Tailored quote from" : "From"}
                 />
@@ -414,42 +451,46 @@ export function TourDetailView({
               {isEnquiry ? (
                 <EnquiryPanel tour={tour} />
               ) : tour.departures.length === 0 ? (
-                <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs space-y-2">
-                  <div className="flex items-center gap-2 font-bold">
-                    <Calendar className="w-4 h-4 text-amber-700" />
-                    <span>Dates on Request</span>
-                  </div>
-                  <p>
-                    Upcoming seasonal dates are being scheduled. Our mountain concierge can arrange a custom date or
-                    private vehicle for your party.
-                  </p>
+                // No scheduled dates yet: still a clear primary action (request a date).
+                <div className="space-y-4">
+                  <PartySizeStepper
+                    value={partySize}
+                    max={tour.maxGroupSize}
+                    onChange={setPartySize}
+                    hint={isVehicle ? `Vehicle seats up to ${tour.maxGroupSize}` : `Up to ${tour.maxGroupSize} guests`}
+                  />
+                  <Link
+                    href={`/contact-us?${new URLSearchParams({ tour: tour.slug, guests: String(partySize) }).toString()}`}
+                    className="golden-summit-btn flex h-14 w-full items-center justify-center gap-2 rounded-full text-base text-obsidian-900"
+                  >
+                    <Send className="h-4 w-4" aria-hidden="true" />
+                    Request your date
+                  </Link>
                   <Link
                     href="/concierge"
-                    className="inline-flex items-center gap-1.5 font-bold text-amber-800 hover:text-amber-950 mt-1"
+                    className="flex h-12 w-full items-center justify-center gap-2 rounded-full border border-slate-300 bg-white text-base text-slate-700 transition-colors hover:bg-slate-50"
                   >
-                    <span>Talk with AI Concierge</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
+                    <Sparkles className="h-4 w-4 text-ocean-600" aria-hidden="true" />
+                    Ask the AI concierge
                   </Link>
+                  <p className="flex items-start gap-2.5 rounded-2xl bg-ocean-50 p-4 text-sm leading-relaxed text-obsidian-800">
+                    <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-ocean-700" aria-hidden="true" />
+                    <span>
+                      <span className="block text-base text-obsidian-900">Dates on request</span>
+                      This season&rsquo;s dates are being scheduled. Tell us your day and party size and we&rsquo;ll
+                      confirm availability, usually within a day.
+                    </span>
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label htmlFor="tour-departure" className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
-                      Choose Departure Date
-                    </label>
-                    <select
-                      id="tour-departure"
-                      value={selectedDepartureId}
-                      onChange={(e) => setSelectedDepartureId(e.target.value)}
-                      className="w-full p-3.5 rounded-xl border border-slate-300 bg-white text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-ocean-500"
-                    >
-                      {tour.departures.map((d) => (
-                        <option key={d.id} value={d.id} disabled={!departureFits(tour, d, 1)}>
-                          {formatDeparture(d)} — {isVehicle ? `$${d.price} / vehicle` : `${d.seatsAvailable} seats left · $${d.price} CAD`}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <DepartureCalendar
+                    departures={tour.departures}
+                    isBookable={(d) => departureFits(tour, d, 1)}
+                    value={selectedDepartureId}
+                    onChange={setSelectedDepartureId}
+                    describe={(d) => (isVehicle ? `$${d.price} per vehicle` : `${SEATS_MESSAGE} · $${d.price} CAD per guest`)}
+                  />
 
                   {/* Guests / Party Size */}
                   <PartySizeStepper
@@ -467,12 +508,8 @@ export function TourDetailView({
                       </span>
                       <span>{money(calculatedTotal)} CAD</span>
                     </div>
-                    <div className="flex items-center justify-between text-slate-600">
-                      <span>GST (5%)</span>
-                      <span>Calculated at checkout</span>
-                    </div>
                     <div className="pt-2 border-t border-slate-200 flex items-center justify-between font-bold text-slate-900 text-sm">
-                      <span>Total Estimated</span>
+                      <span>Estimated total</span>
                       <span className="text-base text-obsidian-900 font-serif">{money(calculatedTotal)} CAD</span>
                     </div>
                   </div>
@@ -502,7 +539,7 @@ export function TourDetailView({
               <div className="pt-4 border-t border-slate-100 space-y-2.5 text-sm text-slate-600">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" aria-hidden="true" />
-                  <span>Free cancellation up to 24 hours before your tour</span>
+                  <span>{cancellationShort(tour.category)}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-ocean-600 shrink-0" aria-hidden="true" />
@@ -510,6 +547,18 @@ export function TourDetailView({
                 </div>
               </div>
             </div>
+            {panelMore && (
+              <button
+                type="button"
+                onClick={() => panelRef.current?.scrollBy({ top: 240, behavior: "smooth" })}
+                className="absolute inset-x-px bottom-px hidden h-20 items-end justify-center rounded-b-[1.75rem] bg-gradient-to-t from-white via-white/90 to-transparent pb-3 text-sm text-obsidian-900 lg:flex"
+              >
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-obsidian-900 px-4 py-1.5 text-white shadow-lg">
+                  More below
+                  <ChevronDown className="h-4 w-4" aria-hidden="true" />
+                </span>
+              </button>
+            )}
           </div>
         </div>
       </section>
@@ -534,12 +583,10 @@ export function TourDetailView({
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
           <PriceTag price={price} currency={tour.currency} unit={tour.category === "TICKET" ? "per ticket" : unitLabel} layout="inline" />
           <a href="#booking" className="golden-summit-btn inline-flex h-12 shrink-0 items-center rounded-full px-6 text-base">
-            {isEnquiry ? "Request" : "Check availability"}
+            {isEnquiry || tour.departures.length === 0 ? "Request a date" : "Check availability"}
           </a>
         </div>
       </MobileBookingBar>
-      {/* Room for the bar so it never covers the last content on phones */}
-      <div className="h-24 lg:hidden" aria-hidden="true" />
     </div>
   );
 }

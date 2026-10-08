@@ -13,7 +13,7 @@ router.get("/checkout", async (req, res) => {
     }
     return res.json({ success: true, ...checkout });
   } catch (error: unknown) {
-    return res.status(500).json({ success: false, error: (error as Error).message || "Failed to load departure" });
+    return res.status(500).json({ success: false, error: "Failed to load departure" });
   }
 });
 

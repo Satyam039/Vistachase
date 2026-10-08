@@ -1,4 +1,6 @@
+import helmet from "helmet";
 import express from "express";
+import * as Sentry from "@sentry/node";
 import { MEDIA_DIR } from "@/modules/media/media.repository";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -7,6 +9,7 @@ import adminRoutes from "@/routes/admin.routes";
 import authRoutes from "@/routes/auth.routes";
 import bookingsRoutes from "@/routes/bookings.routes";
 import conciergeRoutes from "@/routes/concierge.routes";
+import enquiriesRoutes from "@/routes/enquiries.routes";
 import departuresRoutes from "@/routes/departures.routes";
 import destinationsRoutes from "@/routes/destinations.routes";
 import healthRoutes from "@/routes/health.routes";
@@ -19,9 +22,14 @@ import operationsRoutes from "@/routes/operations.routes";
 import trackingRoutes from "@/routes/tracking.routes";
 import mediaRoutes from "@/routes/media.routes";
 import affiliatesRoutes from "@/routes/affiliates.routes";
+import pricingRoutes from "@/routes/pricing.routes";
+import webhooksRoutes from "@/routes/webhooks.routes";
+import { apiJsonReplacer } from "@/lib/utils/time";
 
 export function createApp() {
   const app = express();
+  // Departure dates and times leave the API as "YYYY-MM-DD" and "HH:MM" (lib/utils/time.ts).
+  app.set("json replacer", apiJsonReplacer);
 
   app.disable("x-powered-by");
   app.set("trust proxy", 1);
@@ -34,8 +42,39 @@ export function createApp() {
     .filter(Boolean);
   app.use(cors({ origin: allowedOrigins, credentials: true }));
 
+  // Stripe signs the raw request bytes, so its webhook is mounted before the JSON parser.
+  app.use("/api/webhooks", express.raw({ type: "application/json", limit: "1mb" }), webhooksRoutes);
+
   app.use(express.json({ limit: "1mb" }));
   app.use(cookieParser());
+
+  // F13: Security headers and CSRF
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "blob:", "https:"],
+        connectSrc: ["'self'", "https:"],
+      },
+    },
+    hsts: {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true,
+    },
+  }));
+
+  // CSRF: the session cookie is SameSite=Lax, and state-changing requests a browser sends from any
+  // other site are refused here (browsers always send Origin on cross-site POST/PUT/PATCH/DELETE).
+  app.use("/api", (req, res, next) => {
+    if (["GET", "HEAD", "OPTIONS"].includes(req.method)) return next();
+    const origin = req.headers.origin;
+    if (!origin || allowedOrigins.includes(origin)) return next();
+    return res.status(403).json({ success: false, error: "Cross-site request refused" });
+  });
+
 
   app.use((_req, res, next) => {
     res.setHeader("X-Content-Type-Options", "nosniff");
@@ -63,6 +102,7 @@ export function createApp() {
   app.use("/api/auth", authRoutes);
   app.use("/api/bookings", bookingsRoutes);
   app.use("/api/concierge", conciergeRoutes);
+  app.use("/api/enquiries", enquiriesRoutes);
   app.use("/api/departures", departuresRoutes);
   app.use("/api/destinations", destinationsRoutes);
   app.use("/api/health", healthRoutes);
@@ -75,10 +115,16 @@ export function createApp() {
   app.use("/api/track", trackingRoutes);
   app.use("/api/media", mediaRoutes);
   app.use("/api/affiliates", affiliatesRoutes);
+  app.use("/api/pricing", pricingRoutes);
 
   app.use("/api", (_req, res) => {
     res.status(404).json({ success: false, error: "Not found" });
   });
+
+
+  if (process.env.SENTRY_DSN) {
+    Sentry.setupExpressErrorHandler(app);
+  }
 
   app.use((err: Error & { status?: number; type?: string }, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     if (err.type === "entity.parse.failed") {

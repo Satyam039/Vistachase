@@ -48,7 +48,10 @@ export interface TrackingTelemetry {
 }
 
 export interface ILiveTrackingProvider {
+  /** Public: only a live tracking-session token or a booking's unexpired tracking token opens tracking. */
   getTrackingTelemetry(trackingToken: string): Promise<TrackingTelemetry | null>;
+  /** Internal: for a booking whose owner the caller has already verified (e.g. concierge email check). */
+  getTelemetryForVerifiedBooking(bookingReference: string): Promise<TrackingTelemetry | null>;
   pushGpsPing?(vehicleId: string, coords: VehicleCoordinates): Promise<void>;
 }
 
@@ -72,12 +75,21 @@ const ROCKIES_CORRIDOR_WAYPOINTS = [
 
 export class MockLiveTrackingProvider implements ILiveTrackingProvider {
   async getTrackingTelemetry(trackingToken: string): Promise<TrackingTelemetry | null> {
+    return this.load(trackingToken);
+  }
+
+  async getTelemetryForVerifiedBooking(bookingReference: string): Promise<TrackingTelemetry | null> {
+    return this.load(null, bookingReference);
+  }
+
+  private async load(trackingToken: string | null, verifiedReference?: string): Promise<TrackingTelemetry | null> {
     // 1. Look up tracking session or booking directly
     let booking: any = null;
     let run: any = null;
 
     // Check tracking session first
-    const session = await prisma.trackingSession.findUnique({
+    const session = trackingToken
+      ? await prisma.trackingSession.findUnique({
       where: { token: trackingToken },
       include: {
         run: {
@@ -108,7 +120,8 @@ export class MockLiveTrackingProvider implements ILiveTrackingProvider {
           },
         },
       },
-    });
+    })
+      : null;
 
     if (session && session.isActive && session.expiresAt > new Date()) {
       run = session.run;
@@ -118,16 +131,14 @@ export class MockLiveTrackingProvider implements ILiveTrackingProvider {
       }
     }
 
-    // Fallback: look up by booking trackingToken or bookingReference
-    if (!booking) {
+    // Otherwise the booking's own tracking token (never its reference or id: references are
+    // printed on vouchers and emails, so they must not open live location), or a booking the caller
+    // has already verified.
+    if (!booking && (trackingToken || verifiedReference)) {
       booking = await prisma.booking.findFirst({
-        where: {
-          OR: [
-            { trackingToken },
-            { bookingReference: trackingToken },
-            { id: trackingToken },
-          ],
-        },
+        where: verifiedReference
+          ? { bookingReference: verifiedReference }
+          : { trackingToken, OR: [{ trackingTokenExpiresAt: null }, { trackingTokenExpiresAt: { gt: new Date() } }] },
         include: {
           tourDeparture: {
             include: {
@@ -184,8 +195,25 @@ export class MockLiveTrackingProvider implements ILiveTrackingProvider {
     const startPoint = ROCKIES_CORRIDOR_WAYPOINTS[0];
     const targetPoint = { latitude: stopLat, longitude: stopLng };
 
-    const currentLat = startPoint.latitude + (targetPoint.latitude - startPoint.latitude) * progress;
-    const currentLng = startPoint.longitude + (targetPoint.longitude - startPoint.longitude) * progress;
+// 2. Telemetry: Read from real VehiclePosition table first!
+    const latestPos = vehicle.id ? await prisma.vehiclePosition.findFirst({
+      where: { vehicleId: vehicle.id },
+      orderBy: { timestamp: "desc" }
+    }) : null;
+    
+    let currentLat = startPoint.latitude;
+    let currentLng = startPoint.longitude;
+    let speed = 72;
+    
+    if (latestPos) {
+       currentLat = latestPos.latitude;
+       currentLng = latestPos.longitude;
+       speed = latestPos.speedKmh || 0;
+    } else {
+       // Fallback to interpolated progress for demo if no GPS ping
+       currentLat = startPoint.latitude + (targetPoint.latitude - startPoint.latitude) * progress;
+       currentLng = startPoint.longitude + (targetPoint.longitude - startPoint.longitude) * progress;
+    }
     const remainingMinutes = Math.max(1, Math.round((1 - progress) * 15));
 
     // Dynamic Status Logic
@@ -245,7 +273,7 @@ export class MockLiveTrackingProvider implements ILiveTrackingProvider {
     ];
 
     return {
-      sessionToken: trackingToken,
+      sessionToken: trackingToken ?? booking.trackingToken ?? "",
       bookingReference: booking.bookingReference,
       customerName: booking.customerName,
       tourName: tourTitle,
@@ -269,7 +297,7 @@ export class MockLiveTrackingProvider implements ILiveTrackingProvider {
         latitude: Number(currentLat.toFixed(5)),
         longitude: Number(currentLng.toFixed(5)),
         heading: 315, // Northwest toward Lake Louise
-        speedKmh: status === "SHUTTLE_IS_HERE" ? 0 : 72,
+        speedKmh: speed,
         altitudeMeters: 1450,
         updatedAt: new Date().toISOString(),
       },
@@ -298,6 +326,13 @@ export class MockLiveTrackingProvider implements ILiveTrackingProvider {
 let trackingProviderInstance: ILiveTrackingProvider | null = null;
 
 export function getLiveTrackingProvider(): ILiveTrackingProvider {
+  if (process.env.FEATURE_TRACKING !== "true") {
+    return {
+      getTrackingTelemetry: async () => null,
+      getTelemetryForVerifiedBooking: async () => null,
+      pushGpsPing: async () => {},
+    };
+  }
   if (!trackingProviderInstance) {
     trackingProviderInstance = new MockLiveTrackingProvider();
   }

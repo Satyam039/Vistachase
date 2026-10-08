@@ -1,4 +1,5 @@
 import prisma from "@/lib/db/prisma";
+import { dateOnly, timeOfDay } from "@/lib/utils/time";
 
 export interface OperationsDashboardStats {
   date: string;
@@ -24,7 +25,7 @@ export interface CreateRunInput {
 export async function getOperationsDashboard(date: string) {
   // 1. Departures on date
   const departures = await prisma.tourDeparture.findMany({
-    where: { date },
+    where: { date: dateOnly(date) },
     include: {
       tour: true,
       shuttleRoute: true,
@@ -109,9 +110,9 @@ export async function createOrUpdateRun(input: CreateRunInput, runId?: string) {
       where: { id: runId },
       data: {
         name: input.name,
-        date: input.date,
+        date: dateOnly(input.date),
         tourDepartureId: input.tourDepartureId,
-        departureTime: input.departureTime,
+        departureTime: input.departureTime ? timeOfDay(input.departureTime) : undefined,
         vehicleId: input.vehicleId,
         driverId: input.driverId,
         status: input.status || "PLANNED",
@@ -126,9 +127,9 @@ export async function createOrUpdateRun(input: CreateRunInput, runId?: string) {
     run = await prisma.operationRun.create({
       data: {
         name: input.name,
-        date: input.date,
+        date: dateOnly(input.date),
         tourDepartureId: input.tourDepartureId,
-        departureTime: input.departureTime,
+        departureTime: input.departureTime ? timeOfDay(input.departureTime) : undefined,
         vehicleId: input.vehicleId,
         driverId: input.driverId,
         status: input.status || "PLANNED",
@@ -156,7 +157,7 @@ export async function updateRunStatus(runId: string, status: string, notes?: str
   const updated = await prisma.operationRun.update({
     where: { id: runId },
     data: {
-      status,
+      status: status as any,
       ...(notes ? { notes } : {}),
     },
     include: {

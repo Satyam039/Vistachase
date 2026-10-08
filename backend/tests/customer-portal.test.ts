@@ -3,6 +3,7 @@ import prisma from "@/lib/db/prisma";
 import { signToken } from "@/lib/auth/auth";
 import { cancelBooking, getCustomerBookings } from "@/modules/bookings/booking.repository";
 import { createReview, getTourReviews } from "@/modules/reviews/review.repository";
+import { dateOnly, timeOfDay } from "@/lib/utils/time";
 
 describe("Phase 5: Customer Portal, My Trips & Reviews", () => {
   let testCustomerEmail: string;
@@ -27,19 +28,19 @@ describe("Phase 5: Customer Portal, My Trips & Reviews", () => {
     const futureDep = await prisma.tourDeparture.create({
       data: {
         tourId: testTourId,
-        date: futureDateStr,
-        departureTime: "09:00",
+        date: dateOnly(futureDateStr),
+        departureTime: timeOfDay("09:00"),
         capacityTotal: 14,
         capacityBooked: 2,
         capacityHeld: 0,
-        price: 155.0,
+        price: 15500,
         currency: "CAD",
-        status: "SCHEDULED",
+        status: "ACTIVE",
       },
     });
     futureDepartureId = futureDep.id;
 
-    // 3. Create imminent departure (< 48h away, e.g. tomorrow)
+    // 3. Create imminent departure (< 72h away)
     const imminentDate = new Date();
     imminentDate.setHours(imminentDate.getHours() + 12);
     const imminentDateStr = imminentDate.toISOString().split("T")[0];
@@ -48,14 +49,14 @@ describe("Phase 5: Customer Portal, My Trips & Reviews", () => {
     const imminentDep = await prisma.tourDeparture.create({
       data: {
         tourId: testTourId,
-        date: imminentDateStr,
-        departureTime: imminentTimeStr,
+        date: dateOnly(imminentDateStr),
+        departureTime: timeOfDay(imminentTimeStr),
         capacityTotal: 14,
         capacityBooked: 2,
         capacityHeld: 0,
-        price: 155.0,
+        price: 15500,
         currency: "CAD",
-        status: "SCHEDULED",
+        status: "ACTIVE",
       },
     });
     imminentDepartureId = imminentDep.id;
@@ -73,9 +74,9 @@ describe("Phase 5: Customer Portal, My Trips & Reviews", () => {
         childrenCount: 0,
         infantsCount: 0,
         totalSeats: 2,
-        subtotal: 310,
-        tax: 15.5,
-        totalAmount: 325.5,
+        subtotal: 31000,
+        tax: 1550,
+        totalAmount: 32550,
         currency: "CAD",
         status: "CONFIRMED",
         voucherCode: `VOUCH-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
@@ -95,9 +96,9 @@ describe("Phase 5: Customer Portal, My Trips & Reviews", () => {
         childrenCount: 0,
         infantsCount: 0,
         totalSeats: 2,
-        subtotal: 310,
-        tax: 15.5,
-        totalAmount: 325.5,
+        subtotal: 31000,
+        tax: 1550,
+        totalAmount: 32550,
         currency: "CAD",
         status: "CONFIRMED",
         voucherCode: `VOUCH-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
@@ -121,7 +122,7 @@ describe("Phase 5: Customer Portal, My Trips & Reviews", () => {
     expect(trips.some((t) => t.bookingReference === validBookingRef)).toBe(true);
   });
 
-  it("enforces 48-hour cancellation policy: rejects cancellation within 48 hours", async () => {
+  it("enforces the 72-hour cancellation policy: rejects cancellation within 72 hours", async () => {
     const res = await cancelBooking(imminentBookingRef, testCustomerEmail);
     expect(res.success).toBe(false);
     expect(res.error).toContain("Cancellation window closed");
@@ -131,7 +132,7 @@ describe("Phase 5: Customer Portal, My Trips & Reviews", () => {
     expect(b?.status).toBe("CONFIRMED");
   });
 
-  it("allows cancellation outside 48 hours and releases tour capacity atomically", async () => {
+  it("allows cancellation outside 72 hours and releases tour capacity atomically", async () => {
     const res = await cancelBooking(validBookingRef, testCustomerEmail);
     expect(res.success).toBe(true);
     expect(res.booking?.status).toBe("CANCELLED");
@@ -155,14 +156,16 @@ describe("Phase 5: Customer Portal, My Trips & Reviews", () => {
         childrenCount: 0,
         infantsCount: 0,
         totalSeats: 1,
-        subtotal: 155,
-        tax: 7.75,
-        totalAmount: 162.75,
+        subtotal: 15500,
+        tax: 775,
+        totalAmount: 16275,
         currency: "CAD",
-        status: "CONFIRMED",
+        status: "COMPLETED", // reviews are accepted only after the trip
         voucherCode: `VOUCH-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
       },
     });
+
+    const before = await prisma.tour.findUnique({ where: { id: testTourId } });
 
     const result = await createReview({
       bookingReference: reviewBookingRef,
@@ -188,5 +191,44 @@ describe("Phase 5: Customer Portal, My Trips & Reviews", () => {
     // Verify review list
     const tourReviews = await getTourReviews(testTourId);
     expect(tourReviews.some((r) => r.bookingId !== null)).toBe(true);
+    // Only reviews left against a booking are public; seeded samples are not.
+    expect(tourReviews.every((r) => r.bookingId !== null)).toBe(true);
+
+    // A tour with a published count (e.g. 1,000+ from TripAdvisor and Google) keeps it.
+    const after = await prisma.tour.findUnique({ where: { id: testTourId } });
+    if (before!.reviewCount > 1) {
+      expect(after!.reviewCount).toBe(before!.reviewCount);
+      expect(after!.rating).toBe(before!.rating);
+    }
+  });
+
+  it("starts a new product's rating from its first real review", async () => {
+    const tour = await prisma.tour.update({ where: { id: testTourId }, data: { reviewCount: 0, rating: 0 } });
+    const ref = `VC-REV-${Math.floor(10000 + Math.random() * 90000)}`;
+    await prisma.booking.create({
+      data: {
+        bookingReference: ref,
+        customerName: "New Product Reviewer",
+        customerEmail: testCustomerEmail,
+        customerPhone: "+14035550199",
+        tourDepartureId: futureDepartureId,
+        adultsCount: 1,
+        childrenCount: 0,
+        infantsCount: 0,
+        totalSeats: 1,
+        subtotal: 15500,
+        tax: 775,
+        totalAmount: 16275,
+        currency: "CAD",
+        status: "COMPLETED", // reviews are accepted only after the trip
+        voucherCode: `VOUCH-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+      },
+    });
+    const result = await createReview({ bookingReference: ref, rating: 4, title: "Good day", body: "A good day out." });
+    expect(result.success).toBe(true);
+    const updated = await prisma.tour.findUnique({ where: { id: tour.id } });
+    const real = await prisma.review.count({ where: { tourId: tour.id, bookingId: { not: null } } });
+    expect(updated!.reviewCount).toBe(real);
+    expect(updated!.rating).toBeGreaterThan(0);
   });
 });

@@ -3,6 +3,7 @@ import prisma from "@/lib/db/prisma";
 import { createReservationHold } from "@/modules/reservations/reservation.repository";
 import { getTourBySlug } from "@/modules/tours/tour.repository";
 import { getCheckoutDeparture } from "@/modules/departures/departure.repository";
+import { dateOnly, timeOfDay } from "@/lib/utils/time";
 
 describe("Live seat availability ignores expired holds", () => {
   it("counts live holds as taken but frees seats once a hold has expired", async () => {
@@ -10,12 +11,12 @@ describe("Live seat availability ignores expired holds", () => {
     const departure = await prisma.tourDeparture.create({
       data: {
         tourId: tour.id,
-        date: "2027-01-15",
-        departureTime: "07:00",
+        date: dateOnly("2027-01-15"),
+        departureTime: timeOfDay("07:00"),
         capacityTotal: 10,
         capacityBooked: 0,
         capacityHeld: 0,
-        price: 100,
+        price: 10000,
         status: "ACTIVE",
       },
     });

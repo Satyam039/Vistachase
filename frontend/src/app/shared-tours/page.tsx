@@ -1,5 +1,6 @@
-import { getTours } from "@/lib/api/catalog";
+import { getCategoryExtras, getTours } from "@/lib/api/catalog";
 import { TourGallery } from "@/components/tours/TourGallery";
+import { SignatureDays } from "@/components/tours/SignatureDays";
 import { serviceById } from "@/lib/services";
 import type { Metadata } from "next";
 
@@ -12,8 +13,16 @@ export const metadata: Metadata = {
   },
 };
 
+// Three genuinely different days from this category, compared side by side above the full list.
+const SIGNATURE = [
+  { slug: "shared-tours-heart-of-banff", theme: "Banff town, Bow Falls & the Gondola" },
+  { slug: "banff-highlights-tour", theme: "The famous lakes: Moraine, Louise & Peyto" },
+  { slug: "shared-tours-icefields-jasper", theme: "Glaciers of the Icefields Parkway" },
+];
+
 export default async function SharedToursPage() {
   const tours = await getTours({ category: "SHARED" });
+  const { reviews, faqs } = await getCategoryExtras(tours);
 
   return (
     <TourGallery
@@ -22,6 +31,17 @@ export default async function SharedToursPage() {
       ctaLabel="Find a departure"
       ctaHref="/search?category=SHARED"
       tours={tours}
+      reviews={reviews}
+      faqs={faqs}
+      signature={
+        <SignatureDays
+          eyebrow="Three signature days"
+          title="Which shared tour is right for you?"
+          intro="Three different days in the Rockies, each with its own route. Compare them here, or see every shared tour below."
+          picks={SIGNATURE}
+          tours={tours}
+        />
+      }
       service={serviceById("shared")}
     />
   );

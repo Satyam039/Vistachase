@@ -10,7 +10,7 @@ export interface TokenPayload {
   name: string;
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || "default-insecure-dev-secret-replace-in-env";
+const JWT_SECRET = process.env.JWT_SECRET!;
 
 export async function hashPassword(password: string): Promise<string> {
   const salt = await bcrypt.genSalt(10);

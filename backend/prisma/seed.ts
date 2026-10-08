@@ -573,49 +573,8 @@ async function main() {
     });
   }
 
-  // 8. Sample Verified Reviews
-  const reviews = [
-    {
-      tourId: tourBanffHighlights.id,
-      authorName: "Emily & Jason",
-      rating: 5,
-      title: "Easily the highlight of our 2-week Canada trip!",
-      body: "Excellent tour experience. Our guide was professional and the SUV was very comfortable. Getting guaranteed access to Moraine Lake without waking up at 3am to fight for parking made the entire vacation stress-free.",
-      date: "September 2026",
-      isFeatured: true,
-    },
-    {
-      tourId: tourBanffHighlights.id,
-      authorName: "Jessica M.",
-      rating: 5,
-      title: "Top-notch guidance and photography tips",
-      body: "I booked a shared tour and it was easily the best day of my trip. Our guide was incredibly patient, took stunning photos of our group at the Rockpile, and provided warm tea on a chilly morning.",
-      date: "August 2026",
-      isFeatured: true,
-    },
-    {
-      tourId: tourBanffPrivate.id,
-      authorName: "Sarah & Tom",
-      rating: 5,
-      title: "Worth every penny for our family",
-      body: "Our guide was friendly, knowledgeable, and made the day feel completely personal. We learned so much about the flora, fauna, and indigenous history of Banff.",
-      date: "August 2026",
-      isFeatured: true,
-    },
-    {
-      tourId: tourBanffHighlights.id,
-      authorName: "Rohit S.",
-      rating: 5,
-      title: "Exceeded all our expectations",
-      body: "We did a private day tour for my family of five, and it exceeded our expectations. Great value, spotless vehicle, and punctual hotel pickup at Rimrock.",
-      date: "July 2026",
-      isFeatured: true,
-    },
-  ];
-
-  for (const r of reviews) {
-    await prisma.review.create({ data: r });
-  }
+  // 8. Reviews: none are seeded. Public reviews are only ones guests leave against a real booking
+  // (POST /api/reviews), so the site never shows invented quotes.
 
   // 9. Sample Confirmed Booking with Digital Voucher
   const sampleDeparture = departures[0];

@@ -20,6 +20,10 @@
     "value": "Allow 2–3 hours"
    },
    {
+    "label": "Time we request",
+    "value": "9:00 AM ride, subject to availability"
+   },
+   {
     "label": "Summit",
     "value": "2,281 m"
    },
@@ -127,7 +131,7 @@
       "heading": "Seasons and times",
       "body": [
        "Seasons, opening hours and sailing or ride times are set by the operator and change through the year. Tell us your date and we confirm availability and the best time slot around your plans.",
-       "Free cancellation up to 24 hours before your date for a full refund."
+       "Tickets follow the attraction operator's own cancellation rules, which we confirm with your request."
       ],
       "items": [],
       "steps": [],
@@ -144,7 +148,7 @@
    },
    {
     "question": "What is the cancellation policy?",
-    "answer": "Free cancellation up to 24 hours before your date for a full refund."
+    "answer": "Tickets follow the attraction operator's own cancellation rules, which we confirm with your request."
    }
   ],
   "crossSells": [],
@@ -172,6 +176,10 @@
    {
     "label": "Duration",
     "value": "About 1 hour"
+   },
+   {
+    "label": "Time we request",
+    "value": "2–4 PM sailing, subject to availability"
    },
    {
     "label": "Lake",
@@ -279,7 +287,7 @@
       "heading": "Seasons and times",
       "body": [
        "Seasons, opening hours and sailing or ride times are set by the operator and change through the year. Tell us your date and we confirm availability and the best time slot around your plans.",
-       "Free cancellation up to 24 hours before your date for a full refund."
+       "Tickets follow the attraction operator's own cancellation rules, which we confirm with your request."
       ],
       "items": [],
       "steps": [],
@@ -296,7 +304,7 @@
    },
    {
     "question": "What is the cancellation policy?",
-    "answer": "Free cancellation up to 24 hours before your date for a full refund."
+    "answer": "Tickets follow the attraction operator's own cancellation rules, which we confirm with your request."
    }
   ],
   "crossSells": [],
@@ -431,7 +439,7 @@
       "heading": "Seasons and times",
       "body": [
        "Seasons, opening hours and sailing or ride times are set by the operator and change through the year. Tell us your date and we confirm availability and the best time slot around your plans.",
-       "Free cancellation up to 24 hours before your date for a full refund."
+       "Tickets follow the attraction operator's own cancellation rules, which we confirm with your request."
       ],
       "items": [],
       "steps": [],
@@ -448,7 +456,7 @@
    },
    {
     "question": "What is the cancellation policy?",
-    "answer": "Free cancellation up to 24 hours before your date for a full refund."
+    "answer": "Tickets follow the attraction operator's own cancellation rules, which we confirm with your request."
    }
   ],
   "crossSells": [],
@@ -573,7 +581,7 @@
       "heading": "Seasons and times",
       "body": [
        "Seasons, opening hours and sailing or ride times are set by the operator and change through the year. Tell us your date and we confirm availability and the best time slot around your plans.",
-       "Free cancellation up to 24 hours before your date for a full refund."
+       "Tickets follow the attraction operator's own cancellation rules, which we confirm with your request."
       ],
       "items": [],
       "steps": [],
@@ -590,11 +598,635 @@
    },
    {
     "question": "What is the cancellation policy?",
-    "answer": "Free cancellation up to 24 hours before your date for a full refund."
+    "answer": "Tickets follow the attraction operator's own cancellation rules, which we confirm with your request."
    }
   ],
   "crossSells": [],
   "images": [],
+  "_note": "Not on the live vistachase.com site: written for the new site's Banff activity tickets. Prices are on request until the Bokun products exist."
+ },
+ {
+  "slug": "open-top-touring-tickets",
+  "category": "TICKET",
+  "destination": "banff-national-park",
+  "bokunId": null,
+  "bookingMode": "ENQUIRY",
+  "title": "Open Top Touring Tickets",
+  "metaTitle": "Open Top Touring Tickets | Vintage Open-Top Tour of Banff – Vista Chase",
+  "metaDescription": "A 90-minute guided tour of Banff in a vintage-style 1930s open-top automobile, with stops at Surprise Corner, Vermilion Viewpoint, Tunnel Mountain and Mount Norquay Viewpoint.",
+  "rating": null,
+  "reviewCountLabel": null,
+  "facts": [
+   {
+    "label": "Location",
+    "value": "Departs Banff town centre"
+   },
+   {
+    "label": "Duration",
+    "value": "About 90 minutes"
+   },
+   {
+    "label": "Group",
+    "value": "Max 19 guests"
+   },
+   {
+    "label": "Season",
+    "value": "May–October (dates vary)"
+   }
+  ],
+  "priceFrom": null,
+  "priceUnit": "person",
+  "overview": {
+   "heading": "Banff in a 1930s-style open-top car",
+   "paragraphs": [
+    "See Banff the way early visitors did: a guided 90-minute tour in a vintage-style 1930s automobile with an open roof (covered in bad weather), stopping at four of the town's classic viewpoints."
+   ]
+  },
+  "includes": [
+   "Guided 90-minute open-top tour",
+   "Help choosing a departure that fits your tour day"
+  ],
+  "excludes": [
+   "Food and drinks",
+   "Transport to the departure point, unless added to a Vista Chase tour"
+  ],
+  "whyTravelersLove": null,
+  "highlights": [],
+  "stops": [
+   {
+    "name": "Surprise Corner",
+    "text": "The classic view of the Fairmont Banff Springs above the Bow River."
+   },
+   {
+    "name": "Vermilion Viewpoint",
+    "text": "Mount Rundle over the Vermilion Lakes."
+   },
+   {
+    "name": "Tunnel Mountain",
+    "text": "Views over the Bow Valley and the Hoodoos."
+   },
+   {
+    "name": "Mount Norquay Viewpoint",
+    "text": "Banff townsite laid out below Cascade Mountain."
+   }
+  ],
+  "itinerary": null,
+  "seasonal": [],
+  "tabs": [
+   {
+    "label": "Overview",
+    "sections": [
+     {
+      "heading": "Banff in a 1930s-style open-top car",
+      "body": [
+       "See Banff the way early visitors did: a guided 90-minute tour in a vintage-style 1930s automobile with an open roof (covered in bad weather), stopping at four of the town's classic viewpoints."
+      ],
+      "items": [],
+      "steps": [],
+      "stops": [],
+      "note": null
+     },
+     {
+      "heading": "Price includes",
+      "body": [],
+      "items": [
+       "Guided 90-minute open-top tour",
+       "Help choosing a departure that fits your tour day"
+      ],
+      "steps": [],
+      "stops": [],
+      "note": null
+     },
+     {
+      "heading": "Price excludes",
+      "body": [],
+      "items": [
+       "Food and drinks",
+       "Transport to the departure point, unless added to a Vista Chase tour"
+      ],
+      "steps": [],
+      "stops": [],
+      "note": null
+     }
+    ]
+   },
+   {
+    "label": "Inclusions",
+    "sections": [
+     {
+      "heading": "What you'll see",
+      "body": [],
+      "items": [],
+      "steps": [],
+      "stops": [
+       {
+        "name": "Surprise Corner",
+        "text": "The classic view of the Fairmont Banff Springs above the Bow River."
+       },
+       {
+        "name": "Vermilion Viewpoint",
+        "text": "Mount Rundle over the Vermilion Lakes."
+       },
+       {
+        "name": "Tunnel Mountain",
+        "text": "Views over the Bow Valley and the Hoodoos."
+       },
+       {
+        "name": "Mount Norquay Viewpoint",
+        "text": "Banff townsite laid out below Cascade Mountain."
+       }
+      ],
+      "note": null
+     }
+    ]
+   },
+   {
+    "label": "Seasonal",
+    "sections": [
+     {
+      "heading": "Seasons and times",
+      "body": [
+       "Seasons, opening hours and departure times are set by the operator and change through the year. Tell us your date and we confirm availability and the best time slot around your plans.",
+       "Tickets follow the attraction operator's own cancellation rules, which we confirm with your request."
+      ],
+      "items": [],
+      "steps": [],
+      "stops": [],
+      "note": null
+     }
+    ]
+   }
+  ],
+  "faqs": [
+   {
+    "question": "How do I get tickets?",
+    "answer": "Send a request with your date and party size. We confirm availability and price, and can add the tickets to any Vista Chase tour on the same day."
+   },
+   {
+    "question": "What is the cancellation policy?",
+    "answer": "Tickets follow the attraction operator's own cancellation rules, which we confirm with your request."
+   }
+  ],
+  "crossSells": [],
+  "images": [
+   "/media/site/tour-image.webp"
+  ],
+  "_note": "Not on the live vistachase.com site: written for the new site's Banff activity tickets. Prices are on request until the Bokun products exist."
+ },
+ {
+  "slug": "columbia-icefield-adventure-tickets",
+  "category": "TICKET",
+  "destination": "jasper-national-park",
+  "bokunId": null,
+  "bookingMode": "ENQUIRY",
+  "title": "Columbia Icefield Adventure Tickets (Ice Explorer + Skywalk)",
+  "metaTitle": "Columbia Icefield Adventure Tickets | Ice Explorer + Skywalk – Vista Chase",
+  "metaDescription": "Ride an Ice Explorer onto the Athabasca Glacier, step onto the ice, then walk the glass-floored Columbia Icefield Skywalk. Add it to your Icefields Parkway tour.",
+  "rating": null,
+  "reviewCountLabel": null,
+  "facts": [
+   {
+    "label": "Location",
+    "value": "Columbia Icefield, Icefields Parkway"
+   },
+   {
+    "label": "Includes",
+    "value": "Ice Explorer + Skywalk"
+   },
+   {
+    "label": "Time we request",
+    "value": "3:30 PM, subject to availability"
+   },
+   {
+    "label": "Season",
+    "value": "May–October, weather dependent"
+   }
+  ],
+  "priceFrom": null,
+  "priceUnit": "person",
+  "overview": {
+   "heading": "Onto the glacier, then out over the valley",
+   "paragraphs": [
+    "Ride a massive Ice Explorer onto the Athabasca Glacier and step out onto the ancient ice, then continue to the Columbia Icefield Skywalk, a glass-floored walkway on the cliff edge above the Sunwapta Valley."
+   ]
+  },
+  "includes": [
+   "Ice Explorer ride onto the Athabasca Glacier, with time on the ice",
+   "Columbia Icefield Skywalk",
+   "Help timing it around your Icefields Parkway day"
+  ],
+  "excludes": [
+   "Transport to the Columbia Icefield, unless added to a Vista Chase tour",
+   "Food and drinks"
+  ],
+  "whyTravelersLove": null,
+  "highlights": [],
+  "stops": [
+   {
+    "name": "Athabasca Glacier",
+    "text": "Time on the ice from the Ice Explorer."
+   },
+   {
+    "name": "Columbia Icefield Skywalk",
+    "text": "Glass-floored walkway above the Sunwapta Valley."
+   }
+  ],
+  "itinerary": null,
+  "seasonal": [],
+  "tabs": [
+   {
+    "label": "Overview",
+    "sections": [
+     {
+      "heading": "Onto the glacier, then out over the valley",
+      "body": [
+       "Ride a massive Ice Explorer onto the Athabasca Glacier and step out onto the ancient ice, then continue to the Columbia Icefield Skywalk, a glass-floored walkway on the cliff edge above the Sunwapta Valley."
+      ],
+      "items": [],
+      "steps": [],
+      "stops": [],
+      "note": null
+     },
+     {
+      "heading": "Price includes",
+      "body": [],
+      "items": [
+       "Ice Explorer ride onto the Athabasca Glacier, with time on the ice",
+       "Columbia Icefield Skywalk",
+       "Help timing it around your Icefields Parkway day"
+      ],
+      "steps": [],
+      "stops": [],
+      "note": null
+     },
+     {
+      "heading": "Price excludes",
+      "body": [],
+      "items": [
+       "Transport to the Columbia Icefield, unless added to a Vista Chase tour",
+       "Food and drinks"
+      ],
+      "steps": [],
+      "stops": [],
+      "note": null
+     }
+    ]
+   },
+   {
+    "label": "Inclusions",
+    "sections": [
+     {
+      "heading": "What you'll see",
+      "body": [],
+      "items": [],
+      "steps": [],
+      "stops": [
+       {
+        "name": "Athabasca Glacier",
+        "text": "Time on the ice from the Ice Explorer."
+       },
+       {
+        "name": "Columbia Icefield Skywalk",
+        "text": "Glass-floored walkway above the Sunwapta Valley."
+       }
+      ],
+      "note": null
+     }
+    ]
+   },
+   {
+    "label": "Seasonal",
+    "sections": [
+     {
+      "heading": "Seasons and times",
+      "body": [
+       "Seasons, opening hours and departure times are set by the operator and change through the year. Tell us your date and we confirm availability and the best time slot around your plans.",
+       "Tickets follow the attraction operator's own cancellation rules, which we confirm with your request."
+      ],
+      "items": [],
+      "steps": [],
+      "stops": [],
+      "note": null
+     }
+    ]
+   }
+  ],
+  "faqs": [
+   {
+    "question": "How do I get tickets?",
+    "answer": "Send a request with your date and party size. We confirm availability and price, and can add the tickets to any Vista Chase tour on the same day."
+   },
+   {
+    "question": "What is the cancellation policy?",
+    "answer": "Tickets follow the attraction operator's own cancellation rules, which we confirm with your request."
+   }
+  ],
+  "crossSells": [],
+  "images": [
+   "/media/photos/columbia-icefield-ice-explorer.jpg"
+  ],
+  "_note": "Not on the live vistachase.com site: written for the new site's Banff activity tickets. Prices are on request until the Bokun products exist."
+ },
+ {
+  "slug": "ice-odyssey-tickets",
+  "category": "TICKET",
+  "destination": "jasper-national-park",
+  "bokunId": null,
+  "bookingMode": "ENQUIRY",
+  "title": "Ice Odyssey Tickets (Premium Glacier Tour)",
+  "metaTitle": "Ice Odyssey Tickets | Premium Small-Group Glacier Tour – Vista Chase",
+  "metaDescription": "A premium small-group guided tour in all-terrain vehicles on the Athabasca Glacier at the Columbia Icefield. Closed for the rest of 2026; we take requests for next season.",
+  "rating": null,
+  "reviewCountLabel": null,
+  "facts": [
+   {
+    "label": "Location",
+    "value": "Columbia Icefield, Icefields Parkway"
+   },
+   {
+    "label": "Duration",
+    "value": "3–3.5 hours"
+   },
+   {
+    "label": "Ages",
+    "value": "6 and over"
+   },
+   {
+    "label": "Season",
+    "value": "Closed for the rest of 2026"
+   }
+  ],
+  "priceFrom": null,
+  "priceUnit": "person",
+  "overview": {
+   "heading": "The premium way onto the Athabasca Glacier",
+   "paragraphs": [
+    "Ice Odyssey is the operator's premium, small-group guided glacier tour, travelling in all-terrain vehicles on the Athabasca Glacier. It starts and ends at the Glacier Discovery Centre. Guests climb a ladder to get in and out of the vehicle, and children must be at least 6."
+   ]
+  },
+  "includes": [
+   "Guided small-group tour on the Athabasca Glacier",
+   "Help planning it around an Icefields Parkway day"
+  ],
+  "excludes": [
+   "Transport to the Columbia Icefield, unless added to a Vista Chase tour"
+  ],
+  "whyTravelersLove": null,
+  "highlights": [],
+  "stops": [
+   {
+    "name": "Athabasca Glacier",
+    "text": "A guided small-group tour on the glacier."
+   },
+   {
+    "name": "Glacier Discovery Centre",
+    "text": "Where the tour starts and ends."
+   }
+  ],
+  "itinerary": null,
+  "seasonal": [],
+  "tabs": [
+   {
+    "label": "Overview",
+    "sections": [
+     {
+      "heading": "The premium way onto the Athabasca Glacier",
+      "body": [
+       "Ice Odyssey is the operator's premium, small-group guided glacier tour, travelling in all-terrain vehicles on the Athabasca Glacier. It starts and ends at the Glacier Discovery Centre. Guests climb a ladder to get in and out of the vehicle, and children must be at least 6."
+      ],
+      "items": [],
+      "steps": [],
+      "stops": [],
+      "note": null
+     },
+     {
+      "heading": "Price includes",
+      "body": [],
+      "items": [
+       "Guided small-group tour on the Athabasca Glacier",
+       "Help planning it around an Icefields Parkway day"
+      ],
+      "steps": [],
+      "stops": [],
+      "note": null
+     },
+     {
+      "heading": "Price excludes",
+      "body": [],
+      "items": [
+       "Transport to the Columbia Icefield, unless added to a Vista Chase tour"
+      ],
+      "steps": [],
+      "stops": [],
+      "note": null
+     }
+    ]
+   },
+   {
+    "label": "Inclusions",
+    "sections": [
+     {
+      "heading": "What you'll see",
+      "body": [],
+      "items": [],
+      "steps": [],
+      "stops": [
+       {
+        "name": "Athabasca Glacier",
+        "text": "A guided small-group tour on the glacier."
+       },
+       {
+        "name": "Glacier Discovery Centre",
+        "text": "Where the tour starts and ends."
+       }
+      ],
+      "note": null
+     }
+    ]
+   },
+   {
+    "label": "Seasonal",
+    "sections": [
+     {
+      "heading": "Seasons and times",
+      "body": [
+       "The operator has closed Ice Odyssey for the rest of the 2026 season. Send a request and we'll confirm dates as soon as next season opens.",
+       "Tickets follow the attraction operator's own cancellation rules, which we confirm with your request."
+      ],
+      "items": [],
+      "steps": [],
+      "stops": [],
+      "note": null
+     }
+    ]
+   }
+  ],
+  "faqs": [
+   {
+    "question": "How do I get tickets?",
+    "answer": "Send a request with your date and party size. We confirm availability and price, and can add the tickets to any Vista Chase tour on the same day."
+   },
+   {
+    "question": "What is the cancellation policy?",
+    "answer": "Tickets follow the attraction operator's own cancellation rules, which we confirm with your request."
+   }
+  ],
+  "crossSells": [],
+  "images": [
+   "/media/photos/columbia-icefield-ice-explorer-guide.jpg"
+  ],
+  "_note": "Not on the live vistachase.com site: written for the new site's Banff activity tickets. Prices are on request until the Bokun products exist."
+ },
+ {
+  "slug": "maligne-lake-cruise-tickets",
+  "category": "TICKET",
+  "destination": "jasper-national-park",
+  "bokunId": null,
+  "bookingMode": "ENQUIRY",
+  "title": "Maligne Lake Cruise Tickets (Spirit Island)",
+  "metaTitle": "Maligne Lake Cruise Tickets | Spirit Island – Vista Chase",
+  "metaDescription": "Cruise across Maligne Lake to Spirit Island, one of the most photographed places in the Rockies, with free time near the island. Add it to your Jasper day.",
+  "rating": null,
+  "reviewCountLabel": null,
+  "facts": [
+   {
+    "label": "Location",
+    "value": "Maligne Lake, Jasper National Park"
+   },
+   {
+    "label": "Duration",
+    "value": "About 1.5 hours"
+   },
+   {
+    "label": "Time we request",
+    "value": "9–10 AM, subject to availability"
+   },
+   {
+    "label": "Season",
+    "value": "Late May–early October"
+   }
+  ],
+  "priceFrom": null,
+  "priceUnit": "person",
+  "overview": {
+   "heading": "Across Maligne Lake to Spirit Island",
+   "paragraphs": [
+    "The classic cruise crosses Maligne Lake to Spirit Island, the tiny tree-covered island below the peaks, with free time near the island for photos before the ride back."
+   ]
+  },
+  "includes": [
+   "Maligne Lake cruise to Spirit Island",
+   "Help choosing a sailing that fits your Jasper day"
+  ],
+  "excludes": [
+   "Transport to Maligne Lake, unless added to a Vista Chase tour",
+   "Food and drinks"
+  ],
+  "whyTravelersLove": null,
+  "highlights": [],
+  "stops": [
+   {
+    "name": "Spirit Island",
+    "text": "Free time near the island for photos."
+   },
+   {
+    "name": "Maligne Lake",
+    "text": "The cruise crosses the lake from the dock."
+   }
+  ],
+  "itinerary": null,
+  "seasonal": [],
+  "tabs": [
+   {
+    "label": "Overview",
+    "sections": [
+     {
+      "heading": "Across Maligne Lake to Spirit Island",
+      "body": [
+       "The classic cruise crosses Maligne Lake to Spirit Island, the tiny tree-covered island below the peaks, with free time near the island for photos before the ride back."
+      ],
+      "items": [],
+      "steps": [],
+      "stops": [],
+      "note": null
+     },
+     {
+      "heading": "Price includes",
+      "body": [],
+      "items": [
+       "Maligne Lake cruise to Spirit Island",
+       "Help choosing a sailing that fits your Jasper day"
+      ],
+      "steps": [],
+      "stops": [],
+      "note": null
+     },
+     {
+      "heading": "Price excludes",
+      "body": [],
+      "items": [
+       "Transport to Maligne Lake, unless added to a Vista Chase tour",
+       "Food and drinks"
+      ],
+      "steps": [],
+      "stops": [],
+      "note": null
+     }
+    ]
+   },
+   {
+    "label": "Inclusions",
+    "sections": [
+     {
+      "heading": "What you'll see",
+      "body": [],
+      "items": [],
+      "steps": [],
+      "stops": [
+       {
+        "name": "Spirit Island",
+        "text": "Free time near the island for photos."
+       },
+       {
+        "name": "Maligne Lake",
+        "text": "The cruise crosses the lake from the dock."
+       }
+      ],
+      "note": null
+     }
+    ]
+   },
+   {
+    "label": "Seasonal",
+    "sections": [
+     {
+      "heading": "Seasons and times",
+      "body": [
+       "Seasons, opening hours and departure times are set by the operator and change through the year. Tell us your date and we confirm availability and the best time slot around your plans.",
+       "Tickets follow the attraction operator's own cancellation rules, which we confirm with your request."
+      ],
+      "items": [],
+      "steps": [],
+      "stops": [],
+      "note": null
+     }
+    ]
+   }
+  ],
+  "faqs": [
+   {
+    "question": "How do I get tickets?",
+    "answer": "Send a request with your date and party size. We confirm availability and price, and can add the tickets to any Vista Chase tour on the same day."
+   },
+   {
+    "question": "What is the cancellation policy?",
+    "answer": "Tickets follow the attraction operator's own cancellation rules, which we confirm with your request."
+   }
+  ],
+  "crossSells": [],
+  "images": [
+   "/media/photos/spirit-island.webp"
+  ],
   "_note": "Not on the live vistachase.com site: written for the new site's Banff activity tickets. Prices are on request until the Bokun products exist."
  }
 ]
