@@ -7,6 +7,7 @@ import "@astryxdesign/core/reset.css";
 import "@astryxdesign/core/astryx.css";
 import "@/themes/vistachase/vistachase.css";
 import "./globals.css";
+import Script from "next/script";
 import { AstryxThemeProvider } from "@/components/providers/AstryxThemeProvider";
 import { SiteFrame } from "@/components/layout/SiteFrame";
 

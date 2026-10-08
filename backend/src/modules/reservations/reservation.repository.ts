@@ -1,6 +1,7 @@
 import prisma from "@/lib/db/prisma";
 import { getCacheProvider } from "@/lib/cache/cache.provider";
 import { isVehicleDeparture, partySizeError, seatsToReserve } from "@/modules/pricing/departure-pricing";
+import { formatDateOnly, formatTimeOfDay } from "@/lib/utils/time";
 
 export interface CreateHoldInput {
   departureId: string;
@@ -197,8 +198,8 @@ export async function getHoldStatus(holdToken: string): Promise<{
       isVehicle: isVehicleDeparture(hold.tourDeparture),
       departure: {
         id: hold.tourDeparture.id,
-        date: hold.tourDeparture.date.toISOString().split('T')[0],
-        departureTime: hold.tourDeparture.departureTime.toISOString(),
+        date: formatDateOnly(hold.tourDeparture.date),
+        departureTime: formatTimeOfDay(hold.tourDeparture.departureTime),
         price: hold.tourDeparture.price / 100,
       },
     },

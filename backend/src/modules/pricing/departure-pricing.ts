@@ -22,7 +22,7 @@ export function seatsToReserve(departure: PricedDeparture, guests: number): numb
   return isVehicleDeparture(departure) ? departure.capacityTotal : guests;
 }
 
-/** Fare before add-ons and tax. */
+/** Fare before add-ons and tax, in cents (departure prices are stored in cents). */
 export function fareSubtotal(departure: PricedDeparture, guests: number): number {
   return isVehicleDeparture(departure) ? departure.price : departure.price * guests;
 }

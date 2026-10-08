@@ -1,5 +1,6 @@
 import prisma from "@/lib/db/prisma";
 import { getEmailProvider } from "@/lib/email/email.provider";
+import { dateOnly } from "@/lib/utils/time";
 
 export interface EnquiryInput {
   name: string;
@@ -17,7 +18,7 @@ const escape = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<":
 export async function createEnquiry(input: EnquiryInput) {
   const tour = input.tourSlug ? await prisma.tour.findUnique({ where: { slug: input.tourSlug }, select: { title: true } }) : null;
   const enquiry = await prisma.enquiry.create({
-    data: { ...input, tourSlug: tour ? input.tourSlug : undefined },
+    data: { ...input, tourSlug: tour ? input.tourSlug : undefined, date: input.date ? dateOnly(input.date) : undefined },
   });
 
   const lines = [

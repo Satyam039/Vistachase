@@ -1,0 +1,15 @@
+# *
+User-agent: *
+Allow: /
+
+# *
+User-agent: *
+Disallow: /admin
+Disallow: /booking
+Disallow: /account
+
+# Host
+Host: https://vistachase.com
+
+# Sitemaps
+Sitemap: https://vistachase.com/sitemap.xml

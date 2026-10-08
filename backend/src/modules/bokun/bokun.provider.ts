@@ -9,6 +9,7 @@ export interface BokunProduct {
   category: "SHARED" | "PRIVATE" | "SHUTTLE" | "MULTIDAY" | "TICKET";
   durationHours: number;
   capacity: number;
+  /** Lowest price in dollars, as Bókun reports it (departures store cents). */
   basePrice: number;
   currency: string;
 }
@@ -70,7 +71,7 @@ export const BOKUN_CATALOG_PRODUCTS: BokunProduct[] = PRODUCT_MAP.map((product) 
     category: product.category,
     durationHours: durationHours(content?.facts ?? []),
     capacity: perGroup ? 13 : 12,
-    basePrice: Math.round((content?.priceFrom ?? 0) * 100),
+    basePrice: content?.priceFrom ?? 0, // dollars, like Bókun; departures store cents
     currency: "CAD",
   };
 });
@@ -154,7 +155,8 @@ export class LiveBokunOperationsProvider implements IBookingOperationsProvider {
 
   async syncTodaysBookings(date: string): Promise<BokunSyncResult> {
     const products = await this.fetchProducts();
-    let syncedCount = 0;
+    let syncedCount = 0; // departures created
+    let updatedCount = 0; // departures already known, capacity refreshed
     
     for (const prod of products) {
       try {
@@ -179,6 +181,7 @@ export class LiveBokunOperationsProvider implements IBookingOperationsProvider {
                 where: { id: existing.id },
                 data: { capacityTotal: capacityTotal }
               });
+              updatedCount++;
             } else {
               await prisma.tourDeparture.create({
                 data: {
@@ -191,8 +194,8 @@ export class LiveBokunOperationsProvider implements IBookingOperationsProvider {
                   price: Math.round(prod.basePrice * 100)
                 }
               });
+              syncedCount++;
             }
-            syncedCount++;
           }
         }
       } catch (err) {
@@ -200,7 +203,7 @@ export class LiveBokunOperationsProvider implements IBookingOperationsProvider {
       }
     }
     
-    return { syncedCount, updatedCount: 0, errors: [] };
+    return { syncedCount, updatedCount, errors: [] };
   }
 
 

@@ -1,4 +1,5 @@
 import prisma from "@/lib/db/prisma";
+import { dateOnly, formatDateOnly, formatTimeOfDay } from "@/lib/utils/time";
 
 export async function getAdminMetrics() {
   const [
@@ -50,7 +51,7 @@ export async function getAdminMetrics() {
 
 export async function getDispatchManifest(date: string) {
   const departures = await prisma.tourDeparture.findMany({
-    where: { date },
+    where: { date: dateOnly(date) },
     include: {
       tour: true,
       shuttleRoute: true,
@@ -94,8 +95,8 @@ export async function getDispatchManifest(date: string) {
 
     return {
       departureId: dep.id,
-      date: dep.date,
-      departureTime: dep.departureTime,
+      date: formatDateOnly(dep.date),
+      departureTime: formatTimeOfDay(dep.departureTime),
       title: dep.tour?.title || dep.shuttleRoute?.name || "Rockies Shuttle Service",
       capacityTotal: dep.capacityTotal,
       capacityBooked: dep.capacityBooked,

@@ -22,6 +22,7 @@ import prisma from "@/lib/db/prisma";
 import { executeAiTool, type ToolExecutionContext } from "@/lib/ai/ai.tools";
 import { cancelBooking } from "@/modules/bookings/booking.repository";
 import type { ChatMessage, ConciergeResponse, SessionState } from "@/lib/ai/ai.provider";
+import { formatDateOnly, formatTimeOfDay } from "@/lib/utils/time";
 
 export const CARD_NUMBER = /\b(?:\d[ -]*?){13,19}\b/;
 const MAX_STEPS = 8;
@@ -246,7 +247,7 @@ export async function runConciergeTool(name: string, input: Record<string, any>,
       const departures = rows.slice(0, 8).map((d) => ({
         id: d.departureId,
         title: d.title ?? d.tourTitle,
-        date: d.date,
+        date: d.date, // already "YYYY-MM-DD" / "HH:MM" from the tool
         departureTime: d.departureTime,
         price: d.price ?? d.pricePerPerson,
         currency: d.currency,
@@ -279,14 +280,14 @@ export async function runConciergeTool(name: string, input: Record<string, any>,
       if (!r.success || !hold?.success) return { result: { error: hold?.error ?? r.error ?? "Couldn't hold those seats." } };
       const dep = await prisma.tourDeparture.findUnique({ where: { id: input.departureId }, include: { tour: true, shuttleRoute: true } });
       const unit = dep?.tour?.priceUnit === "GROUP";
-      const total = dep ? (unit ? dep.price : dep.price * Number(input.seats)) : undefined;
+      const total = dep ? (unit ? dep.price : dep.price * Number(input.seats)) / 100 : undefined; // cents → dollars
       return {
         result: { held: true, expiresAt: hold.expiresAt, checkoutUrl: hold.checkoutUrl, estimatedTotalBeforeGst: total },
         card: {
           checkoutUrl: hold.checkoutUrl,
           data: {
             type: "hold",
-            departure: { title: dep?.tour?.title ?? dep?.shuttleRoute?.name, date: dep?.date, departureTime: dep?.departureTime, seats: Number(input.seats), price: total, currency: dep?.currency ?? "CAD" },
+            departure: { title: dep?.tour?.title ?? dep?.shuttleRoute?.name, date: dep ? formatDateOnly(dep.date) : undefined, departureTime: formatTimeOfDay(dep?.departureTime), seats: Number(input.seats), price: total, currency: dep?.currency ?? "CAD" },
           },
         },
         memory: `Seats held (10 min) on departure ${input.departureId} for ${input.seats}; checkout ${hold.checkoutUrl}`,
@@ -310,8 +311,8 @@ export async function runConciergeTool(name: string, input: Record<string, any>,
             bookingReference: booking.bookingReference,
             status: booking.status,
             tour: title,
-            date: booking.tourDeparture.date,
-            departureTime: booking.tourDeparture.departureTime,
+            date: formatDateOnly(booking.tourDeparture.date),
+            departureTime: formatTimeOfDay(booking.tourDeparture.departureTime),
             pickup: booking.pickupStop?.name ?? booking.pickupCustomText,
             pickupTime: booking.pickupTime,
             guests: booking.totalSeats,
@@ -327,7 +328,7 @@ export async function runConciergeTool(name: string, input: Record<string, any>,
                     voucherCode: booking.voucherCode,
                     voucherUrl: `/booking/${booking.bookingReference}/voucher`,
                     tourTitle: title,
-                    date: booking.tourDeparture.date,
+                    date: formatDateOnly(booking.tourDeparture.date),
                     pickup: booking.pickupStop?.name ?? booking.pickupCustomText ?? undefined,
                   },
                 }
@@ -402,7 +403,7 @@ export async function runConciergeAgent(
   ];
 
   const tools: Anthropic.ToolUnion[] = [
-    ...CUSTOMER_TOOLS,
+    ...CUSTOMER_TOOLS.filter(t => process.env.NODE_ENV !== "production" || !["hold_seats", "cancel_booking"].includes(t.name)),
     ...(ctx.isStaff ? STAFF_TOOLS : []),
     { type: "web_search_20260318", name: "web_search", max_uses: 4, user_location: { type: "approximate", city: "Banff", region: "Alberta", country: "CA", timezone: "America/Edmonton" } },
     { type: "web_fetch_20260318", name: "web_fetch", max_uses: 3 },

@@ -1,4 +1,5 @@
 import prisma from "@/lib/db/prisma";
+import { dateOnly, todayInMountainTime } from "@/lib/utils/time";
 
 export interface CreateReviewInput {
   bookingReference: string;
@@ -37,8 +38,12 @@ export async function createReview(input: CreateReviewInput): Promise<ReviewResu
     },
   });
 
-  if (!booking) {
+if (!booking) {
     return { success: false, error: "Verified booking not found for this reference" };
+  }
+  
+  if (booking.status !== "COMPLETED") {
+    return { success: false, error: "Reviews can only be submitted after the trip has been completed" };
   }
 
   if (booking.review) {
@@ -51,7 +56,6 @@ export async function createReview(input: CreateReviewInput): Promise<ReviewResu
   }
 
   const now = new Date();
-  const dateFormatted = now.toLocaleDateString("en-US", { month: "long", year: "numeric" });
   const author = input.authorName || booking.customerName;
 
   const result = await prisma.$transaction(async (tx) => {
@@ -64,7 +68,7 @@ export async function createReview(input: CreateReviewInput): Promise<ReviewResu
         title: input.title,
         body: input.body,
         isVerified: true,
-        date: dateFormatted,
+        date: dateOnly(todayInMountainTime(now)),
       },
     });
 

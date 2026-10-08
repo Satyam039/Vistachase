@@ -1,5 +1,5 @@
 import { getBokunOperationsProvider } from "@/modules/bokun/bokun.provider";
-import { getMountainTimeInstant } from "@/lib/utils/time";
+import { formatDateOnly, formatTimeOfDay, getMountainTimeInstant } from "@/lib/utils/time";
 import prisma from "@/lib/db/prisma";
 import QRCode from "qrcode";
 import { getPaymentProvider } from "@/lib/payment/payment.provider";
@@ -112,7 +112,8 @@ let discountPercent = 0;
       else if (code === "BANFF10") discountPercent = 10;
     }
 
-    const subtotal = fareSubtotal(departure, totalSeats);
+    // Totals below are in dollars and stored as cents (× 100); departure prices are cents.
+    const subtotal = fareSubtotal(departure, totalSeats) / 100;
     const discountAmount = Math.round(subtotal * (discountPercent / 100));
     const addOnsTotal = (input.addOns || []).reduce((acc, curr) => acc + curr.price * curr.quantity, 0);
     const tax = Math.round((subtotal - discountAmount + addOnsTotal) * 0.05 * 100) / 100; // 5% GST Alberta
@@ -124,23 +125,23 @@ let discountPercent = 0;
     const bookingReference = `VC-${new Date().getFullYear()}-${randSuffix}`;
     const voucherCode = `VOUCH-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
-    // Generate QR code data URL
-    const qrDataUrl = await QRCode.toDataURL(
-      JSON.stringify({
-        ref: bookingReference,
-        voucher: voucherCode,
-        guest: input.customerName,
-        seats: totalSeats,
-        departure: departure.date,
-      })
-    );
+// Generate signed check-in token for QR
+    const hmac = crypto.createHmac("sha256", process.env.JWT_SECRET || "super-secret");
+    hmac.update(bookingReference);
+    const signature = hmac.digest("hex");
+    
+    // Generate QR code data URL (points to admin check-in page)
+    const checkinUrl = `https://vistachase.com/admin/checkin?ref=${bookingReference}&sig=${signature}`;
+    const qrDataUrl = await QRCode.toDataURL(checkinUrl);
 
     // Create Booking
 
     const bokunProvider = getBokunOperationsProvider();
     
     // B5: Reserve in Bókun first
-    let bokunBookingId = "pending_sync";
+    // Set only once Bókun confirms the reservation; NULL until then (the column is unique, so a
+    // shared placeholder would block every booking after the first).
+    let bokunBookingId: string | null = null;
     if (departure.tour?.bokunId) {
       const departureDateStr = departure.date.toISOString().split("T")[0];
       const departureTimeStr = departure.departureTime.toISOString().split("T")[1].substring(0, 5);
@@ -259,8 +260,8 @@ let discountPercent = 0;
         qrCodeUrl: booking.qrCodeUrl,
       },
       tourTitle: departure.tour?.title || departure.shuttleRoute?.name || "Rockies Tour",
-      date: departure.date,
-      time: departure.departureTime,
+      date: formatDateOnly(departure.date),
+      time: formatTimeOfDay(departure.departureTime),
     };
   });
 
@@ -369,7 +370,7 @@ export async function cancelBooking(reference: string, customerEmail?: string) {
 
 // B6: Cancel in Bokun
     const bokunProvider = getBokunOperationsProvider();
-    if (booking.bokunBookingId && booking.bokunBookingId !== "pending_sync") {
+    if (booking.bokunBookingId) {
       await bokunProvider.cancelBooking(booking.bokunBookingId).catch(e => console.error("Bókun cancel error:", e));
     }
 
@@ -396,7 +397,7 @@ export async function cancelBooking(reference: string, customerEmail?: string) {
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #072019;">
           <h2 style="color: #991b1b;">Reservation Cancelled</h2>
-          <p>Your booking <strong>${booking.bookingReference}</strong> for <strong>${booking.tourDeparture.tour?.title || "Vista Chase Rockies Tour"}</strong> on ${booking.tourDeparture.date} has been cancelled under our 72-hour cancellation policy.</p>
+          <p>Your booking <strong>${booking.bookingReference}</strong> for <strong>${booking.tourDeparture.tour?.title || "Vista Chase Rockies Tour"}</strong> on ${formatDateOnly(booking.tourDeparture.date)} has been cancelled under our 72-hour cancellation policy.</p>
           <p>Bookings of 1–6 guests are refunded in full. For groups of 7 or more and multi-day trips, the 20% deposit is non-refundable and the rest is refunded. Approved refunds reach your original payment method within 5–10 business days.</p>
           <p>Questions? Email support@vistachase.com or call +1 (825) 734-9456 (6 a.m. – 9 p.m. Mountain Time).</p>
         </div>

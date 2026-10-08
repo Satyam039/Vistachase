@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import prisma from "@/lib/db/prisma";
+import { dateOnly, todayInMountainTime } from "@/lib/utils/time";
 
 export interface WhatsAppMessagePayload {
   toPhoneNumber: string;
@@ -344,12 +345,12 @@ export async function dispatchT60ScheduledBatch(): Promise<{
   dispatched: number;
   skipped: number;
 }> {
-  const today = new Date().toISOString().split("T")[0];
+  const today = todayInMountainTime();
 
-  // Find all confirmed departures for today
+  // Find all confirmed departures for today (Banff's operating day)
   const departures = await prisma.tourDeparture.findMany({
     where: {
-      date: today,
+      date: dateOnly(today),
       status: { not: "CANCELLED" },
     },
     include: {

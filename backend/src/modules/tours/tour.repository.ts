@@ -3,6 +3,7 @@ import prisma from "@/lib/db/prisma";
 import { PRODUCT_MAP } from "@/modules/bokun/product-map";
 import { videosFor, type PageVideo } from "@/modules/media/media.repository";
 import { getExpiredHeldSeats, liveCapacity } from "@/modules/reservations/reservation.repository";
+import { formatDateOnly, formatTimeOfDay } from "@/lib/utils/time";
 
 export interface TourFact {
   label: string;
@@ -152,9 +153,9 @@ function toTourDto(t: TourRow, expiredHeld: Map<string, number>): TourWithAvaila
     destination: t.destination,
     departures: t.departures.map((d) => ({
       id: d.id,
-      date: d.date.toISOString().split('T')[0],
-      departureTime: d.departureTime.toISOString(),
-      returnTime: d.returnTime ? d.returnTime.toISOString() : null,
+      date: formatDateOnly(d.date),
+      departureTime: formatTimeOfDay(d.departureTime),
+      returnTime: formatTimeOfDay(d.returnTime),
       capacityTotal: d.capacityTotal,
       capacityBooked: d.capacityBooked,
       // Strict capacity calculation: Total - (Booked + live Held)

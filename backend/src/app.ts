@@ -23,9 +23,12 @@ import operationsRoutes from "@/routes/operations.routes";
 import trackingRoutes from "@/routes/tracking.routes";
 import mediaRoutes from "@/routes/media.routes";
 import affiliatesRoutes from "@/routes/affiliates.routes";
+import { apiJsonReplacer } from "@/lib/utils/time";
 
 export function createApp() {
   const app = express();
+  // Departure dates and times leave the API as "YYYY-MM-DD" and "HH:MM" (lib/utils/time.ts).
+  app.set("json replacer", apiJsonReplacer);
 
   app.disable("x-powered-by");
   app.set("trust proxy", 1);

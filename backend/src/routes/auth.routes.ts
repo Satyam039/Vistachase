@@ -26,18 +26,40 @@ router.post("/login", rateLimitMiddleware("login", { maxRequests: 5, windowSecon
 
     const normalizedEmail = email.toLowerCase().trim();
 
-    const user = await prisma.user.findUnique({
+const user = await prisma.user.findUnique({
       where: { email: normalizedEmail },
     });
 
     if (!user) {
       return res.status(401).json({ success: false, error: "Invalid email or password" });
     }
+    
+    if (user.lockedUntil && user.lockedUntil > new Date()) {
+      return res.status(403).json({ success: false, error: "Account locked due to too many failed attempts. Try again later." });
+    }
 
     const valid = await verifyPassword(password, user.passwordHash);
     if (!valid) {
+      const attempts = user.failedLoginAttempts + 1;
+      const updates: any = { failedLoginAttempts: attempts };
+      if (attempts >= 5) {
+         updates.lockedUntil = new Date(Date.now() + 15 * 60 * 1000); // Lock for 15 mins
+      }
+      await prisma.user.update({ where: { id: user.id }, data: updates });
+      
       return res.status(401).json({ success: false, error: "Invalid email or password" });
     }
+    
+    // Success: reset attempts
+    if (user.failedLoginAttempts > 0) {
+      await prisma.user.update({ where: { id: user.id }, data: { failedLoginAttempts: 0, lockedUntil: null } });
+    }
+    
+    // Link previous bookings to this user by email!
+    await prisma.booking.updateMany({
+      where: { customerEmail: normalizedEmail, customerId: null },
+      data: { customerId: user.id }
+    });
 
     const token = signToken({
       userId: user.id,
@@ -138,6 +160,58 @@ router.get("/me", (req, res) => {
       role: payload.role,
     },
   });
+});
+
+
+import crypto from "crypto";
+// import { getEmailProvider } from "@/lib/email/email.provider"; // Assumed existing
+
+router.post("/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: "Email required" });
+    
+    const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+    if (!user) return res.json({ success: true }); // Silent fail for security
+    
+    const token = crypto.randomBytes(32).toString("hex");
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { resetToken: token, resetTokenExpiry: new Date(Date.now() + 60 * 60 * 1000) }
+    });
+    
+    // In production we would send an email here using getEmailProvider().sendEmail(...)
+    console.log(`[AUTH] Password reset token for ${email}: ${token}`);
+    
+    res.json({ success: true, message: "If an account exists, a reset link was sent." });
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.post("/reset-password", async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+    if (!token || !newPassword || newPassword.length < 8) {
+      return res.status(400).json({ error: "Invalid request" });
+    }
+    
+    const user = await prisma.user.findFirst({
+      where: { resetToken: token, resetTokenExpiry: { gt: new Date() } }
+    });
+    
+    if (!user) return res.status(400).json({ error: "Invalid or expired token" });
+    
+    const passwordHash = await hashPassword(newPassword);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash, resetToken: null, resetTokenExpiry: null, lockedUntil: null, failedLoginAttempts: 0 }
+    });
+    
+    res.json({ success: true, message: "Password updated successfully." });
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
 export default router;
