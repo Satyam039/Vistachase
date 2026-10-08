@@ -6,7 +6,7 @@
 //   → sticky sort bar with the result count → card grid → reassurance → guest reviews rail
 //   → FAQ (from the category's own tours) → other ways to explore
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -74,6 +74,7 @@ export function TourGallery({
   service,
   reviews = [],
   faqs = [],
+  signature,
 }: {
   heading: string;
   intro: string;
@@ -85,6 +86,8 @@ export function TourGallery({
   /** Real reviews of this category's tours (getCategoryExtras). */
   reviews?: CategoryReview[];
   faqs?: { question: string; answer: string }[];
+  /** Optional side-by-side of the category's signature days, shown above the full list. */
+  signature?: ReactNode;
 }) {
   const [sort, setSort] = useState<SortKey>("recommended");
 
@@ -231,6 +234,8 @@ export function TourGallery({
           </dl>
         </div>
       </section>
+
+      {signature}
 
       {/* Results */}
       <section
