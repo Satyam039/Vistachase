@@ -83,7 +83,7 @@ const LEGAL: FooterLink[] = [
   { label: "Terms", href: "/terms-and-conditions" },
   { label: "Privacy", href: "/privacy-policy" },
   { label: "Cancellation policy", href: "/cancellation-policy" },
-  { label: "Affiliates & Bókun agents", href: "/affiliates" },
+  { label: "Travel trade & agents", href: "/affiliates" },
   { label: "Staff portal", href: "/admin" },
 ];
 

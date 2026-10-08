@@ -17,7 +17,7 @@ import {
 export const metadata: Metadata = {
   title: "Affiliate & Travel Trade Partner Portal | Vista Chase",
   description:
-    "Official partner portal for travel agents, concierges, and wholesale tour operators. Bókun agent login, net rates, and guaranteed Moraine Lake commercial access.",
+    "Official partner portal for travel agents, concierges, and wholesale tour operators. Agent portal login, net rates, and guaranteed Moraine Lake commercial access.",
   alternates: {
     canonical: "/affiliates",
   },
@@ -44,26 +44,26 @@ export default function AffiliatesPage() {
             </h1>
             <p className="text-slate-300 text-base sm:text-lg leading-relaxed font-sans font-light">
               Elevate your guests&apos; Canadian Rockies itinerary. Access live wholesale availability,
-              instant Bókun agent booking holds, and guaranteed commercial access to Moraine Lake and Lake Louise.
+              instant agent booking holds, and guaranteed commercial access to Moraine Lake and Lake Louise.
             </p>
           </div>
         </div>
       </section>
 
-      {/* 02. BÓKUN AGENT ACCESS BOX & DIRECT LOGIN */}
+      {/* 02. AGENT PORTAL ACCESS & DIRECT LOGIN (the portal runs on the booking backend; customers only see Vista Chase) */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-12 -mt-8 relative z-10">
         <div className="p-8 sm:p-10 rounded-3xl bg-white border border-slate-200/90 shadow-2xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           <div className="lg:col-span-8 space-y-3">
             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-ocean-600">
               <Lock className="w-4 h-4" />
-              <span>Bókun Verified System of Record</span>
+              <span>Vista Chase Agent Portal</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-serif font-medium text-obsidian-900">
               Registered Partner &amp; Agent Login
             </h2>
             <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
-              If your agency or hotel concierge desk holds active credentials, log in directly via the
-              Bókun Agent Booking Portal to reserve private SUVs and small-group seats at your contracted commission rate.
+              If your agency or hotel concierge desk holds active credentials, log in directly to the
+              Vista Chase agent portal to reserve private SUVs and small-group seats at your contracted commission rate.
             </p>
             <div className="flex flex-wrap items-center gap-4 pt-2 text-xs text-slate-500">
               <span className="flex items-center gap-1.5">
@@ -85,11 +85,11 @@ export default function AffiliatesPage() {
               rel="noopener noreferrer"
               className="w-full py-4 px-6 rounded-xl golden-summit-btn text-obsidian-900 text-sm font-semibold uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg text-center"
             >
-              <span>Access Bókun Portal</span>
+              <span>Open agent portal</span>
               <ExternalLink className="w-4 h-4" />
             </a>
             <span className="text-[11px] text-center text-slate-400">
-              Powered by TripAdvisor Bókun Agent Network
+              Opens our secure booking system in a new tab
             </span>
           </div>
         </div>
@@ -152,7 +152,7 @@ export default function AffiliatesPage() {
               guaranteed group holds, and branded reporting.
             </p>
             <ul className="text-xs text-slate-700 space-y-2 pt-2 border-t border-slate-100">
-              <li>• Bókun API &amp; Channel Manager</li>
+              <li>• API &amp; channel manager connections</li>
               <li>• High-capacity Sprinter fleet</li>
               <li>• Full liability insurance &amp; park permits</li>
             </ul>
@@ -168,11 +168,11 @@ export default function AffiliatesPage() {
               Apply For Partnership
             </span>
             <h2 className="text-3xl sm:text-4xl font-serif font-light text-white">
-              Request Bókun Agent Credentials
+              Request Agent Portal Access
             </h2>
             <p className="text-slate-300 text-sm sm:text-base">
               Fill in your agency details. Our partnerships team will review your application and issue
-              your Bókun booking engine access within 24 business hours.
+              your agent portal access within 24 business hours.
             </p>
           </div>
 
