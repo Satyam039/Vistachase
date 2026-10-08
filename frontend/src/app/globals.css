@@ -69,6 +69,43 @@
 .vc-scrim-tall { height: 62%; }
 .vc-scrim-full { height: 78%; }
 
+/* Site menu (components/layout/SiteMenu.tsx): dark panel from the left, the page behind dimmed
+   and lightly blurred so it stays recognisable. data-closing plays the exit before close(). */
+.vc-menu {
+  margin: 0;
+  padding: 0;
+  max-width: none;
+  max-height: none;
+  height: 100dvh;
+  border: 0;
+  background: transparent;
+  overflow: visible;
+}
+.vc-menu::backdrop {
+  background: rgb(10 14 16 / 0.55);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  animation: vcMenuFade 420ms ease-out both;
+}
+.vc-menu-panel {
+  box-shadow: 30px 0 80px -40px rgb(0 0 0 / 0.6);
+  animation: vcMenuIn 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.vc-menu-item {
+  animation: vcMenuItem 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(120ms + var(--i, 0) * 45ms);
+}
+.vc-menu-links { animation: vcMenuFade 360ms ease-out both; }
+.vc-menu[data-closing]::backdrop { animation: vcMenuFade 320ms ease-in reverse both; }
+.vc-menu[data-closing] .vc-menu-panel { animation: vcMenuOut 320ms cubic-bezier(0.55, 0, 0.75, 0.2) both; }
+@keyframes vcMenuFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes vcMenuIn { from { opacity: 0; transform: translateX(-32px); } to { opacity: 1; transform: none; } }
+@keyframes vcMenuOut { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateX(-32px); } }
+@keyframes vcMenuItem { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .vc-menu::backdrop, .vc-menu-panel, .vc-menu-item, .vc-menu-links, .vc-menu[data-closing] .vc-menu-panel { animation: none; }
+}
+
 /* Dropdown panel (components/forms/Dropdown.tsx). */
 @keyframes vcDropIn {
   from { opacity: 0; transform: translateY(-4px) scale(0.98); }
