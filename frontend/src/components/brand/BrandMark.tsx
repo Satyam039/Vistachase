@@ -1,51 +1,36 @@
 import Image from "next/image";
 
 /**
- * Vista Chase horse-and-rider logo. Files are served by the backend (backend/media/brand, at /media).
- * A logo is a brand asset, so it keeps its own ink instead of theme tokens.
- * The source PNGs are small (213px wide); swap in the vector master when the brand team sends it.
+ * Vista Chase horse-and-rider emblem, cropped tight from the official vector master (backend/media/
+ * brand/horse-emblem-vector-*.svg are the full lockup on a 2000px square: emblem, name and tagline).
+ * emblem-*.svg keep only the four horse-and-rider paths, so nothing of the lettering shows at small
+ * sizes. A logo is a brand asset, so it keeps its own ink instead of theme tokens.
  *
+ * `size` is the height; the emblem is 1.2× as wide as it is tall.
  * variant:
- *   default  the horse-and-rider mark on its own, for the nav bar next to the "Vista Chase" heading
- *   white    full lockup in white, for dark surfaces
- *   emblem   square horse emblem
+ *   default / dark  ink (#1C1F23) for light surfaces
+ *   white           for dark surfaces
+ *   emblem / gold   Golden Summit
  */
-export function BrandMark({ size = 36, variant = "default" }: { size?: number; variant?: "default" | "white" | "emblem" | "dark" }) {
-  if (variant === "white") {
-    return (
-      <Image
-        src="/media/brand/horse-emblem-vector-white.svg"
-        alt="Vista Chase Luxury Canadian Rockies Tours"
-        width={size}
-        height={size}
-        className="object-contain w-auto"
-        priority
-      />
-    );
-  }
+const EMBLEM_RATIO = 726 / 603;
+const EMBLEM_SRC = {
+  default: "/media/brand/emblem-ink.svg",
+  dark: "/media/brand/emblem-ink.svg",
+  white: "/media/brand/emblem-white.svg",
+  emblem: "/media/brand/emblem-gold.svg",
+  gold: "/media/brand/emblem-gold.svg",
+} as const;
 
-  if (variant === "dark") {
-    return (
-      <Image
-        src="/media/brand/horse-emblem-vector-dark.svg"
-        alt="Vista Chase Luxury Canadian Rockies Tours"
-        width={size}
-        height={size}
-        className="object-contain w-auto"
-        priority
-      />
-    );
-  }
-
-  // Default & emblem: Official Master Gold Horse Vector
+export function BrandMark({ size = 36, variant = "default" }: { size?: number; variant?: keyof typeof EMBLEM_SRC }) {
   return (
     <Image
-      src="/media/brand/horse-emblem-vector-gold.svg"
-      alt="Vista Chase Canadian Rockies"
-      width={size}
+      src={EMBLEM_SRC[variant]}
+      alt=""
+      width={Math.round(size * EMBLEM_RATIO)}
       height={size}
-      className="object-contain drop-shadow-sm"
+      className="shrink-0 object-contain"
       priority
+      unoptimized
     />
   );
 }

@@ -85,22 +85,18 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
             heading={
               <>
                 <SiteMenu />
-                {/* Centred brand. Not in TopNav's centerContent: Astryx hides that slot on narrow
-                  screens; phones show just the mark so it never meets the Menu button. */}
+                {/* Centred brand: emblem + name only. Not in TopNav's centerContent: Astryx hides
+                  that slot on narrow screens. Phones fit the name because the Menu button is
+                  icon-only there (SiteMenu). */}
                 <Link
                   href="/"
+                  aria-label="Vista Chase home"
                   className="absolute left-1/2 top-1/2 inline-flex -translate-x-1/2 -translate-y-1/2 items-center gap-2.5 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ocean-600"
                 >
-                  <BrandMark size={34} />
-                  <span className="hidden flex-col leading-tight sm:flex">
-                    <span className="text-lg text-obsidian-900">
-                      Vista Chase
-                    </span>
-                    <span className="text-xs text-slate-600">
-                      Canadian Rockies · Banff
-                    </span>
+                  <BrandMark size={30} />
+                  <span className="whitespace-nowrap text-lg tracking-[0.02em] text-obsidian-900 sm:text-xl">
+                    Vista Chase
                   </span>
-                  <span className="sr-only sm:hidden">Vista Chase home</span>
                 </Link>
               </>
             }
