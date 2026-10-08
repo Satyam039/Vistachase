@@ -1,4 +1,5 @@
 import "server-only";
+import { unstable_rethrow } from "next/navigation";
 
 // Server-side calls from React Server Components go straight to the backend.
 // Browser calls use relative /api/* paths, which next.config.mjs rewrites to the backend.
@@ -33,6 +34,9 @@ export async function apiGet<T>(path: string, params?: Record<string, string | u
     }
     return (await res.json()) as T;
   } catch (error) {
+    // Next.js signals "render this page per request" (live prices and seats) by throwing from
+    // fetch during the build; let that through instead of treating it as the backend being down.
+    unstable_rethrow(error);
     if (error instanceof ApiError) throw error;
     // Catch fetch/timeout/network errors gracefully
     throw new ApiError(503, (error as Error).message || "Backend service unavailable");
@@ -44,6 +48,7 @@ export async function apiGetOrNull<T>(path: string, params?: Record<string, stri
   try {
     return await apiGet<T>(path, params, headers);
   } catch (error) {
+    unstable_rethrow(error);
     if (error instanceof ApiError && (error.status === 404 || error.status === 503)) return null;
     return null;
   }

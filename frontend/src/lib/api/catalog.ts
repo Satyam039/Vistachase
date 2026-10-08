@@ -1,3 +1,4 @@
+import { unstable_rethrow } from "next/navigation";
 import { apiGet, apiGetOrNull } from "@/lib/api/server";
 import {
   FALLBACK_TOURS,
@@ -35,6 +36,7 @@ export async function getTours(options?: {
     });
     if (data?.tours && (data.tours.length > 0 || !fallbackAllowed())) return data.tours;
   } catch (err) {
+    unstable_rethrow(err); // Next.js "render per request" signal, not an outage
     console.warn("[Catalog] Backend unavailable, serving authoritative fallback catalog");
     if (!fallbackAllowed()) throw new Error("Backend unavailable");
 }
@@ -53,6 +55,7 @@ export async function getTourBySlug(slug: string): Promise<TourWithAvailability 
     const data = await apiGetOrNull<{ tour: TourWithAvailability }>(`/api/tours/${encodeURIComponent(slug)}`);
     if (data?.tour) return data.tour;
   } catch (err) {
+    unstable_rethrow(err); // Next.js "render per request" signal, not an outage
     console.warn(`[Catalog] Backend unavailable for slug ${slug}, serving authoritative fallback`);
     if (!fallbackAllowed()) throw new Error("Backend unavailable");
 }
@@ -67,6 +70,7 @@ export async function getShuttleRoutes(): Promise<ShuttleWithDepartures[]> {
     const data = await apiGet<{ routes: ShuttleWithDepartures[] }>("/api/shuttles");
     if (data?.routes && (data.routes.length > 0 || !fallbackAllowed())) return data.routes;
   } catch (err) {
+    unstable_rethrow(err); // Next.js "render per request" signal, not an outage
     console.warn("[Catalog] Backend unavailable for shuttles, serving authoritative fallback");
     if (!fallbackAllowed()) throw new Error("Backend unavailable");
 }
@@ -79,6 +83,7 @@ export async function getDestinations(): Promise<DestinationSummary[]> {
     const data = await apiGet<{ destinations: DestinationSummary[] }>("/api/destinations");
     if (data?.destinations && (data.destinations.length > 0 || !fallbackAllowed())) return data.destinations;
   } catch (err) {
+    unstable_rethrow(err); // Next.js "render per request" signal, not an outage
     console.warn("[Catalog] Backend unavailable for destinations, serving authoritative fallback");
     if (!fallbackAllowed()) throw new Error("Backend unavailable");
 }
@@ -93,6 +98,7 @@ export async function getDestinationBySlug(slug: string): Promise<DestinationDet
     );
     if (data?.destination) return data.destination;
   } catch (err) {
+    unstable_rethrow(err); // Next.js "render per request" signal, not an outage
     console.warn(`[Catalog] Backend unavailable for destination ${slug}, serving authoritative fallback`);
     if (!fallbackAllowed()) throw new Error("Backend unavailable");
 }
@@ -138,6 +144,7 @@ export async function getCheckoutData(departureId?: string): Promise<CheckoutDat
     const data = await apiGetOrNull<CheckoutData>("/api/departures/checkout", { departureId });
     if (data) return data;
   } catch (err) {
+    unstable_rethrow(err); // Next.js "render per request" signal, not an outage
     console.warn("[Catalog] Backend unavailable for checkout, serving authoritative fallback");
     if (!fallbackAllowed()) throw new Error("Backend unavailable");
 }
@@ -220,7 +227,10 @@ export interface CategoryReview {
 export async function getCategoryExtras(tours: TourWithAvailability[]) {
   const lists = await Promise.all(
     tours.map(async (t) => {
-      const data = await apiGetOrNull<{ reviews: Omit<CategoryReview, "tourTitle" | "tourSlug">[] }>("/api/reviews", { tourId: t.id }).catch(() => null);
+      const data = await apiGetOrNull<{ reviews: Omit<CategoryReview, "tourTitle" | "tourSlug">[] }>("/api/reviews", { tourId: t.id }).catch((e) => {
+        unstable_rethrow(e);
+        return null;
+      });
       return (data?.reviews ?? []).map((r) => ({ ...r, tourTitle: t.title, tourSlug: t.slug }));
     }),
   );
