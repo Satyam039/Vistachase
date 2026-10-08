@@ -139,7 +139,9 @@ let discountPercent = 0;
     const bokunProvider = getBokunOperationsProvider();
     
     // B5: Reserve in Bókun first
-    let bokunBookingId = "pending_sync";
+    // Set only once Bókun confirms the reservation; NULL until then (the column is unique, so a
+    // shared placeholder would block every booking after the first).
+    let bokunBookingId: string | null = null;
     if (departure.tour?.bokunId) {
       const departureDateStr = departure.date.toISOString().split("T")[0];
       const departureTimeStr = departure.departureTime.toISOString().split("T")[1].substring(0, 5);
@@ -368,7 +370,7 @@ export async function cancelBooking(reference: string, customerEmail?: string) {
 
 // B6: Cancel in Bokun
     const bokunProvider = getBokunOperationsProvider();
-    if (booking.bokunBookingId && booking.bokunBookingId !== "pending_sync") {
+    if (booking.bokunBookingId) {
       await bokunProvider.cancelBooking(booking.bokunBookingId).catch(e => console.error("Bókun cancel error:", e));
     }
 
