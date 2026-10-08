@@ -67,6 +67,12 @@ router.post("/register", async (req, res) => {
     if (!name || !email || !password) {
       return res.status(400).json({ success: false, error: "Name, email, and password are required" });
     }
+    if (typeof password !== "string" || password.length < 8) {
+      return res.status(400).json({ success: false, error: "Use a password of at least 8 characters" });
+    }
+    if (typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      return res.status(400).json({ success: false, error: "Enter a valid email address" });
+    }
 
     const normalizedEmail = email.toLowerCase().trim();
 

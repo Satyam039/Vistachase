@@ -16,7 +16,7 @@ interface RailProps {
   tone?: "light" | "dark";
 }
 
-export function Rail({ label, children, itemClassName = "w-[82%] sm:w-[46%] lg:w-[31%] xl:w-[23.5%]", tone = "light" }: RailProps) {
+export function Rail({ label, children, itemClassName = "w-[80vw] max-w-[22rem] sm:w-[21rem] xl:w-[18.25rem]", tone = "light" }: RailProps) {
   const ref = useRef<HTMLUListElement>(null);
   const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(false);
@@ -75,7 +75,12 @@ export function Rail({ label, children, itemClassName = "w-[82%] sm:w-[46%] lg:w
         ref={ref}
         onScroll={update}
         aria-label={label}
-        className="vc-rail -mx-page flex gap-5 overflow-x-auto px-page pb-4 scroll-px-page"
+        // Focusable so keyboard users can scroll it even when the cards hold no links. overflow-x
+        // also clips vertically, so pt/pb leave room for the cards' hover lift and shadow and the
+        // negative margins hand that space back to the section. It starts on the page margin and
+        // bleeds to the window's right edge (the last card still stops on the container edge).
+        tabIndex={0}
+        className="vc-rail -mb-10 -ml-page -mt-4 mr-[calc(50%-50vw)] flex gap-5 overflow-x-auto pb-14 pl-page pr-[max(var(--vc-page-margin-x),calc(50vw-50%))] pt-4 scroll-pl-page focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ocean-600"
         data-stagger
       >
         {Children.map(children, (child) => (

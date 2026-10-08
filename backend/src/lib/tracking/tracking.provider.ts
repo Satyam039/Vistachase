@@ -48,7 +48,10 @@ export interface TrackingTelemetry {
 }
 
 export interface ILiveTrackingProvider {
+  /** Public: only a live tracking-session token or a booking's unexpired tracking token opens tracking. */
   getTrackingTelemetry(trackingToken: string): Promise<TrackingTelemetry | null>;
+  /** Internal: for a booking whose owner the caller has already verified (e.g. concierge email check). */
+  getTelemetryForVerifiedBooking(bookingReference: string): Promise<TrackingTelemetry | null>;
   pushGpsPing?(vehicleId: string, coords: VehicleCoordinates): Promise<void>;
 }
 
@@ -72,12 +75,21 @@ const ROCKIES_CORRIDOR_WAYPOINTS = [
 
 export class MockLiveTrackingProvider implements ILiveTrackingProvider {
   async getTrackingTelemetry(trackingToken: string): Promise<TrackingTelemetry | null> {
+    return this.load(trackingToken);
+  }
+
+  async getTelemetryForVerifiedBooking(bookingReference: string): Promise<TrackingTelemetry | null> {
+    return this.load(null, bookingReference);
+  }
+
+  private async load(trackingToken: string | null, verifiedReference?: string): Promise<TrackingTelemetry | null> {
     // 1. Look up tracking session or booking directly
     let booking: any = null;
     let run: any = null;
 
     // Check tracking session first
-    const session = await prisma.trackingSession.findUnique({
+    const session = trackingToken
+      ? await prisma.trackingSession.findUnique({
       where: { token: trackingToken },
       include: {
         run: {
@@ -108,7 +120,8 @@ export class MockLiveTrackingProvider implements ILiveTrackingProvider {
           },
         },
       },
-    });
+    })
+      : null;
 
     if (session && session.isActive && session.expiresAt > new Date()) {
       run = session.run;
@@ -118,16 +131,14 @@ export class MockLiveTrackingProvider implements ILiveTrackingProvider {
       }
     }
 
-    // Fallback: look up by booking trackingToken or bookingReference
-    if (!booking) {
+    // Otherwise the booking's own tracking token (never its reference or id: references are
+    // printed on vouchers and emails, so they must not open live location), or a booking the caller
+    // has already verified.
+    if (!booking && (trackingToken || verifiedReference)) {
       booking = await prisma.booking.findFirst({
-        where: {
-          OR: [
-            { trackingToken },
-            { bookingReference: trackingToken },
-            { id: trackingToken },
-          ],
-        },
+        where: verifiedReference
+          ? { bookingReference: verifiedReference }
+          : { trackingToken, OR: [{ trackingTokenExpiresAt: null }, { trackingTokenExpiresAt: { gt: new Date() } }] },
         include: {
           tourDeparture: {
             include: {
@@ -245,7 +256,7 @@ export class MockLiveTrackingProvider implements ILiveTrackingProvider {
     ];
 
     return {
-      sessionToken: trackingToken,
+      sessionToken: trackingToken ?? booking.trackingToken ?? "",
       bookingReference: booking.bookingReference,
       customerName: booking.customerName,
       tourName: tourTitle,

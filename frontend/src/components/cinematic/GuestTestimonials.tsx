@@ -89,7 +89,7 @@ export function GuestTestimonials() {
           </a>
         </div>
 
-        <Rail label="Guest reviews" tone="dark" itemClassName="w-[85%] sm:w-[60%] lg:w-[48%]">
+        <Rail label="Guest reviews" tone="dark" itemClassName="w-[84vw] max-w-[28rem] sm:w-[26rem]">
           {TESTIMONIALS.map((t) => (
             <figure key={t.author} className="flex h-full flex-col rounded-[1.75rem] border border-white/10 bg-white/[0.05] p-7 sm:p-8">
               <div className="flex items-center justify-between">

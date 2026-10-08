@@ -1,30 +1,14 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+// Operations (Mornby runs): KPI cards, every vehicle run of the day with its real departure,
+// vehicle, driver and status, and a run manifest dialog for pickup order and check-in. Brand light
+// surface with the shared staff header and tabs.
+
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import {
-  Truck,
-  Users,
-  Calendar,
-  Clock,
-  MapPin,
-  CheckCircle2,
-  AlertCircle,
-  RefreshCw,
-  ChevronRight,
-  ShieldCheck,
-  ArrowRight,
-  Compass,
-  Sparkles,
-  Phone,
-  MessageSquare,
-  Play,
-  Navigation,
-  ExternalLink,
-  Sliders,
-  Check,
-  X,
-} from "lucide-react";
+import { CheckCircle2, Circle, Compass, ExternalLink, MapPin, Navigation, Phone, RefreshCw, Sliders, X } from "lucide-react";
+import { Dropdown } from "@/components/forms/Dropdown";
+import { AdminHeader, StaffSignIn } from "@/components/admin/AdminHeader";
 
 interface FleetVehicle {
   id: string;
@@ -59,11 +43,7 @@ interface RunPassenger {
     specialRequests?: string;
     voucherCode: string;
     trackingToken?: string;
-    pickupStop?: {
-      name: string;
-      town: string;
-      address: string;
-    };
+    pickupStop?: { name: string; town: string; address: string };
   };
 }
 
@@ -76,10 +56,7 @@ interface OperationRunItem {
   notes?: string;
   vehicle?: FleetVehicle;
   driver?: StaffDriver;
-  trackingSession?: {
-    token: string;
-    isActive: boolean;
-  };
+  trackingSession?: { token: string; isActive: boolean };
   bookings: RunPassenger[];
 }
 
@@ -90,533 +67,419 @@ interface DepartureItem {
   capacityTotal: number;
   capacityBooked: number;
   status: string;
-  tour?: {
-    title: string;
-    bokunId?: string;
-  };
-  shuttleRoute?: {
-    name: string;
-  };
+  tour?: { title: string; bokunId?: string };
+  shuttleRoute?: { name: string };
   operationRuns: OperationRunItem[];
 }
 
+interface Stats {
+  totalRuns: number;
+  totalPassengers: number;
+  boardedPassengers: number;
+  totalDepartures: number;
+}
+
 const RUN_STATUSES = [
-  { value: "PLANNED", label: "Planned", color: "bg-slate-800 text-slate-300 border-slate-700" },
-  { value: "READY", label: "Ready", color: "bg-blue-950 text-blue-300 border-blue-800" },
-  { value: "DISPATCHED", label: "Dispatched", color: "bg-amber-950 text-amber-300 border-amber-800" },
-  { value: "BOARDING", label: "Boarding", color: "bg-purple-950 text-purple-300 border-purple-800" },
-  { value: "IN_PROGRESS", label: "In Progress", color: "bg-emerald-950 text-emerald-300 border-emerald-800" },
-  { value: "COMPLETED", label: "Completed", color: "bg-slate-900 text-slate-400 border-slate-800" },
-  { value: "DELAYED", label: "Delayed", color: "bg-rose-950 text-rose-300 border-rose-800" },
+  { value: "PLANNED", label: "Planned", tone: "!bg-obsidian-100 !text-obsidian-900" },
+  { value: "READY", label: "Ready", tone: "!bg-ocean-50 !text-ocean-800" },
+  { value: "DISPATCHED", label: "Dispatched", tone: "!bg-summit-100 !text-obsidian-900" },
+  { value: "BOARDING", label: "Boarding", tone: "!bg-summit-200 !text-obsidian-900" },
+  { value: "IN_PROGRESS", label: "In progress", tone: "!bg-ocean-600 !text-white" },
+  { value: "COMPLETED", label: "Completed", tone: "!bg-obsidian-900 !text-white" },
+  { value: "DELAYED", label: "Delayed", tone: "!bg-red-50 !text-red-800" },
 ];
 
-export default function MornbyOperationsPage() {
-  const [selectedDate, setSelectedDate] = useState<string>(() => new Date().toISOString().split("T")[0]);
+const pad = (n: number) => String(n).padStart(2, "0");
+const todayKey = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+const seats = (list: RunPassenger[]) => list.reduce((s, b) => s + b.booking.totalSeats, 0);
+
+export default function OperationsPage() {
+  const [selectedDate, setSelectedDate] = useState(todayKey);
   const [departures, setDepartures] = useState<DepartureItem[]>([]);
   const [fleet, setFleet] = useState<FleetVehicle[]>([]);
-  const [drivers, setDrivers] = useState<StaffDriver[]>([]);
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [unauthorized, setUnauthorized] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedRun, setSelectedRun] = useState<OperationRunItem | null>(null);
-  const [isSyncingBokun, setIsSyncingBokun] = useState(false);
-  const [syncFeedback, setSyncFeedback] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
   const [updatingRunId, setUpdatingRunId] = useState<string | null>(null);
+  const dialog = useRef<HTMLDialogElement>(null);
 
   const fetchDashboard = useCallback(async (date: string) => {
     setLoading(true);
     setError(null);
     try {
       const res = await fetch(`/api/operations/dashboard?date=${date}`);
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        setError(data.error || "Failed to load Mornby operations dashboard.");
-      } else {
-        setDepartures(data.departures || []);
-        setFleet(data.fleet || []);
-        setDrivers(data.drivers || []);
-        setStats(data.stats || null);
-
-        // If a run is open in modal, refresh its view
-        if (selectedRun) {
-          for (const dep of data.departures || []) {
-            const found = (dep.operationRuns || []).find((r: any) => r.id === selectedRun.id);
-            if (found) setSelectedRun(found);
-          }
-        }
+      if (res.status === 401 || res.status === 403) {
+        setUnauthorized(true);
+        return;
       }
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error);
+      setUnauthorized(false);
+      setDepartures(data.departures || []);
+      setFleet(data.fleet || []);
+      setStats(data.stats || null);
     } catch {
-      setError("Network connection error reaching Operations API.");
+      setError("Couldn't load operations. Try again in a moment.");
     } finally {
       setLoading(false);
     }
-  }, [selectedRun]);
+  }, []);
 
   useEffect(() => {
-    fetchDashboard(selectedDate);
-  }, [selectedDate]);
+    void fetchDashboard(selectedDate);
+  }, [selectedDate, fetchDashboard]);
 
-  async function handleSyncBokun() {
-    setIsSyncingBokun(true);
-    setSyncFeedback(null);
+  // Each run with the departure it belongs to (real tour title, Bokun id and capacity).
+  const runs = departures.flatMap((d) => d.operationRuns.map((run) => ({ run, dep: d })));
+  const selected = runs.find((r) => r.run.id === selectedRunId) ?? null;
+
+  useEffect(() => {
+    const el = dialog.current;
+    if (!el) return;
+    if (selected && !el.open) el.showModal();
+    if (!selected && el.open) el.close();
+  }, [selected]);
+
+  async function post(url: string, body?: unknown) {
+    const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+    if (!res.ok) throw new Error();
+    await fetchDashboard(selectedDate);
+  }
+
+  async function syncBokun() {
+    setSyncing(true);
+    setNotice(null);
     try {
-      const res = await fetch("/api/operations/sync-bokun", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ date: selectedDate }),
-      });
+      const res = await fetch("/api/operations/sync-bokun", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ date: selectedDate }) });
       const data = await res.json();
-      if (data.success) {
-        setSyncFeedback(`Synced ${data.result.syncedCount} new, ${data.result.updatedCount} updated bookings from Bókun.`);
-        await fetchDashboard(selectedDate);
-      } else {
-        setSyncFeedback(data.error || "Bókun sync failed.");
-      }
+      setNotice(data.success ? `Synced ${data.result.syncedCount} new and ${data.result.updatedCount} updated bookings from Bókun.` : data.error || "Bókun sync failed.");
+      if (data.success) await fetchDashboard(selectedDate);
     } catch {
-      setSyncFeedback("Failed to trigger Bókun synchronization.");
+      setNotice("Couldn't reach Bókun. Try again.");
     } finally {
-      setIsSyncingBokun(false);
-      setTimeout(() => setSyncFeedback(null), 6000);
+      setSyncing(false);
     }
   }
 
-  async function handleStatusChange(runId: string, newStatus: string) {
+  async function changeStatus(runId: string, status: string) {
     setUpdatingRunId(runId);
     try {
-      const res = await fetch(`/api/operations/runs/${runId}/status`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
-      });
-      if (res.ok) {
-        await fetchDashboard(selectedDate);
-      }
-    } catch (err) {
-      console.error("Status update error:", err);
+      await post(`/api/operations/runs/${runId}/status`, { status });
+    } catch {
+      setError("Couldn't update the run status.");
     } finally {
       setUpdatingRunId(null);
     }
   }
 
-  async function handleToggleBoarding(runBookingId: string, currentStatus: boolean) {
-    try {
-      const res = await fetch("/api/operations/runs/check-in", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ runBookingId, isBoarded: !currentStatus }),
-      });
-      if (res.ok) {
-        await fetchDashboard(selectedDate);
-      }
-    } catch (err) {
-      console.error("Boarding check-in error:", err);
-    }
-  }
-
-  async function handleOptimizePickups(runId: string) {
-    try {
-      const res = await fetch(`/api/operations/runs/${runId}/optimize-pickups`, {
-        method: "POST",
-      });
-      if (res.ok) {
-        await fetchDashboard(selectedDate);
-      }
-    } catch (err) {
-      console.error("Optimize pickups error:", err);
-    }
-  }
-
-  const allRuns = departures.flatMap((d) => d.operationRuns);
+  const kpis = stats
+    ? [
+        { label: "Vehicle runs", value: String(stats.totalRuns) },
+        { label: "Guests boarded", value: `${stats.boardedPassengers} / ${stats.totalPassengers}` },
+        { label: "Fleet deployed", value: `${fleet.filter((v) => v.status === "ASSIGNED").length} / ${fleet.length}` },
+        { label: "Departures", value: String(stats.totalDepartures) },
+      ]
+    : [];
 
   return (
-    <div className="min-h-screen bg-ocean-950 text-slate-100 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-
-        {/* Top Operational Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between pb-6 border-b border-forest-800/80 gap-4">
-          <div>
-            <div className="flex items-center gap-2 text-gold-400 text-xs font-semibold tracking-wider uppercase mb-1">
-              <ShieldCheck className="w-4 h-4" />
-              <span>Mornby Daily Operations &amp; Dispatch • Vista Chase</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-serif font-bold text-white tracking-tight">
-              Canmore Fleet &amp; Dispatch Center
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-400 mt-1">
-              Run grouping, vehicle telemetry, driver rosters, and pickup routing synchronized with Bókun.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Date Switcher */}
-            <div className="flex items-center gap-2 bg-ocean-900 px-3 py-1.5 rounded-xl border border-forest-700/60 text-xs">
-              <Calendar className="w-3.5 h-3.5 text-gold-400" />
-              <input
-                type="date"
-                aria-label="Operations date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="bg-transparent text-white font-mono text-xs rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-summit-500"
-              />
-            </div>
-
-            {/* Sync Bókun CTA */}
+    <div className="min-h-screen bg-obsidian-50 text-obsidian-900">
+      <AdminHeader
+        current="/admin/operations"
+        eyebrow="Staff · Operations"
+        title="Fleet & runs"
+        subtitle="Vehicle runs, drivers and pickup order, synced with Bókun."
+        actions={
+          <>
+            <label htmlFor="ops-date" className="sr-only">
+              Operations date
+            </label>
+            <input
+              id="ops-date"
+              type="date"
+              value={selectedDate}
+              onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
+              className="h-11 rounded-full border border-obsidian-900/15 bg-white px-4 text-sm text-obsidian-900 focus:border-ocean-600 focus:outline-none focus:ring-2 focus:ring-ocean-600/30"
+            />
             <button
-              onClick={handleSyncBokun}
-              disabled={isSyncingBokun}
-              className="px-4 py-2 rounded-xl bg-gold-500 hover:bg-gold-400 text-forest-950 font-bold text-xs flex items-center gap-2 transition-colors shadow-glow"
+              type="button"
+              onClick={() => fetchDashboard(selectedDate)}
+              aria-label="Refresh"
+              disabled={loading}
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-obsidian-900/15 bg-white hover:bg-obsidian-50 disabled:opacity-60"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isSyncingBokun ? "animate-spin" : ""}`} />
-              <span>{isSyncingBokun ? "Syncing Bókun..." : "Sync Bókun"}</span>
+              <RefreshCw className={`h-4 w-4 ${loading ? "motion-safe:animate-spin" : ""}`} aria-hidden="true" />
             </button>
+            <button type="button" onClick={syncBokun} disabled={syncing} className="golden-summit-btn inline-flex h-11 items-center gap-2 rounded-full px-5 text-sm disabled:opacity-60">
+              <RefreshCw className={`h-4 w-4 ${syncing ? "motion-safe:animate-spin" : ""}`} aria-hidden="true" />
+              {syncing ? "Syncing…" : "Sync Bókun"}
+            </button>
+          </>
+        }
+      />
 
-            <Link
-              href="/admin"
-              className="px-3.5 py-2 rounded-xl bg-forest-900 hover:bg-forest-800 border border-forest-700/60 text-slate-300 text-xs font-semibold"
-            >
-              Admin Metrics
-            </Link>
-          </div>
-        </div>
-
-        {/* Sync Feedback Toast */}
-        {syncFeedback && (
-          <div className="p-3 rounded-xl bg-emerald-950/80 border border-emerald-500/40 text-emerald-200 text-xs flex items-center gap-2">
-            <Check className="w-4 h-4 text-emerald-400" />
-            <span>{syncFeedback}</span>
-          </div>
-        )}
-
-        {/* Error Banner */}
+      <div className="mx-auto max-w-7xl space-y-6 px-page py-8 sm:py-10">
+        {unauthorized && !loading && <StaffSignIn body="Sign in with an admin or dispatch account to manage runs." />}
         {error && (
-          <div className="p-4 rounded-xl bg-rose-950/80 border border-rose-500/40 text-rose-200 text-xs flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-            <span>{error}</span>
-          </div>
+          <p role="alert" className="rounded-2xl bg-red-50 px-5 py-4 text-sm text-red-800 ring-1 ring-red-200">
+            {error}
+          </p>
         )}
+        <p aria-live="polite" className={notice ? "rounded-2xl bg-ocean-50 px-5 py-3 text-sm text-ocean-800" : "sr-only"}>
+          {notice}
+        </p>
 
-        {/* KPI Metrics Strip */}
-        {stats && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="bg-ocean-900 p-4 rounded-2xl border border-forest-800/80 shadow-lg">
-              <span className="text-xs uppercase tracking-widest text-slate-400 font-bold block">
-                Active Vehicle Runs
-              </span>
-              <p className="text-2xl font-serif font-bold text-white mt-1">
-                {stats.totalRuns} <span className="text-xs font-sans text-slate-400 font-normal">Runs</span>
-              </p>
-            </div>
+        {!unauthorized && (
+          <>
+            <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Key figures">
+              {(kpis.length ? kpis : [0, 1, 2, 3].map((i) => ({ label: String(i), value: "" }))).map((k, i) => (
+                <li key={k.label + i} className="rounded-[1.5rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07]">
+                  {kpis.length ? (
+                    <>
+                      <p className="text-sm text-slate-600">{k.label}</p>
+                      <p className="mt-2 text-3xl font-light tabular-nums text-obsidian-900">{k.value}</p>
+                    </>
+                  ) : (
+                    <span className="block h-16 rounded-lg bg-obsidian-100 motion-safe:animate-pulse" aria-hidden="true" />
+                  )}
+                </li>
+              ))}
+            </ul>
 
-            <div className="bg-ocean-900 p-4 rounded-2xl border border-forest-800/80 shadow-lg">
-              <span className="text-xs uppercase tracking-widest text-slate-400 font-bold block">
-                Boarding Manifest
-              </span>
-              <p className="text-2xl font-serif font-bold text-emerald-400 mt-1">
-                {stats.boardedPassengers} / {stats.totalPassengers}
-                <span className="text-xs font-sans text-slate-400 font-normal ml-1">Boarded</span>
-              </p>
-            </div>
+            <section aria-labelledby="runs-heading" className="overflow-hidden rounded-[1.75rem] bg-white ring-1 ring-obsidian-900/[0.07]">
+              <div className="flex items-center justify-between gap-3 border-b border-obsidian-900/[0.06] px-6 py-5">
+                <h2 id="runs-heading" className="text-xl text-obsidian-900">
+                  Vehicle runs
+                </h2>
+                <span className="text-sm text-slate-600">
+                  {runs.length} {runs.length === 1 ? "run" : "runs"}
+                </span>
+              </div>
 
-            <div className="bg-ocean-900 p-4 rounded-2xl border border-forest-800/80 shadow-lg">
-              <span className="text-xs uppercase tracking-widest text-slate-400 font-bold block">
-                Fleet Deployed
-              </span>
-              <p className="text-2xl font-serif font-bold text-gold-400 mt-1">
-                {fleet.filter((v) => v.status === "ASSIGNED").length} / {fleet.length}
-                <span className="text-xs font-sans text-slate-400 font-normal ml-1">Vehicles</span>
-              </p>
-            </div>
-
-            <div className="bg-ocean-900 p-4 rounded-2xl border border-forest-800/80 shadow-lg">
-              <span className="text-xs uppercase tracking-widest text-slate-400 font-bold block">
-                Departures Scheduled
-              </span>
-              <p className="text-2xl font-serif font-bold text-white mt-1">
-                {stats.totalDepartures}
-                <span className="text-xs font-sans text-slate-400 font-normal ml-1">Departures</span>
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Departures & Runs Manifest Table */}
-        <div className="bg-ocean-900 rounded-3xl border border-forest-800/80 shadow-2xl overflow-hidden">
-          <div className="p-5 border-b border-forest-800/80 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Truck className="w-5 h-5 text-gold-400" />
-              <h2 className="text-base font-serif font-bold text-white">
-                Daily Departures &amp; Vehicle Runs Manifest
-              </h2>
-            </div>
-            <span className="text-xs font-mono text-slate-400">
-              {allRuns.length} Total Runs Scheduled
-            </span>
-          </div>
-
-          {loading ? (
-            <div className="p-12 text-center text-slate-400 flex flex-col items-center gap-3">
-              <RefreshCw className="w-6 h-6 animate-spin text-gold-400" />
-              <p className="text-xs">Loading Mornby operations manifest...</p>
-            </div>
-          ) : allRuns.length === 0 ? (
-            <div className="p-12 text-center text-slate-400 space-y-3">
-              <Compass className="w-8 h-8 mx-auto text-slate-600" />
-              <p className="text-sm font-semibold text-slate-300">No vehicle runs scheduled for {selectedDate}.</p>
-              <button
-                onClick={handleSyncBokun}
-                className="px-4 py-2 rounded-xl bg-forest-900 border border-forest-700 text-gold-400 hover:text-white text-xs font-semibold inline-flex items-center gap-2"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-                <span>Sync Today&apos;s Bookings from Bókun</span>
-              </button>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-ocean-950 text-slate-400 uppercase tracking-wider font-mono text-xs border-b border-forest-800">
-                  <tr>
-                    <th className="py-3.5 px-4">Time &amp; Run Name</th>
-                    <th className="py-3.5 px-4">Tour / Bókun ID</th>
-                    <th className="py-3.5 px-4">Capacity / Booked</th>
-                    <th className="py-3.5 px-4">Vehicle</th>
-                    <th className="py-3.5 px-4">Driver / Guide</th>
-                    <th className="py-3.5 px-4">Status</th>
-                    <th className="py-3.5 px-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-forest-800/60 font-medium">
-                  {allRuns.map((run) => {
-                    const statusObj = RUN_STATUSES.find((s) => s.value === run.status) || RUN_STATUSES[0];
-                    const passengerCount = run.bookings.reduce((sum, b) => sum + b.booking.totalSeats, 0);
-                    const boardedCount = run.bookings.filter((b) => b.isBoarded).reduce((sum, b) => sum + b.booking.totalSeats, 0);
-                    const capacity = run.vehicle?.capacity || 14;
-
-                    return (
-                      <tr key={run.id} className="hover:bg-forest-900/30 transition-colors">
-                        <td className="py-3.5 px-4">
-                          <div className="font-bold text-white text-sm">{run.name}</div>
-                          <span className="text-xs font-mono text-gold-400">{run.departureTime || "08:30"}</span>
-                        </td>
-
-                        <td className="py-3.5 px-4 text-slate-300">
-                          <p className="line-clamp-1">Lake Louise &amp; Moraine Lake Explorer</p>
-                          <span className="text-xs font-mono text-slate-500">BÓKUN: #1142134</span>
-                        </td>
-
-                        <td className="py-3.5 px-4">
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono font-bold text-white">{passengerCount} / {capacity}</span>
-                            <span className="text-xs text-slate-400">({boardedCount} Boarded)</span>
-                          </div>
-                          <div className="w-24 bg-forest-950 h-1.5 rounded-full overflow-hidden mt-1 border border-forest-800">
-                            <div
-                              className="bg-gold-500 h-full rounded-full transition-all"
-                              style={{ width: `${Math.min(100, (passengerCount / capacity) * 100)}%` }}
-                            />
-                          </div>
-                        </td>
-
-                        <td className="py-3.5 px-4">
-                          {run.vehicle ? (
-                            <div>
-                              <p className="text-white font-semibold">{run.vehicle.name}</p>
-                              <span className="text-xs font-mono text-gold-300">{run.vehicle.licensePlate}</span>
-                            </div>
-                          ) : (
-                            <span className="text-slate-500 italic">Unassigned</span>
-                          )}
-                        </td>
-
-                        <td className="py-3.5 px-4">
-                          {run.driver ? (
-                            <div>
-                              <p className="text-white font-semibold">{run.driver.name}</p>
-                              <span className="text-xs text-slate-400">{run.driver.phone}</span>
-                            </div>
-                          ) : (
-                            <span className="text-slate-500 italic">Unassigned</span>
-                          )}
-                        </td>
-
-                        <td className="py-3.5 px-4">
-                          <select
-                            aria-label="Run status"
-                            value={run.status}
-                            disabled={updatingRunId === run.id}
-                            onChange={(e) => handleStatusChange(run.id, e.target.value)}
-                            className={`px-2.5 py-1 rounded-full text-xs font-bold tracking-wider uppercase border cursor-pointer ${statusObj.color} focus:outline-none focus-visible:ring-2 focus-visible:ring-summit-500`}
-                          >
-                            {RUN_STATUSES.map((s) => (
-                              <option key={s.value} value={s.value} className="bg-slate-900 text-white">
-                                {s.label}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-
-                        <td className="py-3.5 px-4 text-right space-x-2">
-                          <button
-                            onClick={() => setSelectedRun(run)}
-                            className="px-3 py-1.5 rounded-lg bg-forest-900 hover:bg-forest-800 text-slate-200 border border-forest-700/60 transition-colors text-xs font-semibold"
-                          >
-                            Manifest &amp; Stops
-                          </button>
-
-                          {run.trackingSession && (
-                            <Link
-                              href={`/track/${run.trackingSession.token}`}
-                              target="_blank"
-                              className="px-2.5 py-1.5 rounded-lg bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-800/60 inline-flex items-center gap-1 text-xs"
-                              title="Live GPS Session"
-                            >
-                              <Navigation className="w-3.5 h-3.5 text-emerald-400" />
-                              <span>GPS</span>
-                            </Link>
-                          )}
-                        </td>
+              {loading && runs.length === 0 ? (
+                <div className="space-y-3 p-6" aria-hidden="true">
+                  {[0, 1, 2].map((i) => (
+                    <span key={i} className="block h-12 rounded-xl bg-obsidian-100 motion-safe:animate-pulse" />
+                  ))}
+                </div>
+              ) : runs.length === 0 ? (
+                <div className="px-6 py-12 text-center">
+                  <Compass className="mx-auto h-8 w-8 text-slate-500" aria-hidden="true" />
+                  <p className="mt-3 text-lg text-obsidian-900">No vehicle runs on this day</p>
+                  <p className="mt-1 text-base text-slate-600">Sync from Bókun to group the day&apos;s bookings into runs.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ocean-600" tabIndex={0} role="region" aria-label="Vehicle runs table">
+                  <table className="w-full min-w-[74rem] text-left text-base">
+                    <thead className="bg-obsidian-50/70 text-sm text-slate-600">
+                      <tr>
+                        <th scope="col" className="px-6 py-3 font-normal">Run</th>
+                        <th scope="col" className="px-6 py-3 font-normal">Tour</th>
+                        <th scope="col" className="px-6 py-3 font-normal">Guests</th>
+                        <th scope="col" className="px-6 py-3 font-normal">Vehicle</th>
+                        <th scope="col" className="px-6 py-3 font-normal">Driver</th>
+                        <th scope="col" className="px-6 py-3 font-normal">Status</th>
+                        <th scope="col" className="px-6 py-3 text-right font-normal">
+                          <span className="sr-only">Actions</span>
+                        </th>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                    </thead>
+                    <tbody className="divide-y divide-obsidian-900/[0.06]">
+                      {runs.map(({ run, dep }) => {
+                        const status = RUN_STATUSES.find((s) => s.value === run.status) ?? RUN_STATUSES[0];
+                        const guests = seats(run.bookings);
+                        const boarded = seats(run.bookings.filter((b) => b.isBoarded));
+                        const capacity = run.vehicle?.capacity ?? dep.capacityTotal;
+                        return (
+                          <tr key={run.id} className="hover:bg-obsidian-50/60">
+                            <td className="min-w-[13rem] px-6 py-4">
+                              <span className="block text-obsidian-900">{run.name}</span>
+                              <span className="font-mono text-sm text-slate-600">{run.departureTime || dep.departureTime}</span>
+                            </td>
+                            <td className="w-[16rem] min-w-[14rem] px-6 py-4">
+                              <span className="line-clamp-2 text-sm text-obsidian-900">{dep.tour?.title ?? dep.shuttleRoute?.name ?? "—"}</span>
+                              {dep.tour?.bokunId && <span className="font-mono text-sm text-slate-600">Bókun #{dep.tour.bokunId}</span>}
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="tabular-nums text-obsidian-900">
+                                {guests} / {capacity}
+                              </span>
+                              <span className="block text-sm text-slate-600">{boarded} boarded</span>
+                              <span className="mt-1.5 block h-1.5 w-24 overflow-hidden rounded-full bg-obsidian-900/[0.08]" aria-hidden="true">
+                                <span className="block h-full rounded-full bg-summit-500" style={{ width: `${capacity ? Math.min(100, (guests / capacity) * 100) : 0}%` }} />
+                              </span>
+                            </td>
+                            <td className="min-w-[13rem] px-6 py-4 text-sm">
+                              {run.vehicle ? (
+                                <>
+                                  <span className="block text-obsidian-900">{run.vehicle.name}</span>
+                                  <span className="whitespace-nowrap font-mono text-slate-600">{run.vehicle.licensePlate}</span>
+                                </>
+                              ) : (
+                                <span className="text-slate-600">Unassigned</span>
+                              )}
+                            </td>
+                            <td className="whitespace-nowrap px-6 py-4 text-sm">
+                              {run.driver ? (
+                                <>
+                                  <span className="block text-obsidian-900">{run.driver.name}</span>
+                                  <a href={`tel:${run.driver.phone}`} className="text-ocean-600 underline-offset-4 hover:underline">
+                                    {run.driver.phone}
+                                  </a>
+                                </>
+                              ) : (
+                                <span className="text-slate-600">Unassigned</span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4">
+                              <Dropdown
+                                id={`status-${run.id}`}
+                                variant="pill"
+                                label={`Status of ${run.name}`}
+                                hideLabel
+                                value={run.status}
+                                disabled={updatingRunId === run.id}
+                                onChange={(v) => changeStatus(run.id, v)}
+                                className="w-40"
+                                triggerClassName={`!border-transparent ${status.tone}`}
+                                options={RUN_STATUSES.map((s) => ({ value: s.value, label: s.label }))}
+                              />
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex justify-end gap-2 whitespace-nowrap">
+                                {run.trackingSession && (
+                                  <Link
+                                    href={`/track/${run.trackingSession.token}`}
+                                    target="_blank"
+                                    className="inline-flex h-10 items-center gap-1.5 rounded-full border border-obsidian-900/15 px-4 text-sm hover:bg-obsidian-50"
+                                  >
+                                    <Navigation className="h-3.5 w-3.5" aria-hidden="true" /> Live map
+                                    <span className="sr-only">for {run.name} (opens in a new tab)</span>
+                                  </Link>
+                                )}
+                                <button type="button" onClick={() => setSelectedRunId(run.id)} className="inline-flex h-10 items-center rounded-full bg-ocean-600 px-4 text-sm text-white hover:bg-ocean-700">
+                                  Manifest <span className="sr-only">for {run.name}</span>
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+          </>
+        )}
+      </div>
+
+      {/* Run manifest: native modal dialog (focus trapped, Escape closes). */}
+      <dialog
+        ref={dialog}
+        onClose={() => setSelectedRunId(null)}
+        aria-labelledby="manifest-title"
+        className="m-auto w-[calc(100%-2rem)] max-w-3xl overflow-hidden rounded-[1.75rem] bg-white p-0 text-obsidian-900 shadow-2xl backdrop:bg-obsidian-950/60 backdrop:backdrop-blur-sm"
+      >
+        {selected && (
+          <div className="flex max-h-[85vh] flex-col">
+            <div className="flex items-start justify-between gap-4 border-b border-obsidian-900/[0.06] p-6">
+              <div className="min-w-0">
+                <p className="text-sm text-slate-600">
+                  Run manifest · {selected.run.date} · {selected.run.departureTime || selected.dep.departureTime}
+                </p>
+                <h2 id="manifest-title" className="mt-1 text-2xl font-light text-obsidian-900">
+                  {selected.run.name}
+                </h2>
+                <p className="mt-1 text-sm text-slate-600">
+                  {selected.dep.tour?.title ?? selected.dep.shuttleRoute?.name} · {selected.run.vehicle ? `${selected.run.vehicle.name} (${selected.run.vehicle.licensePlate})` : "No vehicle"} ·{" "}
+                  {selected.run.driver?.name ?? "No driver"}
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => post(`/api/operations/runs/${selected.run.id}/optimize-pickups`).catch(() => setError("Couldn't reorder pickups."))}
+                  className="inline-flex h-10 items-center gap-1.5 rounded-full border border-obsidian-900/15 px-4 text-sm hover:bg-obsidian-50"
+                >
+                  <Sliders className="h-3.5 w-3.5" aria-hidden="true" /> Order east to west
+                </button>
+                <button type="button" onClick={() => dialog.current?.close()} aria-label="Close manifest" className="inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-obsidian-50">
+                  <X className="h-4 w-4" aria-hidden="true" />
+                </button>
+              </div>
             </div>
-          )}
-        </div>
 
-        {/* Selected Run Manifest Modal / Drawer */}
-        {selectedRun && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-ocean-900 rounded-3xl border border-forest-800 shadow-2xl max-w-3xl w-full max-h-[85vh] flex flex-col overflow-hidden">
-              {/* Modal Header */}
-              <div className="p-6 border-b border-forest-800/80 flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase bg-gold-950 text-gold-300 border border-gold-800/40">
-                      Mornby Run Manifest
-                    </span>
-                    <span className="text-xs font-mono text-slate-400">
-                      {selectedRun.date} • {selectedRun.departureTime}
-                    </span>
-                  </div>
-                  <h3 className="text-xl font-serif font-bold text-white mt-1">
-                    {selectedRun.name}
-                  </h3>
-                  <p className="text-xs text-slate-400">
-                    Vehicle: {selectedRun.vehicle?.name || "Unassigned"} ({selectedRun.vehicle?.licensePlate || "N/A"}) • Guide: {selectedRun.driver?.name || "Unassigned"}
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleOptimizePickups(selectedRun.id)}
-                    className="px-3 py-1.5 rounded-xl bg-forest-900 border border-forest-700/60 text-gold-400 text-xs font-semibold flex items-center gap-1.5 hover:text-white"
-                    title="Sort stops East to West (Canmore -> Banff -> Lake Louise)"
-                  >
-                    <Sliders className="w-3.5 h-3.5" />
-                    <span>Optimize Route</span>
-                  </button>
-                  <button
-                    onClick={() => setSelectedRun(null)}
-                    className="p-2 rounded-xl bg-forest-900 text-slate-400 hover:text-white border border-forest-700/60"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Modal Stops & Passengers List */}
-              <div className="p-6 overflow-y-auto space-y-4 flex-1">
-                {selectedRun.bookings.length === 0 ? (
-                  <p className="text-xs text-slate-400 italic text-center py-8">
-                    No passengers assigned to this run yet. Synchronize Bókun or assign bookings from departure.
-                  </p>
-                ) : (
-                  selectedRun.bookings.map((rb, idx) => (
-                    <div
+            <div className="flex-1 space-y-3 overflow-y-auto p-6">
+              {selected.run.bookings.length === 0 ? (
+                <p className="py-8 text-center text-base text-slate-600">No guests on this run yet. Sync from Bókun or assign bookings to the departure.</p>
+              ) : (
+                <ol className="space-y-3">
+                  {selected.run.bookings.map((rb, i) => (
+                    <li
                       key={rb.id}
-                      className={`p-4 rounded-2xl border transition-all ${
-                        rb.isBoarded
-                          ? "bg-forest-950/60 border-emerald-500/40"
-                          : "bg-forest-950/80 border-forest-800/80"
-                      }`}
+                      className={`flex flex-col gap-3 rounded-2xl p-4 ring-1 sm:flex-row sm:items-start sm:justify-between ${rb.isBoarded ? "bg-ocean-50/60 ring-ocean-600/20" : "ring-obsidian-900/[0.08]"}`}
                     >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex items-start gap-3">
-                          <span className="w-6 h-6 rounded-full bg-gold-500/20 text-gold-400 border border-gold-400/40 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
-                            {rb.pickupOrder || idx + 1}
-                          </span>
-
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <h4 className="text-sm font-bold text-white">
-                                {rb.booking.customerName}
-                              </h4>
-                              <span className="text-xs font-mono text-gold-300 bg-gold-950/60 px-2 py-0.5 rounded border border-gold-800/40">
-                                {rb.booking.totalSeats} Guests
-                              </span>
-                              <span className="text-xs font-mono text-slate-400">
-                                #{rb.booking.bookingReference}
-                              </span>
-                            </div>
-
-                            <p className="text-xs text-slate-300 flex items-center gap-1.5">
-                              <MapPin className="w-3.5 h-3.5 text-gold-400 shrink-0" />
-                              <span>{rb.booking.pickupStop?.name || "Fairmont Banff Springs"} ({rb.booking.pickupStop?.town || "Banff"})</span>
-                            </p>
-
-                            {rb.booking.specialRequests && (
-                              <p className="text-xs text-amber-300 italic">
-                                Note: {rb.booking.specialRequests}
-                              </p>
-                            )}
-
-                            <div className="flex items-center gap-4 text-xs text-slate-400 pt-1">
-                              <a href={`tel:${rb.booking.customerPhone}`} className="hover:text-gold-300 flex items-center gap-1">
-                                <Phone className="w-3 h-3 text-emerald-400" />
-                                <span>{rb.booking.customerPhone}</span>
-                              </a>
-                              <span className="font-mono">Voucher: {rb.booking.voucherCode}</span>
-                            </div>
-                          </div>
+                      <div className="flex min-w-0 items-start gap-3">
+                        <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-summit-100 text-sm">{rb.pickupOrder || i + 1}</span>
+                        <div className="min-w-0 space-y-1">
+                          <p className="text-base text-obsidian-900">
+                            {rb.booking.customerName}{" "}
+                            <span className="text-slate-600">
+                              · {rb.booking.totalSeats} {rb.booking.totalSeats === 1 ? "guest" : "guests"} · <span className="font-mono">{rb.booking.bookingReference}</span>
+                            </span>
+                          </p>
+                          <p className="flex items-center gap-1.5 text-sm text-slate-600">
+                            <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                            {rb.booking.pickupStop ? `${rb.booking.pickupStop.name} (${rb.booking.pickupStop.town})` : "Pickup not set"}
+                            {rb.booking.pickupTime && ` · ${rb.booking.pickupTime}`}
+                          </p>
+                          {rb.booking.specialRequests && <p className="rounded-xl bg-summit-100/70 px-3 py-1.5 text-sm text-obsidian-900">Note: {rb.booking.specialRequests}</p>}
+                          <p className="flex flex-wrap gap-x-4 text-sm text-slate-600">
+                            <a href={`tel:${rb.booking.customerPhone}`} className="inline-flex items-center gap-1 text-ocean-600 underline-offset-4 hover:underline">
+                              <Phone className="h-3.5 w-3.5" aria-hidden="true" /> {rb.booking.customerPhone}
+                            </a>
+                            <span className="font-mono">Voucher {rb.booking.voucherCode}</span>
+                          </p>
                         </div>
-
-                        {/* 1-Click Boarding Check-in */}
-                        <button
-                          onClick={() => handleToggleBoarding(rb.id, rb.isBoarded)}
-                          className={`px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-colors ${
-                            rb.isBoarded
-                              ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-glow"
-                              : "bg-forest-900 hover:bg-forest-800 text-slate-300 border border-forest-700"
-                          }`}
-                        >
-                          <CheckCircle2 className="w-4 h-4" />
-                          <span>{rb.isBoarded ? "Boarded" : "Check-in"}</span>
-                        </button>
                       </div>
-                    </div>
-                  ))
-                )}
-              </div>
+                      <button
+                        type="button"
+                        onClick={() => post("/api/operations/runs/check-in", { runBookingId: rb.id, isBoarded: !rb.isBoarded }).catch(() => setError("Couldn't update check-in."))}
+                        className={`inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full px-4 text-sm ${
+                          rb.isBoarded ? "border border-obsidian-900/15 bg-white text-obsidian-900 hover:bg-obsidian-50" : "bg-ocean-600 text-white hover:bg-ocean-700"
+                        }`}
+                      >
+                        {rb.isBoarded ? <CheckCircle2 className="h-4 w-4 text-ocean-600" aria-hidden="true" /> : <Circle className="h-4 w-4" aria-hidden="true" />}
+                        {rb.isBoarded ? "Boarded · undo" : "Check in"}
+                        <span className="sr-only"> {rb.booking.customerName}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </div>
 
-              {/* Modal Footer */}
-              <div className="p-4 bg-ocean-950 border-t border-forest-800/80 flex items-center justify-between text-xs text-slate-400">
-                <span>{selectedRun.bookings.length} Pickups on Manifest</span>
-                {selectedRun.trackingSession && (
-                  <Link
-                    href={`/track/${selectedRun.trackingSession.token}`}
-                    target="_blank"
-                    className="text-gold-400 hover:text-gold-300 font-semibold flex items-center gap-1"
-                  >
-                    <span>Open Live GPS Telemetry View</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </Link>
-                )}
-              </div>
+            <div className="flex items-center justify-between gap-3 border-t border-obsidian-900/[0.06] bg-obsidian-50 px-6 py-4 text-sm text-slate-600">
+              <span>
+                {selected.run.bookings.length} {selected.run.bookings.length === 1 ? "pickup" : "pickups"}
+              </span>
+              {selected.run.trackingSession && (
+                <Link href={`/track/${selected.run.trackingSession.token}`} target="_blank" className="inline-flex items-center gap-1 text-ocean-600 underline-offset-4 hover:underline">
+                  Open live map <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span className="sr-only">(opens in a new tab)</span>
+                </Link>
+              )}
             </div>
           </div>
         )}
-
-      </div>
+      </dialog>
     </div>
   );
 }

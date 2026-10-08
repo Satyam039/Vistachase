@@ -71,7 +71,10 @@ router.get("/", async (req, res) => {
       return res.status(404).json({ success: false, error: "Booking not found" });
     }
 
-    return res.json({ success: true, booking });
+    // Public by reference (voucher page), so the tracking token stays out: live location opens only
+    // from the link sent to the guest.
+    const { trackingToken: _token, trackingTokenExpiresAt: _expires, ...publicBooking } = booking;
+    return res.json({ success: true, booking: publicBooking });
   } catch (error: unknown) {
     return res.status(500).json({ success: false, error: (error as Error).message || "Failed to retrieve booking" });
   }

@@ -1,63 +1,75 @@
-// Floating search card overlapping the bottom of the hero (Expedia / GetYourGuide): experience
-// type, date and guests, submitted as a plain GET form to /search, so it works before hydration.
+// Booking search in the home hero (GetYourGuide / Viator / Expedia): experience type, date and
+// guests in one bar, submitted as a plain GET form to /search so it works before hydration.
+// Desktop: one white pill with labelled segments. Phones: a stacked card.
 
 import { CalendarDays, Compass, Search, Users } from "lucide-react";
+import { Dropdown } from "@/components/forms/Dropdown";
 
-const FIELD =
-  "h-12 w-full appearance-none rounded-xl border border-obsidian-900/10 bg-obsidian-50 pl-11 pr-4 text-base text-obsidian-900 focus:border-ocean-600 focus:outline-none focus:ring-2 focus:ring-ocean-600/30";
+const SEGMENT = "group relative flex min-w-0 flex-col justify-center rounded-[1.5rem] px-5 py-2.5 transition-colors hover:bg-obsidian-50 focus-within:bg-obsidian-50";
+const LABEL = "flex items-center gap-1.5 text-xs uppercase tracking-[0.14em] text-slate-600";
+const CONTROL =
+  "mt-0.5 w-full min-w-0 cursor-pointer appearance-none bg-transparent text-base text-obsidian-900 focus:outline-none";
 
-export function HeroSearch() {
+export function HeroSearch({ className = "" }: { className?: string }) {
   return (
-    <div className="relative z-20 mx-auto -mt-14 max-w-6xl px-page sm:-mt-16" data-reveal>
-      <form
-        action="/search"
-        method="get"
-        role="search"
-        aria-label="Find a tour"
-        className="grid gap-3 rounded-[1.75rem] bg-white p-4 shadow-[0_30px_80px_-30px_rgba(12,31,33,0.45)] ring-1 ring-obsidian-900/5 sm:grid-cols-2 sm:p-5 lg:grid-cols-[1.3fr_1fr_0.8fr_auto]"
+    <form
+      action="/search"
+      method="get"
+      role="search"
+      aria-label="Find a tour"
+      className={`grid gap-1 rounded-[2rem] bg-white p-2 text-left shadow-[0_30px_80px_-30px_rgba(0,0,0,0.6)] sm:grid-cols-2 lg:grid-cols-[1.35fr_1fr_0.85fr_auto] lg:items-stretch lg:rounded-full ${className}`}
+    >
+      <div className={`${SEGMENT} lg:rounded-full`}>
+        <Dropdown
+          variant="bare"
+          name="category"
+          defaultValue=""
+          labelClassName={LABEL}
+          label={
+            <>
+              <Compass className="h-3.5 w-3.5 text-ocean-600" aria-hidden="true" />
+              Experience
+            </>
+          }
+          options={[
+            { value: "", label: "All experiences" },
+            { value: "SHARED", label: "Shared tours" },
+            { value: "PRIVATE", label: "Private tours" },
+            { value: "SHUTTLE", label: "Lake shuttles" },
+            { value: "MULTIDAY", label: "Multi-day trips" },
+            { value: "TICKET", label: "Activity tickets" },
+          ]}
+        />
+      </div>
+      <label className={`${SEGMENT} lg:rounded-full lg:before:absolute lg:before:left-0 lg:before:top-1/4 lg:before:h-1/2 lg:before:w-px lg:before:bg-obsidian-900/10`}>
+        <span className={LABEL}>
+          <CalendarDays className="h-3.5 w-3.5 text-ocean-600" aria-hidden="true" />
+          Date
+        </span>
+        <input type="date" name="date" className={CONTROL} />
+      </label>
+      <div className={`${SEGMENT} lg:rounded-full lg:before:absolute lg:before:left-0 lg:before:top-1/4 lg:before:h-1/2 lg:before:w-px lg:before:bg-obsidian-900/10`}>
+        <Dropdown
+          variant="bare"
+          name="seats"
+          defaultValue="2"
+          labelClassName={LABEL}
+          label={
+            <>
+              <Users className="h-3.5 w-3.5 text-ocean-600" aria-hidden="true" />
+              Guests
+            </>
+          }
+          options={[1, 2, 3, 4, 5, 6, 7].map((n) => ({ value: String(n), label: `${n} ${n === 1 ? "guest" : "guests"}` }))}
+        />
+      </div>
+      <button
+        type="submit"
+        className="golden-summit-btn inline-flex min-h-14 items-center justify-center gap-2 rounded-[1.5rem] px-8 text-base sm:col-span-2 lg:col-span-1 lg:rounded-full"
       >
-        <label className="block">
-          <span className="mb-1.5 block px-1 text-sm text-slate-600">Experience</span>
-          <span className="relative block">
-            <Compass className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-ocean-600" aria-hidden="true" />
-            <select name="category" defaultValue="" className={FIELD}>
-              <option value="">All experiences</option>
-              <option value="SHARED">Shared tours</option>
-              <option value="PRIVATE">Private tours</option>
-              <option value="SHUTTLE">Lake shuttles</option>
-              <option value="MULTIDAY">Multi-day packages</option>
-              <option value="TICKET">Activity tickets</option>
-            </select>
-          </span>
-        </label>
-        <label className="block">
-          <span className="mb-1.5 block px-1 text-sm text-slate-600">Date</span>
-          <span className="relative block">
-            <CalendarDays className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-ocean-600" aria-hidden="true" />
-            <input type="date" name="date" className={FIELD} />
-          </span>
-        </label>
-        <label className="block">
-          <span className="mb-1.5 block px-1 text-sm text-slate-600">Guests</span>
-          <span className="relative block">
-            <Users className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-ocean-600" aria-hidden="true" />
-            <select name="seats" defaultValue="2" className={FIELD}>
-              {[1, 2, 3, 4, 5, 6, 7].map((n) => (
-                <option key={n} value={n}>
-                  {n} {n === 1 ? "guest" : "guests"}
-                </option>
-              ))}
-            </select>
-          </span>
-        </label>
-        <button
-          type="submit"
-          className="golden-summit-btn inline-flex h-12 items-center justify-center gap-2 self-end rounded-xl px-8 text-base sm:col-span-2 lg:col-span-1"
-        >
-          <Search className="h-5 w-5" aria-hidden="true" />
-          Search
-        </button>
-      </form>
-    </div>
+        <Search className="h-5 w-5" aria-hidden="true" />
+        Search
+      </button>
+    </form>
   );
 }

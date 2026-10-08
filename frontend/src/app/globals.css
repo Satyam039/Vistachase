@@ -51,6 +51,30 @@
 }
 
 /* ServicesHero: slide content rises in; the active picker fills over the 8s rotation. */
+/* Readability scrim for text over photos (cards): a Gaussian blur over the bottom half of the
+   image that fades out toward the middle, plus a soft dark tint, so overlaid text stays legible on
+   any photo. Put it inside the card's image layer, under the text. */
+.vc-scrim {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 50%;
+  pointer-events: none;
+  -webkit-backdrop-filter: blur(16px) saturate(1.05);
+  backdrop-filter: blur(16px) saturate(1.05);
+  -webkit-mask-image: linear-gradient(to top, #000 55%, transparent);
+  mask-image: linear-gradient(to top, #000 55%, transparent);
+  background: linear-gradient(to top, rgb(14 20 22 / 0.85), rgb(14 20 22 / 0.55) 60%, rgb(14 20 22 / 0));
+}
+.vc-scrim-tall { height: 62%; }
+.vc-scrim-full { height: 78%; }
+
+/* Dropdown panel (components/forms/Dropdown.tsx). */
+@keyframes vcDropIn {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
 @keyframes fadeUp {
   from {
     opacity: 0;
@@ -150,6 +174,17 @@
   to { opacity: 0; translate: 0 -12%; }
 }
 
+/* Focused elements scroll clear of the fixed voice-assistant button and, on product pages, the
+   phone booking bar (WCAG 2.4.11). The top padding is set by SiteFrame from the header height. */
+html {
+  scroll-padding-bottom: calc(6rem + var(--vc-bottom-bar-h, 0px));
+}
+
+/* Announcement strip closed on this device (set before paint by ANNOUNCE_SCRIPT). */
+html[data-announce-closed] .vc-announce {
+  display: none;
+}
+
 /* Header elevation once the page scrolls (SiteFrame sets data-scrolled). */
 .astryx-app-shell-header {
   transition: box-shadow 300ms var(--ease-out-expo), background-color 300ms var(--ease-out-expo);
@@ -177,6 +212,8 @@
 /* Horizontal rails: native scroll with snap; scrollbar hidden (arrow buttons + swipe instead). */
 .vc-rail {
   scroll-snap-type: x mandatory;
+  /* Snap to the page margin, not the edge, so padded rows aren't nudged sideways on load. */
+  scroll-padding-inline: var(--vc-page-margin-x, 0px);
   scrollbar-width: none;
   overscroll-behavior-x: contain;
 }

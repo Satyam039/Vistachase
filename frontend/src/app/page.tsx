@@ -3,7 +3,6 @@ import { ServicesHero, type HeroSlide } from "@/components/cinematic/ServicesHer
 import { fromPrice, priceUnitLabel } from "@/lib/tours";
 import { getTours } from "@/lib/api/catalog";
 import { SERVICES } from "@/lib/services";
-import { HeroSearch } from "@/components/home/HeroSearch";
 import { TrustRow } from "@/components/home/TrustRow";
 import { TopExperiences } from "@/components/home/TopExperiences";
 import { ExperienceCategories } from "@/components/cinematic/ExperienceCategories";
@@ -14,7 +13,6 @@ import { VerifiedAwardSection } from "@/components/cinematic/VerifiedAwardSectio
 import { GuestTestimonials } from "@/components/cinematic/GuestTestimonials";
 import { LiveTrackingTeaser } from "@/components/cinematic/LiveTrackingTeaser";
 import { TrustBar } from "@/components/cinematic/TrustBar";
-import { CinematicFinalCta } from "@/components/cinematic/CinematicFinalCta";
 
 export const metadata = {
   title: "Vista Chase | Luxury Private Tours & Shuttles • Banff & Lake Louise",
@@ -55,14 +53,11 @@ export default async function HomePage() {
 
   // Page order follows the booking sites the redesign studied (GetYourGuide, Viator, Expedia,
   // Civitatis): search first, reassurance, the most-booked experiences, browse by style and by
-  // place, proof (award, reviews), then a closing call to action.
+  // place, proof (award, reviews); the footer's banner is the closing call to action. The search lives in the hero.
   return (
     <div className="flex w-full flex-col bg-white selection:bg-summit-500 selection:text-obsidian-900">
       <ServicesHero slides={slides} />
-      <div className="bg-white">
-        <HeroSearch />
-        <TrustRow />
-      </div>
+      <TrustRow />
       <TopExperiences tours={tours} />
       <ExperienceCategories />
       <DestinationStoryStream />
@@ -72,7 +67,6 @@ export default async function HomePage() {
       <GuestTestimonials />
       <LiveTrackingTeaser />
       <TrustBar />
-      <CinematicFinalCta />
     </div>
   );
 }

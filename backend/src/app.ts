@@ -7,6 +7,7 @@ import adminRoutes from "@/routes/admin.routes";
 import authRoutes from "@/routes/auth.routes";
 import bookingsRoutes from "@/routes/bookings.routes";
 import conciergeRoutes from "@/routes/concierge.routes";
+import enquiriesRoutes from "@/routes/enquiries.routes";
 import departuresRoutes from "@/routes/departures.routes";
 import destinationsRoutes from "@/routes/destinations.routes";
 import healthRoutes from "@/routes/health.routes";
@@ -63,6 +64,7 @@ export function createApp() {
   app.use("/api/auth", authRoutes);
   app.use("/api/bookings", bookingsRoutes);
   app.use("/api/concierge", conciergeRoutes);
+  app.use("/api/enquiries", enquiriesRoutes);
   app.use("/api/departures", departuresRoutes);
   app.use("/api/destinations", destinationsRoutes);
   app.use("/api/health", healthRoutes);

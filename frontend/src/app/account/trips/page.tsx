@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
+import { canCancelFree, departureInstant } from "@/lib/policy";
 import { useRouter } from "next/navigation";
 import {
   Calendar,
@@ -41,7 +43,8 @@ interface TripBooking {
       id: string;
       title: string;
       slug: string;
-      image: string;
+      image?: string;
+      featuredImage?: string;
     };
     shuttleRoute?: {
       id: string;
@@ -251,14 +254,12 @@ export default function MyTripsPage() {
   const now = new Date();
   const upcomingBookings = bookings.filter((b) => {
     if (b.status === "CANCELLED") return false;
-    const departureTime = new Date(`${b.tourDeparture.date}T${b.tourDeparture.departureTime || "08:00"}`);
-    return departureTime >= now;
+    return departureInstant(b.tourDeparture.date, b.tourDeparture.departureTime) >= now;
   });
 
   const pastBookings = bookings.filter((b) => {
     if (b.status === "CANCELLED") return false;
-    const departureTime = new Date(`${b.tourDeparture.date}T${b.tourDeparture.departureTime || "08:00"}`);
-    return departureTime < now;
+    return departureInstant(b.tourDeparture.date, b.tourDeparture.departureTime) < now;
   });
 
   const cancelledBookings = bookings.filter((b) => b.status === "CANCELLED");
@@ -270,349 +271,383 @@ export default function MyTripsPage() {
       ? pastBookings
       : cancelledBookings;
 
+  const tabs = [
+    { id: "upcoming" as const, label: "Upcoming", count: upcomingBookings.length },
+    { id: "past" as const, label: "Past", count: pastBookings.length },
+    { id: "cancelled" as const, label: "Cancelled", count: cancelledBookings.length },
+  ];
+  const showList = !!user || bookings.length > 0;
+
   return (
-    <div className="min-h-screen bg-forest-950 text-white py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto">
-        {/* Header Bar */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between pb-8 border-b border-forest-800 gap-4">
+    <div className="min-h-screen bg-obsidian-50 text-obsidian-900">
+      {/* Header band */}
+      <section className="relative isolate overflow-hidden bg-ocean-950 text-white">
+        <Image
+          src="/media/photos/moraine-lake-perfect-reflection.webp"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="-z-10 object-cover opacity-50"
+        />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/60 to-ocean-950/20" />
+        <div className="mx-auto flex max-w-7xl flex-col gap-6 px-page pb-12 pt-14 sm:pb-16 sm:pt-20 md:flex-row md:items-end md:justify-between">
           <div>
-            <div className="flex items-center gap-2 text-gold-400 text-xs font-semibold tracking-wider uppercase mb-1">
-              <span>Customer Portal</span>
-              <span>•</span>
-              <span>Vista Chase Canadian Rockies</span>
-            </div>
-            <h1 className="text-3xl font-display font-bold text-white">My Trips &amp; Vouchers</h1>
-            {user ? (
-              <p className="text-sm text-slate-400 mt-1">
-                Welcome back, <span className="text-white font-medium">{user.name}</span> ({user.email})
-              </p>
-            ) : (
-              <p className="text-sm text-slate-400 mt-1">
-                Manage your Canadian Rockies reservations, digital QR boarding passes, and reviews.
-              </p>
-            )}
-          </div>
-
-          <div className="flex items-center gap-3">
-            {user ? (
-              <button
-                onClick={handleLogout}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-forest-900 border border-forest-800 hover:border-red-500/50 text-slate-300 hover:text-red-400 transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Sign Out</span>
-              </button>
-            ) : (
-              <div className="flex items-center gap-2">
-                <Link
-                  href="/login"
-                  className="px-4 py-2 rounded-xl text-sm font-semibold bg-forest-800 hover:bg-forest-700 text-white border border-forest-700 transition-colors"
-                >
-                  Sign In
-                </Link>
-                <Link
-                  href="/register"
-                  className="px-4 py-2 rounded-xl text-sm font-semibold gold-gradient text-forest-950 shadow-glow hover:opacity-95 transition-all"
-                >
-                  Create Account
-                </Link>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Guest Lookup Box if not logged in */}
-        {!user && !loading && bookings.length === 0 && (
-          <div className="my-8 p-6 rounded-2xl bg-forest-900/80 border border-forest-800 shadow-xl">
-            <h2 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
-              <Ticket className="w-5 h-5 text-gold-400" />
-              <span>Looking for your reservation as a Guest?</span>
-            </h2>
-            <p className="text-sm text-slate-400 mb-4">
-              Enter your booking reference (e.g. <code className="text-gold-300">VC-2026-98412</code>) and email to look up your digital boarding pass voucher.
+            <p className="mb-3 text-sm uppercase tracking-[0.22em] text-summit-300">Your Rockies journeys</p>
+            <h1 className="text-4xl font-light tracking-tight text-white sm:text-5xl lg:text-6xl">My trips</h1>
+            <p className="mt-3 max-w-xl text-lg font-light text-white/85">
+              {user ? (
+                <>
+                  Welcome back, <span className="text-white">{user.name}</span>. Your vouchers, pickups and reviews are all here.
+                </>
+              ) : (
+                "Vouchers, pickup times and trip details for every booking, in one place."
+              )}
             </p>
-            <form onSubmit={handleLookupSingleBooking} className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <input
-                type="text"
-                aria-label="Booking reference"
-                placeholder="Booking Ref (e.g. VC-2026-98412)"
-                value={searchRef}
-                onChange={(e) => setSearchRef(e.target.value)}
-                required
-                className="bg-forest-950 border border-forest-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-gold-400"
-              />
-              <input
-                type="email"
-                aria-label="Email used for the booking"
-                autoComplete="email"
-                placeholder="Customer Email"
-                value={searchEmail}
-                onChange={(e) => setSearchEmail(e.target.value)}
-                className="bg-forest-950 border border-forest-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-gold-400"
-              />
-              <button
-                type="submit"
-                className="px-5 py-2.5 rounded-xl font-semibold text-forest-950 gold-gradient shadow-glow hover:opacity-95 transition-all text-sm flex items-center justify-center gap-2"
-              >
-                <span>Find Reservation</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </form>
-            {lookupError && (
-              <p role="alert" className="text-sm text-red-400 mt-3 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4" />
-                <span>{lookupError}</span>
-              </p>
-            )}
           </div>
-        )}
-
-        {/* Tab Navigation */}
-        <div className="flex items-center gap-4 mt-8 border-b border-forest-800 pb-2">
-          <button
-            onClick={() => setActiveTab("upcoming")}
-            className={`pb-2 text-sm font-semibold transition-colors flex items-center gap-2 border-b-2 ${
-              activeTab === "upcoming"
-                ? "border-gold-400 text-gold-400"
-                : "border-transparent text-slate-400 hover:text-slate-200"
-            }`}
-          >
-            <span>Upcoming Trips</span>
-            <span className="px-2 py-0.5 rounded-full text-xs bg-forest-800 text-slate-300">
-              {upcomingBookings.length}
-            </span>
-          </button>
-          <button
-            onClick={() => setActiveTab("past")}
-            className={`pb-2 text-sm font-semibold transition-colors flex items-center gap-2 border-b-2 ${
-              activeTab === "past"
-                ? "border-gold-400 text-gold-400"
-                : "border-transparent text-slate-400 hover:text-slate-200"
-            }`}
-          >
-            <span>Past Journeys</span>
-            <span className="px-2 py-0.5 rounded-full text-xs bg-forest-800 text-slate-300">
-              {pastBookings.length}
-            </span>
-          </button>
-          <button
-            onClick={() => setActiveTab("cancelled")}
-            className={`pb-2 text-sm font-semibold transition-colors flex items-center gap-2 border-b-2 ${
-              activeTab === "cancelled"
-                ? "border-gold-400 text-gold-400"
-                : "border-transparent text-slate-400 hover:text-slate-200"
-            }`}
-          >
-            <span>Cancelled</span>
-            <span className="px-2 py-0.5 rounded-full text-xs bg-forest-800 text-slate-300">
-              {cancelledBookings.length}
-            </span>
-          </button>
-        </div>
-
-        {/* Loading Spinner */}
-        {loading && (
-          <div className="py-20 text-center">
-            <RefreshCw className="w-8 h-8 text-gold-400 animate-spin mx-auto mb-3" />
-            <p className="text-slate-400 text-sm">Loading your reservations...</p>
-          </div>
-        )}
-
-        {/* Trips List */}
-        {!loading && displayBookings.length === 0 && (
-          <div className="py-16 text-center bg-forest-900/40 rounded-2xl border border-forest-800 mt-6">
-            <Ticket className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-            <h3 className="text-lg font-semibold text-white">No {activeTab} trips found</h3>
-            <p className="text-sm text-slate-400 max-w-md mx-auto mt-1 mb-6">
-              {activeTab === "upcoming"
-                ? "You don't have any upcoming departures scheduled with Vista Chase."
-                : `No reservations found under ${activeTab}.`}
-            </p>
-            <Link
-              href="/banff-highlights-tour"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-forest-950 gold-gradient shadow-glow hover:opacity-95 transition-all text-sm"
+          {user && (
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="inline-flex h-11 items-center gap-2 self-start rounded-full border border-white/25 px-5 text-sm text-white hover:bg-white/10 md:self-auto"
             >
-              <span>Explore Banff Experiences</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        )}
+              <LogOut className="h-4 w-4" aria-hidden="true" />
+              Sign out
+            </button>
+          )}
+        </div>
+      </section>
 
-        {!loading && displayBookings.length > 0 && (
-          <div className="grid grid-cols-1 gap-6 mt-6">
-            {displayBookings.map((b) => {
-              const tourTitle =
-                b.tourDeparture.tour?.title ||
-                b.tourDeparture.shuttleRoute?.name ||
-                "Vista Chase Rockies Journey";
-
-              return (
-                <div
-                  key={b.id}
-                  className="rounded-2xl bg-forest-900 border border-forest-800 hover:border-forest-700 transition-all p-6 shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-6"
-                >
-                  <div className="space-y-3 flex-1">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <span className="font-mono text-xs font-semibold px-2.5 py-1 rounded-md bg-forest-950 text-gold-400 border border-forest-800">
-                        {b.bookingReference}
-                      </span>
-                      <span
-                        className={`text-xs font-semibold px-2.5 py-1 rounded-md ${
-                          b.status === "CONFIRMED"
-                            ? "bg-emerald-950/80 text-emerald-400 border border-emerald-800/60"
-                            : b.status === "CANCELLED"
-                            ? "bg-red-950/80 text-red-400 border border-red-800/60"
-                            : "bg-forest-800 text-slate-300"
-                        }`}
-                      >
-                        {b.status}
-                      </span>
-                      <span className="text-xs text-slate-400">
-                        Voucher: <strong className="text-white">{b.voucherCode}</strong>
-                      </span>
-                    </div>
-
-                    <h3 className="text-xl font-display font-bold text-white hover:text-gold-300 transition-colors">
-                      {tourTitle}
-                    </h3>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-slate-300 pt-1">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-gold-400 flex-shrink-0" />
-                        <span>Date: <strong>{b.tourDeparture.date}</strong></span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-gold-400 flex-shrink-0" />
-                        <span>Departure: <strong>{b.tourDeparture.departureTime || "08:00 AM"}</strong></span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4 text-gold-400 flex-shrink-0" />
-                        <span>
-                          Passengers: <strong>{b.totalSeats} seats</strong> ({b.adultsCount} Adult{b.adultsCount > 1 ? "s" : ""}{b.childrenCount > 0 ? `, ${b.childrenCount} Child` : ""})
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-2 text-xs text-slate-400 bg-forest-950/60 p-2.5 rounded-xl border border-forest-800/50">
-                      <MapPin className="w-4 h-4 text-gold-400 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <span className="font-semibold text-slate-300">
-                          Pickup: {b.pickupStop ? b.pickupStop.name : b.pickupCustomText || "Banff Central Dispatch Point"}
-                        </span>
-                        {b.pickupStop?.address && (
-                          <span className="block text-xs text-slate-400">
-                            {b.pickupStop.address}, {b.pickupStop.town}
-                          </span>
-                        )}
-                        {b.pickupTime && (
-                          <span className="block text-gold-400 text-xs font-medium mt-0.5">
-                            Scheduled Pickup: {b.pickupTime}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Review snippet if already reviewed */}
-                    {b.review && (
-                      <div className="flex items-center gap-2 text-xs text-gold-400 bg-gold-950/20 border border-gold-800/40 p-2 rounded-xl">
-                        <Star className="w-4 h-4 fill-gold-400 text-gold-400" />
-                        <span>
-                          You reviewed: <strong>{b.review.rating} / 5 Stars</strong> — &quot;{b.review.title}&quot;
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Actions Column */}
-                  <div className="flex flex-col sm:flex-row lg:flex-col items-stretch lg:items-end justify-between gap-3 pt-4 lg:pt-0 border-t lg:border-t-0 border-forest-800 min-w-[200px]">
-                    <div className="text-right sm:text-left lg:text-right">
-                      <div className="text-xs text-slate-400">Total Paid</div>
-                      <div className="text-xl font-bold text-white font-mono">
-                        ${b.totalAmount.toFixed(2)} <span className="text-xs text-slate-400">{b.currency}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-2 w-full">
-                      <Link
-                        href={`/booking/${b.bookingReference}/voucher`}
-                        className="px-4 py-2.5 rounded-xl font-semibold text-forest-950 gold-gradient shadow-glow hover:opacity-95 transition-all text-xs text-center flex items-center justify-center gap-2"
-                      >
-                        <Ticket className="w-3.5 h-3.5" />
-                        <span>Digital Boarding Pass</span>
-                      </Link>
-
-                      {b.status === "CONFIRMED" && (
-                        <button
-                          onClick={() => setCancellingBooking(b)}
-                          className="px-4 py-2 rounded-xl text-xs font-medium text-slate-300 hover:text-red-400 bg-forest-950 border border-forest-800 hover:border-red-900 transition-colors"
-                        >
-                          Cancel (48h Policy)
-                        </button>
-                      )}
-
-                      {b.status !== "CANCELLED" && !b.review && b.tourDeparture.tour && (
-                        <button
-                          onClick={() => {
-                            setReviewModalBooking(b);
-                            setReviewRating(5);
-                            setReviewTitle("");
-                            setReviewBody("");
-                          }}
-                          className="px-4 py-2 rounded-xl text-xs font-medium text-gold-300 bg-gold-950/30 border border-gold-800/40 hover:bg-gold-950/60 transition-colors flex items-center justify-center gap-1.5"
-                        >
-                          <Star className="w-3.5 h-3.5 text-gold-400" />
-                          <span>Leave Verified Review</span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Cancellation Modal */}
-        {cancellingBooking && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-forest-900 border border-forest-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in duration-150">
-              <div className="flex items-center gap-3 text-red-400">
-                <AlertCircle className="w-6 h-6 flex-shrink-0" />
-                <h3 className="text-lg font-bold text-white">Cancel Reservation</h3>
-              </div>
-              <p className="text-sm text-slate-300">
-                Are you sure you want to cancel booking{" "}
-                <strong className="text-white font-mono">{cancellingBooking.bookingReference}</strong> for{" "}
-                <strong className="text-white">
-                  {cancellingBooking.tourDeparture.tour?.title || "Vista Chase Rockies Tour"}
-                </strong>{" "}
-                on {cancellingBooking.tourDeparture.date}?
+      <div className="mx-auto max-w-7xl px-page py-10 sm:py-14">
+        {/* Signed out: find a booking, or sign in */}
+        {!user && !loading && bookings.length === 0 && (
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+            <section aria-labelledby="find-heading" className="rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:p-8">
+              <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-ocean-50 text-ocean-700">
+                <Ticket className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <h2 id="find-heading" className="mt-5 text-2xl font-light text-obsidian-900 sm:text-3xl">
+                Find your booking
+              </h2>
+              <p className="mt-2 text-base text-slate-600">
+                Booked without an account? Enter the reference from your confirmation email to see your voucher and pickup.
               </p>
-              <div className="p-3 rounded-xl bg-forest-950 border border-forest-800 text-xs text-slate-400 space-y-1">
-                <p className="font-semibold text-gold-400">48-Hour Cancellation Policy</p>
-                <p>
-                  Reservations cancelled 48 hours or more prior to departure are eligible for a full cancellation and release of seats. Cancellations within 48 hours are non-refundable.
+              <form onSubmit={handleLookupSingleBooking} className="mt-6 grid gap-4 sm:grid-cols-2">
+                <label className="block">
+                  <span className="mb-1.5 block text-sm text-slate-700">Booking reference</span>
+                  <input
+                    type="text"
+                    placeholder="VC-2026-98412"
+                    value={searchRef}
+                    onChange={(e) => setSearchRef(e.target.value)}
+                    required
+                    autoCapitalize="characters"
+                    className="h-12 w-full rounded-xl border border-obsidian-900/15 bg-white px-4 font-mono text-base text-obsidian-900 placeholder:text-slate-400 focus:border-ocean-600 focus:outline-none focus:ring-2 focus:ring-ocean-600/30"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-1.5 block text-sm text-slate-700">Email used to book</span>
+                  <input
+                    type="email"
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    value={searchEmail}
+                    onChange={(e) => setSearchEmail(e.target.value)}
+                    className="h-12 w-full rounded-xl border border-obsidian-900/15 bg-white px-4 text-base text-obsidian-900 placeholder:text-slate-400 focus:border-ocean-600 focus:outline-none focus:ring-2 focus:ring-ocean-600/30"
+                  />
+                </label>
+                <button
+                  type="submit"
+                  className="golden-summit-btn inline-flex h-12 items-center justify-center gap-2 rounded-full px-7 text-base sm:col-span-2 sm:justify-self-start"
+                >
+                  Find my booking
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </button>
+              </form>
+              {lookupError && (
+                <p role="alert" className="mt-4 flex items-center gap-2 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-800">
+                  <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  {lookupError}
                 </p>
-              </div>
+              )}
+              <p className="mt-6 text-sm text-slate-600">
+                Can&rsquo;t find your reference?{" "}
+                <Link href="/contact-us" className="text-ocean-700 underline underline-offset-2 hover:text-ocean-900">
+                  Contact us
+                </Link>{" "}
+                and we&rsquo;ll resend it.
+              </p>
+            </section>
 
-              {cancelMessage && (
-                <div
-                  className={`p-3 rounded-xl text-xs flex items-center gap-2 ${
-                    cancelMessage.type === "success"
-                      ? "bg-emerald-950 text-emerald-300 border border-emerald-800"
-                      : "bg-red-950 text-red-300 border border-red-800"
+            <section aria-labelledby="signin-heading" className="flex flex-col rounded-[1.75rem] bg-ocean-950 p-6 text-white sm:p-8">
+              <h2 id="signin-heading" className="text-2xl font-light text-white sm:text-3xl">
+                See every trip in one place
+              </h2>
+              <ul className="mt-5 space-y-3 text-base text-white/85">
+                {["All your bookings and vouchers", "Pickup times as soon as they're set", "Cancel free up to 72 hours before", "Review your guide after the tour"].map(
+                  (t) => (
+                    <li key={t} className="flex items-start gap-2.5">
+                      <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-summit-400" aria-hidden="true" />
+                      {t}
+                    </li>
+                  ),
+                )}
+              </ul>
+              <div className="mt-auto flex flex-wrap gap-3 pt-8">
+                <Link href="/login" className="golden-summit-btn inline-flex h-12 items-center rounded-full px-7 text-base">
+                  Sign in
+                </Link>
+                <Link href="/register" className="inline-flex h-12 items-center rounded-full border border-white/25 px-6 text-base text-white hover:bg-white/10">
+                  Create account
+                </Link>
+              </div>
+            </section>
+          </div>
+        )}
+
+        {loading && (
+          <div className="py-24 text-center" role="status">
+            <RefreshCw className="mx-auto mb-3 h-7 w-7 animate-spin text-ocean-600" aria-hidden="true" />
+            <p className="text-base text-slate-600">Loading your trips…</p>
+          </div>
+        )}
+
+        {!loading && showList && (
+          <>
+            {/* Segmented tabs with counts */}
+            <div
+              role="group"
+              aria-label="Show trips"
+              // Sticks 16px below the navbar, like the other in-page bars.
+              className="sticky top-[calc(var(--vc-header-h,80px)+16px)] z-20 inline-flex rounded-full bg-white p-1.5 shadow-[0_12px_24px_-20px_rgba(12,31,33,0.45)] ring-1 ring-obsidian-900/[0.07]"
+            >
+              {tabs.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  aria-pressed={activeTab === t.id}
+                  onClick={() => setActiveTab(t.id)}
+                  className={`inline-flex h-11 items-center gap-2 rounded-full px-5 text-sm transition-colors ${
+                    activeTab === t.id ? "bg-obsidian-900 text-white" : "text-slate-700 hover:bg-obsidian-900/[0.05]"
                   }`}
                 >
-                  {cancelMessage.type === "success" ? (
-                    <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-                  ) : (
-                    <XCircle className="w-4 h-4 flex-shrink-0" />
-                  )}
-                  <span>{cancelMessage.text}</span>
-                </div>
-              )}
+                  {t.label}
+                  <span
+                    className={`inline-flex min-w-6 items-center justify-center rounded-full px-1.5 text-xs ${
+                      activeTab === t.id ? "bg-white/15 text-white" : "bg-obsidian-900/[0.06] text-slate-700"
+                    }`}
+                  >
+                    {t.count}
+                  </span>
+                </button>
+              ))}
+            </div>
 
-              <div className="flex items-center justify-end gap-3 pt-2">
+            <section aria-label={`${tabs.find((t) => t.id === activeTab)?.label} trips`} className="mt-8">
+              {displayBookings.length === 0 ? (
+                <div className="flex flex-col items-center rounded-[1.75rem] bg-white px-6 py-16 text-center ring-1 ring-obsidian-900/[0.07]">
+                  <span className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-ocean-50 text-ocean-700">
+                    <Calendar className="h-7 w-7" aria-hidden="true" />
+                  </span>
+                  <h2 className="mt-5 text-2xl font-light text-obsidian-900">
+                    {activeTab === "upcoming" ? "No upcoming trips yet" : activeTab === "past" ? "No past trips yet" : "No cancelled trips"}
+                  </h2>
+                  <p className="mt-2 max-w-md text-base text-slate-600">
+                    {activeTab === "upcoming"
+                      ? "When you book a tour or shuttle, it shows up here with your voucher and pickup details."
+                      : "Trips will appear here once they've happened."}
+                  </p>
+                  {activeTab === "upcoming" && (
+                    <Link href="/search" className="golden-summit-btn mt-7 inline-flex h-12 items-center gap-2 rounded-full px-7 text-base">
+                      Explore experiences
+                      <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                    </Link>
+                  )}
+                </div>
+              ) : (
+                <ul className="space-y-5">
+                  {displayBookings.map((b) => {
+                    const title = b.tourDeparture.tour?.title || b.tourDeparture.shuttleRoute?.name || "Vista Chase tour";
+                    const image = b.tourDeparture.tour?.featuredImage || b.tourDeparture.tour?.image || "/media/photos/moraine-lake-perfect-reflection.webp";
+                    const date = new Date(`${b.tourDeparture.date}T00:00:00`);
+                    const valid = !Number.isNaN(date.getTime());
+                    const statusTone =
+                      b.status === "CONFIRMED"
+                        ? "bg-emerald-50 text-emerald-800 ring-emerald-200"
+                        : b.status === "CANCELLED"
+                        ? "bg-red-50 text-red-800 ring-red-200"
+                        : "bg-slate-100 text-slate-700 ring-slate-200";
+                    return (
+                      <li key={b.id}>
+                        <article className="grid overflow-hidden rounded-[1.75rem] bg-white ring-1 ring-obsidian-900/[0.07] md:grid-cols-[16rem_minmax(0,1fr)] lg:grid-cols-[18rem_minmax(0,1fr)_16rem]">
+                          {/* Photo with date badge */}
+                          <div className="relative aspect-[16/9] md:aspect-auto md:min-h-full">
+                            <Image src={image} alt="" fill sizes="(max-width: 768px) 100vw, 18rem" className="object-cover" />
+                            {valid && (
+                              <span className="absolute left-4 top-4 flex flex-col items-center rounded-2xl bg-white px-3 py-2 text-center shadow-lg">
+                                <span className="text-xs uppercase tracking-wider text-ocean-700">
+                                  {date.toLocaleDateString("en-CA", { month: "short" })}
+                                </span>
+                                <span className="text-2xl font-light leading-none text-obsidian-900">{date.getDate()}</span>
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Details */}
+                          <div className="space-y-4 p-6">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className={`rounded-full px-3 py-1 text-xs ring-1 ${statusTone}`}>
+                                {b.status.charAt(0) + b.status.slice(1).toLowerCase()}
+                              </span>
+                              <span className="rounded-full bg-obsidian-900/[0.05] px-3 py-1 font-mono text-xs text-obsidian-800">{b.bookingReference}</span>
+                            </div>
+                            <h3 className="text-xl leading-snug text-obsidian-900 sm:text-2xl sm:font-light">
+                              {b.tourDeparture.tour?.slug ? (
+                                <Link href={`/${b.tourDeparture.tour.slug}`} className="hover:text-ocean-700">
+                                  {title}
+                                </Link>
+                              ) : (
+                                title
+                              )}
+                            </h3>
+                            <dl className="grid gap-x-6 gap-y-2 text-sm text-slate-700 sm:grid-cols-3">
+                              <div className="flex items-center gap-2">
+                                <Calendar className="h-4 w-4 shrink-0 text-ocean-600" aria-hidden="true" />
+                                <dt className="sr-only">Date</dt>
+                                <dd>
+                                  {valid
+                                    ? date.toLocaleDateString("en-CA", { weekday: "short", month: "short", day: "numeric", year: "numeric" })
+                                    : b.tourDeparture.date}
+                                </dd>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Clock className="h-4 w-4 shrink-0 text-ocean-600" aria-hidden="true" />
+                                <dt className="sr-only">Departure</dt>
+                                <dd>Departs {b.tourDeparture.departureTime || "08:00"}</dd>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Users className="h-4 w-4 shrink-0 text-ocean-600" aria-hidden="true" />
+                                <dt className="sr-only">Guests</dt>
+                                <dd>
+                                  {b.adultsCount} adult{b.adultsCount === 1 ? "" : "s"}
+                                  {b.childrenCount > 0 ? `, ${b.childrenCount} child${b.childrenCount === 1 ? "" : "ren"}` : ""}
+                                </dd>
+                              </div>
+                            </dl>
+                            <div className="flex items-start gap-3 rounded-2xl bg-obsidian-50 p-4">
+                              <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-ocean-600" aria-hidden="true" />
+                              <div className="text-sm">
+                                <p className="text-obsidian-900">
+                                  Pickup: {b.pickupStop ? b.pickupStop.name : b.pickupCustomText || "We'll confirm your pickup by email"}
+                                </p>
+                                {b.pickupStop?.address && (
+                                  <p className="text-slate-600">
+                                    {b.pickupStop.address}, {b.pickupStop.town}
+                                  </p>
+                                )}
+                                {b.pickupTime && <p className="mt-0.5 text-ocean-700">Pickup at {b.pickupTime}</p>}
+                              </div>
+                            </div>
+                            {b.review && (
+                              <p className="flex items-center gap-2 text-sm text-slate-700">
+                                <Star className="h-4 w-4 fill-summit-500 text-summit-500" aria-hidden="true" />
+                                You rated this {b.review.rating}/5 · &ldquo;{b.review.title}&rdquo;
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Total + actions */}
+                          <div className="flex flex-col gap-3 border-t border-obsidian-900/[0.07] p-6 md:col-span-2 lg:col-span-1 lg:border-l lg:border-t-0">
+                            <div>
+                              <p className="text-sm text-slate-600">Total paid</p>
+                              <p className="text-2xl font-light text-obsidian-900">
+                                ${b.totalAmount.toFixed(2)} <span className="text-sm text-slate-600">{b.currency}</span>
+                              </p>
+                            </div>
+                            <div className="mt-auto grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
+                              <Link
+                                href={`/booking/${b.bookingReference}/voucher`}
+                                className="golden-summit-btn inline-flex h-11 items-center justify-center gap-2 rounded-full px-5 text-sm"
+                              >
+                                <Ticket className="h-4 w-4" aria-hidden="true" />
+                                View voucher
+                              </Link>
+                              {b.status !== "CANCELLED" && !b.review && b.tourDeparture.tour && activeTab === "past" && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setReviewModalBooking(b);
+                                    setReviewRating(5);
+                                    setReviewTitle("");
+                                    setReviewBody("");
+                                  }}
+                                  className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-obsidian-900/15 px-5 text-sm text-obsidian-900 hover:bg-obsidian-50"
+                                >
+                                  <Star className="h-4 w-4 text-summit-600" aria-hidden="true" />
+                                  Write a review
+                                </button>
+                              )}
+                              {b.status === "CONFIRMED" && activeTab === "upcoming" && !canCancelFree(b.tourDeparture.date, b.tourDeparture.departureTime) && (
+                                <p className="text-sm leading-snug text-slate-600">
+                                  Within 72 hours of departure: free cancellation has ended.{" "}
+                                  <Link href="/contact-us" className="text-ocean-600 underline underline-offset-4">
+                                    Contact us
+                                  </Link>{" "}
+                                  for changes.
+                                </p>
+                              )}
+                              {b.status === "CONFIRMED" && activeTab === "upcoming" && canCancelFree(b.tourDeparture.date, b.tourDeparture.departureTime) && (
+                                <button
+                                  type="button"
+                                  onClick={() => setCancellingBooking(b)}
+                                  className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-red-200 bg-white px-5 text-sm text-red-700 transition-colors hover:border-red-700 hover:bg-red-700 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700"
+                                >
+                                  <XCircle className="h-4 w-4" aria-hidden="true" />
+                                  Cancel booking
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </article>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </section>
+          </>
+        )}
+
+        {/* Cancellation dialog */}
+        {cancellingBooking && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-obsidian-950/70 p-4 backdrop-blur-sm">
+            <div role="dialog" aria-modal="true" aria-labelledby="cancel-title" className="w-full max-w-md space-y-5 rounded-[1.75rem] bg-white p-6 shadow-2xl sm:p-8">
+              <h2 id="cancel-title" className="text-2xl font-light text-obsidian-900">
+                Cancel this booking?
+              </h2>
+              <p className="text-base text-slate-700">
+                <span className="font-mono">{cancellingBooking.bookingReference}</span> ·{" "}
+                {cancellingBooking.tourDeparture.tour?.title || "Vista Chase tour"} on {cancellingBooking.tourDeparture.date}
+              </p>
+              <div className="rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-900">
+                <p className="text-base">Free cancellation up to 72 hours before</p>
+                <p className="mt-1">
+                  Groups of 1–6 get a full refund. For groups of 7 or more and multi-day trips, the 20% deposit is non-refundable. Within 72 hours the
+                  booking can&rsquo;t be refunded. Refunds take 5–10 business days.
+                </p>
+              </div>
+              {cancelMessage && (
+                <p
+                  role="alert"
+                  className={`flex items-center gap-2 rounded-xl px-4 py-3 text-sm ${
+                    cancelMessage.type === "success" ? "bg-emerald-50 text-emerald-800" : "bg-red-50 text-red-800"
+                  }`}
+                >
+                  {cancelMessage.type === "success" ? <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" /> : <XCircle className="h-4 w-4 shrink-0" aria-hidden="true" />}
+                  {cancelMessage.text}
+                </p>
+              )}
+              <div className="flex flex-wrap justify-end gap-3">
                 <button
                   type="button"
                   disabled={cancellingLoading}
@@ -620,48 +655,50 @@ export default function MyTripsPage() {
                     setCancellingBooking(null);
                     setCancelMessage(null);
                   }}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold bg-forest-800 hover:bg-forest-700 text-slate-300 transition-colors"
+                  className="inline-flex h-11 items-center rounded-full border border-obsidian-900/15 px-5 text-sm text-obsidian-900 hover:bg-obsidian-50"
                 >
-                  Keep Reservation
+                  Keep booking
                 </button>
                 <button
                   type="button"
                   disabled={cancellingLoading}
                   onClick={handleCancelConfirm}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold bg-red-600 hover:bg-red-500 text-white transition-colors flex items-center gap-2"
+                  className="inline-flex h-11 items-center gap-2 rounded-full bg-red-700 px-5 text-sm text-white hover:bg-red-800"
                 >
-                  {cancellingLoading && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
-                  <span>Confirm Cancellation</span>
+                  {cancellingLoading && <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" />}
+                  Cancel booking
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Review Modal */}
+        {/* Review dialog */}
         {reviewModalBooking && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-forest-900 border border-forest-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 animate-in fade-in duration-150">
-              <div className="flex items-center justify-between">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-obsidian-950/70 p-4 backdrop-blur-sm">
+            <div role="dialog" aria-modal="true" aria-labelledby="review-title" className="w-full max-w-lg space-y-5 rounded-[1.75rem] bg-white p-6 shadow-2xl sm:p-8">
+              <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h3 className="text-lg font-bold text-white">Write a Verified Review</h3>
-                  <p className="text-xs text-slate-400">
-                    Booking: {reviewModalBooking.bookingReference} • {reviewModalBooking.tourDeparture.tour?.title}
-                  </p>
+                  <h2 id="review-title" className="text-2xl font-light text-obsidian-900">
+                    How was your day?
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-600">{reviewModalBooking.tourDeparture.tour?.title}</p>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setReviewModalBooking(null)}
-                  className="text-slate-400 hover:text-white"
+                  aria-label="Close"
+                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-obsidian-900/15 text-obsidian-900 hover:bg-obsidian-50"
                 >
-                  ✕
+                  <XCircle className="h-5 w-5" aria-hidden="true" />
                 </button>
               </div>
-
               <form onSubmit={handleSubmitReview} className="space-y-4">
-                {/* Rating selection */}
                 <div>
-                  <span id="review-rating-label" className="block text-xs font-medium text-slate-300 mb-1.5">Overall Rating</span>
-                  <div role="radiogroup" aria-labelledby="review-rating-label" className="flex items-center gap-2">
+                  <span id="review-rating-label" className="mb-1.5 block text-sm text-slate-700">
+                    Your rating
+                  </span>
+                  <div role="radiogroup" aria-labelledby="review-rating-label" className="flex items-center gap-1">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <button
                         type="button"
@@ -670,76 +707,58 @@ export default function MyTripsPage() {
                         aria-checked={reviewRating === star}
                         aria-label={`${star} ${star === 1 ? "star" : "stars"}`}
                         onClick={() => setReviewRating(star)}
-                        className="p-1 rounded hover:scale-110 transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-summit-500"
+                        className="rounded-lg p-1.5 transition-transform hover:scale-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ocean-600"
                       >
-                        <Star
-                          className={`w-6 h-6 ${
-                            star <= reviewRating
-                              ? "fill-gold-400 text-gold-400"
-                              : "text-slate-600"
-                          }`}
-                        />
+                        <Star className={`h-7 w-7 ${star <= reviewRating ? "fill-summit-500 text-summit-500" : "text-slate-300"}`} aria-hidden="true" />
                       </button>
                     ))}
-                    <span className="text-sm font-semibold text-gold-400 ml-2" aria-hidden="true">
-                      {reviewRating} of 5 Stars
-                    </span>
                   </div>
                 </div>
-
-                <div>
-                  <label htmlFor="app-account-trips-headline-title" className="block text-xs font-medium text-slate-300 mb-1">Headline / Title</label>
-                  <input id="app-account-trips-headline-title"
+                <label className="block">
+                  <span className="mb-1.5 block text-sm text-slate-700">Headline</span>
+                  <input
                     type="text"
                     required
-                    placeholder="e.g. Unforgettable day at Moraine Lake with Vista Chase!"
+                    placeholder="An unforgettable sunrise at Moraine Lake"
                     value={reviewTitle}
                     onChange={(e) => setReviewTitle(e.target.value)}
-                    className="w-full bg-forest-950 border border-forest-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-gold-400"
+                    className="h-12 w-full rounded-xl border border-obsidian-900/15 px-4 text-base text-obsidian-900 placeholder:text-slate-400 focus:border-ocean-600 focus:outline-none focus:ring-2 focus:ring-ocean-600/30"
                   />
-                </div>
-
-                <div>
-                  <label htmlFor="app-account-trips-your-review" className="block text-xs font-medium text-slate-300 mb-1">Your Review</label>
-                  <textarea id="app-account-trips-your-review"
+                </label>
+                <label className="block">
+                  <span className="mb-1.5 block text-sm text-slate-700">Your review</span>
+                  <textarea
                     rows={4}
                     required
-                    placeholder="Tell other travelers about your experience, punctuality, driver, and scenic views..."
+                    placeholder="Your guide, the stops, the views…"
                     value={reviewBody}
                     onChange={(e) => setReviewBody(e.target.value)}
-                    className="w-full bg-forest-950 border border-forest-700 rounded-xl p-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-gold-400"
+                    className="w-full rounded-xl border border-obsidian-900/15 p-4 text-base text-obsidian-900 placeholder:text-slate-400 focus:border-ocean-600 focus:outline-none focus:ring-2 focus:ring-ocean-600/30"
                   />
-                </div>
-
+                </label>
                 {reviewStatus && reviewStatus !== "SUCCESS" && (
-                  <p className="text-xs text-red-400 flex items-center gap-1.5">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                    <span>{reviewStatus}</span>
+                  <p role="alert" className="flex items-center gap-2 text-sm text-red-700">
+                    <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    {reviewStatus}
                   </p>
                 )}
-
                 {reviewStatus === "SUCCESS" && (
-                  <p className="text-xs text-emerald-400 flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-                    <span>Your verified review has been submitted successfully!</span>
+                  <p role="status" className="flex items-center gap-2 text-sm text-emerald-800">
+                    <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    Thank you, your review is posted.
                   </p>
                 )}
-
-                <div className="flex items-center justify-end gap-3 pt-2">
+                <div className="flex justify-end gap-3 pt-1">
                   <button
                     type="button"
                     onClick={() => setReviewModalBooking(null)}
-                    className="px-4 py-2 rounded-xl text-xs font-semibold bg-forest-800 hover:bg-forest-700 text-slate-300 transition-colors"
+                    className="inline-flex h-11 items-center rounded-full border border-obsidian-900/15 px-5 text-sm text-obsidian-900 hover:bg-obsidian-50"
                   >
                     Cancel
                   </button>
-                  <button
-                    type="submit"
-                    disabled={submittingReview}
-                    className="px-5 py-2.5 rounded-xl text-xs font-semibold text-forest-950 gold-gradient shadow-glow hover:opacity-95 transition-all flex items-center gap-2"
-                  >
-                    {submittingReview && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
-                    <span>Submit Review</span>
+                  <button type="submit" disabled={submittingReview} className="golden-summit-btn inline-flex h-11 items-center gap-2 rounded-full px-6 text-sm">
+                    {submittingReview && <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" />}
+                    Post review
                   </button>
                 </div>
               </form>

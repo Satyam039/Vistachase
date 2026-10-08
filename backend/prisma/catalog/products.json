@@ -13,15 +13,15 @@
     "facts": [
       {
         "label": "Duration",
-        "value": "9-11 hours"
+        "value": "9–11 hours"
       },
       {
         "label": "Entry fees",
-        "value": "Park Canada included"
+        "value": "Parks Canada included"
       },
       {
-        "label": "Small Group",
-        "value": "max 12 people"
+        "label": "Small group",
+        "value": "Max 12 people"
       },
       {
         "label": "Operation",
@@ -341,7 +341,7 @@
       },
       {
         "question": "What is your cancellation policy?",
-        "answer": "We offer a full refund if you cancel at least 24 hours before your scheduled travel date. No hidden fees just peace of mind when you book."
+        "answer": "Cancel at least 72 hours before your tour for a full refund (groups of 1–6). For groups of 7 or more, the 20% deposit is non-refundable and the rest is refunded. Cancellations within 72 hours aren't refunded."
       }
     ],
     "crossSells": [
@@ -367,15 +367,15 @@
     "facts": [
       {
         "label": "Duration",
-        "value": "8-10 hours"
+        "value": "8–10 hours"
       },
       {
         "label": "Entry fees",
-        "value": "Park Canada included"
+        "value": "Parks Canada included"
       },
       {
-        "label": "Small Group",
-        "value": "max 12 people"
+        "label": "Small group",
+        "value": "Max 12 people"
       },
       {
         "label": "Operation",
@@ -729,15 +729,15 @@
     "facts": [
       {
         "label": "Duration",
-        "value": "9-11 hours"
+        "value": "9–11 hours"
       },
       {
         "label": "Entry fees",
-        "value": "Park Canada included"
+        "value": "Parks Canada included"
       },
       {
-        "label": "Small Group",
-        "value": "max 12 people"
+        "label": "Small group",
+        "value": "Max 12 people"
       },
       {
         "label": "Operation",
@@ -1079,19 +1079,19 @@
     "facts": [
       {
         "label": "Duration",
-        "value": "10-12 hours"
+        "value": "10–12 hours"
       },
       {
         "label": "Entry fees",
-        "value": "Park Canada included"
+        "value": "Parks Canada included"
       },
       {
-        "label": "Small Group",
-        "value": "max 12 people"
+        "label": "Small group",
+        "value": "Max 12 people"
       },
       {
         "label": "Operation",
-        "value": "June-Nov"
+        "value": "June–November"
       }
     ],
     "priceFrom": 249.0,
@@ -1441,19 +1441,19 @@
     "facts": [
       {
         "label": "Duration",
-        "value": "8-10 hours"
+        "value": "8–10 hours"
       },
       {
         "label": "Entry fees",
-        "value": "Park Canada included"
+        "value": "Parks Canada included"
       },
       {
-        "label": "Small Group",
-        "value": "max 12 people"
+        "label": "Small group",
+        "value": "Max 12 people"
       },
       {
         "label": "Operation",
-        "value": "Dec-Apr"
+        "value": "December–April"
       }
     ],
     "priceFrom": 199.0,
@@ -1789,19 +1789,19 @@
     "facts": [
       {
         "label": "Duration",
-        "value": "10-12 hours"
+        "value": "10–12 hours"
       },
       {
-        "label": "Price From",
-        "value": "$999 per Group"
+        "label": "Price from",
+        "value": "$999 per group"
       },
       {
-        "label": "Private Experience",
-        "value": "max 6 or13 people"
+        "label": "Private vehicle",
+        "value": "Up to 6 or 13 guests"
       },
       {
         "label": "Operation",
-        "value": "Year Around"
+        "value": "Year round"
       }
     ],
     "priceFrom": 999.0,
@@ -2153,19 +2153,19 @@
     "facts": [
       {
         "label": "Duration",
-        "value": "10-12 hours"
+        "value": "10–12 hours"
       },
       {
-        "label": "Price From",
-        "value": "$999 per Group"
+        "label": "Price from",
+        "value": "$999 per group"
       },
       {
-        "label": "Private Expeience",
-        "value": "Max 6 or13 pax each Group"
+        "label": "Private vehicle",
+        "value": "Up to 6 or 13 guests"
       },
       {
         "label": "Operation",
-        "value": "Year Around"
+        "value": "Year round"
       }
     ],
     "priceFrom": 999.0,
@@ -2524,19 +2524,19 @@
     "facts": [
       {
         "label": "Duration",
-        "value": "8-10 hours"
+        "value": "8–10 hours"
       },
       {
-        "label": "Price From",
-        "value": "$999 per Group"
+        "label": "Price from",
+        "value": "$999 per group"
       },
       {
-        "label": "Private Experience",
-        "value": "Max 6 or 13 pax"
+        "label": "Private vehicle",
+        "value": "Up to 6 or 13 guests"
       },
       {
         "label": "Operation",
-        "value": "Dec-Apr"
+        "value": "December–April"
       }
     ],
     "priceFrom": 999.0,
@@ -2869,19 +2869,19 @@
     "facts": [
       {
         "label": "Duration",
-        "value": "10-12 hours"
+        "value": "10–12 hours"
       },
       {
-        "label": "Price From",
-        "value": "$1099 each Group"
+        "label": "Price from",
+        "value": "$1,099 per group"
       },
       {
-        "label": "Private Experience",
-        "value": "Max 6 or 13 each group"
+        "label": "Private vehicle",
+        "value": "Up to 6 or 13 guests"
       },
       {
         "label": "Operation",
-        "value": "Year Around"
+        "value": "Year round"
       }
     ],
     "priceFrom": 1099.0,
@@ -3320,19 +3320,19 @@
     "facts": [
       {
         "label": "Duration",
-        "value": "10-12 hours"
+        "value": "10–12 hours"
       },
       {
-        "label": "Price From",
-        "value": "$1199 per Group"
+        "label": "Price from",
+        "value": "$1,199 per group"
       },
       {
-        "label": "Private Experience",
-        "value": "max 6 or 12 pax"
+        "label": "Private vehicle",
+        "value": "Up to 6 or 13 guests"
       },
       {
         "label": "Operation",
-        "value": "Year Around"
+        "value": "Year round"
       }
     ],
     "priceFrom": 1199.0,
@@ -3715,19 +3715,19 @@
     "facts": [
       {
         "label": "Duration",
-        "value": "5-6 hours round trip"
+        "value": "5–6 hours round trip"
       },
       {
-        "label": "Price From",
+        "label": "Price from",
         "value": "$125 per person"
       },
       {
-        "label": "Small Group",
-        "value": "max 12 people"
+        "label": "Small group",
+        "value": "Max 12 people"
       },
       {
         "label": "Operation",
-        "value": "June-October"
+        "value": "June–October"
       }
     ],
     "priceFrom": 125.0,
@@ -3999,19 +3999,19 @@
     "facts": [
       {
         "label": "Duration",
-        "value": "8-9 hours"
+        "value": "8–9 hours"
       },
       {
-        "label": "Price From",
+        "label": "Price from",
         "value": "$99 per person"
       },
       {
-        "label": "Small Group",
-        "value": "max 12 people"
+        "label": "Small group",
+        "value": "Max 12 people"
       },
       {
         "label": "Operation",
-        "value": "June-Sept"
+        "value": "June–September"
       }
     ],
     "priceFrom": 99.0,
@@ -4262,19 +4262,19 @@
     "facts": [
       {
         "label": "Duration",
-        "value": "2-7 Days"
+        "value": "2–7 days"
       },
       {
-        "label": "Save More",
-        "value": "Rental Car not Required"
+        "label": "Getting there",
+        "value": "No rental car needed"
       },
       {
-        "label": "Private Experience",
-        "value": "Max 6 or 13 Pax each part y"
+        "label": "Private vehicle",
+        "value": "Up to 6 or 13 guests"
       },
       {
         "label": "Operation",
-        "value": "Year Around"
+        "value": "Year round"
       }
     ],
     "priceFrom": 1799.0,

@@ -1,5 +1,6 @@
-import { redirect } from "next/navigation";
+import { permanentRedirect } from "next/navigation";
 
-export default function PrivacyPolicyAlias() {
-  redirect("/privacy-policy");
+// The live site's cancellation policy lived at this URL; keep old links working.
+export default function LegacyCancellationPolicy() {
+  permanentRedirect("/cancellation-policy");
 }

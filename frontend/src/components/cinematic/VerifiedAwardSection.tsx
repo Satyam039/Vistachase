@@ -4,6 +4,7 @@
 // Figures match the live site: 10,000+ travellers, 5.0 from 1,000+ reviews, #6 in Canada.
 
 import Image from "next/image";
+import { AwardSeal } from "@/components/brand/AwardSeal";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
@@ -53,13 +54,7 @@ export function VerifiedAwardSection() {
 
         <div className="flex justify-center lg:col-span-5" data-reveal="scale">
           <div className="relative aspect-square w-full max-w-sm rounded-full bg-white p-12 shadow-[0_40px_80px_-40px_rgba(12,31,33,0.35)] ring-1 ring-obsidian-900/5">
-            <Image
-              src="/media/badges/tripadvisor-best-of-the-best-2025.png"
-              alt="Tripadvisor Travelers' Choice award badge"
-              fill
-              sizes="384px"
-              className="object-contain p-14"
-            />
+            <AwardSeal className="absolute inset-0 p-12" />
           </div>
         </div>
 
@@ -67,7 +62,7 @@ export function VerifiedAwardSection() {
           {STATS.map((s) => {
             const final = `${s.prefix ?? ""}${s.to.toLocaleString("en-CA", { minimumFractionDigits: s.decimals ?? 0 })}${s.suffix ?? ""}`;
             return (
-              <div key={s.label} className="flex flex-col-reverse bg-white px-6 py-8 sm:px-8">
+              <div key={s.label} className="flex flex-col-reverse items-center justify-end bg-white px-6 py-8 text-center sm:px-8">
                 <dt className="mt-2 text-sm leading-snug text-slate-600">{s.label}</dt>
                 <dd
                   className="text-4xl font-light tabular-nums text-obsidian-900 sm:text-5xl"

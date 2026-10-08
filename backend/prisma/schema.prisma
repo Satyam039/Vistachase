@@ -421,3 +421,21 @@ model Affiliate {
 
   @@index([status])
 }
+
+// Messages from the contact form and "Request this tour" (custom quotes). The team is emailed a
+// copy; the record keeps it if email delivery fails.
+model Enquiry {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  tourSlug  String?
+  guests    Int?
+  date      String?
+  message   String
+  status    String   @default("NEW") // NEW | REPLIED | CLOSED
+  createdAt DateTime @default(now())
+
+  @@index([status])
+  @@index([createdAt])
+}

@@ -191,14 +191,30 @@ export interface BookingDetail {
   currency: string;
   status: string;
   qrCodeUrl: string | null;
+  /** Not returned by the public reference lookup: live tracking opens only from the link sent to the guest. */
   trackingToken?: string | null;
   pickupCustomText: string | null;
-  pickupStop: { name: string; town: string; instructions: string } | null;
+  pickupTime?: string | null;
+  adultsCount?: number;
+  childrenCount?: number;
+  infantsCount?: number;
+  subtotal?: number;
+  tax?: number;
+  addOnsTotal?: number;
+  pickupStop: {
+    name: string;
+    town: string;
+    instructions: string;
+    address?: string;
+    latitude?: number;
+    longitude?: number;
+  } | null;
   items: { id: string; name: string; price: number; quantity: number }[];
   tourDeparture: {
     date: string;
     departureTime: string;
-    tour: { title: string } | null;
+    returnTime?: string | null;
+    tour: { title: string; slug?: string; featuredImage?: string; durationHours?: number } | null;
     shuttleRoute: { name: string } | null;
   };
 }

@@ -5,9 +5,9 @@
 // stacked sections, so everything can be scanned and linked. Content comes from the catalog
 // imported from the live product pages (tour.tabs, inclusions, faqs).
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Car, Check, CheckCircle2, ChevronDown, Clock, MapPin, Star, X } from "lucide-react";
+import { Car, Check, CheckCircle2, Clock, MapPin, Plus, Star, X } from "lucide-react";
 import type { TourSection, TourWithAvailability } from "@/lib/api/types";
 
 interface Review {
@@ -30,6 +30,45 @@ const SECTIONS = [
   { id: "reviews", label: "Reviews" },
 ] as const;
 
+
+// Imported live-site copy packs several lines into one paragraph ("Doorstep Pickup – we collect
+// you…"). Split it into real paragraphs; runs of "Label – text" lines become a list.
+const LABELLED = /^([^–—:\n]{2,48})\s[–—-]\s(.+)$/;
+function Prose({ text, className = "text-base leading-relaxed text-slate-700" }: { text: string; className?: string }) {
+  const lines = text.split(/\n+/).map((l) => l.trim()).filter(Boolean);
+  const blocks: (string | [string, string][])[] = [];
+  for (const line of lines) {
+    const m = line.match(LABELLED);
+    const last = blocks[blocks.length - 1];
+    if (m) {
+      if (Array.isArray(last)) last.push([m[1], m[2]]);
+      else blocks.push([[m[1], m[2]]]);
+    } else blocks.push(line);
+  }
+  return (
+    <>
+      {blocks.map((b, i) =>
+        typeof b === "string" ? (
+          <p key={i} className={className}>
+            {b}
+          </p>
+        ) : (
+          <ul key={i} className="space-y-3">
+            {b.map(([label, body]) => (
+              <li key={label} className="flex items-start gap-3 text-base leading-relaxed text-slate-700">
+                <Check className="mt-1 h-4 w-4 shrink-0 text-ocean-600" aria-hidden="true" />
+                <span>
+                  <span className="text-obsidian-900">{label}</span> · {body}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ),
+      )}
+    </>
+  );
+}
+
 const tab = (tour: TourWithAvailability, labels: RegExp) => tour.tabs.find((t) => labels.test(t.label));
 
 function SectionBlock({ section, level = 3 }: { section: TourSection; level?: 3 | 4 }) {
@@ -38,9 +77,7 @@ function SectionBlock({ section, level = 3 }: { section: TourSection; level?: 3 
     <div className="space-y-4">
       {section.heading && <Heading className="text-xl font-light text-obsidian-900">{section.heading}</Heading>}
       {section.body.map((paragraph) => (
-        <p key={paragraph} className="whitespace-pre-line text-base leading-relaxed text-slate-700">
-          {paragraph}
-        </p>
+        <Prose key={paragraph} text={paragraph} />
       ))}
       {section.items.length > 0 && (
         <ul className="space-y-2 text-base text-slate-700">
@@ -95,7 +132,6 @@ function SectionHeading({ id, children }: { id: string; children: React.ReactNod
 }
 
 export function TourSections({ tour }: { tour: TourWithAvailability }) {
-  const [active, setActive] = useState<string>("overview");
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [reviews, setReviews] = useState<Review[] | null>(null);
 
@@ -109,19 +145,7 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
   const overviewSections = (overview?.sections ?? []).filter((s) => !/price (in|ex)cludes/i.test(s.heading));
   const pickupStep = itinerary?.sections.flatMap((s) => s.steps).find((s) => /pick ?up/i.test(s.text));
 
-  // Highlight the section in view in the sticky bar.
-  useEffect(() => {
-    const targets = SECTIONS.map((s) => document.getElementById(s.id)).filter((el): el is HTMLElement => !!el);
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-        if (visible[0]) setActive(visible[0].target.id);
-      },
-      { rootMargin: "-35% 0px -55% 0px" }
-    );
-    targets.forEach((t) => observer.observe(t));
-    return () => observer.disconnect();
-  }, []);
+
 
   // Reviews left by guests who booked this tour (backend /api/reviews).
   useEffect(() => {
@@ -135,40 +159,17 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
     };
   }, [tour.id]);
 
-  const nav = useMemo(
-    () => (
-      <nav
-        aria-label="On this page"
-        className="sticky z-30 -mx-4 border-y border-slate-200 bg-obsidian-50/95 px-4 backdrop-blur-md sm:mx-0 sm:rounded-2xl sm:border"
-        style={{ top: "var(--vc-header-h, 0px)" }}
-      >
-        <ul className="flex gap-1 overflow-x-auto py-2 [scrollbar-width:none]">
-          {SECTIONS.map((s) => (
-            <li key={s.id} className="shrink-0">
-              <a
-                href={`#${s.id}`}
-                aria-current={active === s.id ? "location" : undefined}
-                className={`inline-flex min-h-11 items-center rounded-full px-4 text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-ocean-600 ${
-                  active === s.id ? "bg-obsidian-900 text-white" : "text-slate-700 hover:bg-obsidian-900/5"
-                }`}
-              >
-                {s.label}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </nav>
-    ),
-    [active]
-  );
 
   return (
     <div className="space-y-14">
-      {nav}
 
       <section id="overview" aria-labelledby="overview-heading" className="space-y-6">
         <SectionHeading id="overview">Overview</SectionHeading>
-        {tour.description && <p className="whitespace-pre-line text-lg font-light leading-relaxed text-slate-700">{tour.description}</p>}
+        {tour.description && (
+          <div className="space-y-4">
+            <Prose text={tour.description} className="text-lg font-light leading-relaxed text-slate-700" />
+          </div>
+        )}
         {tour.highlights.length > 0 && (
           <ul className="grid gap-3 rounded-3xl border border-slate-200/80 bg-white p-6 sm:grid-cols-2" aria-label="Highlights">
             {tour.highlights.map((h) => (
@@ -266,41 +267,84 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
 
       <section id="cancellation-policy" aria-labelledby="cancellation-policy-heading" className="space-y-4">
         <SectionHeading id="cancellation-policy">Cancellation policy</SectionHeading>
-        <div className="space-y-3 rounded-3xl border border-emerald-200 bg-emerald-50 p-6 text-base text-emerald-900">
-          <p className="flex items-start gap-2.5 text-lg">
-            <CheckCircle2 className="mt-1 h-5 w-5 shrink-0" aria-hidden="true" />
-            <span>Free cancellation up to 24 hours before your experience, with a full refund.</span>
-          </p>
-          <p>Cancellations made less than 24 hours before the start time are not refundable.</p>
-          <Link href="/privacy-policy-vista-chase" className="inline-flex min-h-11 items-center underline underline-offset-4">
-            Read the full cancellation policy
-          </Link>
-        </div>
+        {isTicket ? (
+          <div className="space-y-3 rounded-[1.75rem] bg-white p-6 text-base text-slate-700 ring-1 ring-obsidian-900/[0.07]">
+            <p>Tickets are run by the attraction operator and follow their own cancellation rules, which we confirm with your request.</p>
+            <Link href="/cancellation-policy" className="inline-flex min-h-11 items-center text-ocean-700 underline underline-offset-4">
+              Read our cancellation policy
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-3 rounded-[1.75rem] bg-emerald-50 p-6 text-base text-emerald-950 ring-1 ring-emerald-200">
+            <p className="flex items-start gap-2.5 text-lg">
+              <CheckCircle2 className="mt-1 h-5 w-5 shrink-0 text-emerald-700" aria-hidden="true" />
+              <span>
+                {tour.category === "MULTIDAY"
+                  ? "Cancel at least 72 hours before your trip for a refund of everything except the 20% non-refundable deposit."
+                  : "Cancel at least 72 hours before your tour for a full refund (groups of 1–6)."}
+              </span>
+            </p>
+            <ul className="list-disc space-y-1.5 pl-6">
+              {tour.category !== "MULTIDAY" && <li>Groups of 7 or more: the 20% deposit is non-refundable; the rest is refunded.</li>}
+              <li>Within 72 hours of the start time, cancellations aren&rsquo;t refunded.</li>
+              <li>Arriving 10 or more minutes late, or not showing up, is fully charged.</li>
+              <li>Approved refunds reach your original payment method within 5–10 business days.</li>
+            </ul>
+            <Link href="/cancellation-policy" className="inline-flex min-h-11 items-center underline underline-offset-4">
+              Read the full cancellation policy
+            </Link>
+          </div>
+        )}
       </section>
 
       {tour.faqs.length > 0 && (
         <section id="faq" aria-labelledby="faq-heading" className="space-y-6">
           <SectionHeading id="faq">Frequently asked questions</SectionHeading>
+          {/* Accordion: answers open with a height transition (grid rows 0fr → 1fr); a closed
+              answer is inert, so it is skipped by keyboard and screen readers. */}
           <div className="space-y-3">
-            {tour.faqs.map((faq, idx) => (
-              <div key={faq.question} className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-                <h3>
-                  <button
-                    type="button"
-                    onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                    aria-expanded={openFaq === idx}
-                    aria-controls={`faq-answer-${idx}`}
-                    className="flex w-full items-center justify-between gap-4 p-5 text-left text-base text-slate-900 hover:text-ocean-600 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ocean-600"
+            {tour.faqs.map((faq, idx) => {
+              const open = openFaq === idx;
+              return (
+                <div
+                  key={faq.question}
+                  className={`rounded-2xl border bg-white transition-[border-color,box-shadow] duration-300 ${
+                    open ? "border-ocean-600/40 shadow-[0_18px_40px_-28px_rgba(12,31,33,0.45)]" : "border-slate-200 hover:border-slate-300"
+                  }`}
+                >
+                  <h3>
+                    <button
+                      type="button"
+                      onClick={() => setOpenFaq(open ? null : idx)}
+                      aria-expanded={open}
+                      aria-controls={`faq-answer-${idx}`}
+                      className="group flex w-full items-center justify-between gap-4 rounded-2xl px-5 py-4 text-left text-base text-slate-900 sm:px-6 sm:py-5 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ocean-600"
+                    >
+                      <span className={open ? "text-obsidian-900" : "group-hover:text-ocean-700"}>{faq.question}</span>
+                      <span
+                        className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-[background-color,color,transform] duration-300 ${
+                          open ? "rotate-45 bg-obsidian-900 text-white" : "bg-obsidian-900/[0.05] text-obsidian-900 group-hover:bg-obsidian-900/10"
+                        }`}
+                        aria-hidden="true"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </span>
+                    </button>
+                  </h3>
+                  <div
+                    id={`faq-answer-${idx}`}
+                    role="region"
+                    aria-label={faq.question}
+                    inert={!open}
+                    className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
                   >
-                    <span>{faq.question}</span>
-                    <ChevronDown className={`h-5 w-5 shrink-0 transition-transform ${openFaq === idx ? "rotate-180" : ""}`} aria-hidden="true" />
-                  </button>
-                </h3>
-                <div id={`faq-answer-${idx}`} hidden={openFaq !== idx} className="whitespace-pre-line border-t border-slate-100 px-5 pb-5 pt-3 text-base leading-relaxed text-slate-700">
-                  {faq.answer}
+                    <div className="overflow-hidden">
+                      <p className="whitespace-pre-line px-5 pb-5 text-base leading-relaxed text-slate-700 sm:px-6 sm:pb-6">{faq.answer}</p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       )}
@@ -321,7 +365,7 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
           <ul className="space-y-4">
             {reviews.map((r) => (
               <li key={r.id} className="space-y-2 rounded-3xl border border-slate-200 bg-white p-6">
-                <p className="flex items-center gap-1" aria-label={`${r.rating} out of 5`}>
+                <p className="flex items-center gap-1" role="img" aria-label={`${r.rating} out of 5`}>
                   {Array.from({ length: 5 }, (_, i) => (
                     <Star key={i} className={`h-4 w-4 ${i < r.rating ? "fill-summit-500 text-summit-500" : "text-slate-300"}`} aria-hidden="true" />
                   ))}
@@ -343,5 +387,79 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
         )}
       </section>
     </div>
+  );
+}
+
+/**
+ * Sticky "On this page" bar for the product sections (Viator / Expedia tab bar). Rendered by
+ * TourDetailView across the full content width, so all sections fit and the pills share the
+ * width edge to edge; on narrow screens it scrolls sideways and keeps the active pill in view.
+ */
+export function TourSectionNav() {
+  const [active, setActive] = useState<string>("overview");
+
+  // Highlight the section in view in the sticky bar: the last section whose top has passed
+  // 40% of the viewport (scroll-based, so instant jumps and fast scrolling are caught too).
+  useEffect(() => {
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const line = window.innerHeight * 0.4;
+      let current: string = SECTIONS[0].id;
+      for (const { id } of SECTIONS) {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top <= line) current = id;
+      }
+      setActive(current);
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  // Keep the active pill visible inside the horizontally scrolling bar (it can sit off to the side).
+  const navList = useRef<HTMLUListElement>(null);
+  useEffect(() => {
+    const list = navList.current;
+    const pill = list?.querySelector<HTMLElement>(`a[href="#${active}"]`);
+    if (!list || !pill) return;
+    const target = pill.offsetLeft - (list.clientWidth - pill.offsetWidth) / 2;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    list.scrollTo({ left: Math.max(0, target), behavior: reduce ? "auto" : "smooth" });
+  }, [active]);
+
+  return (
+      <nav
+        aria-label="On this page"
+        // Solid surface + shadow so content scrolling underneath never shows at its edges.
+        className="sticky z-30 -mx-page mb-10 border-b border-obsidian-900/[0.08] bg-obsidian-50 px-page shadow-[0_12px_24px_-20px_rgba(12,31,33,0.45)] sm:mx-0 sm:rounded-full sm:border sm:bg-white sm:px-1.5"
+        style={{ top: "calc(var(--vc-header-h, 0px) + 16px)" }} // 16px below the navbar
+      >
+        <ul
+          ref={navList}
+          className="vc-rail flex w-full gap-1 overflow-x-auto py-1.5 [mask-image:linear-gradient(90deg,transparent,#000_1.5rem,#000_calc(100%-1.5rem),transparent)] sm:[mask-image:none]"
+        >
+          {SECTIONS.map((s) => (
+            <li key={s.id} className="flex-1 shrink-0">
+              <a
+                href={`#${s.id}`}
+                onClick={() => setActive(s.id)}
+                aria-current={active === s.id ? "location" : undefined}
+                className={`flex min-h-11 w-full items-center justify-center whitespace-nowrap rounded-full px-4 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ocean-600 ${
+                  active === s.id ? "bg-obsidian-900 text-white" : "text-slate-700 hover:bg-obsidian-900/[0.06] hover:text-obsidian-900"
+                }`}
+              >
+                {s.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
   );
 }

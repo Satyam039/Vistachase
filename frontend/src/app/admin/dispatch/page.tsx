@@ -1,22 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+// Daily dispatch board: one card per departure with capacity and boarding progress, then each
+// pickup stop in order with its passengers and a check-in toggle. Brand light surface, shared
+// staff header and tabs.
+
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import {
-  Truck,
-  Calendar,
-  Clock,
-  MapPin,
-  Users,
-  CheckCircle2,
-  Circle,
-  ChevronLeft,
-  ChevronRight,
-  AlertCircle,
-  RefreshCw,
-  ArrowLeft,
-  ShieldCheck,
-} from "lucide-react";
+import { CheckCircle2, ChevronLeft, ChevronRight, Circle, Clock, MapPin, RefreshCw, Truck } from "lucide-react";
+import { AdminHeader, StaffSignIn } from "@/components/admin/AdminHeader";
 
 interface DispatchPassenger {
   id: string;
@@ -49,415 +40,282 @@ interface DispatchManifest {
   stops: DispatchStop[];
 }
 
+// Dates are local calendar days (YYYY-MM-DD), not UTC, so evenings in Canmore don't jump ahead.
+const pad = (n: number) => String(n).padStart(2, "0");
+const toKey = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const fromKey = (k: string) => {
+  const [y, m, d] = k.split("-").map(Number);
+  return new Date(y, m - 1, d);
+};
+const longDate = (k: string) => fromKey(k).toLocaleDateString("en-CA", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+
+function Progress({ label, value, total, tone }: { label: string; value: number; total: number; tone: "ocean" | "summit" }) {
+  const pct = total > 0 ? Math.min(100, Math.round((value / total) * 100)) : 0;
+  return (
+    <div className="rounded-2xl bg-obsidian-50 p-4">
+      <div className="flex items-baseline justify-between gap-3 text-sm">
+        <span className="text-slate-600">{label}</span>
+        <span className="tabular-nums text-obsidian-900">
+          {value} / {total}
+        </span>
+      </div>
+      <div className="mt-2 h-2 overflow-hidden rounded-full bg-obsidian-900/[0.08]" role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={total} aria-valuenow={value}>
+        <div className={`h-full rounded-full transition-[width] duration-500 ${tone === "ocean" ? "bg-ocean-600" : "bg-summit-500"}`} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
+
 export default function DispatchBoardPage() {
-  const [selectedDate, setSelectedDate] = useState<string>(() => {
-    return new Date().toISOString().split("T")[0];
-  });
+  const [selectedDate, setSelectedDate] = useState(() => toKey(new Date()));
   const [manifests, setManifests] = useState<DispatchManifest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [unauthorized, setUnauthorized] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchManifests(selectedDate);
-  }, [selectedDate]);
-
-  async function fetchManifests(date: string) {
+  const fetchManifests = useCallback(async (date: string) => {
     setLoading(true);
     setError(null);
     try {
       const res = await fetch(`/api/admin/dispatch?date=${date}`);
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        setError(data.error || "Failed to load dispatch manifest. Please ensure you are logged in as staff.");
-      } else {
-        setManifests(data.manifests || []);
+      if (res.status === 401 || res.status === 403) {
+        setUnauthorized(true);
+        setManifests([]);
+        return;
       }
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error);
+      setUnauthorized(false);
+      setManifests(data.manifests || []);
     } catch {
-      setError("Network error fetching dispatch board.");
+      setError("Couldn't load the dispatch board. Try again in a moment.");
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
-  function handleDateShift(days: number) {
-    const d = new Date(selectedDate);
+  useEffect(() => {
+    void fetchManifests(selectedDate);
+  }, [selectedDate, fetchManifests]);
+
+  const shift = (days: number) => {
+    const d = fromKey(selectedDate);
     d.setDate(d.getDate() + days);
-    setSelectedDate(d.toISOString().split("T")[0]);
-  }
+    setSelectedDate(toKey(d));
+  };
 
-  async function handleToggleBoarding(bookingId: string, currentStatus: boolean) {
+  async function toggleBoarding(bookingId: string, currentStatus: boolean) {
     setUpdatingId(bookingId);
     try {
       const res = await fetch("/api/admin/dispatch/check-in", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          bookingId,
-          isBoarded: !currentStatus,
-        }),
+        body: JSON.stringify({ bookingId, isBoarded: !currentStatus }),
       });
-
       const data = await res.json();
-      if (res.ok && data.success) {
-        // Optimistically update manifest in state
-        setManifests((prev) =>
-          prev.map((manifest) => {
-            let newlyBoardedCount = manifest.boardedPassengers;
-            const updatedStops = manifest.stops.map((stop) => {
-              const updatedBookings = stop.bookings.map((b) => {
-                if (b.id === bookingId) {
-                  const nextBoarded = !currentStatus;
-                  if (nextBoarded) {
-                    newlyBoardedCount += b.totalSeats;
-                  } else {
-                    newlyBoardedCount = Math.max(0, newlyBoardedCount - b.totalSeats);
-                  }
-                  return {
-                    ...b,
-                    isBoarded: nextBoarded,
-                    boardedAt: nextBoarded ? new Date().toISOString() : undefined,
-                  };
-                }
-                return b;
-              });
-              return { ...stop, bookings: updatedBookings };
-            });
-
-            return {
-              ...manifest,
-              boardedPassengers: newlyBoardedCount,
-              stops: updatedStops,
-            };
-          })
-        );
-      }
-    } catch (e) {
-      console.error("Boarding toggle error", e);
+      if (!res.ok || !data.success) throw new Error();
+      setManifests((prev) =>
+        prev.map((m) => {
+          let boarded = m.boardedPassengers;
+          const stops = m.stops.map((stop) => ({
+            ...stop,
+            bookings: stop.bookings.map((b) => {
+              if (b.id !== bookingId) return b;
+              boarded = currentStatus ? Math.max(0, boarded - b.totalSeats) : boarded + b.totalSeats;
+              return { ...b, isBoarded: !currentStatus, boardedAt: currentStatus ? undefined : new Date().toISOString() };
+            }),
+          }));
+          return { ...m, boardedPassengers: boarded, stops };
+        }),
+      );
+    } catch {
+      setError("Couldn't update check-in. Try again.");
     } finally {
       setUpdatingId(null);
     }
   }
 
-  return (
-    <div className="min-h-screen bg-forest-950 text-white py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Top Breadcrumb & Controls */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-forest-800">
-          <div className="space-y-1">
-            <Link
-              href="/admin"
-              className="inline-flex items-center gap-1.5 text-xs text-gold-400 hover:text-gold-300 font-semibold mb-1 transition-colors"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back to Admin Panel</span>
-            </Link>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl sm:text-3xl font-display font-bold text-white flex items-center gap-2">
-                <Truck className="w-7 h-7 text-gold-400" />
-                <span>Daily Dispatch &amp; Driver Board</span>
-              </h1>
-              <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800">
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Live Dispatch Active</span>
-              </span>
-            </div>
-            <p className="text-xs text-slate-400">
-              Hotel pickup manifests, scheduled routes, passenger manifests, and real-time boarding check-ins.
-            </p>
-          </div>
+  const isToday = selectedDate === toKey(new Date());
 
-          {/* Date Selector Bar */}
-          <div className="flex items-center gap-2 bg-forest-900 border border-forest-800 p-1.5 rounded-2xl">
-            <button
-              onClick={() => handleDateShift(-1)}
-              className="p-2 rounded-xl hover:bg-forest-800 text-slate-300 hover:text-white transition-colors"
-              title="Previous Day"
-            >
-              <ChevronLeft className="w-4 h-4" />
+  return (
+    <div className="min-h-screen bg-obsidian-50 text-obsidian-900">
+      <AdminHeader
+        current="/admin/dispatch"
+        eyebrow="Staff · Dispatch"
+        title="Dispatch board"
+        subtitle="Pickup manifests and passenger check-in by departure."
+        actions={
+          <div className="flex items-center gap-1 rounded-full bg-white p-1 ring-1 ring-obsidian-900/15">
+            <button type="button" onClick={() => shift(-1)} aria-label="Previous day" className="inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-obsidian-50">
+              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
             </button>
-            <div className="flex items-center gap-2 px-3 py-1 bg-forest-950 rounded-xl border border-forest-800/80">
-              <Calendar className="w-4 h-4 text-gold-400" />
-              <input
-                type="date"
-                aria-label="Dispatch date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="bg-transparent text-xs sm:text-sm font-semibold text-white rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-summit-500"
-              />
-            </div>
-            <button
-              onClick={() => handleDateShift(1)}
-              className="p-2 rounded-xl hover:bg-forest-800 text-slate-300 hover:text-white transition-colors"
-              title="Next Day"
-            >
-              <ChevronRight className="w-4 h-4" />
+            <label className="sr-only" htmlFor="dispatch-date">
+              Dispatch date
+            </label>
+            <input
+              id="dispatch-date"
+              type="date"
+              value={selectedDate}
+              onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
+              className="h-10 rounded-full bg-transparent px-2 text-sm text-obsidian-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-ocean-600"
+            />
+            <button type="button" onClick={() => shift(1)} aria-label="Next day" className="inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-obsidian-50">
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
             </button>
             <button
+              type="button"
               onClick={() => fetchManifests(selectedDate)}
-              className="p-2 rounded-xl hover:bg-forest-800 text-slate-300 hover:text-gold-400 transition-colors"
-              title="Refresh"
+              aria-label="Refresh"
+              disabled={loading}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-obsidian-50 disabled:opacity-60"
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+              <RefreshCw className={`h-4 w-4 ${loading ? "motion-safe:animate-spin" : ""}`} aria-hidden="true" />
             </button>
           </div>
+        }
+      />
+
+      <div className="mx-auto max-w-7xl space-y-6 px-page py-8 sm:py-10">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-xl text-obsidian-900">{longDate(selectedDate)}</h2>
+          {!isToday && (
+            <button type="button" onClick={() => setSelectedDate(toKey(new Date()))} className="inline-flex h-10 items-center rounded-full border border-obsidian-900/15 bg-white px-4 text-sm hover:bg-obsidian-50">
+              Back to today
+            </button>
+          )}
         </div>
 
-        {/* Error Notification */}
+        {unauthorized && !loading && <StaffSignIn body="Sign in with an admin or dispatch account to see manifests." />}
         {error && (
-          <div className="p-4 rounded-2xl bg-amber-950/40 border border-amber-800/60 text-amber-200 text-sm flex items-start justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="font-semibold text-amber-300">{error}</p>
-                <p className="text-xs text-amber-400/80 mt-1">
-                  Ensure you are signed in with a staff account (<code className="bg-amber-900/60 px-1 py-0.5 rounded">dispatch@vistachase.com</code> / <code className="bg-amber-900/60 px-1 py-0.5 rounded">Dispatch2026!</code>).
-                </p>
-              </div>
+          <p role="alert" className="rounded-2xl bg-red-50 px-5 py-4 text-sm text-red-800 ring-1 ring-red-200">
+            {error}
+          </p>
+        )}
+
+        {loading ? (
+          <div className="space-y-4" aria-hidden="true">
+            {[0, 1].map((i) => (
+              <div key={i} className="h-40 rounded-[1.75rem] bg-white ring-1 ring-obsidian-900/[0.07] motion-safe:animate-pulse" />
+            ))}
+          </div>
+        ) : (
+          !unauthorized &&
+          (manifests.length === 0 ? (
+            <div className="rounded-[1.75rem] bg-white p-10 text-center ring-1 ring-obsidian-900/[0.07]">
+              <span className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-ocean-50 text-ocean-700">
+                <Truck className="h-6 w-6" aria-hidden="true" />
+              </span>
+              <p className="mt-4 text-lg text-obsidian-900">No departures on this day</p>
+              <p className="mt-1 text-base text-slate-600">Use the arrows or the date picker to check another day.</p>
             </div>
-            <Link
-              href="/login"
-              className="px-4 py-1.5 rounded-lg bg-amber-400 text-forest-950 font-bold text-xs hover:bg-amber-300 transition-colors whitespace-nowrap"
-            >
-              Sign In
-            </Link>
-          </div>
-        )}
-
-        {/* Loading Spinner */}
-        {loading && (
-          <div className="py-24 text-center">
-            <RefreshCw className="w-8 h-8 text-gold-400 animate-spin mx-auto mb-3" />
-            <p className="text-slate-400 text-sm">Loading daily manifests for {selectedDate}...</p>
-          </div>
-        )}
-
-        {/* Empty State */}
-        {!loading && manifests.length === 0 && (
-          <div className="py-20 text-center bg-forest-900/40 rounded-3xl border border-forest-800 p-8">
-            <Truck className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-            <h2 className="text-lg font-bold text-white">No Departures Scheduled for {selectedDate}</h2>
-            <p className="text-xs text-slate-400 max-w-md mx-auto mt-1 mb-6">
-              There are no tour or shuttle runs scheduled on this specific date. Switch dates using the arrows above or view upcoming peak season runs.
-            </p>
-            <div className="flex justify-center gap-3">
-              <button
-                onClick={() => {
-                  const today = new Date().toISOString().split("T")[0];
-                  setSelectedDate(today);
-                }}
-                className="px-4 py-2 rounded-xl font-semibold bg-forest-800 hover:bg-forest-700 text-white text-xs border border-forest-700 transition-colors"
-              >
-                Go to Today
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Manifests List */}
-        {!loading && manifests.length > 0 && (
-          <div className="space-y-8">
-            {manifests.map((manifest) => {
-              const capacityPercent = Math.min(
-                100,
-                Math.round((manifest.capacityBooked / manifest.capacityTotal) * 100)
-              );
-              const boardingPercent =
-                manifest.totalPassengers > 0
-                  ? Math.round((manifest.boardedPassengers / manifest.totalPassengers) * 100)
-                  : 0;
-
-              return (
-                <div
-                  key={manifest.departureId}
-                  className="rounded-3xl bg-forest-900 border border-forest-800 shadow-2xl overflow-hidden"
-                >
-                  {/* Departure Header Banner */}
-                  <div className="p-6 bg-forest-950/80 border-b border-forest-800 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="px-2.5 py-1 rounded-md bg-gold-400/10 text-gold-400 border border-gold-400/30 text-xs font-mono font-bold">
-                          {manifest.departureTime || "08:00 AM"}
-                        </span>
-                        <h2 className="text-xl font-display font-bold text-white">
-                          {manifest.title}
-                        </h2>
-                      </div>
-                      <div className="flex items-center gap-4 text-xs text-slate-400">
-                        <span>Date: <strong className="text-slate-200">{manifest.date}</strong></span>
-                        <span>•</span>
-                        <span>Stops: <strong className="text-slate-200">{manifest.stops.length} locations</strong></span>
-                        <span>•</span>
-                        <span>Departure ID: <code className="text-slate-400">{manifest.departureId.slice(0, 10)}...</code></span>
-                      </div>
-                    </div>
-
-                    {/* Capacity & Boarding Progress */}
-                    <div className="grid grid-cols-2 gap-4 lg:w-96">
-                      <div className="bg-forest-900 p-3 rounded-xl border border-forest-800">
-                        <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
-                          <span>Capacity Booked</span>
-                          <span className="font-bold text-white font-mono">
-                            {manifest.capacityBooked} / {manifest.capacityTotal}
-                          </span>
-                        </div>
-                        <div className="w-full h-2 rounded-full bg-forest-950 overflow-hidden">
-                          <div
-                            className="h-full bg-gold-400 transition-all duration-300"
-                            style={{ width: `${capacityPercent}%` }}
-                          />
+          ) : (
+            <ul className="space-y-6">
+              {manifests.map((m) => (
+                <li key={m.departureId}>
+                  <article aria-labelledby={`dep-${m.departureId}`} className="overflow-hidden rounded-[1.75rem] bg-white ring-1 ring-obsidian-900/[0.07]">
+                    <header className="flex flex-col gap-5 border-b border-obsidian-900/[0.06] p-6 lg:flex-row lg:items-center lg:justify-between">
+                      <div className="flex items-start gap-4">
+                        <span className="inline-flex h-12 shrink-0 items-center rounded-2xl bg-ocean-950 px-3.5 font-mono text-base text-white">{m.departureTime}</span>
+                        <div>
+                          <h3 id={`dep-${m.departureId}`} className="text-xl font-light text-obsidian-900">
+                            {m.title}
+                          </h3>
+                          <p className="mt-0.5 text-sm text-slate-600">
+                            {m.stops.length} {m.stops.length === 1 ? "pickup stop" : "pickup stops"} · {m.totalPassengers} {m.totalPassengers === 1 ? "guest" : "guests"}
+                          </p>
                         </div>
                       </div>
-
-                      <div className="bg-forest-900 p-3 rounded-xl border border-forest-800">
-                        <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
-                          <span>Boarded Guests</span>
-                          <span className="font-bold text-emerald-400 font-mono">
-                            {manifest.boardedPassengers} / {manifest.totalPassengers}
-                          </span>
-                        </div>
-                        <div className="w-full h-2 rounded-full bg-forest-950 overflow-hidden">
-                          <div
-                            className="h-full bg-emerald-400 transition-all duration-300"
-                            style={{ width: `${boardingPercent}%` }}
-                          />
-                        </div>
+                      <div className="grid gap-3 sm:grid-cols-2 lg:w-[26rem]">
+                        <Progress label="Seats booked" value={m.capacityBooked} total={m.capacityTotal} tone="summit" />
+                        <Progress label="Guests boarded" value={m.boardedPassengers} total={m.totalPassengers} tone="ocean" />
                       </div>
-                    </div>
-                  </div>
+                    </header>
 
-                  {/* Stops & Passengers Breakdown */}
-                  <div className="p-6 space-y-6">
-                    {manifest.stops.length === 0 ? (
-                      <p className="text-xs text-slate-500 py-4 text-center">
-                        No passenger bookings registered for this departure run yet.
-                      </p>
+                    {m.stops.length === 0 ? (
+                      <p className="px-6 py-8 text-center text-base text-slate-600">No bookings on this departure yet.</p>
                     ) : (
-                      manifest.stops.map((stop, sIdx) => (
-                        <div
-                          key={sIdx}
-                          className="rounded-2xl bg-forest-950/60 border border-forest-800/80 p-5 space-y-4"
-                        >
-                          {/* Stop Header */}
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-forest-800/60">
-                            <div className="flex items-start gap-2.5">
-                              <div className="w-7 h-7 rounded-lg bg-gold-400/10 border border-gold-400/20 flex items-center justify-center text-gold-400 font-bold text-xs flex-shrink-0 mt-0.5">
-                                {sIdx + 1}
-                              </div>
-                              <div>
-                                <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                                  <span>{stop.stopName}</span>
-                                </h3>
-                                {stop.address && (
-                                  <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
-                                    <MapPin className="w-3 h-3 text-gold-400" />
-                                    <span>{stop.address}</span>
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-3 text-xs">
-                              {stop.pickupTime && (
-                                <div className="flex items-center gap-1 text-gold-300 font-mono font-medium">
-                                  <Clock className="w-3.5 h-3.5" />
-                                  <span>Pickup: {stop.pickupTime}</span>
+                      <ol className="divide-y divide-obsidian-900/[0.06]">
+                        {m.stops.map((stop, i) => (
+                          <li key={`${stop.stopName}-${i}`} className="p-6">
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div className="flex items-start gap-3">
+                                <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-summit-100 text-sm text-obsidian-900">{i + 1}</span>
+                                <div>
+                                  <h4 className="text-base text-obsidian-900">{stop.stopName}</h4>
+                                  {stop.address && (
+                                    <p className="mt-0.5 flex items-center gap-1 text-sm text-slate-600">
+                                      <MapPin className="h-3.5 w-3.5" aria-hidden="true" /> {stop.address}
+                                    </p>
+                                  )}
                                 </div>
-                              )}
-                              <span className="px-2 py-0.5 rounded bg-forest-800 text-slate-300 text-xs">
-                                {stop.bookings.reduce((sum, b) => sum + b.totalSeats, 0)} Seats
-                              </span>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm">
+                                {stop.pickupTime && (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-obsidian-50 px-3 py-1 text-obsidian-900">
+                                    <Clock className="h-3.5 w-3.5" aria-hidden="true" /> {stop.pickupTime}
+                                  </span>
+                                )}
+                                <span className="rounded-full bg-obsidian-50 px-3 py-1 text-slate-700">{stop.bookings.reduce((s, b) => s + b.totalSeats, 0)} seats</span>
+                              </div>
                             </div>
-                          </div>
 
-                          {/* Stop Passengers Table */}
-                          <div className="overflow-x-auto">
-                            <table className="w-full text-left text-xs">
-                              <thead className="text-xs uppercase text-slate-500 border-b border-forest-800/40 pb-2">
-                                <tr>
-                                  <th className="py-2 px-3">Status</th>
-                                  <th className="py-2 px-3">Guest Name</th>
-                                  <th className="py-2 px-3">Contact</th>
-                                  <th className="py-2 px-3">Reference</th>
-                                  <th className="py-2 px-3">Voucher</th>
-                                  <th className="py-2 px-3">Seats</th>
-                                  <th className="py-2 px-3 text-right">Action</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-forest-800/30">
-                                {stop.bookings.map((p) => {
-                                  const isUpdating = updatingId === p.id;
-                                  return (
-                                    <tr
-                                      key={p.id}
-                                      className={`hover:bg-forest-900/40 transition-colors ${
-                                        p.isBoarded ? "bg-emerald-950/10" : ""
+                            <ul className="mt-4 space-y-2">
+                              {stop.bookings.map((p) => {
+                                const updating = updatingId === p.id;
+                                return (
+                                  <li
+                                    key={p.id}
+                                    className={`flex flex-col gap-3 rounded-2xl p-4 ring-1 sm:flex-row sm:items-center sm:justify-between ${
+                                      p.isBoarded ? "bg-ocean-50/60 ring-ocean-600/20" : "bg-white ring-obsidian-900/[0.08]"
+                                    }`}
+                                  >
+                                    <div className="flex min-w-0 items-start gap-3">
+                                      {p.isBoarded ? (
+                                        <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-ocean-600" aria-label="Boarded" />
+                                      ) : (
+                                        <Circle className="mt-0.5 h-5 w-5 shrink-0 text-slate-400" aria-label="Waiting" />
+                                      )}
+                                      <div className="min-w-0">
+                                        <p className="text-base text-obsidian-900">
+                                          {p.customerName} <span className="text-slate-600">· {p.totalSeats} {p.totalSeats === 1 ? "seat" : "seats"}</span>
+                                        </p>
+                                        <p className="mt-0.5 flex flex-wrap gap-x-3 text-sm text-slate-600">
+                                          <a href={`tel:${p.customerPhone}`} className="text-ocean-600 underline-offset-4 hover:underline">
+                                            {p.customerPhone}
+                                          </a>
+                                          <Link href={`/booking/${p.bookingReference}/voucher`} className="font-mono underline-offset-4 hover:underline">
+                                            {p.bookingReference}
+                                          </Link>
+                                          <span className="font-mono">{p.voucherCode}</span>
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleBoarding(p.id, p.isBoarded)}
+                                      disabled={updating}
+                                      className={`inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full px-4 text-sm disabled:opacity-60 ${
+                                        p.isBoarded ? "border border-obsidian-900/15 bg-white text-obsidian-900 hover:bg-obsidian-50" : "bg-ocean-600 text-white hover:bg-ocean-700"
                                       }`}
                                     >
-                                      <td className="py-2.5 px-3">
-                                        {p.isBoarded ? (
-                                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">
-                                            <CheckCircle2 className="w-3 h-3" />
-                                            <span>BOARDED</span>
-                                          </span>
-                                        ) : (
-                                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-forest-800 text-slate-400">
-                                            <Circle className="w-3 h-3" />
-                                            <span>WAITING</span>
-                                          </span>
-                                        )}
-                                      </td>
-                                      <td className="py-2.5 px-3 font-semibold text-white">
-                                        {p.customerName}
-                                      </td>
-                                      <td className="py-2.5 px-3 text-slate-300 font-mono">
-                                        <a href={`tel:${p.customerPhone}`} className="hover:text-gold-400">
-                                          {p.customerPhone}
-                                        </a>
-                                      </td>
-                                      <td className="py-2.5 px-3 font-mono text-gold-400">
-                                        <Link
-                                          href={`/booking/${p.bookingReference}/voucher`}
-                                          target="_blank"
-                                          className="hover:underline"
-                                        >
-                                          {p.bookingReference}
-                                        </Link>
-                                      </td>
-                                      <td className="py-2.5 px-3 font-mono text-slate-300">
-                                        {p.voucherCode}
-                                      </td>
-                                      <td className="py-2.5 px-3 font-mono font-bold text-white">
-                                        {p.totalSeats}
-                                      </td>
-                                      <td className="py-2.5 px-3 text-right">
-                                        <button
-                                          onClick={() => handleToggleBoarding(p.id, p.isBoarded)}
-                                          disabled={isUpdating}
-                                          className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all inline-flex items-center gap-1.5 ${
-                                            p.isBoarded
-                                              ? "bg-forest-800 hover:bg-forest-700 text-slate-300 border border-forest-700"
-                                              : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm"
-                                          }`}
-                                        >
-                                          {isUpdating && <RefreshCw className="w-3 h-3 animate-spin" />}
-                                          <span>{p.isBoarded ? "Undo Check-In" : "Check In"}</span>
-                                        </button>
-                                      </td>
-                                    </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-                      ))
+                                      {updating && <RefreshCw className="h-3.5 w-3.5 motion-safe:animate-spin" aria-hidden="true" />}
+                                      {p.isBoarded ? "Undo check-in" : "Check in"}
+                                      <span className="sr-only"> {p.customerName}</span>
+                                    </button>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          </li>
+                        ))}
+                      </ol>
                     )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                  </article>
+                </li>
+              ))}
+            </ul>
+          ))
         )}
       </div>
     </div>

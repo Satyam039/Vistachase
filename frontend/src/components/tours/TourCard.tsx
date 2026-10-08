@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { CheckCircle2, Clock, MapPin, Star, Users } from "lucide-react";
 import { PriceTag } from "@/components/pricing/PriceTag";
+import { cancellationShort } from "@/lib/policy";
 import type { TourWithAvailability } from "@/lib/api/types";
 import {
   CATEGORY_LABEL,
@@ -151,7 +152,7 @@ export function TourCard({
 
         <p className="flex items-center gap-1.5 text-sm text-emerald-800">
           <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
-          Free cancellation up to 24 hours before
+          {cancellationShort(tour.category)}
         </p>
 
         <p

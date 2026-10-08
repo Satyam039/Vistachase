@@ -1,22 +1,14 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
+// Live pickup tracking (Uber / Lyft trip-status layout): status and ETA first, a simplified route map
+// projected from the real coordinates, then driver, vehicle and pickup details. Everything shown
+// comes from /api/track/:token; it refreshes every 8 seconds while the tab is visible.
+
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import {
-  Navigation,
-  Car,
-  MapPin,
-  Compass,
-  Phone,
-  MessageSquare,
-  ShieldCheck,
-  Clock,
-  RefreshCw,
-  Wifi,
-  Thermometer,
-  Sparkles,
-} from "lucide-react";
+import Link from "next/link";
+import { LiveMap } from "@/components/tracking/LiveMap";
+import { CarFront, Clock, ExternalLink, MapPin, MessageSquare, Navigation, Phone, RefreshCw } from "lucide-react";
 
 export interface VehicleCoordinates {
   latitude: number;
@@ -57,596 +49,338 @@ export interface TrackingTelemetry {
   statusDescription: string;
   estimatedArrivalMinutes: number;
   vehicleCoordinates: VehicleCoordinates;
-  destinationCoordinates: {
-    latitude: number;
-    longitude: number;
-  };
+  destinationCoordinates: { latitude: number; longitude: number };
   routeWaypoints: RouteWaypoint[];
   isTrackingActive: boolean;
 }
 
-interface LiveShuttleTrackingClientProps {
-  initialTelemetry: TrackingTelemetry;
-  token: string;
-}
+const OFFICE_PHONE = "+18257349456";
+const CARD = "rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:p-7";
 
-export default function LiveShuttleTrackingClient({
-  initialTelemetry,
-  token,
-}: LiveShuttleTrackingClientProps) {
-  const [telemetry, setTelemetry] = useState<TrackingTelemetry>(initialTelemetry);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
-  const [mapZoom, setMapZoom] = useState<"route" | "vehicle">("route");
+// Progress steps shown under the ETA; each status maps to how far along the pickup is.
+const STEPS = ["Preparing", "On the way", "Arriving", "Picked up"];
+const STEP_OF: Record<TrackingTelemetry["status"], number> = {
+  PREPARING: 0,
+  ON_THE_WAY: 1,
+  ARRIVING_SOON: 2,
+  SHUTTLE_IS_HERE: 2,
+  IN_TRANSIT: 3,
+  COMPLETED: 3,
+};
 
-  // Auto-poll telemetry every 8 seconds
-  const fetchTelemetry = useCallback(async (isManual = false) => {
-    if (isManual) setIsRefreshing(true);
-    try {
-      const res = await fetch(`/api/track/${token}`, {
-        cache: "no-store",
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.telemetry) {
-          setTelemetry(data.telemetry);
-          setLastUpdated(new Date());
-        }
+// Headlines come from the status, not the backend's label, so they never contradict the live ETA.
+const HEADLINE: Record<TrackingTelemetry["status"], string> = {
+  PREPARING: "Getting ready to leave",
+  ON_THE_WAY: "Your shuttle is on the way",
+  ARRIVING_SOON: "Arriving soon",
+  SHUTTLE_IS_HERE: "Your shuttle is here",
+  IN_TRANSIT: "You're on your way",
+  COMPLETED: "Trip complete",
+};
+
+const formatDate = (iso: string) => {
+  const d = new Date(`${iso.slice(0, 10)}T12:00:00`);
+  return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString("en-CA", { weekday: "short", month: "short", day: "numeric" });
+};
+const mapsLink = (lat: number, lng: number) => `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+
+export default function LiveShuttleTrackingClient({ initialTelemetry, token }: { initialTelemetry: TrackingTelemetry; token: string }) {
+  const [t, setT] = useState(initialTelemetry);
+  const [refreshing, setRefreshing] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
+  const [stale, setStale] = useState(false);
+  const busy = useRef(false);
+
+  const refresh = useCallback(
+    async (manual = false) => {
+      if (busy.current) return;
+      busy.current = true;
+      if (manual) setRefreshing(true);
+      try {
+        const res = await fetch(`/api/track/${encodeURIComponent(token)}`, { cache: "no-store" });
+        const data = res.ok ? await res.json() : null;
+        if (data?.telemetry) {
+          setT(data.telemetry);
+          setUpdatedAt(new Date());
+          setStale(false);
+        } else setStale(true);
+      } catch {
+        setStale(true);
+      } finally {
+        busy.current = false;
+        if (manual) setRefreshing(false);
       }
-    } catch (err) {
-      console.error("Telemetry fetch error:", err);
-    } finally {
-      if (isManual) {
-        setTimeout(() => setIsRefreshing(false), 500);
-      }
-    }
-  }, [token]);
+    },
+    [token],
+  );
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      fetchTelemetry(false);
+    setUpdatedAt(new Date());
+    const id = setInterval(() => {
+      if (document.visibilityState === "visible") refresh();
     }, 8000);
-    return () => clearInterval(timer);
-  }, [fetchTelemetry]);
+    const onVisible = () => document.visibilityState === "visible" && refresh();
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [refresh]);
 
-  // Status visual styles
-  const getStatusBadge = () => {
-    switch (telemetry.status) {
-      case "SHUTTLE_IS_HERE":
-        return {
-          bg: "bg-amber-400/20 text-amber-300 border-amber-400/50",
-          dot: "bg-amber-400 animate-ping",
-          title: "SHUTTLE HAS ARRIVED",
-          accentColor: "text-amber-400",
-        };
-      case "ARRIVING_SOON":
-        return {
-          bg: "bg-sky-500/20 text-sky-300 border-sky-400/50",
-          dot: "bg-sky-400 animate-ping",
-          title: `ARRIVING IN ${telemetry.estimatedArrivalMinutes} MINS`,
-          accentColor: "text-sky-400",
-        };
-      case "IN_TRANSIT":
-        return {
-          bg: "bg-emerald-500/20 text-emerald-300 border-emerald-400/50",
-          dot: "bg-emerald-400",
-          title: "JOURNEY IN PROGRESS",
-          accentColor: "text-emerald-400",
-        };
-      case "PREPARING":
-        return {
-          bg: "bg-slate-500/20 text-slate-300 border-slate-400/50",
-          dot: "bg-slate-400",
-          title: "PREPARING DEPARTURE",
-          accentColor: "text-slate-300",
-        };
-      case "ON_THE_WAY":
-      default:
-        return {
-          bg: "bg-emerald-500/20 text-emerald-300 border-emerald-500/50",
-          dot: "bg-emerald-400 animate-pulse",
-          title: `ON THE WAY • ${telemetry.estimatedArrivalMinutes} MINS AWAY`,
-          accentColor: "text-emerald-400",
-        };
-    }
-  };
-
-  const statusStyle = getStatusBadge();
-
-  // Normalize lat/lng to aesthetic SVG canvas
-  const minLat = 51.05;
-  const maxLat = 51.45;
-  const minLng = -116.25;
-  const maxLng = -115.3;
-
-  const toSvgX = (lng: number) => {
-    const clamped = Math.max(minLng, Math.min(maxLng, lng));
-    return ((clamped - minLng) / (maxLng - minLng)) * 800;
-  };
-
-  const toSvgY = (lat: number) => {
-    const clamped = Math.max(minLat, Math.min(maxLat, lat));
-    return (1 - (clamped - minLat) / (maxLat - minLat)) * 450;
-  };
-
-  const vehicleX = toSvgX(telemetry.vehicleCoordinates.longitude);
-  const vehicleY = toSvgY(telemetry.vehicleCoordinates.latitude);
-  const targetX = toSvgX(telemetry.destinationCoordinates.longitude);
-  const targetY = toSvgY(telemetry.destinationCoordinates.latitude);
+  const [mapFailed, setMapFailed] = useState(false);
+  const { latitude: vLat, longitude: vLng } = t.vehicleCoordinates;
+  const { latitude: pLat, longitude: pLng } = t.destinationCoordinates;
+  const first = t.routeWaypoints[0];
+  const vehicleLL = useMemo<[number, number]>(() => [vLng, vLat], [vLng, vLat]);
+  const pickupLL = useMemo<[number, number]>(() => [pLng, pLat], [pLng, pLat]);
+  const startLL = useMemo<[number, number] | undefined>(() => (first ? [first.longitude, first.latitude] : undefined), [first?.longitude, first?.latitude]); // eslint-disable-line react-hooks/exhaustive-deps
+  const step = STEP_OF[t.status] ?? 1;
+  const here = t.status === "SHUTTLE_IS_HERE";
+  const onboard = t.status === "IN_TRANSIT" || t.status === "COMPLETED";
+  const phone = t.driverPhone ? t.driverPhone.replace(/[^\d+]/g, "") : OFFICE_PHONE;
+  const whatsapp = `https://wa.me/${OFFICE_PHONE.slice(1)}?text=${encodeURIComponent(`Hi Vista Chase, I'm tracking my pickup for booking ${t.bookingReference}.`)}`;
 
   return (
-    <div className="min-h-screen bg-ocean-950 text-slate-100 flex flex-col selection:bg-gold-500 selection:text-forest-950">
-      {/* Top Luxury Navigation Header */}
-      <header className="sticky top-0 z-50 bg-ocean-950/90 backdrop-blur-md border-b border-forest-800/60 px-4 sm:px-8 py-3.5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link href="/" className="flex items-center gap-2 group">
-            <span className="font-serif font-bold text-xl tracking-wider text-white group-hover:text-gold-300 transition-colors">
-              VISTA CHASE
-            </span>
-            <span className="text-xs tracking-widest text-gold-400 font-semibold uppercase px-2 py-0.5 rounded bg-gold-950/60 border border-gold-800/40">
-              LIVE CONCIERGE
-            </span>
-          </Link>
-        </div>
-
-        <div className="flex items-center gap-3 text-xs">
-          <div className="hidden sm:flex items-center gap-2 text-slate-400 bg-forest-950/80 px-3 py-1.5 rounded-full border border-forest-800/50 font-mono text-xs">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>GPS 10Hz TELEMETRY LIVE</span>
+    <div className="bg-obsidian-50 text-obsidian-900">
+      <div className="mx-auto max-w-6xl px-page pb-16 pt-8 sm:pt-10">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div className="min-w-0">
+            <p className="flex items-center gap-2 text-sm text-slate-600">
+              <span className="relative inline-flex h-2.5 w-2.5" aria-hidden="true">
+                <span className={`absolute inset-0 rounded-full ${stale ? "bg-slate-400" : "bg-ocean-500 motion-safe:animate-ping"} opacity-60`} />
+                <span className={`relative h-2.5 w-2.5 rounded-full ${stale ? "bg-slate-400" : "bg-ocean-600"}`} />
+              </span>
+              {stale ? "Reconnecting…" : "Live pickup tracking"} · Booking {t.bookingReference}
+            </p>
+            <h1 className="mt-2 text-3xl font-light tracking-tight text-obsidian-900 sm:text-4xl">{t.tourName}</h1>
+            <p className="mt-1.5 text-base text-slate-600">
+              {formatDate(t.departureDate)} · Departs {t.departureTime}
+            </p>
           </div>
-
           <button
-            onClick={() => fetchTelemetry(true)}
-            disabled={isRefreshing}
-            className="p-2 rounded-xl bg-forest-900/60 border border-forest-700/60 text-slate-300 hover:text-white hover:border-gold-500/50 transition-all"
-            title="Refresh GPS Signal"
+            type="button"
+            onClick={() => refresh(true)}
+            disabled={refreshing}
+            className="inline-flex h-11 items-center gap-2 rounded-full border border-obsidian-900/15 bg-white px-5 text-sm text-obsidian-900 hover:bg-obsidian-50 disabled:opacity-60"
           >
-            <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin text-gold-400" : ""}`} />
+            <RefreshCw className={`h-4 w-4 ${refreshing ? "motion-safe:animate-spin" : ""}`} aria-hidden="true" />
+            Refresh
           </button>
         </div>
-      </header>
 
-      {/* Main Grid */}
-      <div className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-        {/* LEFT COLUMN: Map & Telemetry (7 cols) */}
-        <div className="lg:col-span-7 flex flex-col gap-6">
-
-          {/* Status Header Banner */}
-          <div className="bg-ocean-900 rounded-2xl p-5 border border-forest-800/60 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2 mb-1.5">
-                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase border ${statusStyle.bg}`}>
-                  <span className={`w-2 h-2 rounded-full ${statusStyle.dot}`} />
-                  {statusStyle.title}
-                </span>
-                <span className="text-xs text-slate-400 font-mono">
-                  Ref #{telemetry.bookingReference}
-                </span>
-              </div>
-              <h1 className="text-xl sm:text-2xl font-serif font-bold text-white tracking-tight">
-                {telemetry.tourName}
-              </h1>
-              <p className="text-sm text-slate-300 mt-1">
-                {telemetry.statusDescription}
-              </p>
-            </div>
-
-            {/* Prominent ETA Dial */}
-            <div className="shrink-0 flex items-center gap-3 bg-forest-950/80 px-4 py-3 rounded-xl border border-gold-500/30">
-              <div className="text-right">
-                <span className="text-xs uppercase tracking-widest text-gold-400 font-bold block">
-                  ESTIMATED ARRIVAL
-                </span>
-                <span className="text-2xl sm:text-3xl font-bold font-serif text-white">
-                  {telemetry.estimatedArrivalMinutes} <span className="text-sm font-sans font-normal text-slate-400">MINS</span>
-                </span>
-              </div>
-              <div className="w-10 h-10 rounded-full bg-gold-500/10 border border-gold-400/30 flex items-center justify-center text-gold-400">
-                <Clock className="w-5 h-5 animate-pulse" />
-              </div>
-            </div>
-          </div>
-
-          {/* Interactive Topographic Vector Map */}
-          <div className="relative bg-ocean-950 rounded-3xl border border-forest-800/80 shadow-2xl overflow-hidden min-h-[380px] sm:min-h-[460px] flex flex-col">
-            <div className="absolute top-4 left-4 z-20 flex items-center gap-2">
-              <div className="px-3 py-1.5 rounded-xl bg-ocean-950/90 backdrop-blur-md border border-forest-700/60 text-xs font-semibold text-slate-200 flex items-center gap-2 shadow-lg">
-                <Compass className="w-3.5 h-3.5 text-gold-400" />
-                <span>Bow Valley Parkway • Trans-Canada Hwy 1</span>
-              </div>
-            </div>
-
-            <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
-              <button
-                onClick={() => setMapZoom(mapZoom === "route" ? "vehicle" : "route")}
-                className="px-3 py-1.5 rounded-xl bg-ocean-950/90 backdrop-blur-md border border-forest-700/60 text-xs font-semibold text-gold-300 hover:text-white transition-colors shadow-lg flex items-center gap-1.5"
-              >
-                <Navigation className="w-3.5 h-3.5 text-gold-400" />
-                <span>{mapZoom === "route" ? "Follow Vehicle" : "Full Route"}</span>
-              </button>
-            </div>
-
-            {/* SVG Canvas */}
-            <div className="relative w-full flex-1 flex items-center justify-center p-4">
-              <svg
-                viewBox="0 0 800 450"
-                className="w-full h-full max-h-[440px] drop-shadow-md select-none transition-transform duration-700"
-                style={{
-                  transform: mapZoom === "vehicle" ? `scale(1.4) translate(${400 - vehicleX}px, ${225 - vehicleY}px)` : "none",
-                  transformOrigin: "center center",
-                }}
-              >
-                <defs>
-                  <linearGradient id="rockiesGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#0B1A14" />
-                    <stop offset="50%" stopColor="#0E231B" />
-                    <stop offset="100%" stopColor="#081510" />
-                  </linearGradient>
-
-                  <linearGradient id="routeProgressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#C5A880" />
-                    <stop offset="100%" stopColor="#F5D061" />
-                  </linearGradient>
-
-                  <filter id="goldGlow" x="-20%" y="-20%" width="140%" height="140%">
-                    <feGaussianBlur stdDeviation="4" result="blur" />
-                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                  </filter>
-                </defs>
-
-                {/* Background Terrain */}
-                <rect width="800" height="450" fill="url(#rockiesGradient)" rx="16" />
-
-                {/* Mountain Ridge Outlines */}
-                <path
-                  d="M 50,420 Q 150,180 250,380 T 450,220 T 650,340 T 780,180"
-                  fill="none"
-                  stroke="#16382C"
-                  strokeWidth="2.5"
-                  strokeDasharray="4 4"
-                  opacity="0.5"
-                />
-                <path
-                  d="M 20,380 Q 180,90 320,300 T 520,110 T 720,260"
-                  fill="none"
-                  stroke="#1E4D3C"
-                  strokeWidth="1.5"
-                  opacity="0.4"
-                />
-
-                {/* Peak Labels */}
-                <text x="180" y="85" fill="#4E7A68" fontSize="11" fontFamily="sans-serif" letterSpacing="2">
-                  ▲ MT. RUNDLE (2,949M)
-                </text>
-                <text x="460" y="70" fill="#4E7A68" fontSize="11" fontFamily="sans-serif" letterSpacing="2">
-                  ▲ CASTLE MOUNTAIN (2,766M)
-                </text>
-                <text x="630" y="110" fill="#4E7A68" fontSize="11" fontFamily="sans-serif" letterSpacing="2">
-                  ▲ MT. TEMPLE (3,544M)
-                </text>
-
-                {/* Road Corridor */}
-                <path
-                  d="M 120,370 C 220,340 320,290 420,240 S 600,160 700,120"
-                  fill="none"
-                  stroke="#1A3B30"
-                  strokeWidth="8"
-                  strokeLinecap="round"
-                />
-
-                {/* Driven Path Highlight */}
-                <path
-                  d={`M 120,370 Q ${vehicleX * 0.7 + 60},${vehicleY * 0.7 + 100} ${vehicleX},${vehicleY}`}
-                  fill="none"
-                  stroke="url(#routeProgressGradient)"
-                  strokeWidth="4"
-                  strokeLinecap="round"
-                  filter="url(#goldGlow)"
-                />
-
-                {/* Static Waypoints */}
-                <g transform="translate(120, 370)">
-                  <circle r="5" fill="#C5A880" />
-                  <text x="-15" y="20" fill="#88A397" fontSize="10" fontWeight="bold">
-                    Canmore Fleet Depot
-                  </text>
-                </g>
-
-                {/* Target Pickup Location */}
-                <g transform={`translate(${targetX}, ${targetY})`}>
-                  <circle r="14" fill="#C5A880" fillOpacity="0.2" className="animate-ping" />
-                  <circle r="8" fill="#C5A880" />
-                  <circle r="4" fill="#07130F" />
-                  <text
-                    x="15"
-                    y="4"
-                    fill="#F5D061"
-                    fontSize="11"
-                    fontWeight="bold"
-                    filter="drop-shadow(0 1px 2px rgba(0,0,0,0.8))"
-                  >
-                    ★ {telemetry.pickupStopName}
-                  </text>
-                </g>
-
-                {/* Destination */}
-                <g transform="translate(700, 120)">
-                  <circle r="6" fill="#3B82F6" />
-                  <circle r="2" fill="#FFFFFF" />
-                  <text x="-30" y="-12" fill="#93C5FD" fontSize="10" fontWeight="bold">
-                    Moraine Lake &amp; Ten Peaks
-                  </text>
-                </g>
-
-                {/* LIVE MOVING VEHICLE MARKER */}
-                <g
-                  transform={`translate(${vehicleX}, ${vehicleY})`}
-                  className="transition-all duration-1000 ease-out cursor-pointer"
-                >
-                  <circle r="22" fill="#10B981" fillOpacity="0.15" className="animate-ping" />
-                  <circle r="14" fill="#10B981" fillOpacity="0.3" />
-                  <circle r="11" fill="#0A1F18" stroke="#10B981" strokeWidth="2.5" />
-
-                  {/* Heading Arrow */}
-                  <g transform={`rotate(${telemetry.vehicleCoordinates.heading})`}>
-                    <polygon points="0,-7 5,6 0,3 -5,6" fill="#F5D061" />
-                  </g>
-
-                  {/* Speed Badge */}
-                  <rect
-                    x="-32"
-                    y="-30"
-                    width="64"
-                    height="18"
-                    rx="9"
-                    fill="#050C0A"
-                    stroke="#10B981"
-                    strokeWidth="1"
-                  />
-                  <text
-                    x="0"
-                    y="-18"
-                    fill="#34D399"
-                    fontSize="9"
-                    fontWeight="bold"
-                    textAnchor="middle"
-                    fontFamily="monospace"
-                  >
-                    {telemetry.vehicleCoordinates.speedKmh} KM/H
-                  </text>
-                </g>
-              </svg>
-            </div>
-
-            {/* Map Telemetry Footer */}
-            <div className="bg-ocean-950/95 border-t border-forest-800/80 px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-xs">
-              <div className="flex items-center gap-4 text-slate-300">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-                  <span>Live Sprinter #4</span>
+        <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_24rem]">
+          {/* Status + map */}
+          <div className="space-y-6">
+            <section aria-labelledby="status-h" className="rounded-[1.75rem] bg-ocean-950 p-6 text-white sm:p-8">
+              <div className="flex flex-wrap items-start justify-between gap-6">
+                <div className="min-w-0 flex-1" role="status" aria-live="polite" aria-atomic="true">
+                  <h2 id="status-h" className="text-2xl font-light text-white sm:text-3xl">
+                    {HEADLINE[t.status] ?? t.statusLabel}
+                  </h2>
+                  <p className="mt-2 max-w-xl text-base leading-relaxed text-white/80">{t.statusDescription}</p>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-gold-400" />
-                  <span>Your Pickup Point</span>
-                </div>
+                {!onboard && !here && (
+                  <div className="shrink-0 sm:text-right">
+                    <p className="text-sm text-white/70">Arrives in about</p>
+                    <p className="text-4xl font-light tabular-nums text-white sm:text-5xl">{t.estimatedArrivalMinutes} min</p>
+                  </div>
+                )}
               </div>
 
-              <div className="flex items-center gap-3 text-slate-400 font-mono text-xs">
-                <span>LAT: {telemetry.vehicleCoordinates.latitude.toFixed(4)}°N</span>
-                <span>LNG: {Math.abs(telemetry.vehicleCoordinates.longitude).toFixed(4)}°W</span>
-                <span>UPDATED: {lastUpdated.toLocaleTimeString()}</span>
-              </div>
-            </div>
-          </div>
+              <ol className="mt-8 grid grid-cols-4 gap-2" aria-label="Pickup progress">
+                {STEPS.map((label, i) => (
+                  <li key={label} aria-current={i === step ? "step" : undefined}>
+                    <span className={`block h-1.5 rounded-full ${i <= step ? "bg-summit-400" : "bg-white/15"}`} />
+                    <span className={`mt-2 block text-xs sm:text-sm ${i === step ? "text-white" : "text-white/70"}`}>{label}</span>
+                  </li>
+                ))}
+              </ol>
+            </section>
 
-          {/* Pickup Instructions Box */}
-          <div className="bg-ocean-900 rounded-2xl p-5 border border-forest-800/60 shadow-xl space-y-3">
-            <div className="flex items-start gap-3">
-              <div className="w-9 h-9 rounded-xl bg-gold-500/10 border border-gold-500/30 text-gold-400 flex items-center justify-center shrink-0 mt-0.5">
-                <MapPin className="w-5 h-5" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-                    Pickup Location &amp; Instructions
-                  </h3>
-                  <span className="text-xs font-mono text-gold-400 font-bold">
-                    {telemetry.pickupTime}
-                  </span>
-                </div>
-                <p className="text-sm font-semibold text-slate-200 mt-0.5">
-                  {telemetry.pickupStopName}
-                </p>
-                <p className="text-xs text-slate-400">
-                  {telemetry.pickupAddress}
-                </p>
-                <div className="mt-3 p-3 rounded-xl bg-forest-950/60 border border-forest-800/40 text-xs text-slate-300 flex items-start gap-2">
-                  <Sparkles className="w-4 h-4 text-gold-400 shrink-0 mt-0.5" />
-                  <span>
-                    <strong>Guest Tip:</strong> {telemetry.pickupInstructions}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        {/* RIGHT COLUMN: Guide Profile, Vehicle Specs, Route Steps (5 cols) */}
-        <div className="lg:col-span-5 flex flex-col gap-6">
-
-          {/* Guide Card */}
-          <div className="bg-ocean-900 rounded-2xl p-6 border border-forest-800/60 shadow-xl space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs uppercase tracking-widest text-gold-400 font-bold">
-                Your Certified Guide &amp; Chauffeur
-              </span>
-              <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-400 bg-emerald-950/50 px-2 py-0.5 rounded-full border border-emerald-800/40">
-                <ShieldCheck className="w-3.5 h-3.5" />
-                Parks Canada Certified
-              </span>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <div className="relative w-16 h-16 rounded-2xl overflow-hidden border-2 border-gold-500/40 shadow-md shrink-0">
-                <Image
-                  src={telemetry.driverPhoto}
-                  alt={telemetry.driverName}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-
-              <div className="flex-1 min-w-0">
-                <h2 className="text-lg font-bold text-white font-serif tracking-tight truncate">
-                  {telemetry.driverName}
+            <section aria-labelledby="map-h" className="overflow-hidden rounded-[1.75rem] bg-white ring-1 ring-obsidian-900/[0.07]">
+              <div className="flex flex-wrap items-center justify-between gap-3 px-6 pt-5 sm:px-7">
+                <h2 id="map-h" className="text-lg text-obsidian-900">
+                  Where your shuttle is
                 </h2>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Lead Naturalist &amp; Commercial Alpine Driver
-                </p>
-                <p className="text-xs text-gold-300 font-mono mt-1 flex items-center gap-1">
-                  <span>★ 4.98</span>
-                  <span className="text-slate-500">•</span>
-                  <span>1,420+ Rockies Expeditions</span>
-                </p>
+                <a
+                  href={mapsLink(t.vehicleCoordinates.latitude, t.vehicleCoordinates.longitude)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-sm text-ocean-600 underline-offset-4 hover:underline"
+                >
+                  Open in Google Maps <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span className="sr-only">(opens in a new tab)</span>
+                </a>
               </div>
-            </div>
+              {mapFailed ? (
+                <RouteMap t={t} />
+              ) : (
+                <LiveMap
+                  start={startLL}
+                  vehicle={vehicleLL}
+                  pickup={pickupLL}
+                  label={`Map: the shuttle is about ${t.estimatedArrivalMinutes} minutes from ${t.pickupStopName}.`}
+                  onError={() => setMapFailed(true)}
+                />
+              )}
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-obsidian-900/[0.06] px-6 py-4 text-sm text-slate-600 sm:px-7">
+                <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-full bg-ocean-600" aria-hidden="true" /> Shuttle
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-full bg-summit-500" aria-hidden="true" /> Your pickup
+                  </span>
+                </span>
+                <span>
+                  {t.vehicleCoordinates.speedKmh > 0 ? `${t.vehicleCoordinates.speedKmh} km/h · ` : ""}
+                  Updated {updatedAt ? updatedAt.toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit", second: "2-digit" }) : "just now"}
+                </span>
+              </div>
+            </section>
+          </div>
 
-            {/* Direct Contact Buttons */}
-            <div className="grid grid-cols-2 gap-3 pt-2">
-              <a
-                href={telemetry.driverPhone ? `tel:${telemetry.driverPhone.replace(/[^\d+]/g, "")}` : "tel:+18257349456"}
-                className="py-2.5 px-3 rounded-xl bg-forest-900 hover:bg-forest-800 border border-forest-700/60 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-colors"
-              >
-                <Phone className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Call Chauffeur</span>
-              </a>
+          {/* Driver, vehicle, pickup */}
+          <div className="space-y-6">
+            <section aria-labelledby="driver-h" className={CARD}>
+              <h2 id="driver-h" className="text-sm text-slate-600">
+                Your driver
+              </h2>
+              <div className="mt-3 flex items-center gap-4">
+                <span className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full bg-ocean-950 ring-1 ring-obsidian-900/10">
+                  <Image src={t.driverPhoto} alt="" fill sizes="56px" className="object-cover" />
+                </span>
+                <p className="min-w-0 text-xl text-obsidian-900">{t.driverName}</p>
+              </div>
+              <div className="mt-5 flex items-start gap-3 rounded-2xl bg-obsidian-50 p-4">
+                <CarFront className="mt-0.5 h-5 w-5 shrink-0 text-ocean-600" aria-hidden="true" />
+                <div className="min-w-0">
+                  <p className="text-base text-obsidian-900">{t.vehicleName}</p>
+                  <p className="mt-1 inline-flex rounded-md border border-obsidian-900/15 bg-white px-2 py-0.5 font-mono text-sm tracking-wide text-obsidian-900">
+                    {t.licensePlate}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                <a href={`tel:${phone}`} className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-ocean-600 px-4 text-sm text-white hover:bg-ocean-700">
+                  <Phone className="h-4 w-4" aria-hidden="true" /> Call
+                </a>
+                <a
+                  href={whatsapp}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-obsidian-900/15 px-4 text-sm text-obsidian-900 hover:bg-obsidian-50"
+                >
+                  <MessageSquare className="h-4 w-4" aria-hidden="true" /> WhatsApp
+                  <span className="sr-only">(opens in a new tab)</span>
+                </a>
+              </div>
+            </section>
 
+            <section aria-labelledby="pickup-h" className={CARD}>
+              <div className="flex items-center justify-between gap-3">
+                <h2 id="pickup-h" className="text-sm text-slate-600">
+                  Pickup
+                </h2>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-summit-100 px-3 py-1 text-sm text-obsidian-900">
+                  <Clock className="h-3.5 w-3.5" aria-hidden="true" /> {t.pickupTime}
+                </span>
+              </div>
+              <p className="mt-3 flex items-start gap-2 text-lg text-obsidian-900">
+                <MapPin className="mt-1 h-4 w-4 shrink-0 text-ocean-600" aria-hidden="true" />
+                {t.pickupStopName}
+              </p>
+              <p className="ml-6 text-sm text-slate-600">{t.pickupAddress}</p>
+              {t.pickupInstructions && <p className="mt-4 rounded-2xl bg-obsidian-50 p-4 text-sm leading-relaxed text-slate-700">{t.pickupInstructions}</p>}
               <a
-                href={`https://wa.me/18257349456?text=Hi%20Vista%20Chase,%20I'm%20tracking%20my%20shuttle%20for%20booking%20${telemetry.bookingReference}`}
+                href={`https://www.google.com/maps/dir/?api=1&destination=${t.destinationCoordinates.latitude},${t.destinationCoordinates.longitude}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="py-2.5 px-3 rounded-xl bg-emerald-950 hover:bg-emerald-900 border border-emerald-700/60 text-emerald-200 font-semibold text-xs flex items-center justify-center gap-2 transition-colors"
+                className="mt-4 inline-flex items-center gap-1.5 text-sm text-ocean-600 underline-offset-4 hover:underline"
               >
-                <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
-                <span>WhatsApp Concierge</span>
+                <Navigation className="h-3.5 w-3.5" aria-hidden="true" /> Walking directions
+                <span className="sr-only">(opens in a new tab)</span>
               </a>
-            </div>
+            </section>
+
+            <p className="px-2 text-sm leading-relaxed text-slate-600">
+              Running late or can&apos;t find the shuttle? Call{" "}
+              <a href={`tel:${OFFICE_PHONE}`} className="text-ocean-600 underline underline-offset-4">
+                +1 825-734-9456
+              </a>
+              . See your{" "}
+              <Link href={`/booking/${encodeURIComponent(t.bookingReference)}/voucher`} className="text-ocean-600 underline underline-offset-4">
+                voucher
+              </Link>{" "}
+              for the full itinerary.
+            </p>
           </div>
-
-          {/* Vehicle Specs */}
-          <div className="bg-ocean-900 rounded-2xl p-6 border border-forest-800/60 shadow-xl space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Car className="w-4 h-4 text-gold-400" />
-                <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-                  Assigned Vehicle
-                </h3>
-              </div>
-              <span className="font-mono text-xs font-bold text-gold-300 px-2 py-0.5 rounded bg-gold-950/60 border border-gold-800/40">
-                {telemetry.licensePlate}
-              </span>
-            </div>
-
-            <div className="p-4 rounded-xl bg-forest-950/80 border border-forest-800/60 space-y-2">
-              <p className="text-sm font-bold text-white">
-                {telemetry.vehicleName}
-              </p>
-              <div className="grid grid-cols-2 gap-2 text-xs text-slate-300 pt-1">
-                <div className="flex items-center gap-1.5">
-                  <Wifi className="w-3.5 h-3.5 text-gold-400" />
-                  <span>Starlink Wi-Fi Onboard</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Thermometer className="w-3.5 h-3.5 text-gold-400" />
-                  <span>Climate Controlled Cabin</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5 text-gold-400" />
-                  <span>Commercial Inspection Pass</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-gold-400" />
-                  <span>Panorama Glass Roof</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Route Progression Timeline */}
-          <div className="bg-ocean-900 rounded-2xl p-6 border border-forest-800/60 shadow-xl space-y-4">
-            <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-              Route Progression
-            </h3>
-
-            <div className="space-y-4 relative before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-forest-800">
-              {telemetry.routeWaypoints.map((wp, idx) => (
-                <div key={idx} className="relative flex items-start gap-4 text-xs">
-                  <div
-                    className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 z-10 text-xs font-bold ${
-                      wp.isCurrent
-                        ? "bg-gold-500 text-forest-950 ring-4 ring-gold-500/20 animate-pulse"
-                        : wp.isPassed
-                        ? "bg-emerald-600 text-white"
-                        : "bg-forest-900 text-slate-400 border border-forest-700"
-                    }`}
-                  >
-                    {wp.isPassed ? "✓" : idx + 1}
-                  </div>
-                  <div className="flex-1 min-w-0 pt-0.5">
-                    <p
-                      className={`font-semibold ${
-                        wp.isCurrent
-                          ? "text-gold-300"
-                          : wp.isPassed
-                          ? "text-slate-300"
-                          : "text-slate-500"
-                      }`}
-                    >
-                      {wp.name}
-                    </p>
-                    {wp.isCurrent && (
-                      <span className="text-xs text-gold-400 font-mono block mt-0.5">
-                        Current Position / Proximity
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Canadian Rockies Alpine Conditions */}
-          <div className="bg-ocean-900 rounded-2xl p-5 border border-forest-800/60 shadow-xl space-y-3">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-bold text-slate-300 uppercase tracking-wider">
-                Destination Weather
-              </span>
-              <span className="text-emerald-400 font-semibold">Conditions Optimal</span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="p-3 rounded-xl bg-forest-950/60 border border-forest-800/40">
-                <span className="text-xs text-slate-400 uppercase font-mono block">Lake Louise / Moraine</span>
-                <span className="text-base font-bold text-white">14°C • Crystal Clear</span>
-              </div>
-              <div className="p-3 rounded-xl bg-forest-950/60 border border-forest-800/40">
-                <span className="text-xs text-slate-400 uppercase font-mono block">Alpine Wildlife Activity</span>
-                <span className="text-base font-bold text-gold-400">High • Elk / Bears</span>
-              </div>
-            </div>
-          </div>
-
         </div>
-
       </div>
-
-      {/* Footer */}
-      <footer className="mt-auto border-t border-forest-800/60 bg-ocean-950 py-6 px-4 text-center text-xs text-slate-500">
-        <p>© 2026 Vista Chase Canadian Rockies. All rights reserved. Parks Canada Commercial License #PC-BANFF-2026-VC.</p>
-        <p className="mt-1">For urgent trip adjustments or flight delays, contact 24/7 Dispatch at +1 (825) 734-9456.</p>
-      </footer>
     </div>
+  );
+}
+
+// Fallback when the street map can't load (no WebGL). Simplified map: the route's real coordinates fitted to the frame (equirectangular, corrected for
+// latitude), so positions are true relative to each other. No tiles: only our own drawing.
+function RouteMap({ t }: { t: TrackingTelemetry }) {
+  const W = 640;
+  const H = 320;
+  const PAD = 48;
+  const start = t.routeWaypoints[0];
+  const pts = [
+    ...(start ? [start] : []),
+    t.vehicleCoordinates,
+    t.destinationCoordinates,
+  ];
+  const k = Math.cos((t.destinationCoordinates.latitude * Math.PI) / 180);
+  const xs = pts.map((p) => p.longitude * k);
+  const ys = pts.map((p) => p.latitude);
+  const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+  const scale = Math.min((W - PAD * 2) / Math.max(x1 - x0, 1e-4), (H - PAD * 2) / Math.max(y1 - y0, 1e-4));
+  const ox = (W - (x1 - x0) * scale) / 2;
+  const oy = (H - (y1 - y0) * scale) / 2;
+  const project = (p: { latitude: number; longitude: number }) => ({
+    x: ox + (p.longitude * k - x0) * scale,
+    y: H - (oy + (p.latitude - y0) * scale),
+  });
+  const s = start ? project(start) : null;
+  const v = project(t.vehicleCoordinates);
+  const d = project(t.destinationCoordinates);
+  // Anchor labels so they stay inside the frame near either edge.
+  const anchor = (x: number) => (x < W * 0.3 ? "start" : x > W * 0.7 ? "end" : "middle");
+  const labelX = (x: number) => (x < W * 0.3 ? Math.max(x - 12, 12) : x > W * 0.7 ? Math.min(x + 12, W - 12) : x);
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" role="img" aria-label={`Map: the shuttle is about ${t.estimatedArrivalMinutes} minutes from ${t.pickupStopName}.`}>
+      <defs>
+        <pattern id="vc-map-grid" width="32" height="32" patternUnits="userSpaceOnUse">
+          <path d="M32 0H0V32" fill="none" className="stroke-obsidian-900/[0.05]" strokeWidth="1" />
+        </pattern>
+      </defs>
+      <rect width={W} height={H} className="fill-obsidian-50" />
+      <rect width={W} height={H} fill="url(#vc-map-grid)" />
+      {s && (
+        <>
+          <line x1={s.x} y1={s.y} x2={d.x} y2={d.y} className="stroke-obsidian-900/20" strokeWidth="4" strokeLinecap="round" strokeDasharray="2 10" />
+          <line x1={s.x} y1={s.y} x2={v.x} y2={v.y} className="stroke-ocean-600" strokeWidth="5" strokeLinecap="round" />
+          <circle cx={s.x} cy={s.y} r="5" className="fill-white stroke-obsidian-900/40" strokeWidth="2" />
+          <text x={labelX(s.x)} y={s.y + 26} textAnchor={anchor(s.x)} className="fill-slate-600 text-[13px]">
+            {start!.name.replace(/^Vista Chase /, "")}
+          </text>
+        </>
+      )}
+      <g>
+        <circle cx={d.x} cy={d.y} r="16" className="fill-summit-500/25" />
+        <circle cx={d.x} cy={d.y} r="8" className="fill-summit-500 stroke-white" strokeWidth="3" />
+        <text x={labelX(d.x)} y={d.y < 40 ? d.y + 34 : d.y - 22} textAnchor={anchor(d.x)} className="fill-obsidian-900 text-[14px]">
+          {t.pickupStopName}
+        </text>
+      </g>
+      <g style={{ transform: `translate(${v.x}px, ${v.y}px)`, transition: "transform 1s ease-out" }}>
+        <circle r="18" className="fill-ocean-500/20 motion-safe:animate-ping" />
+        <circle r="11" className="fill-ocean-600 stroke-white" strokeWidth="3" />
+      </g>
+    </svg>
   );
 }

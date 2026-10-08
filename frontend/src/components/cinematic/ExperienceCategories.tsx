@@ -20,20 +20,20 @@ const CATEGORIES: CategoryCard[] = [
   {
     id: "private",
     eyebrow: "EXCLUSIVE FLEET",
-    title: "Private Tours",
-    tagline: "Your Day, Your Way",
-    description: "Luxury, comfort, and total flexibility. Design your itinerary with a certified guide in a full-size GMC Yukon Denali XL or Mercedes Sprinter VIP.",
+    title: "Private tours",
+    tagline: "Your day, your way",
+    description: "Your own guide and vehicle: a luxury SUV for up to 6 or an executive van for up to 13. Choose your stops and how long you stay.",
     image: "/media/site/dcb45221eefae27970a0c11f4f7fc0eb3edb65d1-1.webp",
     href: "/private-tours",
     icon: Sparkles,
-    badge: "VIP Service",
+    badge: "Priced per vehicle",
   },
   {
     id: "shared",
     eyebrow: "MAX 12 GUESTS",
-    title: "Shared Tours",
-    tagline: "Small Groups, More Fun",
-    description: "Explore Banff, Lake Louise, and Yoho National Park with curated scenic stops and expert local storytelling at remarkable value.",
+    title: "Shared tours",
+    tagline: "Small groups, big days out",
+    description: "Banff, Lake Louise, Yoho and the Icefields Parkway in groups of up to 12, with hotel pickup and Parks Canada entry included.",
     image: "/media/site/image-2025-11-04t210434-975.webp",
     href: "/shared-tours",
     icon: Users,
@@ -42,31 +42,31 @@ const CATEGORIES: CategoryCard[] = [
   {
     id: "shuttles",
     eyebrow: "NO PERMIT HASSLE",
-    title: "Lake Shuttles",
-    tagline: "Skip the Traffic",
-    description: "Guaranteed access to Moraine Lake and Lake Louise where private cars are strictly restricted. Direct sunrise and daily departures from Canmore and Banff.",
+    title: "Lake shuttles",
+    tagline: "Skip the parking",
+    description: "Private cars can't drive to Moraine Lake; our shuttles can. Sunrise and mid-day departures from Canmore and Banff.",
     image: "/media/photos/moraine-lake-perfect-reflection.webp",
     href: "/shuttles",
     icon: Compass,
-    badge: "Guaranteed Access",
+    badge: "Guaranteed access",
   },
   {
     id: "multiday",
     eyebrow: "AIRPORT TO PEAKS",
-    title: "Multi-Day Packages",
-    tagline: "Save More, Stress Less",
-    description: "Turn your journey into a seamless 2 to 7-day Rockies adventure. Airport transfers, hotel logistics, and daily guided excursions completely coordinated.",
+    title: "Multi-day trips",
+    tagline: "No rental car needed",
+    description: "2 to 7 days across Banff, Yoho and Jasper with one dedicated guide and airport transfers.",
     image: "/media/videos/athabasca-falls-poster.webp",
     href: "/multi-day-tour-package-for-banff",
     icon: Shield,
-    badge: "All-Inclusive",
+    badge: "2–7 days",
   },
   {
     id: "tickets",
     eyebrow: "ADD TO YOUR DAY",
-    title: "Banff Activity Tickets",
-    tagline: "The Rockies' Classics",
-    description: "Banff Gondola, Lake Minnewanka cruise, Columbia Icefield Skywalk and the Upper Hot Springs, timed around your tour with one request.",
+    title: "Activity tickets",
+    tagline: "The Rockies' classics",
+    description: "Banff Gondola, Lake Minnewanka cruise, Icefield Skywalk and Upper Hot Springs, timed around your tour.",
     image: "/media/site/banff-gondola-hike.webp",
     href: "/banff-activity-tickets",
     icon: Ticket,
@@ -109,7 +109,7 @@ export function ExperienceCategories() {
                         data-parallax="6"
                       />
                     </div>
-                    <div className="absolute inset-0 bg-gradient-to-t from-obsidian-950/90 via-obsidian-950/35 to-transparent" />
+                    <div className={`vc-scrim ${idx < 2 ? "vc-scrim-tall" : "vc-scrim-full"}`} aria-hidden="true" />
                   </div>
 
                   {category.badge && (
@@ -117,12 +117,12 @@ export function ExperienceCategories() {
                   )}
 
                   <div className="relative p-6 sm:p-7">
-                    <p className="mb-2 flex items-center gap-2 text-sm text-summit-300">
-                      <Icon className="h-4 w-4" aria-hidden="true" />
+                    <p className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-summit-400/40 bg-summit-500/15 px-3 py-1 text-sm text-summit-300 backdrop-blur-md">
+                      <Icon className="h-3.5 w-3.5" aria-hidden="true" />
                       {category.tagline}
                     </p>
                     <h3 className="text-2xl font-light text-white sm:text-3xl">{category.title}</h3>
-                    <p className="mt-2 max-w-md text-base font-light leading-relaxed text-slate-200 line-clamp-3">{category.description}</p>
+                    <p className="mt-2 max-w-md text-base font-light leading-relaxed text-slate-100">{category.description}</p>
                     <span className="mt-5 inline-flex items-center gap-2 text-sm">
                       <span className="border-b border-summit-500 pb-0.5">Explore {category.title.toLowerCase()}</span>
                       <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true" />
