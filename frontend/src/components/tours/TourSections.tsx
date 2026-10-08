@@ -6,10 +6,12 @@
 // imported from the live product pages (tour.tabs, inclusions, faqs).
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { Car, Check, CheckCircle2, Clock, MapPin, Plus, Star, X } from "lucide-react";
 import type { TourSection, TourWithAvailability } from "@/lib/api/types";
 import { ReviewSlider } from "@/components/reviews/ReviewSlider";
+import { vehiclesFor } from "@/lib/vehicles";
 
 interface Review {
   id: string;
@@ -144,6 +146,7 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
   const itinerary = tab(tour, /^(itinerary|process)$/i);
   const seasonal = tab(tour, /^seasonal$/i);
   const overviewSections = (overview?.sections ?? []).filter((s) => !/price (in|ex)cludes/i.test(s.heading));
+  const vehicles = vehiclesFor(tour);
   const pickupStep = itinerary?.sections.flatMap((s) => s.steps).find((s) => /pick ?up/i.test(s.text));
 
 
@@ -195,12 +198,6 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
                 </div>
               ))}
             </dl>
-          )}
-          {isPrivate && tour.vehicleOptions.length > 0 && (
-            <p className="flex items-start gap-2.5 text-base text-slate-700">
-              <Car className="mt-1 h-4 w-4 shrink-0 text-ocean-600" aria-hidden="true" />
-              <span>Your private vehicle: {tour.vehicleOptions.map((v) => `${v.label} for up to ${v.seats}`).join(" or ")}.</span>
-            </p>
           )}
           {seasonal?.sections.map((s, i) => <SectionBlock key={`season-${i}`} section={s} level={4} />)}
         </div>
@@ -263,6 +260,47 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
             Find your hotel&apos;s pickup point
           </Link>
         </div>
+        {vehicles.length > 0 && (
+          <div className="space-y-4 pt-4">
+            <h3 className="flex items-center gap-2 text-xl font-light text-obsidian-900">
+              <Car className="h-5 w-5 text-ocean-600" aria-hidden="true" />
+              {vehicles.length > 1 ? "Your vehicle options" : "Your vehicle"}
+            </h3>
+            <ul className={`grid gap-5 ${vehicles.length > 1 ? "md:grid-cols-2" : ""}`}>
+              {vehicles.map((v) => (
+                <li key={v.name} className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white">
+                  <figure>
+                    <div className={`flex gap-1 ${vehicles.length > 1 ? "h-48" : "h-56 sm:h-72"}`}>
+                      {v.photos.map((photo, i) => (
+                        <div key={photo.src} className={`relative ${i === 0 ? "flex-[2]" : "flex-1"}`}>
+                          <Image src={photo.src} alt={photo.alt} fill sizes="(min-width: 768px) 400px, 100vw" className="object-cover" />
+                        </div>
+                      ))}
+                    </div>
+                    {v.caption && <figcaption className="px-6 pt-3 text-xs text-slate-600">{v.caption}</figcaption>}
+                  </figure>
+                  <div className="space-y-3 p-6">
+                    <p className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                      <span className="text-lg text-obsidian-900">{v.name}</span>
+                      {v.seats && <span className="text-sm text-slate-600">Up to {v.seats} guests</span>}
+                    </p>
+                    {v.model && <p className="text-sm text-slate-600">{v.model}</p>}
+                    {v.notes.length > 0 && (
+                      <ul className="space-y-1.5 text-sm text-slate-700">
+                        {v.notes.map((n) => (
+                          <li key={n} className="flex items-start gap-2">
+                            <Check className="mt-0.5 h-4 w-4 shrink-0 text-ocean-600" aria-hidden="true" />
+                            {n}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </section>
 
       <section id="cancellation" aria-labelledby="cancellation-heading" className="space-y-4">
