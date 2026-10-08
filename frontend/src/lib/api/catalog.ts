@@ -1,5 +1,5 @@
 import { unstable_rethrow } from "next/navigation";
-import { apiGet, apiGetOrNull } from "@/lib/api/server";
+import { ApiError, apiGet, apiGetOrNull } from "@/lib/api/server";
 import {
   FALLBACK_TOURS,
   FALLBACK_SHUTTLES,
@@ -52,13 +52,15 @@ export async function getTours(options?: {
 
 export async function getTourBySlug(slug: string): Promise<TourWithAvailability | null> {
   try {
-    const data = await apiGetOrNull<{ tour: TourWithAvailability }>(`/api/tours/${encodeURIComponent(slug)}`);
+    const data = await apiGet<{ tour: TourWithAvailability }>(`/api/tours/${encodeURIComponent(slug)}`);
     if (data?.tour) return data.tour;
   } catch (err) {
     unstable_rethrow(err); // Next.js "render per request" signal, not an outage
-    console.warn(`[Catalog] Backend unavailable for slug ${slug}, serving authoritative fallback`);
+    if (err instanceof ApiError && err.status === 404) return null; // no such tour: the page 404s
+    console.warn(`[Catalog] Backend unavailable for slug ${slug}`);
+    // An outage is not "page not found": show the error page (search engines keep the URL).
     if (!fallbackAllowed()) throw new Error("Backend unavailable");
-}
+  }
 
   // Only a matching tour: product pages live at top-level URLs, so an unknown slug must 404.
   if (!fallbackAllowed()) return null;
