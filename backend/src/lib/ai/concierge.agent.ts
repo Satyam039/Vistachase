@@ -402,7 +402,7 @@ export async function runConciergeAgent(
   ];
 
   const tools: Anthropic.ToolUnion[] = [
-    ...CUSTOMER_TOOLS,
+    ...CUSTOMER_TOOLS.filter(t => process.env.NODE_ENV !== "production" || !["hold_seats", "cancel_booking"].includes(t.name)),
     ...(ctx.isStaff ? STAFF_TOOLS : []),
     { type: "web_search_20260318", name: "web_search", max_uses: 4, user_location: { type: "approximate", city: "Banff", region: "Alberta", country: "CA", timezone: "America/Edmonton" } },
     { type: "web_fetch_20260318", name: "web_fetch", max_uses: 3 },

@@ -124,16 +124,14 @@ let discountPercent = 0;
     const bookingReference = `VC-${new Date().getFullYear()}-${randSuffix}`;
     const voucherCode = `VOUCH-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
-    // Generate QR code data URL
-    const qrDataUrl = await QRCode.toDataURL(
-      JSON.stringify({
-        ref: bookingReference,
-        voucher: voucherCode,
-        guest: input.customerName,
-        seats: totalSeats,
-        departure: departure.date,
-      })
-    );
+// Generate signed check-in token for QR
+    const hmac = crypto.createHmac("sha256", process.env.JWT_SECRET || "super-secret");
+    hmac.update(bookingReference);
+    const signature = hmac.digest("hex");
+    
+    // Generate QR code data URL (points to admin check-in page)
+    const checkinUrl = `https://vistachase.com/admin/checkin?ref=${bookingReference}&sig=${signature}`;
+    const qrDataUrl = await QRCode.toDataURL(checkinUrl);
 
     // Create Booking
 

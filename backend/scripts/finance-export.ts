@@ -26,6 +26,23 @@ async function runFinanceExport() {
   const filename = `finance_export_${Date.now()}.csv`;
   fs.writeFileSync(filename, csv);
   console.log(`Export saved to ${filename}`);
+// Payout Export for Affiliates
+  const affiliates = await prisma.affiliate.findMany({
+    include: { user: true, _count: { select: { referrals: true } } }
+  });
+  
+  let payoutCsv = "PartnerName,Email,CommissionRate,ReferralCount,TotalCommissionDue
+";
+  for (const aff of affiliates) {
+    // Basic calculation for demo: each referral = assumed $15 commission
+    const commissionDue = aff._count.referrals * 15.00;
+    payoutCsv += `${aff.user.name},${aff.user.email},${aff.commissionRate}%,${aff._count.referrals},${commissionDue.toFixed(2)}
+`;
+  }
+  
+  const payoutFilename = `payout_export_${Date.now()}.csv`;
+  fs.writeFileSync(payoutFilename, payoutCsv);
+  console.log(`Partner payout export saved to ${payoutFilename}`);
 }
 
 runFinanceExport().catch(console.error).finally(() => prisma.$disconnect());

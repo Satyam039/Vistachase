@@ -195,8 +195,25 @@ export class MockLiveTrackingProvider implements ILiveTrackingProvider {
     const startPoint = ROCKIES_CORRIDOR_WAYPOINTS[0];
     const targetPoint = { latitude: stopLat, longitude: stopLng };
 
-    const currentLat = startPoint.latitude + (targetPoint.latitude - startPoint.latitude) * progress;
-    const currentLng = startPoint.longitude + (targetPoint.longitude - startPoint.longitude) * progress;
+// 2. Telemetry: Read from real VehiclePosition table first!
+    const latestPos = vehicle.id ? await prisma.vehiclePosition.findFirst({
+      where: { vehicleId: vehicle.id },
+      orderBy: { timestamp: "desc" }
+    }) : null;
+    
+    let currentLat = startPoint.latitude;
+    let currentLng = startPoint.longitude;
+    let speed = 72;
+    
+    if (latestPos) {
+       currentLat = latestPos.latitude;
+       currentLng = latestPos.longitude;
+       speed = latestPos.speedKmh || 0;
+    } else {
+       // Fallback to interpolated progress for demo if no GPS ping
+       currentLat = startPoint.latitude + (targetPoint.latitude - startPoint.latitude) * progress;
+       currentLng = startPoint.longitude + (targetPoint.longitude - startPoint.longitude) * progress;
+    }
     const remainingMinutes = Math.max(1, Math.round((1 - progress) * 15));
 
     // Dynamic Status Logic
@@ -280,7 +297,7 @@ export class MockLiveTrackingProvider implements ILiveTrackingProvider {
         latitude: Number(currentLat.toFixed(5)),
         longitude: Number(currentLng.toFixed(5)),
         heading: 315, // Northwest toward Lake Louise
-        speedKmh: status === "SHUTTLE_IS_HERE" ? 0 : 72,
+        speedKmh: speed,
         altitudeMeters: 1450,
         updatedAt: new Date().toISOString(),
       },
