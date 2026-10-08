@@ -1,5 +1,14 @@
 import crypto from "crypto";
 
+export class BokunApiError extends Error {
+  constructor(
+    public status: number,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
 export class BokunApiClient {
   private accessKey: string;
   private secretKey: string;
@@ -38,29 +47,33 @@ export class BokunApiClient {
     }
 
     const url = `${this.baseUrl}${endpoint}`;
-    
-    let retries = 3;
-    while (retries > 0) {
+
+    // Only reads are retried: repeating a POST after a timeout could create a second booking.
+    let attempts = method === "GET" ? 3 : 1;
+    while (true) {
       try {
         const res = await fetch(url, {
           method,
           headers,
           body: body ? JSON.stringify(body) : undefined,
+          signal: AbortSignal.timeout(20_000),
         });
 
         if (!res.ok) {
           const text = await res.text();
-          throw new Error(`Bókun API Error: ${res.status} ${res.statusText} - ${text}`);
+          const error = new BokunApiError(res.status, `Bókun API Error: ${res.status} ${res.statusText} - ${text.slice(0, 500)}`);
+          if (res.status < 500) attempts = 1; // a refused request won't succeed on retry
+          throw error;
         }
 
         if (res.status === 204) return null;
-        return await res.json();
+        const text = await res.text();
+        return text ? JSON.parse(text) : null;
       } catch (err: any) {
-        retries--;
-        console.warn(`Bókun API fetch failed: ${err.message}. Retries left: ${retries}`);
-        if (retries === 0) throw err;
-        // exponential backoff
-        await new Promise(resolve => setTimeout(resolve, (3 - retries) * 1000));
+        attempts--;
+        if (attempts <= 0) throw err;
+        console.warn(`Bókun API fetch failed: ${err.message}. Retries left: ${attempts}`);
+        await new Promise((resolve) => setTimeout(resolve, (3 - attempts) * 1000));
       }
     }
   }
