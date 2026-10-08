@@ -90,6 +90,7 @@ export interface TourWithAvailability {
     capacityHeld: number;
     seatsAvailable: number;
     price: number;
+    childPrice: number | null;
     currency: string;
     status: string;
   }[];
@@ -161,6 +162,7 @@ function toTourDto(t: TourRow, expiredHeld: Map<string, number>): TourWithAvaila
       // Strict capacity calculation: Total - (Booked + live Held)
       ...liveCapacity(d, expiredHeld),
       price: d.price / 100,
+      childPrice: d.childPrice != null ? d.childPrice / 100 : null,
       currency: d.currency,
       status: d.status,
     })),

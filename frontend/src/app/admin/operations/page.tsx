@@ -157,9 +157,9 @@ export default function OperationsPage() {
     setSyncing(true);
     setNotice(null);
     try {
-      const res = await fetch("/api/operations/sync-bokun", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ date: selectedDate }) });
+      const res = await fetch("/api/operations/sync-bokun", { method: "POST" });
       const data = await res.json();
-      setNotice(data.success ? `Synced ${data.result.syncedCount} new and ${data.result.updatedCount} updated bookings from Bókun.` : data.error || "Bókun sync failed.");
+      setNotice(data.success ? `Bókun synced: ${data.result.created} new and ${data.result.updated} updated departures, ${data.result.closed} closed${data.result.errors.length ? `; ${data.result.errors.length} product(s) failed` : ""}.` : data.error || "Bókun sync failed.");
       if (data.success) await fetchDashboard(selectedDate);
     } catch {
       setNotice("Couldn't reach Bókun. Try again.");

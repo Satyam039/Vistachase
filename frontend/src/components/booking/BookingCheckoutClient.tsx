@@ -73,6 +73,8 @@ export interface DepartureData {
   capacityHeld: number;
   seatsAvailable: number;
   price: number;
+  /** Per child when it differs from the adult price. */
+  childPrice?: number | null;
   currency: string;
   tour?: {
     id: string;
@@ -536,9 +538,12 @@ export function BookingCheckoutClient({
       return { ...addOn, quantity, total: addOn.price * quantity };
     },
   );
-const fareSubtotal = isVehicle
+  // Same rule as the server: children pay the child price when the departure has one.
+  const childPrice = departure.childPrice ?? departure.price;
+  const hasChildPrice = !isVehicle && children > 0 && childPrice !== departure.price;
+  const fareSubtotal = isVehicle
     ? departure.price
-    : departure.price * totalSeats;
+    : departure.price * adults + childPrice * children;
   const addOnsTotal = selectedAddOns.reduce(
     (sum, addOn) => sum + addOn.total,
     0,
@@ -806,7 +811,9 @@ const fareSubtotal = isVehicle
           label={
             isVehicle
               ? `Private vehicle · up to ${departure.capacityTotal} guests`
-              : `Fare · ${totalSeats} × ${money(departure.price)}`
+              : hasChildPrice
+                ? `Fare · ${adults} × ${money(departure.price)} + ${children} × ${money(childPrice)} (child)`
+                : `Fare · ${totalSeats} × ${money(departure.price)}`
           }
           value={money(fareSubtotal)}
         />

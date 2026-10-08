@@ -129,6 +129,7 @@ export class MockBokunOperationsProvider implements IBookingOperationsProvider {
 
 import { BokunApiClient } from "./bokun.client";
 import { bokunConfig } from "./product-map";
+import { bokunApiSource, syncBokunAvailability } from "./availability-sync";
 
 export class LiveBokunOperationsProvider implements IBookingOperationsProvider {
   private client: BokunApiClient;
@@ -153,59 +154,11 @@ export class LiveBokunOperationsProvider implements IBookingOperationsProvider {
     }));
   }
 
+  /** Departures, seats and prices for one day, read from Bókun (see availability-sync.ts). */
   async syncTodaysBookings(date: string): Promise<BokunSyncResult> {
-    const products = await this.fetchProducts();
-    let syncedCount = 0; // departures created
-    let updatedCount = 0; // departures already known, capacity refreshed
-    
-    for (const prod of products) {
-      try {
-        const availabilities: any = await this.client.getAvailabilities(prod.id, date, date);
-        if (Array.isArray(availabilities)) {
-          for (const avail of availabilities) {
-            const departureTime = avail.time || "08:00";
-            const capacityTotal = avail.capacity || prod.capacity;
-            
-            const mapped = PRODUCT_MAP.find(m => m.bokunId === prod.id);
-            if (!mapped) continue;
-            
-            const tour = await prisma.tour.findUnique({ where: { slug: mapped.slug } });
-            if (!tour) continue;
-            
-            const existing = await prisma.tourDeparture.findFirst({
-              where: { tourId: tour.id, date: new Date(`${date}T00:00:00Z`), departureTime: new Date(`1970-01-01T${departureTime}:00.000Z`) }
-            });
-
-            if (existing) {
-              await prisma.tourDeparture.update({
-                where: { id: existing.id },
-                data: { capacityTotal: capacityTotal }
-              });
-              updatedCount++;
-            } else {
-              await prisma.tourDeparture.create({
-                data: {
-                  tourId: tour.id,
-                  date: new Date(`${date}T00:00:00Z`),
-                  departureTime: new Date(`1970-01-01T${departureTime}:00.000Z`),
-                  capacityTotal: capacityTotal,
-                  capacityBooked: 0,
-                  status: DepartureStatus.ACTIVE,
-                  price: Math.round(prod.basePrice * 100)
-                }
-              });
-              syncedCount++;
-            }
-          }
-        }
-      } catch (err) {
-        console.warn(`Failed to sync availability for ${prod.id}:`, err);
-      }
-    }
-    
-    return { syncedCount, updatedCount, errors: [] };
+    const result = await syncBokunAvailability({ source: bokunApiSource(this.client), days: 1, from: date });
+    return { syncedCount: result.created, updatedCount: result.updated, errors: result.errors };
   }
-
 
   async createReservation(payload: BokunBookingPayload): Promise<{ bokunBookingId: string; totalAmount: number }> {
     // Bókun reservation endpoint logic

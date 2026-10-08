@@ -10,6 +10,7 @@ if (process.env.SENTRY_DSN) {
 }
 
 import { createApp } from "./app";
+import { startInProcessJobs } from "./jobs/in-process";
 
 // Task F4: Validate configuration at boot
 const requiredEnv = [
@@ -40,4 +41,5 @@ const port = parseInt(process.env.PORT || "4000", 10);
 
 createApp().listen(port, () => {
   console.log(`[vistachase-backend] API listening on http://localhost:${port}`);
+  if (process.env.RUN_JOBS_IN_API === "true") startInProcessJobs();
 });
