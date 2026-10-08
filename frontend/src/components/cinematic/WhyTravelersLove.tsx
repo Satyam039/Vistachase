@@ -22,7 +22,7 @@ export function WhyTravelersLove() {
       </div>
 
       <div className="relative mx-auto max-w-7xl px-page">
-        <div className="mb-14 max-w-3xl" data-reveal>
+        <div className="mx-auto mb-14 max-w-3xl text-center" data-reveal>
           <p className="mb-3 text-sm uppercase tracking-[0.22em] text-summit-400">Why Vista Chase</p>
           <h2 id="why-heading" className="text-balance text-3xl font-light leading-[1.1] tracking-tight text-white sm:text-4xl lg:text-5xl">
             Why travellers choose us

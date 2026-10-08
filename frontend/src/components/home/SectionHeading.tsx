@@ -1,5 +1,7 @@
 // Section heading used across the redesigned pages: small eyebrow, large light headline, an
-// optional intro and an optional "See all" link on the right (GetYourGuide / Viator rails).
+// optional intro and an optional "See all" link. Centred on the page axis by default (site-wide
+// rule: section headings are centred, the content below stays left-aligned); align="left" puts
+// the link on the right instead (GetYourGuide / Viator rails).
 
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
@@ -11,7 +13,7 @@ export function SectionHeading({
   intro,
   link,
   tone = "light",
-  align = "left",
+  align = "center",
 }: {
   id?: string;
   eyebrow?: string;
@@ -28,7 +30,7 @@ export function SectionHeading({
         align === "center" ? "items-center text-center" : "md:flex-row md:items-end md:justify-between"
       }`}
     >
-      <div className={align === "center" ? "max-w-3xl" : "max-w-3xl"} data-reveal>
+      <div className="max-w-3xl" data-reveal>
         {eyebrow && (
           <p className={`mb-3 text-sm uppercase tracking-[0.22em] ${dark ? "text-summit-300" : "text-ocean-600"}`}>{eyebrow}</p>
         )}
