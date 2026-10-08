@@ -30,6 +30,7 @@ export interface BokunBookingPayload {
   currency: string;
   sourceChannel: "WEBSITE" | "VIATOR" | "GETYOURGUIDE" | "DIRECT";
   specialRequests?: string;
+  promoCode?: string;
 }
 
 export interface BokunSyncResult {

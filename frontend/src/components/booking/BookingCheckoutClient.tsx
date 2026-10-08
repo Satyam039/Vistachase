@@ -301,6 +301,35 @@ export function BookingCheckoutClient({
   // Submission
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [promoCodeInput, setPromoCodeInput] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState<{ code: string; percent: number; amount: number } | null>(null);
+  const [promoError, setPromoError] = useState("");
+  const [isApplyingPromo, setIsApplyingPromo] = useState(false);
+
+  const handleApplyPromo = async () => {
+    setPromoError("");
+    setIsApplyingPromo(true);
+    try {
+      const res = await fetch("/api/pricing/quote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ departureId: departure.id, adultsCount: adults, childrenCount: children, promoCode: promoCodeInput.trim() })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setPromoError(data.error || "Invalid promo code");
+        setAppliedPromo(null);
+      } else {
+        setAppliedPromo({ code: data.promoCode, percent: data.discountPercent, amount: data.discountAmount });
+        setPromoCodeInput("");
+      }
+    } catch {
+      setPromoError("Network error. Please try again.");
+    } finally {
+      setIsApplyingPromo(false);
+    }
+  };
+
   const [confirmed, setConfirmed] = useState<ConfirmedBooking | null>(null);
 
   const totalSeats = adults + children;
@@ -478,15 +507,16 @@ export function BookingCheckoutClient({
       return { ...addOn, quantity, total: addOn.price * quantity };
     },
   );
-  const fareSubtotal = isVehicle
+const fareSubtotal = isVehicle
     ? departure.price
     : departure.price * totalSeats;
   const addOnsTotal = selectedAddOns.reduce(
     (sum, addOn) => sum + addOn.total,
     0,
   );
-  const tax = round2((fareSubtotal + addOnsTotal) * GST_RATE);
-  const total = round2(fareSubtotal + addOnsTotal + tax);
+  const discount = appliedPromo ? Math.round(fareSubtotal * (appliedPromo.percent / 100)) : 0;
+  const tax = round2((fareSubtotal - discount + addOnsTotal) * GST_RATE);
+  const total = round2(fareSubtotal - discount + addOnsTotal + tax);
 
   const selectedStop = stops.find((stop) => stop.id === pickupStopId);
   const experienceTitle =
@@ -593,6 +623,7 @@ export function BookingCheckoutClient({
             quantity: addOn.quantity,
           })),
           paymentProvider: "mock",
+          promoCode: appliedPromo?.code,
         }),
       });
       const data = await res.json();
@@ -1232,6 +1263,36 @@ export function BookingCheckoutClient({
                           </Card>
                           {/* No card details are collected on this page. A real integration mounts the payment
                           provider's PCI-compliant fields here instead of raw inputs. */}
+                          <Card padding={4}>
+                            <VStack gap={3}>
+                              <HStack vAlign="end" gap={2}>
+                                <StackItem size="fill">
+                                  <TextInput
+                                    label="Promo code"
+                                    isOptional
+                                    value={promoCodeInput}
+                                    onChange={setPromoCodeInput}
+                                    placeholder="Enter code"
+                                    isDisabled={isApplyingPromo}
+                                  />
+                                </StackItem>
+                                <Button
+                                  variant="secondary"
+                                  label={isApplyingPromo ? "Applying..." : "Apply"}
+                                  onClick={handleApplyPromo}
+                                  isDisabled={!promoCodeInput.trim() || isApplyingPromo}
+                                />
+                              </HStack>
+                              {promoError && <p className="text-sm text-red-600">{promoError}</p>}
+                              {appliedPromo && (
+                                <HStack hAlign="between" className="text-sm text-ocean-600 font-medium">
+                                  <span>Applied: {appliedPromo.code} (-{appliedPromo.percent}%)</span>
+                                  <button onClick={() => setAppliedPromo(null)} className="underline hover:text-ocean-700">Remove</button>
+                                </HStack>
+                              )}
+                            </VStack>
+                          </Card>
+
                           <Banner
                             status="info"
                             icon={<Icon icon={CreditCard} size="sm" />}
