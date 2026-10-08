@@ -82,11 +82,11 @@ export class MockBokunOperationsProvider implements IBookingOperationsProvider {
     return `MOCK-${input.bookingReference}`;
   }
 
-  async confirmReservation(): Promise<void> {}
+  async confirmReservation(_code: string, _bookingReference: string, _payment: BokunPayment): Promise<void> {}
 
-  async abortReservation(): Promise<void> {}
+  async abortReservation(_code: string): Promise<void> {}
 
-  async cancelBooking(): Promise<void> {}
+  async cancelBooking(_code: string): Promise<void> {}
 
   async handleBookingWebhook(payload: unknown): Promise<{ success: boolean; bookingReference?: string; error?: string }> {
     return { success: true };
