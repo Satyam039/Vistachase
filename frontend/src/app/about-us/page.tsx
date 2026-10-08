@@ -50,9 +50,9 @@ export default function AboutUsPage() {
       <section className="relative isolate flex min-h-[70vh] items-end overflow-hidden bg-ocean-950 text-white">
         <Image src="/media/photos/three-sisters-canmore.webp" alt="" fill priority sizes="100vw" className="-z-10 object-cover" data-parallax="10" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/55 to-ocean-950/10" />
-        <div className="mx-auto w-full max-w-7xl px-page pb-14 pt-24" data-scroll-fade>
+        <div className="mx-auto flex w-full flex-col items-center text-center max-w-7xl px-page pb-14 pt-24" data-scroll-fade>
           <nav aria-label="Breadcrumb" className="mb-6">
-            <ol className="flex items-center gap-1.5 text-sm text-slate-200">
+            <ol className="flex items-center justify-center gap-1.5 text-sm text-slate-200">
               <li>
                 <Link href="/" className="hover:text-white hover:underline">
                   Home
@@ -67,10 +67,10 @@ export default function AboutUsPage() {
             </ol>
           </nav>
           <p className="text-sm uppercase tracking-[0.22em] text-summit-300 motion-safe:animate-[fadeUp_700ms_ease-out]">Our story</p>
-          <h1 className="mt-3 max-w-4xl text-balance text-4xl font-light leading-[1.05] tracking-tight text-white sm:text-6xl lg:text-7xl motion-safe:animate-[fadeUp_900ms_ease-out]">
+          <h1 className="mx-auto mt-3 max-w-4xl text-balance text-4xl font-light leading-[1.05] tracking-tight text-white sm:text-6xl lg:text-7xl motion-safe:animate-[fadeUp_900ms_ease-out]">
             Local guides, from the heart of the Bow Valley
           </h1>
-          <p className="mt-5 max-w-2xl text-lg font-light leading-relaxed text-white/85 motion-safe:animate-[fadeUp_1100ms_ease-out]">
+          <p className="mx-auto mt-5 max-w-2xl text-lg font-light leading-relaxed text-white/85 motion-safe:animate-[fadeUp_1100ms_ease-out]">
             Vista Chase began in Canmore with a simple idea: the Rockies deserve to be seen calmly, comfortably and with
             someone who knows them.
           </p>
@@ -142,7 +142,7 @@ export default function AboutUsPage() {
       {/* Values */}
       <section aria-labelledby="values-heading" className="bg-white py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-page">
-          <div className="mb-12 max-w-3xl" data-reveal>
+          <div className="mx-auto mb-12 max-w-3xl text-center" data-reveal>
             <p className="mb-3 text-sm uppercase tracking-[0.22em] text-ocean-600">What we stand for</p>
             <h2 id="values-heading" className="text-balance text-3xl font-light leading-[1.1] tracking-tight text-obsidian-900 sm:text-4xl lg:text-5xl">
               The Vista Chase way
@@ -164,7 +164,7 @@ export default function AboutUsPage() {
 
       {/* Fleet */}
       <section aria-labelledby="fleet-heading" className="mx-auto max-w-7xl px-page py-20 sm:py-28">
-        <div className="mb-12 max-w-3xl" data-reveal>
+        <div className="mx-auto mb-12 max-w-3xl text-center" data-reveal>
           <p className="mb-3 text-sm uppercase tracking-[0.22em] text-ocean-600">Our fleet</p>
           <h2 id="fleet-heading" className="text-balance text-3xl font-light leading-[1.1] tracking-tight text-obsidian-900 sm:text-4xl lg:text-5xl">
             Comfortable vehicles, sized for the day
@@ -224,7 +224,7 @@ export default function AboutUsPage() {
 
       {/* Ways to explore */}
       <section aria-labelledby="explore-heading" className="mx-auto max-w-7xl px-page py-20 sm:py-24">
-        <h2 id="explore-heading" className="mb-8 text-3xl font-light tracking-tight text-obsidian-900 sm:text-4xl" data-reveal>
+        <h2 id="explore-heading" className="mb-8 text-center text-3xl font-light tracking-tight text-obsidian-900 sm:text-4xl" data-reveal>
           Explore with us
         </h2>
         <ul className="grid gap-4 sm:grid-cols-3" data-stagger>
