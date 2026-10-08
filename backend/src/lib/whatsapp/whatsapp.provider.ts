@@ -160,19 +160,24 @@ export class MetaCloudWhatsAppProvider implements IWhatsAppProvider {
           messaging_product: "whatsapp",
           recipient_type: "individual",
           to: cleanPhone,
-          type: "text",
-          text: {
-            preview_url: true,
-            body:
-              `🏔️ Vista Chase Canadian Rockies\n\n` +
-              `Good morning, ${payload.customerName}!\n` +
-              `Your private shuttle for ${payload.tourName} is preparing for departure.\n\n` +
-              `📍 Pickup Location: ${payload.pickupLocation}\n` +
-              `⏰ Estimated Pickup: ${payload.pickupTime}\n` +
-              `🚐 Vehicle: ${payload.vehicleName} • Plate: ${payload.licensePlate}\n` +
-              `👤 Guide: ${payload.driverName}\n\n` +
-              `Tap below to track your driver's live GPS location:\n` +
-              `${payload.trackingUrl}`,
+type: "template",
+          template: {
+            name: "vista_chase_pickup",
+            language: { code: "en_US" },
+            components: [
+              {
+                type: "body",
+                parameters: [
+                  { type: "text", text: payload.customerName },
+                  { type: "text", text: payload.tourName },
+                  { type: "text", text: payload.pickupLocation },
+                  { type: "text", text: payload.pickupTime },
+                  { type: "text", text: payload.vehicleName },
+                  { type: "text", text: payload.driverName },
+                  { type: "text", text: payload.trackingUrl }
+                ]
+              }
+            ]
           },
         }),
       });
