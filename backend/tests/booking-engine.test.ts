@@ -77,10 +77,8 @@ describe("Phase 4: Booking Engine, Holds & Payment Abstraction", () => {
       adultsCount: 2,
       childrenCount: 0,
       infantsCount: 0,
-      addOns: [
-        { name: "Parks Canada Discovery Pass Assistance", price: 25.0, quantity: 1 },
-      ],
-      paymentProvider: "mock",
+      // Chosen by id; the server sets the price ($25 → 2500 cents).
+      addOns: [{ id: "parkPass" }],
     });
 
     expect(bookingRes.success).toBe(true);
@@ -93,6 +91,8 @@ describe("Phase 4: Booking Engine, Holds & Payment Abstraction", () => {
     expect(fetched?.customerName).toBe("Robert Miller");
     expect(fetched?.items.length).toBe(1);
     expect(fetched?.items[0].name).toContain("Parks Canada");
+    expect(fetched?.items[0].price).toBe(2500);
+    expect(fetched?.status).toBe("CONFIRMED"); // mock payment completes at once
     expect(fetched?.payments.length).toBe(1);
     expect(fetched?.payments[0].status).toBe("SUCCEEDED");
   });

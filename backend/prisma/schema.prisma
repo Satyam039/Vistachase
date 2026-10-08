@@ -65,6 +65,7 @@ enum PaymentStatus {
   SUCCEEDED
   PENDING
   REFUNDED
+  FAILED
 }
 
 enum TourCategory {
@@ -255,6 +256,8 @@ model Booking {
   affiliateId            String? // partner whose ?ref= link brought this booking
   affiliate              Affiliate?             @relation(fields: [affiliateId], references: [id], onDelete: SetNull)
   bokunBookingId         String?                @unique // Bókun external confirmation reference
+  adminNotes             String?                // Staff-only notes (admin booking screen)
+  reviewRequestedAt      DateTime?              // When the post-trip review email went out (sent once)
   customerId             String?
   customer               User?                  @relation(fields: [customerId], references: [id], onDelete: SetNull)
   customerName           String

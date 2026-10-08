@@ -441,7 +441,7 @@ export function TourDetailView({
               <div className="space-y-3 border-b border-slate-100 pb-5">
                 <PriceTag
                   price={price}
-                  currency={`${tour.currency} + GST`}
+                  currency={tour.currency}
                   unit={tour.category === "TICKET" ? "per ticket" : unitLabel}
                   lead={isEnquiry ? "Tailored quote from" : "From"}
                 />
@@ -508,12 +508,8 @@ export function TourDetailView({
                       </span>
                       <span>{money(calculatedTotal)} CAD</span>
                     </div>
-                    <div className="flex items-center justify-between text-slate-600">
-                      <span>GST (5%)</span>
-                      <span>Calculated at checkout</span>
-                    </div>
                     <div className="pt-2 border-t border-slate-200 flex items-center justify-between font-bold text-slate-900 text-sm">
-                      <span>Total Estimated</span>
+                      <span>Estimated total</span>
                       <span className="text-base text-obsidian-900 font-serif">{money(calculatedTotal)} CAD</span>
                     </div>
                   </div>

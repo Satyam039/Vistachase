@@ -552,38 +552,11 @@ export class MockAIProvider implements IAIProvider {
       lower.includes("completed payment") ||
       lower.includes("confirm my booking")
     ) {
-      state.stage = "CONFIRMED";
-      const ref = `VC-2026-${Math.floor(10000 + Math.random() * 90000)}`;
-      state.bookingReference = ref;
-      state.voucherCode = `VC-BK-${ref.slice(-5)}`;
-      state.voucherUrl = `/booking/${ref}/voucher`;
-
+      // The assistant never confirms a booking itself: only a completed payment at checkout does,
+      // and the voucher arrives by email with the real reference.
       return {
-        message: `Congratulations, ${state.customerName || "traveler"}! Your reservation is officially confirmed under reference #${ref}. Your digital boarding pass and QR code voucher are ready. We have also registered your mobile number for WhatsApp live tracking 60 minutes before departure.`,
-        toolCalls: [
-          {
-            name: "confirmVoiceBooking",
-            arguments: {
-              departureId: state.departureId || "cmutg855l000x12b4p2hcywbj",
-              holdToken: state.holdToken,
-              customerName: state.customerName || "David Miller",
-              customerEmail: state.customerEmail || "david@example.com",
-              customerPhone: state.customerPhone || "+1-825-734-9456",
-              pickupLocation: state.pickupHotel || "Fairmont Banff Springs Hotel",
-              adultsCount: state.adults || 2,
-            },
-          },
-        ],
+        message: `Thanks${state.customerName ? `, ${state.customerName}` : ""}! Your booking is confirmed as soon as payment goes through at checkout, and we email your voucher and booking reference right away. If you've paid and nothing has arrived within a few minutes, check your spam folder or call us on +1 (825) 734-9456.`,
         sessionState: state,
-        data: {
-          type: "confirmed",
-          bookingReference: ref,
-          voucherCode: state.voucherCode,
-          voucherUrl: state.voucherUrl,
-          tourTitle: state.tourTitle,
-          date: state.date,
-          pickup: state.pickupHotel,
-        },
       };
     }
 

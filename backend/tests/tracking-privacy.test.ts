@@ -7,6 +7,7 @@ import type { AddressInfo } from "node:net";
 import { createApp } from "@/app";
 import prisma from "@/lib/db/prisma";
 import { getLiveTrackingProvider } from "@/lib/tracking/tracking.provider";
+import { signBookingLink } from "@/lib/security/signed-links";
 
 // These tests exercise the tracking simulator, which is off unless FEATURE_TRACKING is "true".
 process.env.FEATURE_TRACKING = "true";
@@ -53,7 +54,9 @@ describe("tracking privacy", () => {
 
   it("keeps the tracking token out of the public booking lookup", async () => {
     await prisma.booking.update({ where: { bookingReference: reference }, data: { trackingToken: "b".repeat(64) } });
-    const res = await fetch(`${base}/api/bookings?ref=${reference}`);
+    // The reference alone opens nothing; the voucher page uses the signed link from the email.
+    expect((await fetch(`${base}/api/bookings?ref=${reference}`)).status).toBe(404);
+    const res = await fetch(`${base}/api/bookings?ref=${reference}&t=${signBookingLink(reference, "voucher")}`);
     expect(res.status).toBe(200);
     const { booking } = (await res.json()) as { booking: Record<string, unknown> };
     expect(booking.bookingReference).toBe(reference);

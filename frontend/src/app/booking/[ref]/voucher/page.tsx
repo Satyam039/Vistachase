@@ -23,6 +23,7 @@ import {
 import { getBookingByReference } from "@/lib/api/catalog";
 import { PrintButton } from "@/components/booking/PrintButton";
 import { canCancelFree } from "@/lib/policy";
+import { headers } from "next/headers";
 
 export async function generateMetadata({ params }: { params: Promise<{ ref: string }> }): Promise<Metadata> {
   const { ref } = await params;
@@ -68,9 +69,18 @@ function calendarHref(title: string, date: string, start: string, hours: number,
   return `data:text/calendar;charset=utf-8,${encodeURIComponent(ics)}`;
 }
 
-export default async function VoucherPage({ params }: { params: Promise<{ ref: string }> }) {
+export default async function VoucherPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ ref: string }>;
+  searchParams: Promise<{ t?: string }>;
+}) {
   const { ref } = await params;
-  const booking = await getBookingByReference(ref);
+  const { t } = await searchParams;
+  // The emailed link carries a signed token; signed-in owners and staff open it with their session.
+  const cookie = (await headers()).get("cookie") ?? undefined;
+  const booking = await getBookingByReference(ref, { token: typeof t === "string" ? t : undefined, cookie });
   if (!booking) notFound();
 
   const departure = booking.tourDeparture;
@@ -291,12 +301,6 @@ export default async function VoucherPage({ params }: { params: Promise<{ ref: s
                   <dd className="shrink-0">{money(item.price * item.quantity)}</dd>
                 </div>
               ))}
-              {booking.tax != null && booking.tax > 0 && (
-                <div className="flex justify-between gap-4 text-slate-700">
-                  <dt>GST (5%)</dt>
-                  <dd className="shrink-0">{money(booking.tax)}</dd>
-                </div>
-              )}
               <div className="flex justify-between gap-4 border-t border-obsidian-900/[0.08] pt-3 text-base text-obsidian-900">
                 <dt>Total paid</dt>
                 <dd className="shrink-0">

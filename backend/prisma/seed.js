@@ -8,6 +8,14 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("🌲 Seeding Vista Chase Canadian Rockies Platform...");
 
+  // This script replaces the whole catalog by deleting every table first. On a database that
+  // already has bookings that would destroy them, so it refuses unless explicitly forced.
+  const existingBookings = await prisma.booking.count().catch(() => 0);
+  if (existingBookings > 0 && process.env.SEED_ALLOW_WIPE !== "true") {
+    console.error(`❌ Refusing to seed: the database has ${existingBookings} bookings, and seeding deletes everything. Set SEED_ALLOW_WIPE=true only on a test database.`);
+    process.exit(1);
+  }
+
   // 1. Clean existing records in correct order
   await prisma.whatsAppNotification.deleteMany();
   await prisma.runBooking.deleteMany();

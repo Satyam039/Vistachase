@@ -76,6 +76,10 @@ jobs:
       working-directory: ./backend
       run: npm run typecheck
 
+    - name: Backend Build (API and worker)
+      working-directory: ./backend
+      run: npm run build
+
     - name: Backend Tests
       working-directory: ./backend
       env:
@@ -86,6 +90,13 @@ jobs:
         JWT_SECRET: super-secret-test-key-must-be-32-chars!
         NODE_ENV: test
       run: npm run test
+
+    # next.config skips type and lint checks during builds, so they run here instead.
+    - name: Frontend Typecheck and Lint
+      working-directory: ./frontend
+      run: |
+        npx tsc --noEmit -p .
+        npx eslint src --quiet
 
     - name: Frontend Build Check
       working-directory: ./frontend

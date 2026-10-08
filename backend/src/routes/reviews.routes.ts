@@ -2,6 +2,9 @@ import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
 import { Router } from "express";
 import { getAuthenticatedUser } from "@/lib/auth/admin-guard";
 import { createReview, getTourReviews } from "@/modules/reviews/review.repository";
+import prisma from "@/lib/db/prisma";
+import { verifyBookingLink } from "@/lib/security/signed-links";
+import { emailSchema, parseOr400, referenceSchema, z } from "@/lib/security/validate";
 
 const router = Router();
 
@@ -23,15 +26,30 @@ router.get("/", async (req, res) => {
 
 router.post("/", rateLimitMiddleware("review_create", { maxRequests: 3, windowSeconds: 3600 }), async (req, res) => {
   try {
-    const { bookingReference, rating, title, body: reviewBody, authorName } = req.body ?? {};
+    const input = parseOr400(
+      z.object({
+        bookingReference: referenceSchema,
+        rating: z.coerce.number().int().min(1).max(5),
+        title: z.string().trim().min(2).max(120),
+        body: z.string().trim().min(10).max(3000),
+        authorName: z.string().trim().max(80).optional(),
+        email: emailSchema.optional(),
+        t: z.string().max(64).optional(),
+      }),
+      req.body,
+      res,
+    );
+    if (!input) return;
+    const { bookingReference, rating, title, body: reviewBody, authorName } = input;
 
-    if (!bookingReference || !rating || !title || !reviewBody) {
-      return res.status(400).json({
-        error: "Booking reference, rating (1-5), title, and review body are required.",
-      });
-    }
-
+    // Only the guest who booked: signed in, the booking's email, or the signed review link.
     const payload = getAuthenticatedUser(req);
+    const booking = await prisma.booking.findUnique({ where: { bookingReference }, select: { customerEmail: true } });
+    const ownerEmail = booking?.customerEmail.toLowerCase();
+    const isOwner =
+      !!ownerEmail &&
+      (payload?.email.toLowerCase() === ownerEmail || input.email === ownerEmail || verifyBookingLink(bookingReference, "review", input.t));
+    if (!isOwner) return res.status(403).json({ error: "Only the guest who made this booking can review it." });
     const author = payload?.name || authorName;
 
     const result = await createReview({

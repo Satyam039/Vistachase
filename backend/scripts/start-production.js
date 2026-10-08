@@ -1,25 +1,13 @@
-const { execSync } = require('child_process');
-const path = require('path');
-const backendDir = path.join(__dirname, '..');
+// Production start: apply pending migrations (safe to run on every start; Prisma takes a lock),
+// then start the API. The Prisma client is generated at build time. The catalog is loaded once
+// with `npm run prisma:seed` on an empty database; demo data never runs in production.
+const { execSync } = require("child_process");
+const path = require("path");
 
-console.log('[Vista Chase Production Startup] Preparing database...');
 try {
-  // We still run prepare-db.js to generate client if needed, though usually done at build.
-  execSync('node scripts/prepare-db.js', { stdio: 'inherit', cwd: backendDir });
-  
-  console.log('[Vista Chase Production Startup] Deploying database migrations...');
-  execSync('npx prisma migrate deploy', { stdio: 'inherit', cwd: backendDir });
-  
-  // NOTE: Seeding demo users and rewriting data is intentionally removed for production safety (Task F3).
-  // Catalog loading should be done via a separate secure admin command or Bókun sync.
-
-  startServer();
+  execSync("npx prisma migrate deploy", { stdio: "inherit", cwd: path.join(__dirname, "..") });
 } catch (err) {
-  console.error('[Vista Chase Production Startup] Startup preparation error:', err);
+  console.error("[start] Database migrations failed:", err.message);
   process.exit(1);
 }
-
-function startServer() {
-  console.log('[Vista Chase Production Startup] Starting Express application server...');
-  require('../dist/server.js');
-}
+require("../dist/server.js");

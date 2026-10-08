@@ -8,7 +8,7 @@ import {
 
 const router = Router();
 
-router.post("/hold", async (req, res) => {
+router.post("/hold", rateLimitMiddleware("hold_create", { maxRequests: 10, windowSeconds: 60 }), async (req, res) => {
   try {
     const { departureId, seatsCount, customerName, customerEmail, customerPhone } = req.body ?? {};
 

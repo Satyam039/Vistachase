@@ -13,6 +13,15 @@ import type {
   TourWithAvailability,
 } from "@/lib/api/types";
 
+/**
+ * The hard-coded catalog (fallback-data.ts) is for local development and CI builds without a
+ * backend. In production it is used only with FEATURE_FALLBACK_CATALOG=true: otherwise the site
+ * shows what the API returns, or an error, never possibly stale tours and prices.
+ */
+function fallbackAllowed() {
+  return process.env.NODE_ENV !== "production" || process.env.FEATURE_FALLBACK_CATALOG === "true";
+}
+
 export async function getTours(options?: {
   category?: string;
   destinationSlug?: string;
@@ -24,10 +33,10 @@ export async function getTours(options?: {
       destination: options?.destinationSlug,
       featured: options?.isFeatured === undefined ? undefined : String(options.isFeatured),
     });
-    if (data?.tours && data.tours.length > 0) return data.tours;
+    if (data?.tours && (data.tours.length > 0 || !fallbackAllowed())) return data.tours;
   } catch (err) {
     console.warn("[Catalog] Backend unavailable, serving authoritative fallback catalog");
-    if (process.env.NODE_ENV === "production" && process.env.FEATURE_FALLBACK_CATALOG !== "true") throw new Error("Backend unavailable");
+    if (!fallbackAllowed()) throw new Error("Backend unavailable");
 }
 
   // Graceful fallback to authoritative catalog
@@ -45,20 +54,21 @@ export async function getTourBySlug(slug: string): Promise<TourWithAvailability 
     if (data?.tour) return data.tour;
   } catch (err) {
     console.warn(`[Catalog] Backend unavailable for slug ${slug}, serving authoritative fallback`);
-    if (process.env.NODE_ENV === "production" && process.env.FEATURE_FALLBACK_CATALOG !== "true") throw new Error("Backend unavailable");
+    if (!fallbackAllowed()) throw new Error("Backend unavailable");
 }
 
   // Only a matching tour: product pages live at top-level URLs, so an unknown slug must 404.
+  if (!fallbackAllowed()) return null;
   return FALLBACK_TOURS.find((t) => t.slug === slug) ?? null;
 }
 
 export async function getShuttleRoutes(): Promise<ShuttleWithDepartures[]> {
   try {
     const data = await apiGet<{ routes: ShuttleWithDepartures[] }>("/api/shuttles");
-    if (data?.routes && data.routes.length > 0) return data.routes;
+    if (data?.routes && (data.routes.length > 0 || !fallbackAllowed())) return data.routes;
   } catch (err) {
     console.warn("[Catalog] Backend unavailable for shuttles, serving authoritative fallback");
-    if (process.env.NODE_ENV === "production" && process.env.FEATURE_FALLBACK_CATALOG !== "true") throw new Error("Backend unavailable");
+    if (!fallbackAllowed()) throw new Error("Backend unavailable");
 }
 
   return FALLBACK_SHUTTLES;
@@ -67,10 +77,10 @@ export async function getShuttleRoutes(): Promise<ShuttleWithDepartures[]> {
 export async function getDestinations(): Promise<DestinationSummary[]> {
   try {
     const data = await apiGet<{ destinations: DestinationSummary[] }>("/api/destinations");
-    if (data?.destinations && data.destinations.length > 0) return data.destinations;
+    if (data?.destinations && (data.destinations.length > 0 || !fallbackAllowed())) return data.destinations;
   } catch (err) {
     console.warn("[Catalog] Backend unavailable for destinations, serving authoritative fallback");
-    if (process.env.NODE_ENV === "production" && process.env.FEATURE_FALLBACK_CATALOG !== "true") throw new Error("Backend unavailable");
+    if (!fallbackAllowed()) throw new Error("Backend unavailable");
 }
 
   return FALLBACK_DESTINATIONS;
@@ -84,9 +94,10 @@ export async function getDestinationBySlug(slug: string): Promise<DestinationDet
     if (data?.destination) return data.destination;
   } catch (err) {
     console.warn(`[Catalog] Backend unavailable for destination ${slug}, serving authoritative fallback`);
-    if (process.env.NODE_ENV === "production" && process.env.FEATURE_FALLBACK_CATALOG !== "true") throw new Error("Backend unavailable");
+    if (!fallbackAllowed()) throw new Error("Backend unavailable");
 }
 
+  if (!fallbackAllowed()) return null;
   const found = FALLBACK_DESTINATIONS.find((d) => d.slug === slug || d.slug.includes(slug)) ?? FALLBACK_DESTINATIONS[0];
   if (!found) return null;
 
@@ -128,9 +139,11 @@ export async function getCheckoutData(departureId?: string): Promise<CheckoutDat
     if (data) return data;
   } catch (err) {
     console.warn("[Catalog] Backend unavailable for checkout, serving authoritative fallback");
-    if (process.env.NODE_ENV === "production" && process.env.FEATURE_FALLBACK_CATALOG !== "true") throw new Error("Backend unavailable");
+    if (!fallbackAllowed()) throw new Error("Backend unavailable");
 }
 
+  // Never a made-up departure in production: checkout shows its "not available" state instead.
+  if (!fallbackAllowed()) return null;
   const tour = FALLBACK_TOURS[0];
   const dep = tour.departures[0];
 
@@ -176,10 +189,19 @@ export async function getCheckoutData(departureId?: string): Promise<CheckoutDat
   };
 }
 
-export async function getBookingByReference(reference: string): Promise<BookingDetail | null> {
-  return await apiGetOrNull<{ booking: BookingDetail }>("/api/bookings", { ref: reference }).then(
-    (d) => d?.booking ?? null
-  );
+/**
+ * A booking for its voucher page. Opens with the signed token from the confirmation email (`t`),
+ * or for the signed-in owner or staff (their session cookie is forwarded).
+ */
+export async function getBookingByReference(
+  reference: string,
+  access: { token?: string; cookie?: string } = {},
+): Promise<BookingDetail | null> {
+  return await apiGetOrNull<{ booking: BookingDetail }>(
+    "/api/bookings",
+    { ref: reference, t: access.token },
+    access.cookie ? { cookie: access.cookie } : undefined,
+  ).then((d) => d?.booking ?? null);
 }
 
 export interface CategoryReview {

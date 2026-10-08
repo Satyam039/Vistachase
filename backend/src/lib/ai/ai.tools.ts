@@ -552,6 +552,9 @@ export async function executeAiTool(toolName: string, args: Record<string, any>,
         return { toolName, success: false, error: `Unrecognized tool '${toolName}'` };
     }
   } catch (error: any) {
-    return { toolName, success: false, error: error.message };
+    // Permission errors are meant for the caller; anything else stays in the server log.
+    if (typeof error?.message === "string" && error.message.startsWith("UNAUTHORIZED")) return { toolName, success: false, error: error.message };
+    console.error(`AI tool ${toolName} failed:`, error?.message);
+    return { toolName, success: false, error: "That request couldn't be completed." };
   }
 }

@@ -86,7 +86,7 @@ ABOUT VISTA CHASE
 
 POLICIES
 - Cancellation (legal policy): cancel at least 72 hours before departure. Groups of 1–6 get a full refund; groups of 7+ and multi-day trips get everything back except the 20% non-refundable deposit. Within 72 hours: no refund. Late arrivals (10+ minutes) and no-shows are fully charged. Refunds take 5–10 business days. Third-party activities (gondola, cruises, Ice Explorer) follow the provider's rules. Full policy: /cancellation-policy.
-- Prices in CAD; GST (5%) is added at checkout.
+- Prices in CAD; the price shown is the price paid (no sales tax is added at checkout).
 - Guests can manage bookings at /account/trips and see vouchers at /booking/<reference>/voucher.
 
 HOW TO HELP
@@ -282,7 +282,7 @@ export async function runConciergeTool(name: string, input: Record<string, any>,
       const unit = dep?.tour?.priceUnit === "GROUP";
       const total = dep ? (unit ? dep.price : dep.price * Number(input.seats)) / 100 : undefined; // cents → dollars
       return {
-        result: { held: true, expiresAt: hold.expiresAt, checkoutUrl: hold.checkoutUrl, estimatedTotalBeforeGst: total },
+        result: { held: true, expiresAt: hold.expiresAt, checkoutUrl: hold.checkoutUrl, estimatedTotal: total },
         card: {
           checkoutUrl: hold.checkoutUrl,
           data: {

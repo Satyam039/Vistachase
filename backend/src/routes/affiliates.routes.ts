@@ -9,6 +9,7 @@ import {
   listAffiliates,
   updateAffiliate,
 } from "@/modules/affiliates/affiliate.repository";
+import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
 
 const router = Router();
 
@@ -22,7 +23,7 @@ const applySchema = z.object({
 });
 
 // Apply to the partner program. New partners start PENDING until Vista Chase approves them.
-router.post("/apply", async (req, res) => {
+router.post("/apply", rateLimitMiddleware("affiliate_apply", { maxRequests: 3, windowSeconds: 3600 }), async (req, res) => {
   const parsed = applySchema.safeParse(req.body ?? {});
   if (!parsed.success) {
     return res.status(400).json({ success: false, error: "Please check the highlighted fields.", fields: parsed.error.flatten().fieldErrors });

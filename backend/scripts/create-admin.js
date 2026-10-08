@@ -4,11 +4,17 @@ const bcrypt = require('bcryptjs');
 const prisma = new PrismaClient();
 
 async function main() {
-  const email = process.argv[2];
-  const password = process.argv[3];
-  
+  // The password comes from the environment, not the command line, so it never lands in shell
+  // history or the process list:  ADMIN_PASSWORD='…' node scripts/create-admin.js admin@vistachase.com
+  const email = (process.argv[2] || '').trim().toLowerCase();
+  const password = process.env.ADMIN_PASSWORD || '';
+
   if (!email || !password) {
-    console.error('Usage: node scripts/create-admin.js <email> <password>');
+    console.error("Usage: ADMIN_PASSWORD='<password>' node scripts/create-admin.js <email>");
+    process.exit(1);
+  }
+  if (password.length < 12) {
+    console.error('Use an admin password of at least 12 characters.');
     process.exit(1);
   }
 

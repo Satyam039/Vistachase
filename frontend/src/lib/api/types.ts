@@ -199,7 +199,6 @@ export interface BookingDetail {
   childrenCount?: number;
   infantsCount?: number;
   subtotal?: number;
-  tax?: number;
   addOnsTotal?: number;
   pickupStop: {
     name: string;
