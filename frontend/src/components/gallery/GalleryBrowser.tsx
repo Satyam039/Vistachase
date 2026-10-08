@@ -55,7 +55,7 @@ export function GalleryBrowser({ photos, areas }: { photos: GalleryPhoto[]; area
 
   return (
     <>
-      <div role="group" aria-label="Filter by area" className="vc-rail -mx-page mb-8 flex gap-2 overflow-x-auto px-page">
+      <div role="group" aria-label="Filter by area" className="vc-rail -mx-page mb-8 flex gap-2 overflow-x-auto px-page [&>*:first-child]:ml-auto [&>*:last-child]:mr-auto">
         {["All", ...areas].map((a) => (
           <button
             key={a}

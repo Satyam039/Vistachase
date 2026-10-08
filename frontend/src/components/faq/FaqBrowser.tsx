@@ -38,7 +38,7 @@ export function FaqBrowser({ items, topics, compact = false }: { items: FaqItem[
             className="h-14 w-full rounded-full border border-obsidian-900/15 bg-white pl-14 pr-5 text-base text-obsidian-900 shadow-[0_12px_30px_-20px_rgba(12,31,33,0.4)] placeholder:text-slate-500 focus:border-ocean-600 focus:outline-none focus:ring-2 focus:ring-ocean-600/30"
           />
         </label>
-        <div role="group" aria-label="Filter by topic" className="vc-rail -mx-page flex gap-2 overflow-x-auto px-page">
+        <div role="group" aria-label="Filter by topic" className="vc-rail -mx-page flex gap-2 overflow-x-auto px-page [&>*:first-child]:ml-auto [&>*:last-child]:mr-auto">
           {["All", ...topics].map((t) => (
             <button
               key={t}

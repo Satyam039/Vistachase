@@ -72,9 +72,9 @@ export default function PickupFinderPage() {
           data-parallax="10"
         />
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/60 to-ocean-950/20" />
-        <div className="mx-auto w-full max-w-6xl px-page pb-24 pt-20">
+        <div className="mx-auto flex w-full max-w-6xl flex-col items-center px-page pb-24 pt-20 text-center">
           <nav aria-label="Breadcrumb" className="mb-6">
-            <ol className="flex items-center gap-1.5 text-sm text-slate-200">
+            <ol className="flex items-center justify-center gap-1.5 text-sm text-slate-200">
               <li>
                 <Link href="/" className="hover:text-white hover:underline">
                   Home
@@ -88,10 +88,10 @@ export default function PickupFinderPage() {
               </li>
             </ol>
           </nav>
-          <h1 className="max-w-3xl text-balance text-4xl font-light leading-[1.05] tracking-tight text-white sm:text-6xl motion-safe:animate-[fadeUp_900ms_ease-out]">
+          <h1 className="mx-auto max-w-3xl text-balance text-4xl font-light leading-[1.05] tracking-tight text-white sm:text-6xl motion-safe:animate-[fadeUp_900ms_ease-out]">
             Find your hotel pickup
           </h1>
-          <p className="mt-4 max-w-2xl text-lg font-light leading-relaxed text-white/85 motion-safe:animate-[fadeUp_1100ms_ease-out]">
+          <p className="mx-auto mt-4 max-w-2xl text-lg font-light leading-relaxed text-white/85 motion-safe:animate-[fadeUp_1100ms_ease-out]">
             Search your hotel to see your pickup point and where to wait in
             Banff, Canmore and Lake Louise.
           </p>

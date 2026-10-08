@@ -39,7 +39,7 @@ export function TopExperiences({ tours }: { tours: TourWithAvailability[] }) {
           link={{ label: "See all experiences", href: "/search" }}
         />
 
-        <div role="group" aria-label="Filter experiences" className="vc-rail -mx-page mb-8 flex gap-2 overflow-x-auto px-page md:justify-center" data-reveal="fade">
+        <div role="group" aria-label="Filter experiences" className="vc-rail -mx-page mb-8 flex gap-2 overflow-x-auto px-page [&>*:first-child]:ml-auto [&>*:last-child]:mr-auto" data-reveal="fade">
           {FILTERS.map((f) => (
             <button
               key={f.id}
