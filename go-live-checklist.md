@@ -1,28 +1,23 @@
-# Phase 7: Infrastructure & Go-Live Checklist
+# Go-live checklist
 
-## 1. Cloud Architecture & Hosting (Vercel & Railway)
-- [ ] **I1: Vercel Frontend Deployment**: Connect the `main` branch to a new Vercel project.
-  - Environment Variables to set: `NEXT_PUBLIC_BACKEND_URL`, `NEXT_PUBLIC_STRIPE_KEY`, `NEXT_PUBLIC_GA_ID`, `NEXT_PUBLIC_SENTRY_DSN`.
-  - Override build command to: `npm run build` (Sitemap generates automatically post-build).
-- [ ] **I2: Database Connection Pooling**: Configure Prisma Accelerate or PgBouncer on the production PostgreSQL cluster (e.g., Supabase or Railway) to prevent connection exhaustion. Set the generated connection string to `DATABASE_URL` in the backend.
-- [ ] **I3: Redis & BullMQ**: Provision a Redis instance (Upstash or Redis Enterprise). Set `REDIS_URL` in the backend environment to enable the Job Queue and global Rate Limiting.
+The deployment steps, settings and incident guide live in [docs/production-runbook.md](docs/production-runbook.md). Launch when every item below is true on production.
 
-## 2. API & Service Cutover
-- [ ] **I5: Stripe Webhooks**: In the Stripe Production Dashboard, register a new Webhook endpoint pointing to `https://api.vistachase.com/api/webhooks/stripe`. Copy the live Signing Secret and save it as `STRIPE_WEBHOOK_SECRET` in the backend.
-- [ ] **I10: Final Bókun API Cutover**: Go to Bókun > Settings > API Keys. Generate a live Production Access Key and Secret. Update `BOKUN_ACCESS_KEY` and `BOKUN_SECRET_KEY` in the backend. Ensure the Online Sales Channel ID matches the live channel.
-- [ ] **Meta Cloud / WhatsApp**: Submit the WhatsApp Business Account for production approval and generate a permanent access token.
+- [ ] All services in `render.yaml` are running, including `vistachase-worker`
+- [ ] Release applied migrations; the catalog was loaded once; no demo accounts exist
+- [ ] First admin created with a strong password
+- [ ] Stripe live keys set; webhook registered for succeeded / failed / canceled events; a real card booking confirmed and refunded end to end
+- [ ] Emails arrive from the verified vistachase.com domain (confirmation, cancellation, password reset)
+- [ ] `PROMO_CODES` matches Bókun; the 100%-off test code doesn't work (production)
+- [ ] Bókun product IDs filled in `backend/prisma/catalog/product-map.json`, and the live Bókun booking calls implemented and tested (see open items)
+- [ ] Uptime alert on `/api/health`; Sentry DSNs set; `OPS_ALERT_EMAIL` set
+- [ ] Database restore rehearsed
+- [ ] 301 redirects for the Webflow URLs in place; sitemap submitted to Search Console
+- [ ] Rollback steps rehearsed
 
-## 3. Observability & Analytics
-- [ ] **I6: Sentry Monitoring**: Both the Frontend and Backend are configured for Sentry. Ensure `SENTRY_DSN` is populated on the backend, and `NEXT_PUBLIC_SENTRY_DSN` on the frontend.
-- [ ] **I7: Uptime Monitoring**: Configure Better Stack (Logtail/Uptime) or Pingdom to ping `https://api.vistachase.com/api/health` and `https://vistachase.com` every 1 minute.
-- [ ] **I9: Google Analytics**: GA4 tag (`NEXT_PUBLIC_GA_ID`) is integrated into `layout.tsx`. Validate events using the Tag Assistant.
+## Open items before launch
 
-## 4. SEO & DNS
-- [ ] **I8: Domain Configuration**: Map the A/CNAME records in DNS for `vistachase.com` to Vercel, and `api.vistachase.com` to the Backend hosting provider.
-- [ ] **I11: SEO and Sitemap**: `next-sitemap` is configured. Submit `https://vistachase.com/sitemap.xml` to Google Search Console.
-
-## 5. Security & Final Checks (I12)
-- [ ] Verify AI Concierge falls back smoothly if Anthropic API degrades.
-- [ ] Verify the Admin account exists and the password is secure.
-- [ ] Ensure `NODE_ENV=production` is strictly enforced to block AI mutation tools and disable the mock catalog.
-- [ ] Final end-to-end test of the checkout flow using a live credit card (immediately refunded).
+- Live Bókun booking calls: `createReservation`, `confirmReservation` and `cancelBooking` in `backend/src/modules/bokun/bokun.provider.ts` still log instead of calling Bókun. Paid bookings for Bókun products become `PAID_UNSYNCED` (listed nightly) until this is built against Bókun's API with real keys.
+- Bókun availability sync is manual (admin) only; price categories and pickup places still come from our database.
+- Pickup-day SMS/WhatsApp needs a provider, consent at checkout and approved templates.
+- Live GPS tracking needs a vendor feed; the tracking page stays off (`FEATURE_TRACKING=false`).
+- Media (971 MB) still ships inside the backend image; move it to object storage and a CDN.
