@@ -101,7 +101,7 @@ export default async function DestinationDetailPage({ params }: { params: Promis
           <AmbientVideo src={dest.heroVideo.src} srcHd={dest.heroVideo.srcHd} poster={dest.heroVideo.poster} className="absolute inset-0 -z-10 h-full w-full object-cover" once />
         )}
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/55 to-ocean-950/10" />
-        <div className="mx-auto w-full max-w-7xl px-page pb-14 pt-24" data-scroll-fade>
+        <div className="mx-auto flex w-full flex-col items-center text-center max-w-7xl px-page pb-14 pt-24" data-scroll-fade>
           <nav aria-label="Breadcrumb" className="mb-6">
             <ol className="flex flex-wrap items-center gap-1.5 text-sm text-slate-200">
               <li>
@@ -128,10 +128,10 @@ export default async function DestinationDetailPage({ params }: { params: Promis
           <p className="text-sm uppercase tracking-[0.22em] text-summit-300 motion-safe:animate-[fadeUp_700ms_ease-out]">
             {story.tagline} · {dest.province}
           </p>
-          <h1 className="mt-3 max-w-4xl text-balance text-4xl font-light leading-[1.05] tracking-tight text-white sm:text-6xl lg:text-7xl motion-safe:animate-[fadeUp_900ms_ease-out]">
+          <h1 className="mx-auto mt-3 max-w-4xl text-balance text-4xl font-light leading-[1.05] tracking-tight text-white sm:text-6xl lg:text-7xl motion-safe:animate-[fadeUp_900ms_ease-out]">
             {dest.name}
           </h1>
-          <p className="mt-5 max-w-2xl text-lg font-light leading-relaxed text-white/85 motion-safe:animate-[fadeUp_1100ms_ease-out]">{dest.description}</p>
+          <p className="mx-auto mt-5 max-w-2xl text-lg font-light leading-relaxed text-white/85 motion-safe:animate-[fadeUp_1100ms_ease-out]">{dest.description}</p>
           <a href="#tours" className="golden-summit-btn mt-7 inline-flex h-12 items-center gap-2 rounded-full px-6 text-base motion-safe:animate-[fadeUp_1300ms_ease-out]">
             See {tours.length} {tours.length === 1 ? "tour" : "tours"} that go here
           </a>
@@ -141,7 +141,7 @@ export default async function DestinationDetailPage({ params }: { params: Promis
       {/* Highlights */}
       {story.highlights.length > 0 && (
         <section aria-labelledby="highlights-heading" className="mx-auto max-w-7xl px-page py-20 sm:py-24">
-          <div className="mb-10 max-w-3xl" data-reveal>
+          <div className="mx-auto mb-10 max-w-3xl text-center" data-reveal>
             <p className="mb-3 text-sm uppercase tracking-[0.22em] text-ocean-600">Highlights</p>
             <h2 id="highlights-heading" className="text-balance text-3xl font-light leading-[1.1] tracking-tight text-obsidian-900 sm:text-4xl lg:text-5xl">
               What to see in {dest.name.split(" & ")[0]}
@@ -166,7 +166,7 @@ export default async function DestinationDetailPage({ params }: { params: Promis
       {/* Tours */}
       <section id="tours" aria-labelledby="tours-heading" className="scroll-mt-32 border-t border-obsidian-900/[0.06] bg-white py-20 sm:py-24">
         <div className="mx-auto max-w-7xl px-page">
-          <div className="mb-10 max-w-3xl" data-reveal>
+          <div className="mx-auto mb-10 max-w-3xl text-center" data-reveal>
             <p className="mb-3 text-sm uppercase tracking-[0.22em] text-ocean-600">Tours &amp; shuttles</p>
             <h2 id="tours-heading" className="text-balance text-3xl font-light leading-[1.1] tracking-tight text-obsidian-900 sm:text-4xl lg:text-5xl">
               Tours that visit {dest.name.split(" & ")[0]}
@@ -198,7 +198,7 @@ export default async function DestinationDetailPage({ params }: { params: Promis
       {/* Other destinations */}
       <section aria-labelledby="others-heading" className="overflow-hidden py-20 sm:py-24">
         <div className="mx-auto max-w-7xl px-page">
-          <h2 id="others-heading" className="mb-8 text-3xl font-light tracking-tight text-obsidian-900 sm:text-4xl" data-reveal>
+          <h2 id="others-heading" className="mb-8 text-center text-3xl font-light tracking-tight text-obsidian-900 sm:text-4xl" data-reveal>
             More of the Rockies
           </h2>
           <Rail label="Other destinations" itemClassName="w-[78vw] max-w-[22rem] sm:w-[20rem]">
