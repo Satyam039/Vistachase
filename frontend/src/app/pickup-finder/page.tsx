@@ -61,7 +61,7 @@ export default function PickupFinderPage() {
   return (
     <div className="bg-obsidian-50 text-obsidian-900">
       {/* Hero */}
-      <section className="relative isolate flex min-h-[46vh] items-end overflow-hidden bg-ocean-950 text-white">
+      <section className="relative isolate flex min-h-[46vh] items-end overflow-hidden bg-obsidian-950 text-white">
         <Image
           src="/media/photos/fairmont-banff-springs.webp"
           alt=""
@@ -313,7 +313,7 @@ export default function PickupFinderPage() {
         aria-labelledby="tips-heading"
         className="mx-auto max-w-6xl px-page pb-20"
       >
-        <div className="grid gap-6 rounded-[1.75rem] bg-ocean-950 p-7 text-white sm:p-9 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+        <div className="grid gap-6 rounded-[1.75rem] bg-obsidian-950 p-7 text-white sm:p-9 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
           <div>
             <h2 id="tips-heading" className="text-2xl font-light text-white">
               On the day

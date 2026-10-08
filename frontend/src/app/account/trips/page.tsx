@@ -281,7 +281,7 @@ export default function MyTripsPage() {
   return (
     <div className="min-h-screen bg-obsidian-50 text-obsidian-900">
       {/* Header band */}
-      <section className="relative isolate overflow-hidden bg-ocean-950 text-white">
+      <section className="relative isolate overflow-hidden bg-obsidian-950 text-white">
         <Image
           src="/media/photos/moraine-lake-perfect-reflection.webp"
           alt=""
@@ -379,7 +379,7 @@ export default function MyTripsPage() {
               </p>
             </section>
 
-            <section aria-labelledby="signin-heading" className="flex flex-col rounded-[1.75rem] bg-ocean-950 p-6 text-white sm:p-8">
+            <section aria-labelledby="signin-heading" className="flex flex-col rounded-[1.75rem] bg-obsidian-950 p-6 text-white sm:p-8">
               <h2 id="signin-heading" className="text-2xl font-light text-white sm:text-3xl">
                 See every trip in one place
               </h2>

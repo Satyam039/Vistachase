@@ -48,7 +48,7 @@ export default function FAQPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* Hero */}
-      <section className="relative isolate flex min-h-[48vh] items-end overflow-hidden bg-ocean-950 text-white">
+      <section className="relative isolate flex min-h-[48vh] items-end overflow-hidden bg-obsidian-950 text-white">
         <Image src="/media/photos/moraine-lake-classic.webp" alt="" fill priority sizes="100vw" className="-z-10 object-cover" data-parallax="10" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/45 to-ocean-950/20" />
         <div className="mx-auto flex w-full flex-col items-center text-center max-w-7xl px-page pb-12 pt-24" data-scroll-fade>
@@ -80,7 +80,7 @@ export default function FAQPage() {
         <FaqBrowser items={FAQS} topics={TOPICS} />
 
         {/* Still need help */}
-        <section aria-labelledby="help-heading" className="mt-14 rounded-[1.75rem] bg-ocean-950 p-7 text-white sm:p-9" data-reveal>
+        <section aria-labelledby="help-heading" className="mt-14 rounded-[1.75rem] bg-obsidian-950 p-7 text-white sm:p-9" data-reveal>
           <h2 id="help-heading" className="text-2xl font-light text-white">
             Still need help?
           </h2>

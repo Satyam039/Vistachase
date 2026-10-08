@@ -182,7 +182,7 @@ export function SiteFooter() {
   };
 
   return (
-    <div className="bg-ocean-950 text-white">
+    <div className="bg-obsidian-950 text-white">
       {/* 1. Closing banner */}
       {!task && (
       <div className="mx-auto max-w-7xl px-page pt-12 sm:pt-16">
@@ -300,7 +300,7 @@ export function SiteFooter() {
       <div className="mx-auto max-w-7xl px-page">
         <ul className="grid gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 sm:grid-cols-3" aria-label="Booking with Vista Chase">
           {PROMISES.map(({ icon: Icon, text }) => (
-            <li key={text} className="flex items-center gap-3.5 bg-ocean-950 px-5 py-5">
+            <li key={text} className="flex items-center gap-3.5 bg-obsidian-950 px-5 py-5">
               <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-summit-500/15 text-summit-400">
                 <Icon className="h-5 w-5" aria-hidden="true" />
               </span>

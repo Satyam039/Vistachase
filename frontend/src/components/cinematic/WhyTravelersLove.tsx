@@ -16,7 +16,7 @@ const REASONS = [
 
 export function WhyTravelersLove() {
   return (
-    <section aria-labelledby="why-heading" className="relative overflow-hidden bg-ocean-950 py-20 text-white sm:py-28">
+    <section aria-labelledby="why-heading" className="relative overflow-hidden bg-obsidian-950 py-20 text-white sm:py-28">
       <div className="pointer-events-none absolute -right-20 top-1/2 h-[34rem] w-[34rem] -translate-y-1/2 opacity-[0.04]" aria-hidden="true">
         <Image src="/media/brand/horse-emblem-gold.png" alt="" fill sizes="34rem" className="object-contain" />
       </div>

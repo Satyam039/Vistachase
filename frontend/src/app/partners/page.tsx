@@ -31,7 +31,7 @@ const STEPS = ["Apply below and get your referral code.", "Once approved, copy l
 export default function PartnersPage() {
   return (
     <div className="bg-obsidian-50 text-obsidian-900">
-      <section className="relative isolate flex min-h-[64vh] items-end overflow-hidden bg-ocean-950 text-white">
+      <section className="relative isolate flex min-h-[64vh] items-end overflow-hidden bg-obsidian-950 text-white">
         <Image src="/media/photos/lake-louise-from-chateau.webp" alt="" fill priority sizes="100vw" className="-z-10 object-cover" data-parallax="10" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/55 to-ocean-950/25" />
         <div className="mx-auto flex w-full flex-col items-center text-center max-w-7xl px-page pb-14 pt-24" data-scroll-fade>
@@ -77,7 +77,7 @@ export default function PartnersPage() {
         <ul className="grid gap-5 md:grid-cols-3" data-stagger>
           {BENEFITS.map(({ icon: Icon, title, text }) => (
             <li key={title} className="rounded-[1.75rem] bg-white p-7 ring-1 ring-obsidian-900/[0.07]">
-              <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-ocean-950 text-summit-400">
+              <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-obsidian-950 text-summit-400">
                 <Icon className="h-5 w-5" aria-hidden="true" />
               </span>
               <h3 className="mt-6 text-2xl font-light text-obsidian-900">{title}</h3>
@@ -87,7 +87,7 @@ export default function PartnersPage() {
         </ul>
       </section>
 
-      <section aria-labelledby="who-heading" className="bg-ocean-950 py-20 text-white sm:py-24">
+      <section aria-labelledby="who-heading" className="bg-obsidian-950 py-20 text-white sm:py-24">
         <div className="mx-auto max-w-7xl px-page">
           <h2 id="who-heading" className="mb-10 text-center text-3xl font-light tracking-tight text-white sm:text-4xl" data-reveal>
             Who it&rsquo;s for

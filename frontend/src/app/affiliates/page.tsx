@@ -31,7 +31,7 @@ export default function AffiliatesPage() {
   return (
     <div className="min-h-screen bg-obsidian-50 text-obsidian-900">
       {/* 01. EDITORIAL HERO BANNER */}
-      <section className="bg-ocean-950 text-white pt-28 pb-16 px-4 sm:px-6 lg:px-12 relative overflow-hidden border-b border-white/10">
+      <section className="bg-obsidian-950 text-white pt-28 pb-16 px-4 sm:px-6 lg:px-12 relative overflow-hidden border-b border-white/10">
         <div className="max-w-6xl mx-auto space-y-6">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-summit-300 text-xs font-semibold uppercase tracking-wider border border-white/15">
             <Briefcase className="w-4 h-4 text-summit-500" />
@@ -247,7 +247,7 @@ export default function AffiliatesPage() {
               <select
                 id="agency-type"
                 name="type"
-                className="w-full p-3 rounded-xl bg-ocean-950 border border-white/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-summit-500"
+                className="w-full p-3 rounded-xl bg-obsidian-950 border border-white/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-summit-500"
               >
                 <option value="concierge">Hotel Concierge / Guest Services Desk</option>
                 <option value="advisor">Independent Luxury Travel Advisor</option>

@@ -91,7 +91,7 @@ export default async function DestinationDetailPage({ params }: { params: Promis
   return (
     <div className="bg-obsidian-50 text-obsidian-900">
       {/* Hero */}
-      <section className="relative isolate flex min-h-[72vh] items-end overflow-hidden bg-ocean-950 text-white">
+      <section className="relative isolate flex min-h-[72vh] items-end overflow-hidden bg-obsidian-950 text-white">
         <div className="absolute inset-0 -z-10">
           <Image src={dest.heroImage} alt="" fill priority sizes="100vw" className="object-cover" data-parallax="10" />
         </div>

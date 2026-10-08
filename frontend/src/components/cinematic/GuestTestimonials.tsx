@@ -10,7 +10,7 @@ const TRIPADVISOR_URL =
 // some, that slot points to the reviews on TripAdvisor instead. No quotes are written for guests.
 export function GuestTestimonials({ reviews }: { reviews: SliderReview[] }) {
   return (
-    <section aria-labelledby="reviews-heading" className="overflow-hidden bg-ocean-950 py-20 text-white sm:py-28">
+    <section aria-labelledby="reviews-heading" className="overflow-hidden bg-obsidian-950 py-20 text-white sm:py-28">
       <div className="mx-auto grid max-w-7xl gap-12 px-page lg:grid-cols-[20rem_minmax(0,1fr)] lg:gap-16">
         <div data-reveal>
           <p className="mb-3 text-sm uppercase tracking-[0.22em] text-summit-300">Guest reviews</p>

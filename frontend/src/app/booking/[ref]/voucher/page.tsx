@@ -110,7 +110,7 @@ export default async function VoucherPage({ params }: { params: Promise<{ ref: s
   return (
     <div className="min-h-screen bg-obsidian-50 text-obsidian-900 print:bg-white">
       {/* Confirmation band */}
-      <section className={`print:hidden ${cancelled ? "bg-red-50" : "bg-ocean-950"} `}>
+      <section className={`print:hidden ${cancelled ? "bg-red-50" : "bg-obsidian-950"} `}>
         <div className="mx-auto flex max-w-6xl flex-col gap-6 px-page pb-10 pt-8 sm:pb-12 md:flex-row md:items-end md:justify-between">
           <div>
             <Link
@@ -259,7 +259,7 @@ export default async function VoucherPage({ params }: { params: Promise<{ ref: s
           </section>
 
           {!cancelled && (
-            <section aria-labelledby="tracking-heading" className="rounded-[1.75rem] bg-ocean-950 p-6 text-white sm:p-7 print:hidden">
+            <section aria-labelledby="tracking-heading" className="rounded-[1.75rem] bg-obsidian-950 p-6 text-white sm:p-7 print:hidden">
               <h2 id="tracking-heading" className="flex items-center gap-2 text-lg text-white">
                 <Navigation className="h-5 w-5 text-summit-400" aria-hidden="true" />
                 Track your vehicle on the day

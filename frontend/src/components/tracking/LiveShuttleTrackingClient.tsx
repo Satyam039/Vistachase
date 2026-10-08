@@ -171,7 +171,7 @@ export default function LiveShuttleTrackingClient({ initialTelemetry, token }: {
         <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_24rem]">
           {/* Status + map */}
           <div className="space-y-6">
-            <section aria-labelledby="status-h" className="rounded-[1.75rem] bg-ocean-950 p-6 text-white sm:p-8">
+            <section aria-labelledby="status-h" className="rounded-[1.75rem] bg-obsidian-950 p-6 text-white sm:p-8">
               <div className="flex flex-wrap items-start justify-between gap-6">
                 <div className="min-w-0 flex-1" role="status" aria-live="polite" aria-atomic="true">
                   <h2 id="status-h" className="text-2xl font-light text-white sm:text-3xl">
@@ -247,7 +247,7 @@ export default function LiveShuttleTrackingClient({ initialTelemetry, token }: {
                 Your driver
               </h2>
               <div className="mt-3 flex items-center gap-4">
-                <span className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full bg-ocean-950 ring-1 ring-obsidian-900/10">
+                <span className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full bg-obsidian-950 ring-1 ring-obsidian-900/10">
                   <Image src={t.driverPhoto} alt="" fill sizes="56px" className="object-cover" />
                 </span>
                 <p className="min-w-0 text-xl text-obsidian-900">{t.driverName}</p>

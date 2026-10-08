@@ -47,7 +47,7 @@ export default function AboutUsPage() {
   return (
     <div className="bg-obsidian-50 text-obsidian-900">
       {/* Hero */}
-      <section className="relative isolate flex min-h-[70vh] items-end overflow-hidden bg-ocean-950 text-white">
+      <section className="relative isolate flex min-h-[70vh] items-end overflow-hidden bg-obsidian-950 text-white">
         <Image src="/media/photos/three-sisters-canmore.webp" alt="" fill priority sizes="100vw" className="-z-10 object-cover" data-parallax="10" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/40 to-ocean-950/10" />
         <div className="mx-auto flex w-full flex-col items-center text-center max-w-7xl px-page pb-14 pt-24" data-scroll-fade>
@@ -151,7 +151,7 @@ export default function AboutUsPage() {
           <ul className="grid gap-5 md:grid-cols-3" data-stagger>
             {VALUES.map(({ icon: Icon, title, body }) => (
               <li key={title} className="rounded-[1.75rem] bg-obsidian-50 p-7 ring-1 ring-obsidian-900/[0.06] sm:p-8">
-                <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-ocean-950 text-summit-400">
+                <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-obsidian-950 text-summit-400">
                   <Icon className="h-5 w-5" aria-hidden="true" />
                 </span>
                 <h3 className="mt-6 text-2xl font-light text-obsidian-900">{title}</h3>
@@ -189,7 +189,7 @@ export default function AboutUsPage() {
       </section>
 
       {/* Recognition */}
-      <section aria-labelledby="award-heading" className="bg-ocean-950 py-20 text-white sm:py-24">
+      <section aria-labelledby="award-heading" className="bg-obsidian-950 py-20 text-white sm:py-24">
         <div className="mx-auto grid max-w-7xl items-center gap-10 px-page md:grid-cols-[auto_minmax(0,1fr)] md:gap-14">
           <span className="flex h-44 w-44 items-center justify-center rounded-[1.75rem] bg-white p-5" data-reveal="scale">
             <AwardSeal size="md" />

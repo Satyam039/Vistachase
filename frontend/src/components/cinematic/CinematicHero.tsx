@@ -35,7 +35,7 @@ export function CinematicHero({
   secondaryCtaHref = "/banff-highlights-tour",
 }: CinematicHeroProps) {
   return (
-    <section className="relative w-full min-h-[95vh] lg:min-h-screen flex items-center justify-center overflow-hidden bg-ocean-950">
+    <section className="relative w-full min-h-[95vh] lg:min-h-screen flex items-center justify-center overflow-hidden bg-obsidian-950">
       {/* Background Media Layer */}
       <div className="absolute inset-0 z-0">
         <Image

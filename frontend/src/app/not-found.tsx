@@ -20,7 +20,7 @@ const LINKS = [
 export default function NotFound() {
   return (
     <div className="bg-obsidian-50">
-      <section className="relative isolate overflow-hidden bg-ocean-950">
+      <section className="relative isolate overflow-hidden bg-obsidian-950">
         <Image src="/media/photos/moraine-lake-classic.webp" alt="" fill priority sizes="100vw" className="-z-10 object-cover opacity-60" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/40 to-ocean-950/20" aria-hidden="true" />
         <div className="mx-auto flex max-w-5xl flex-col items-center px-page pb-14 pt-20 text-center sm:pb-20 sm:pt-28">

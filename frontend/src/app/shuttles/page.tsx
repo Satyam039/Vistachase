@@ -47,7 +47,7 @@ export default async function ShuttlesPage() {
   return (
     <div className="bg-obsidian-50 text-obsidian-900">
       {/* Hero */}
-      <section className="relative isolate flex min-h-[78vh] items-end overflow-hidden bg-ocean-950 text-white">
+      <section className="relative isolate flex min-h-[78vh] items-end overflow-hidden bg-obsidian-950 text-white">
         <Image src="/media/photos/moraine-lake-perfect-reflection.webp" alt="" fill priority sizes="100vw" className="-z-10 object-cover" />
         <AmbientVideo
           src="/media/videos/lake-louise-summer.mp4"
@@ -206,7 +206,7 @@ export default async function ShuttlesPage() {
           <ol className="mt-6 space-y-3" data-stagger>
             {STEPS.map(({ icon: Icon, title, body }, i) => (
               <li key={title} className="flex items-start gap-4 rounded-2xl bg-white p-5 ring-1 ring-obsidian-900/[0.07]">
-                <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-ocean-950 text-summit-400">
+                <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-obsidian-950 text-summit-400">
                   <Icon className="h-5 w-5" aria-hidden="true" />
                 </span>
                 <span>

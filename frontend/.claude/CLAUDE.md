@@ -176,6 +176,12 @@ behind the sticky header, traps). Report in `a11y-report/summary.md`. Keep it at
   (cards, forms, tables, long text, product-page sections). Split photo/text sections keep their column
   alignment. Centre chip rows with overflow-safe auto margins (`[&>*:first-child]:ml-auto
   [&>*:last-child]:mr-auto`), never `justify-center`, which clips the first chips when the row overflows.
+- Dark surfaces: one neutral near-black, `bg-obsidian-950`, for dark sections, heroes, cards and the menu
+  (not the teal `ocean-950`, which stays only in photo scrims). Gold accents on dark: `summit-200/300`.
+- No fake information: reviews come only from `/api/reviews` (guests reviewing a real booking, shown by
+  `components/reviews/ReviewSlider.tsx`); never hard-code quotes. Availability reads `SEATS_MESSAGE`,
+  never a seat count. Ticket times are "Time we request", not promises; prices stay on request until
+  confirmed.
 - Client-component pages set their title in a sibling `layout.tsx` (every page needs its own title).
 
 Building pages from templates (https://astryx.atmeta.com/templates):

@@ -113,7 +113,7 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
   return (
     <section
       aria-label="Vista Chase: tours in the Canadian Rockies"
-      className="relative isolate flex min-h-[max(42rem,calc(100svh-var(--vc-header-h,80px)))] flex-col overflow-hidden bg-ocean-950 text-white"
+      className="relative isolate flex min-h-[max(42rem,calc(100svh-var(--vc-header-h,80px)))] flex-col overflow-hidden bg-obsidian-950 text-white"
     >
       {/* Background: each service's photo cross-fades with a slow zoom; the active clip plays. */}
       <div className="absolute inset-0 -z-10">

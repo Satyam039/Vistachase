@@ -36,7 +36,7 @@ export default async function ContactUsPage({ searchParams }: { searchParams: Pr
   return (
     <div className="bg-obsidian-50 text-obsidian-900">
       {/* Hero */}
-      <section className="relative isolate flex min-h-[52vh] items-end overflow-hidden bg-ocean-950 text-white">
+      <section className="relative isolate flex min-h-[52vh] items-end overflow-hidden bg-obsidian-950 text-white">
         <Image src="/media/photos/bow-lake-reflection.webp" alt="" fill priority sizes="100vw" className="-z-10 object-cover" data-parallax="10" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/45 to-ocean-950/20" />
         <div className="mx-auto flex w-full flex-col items-center text-center max-w-7xl px-page pb-12 pt-24" data-scroll-fade>
@@ -90,7 +90,7 @@ export default async function ContactUsPage({ searchParams }: { searchParams: Pr
             ))}
           </ul>
 
-          <div className="rounded-[1.5rem] bg-ocean-950 p-6 text-white" data-reveal>
+          <div className="rounded-[1.5rem] bg-obsidian-950 p-6 text-white" data-reveal>
             <p className="flex items-center gap-2 text-sm text-summit-300">
               <MapPin className="h-4 w-4" aria-hidden="true" />
               Our office
