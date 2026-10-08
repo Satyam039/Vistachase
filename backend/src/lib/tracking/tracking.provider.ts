@@ -309,6 +309,13 @@ export class MockLiveTrackingProvider implements ILiveTrackingProvider {
 let trackingProviderInstance: ILiveTrackingProvider | null = null;
 
 export function getLiveTrackingProvider(): ILiveTrackingProvider {
+  if (process.env.FEATURE_TRACKING !== "true") {
+    return {
+      getTrackingTelemetry: async () => null,
+      getTelemetryForVerifiedBooking: async () => null,
+      pushGpsPing: async () => {},
+    };
+  }
   if (!trackingProviderInstance) {
     trackingProviderInstance = new MockLiveTrackingProvider();
   }

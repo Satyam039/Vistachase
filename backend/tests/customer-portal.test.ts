@@ -34,7 +34,7 @@ describe("Phase 5: Customer Portal, My Trips & Reviews", () => {
         capacityHeld: 0,
         price: 155.0,
         currency: "CAD",
-        status: "SCHEDULED",
+        status: "SCHEDULED" as any,
       },
     });
     futureDepartureId = futureDep.id;
@@ -55,7 +55,7 @@ describe("Phase 5: Customer Portal, My Trips & Reviews", () => {
         capacityHeld: 0,
         price: 155.0,
         currency: "CAD",
-        status: "SCHEDULED",
+        status: "SCHEDULED" as any,
       },
     });
     imminentDepartureId = imminentDep.id;

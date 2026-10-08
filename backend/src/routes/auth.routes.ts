@@ -1,3 +1,4 @@
+import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
 import { Router, Response } from "express";
 import prisma from "@/lib/db/prisma";
 import { hashPassword, verifyPassword, signToken, UserRole } from "@/lib/auth/auth";
@@ -15,7 +16,7 @@ function setAuthCookie(res: Response, token: string) {
   });
 }
 
-router.post("/login", async (req, res) => {
+router.post("/login", rateLimitMiddleware("login", { maxRequests: 5, windowSeconds: 300 }), async (req, res) => {
   try {
     const { email, password } = req.body ?? {};
 
@@ -56,11 +57,11 @@ router.post("/login", async (req, res) => {
       },
     });
   } catch (error: unknown) {
-    return res.status(500).json({ success: false, error: (error as Error).message || "Login failed" });
+    return res.status(500).json({ success: false, error: "Login failed" });
   }
 });
 
-router.post("/register", async (req, res) => {
+router.post("/register", rateLimitMiddleware("register", { maxRequests: 3, windowSeconds: 3600 }), async (req, res) => {
   try {
     const { name, email, password, phone } = req.body ?? {};
 
@@ -113,7 +114,7 @@ router.post("/register", async (req, res) => {
       },
     });
   } catch (error: unknown) {
-    return res.status(500).json({ success: false, error: (error as Error).message || "Registration failed" });
+    return res.status(500).json({ success: false, error: "Registration failed" });
   }
 });
 

@@ -27,7 +27,7 @@ router.get("/:token", async (req, res) => {
     return res.json({ success: true, telemetry });
   } catch (error: any) {
     console.error("Tracking telemetry error:", error);
-    return res.status(500).json({ success: false, error: error.message || "Failed to retrieve telemetry." });
+    return res.status(500).json({ success: false, error: "Failed to retrieve telemetry." });
   }
 });
 
@@ -54,7 +54,7 @@ router.post("/:token/notify", async (req, res) => {
       trackingToken: result.trackingToken,
     });
   } catch (error: any) {
-    return res.status(500).json({ success: false, error: error.message });
+    return res.status(500).json({ success: false, error: "Internal server error" });
   }
 });
 

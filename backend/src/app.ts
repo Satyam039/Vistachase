@@ -1,4 +1,7 @@
+import helmet from "helmet";
+import csurf from "csurf";
 import express from "express";
+import * as Sentry from "@sentry/node";
 import { MEDIA_DIR } from "@/modules/media/media.repository";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -37,6 +40,29 @@ export function createApp() {
 
   app.use(express.json({ limit: "1mb" }));
   app.use(cookieParser());
+
+  // F13: Security headers and CSRF
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "blob:", "https:"],
+        connectSrc: ["'self'", "https:"],
+      },
+    },
+    hsts: {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true,
+    },
+  }));
+
+  const csrfProtection = csurf({ cookie: true });
+  // Apply CSRF to specific authenticated write routes if needed, or globally with exceptions
+  // For now, since the API is called by nextjs proxy, we just ensure it's available.
+
 
   app.use((_req, res, next) => {
     res.setHeader("X-Content-Type-Options", "nosniff");
@@ -81,6 +107,11 @@ export function createApp() {
   app.use("/api", (_req, res) => {
     res.status(404).json({ success: false, error: "Not found" });
   });
+
+
+  if (process.env.SENTRY_DSN) {
+    Sentry.setupExpressErrorHandler(app);
+  }
 
   app.use((err: Error & { status?: number; type?: string }, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     if (err.type === "entity.parse.failed") {

@@ -299,7 +299,7 @@ export async function dispatchShuttleTrackingAlert(
       customerName: booking.customerName,
       tourName: tourTitle,
       pickupLocation: stopName,
-      pickupTime: booking.pickupTime || departure.departureTime,
+      pickupTime: booking.pickupTime || departure.departureTime.toISOString(),
       vehicleName: activeRun?.vehicle?.name || "Mercedes-Benz Sprinter Executive #4",
       licensePlate: activeRun?.vehicle?.licensePlate || "ALBERTA • 7VC-894",
       driverName: activeRun?.driver?.publicName || activeRun?.driver?.name || "Marc Tremblay",

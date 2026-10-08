@@ -197,9 +197,9 @@ export async function getHoldStatus(holdToken: string): Promise<{
       isVehicle: isVehicleDeparture(hold.tourDeparture),
       departure: {
         id: hold.tourDeparture.id,
-        date: hold.tourDeparture.date,
-        departureTime: hold.tourDeparture.departureTime,
-        price: hold.tourDeparture.price,
+        date: hold.tourDeparture.date.toISOString().split('T')[0],
+        departureTime: hold.tourDeparture.departureTime.toISOString(),
+        price: hold.tourDeparture.price / 100,
       },
     },
   };

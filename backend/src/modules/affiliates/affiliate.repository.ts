@@ -128,6 +128,6 @@ export async function listAffiliates() {
   }));
 }
 
-export async function updateAffiliate(id: string, data: { status?: string; commissionRate?: number; bokunChannelId?: string | null }) {
+export async function updateAffiliate(id: string, data: { status?: any; commissionRate?: number; bokunChannelId?: string | null }) {
   return prisma.affiliate.update({ where: { id }, data });
 }

@@ -79,7 +79,7 @@ export async function getDispatchManifest(date: string) {
         stopsMap.set(stopKey, {
           stopName,
           address,
-          pickupTime,
+          pickupTime: pickupTime instanceof Date ? pickupTime.toISOString() : pickupTime,
           bookings: [],
         });
       }

@@ -2,9 +2,10 @@ services:
   - type: web
     name: vistachase-backend
     env: node
-    plan: free
+    plan: starter # F12: Move to paid plan for production matching
     rootDir: backend
-    buildCommand: npm install --include=dev && node scripts/prepare-db.js && npm run build
+    buildCommand: npm ci && npx prisma generate && npm run build
+    preDeployCommand: npx prisma migrate deploy # F1: Run migrations as a release step
     startCommand: npm run start
     healthCheckPath: /api/health
     envVars:
@@ -16,39 +17,58 @@ services:
         fromDatabase:
           name: vistachase-db
           property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: vistachase-redis
+          property: connectionString
       - key: FRONTEND_URL
         sync: false
       - key: CACHE_PROVIDER
-        value: memory
+        value: redis
       - key: STORAGE_PROVIDER
         value: local
       - key: EMAIL_PROVIDER
-        value: console
+        value: resend
       - key: PAYMENT_PROVIDER
-        value: mock
+        value: stripe
       - key: AI_VOICE_PROVIDER
         value: mock
       - key: JWT_SECRET
         generateValue: true
+      - key: FEATURE_TRACKING
+        value: "false"
+      - key: FEATURE_MOCK_BOKUN
+        value: "false"
+      - key: FEATURE_MOCK_PAYMENT
+        value: "false"
 
   - type: web
     name: vistachase-frontend
     env: node
-    plan: free
+    plan: starter
     rootDir: frontend
-    buildCommand: npm install --include=dev && npm run build
+    buildCommand: npm ci && npm run build
     startCommand: npm run start
     envVars:
       - key: NODE_VERSION
         value: 20.18.0
       - key: NODE_ENV
         value: production
-      # Public URL of vistachase-backend
       - key: BACKEND_URL
         value: https://vistachase-backend.onrender.com
+      - key: NEXT_PUBLIC_APP_URL
+        sync: false
+      - key: FEATURE_FALLBACK_CATALOG
+        value: "false"
+
+  - type: redis
+    name: vistachase-redis
+    plan: starter
+    ipAllowList: [] # internal access only
 
 databases:
   - name: vistachase-db
-    plan: free
+    plan: starter
     databaseName: vistachase
     user: vistachase_user

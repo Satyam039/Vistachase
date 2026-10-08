@@ -1,3 +1,4 @@
+import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
 import { Router } from "express";
 import {
   createReservationHold,
@@ -37,7 +38,7 @@ router.post("/hold", async (req, res) => {
       isVehicle: result.isVehicle,
     });
   } catch (error: unknown) {
-    return res.status(500).json({ success: false, error: (error as Error).message || "Failed to create reservation hold" });
+    return res.status(500).json({ success: false, error: "Failed to create reservation hold" });
   }
 });
 
@@ -52,7 +53,7 @@ router.get("/hold", async (req, res) => {
     const status = await getHoldStatus(token);
     return res.json({ success: true, ...status });
   } catch (error: unknown) {
-    return res.status(500).json({ success: false, error: (error as Error).message || "Failed to check hold status" });
+    return res.status(500).json({ success: false, error: "Failed to check hold status" });
   }
 });
 
@@ -67,7 +68,7 @@ router.delete("/hold", async (req, res) => {
     const released = await releaseHold(token);
     return res.json({ success: true, released });
   } catch (error: unknown) {
-    return res.status(500).json({ success: false, error: (error as Error).message || "Failed to release hold" });
+    return res.status(500).json({ success: false, error: "Failed to release hold" });
   }
 });
 

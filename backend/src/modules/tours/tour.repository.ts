@@ -99,20 +99,16 @@ const tourInclude = {
     select: { id: true, slug: true, name: true },
   },
   departures: {
-    where: { status: "ACTIVE" },
+    where: { status: "ACTIVE" as any },
     orderBy: [{ date: "asc" as const }, { departureTime: "asc" as const }],
   },
 };
 
 type TourRow = Prisma.TourGetPayload<{ include: typeof tourInclude }>;
 
-function json<T>(value: string | null | undefined, fallback: T): T {
+function json<T>(value: any, fallback: T): T {
   if (!value) return fallback;
-  try {
-    return JSON.parse(value) as T;
-  } catch {
-    return fallback;
-  }
+  return value as unknown as T;
 }
 
 function tourVideos(slug: string): PageVideo[] {
@@ -136,7 +132,7 @@ function toTourDto(t: TourRow, expiredHeld: Map<string, number>): TourWithAvaila
     featuredImage: t.featuredImage,
     galleryImages: json(t.galleryImages, []),
     videos: tourVideos(t.slug),
-    basePrice: t.basePrice,
+    basePrice: t.basePrice / 100,
     currency: t.currency,
     minGroupSize: t.minGroupSize,
     maxGroupSize: t.maxGroupSize,
@@ -156,14 +152,14 @@ function toTourDto(t: TourRow, expiredHeld: Map<string, number>): TourWithAvaila
     destination: t.destination,
     departures: t.departures.map((d) => ({
       id: d.id,
-      date: d.date,
-      departureTime: d.departureTime,
-      returnTime: d.returnTime,
+      date: d.date.toISOString().split('T')[0],
+      departureTime: d.departureTime.toISOString(),
+      returnTime: d.returnTime ? d.returnTime.toISOString() : null,
       capacityTotal: d.capacityTotal,
       capacityBooked: d.capacityBooked,
       // Strict capacity calculation: Total - (Booked + live Held)
       ...liveCapacity(d, expiredHeld),
-      price: d.price,
+      price: d.price / 100,
       currency: d.currency,
       status: d.status,
     })),
@@ -176,7 +172,7 @@ export async function getTours(options?: {
   isFeatured?: boolean;
 }): Promise<TourWithAvailability[]> {
   const where: Prisma.TourWhereInput = {};
-  if (options?.category) where.category = options.category;
+  if (options?.category) where.category = options.category as any;
   if (options?.isFeatured !== undefined) where.isFeatured = options.isFeatured;
   if (options?.destinationSlug) {
     where.destination = { slug: options.destinationSlug };

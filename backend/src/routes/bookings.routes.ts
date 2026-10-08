@@ -1,3 +1,4 @@
+import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
 import { Router } from "express";
 import {
   createBooking,
@@ -8,7 +9,7 @@ import { getAuthenticatedUser } from "@/lib/auth/admin-guard";
 
 const router = Router();
 
-router.post("/", async (req, res) => {
+router.post("/", rateLimitMiddleware("booking_create", { maxRequests: 5, windowSeconds: 60 }), async (req, res) => {
   try {
     const {
       departureId,
@@ -54,7 +55,7 @@ router.post("/", async (req, res) => {
 
     return res.json({ success: true, booking: result.booking });
   } catch (error: unknown) {
-    return res.status(500).json({ success: false, error: (error as Error).message || "Booking failed" });
+    return res.status(500).json({ success: false, error: "Booking failed" });
   }
 });
 
@@ -71,16 +72,30 @@ router.get("/", async (req, res) => {
       return res.status(404).json({ success: false, error: "Booking not found" });
     }
 
-    // Public by reference (voucher page), so the tracking token stays out: live location opens only
-    // from the link sent to the guest.
-    const { trackingToken: _token, trackingTokenExpiresAt: _expires, ...publicBooking } = booking;
+    // Public by reference (voucher page), restrict PII
+    const publicBooking = {
+      bookingReference: booking.bookingReference,
+      status: booking.status,
+      customerName: booking.customerName,
+      adultsCount: booking.adultsCount,
+      childrenCount: booking.childrenCount,
+      infantsCount: booking.infantsCount,
+      totalSeats: booking.totalSeats,
+      pickupTime: booking.pickupTime,
+      specialRequests: booking.specialRequests,
+      voucherCode: booking.voucherCode,
+      qrCodeUrl: booking.qrCodeUrl,
+      tourDeparture: booking.tourDeparture,
+      pickupStop: booking.pickupStop,
+      createdAt: booking.createdAt,
+    };
     return res.json({ success: true, booking: publicBooking });
   } catch (error: unknown) {
-    return res.status(500).json({ success: false, error: (error as Error).message || "Failed to retrieve booking" });
+    return res.status(500).json({ success: false, error: "Failed to retrieve booking" });
   }
 });
 
-router.post("/cancel", async (req, res) => {
+router.post("/cancel", rateLimitMiddleware("booking_cancel", { maxRequests: 5, windowSeconds: 60 }), async (req, res) => {
   try {
     const { bookingReference, email } = req.body ?? {};
 

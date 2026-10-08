@@ -21,7 +21,7 @@ export async function getDestinations() {
     },
     orderBy: { name: "asc" },
   });
-  return destinations.map((d) => ({ ...d, heroVideo: heroVideo(d.slug) }));
+  return destinations.map((d) => ({ ...d, heroVideo: heroVideo(d.slug), tours: d.tours.map(t => ({ ...t, basePrice: t.basePrice / 100 })) }));
 }
 
 export async function getDestinationBySlug(slug: string) {

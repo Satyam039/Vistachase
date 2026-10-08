@@ -101,7 +101,7 @@ export async function createReview(input: CreateReviewInput): Promise<ReviewResu
       rating: result.rating,
       title: result.title,
       body: result.body,
-      date: result.date,
+      date: result.date.toISOString().split('T')[0],
     },
   };
 }
