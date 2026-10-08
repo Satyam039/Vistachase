@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { CheckCircle2, Clock, MapPin, Star, Users } from "lucide-react";
+import { ArrowRight, CheckCircle2, Clock, MapPin, Star, Users } from "lucide-react";
 import { PriceTag } from "@/components/pricing/PriceTag";
 import { cancellationShort } from "@/lib/policy";
 import type { TourWithAvailability } from "@/lib/api/types";
@@ -66,10 +66,10 @@ const AWARD_BADGE: Record<string, string> = {
   "banff-highlights-tour": "Best of the Best 2025",
 };
 
-// Card anatomy shared by GetYourGuide, Viator and Civitatis: photo first with at most two
-// chips, then place, title, rating + count as one unit, a meta line, free cancellation, and
-// the price (struck original + offer) at the foot. The whole card is one link (title link
-// stretched over it), so there is a single tab stop per card.
+// Dark editorial card (premium brief, item 3): a large photo takes most of the card, then the
+// title, a two-line description (the tour's own catalog summary), key details, the price and a
+// call to action. Near-black surface, hairline border, generous spacing. The whole card is one
+// link (title link stretched over it), so there is a single tab stop per card.
 export function TourCard({
   tour,
   seats = 1,
@@ -88,89 +88,81 @@ export function TourCard({
   const award = AWARD_BADGE[tour.slug];
 
   return (
-    <article className="group relative flex h-full flex-col overflow-hidden rounded-[1.75rem] bg-white ring-1 ring-obsidian-900/[0.07] transition-[box-shadow,transform] duration-500 ease-out hover:-translate-y-1 hover:shadow-[0_30px_60px_-30px_rgba(12,31,33,0.45)]">
-      {/* Media */}
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-obsidian-100">
+    <article className="group relative flex h-full flex-col overflow-hidden rounded-[1.75rem] bg-obsidian-950 text-white ring-1 ring-white/[0.08] transition-[box-shadow,transform] duration-500 ease-out hover:-translate-y-1 hover:shadow-[0_30px_60px_-30px_rgba(0,0,0,0.6)]">
+      {/* Media: the photo gets most of the card */}
+      <div className="relative aspect-[5/4] w-full overflow-hidden bg-obsidian-900">
         <Image
           src={tour.featuredImage}
           alt=""
           fill
-          sizes="(max-width: 640px) 85vw, (max-width: 1024px) 46vw, (max-width: 1280px) 31vw, 300px"
-          className="object-cover transition-transform duration-[1.2s] ease-out group-hover:scale-[1.06]"
+          sizes="(max-width: 640px) 85vw, (max-width: 1024px) 46vw, (max-width: 1280px) 31vw, 400px"
+          className="object-cover transition-transform duration-[1.4s] ease-out group-hover:scale-[1.05]"
         />
-        <div className="absolute inset-x-0 top-0 flex flex-wrap gap-2 p-3.5">
+        <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-obsidian-950/70 to-transparent" aria-hidden="true" />
+        <div className="absolute inset-x-0 top-0 flex flex-wrap gap-2 p-4">
           {award ? (
-            <span className="rounded-full bg-summit-500 px-3 py-1 text-xs text-obsidian-900 shadow-sm">{award}</span>
+            <span className="rounded-full bg-summit-200 px-3 py-1 text-xs text-obsidian-900">{award}</span>
           ) : (
-            <span className="rounded-full bg-white/95 px-3 py-1 text-xs text-obsidian-900 shadow-sm">
+            <span className="rounded-full bg-obsidian-950/55 px-3 py-1 text-xs text-white ring-1 ring-white/15 backdrop-blur-md">
               {CATEGORY_LABEL[tour.category] ?? tour.category}
             </span>
           )}
           {tour.category === "SHUTTLE" && (
-            <span className="rounded-full bg-obsidian-900/80 px-3 py-1 text-xs text-white backdrop-blur">Guaranteed lake access</span>
+            <span className="rounded-full bg-obsidian-950/55 px-3 py-1 text-xs text-white ring-1 ring-white/15 backdrop-blur-md">Guaranteed lake access</span>
           )}
         </div>
       </div>
 
-      {/* Body */}
-      <div className="flex flex-1 flex-col gap-2.5 p-5">
-        <p className="flex items-center gap-1.5 text-sm text-slate-600">
-          <MapPin className="h-3.5 w-3.5 text-ocean-600" aria-hidden="true" />
-          {tour.destination.name}
-        </p>
-
-        <TitleTag className="text-lg leading-snug text-obsidian-900 transition-colors group-hover:text-ocean-700">
+      {/* Body: title, description, key details, price, CTA */}
+      <div className="flex flex-1 flex-col p-6">
+        <TitleTag className="text-xl font-light leading-snug text-white">
           <Link href={`/${tour.slug}`} className="focus-visible:outline-none">
-            <span className="absolute inset-0 z-10 rounded-[1.75rem] group-has-[:focus-visible]:outline group-has-[:focus-visible]:outline-2 group-has-[:focus-visible]:outline-offset-2 group-has-[:focus-visible]:outline-ocean-600" />
+            <span className="absolute inset-0 z-10 rounded-[1.75rem] group-has-[:focus-visible]:outline group-has-[:focus-visible]:outline-2 group-has-[:focus-visible]:outline-offset-2 group-has-[:focus-visible]:outline-summit-300" />
             {tour.title}
           </Link>
         </TitleTag>
+        {tour.summary && <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-white/60">{tour.summary}</p>}
 
-        {tour.reviewCount > 0 ? (
-          <p className="flex items-center gap-1.5 text-sm text-obsidian-900">
-            <Star className="h-4 w-4 fill-summit-500 text-summit-500" aria-hidden="true" />
-            <span>
-              {tour.rating.toFixed(1)}
-              <span className="sr-only"> out of 5,</span> <span className="text-slate-600">({reviewsLabel(tour)})</span>
-            </span>
-          </p>
-        ) : (
-          <p className="text-sm text-slate-600">New on Vista Chase</p>
-        )}
-
-        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-600">
-          <span className="inline-flex items-center gap-1">
-            <Clock className="h-3.5 w-3.5" aria-hidden="true" />
+        <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-white/75" aria-label="Key details">
+          <li className="flex min-w-0 max-w-full items-center gap-1.5">
+            <MapPin className="h-3.5 w-3.5 shrink-0 text-summit-300" aria-hidden="true" />
+            <span className="truncate">{tour.destination.name}</span>
+          </li>
+          <li className="flex items-center gap-1.5">
+            <Clock className="h-3.5 w-3.5 shrink-0 text-summit-300" aria-hidden="true" />
             {durationLabel(tour)}
+          </li>
+          <li className="flex min-w-0 items-center gap-1.5">
+            <Users className="h-3.5 w-3.5 shrink-0 text-summit-300" aria-hidden="true" />
+            <span className="truncate">{groupLabel(tour)}</span>
+          </li>
+          <li className="flex items-center gap-1.5 whitespace-nowrap">
+            {tour.reviewCount > 0 ? (
+              <>
+                <Star className="h-3.5 w-3.5 shrink-0 fill-summit-300 text-summit-300" aria-hidden="true" />
+                <span>
+                  {tour.rating.toFixed(1)}
+                  <span className="sr-only"> out of 5,</span> <span className="text-white/50">({reviewsLabel(tour)})</span>
+                </span>
+              </>
+            ) : (
+              <span className="text-white/60">New on Vista Chase</span>
+            )}
+          </li>
+          <li className="flex items-center gap-1.5">
+            <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-summit-300" aria-hidden="true" />
+            {cancellationShort(tour.category)}
+          </li>
+        </ul>
+
+        <p className={`mt-3 text-sm ${status.variant === "error" ? "text-red-300" : "text-white/55"}`}>{status.text}</p>
+
+        <div className="mt-auto flex items-end justify-between gap-4 border-t border-white/[0.08] pt-5">
+          <PriceTag price={price} currency={tour.currency} lead={priceLabel} size="sm" tone="dark" />
+          <span className="inline-flex shrink-0 items-center gap-1.5 pb-1 text-sm text-summit-200" aria-hidden="true">
+            View
+            <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
           </span>
-          <span aria-hidden="true">·</span>
-          <span className="inline-flex items-center gap-1">
-            <Users className="h-3.5 w-3.5" aria-hidden="true" />
-            {groupLabel(tour)}
-          </span>
-        </p>
-
-        <p className="flex items-center gap-1.5 text-sm text-emerald-800">
-          <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
-          {cancellationShort(tour.category)}
-        </p>
-
-        <p
-          className={`text-sm ${
-            status.variant === "warning"
-              ? "text-amber-800"
-              : status.variant === "error"
-              ? "text-red-700"
-              : status.variant === "neutral"
-              ? "text-slate-600"
-              : "text-emerald-800"
-          }`}
-        >
-          {status.text}
-        </p>
-
-        <div className="mt-auto border-t border-obsidian-900/[0.07] pt-4">
-          <PriceTag price={price} currency={tour.currency} lead={priceLabel} size="sm" />
         </div>
       </div>
     </article>
