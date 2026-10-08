@@ -47,6 +47,17 @@ jobs:
       working-directory: ./frontend
       run: npm ci
 
+    - name: Configure Test Environment
+      working-directory: ./backend
+      run: |
+        echo 'DATABASE_URL="postgresql://postgres:vistachase_secret@localhost:5432/vistachase_test?schema=public"' > .env
+        echo 'REDIS_URL="redis://localhost:6379"' >> .env
+        echo 'JWT_SECRET="super-secret-test-key-must-be-32-chars!"' >> .env
+        echo 'NODE_ENV="test"' >> .env
+        echo 'STRIPE_SECRET_KEY="sk_test_mock"' >> .env
+        echo 'FEATURE_FALLBACK_CATALOG="true"' >> .env
+        cp .env ../frontend/.env
+
     - name: Generate Prisma Client
       working-directory: ./backend
       run: npx prisma generate
