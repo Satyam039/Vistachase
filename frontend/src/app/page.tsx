@@ -1,7 +1,7 @@
 import React from "react";
 import { ServicesHero, type HeroSlide } from "@/components/cinematic/ServicesHero";
 import { fromPrice, priceUnitLabel } from "@/lib/tours";
-import { getTours } from "@/lib/api/catalog";
+import { getCategoryExtras, getTours } from "@/lib/api/catalog";
 import { SERVICES } from "@/lib/services";
 import { TrustRow } from "@/components/home/TrustRow";
 import { TopExperiences } from "@/components/home/TopExperiences";
@@ -36,6 +36,8 @@ export const metadata = {
 export default async function HomePage() {
   // Each hero slide lists its service's tours with rating, reviews and price.
   const tours = await getTours();
+  // Real guest reviews (left against a booking) for the review slider.
+  const { reviews } = await getCategoryExtras(tours);
   const slides: HeroSlide[] = SERVICES.map((service) => ({
     ...service,
     tours: tours
@@ -64,7 +66,7 @@ export default async function HomePage() {
       <PlanAheadGuaranteedAccess />
       <WhyTravelersLove />
       <VerifiedAwardSection />
-      <GuestTestimonials />
+      <GuestTestimonials reviews={reviews} />
       <LiveTrackingTeaser />
       <TrustBar />
     </div>

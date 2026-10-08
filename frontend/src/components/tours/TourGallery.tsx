@@ -34,6 +34,7 @@ import { TrustRow } from "@/components/home/TrustRow";
 import { PinnedHorizontal } from "@/components/motion/PinnedHorizontal";
 import { Rail } from "@/components/motion/Rail";
 import { FaqBrowser } from "@/components/faq/FaqBrowser";
+import { ReviewSlider } from "@/components/reviews/ReviewSlider";
 import type { CategoryReview } from "@/lib/api/catalog";
 import { fromPrice } from "@/lib/tours";
 import { SERVICES, type Service } from "@/lib/services";
@@ -328,95 +329,7 @@ export function TourGallery({
                 </p>
               )}
             </div>
-            {reviews.length > 3 ? (
-              <Rail
-                label="Guest reviews"
-                itemClassName="w-[82vw] max-w-[24rem] sm:w-[24rem]"
-              >
-                {reviews.map((r) => (
-                  <figure
-                    key={r.id}
-                    className="flex h-full flex-col rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07] transition-shadow hover:shadow-md"
-                  >
-                    <p
-                      className="flex items-center gap-1"
-                      role="img"
-                      aria-label={`${r.rating} out of 5`}
-                    >
-                      {Array.from({ length: 5 }, (_, i) => (
-                        <Star
-                          key={i}
-                          className={`h-4 w-4 ${i < r.rating ? "fill-summit-500 text-summit-500" : "text-slate-300"}`}
-                          aria-hidden="true"
-                        />
-                      ))}
-                    </p>
-                    <blockquote className="mt-4 flex-1">
-                      <p className="text-lg font-light text-obsidian-900">
-                        {r.title}
-                      </p>
-                      <p className="mt-2 line-clamp-5 text-base leading-relaxed text-slate-700">
-                        {r.body}
-                      </p>
-                    </blockquote>
-                    <figcaption className="mt-5 border-t border-obsidian-900/[0.06] pt-4 text-sm text-slate-600">
-                      <span className="text-obsidian-900">{r.authorName}</span>{" "}
-                      · {r.date}
-                      <Link
-                        href={`/${r.tourSlug}`}
-                        className="mt-1 block truncate text-ocean-600 underline-offset-4 hover:underline"
-                      >
-                        {r.tourTitle}
-                      </Link>
-                    </figcaption>
-                  </figure>
-                ))}
-              </Rail>
-            ) : (
-              <div
-                className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
-                data-stagger
-              >
-                {reviews.map((r) => (
-                  <figure
-                    key={r.id}
-                    className="flex h-full flex-col rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07] transition-shadow hover:shadow-md"
-                  >
-                    <p
-                      className="flex items-center gap-1"
-                      role="img"
-                      aria-label={`${r.rating} out of 5`}
-                    >
-                      {Array.from({ length: 5 }, (_, i) => (
-                        <Star
-                          key={i}
-                          className={`h-4 w-4 ${i < r.rating ? "fill-summit-500 text-summit-500" : "text-slate-300"}`}
-                          aria-hidden="true"
-                        />
-                      ))}
-                    </p>
-                    <blockquote className="mt-4 flex-1">
-                      <p className="text-lg font-light text-obsidian-900">
-                        {r.title}
-                      </p>
-                      <p className="mt-2 line-clamp-5 text-base leading-relaxed text-slate-700">
-                        {r.body}
-                      </p>
-                    </blockquote>
-                    <figcaption className="mt-5 border-t border-obsidian-900/[0.06] pt-4 text-sm text-slate-600">
-                      <span className="text-obsidian-900">{r.authorName}</span>{" "}
-                      · {r.date}
-                      <Link
-                        href={`/${r.tourSlug}`}
-                        className="mt-1 block truncate text-ocean-600 underline-offset-4 hover:underline"
-                      >
-                        {r.tourTitle}
-                      </Link>
-                    </figcaption>
-                  </figure>
-                ))}
-              </div>
-            )}
+            <ReviewSlider reviews={reviews} />
           </div>
         </section>
       )}

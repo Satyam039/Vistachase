@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Car, Check, CheckCircle2, Clock, MapPin, Plus, Star, X } from "lucide-react";
 import type { TourSection, TourWithAvailability } from "@/lib/api/types";
+import { ReviewSlider } from "@/components/reviews/ReviewSlider";
 
 interface Review {
   id: string;
@@ -310,22 +311,7 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
           </p>
         )}
         {reviews && reviews.length > 0 ? (
-          <ul className="space-y-4">
-            {reviews.map((r) => (
-              <li key={r.id} className="space-y-2 rounded-3xl border border-slate-200 bg-white p-6">
-                <p className="flex items-center gap-1" role="img" aria-label={`${r.rating} out of 5`}>
-                  {Array.from({ length: 5 }, (_, i) => (
-                    <Star key={i} className={`h-4 w-4 ${i < r.rating ? "fill-summit-500 text-summit-500" : "text-slate-300"}`} aria-hidden="true" />
-                  ))}
-                </p>
-                <h3 className="text-lg font-light text-obsidian-900">{r.title}</h3>
-                <p className="text-base leading-relaxed text-slate-700">{r.body}</p>
-                <p className="text-sm text-slate-600">
-                  {r.authorName} · {r.date}
-                </p>
-              </li>
-            ))}
-          </ul>
+          <ReviewSlider reviews={reviews} label={`Reviews of ${tour.title}`} />
         ) : (
           reviews && (
             <p className="text-base text-slate-700">

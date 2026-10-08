@@ -103,9 +103,13 @@ export async function createReview(input: CreateReviewInput): Promise<ReviewResu
   };
 }
 
+/**
+ * Public reviews of a tour: only those written by a guest against a real booking. Seeded sample
+ * reviews have no booking and are never shown to customers.
+ */
 export async function getTourReviews(tourId: string) {
   return await prisma.review.findMany({
-    where: { tourId },
+    where: { tourId, bookingId: { not: null } },
     orderBy: { createdAt: "desc" },
   });
 }
