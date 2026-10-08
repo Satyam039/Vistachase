@@ -7,7 +7,7 @@ import { dateOnly, timeOfDay } from "@/lib/utils/time";
 // (the column is unique): the second booking of the day would fail.
 describe("Bookings for products not yet in Bókun", () => {
   it("accepts several bookings and leaves their Bókun booking ID empty", async () => {
-    const tour = await prisma.tour.findFirstOrThrow({ where: { category: "SHARED", bokunId: null } });
+    const tour = await prisma.tour.findFirstOrThrow({ where: { bookingMode: "BOKUN", bokunId: null } });
     const departure = await prisma.tourDeparture.create({
       data: {
         tourId: tour.id,
