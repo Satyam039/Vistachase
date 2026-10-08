@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import prisma from "@/lib/db/prisma";
 import { createReservationHold, getHoldStatus, releaseHold } from "@/modules/reservations/reservation.repository";
 import { createBooking, getBookingByReference } from "@/modules/bookings/booking.repository";
+import { dateOnly, timeOfDay } from "@/lib/utils/time";
 
 describe("Phase 4: Booking Engine, Holds & Payment Abstraction", () => {
   it("holds seats for 10 minutes and prevents concurrent over-booking", async () => {
@@ -9,12 +10,12 @@ describe("Phase 4: Booking Engine, Holds & Payment Abstraction", () => {
     const departure = await prisma.tourDeparture.create({
       data: {
         tourId: tour!.id,
-        date: "2026-11-21",
-        departureTime: "06:00",
+        date: dateOnly("2026-11-21"),
+        departureTime: timeOfDay("06:00"),
         capacityTotal: 10,
         capacityBooked: 0,
         capacityHeld: 0,
-        price: 120,
+        price: 12000,
         status: "ACTIVE",
       },
     });
@@ -46,12 +47,12 @@ describe("Phase 4: Booking Engine, Holds & Payment Abstraction", () => {
     const departure = await prisma.tourDeparture.create({
       data: {
         tourId: tour!.id,
-        date: "2026-11-22",
-        departureTime: "07:30",
+        date: dateOnly("2026-11-22"),
+        departureTime: timeOfDay("07:30"),
         capacityTotal: 10,
         capacityBooked: 0,
         capacityHeld: 0,
-        price: 140,
+        price: 14000,
         status: "ACTIVE",
       },
     });

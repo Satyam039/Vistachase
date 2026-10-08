@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { getBokunOperationsProvider } from "@/modules/bokun/bokun.provider";
 import prisma from "@/lib/db/prisma";
+import { fareSubtotal } from "@/modules/pricing/departure-pricing";
 
 const router = Router();
 
@@ -36,8 +37,9 @@ router.post("/quote", async (req, res) => {
     }
 
     const totalSeats = parseInt(adultsCount || "0", 10) + parseInt(childrenCount || "0", 10);
-    const subtotal = departure.price * totalSeats;
-    const discountAmount = Math.round(subtotal * (discountPercent / 100));
+    // In dollars, like the checkout: per guest for shared departures, per vehicle for private ones.
+    const subtotal = fareSubtotal(departure, totalSeats) / 100;
+    const discountAmount = Math.round(subtotal * discountPercent) / 100;
 
     return res.json({
       success: true,

@@ -2,18 +2,19 @@ import { describe, it, expect } from "vitest";
 import prisma from "@/lib/db/prisma";
 import { createReservationHold } from "@/modules/reservations/reservation.repository";
 import { cancelBooking, createBooking } from "@/modules/bookings/booking.repository";
+import { dateOnly, timeOfDay } from "@/lib/utils/time";
 
 async function createPrivateDeparture(date: string) {
   const tour = await prisma.tour.findFirstOrThrow({ where: { category: "PRIVATE" } });
   return prisma.tourDeparture.create({
     data: {
       tourId: tour.id,
-      date,
-      departureTime: "08:00",
+      date: dateOnly(date),
+      departureTime: timeOfDay("08:00"),
       capacityTotal: 6,
       capacityBooked: 0,
       capacityHeld: 0,
-      price: 1250,
+      price: 125000, // $1,250 per vehicle, in cents
       status: "ACTIVE",
     },
   });
@@ -61,7 +62,7 @@ describe("Private tours are priced and reserved per vehicle", () => {
 
     const stored = await prisma.booking.findUniqueOrThrow({ where: { bookingReference: booking.booking!.bookingReference } });
     expect(stored.totalSeats).toBe(4); // manifests still count the real guests
-    expect(stored.subtotal).toBe(1250);
+    expect(stored.subtotal).toBe(125000); // stored in cents
 
     const secondBooking = await createBooking({
       departureId: departure.id,

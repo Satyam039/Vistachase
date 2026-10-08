@@ -3,6 +3,7 @@ import prisma from "@/lib/db/prisma";
 import { signToken } from "@/lib/auth/auth";
 import { cancelBooking, getCustomerBookings } from "@/modules/bookings/booking.repository";
 import { createReview, getTourReviews } from "@/modules/reviews/review.repository";
+import { dateOnly, timeOfDay } from "@/lib/utils/time";
 
 describe("Phase 5: Customer Portal, My Trips & Reviews", () => {
   let testCustomerEmail: string;
@@ -27,12 +28,12 @@ describe("Phase 5: Customer Portal, My Trips & Reviews", () => {
     const futureDep = await prisma.tourDeparture.create({
       data: {
         tourId: testTourId,
-        date: futureDateStr,
-        departureTime: "09:00",
+        date: dateOnly(futureDateStr),
+        departureTime: timeOfDay("09:00"),
         capacityTotal: 14,
         capacityBooked: 2,
         capacityHeld: 0,
-        price: 155.0,
+        price: 15500,
         currency: "CAD",
         status: "SCHEDULED" as any,
       },
@@ -48,12 +49,12 @@ describe("Phase 5: Customer Portal, My Trips & Reviews", () => {
     const imminentDep = await prisma.tourDeparture.create({
       data: {
         tourId: testTourId,
-        date: imminentDateStr,
-        departureTime: imminentTimeStr,
+        date: dateOnly(imminentDateStr),
+        departureTime: timeOfDay(imminentTimeStr),
         capacityTotal: 14,
         capacityBooked: 2,
         capacityHeld: 0,
-        price: 155.0,
+        price: 15500,
         currency: "CAD",
         status: "SCHEDULED" as any,
       },
@@ -73,9 +74,9 @@ describe("Phase 5: Customer Portal, My Trips & Reviews", () => {
         childrenCount: 0,
         infantsCount: 0,
         totalSeats: 2,
-        subtotal: 310,
-        tax: 15.5,
-        totalAmount: 325.5,
+        subtotal: 31000,
+        tax: 1550,
+        totalAmount: 32550,
         currency: "CAD",
         status: "CONFIRMED",
         voucherCode: `VOUCH-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
@@ -95,9 +96,9 @@ describe("Phase 5: Customer Portal, My Trips & Reviews", () => {
         childrenCount: 0,
         infantsCount: 0,
         totalSeats: 2,
-        subtotal: 310,
-        tax: 15.5,
-        totalAmount: 325.5,
+        subtotal: 31000,
+        tax: 1550,
+        totalAmount: 32550,
         currency: "CAD",
         status: "CONFIRMED",
         voucherCode: `VOUCH-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
@@ -155,9 +156,9 @@ describe("Phase 5: Customer Portal, My Trips & Reviews", () => {
         childrenCount: 0,
         infantsCount: 0,
         totalSeats: 1,
-        subtotal: 155,
-        tax: 7.75,
-        totalAmount: 162.75,
+        subtotal: 15500,
+        tax: 775,
+        totalAmount: 16275,
         currency: "CAD",
         status: "CONFIRMED",
         voucherCode: `VOUCH-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
@@ -215,9 +216,9 @@ describe("Phase 5: Customer Portal, My Trips & Reviews", () => {
         childrenCount: 0,
         infantsCount: 0,
         totalSeats: 1,
-        subtotal: 155,
-        tax: 7.75,
-        totalAmount: 162.75,
+        subtotal: 15500,
+        tax: 775,
+        totalAmount: 16275,
         currency: "CAD",
         status: "CONFIRMED",
         voucherCode: `VOUCH-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,

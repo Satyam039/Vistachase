@@ -9,6 +9,7 @@ export interface BokunProduct {
   category: "SHARED" | "PRIVATE" | "SHUTTLE" | "MULTIDAY" | "TICKET";
   durationHours: number;
   capacity: number;
+  /** Lowest price in dollars, as Bókun reports it (departures store cents). */
   basePrice: number;
   currency: string;
 }
@@ -70,7 +71,7 @@ export const BOKUN_CATALOG_PRODUCTS: BokunProduct[] = PRODUCT_MAP.map((product) 
     category: product.category,
     durationHours: durationHours(content?.facts ?? []),
     capacity: perGroup ? 13 : 12,
-    basePrice: Math.round((content?.priceFrom ?? 0) * 100),
+    basePrice: content?.priceFrom ?? 0, // dollars, like Bókun; departures store cents
     currency: "CAD",
   };
 });

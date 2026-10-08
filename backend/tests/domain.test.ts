@@ -4,6 +4,7 @@ import { getTours, getTourBySlug } from "@/modules/tours/tour.repository";
 import { getShuttleRoutes } from "@/modules/shuttles/shuttle.repository";
 import { createReservationHold, releaseHold, getHoldStatus } from "@/modules/reservations/reservation.repository";
 import { createBooking } from "@/modules/bookings/booking.repository";
+import { dateOnly, timeOfDay } from "@/lib/utils/time";
 
 describe("Domain Repositories & Business Logic", () => {
   it("fetches seeded tours with accurate capacity and destinations", async () => {
@@ -42,12 +43,12 @@ describe("Domain Repositories & Business Logic", () => {
     const departure = await prisma.tourDeparture.create({
       data: {
         tourId: tour!.id,
-        date: "2026-11-20",
-        departureTime: "07:15",
+        date: dateOnly("2026-11-20"),
+        departureTime: timeOfDay("07:15"),
         capacityTotal: 10,
         capacityBooked: 0,
         capacityHeld: 0,
-        price: 150,
+        price: 15000,
         status: "ACTIVE",
       },
     });
@@ -111,12 +112,12 @@ describe("Domain Repositories & Business Logic", () => {
     const departure = await prisma.tourDeparture.create({
       data: {
         tourId: tour!.id,
-        date: "2026-11-25",
-        departureTime: "09:15",
+        date: dateOnly("2026-11-25"),
+        departureTime: timeOfDay("09:15"),
         capacityTotal: 10,
         capacityBooked: 0,
         capacityHeld: 0,
-        price: 180,
+        price: 18000,
         status: "ACTIVE",
       },
     });

@@ -279,7 +279,7 @@ export async function runConciergeTool(name: string, input: Record<string, any>,
       if (!r.success || !hold?.success) return { result: { error: hold?.error ?? r.error ?? "Couldn't hold those seats." } };
       const dep = await prisma.tourDeparture.findUnique({ where: { id: input.departureId }, include: { tour: true, shuttleRoute: true } });
       const unit = dep?.tour?.priceUnit === "GROUP";
-      const total = dep ? (unit ? dep.price : dep.price * Number(input.seats)) : undefined;
+      const total = dep ? (unit ? dep.price : dep.price * Number(input.seats)) / 100 : undefined; // cents → dollars
       return {
         result: { held: true, expiresAt: hold.expiresAt, checkoutUrl: hold.checkoutUrl, estimatedTotalBeforeGst: total },
         card: {

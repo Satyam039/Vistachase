@@ -13,4 +13,5 @@ export default function setup() {
   // Same migrations production applies (prisma migrate deploy), so a missing migration fails here.
   execSync("npx prisma migrate reset --force --skip-seed --skip-generate", { cwd, env, stdio: "inherit" });
   execSync("node prisma/seed.js", { cwd, env, stdio: "inherit" });
+  execSync("node prisma/seed-fixtures.js", { cwd, env: { ...env, NODE_ENV: "test" }, stdio: "inherit" });
 }

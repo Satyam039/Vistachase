@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import prisma from "@/lib/db/prisma";
 import { hasPermission } from "@/lib/auth/auth";
+import { dateOnly, timeOfDay } from "@/lib/utils/time";
 import {
   getAdminMetrics,
   getDispatchManifest,
@@ -22,12 +23,12 @@ describe("Phase 6: Admin Panel, Dispatch Board & RBAC", () => {
     const dep = await prisma.tourDeparture.create({
       data: {
         tourId: tour!.id,
-        date: dispatchDate,
-        departureTime: "07:30",
+        date: dateOnly(dispatchDate),
+        departureTime: timeOfDay("07:30"),
         capacityTotal: 14,
         capacityBooked: 4,
         capacityHeld: 0,
-        price: 165.0,
+        price: 16500,
         currency: "CAD",
         status: "SCHEDULED" as any,
       },
@@ -48,9 +49,9 @@ describe("Phase 6: Admin Panel, Dispatch Board & RBAC", () => {
         childrenCount: 0,
         infantsCount: 0,
         totalSeats: 4,
-        subtotal: 660,
-        tax: 33,
-        totalAmount: 693,
+        subtotal: 66000,
+        tax: 3300,
+        totalAmount: 69300,
         currency: "CAD",
         status: "CONFIRMED",
         voucherCode: `VOUCH-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,

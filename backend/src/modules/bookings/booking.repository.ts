@@ -112,7 +112,8 @@ let discountPercent = 0;
       else if (code === "BANFF10") discountPercent = 10;
     }
 
-    const subtotal = fareSubtotal(departure, totalSeats);
+    // Totals below are in dollars and stored as cents (× 100); departure prices are cents.
+    const subtotal = fareSubtotal(departure, totalSeats) / 100;
     const discountAmount = Math.round(subtotal * (discountPercent / 100));
     const addOnsTotal = (input.addOns || []).reduce((acc, curr) => acc + curr.price * curr.quantity, 0);
     const tax = Math.round((subtotal - discountAmount + addOnsTotal) * 0.05 * 100) / 100; // 5% GST Alberta

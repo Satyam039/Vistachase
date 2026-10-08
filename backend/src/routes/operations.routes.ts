@@ -11,6 +11,7 @@ import {
 } from "@/modules/operations/operations.repository";
 import { getBokunOperationsProvider } from "@/modules/bokun/bokun.provider";
 import prisma from "@/lib/db/prisma";
+import { todayInMountainTime } from "@/lib/utils/time";
 
 const router = Router();
 
@@ -26,7 +27,7 @@ router.use((req, res, next) => {
 // 1. Operations Dashboard
 router.get("/dashboard", async (req, res) => {
   try {
-    const date = (req.query.date as string) || new Date().toISOString().split("T")[0];
+    const date = (req.query.date as string) || todayInMountainTime();
     const data = await getOperationsDashboard(date);
     return res.json({ success: true, ...data });
   } catch (error: any) {
@@ -136,7 +137,7 @@ router.post("/runs/check-in", async (req, res) => {
 // 8. Trigger Bókun Synchronization
 router.post("/sync-bokun", async (req, res) => {
   try {
-    const date = (req.body?.date as string) || new Date().toISOString().split("T")[0];
+    const date = (req.body?.date as string) || todayInMountainTime();
     const bokunProvider = getBokunOperationsProvider();
     const result = await bokunProvider.syncTodaysBookings(date);
     return res.json({ success: true, result });

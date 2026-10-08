@@ -3,6 +3,7 @@ import { getLiveTrackingProvider } from "@/lib/tracking/tracking.provider";
 import { getMapsProvider } from "@/lib/maps/maps.provider";
 import { createReservationHold } from "@/modules/reservations/reservation.repository";
 import { createBooking } from "@/modules/bookings/booking.repository";
+import { dateOnly, todayInMountainTime } from "@/lib/utils/time";
 
 export interface ToolExecutionContext {
   isStaff?: boolean;
@@ -244,10 +245,10 @@ export async function getOperationalStatus(args: { bookingReference: string }) {
 }
 
 export async function getAvailableDates(args: { tourSlug?: string }) {
-  const today = new Date().toISOString().split("T")[0];
+  const today = todayInMountainTime();
   const departures = await prisma.tourDeparture.findMany({
     where: {
-      date: { gte: new Date(today) },
+      date: { gte: dateOnly(today) },
       status: "ACTIVE",
       ...(args.tourSlug ? { tour: { slug: args.tourSlug } } : {}),
     },
@@ -353,9 +354,9 @@ export async function getTodaysDepartures(args: { date?: string }, ctx: ToolExec
     throw new Error("UNAUTHORIZED: Operations staff credentials required to view daily dispatch rosters.");
   }
 
-  const date = args.date || new Date().toISOString().split("T")[0];
+  const date = args.date || todayInMountainTime();
   const departures = await prisma.tourDeparture.findMany({
-    where: { date },
+    where: { date: dateOnly(date) },
     include: {
       tour: true,
       shuttleRoute: true,
@@ -389,12 +390,12 @@ export async function getPendingPickups(args: { runId?: string; date?: string },
     throw new Error("UNAUTHORIZED: Operations staff credentials required.");
   }
 
-  const today = args.date || new Date().toISOString().split("T")[0];
+  const today = args.date || todayInMountainTime();
 
   const pendingRunBookings = await prisma.runBooking.findMany({
     where: {
       isBoarded: false,
-      ...(args.runId ? { runId: args.runId } : { run: { date: today } }),
+      ...(args.runId ? { runId: args.runId } : { run: { date: dateOnly(today) } }),
     },
     include: {
       run: {
@@ -424,11 +425,11 @@ export async function getBoardingStatus(args: { departureId?: string; date?: str
     throw new Error("UNAUTHORIZED: Operations staff credentials required.");
   }
 
-  const date = args.date || new Date().toISOString().split("T")[0];
+  const date = args.date || todayInMountainTime();
   const bookings = await prisma.booking.findMany({
     where: {
       status: "CONFIRMED",
-      tourDeparture: args.departureId ? { id: args.departureId } : { date },
+      tourDeparture: args.departureId ? { id: args.departureId } : { date: dateOnly(date) },
     },
     select: {
       id: true,
@@ -458,9 +459,9 @@ export async function getVehicleAssignments(args: { date?: string }, ctx: ToolEx
     throw new Error("UNAUTHORIZED: Operations staff credentials required.");
   }
 
-  const date = args.date || new Date().toISOString().split("T")[0];
+  const date = args.date || todayInMountainTime();
   const runs = await prisma.operationRun.findMany({
-    where: { date },
+    where: { date: dateOnly(date) },
     include: {
       vehicle: true,
       driver: true,
