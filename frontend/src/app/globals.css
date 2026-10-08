@@ -295,18 +295,20 @@ b {
   border: 1px solid rgba(28, 31, 35, 0.08);
 }
 
+/* Primary CTA: a soft champagne yellow (premium brief, item 4). Less saturated and lighter than
+   Golden Summit, no glow, no lift; a hairline edge keeps it defined on white and on dark. Yellow is
+   an accent, so this is used once or twice per view. */
 .golden-summit-btn {
-  background-color: #f5bf03;
+  background-color: #f2e3a9;
   color: #1c1f23;
-  font-weight: 700;
-  transition: all 300ms cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 4px 14px rgba(245, 191, 3, 0.25);
+  font-weight: 500;
+  box-shadow: inset 0 0 0 1px rgb(28 31 35 / 0.08);
+  transition: background-color 250ms ease, box-shadow 250ms ease;
 }
 
 .golden-summit-btn:hover {
-  background-color: #ffe085;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 22px rgba(245, 191, 3, 0.35);
+  background-color: #ead68e;
+  box-shadow: inset 0 0 0 1px rgb(28 31 35 / 0.12);
 }
 
 .ocean-teal-btn {

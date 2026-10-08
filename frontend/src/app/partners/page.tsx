@@ -111,7 +111,7 @@ export default function PartnersPage() {
         <ol className="grid gap-5 md:grid-cols-3" data-stagger>
           {STEPS.map((step, i) => (
             <li key={step} className="flex gap-4 rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07]">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-summit-500 text-obsidian-900" aria-hidden="true">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-summit-200 text-obsidian-900" aria-hidden="true">
                 {i + 1}
               </span>
               <span className="pt-1.5 text-base text-obsidian-900">{step}</span>

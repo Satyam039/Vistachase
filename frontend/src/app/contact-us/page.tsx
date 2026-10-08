@@ -76,7 +76,7 @@ export default async function ContactUsPage({ searchParams }: { searchParams: Pr
                   href={href}
                   className="group flex items-center gap-4 rounded-[1.5rem] bg-white p-5 ring-1 ring-obsidian-900/[0.07] transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_40px_-28px_rgba(12,31,33,0.5)]"
                 >
-                  <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-summit-500 text-obsidian-900">
+                  <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-summit-200 text-obsidian-900">
                     <Icon className="h-5 w-5" aria-hidden="true" />
                   </span>
                   <span className="min-w-0 flex-1">
