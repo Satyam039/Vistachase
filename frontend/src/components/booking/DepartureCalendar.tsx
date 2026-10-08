@@ -67,7 +67,7 @@ export function DepartureCalendar({
           Selected
         </li>
         <li className="flex items-center gap-1.5">
-          <span className="text-slate-400 line-through" aria-hidden="true">
+          <span className="text-slate-500 line-through" aria-hidden="true">
             12
           </span>
           Not available
