@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 const bokun = getBokunOperationsProvider();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", { apiVersion: "2024-06-20" as any });
 
-async function runNightlyReconciliation() {
+export async function runNightlyReconciliation() {
   console.log("Starting Nightly Reconciliation...");
 
   // 1. Fetch all bookings that are CONFIRMED locally
@@ -14,7 +14,7 @@ async function runNightlyReconciliation() {
     where: {
       createdAt: { gte: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) } // Last 3 days
     },
-    include: { payment: true }
+    include: { payments: true }
   });
 
   for (const booking of recentBookings) {
@@ -22,14 +22,14 @@ async function runNightlyReconciliation() {
     let stripeOk = false;
 
     // Check Stripe
-    if (booking.payment && booking.payment.transactionId && booking.payment.transactionId.startsWith("ch_")) {
+    if (booking.payments[0] && booking.payments[0].transactionId && booking.payments[0].transactionId.startsWith("ch_")) {
       try {
-        const charge = await stripe.charges.retrieve(booking.payment.transactionId);
+        const charge = await stripe.charges.retrieve(booking.payments[0].transactionId);
         if (charge.status === "succeeded") stripeOk = true;
       } catch (e: any) {
         console.warn(`Stripe error for ${booking.bookingReference}: ${e.message}`);
       }
-    } else if (booking.payment?.status === "SUCCEEDED") {
+    } else if (booking.payments[0]?.status === "SUCCEEDED") {
       stripeOk = true; // Maybe mock payment or other
     }
 

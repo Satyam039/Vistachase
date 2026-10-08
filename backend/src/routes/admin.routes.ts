@@ -1,90 +1,132 @@
 import { Router } from "express";
-import { getAuthenticatedStaff } from "@/lib/auth/admin-guard";
-import {
-  getAdminMetrics,
-  getDispatchManifest,
-  toggleBoardingStatus,
-  updateDepartureCapacity,
-} from "@/modules/admin/admin.repository";
+import { PrismaClient } from "@prisma/client";
+import { verifyToken } from "../lib/auth/auth";
 
 const router = Router();
+const prisma = new PrismaClient();
 
-router.get("/metrics", async (req, res) => {
+// Only ADMIN and DISPATCHER can access these routes
+router.use((req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  
+  const token = authHeader.split(" ")[1];
+  const payload = verifyToken(token);
+  
+  if (!payload || !["ADMIN", "DISPATCHER"].includes(payload.role)) {
+    return res.status(403).json({ error: "Forbidden: Admin access required" });
+  }
+  
+  (req as any).user = payload;
+  next();
+});
+
+// A1: Enquiry Inbox
+router.get("/enquiries", async (req, res) => {
   try {
-    const staff = getAuthenticatedStaff(req, ["ADMIN", "OPERATOR", "DISPATCHER"]);
-    if (!staff) {
-      return res.status(403).json({ error: "Access denied. Staff privileges required." });
-    }
-
-    const metrics = await getAdminMetrics();
-    return res.json({ success: true, metrics });
-  } catch (error) {
-    console.error("Admin metrics error:", error);
-    return res.status(500).json({ error: "Failed to load metrics." });
+    const status = req.query.status as any;
+    const enquiries = await prisma.enquiry.findMany({
+      where: status ? { status } : undefined,
+      orderBy: { createdAt: "desc" }
+    });
+    res.json(enquiries);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
   }
 });
 
-router.get("/dispatch", async (req, res) => {
+router.patch("/enquiries/:id", async (req, res) => {
   try {
-    const staff = getAuthenticatedStaff(req, ["ADMIN", "OPERATOR", "DISPATCHER"]);
-    if (!staff) {
-      return res.status(403).json({ error: "Access denied. Dispatcher privileges required." });
-    }
+    const enquiry = await prisma.enquiry.update({
+      where: { id: req.params.id },
+      data: { status: req.body.status }
+    });
 
-    const date = (req.query.date as string | undefined) || new Date().toISOString().split("T")[0];
+    await prisma.auditLog.create({
+      data: {
+        userId: (req as any).user.id,
+        action: "UPDATE_ENQUIRY",
+        entityType: "Enquiry",
+        entityId: enquiry.id,
+        details: { status: req.body.status }
+      }
+    });
 
-    const manifests = await getDispatchManifest(date);
-    return res.json({ success: true, date, manifests });
-  } catch (error) {
-    console.error("Admin dispatch error:", error);
-    return res.status(500).json({ error: "Failed to load dispatch manifest." });
+    res.json(enquiry);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
   }
 });
 
-router.post("/dispatch/check-in", async (req, res) => {
+// A2: Booking Management
+router.get("/bookings", async (req, res) => {
   try {
-    const staff = getAuthenticatedStaff(req, ["ADMIN", "OPERATOR", "DISPATCHER"]);
-    if (!staff) {
-      return res.status(403).json({ error: "Access denied. Dispatcher privileges required." });
-    }
-
-    const { bookingId, isBoarded } = req.body ?? {};
-
-    if (!bookingId || typeof isBoarded !== "boolean") {
-      return res.status(400).json({ error: "bookingId and boolean isBoarded are required." });
-    }
-
-    const updated = await toggleBoardingStatus(bookingId, isBoarded);
-    return res.json({ success: true, booking: updated });
-  } catch (error) {
-    console.error("Boarding check-in error:", error);
-    return res.status(500).json({ error: "Failed to update boarding status." });
+    const bookings = await prisma.booking.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 100,
+      include: {
+        tourDeparture: { include: { tour: true } },
+        customer: true,
+      }
+    });
+    res.json(bookings);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
   }
 });
 
-router.post("/departures/capacity", async (req, res) => {
+router.patch("/bookings/:id", async (req, res) => {
   try {
-    const staff = getAuthenticatedStaff(req, ["ADMIN", "OPERATOR"]);
-    if (!staff) {
-      return res.status(403).json({ error: "Access denied. Admin or Operator privileges required." });
-    }
+    const booking = await prisma.booking.update({
+      where: { id: req.params.id },
+      data: req.body
+    });
 
-    const { departureId, newTotalCapacity } = req.body ?? {};
+    await prisma.auditLog.create({
+      data: {
+        userId: (req as any).user.id,
+        action: "UPDATE_BOOKING_ADMIN",
+        entityType: "Booking",
+        entityId: booking.id,
+        details: req.body
+      }
+    });
 
-    if (!departureId || typeof newTotalCapacity !== "number") {
-      return res.status(400).json({ error: "departureId and numeric newTotalCapacity are required." });
-    }
+    res.json(booking);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
-    const result = await updateDepartureCapacity(departureId, newTotalCapacity);
+// A3/A5: Staff Roles & Audit Logs
+router.get("/audit-logs", async (req, res) => {
+  try {
+    if ((req as any).user.role !== "ADMIN") return res.status(403).json({ error: "Only ADMIN can view audit logs" });
+    
+    const logs = await prisma.auditLog.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 200,
+      include: { user: { select: { id: true, name: true, email: true, role: true } } }
+    });
+    res.json(logs);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
-    if (!result.success) {
-      return res.status(400).json({ error: result.error });
-    }
-
-    return res.json({ success: true, departure: result.departure });
-  } catch (error) {
-    console.error("Update capacity error:", error);
-    return res.status(500).json({ error: "Failed to update departure capacity." });
+router.get("/staff", async (req, res) => {
+  try {
+    if ((req as any).user.role !== "ADMIN") return res.status(403).json({ error: "Only ADMIN can manage staff" });
+    
+    const staff = await prisma.user.findMany({
+      where: { role: { in: ["ADMIN", "DISPATCHER", "OPERATOR", "AFFILIATE"] } },
+      orderBy: { createdAt: "desc" }
+    });
+    res.json(staff);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
   }
 });
 
