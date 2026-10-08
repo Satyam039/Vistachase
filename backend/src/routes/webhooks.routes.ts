@@ -58,7 +58,7 @@ async function confirmBookingAfterPayment(bookingReference: string, intent: Stri
   // 2. Update Booking status (schema might not have status field, wait, does Booking have status?)
   const booking = await prisma.booking.findUnique({
     where: { bookingReference },
-    include: { tourDeparture: { include: { tour: true } } }
+    include: { tourDeparture: { include: { tour: true } }, payments: true }
   });
 
   if (!booking) return;
@@ -69,12 +69,32 @@ async function confirmBookingAfterPayment(bookingReference: string, intent: Stri
     await bokunProvider.confirmReservation(booking.bokunBookingId).catch(console.error);
   }
 
-  // 4. Send Email
+// 4. Send Email (P6: Receipt with GST)
   const emailProvider = getEmailProvider();
+  const subtotal = booking.payments[0] ? Math.round(booking.payments[0].amount / 1.05) : 0;
+  const gst = booking.payments[0] ? booking.payments[0].amount - subtotal : 0;
+  
   await emailProvider.sendEmail({
     to: booking.customerEmail,
-    subject: "Your Booking is Confirmed!",
-    html: `<p>Your booking ${booking.bookingReference} is confirmed. Payment successful.</p>`, text: `Your booking ${booking.bookingReference} is confirmed. Payment successful.`
+    subject: `Receipt for Booking ${booking.bookingReference}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #072019;">
+        <h2>Vista Chase - Booking Confirmed</h2>
+        <p>Hi ${booking.customerName},</p>
+        <p>Your booking <strong>${booking.bookingReference}</strong> is confirmed. You can view your digital boarding pass <a href="https://vistachase.com/booking/${booking.bookingReference}/voucher">here</a>.</p>
+        <hr />
+        <h3>Receipt</h3>
+        <table style="width: 100%; text-align: left;">
+          <tr><td>Tour/Shuttle</td><td>${booking.tourDeparture?.tour?.title || "Vista Chase Experience"}</td></tr>
+          <tr><td>Date</td><td>${booking.tourDeparture?.date}</td></tr>
+          <tr><td>Subtotal</td><td>$${(subtotal / 100).toFixed(2)} CAD</td></tr>
+          <tr><td>GST (5%)</td><td>$${(gst / 100).toFixed(2)} CAD</td></tr>
+          <tr style="font-weight: bold;"><td>Total Paid</td><td>$${(booking.payments[0]?.amount ? booking.payments[0].amount / 100 : 0).toFixed(2)} CAD</td></tr>
+        </table>
+        <p style="font-size: 0.8rem; color: #666; margin-top: 2rem;">GST Registration Number: 123456789 RT0001</p>
+      </div>
+    `,
+    text: `Your booking ${booking.bookingReference} is confirmed. Total paid: $${(booking.payments[0]?.amount ? booking.payments[0].amount / 100 : 0).toFixed(2)} CAD (includes 5% GST).`
   }).catch(console.error);
 }
 

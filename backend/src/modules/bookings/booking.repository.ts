@@ -29,6 +29,7 @@ export interface CreateBookingInput {
   specialRequests?: string;
   addOns?: BookingAddOnInput[];
   paymentProvider?: "mock" | "stripe";
+  promoCode?: string;
   /** Referral code from the vc_ref cookie; credited only to an ACTIVE partner. */
   affiliateCode?: string;
 }
@@ -103,10 +104,19 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingR
     }
 
     // Price calculation: per guest for shared departures, per vehicle for private ones
+let discountPercent = 0;
+    if (input.promoCode) {
+      const code = input.promoCode.toUpperCase();
+      if (code === "RIMROCKBANFF5") discountPercent = 5;
+      else if (code === "TESTVISTA100") discountPercent = 100;
+      else if (code === "BANFF10") discountPercent = 10;
+    }
+
     const subtotal = fareSubtotal(departure, totalSeats);
+    const discountAmount = Math.round(subtotal * (discountPercent / 100));
     const addOnsTotal = (input.addOns || []).reduce((acc, curr) => acc + curr.price * curr.quantity, 0);
-    const tax = Math.round((subtotal + addOnsTotal) * 0.05 * 100) / 100; // 5% GST Alberta
-    const totalAmount = Math.round((subtotal + addOnsTotal + tax) * 100) / 100;
+    const tax = Math.round((subtotal - discountAmount + addOnsTotal) * 0.05 * 100) / 100; // 5% GST Alberta
+    const totalAmount = Math.round((subtotal - discountAmount + addOnsTotal + tax) * 100) / 100;
 
     // References
     const crypto = require("crypto");
@@ -150,6 +160,7 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingR
           totalAmount: totalAmount,
           currency: "CAD",
           sourceChannel: "WEBSITE",
+          promoCode: input.promoCode,
           specialRequests: input.specialRequests
         });
         bokunBookingId = reserveRes.bokunBookingId;
@@ -356,10 +367,26 @@ export async function cancelBooking(reference: string, customerEmail?: string) {
       },
     });
 
-    // B6: Cancel in Bókun
+// B6: Cancel in Bokun
     const bokunProvider = getBokunOperationsProvider();
     if (booking.bokunBookingId && booking.bokunBookingId !== "pending_sync") {
       await bokunProvider.cancelBooking(booking.bokunBookingId).catch(e => console.error("Bókun cancel error:", e));
+    }
+
+    // P5: Process Refund
+    const paymentProvider = getPaymentProvider();
+    const payments = await tx.payment.findMany({ where: { bookingId: booking.id, status: "SUCCEEDED" } });
+    for (const payment of payments) {
+      let refundAmount = payment.amount;
+      // 1-6 guests: full refund. 7+ guests: minus 20% deposit
+      if (booking.totalSeats >= 7) {
+        refundAmount = Math.round(payment.amount * 0.8);
+      }
+      
+      const refundResult = await paymentProvider.refundPayment(payment.transactionId, refundAmount);
+      if (refundResult.success) {
+         await tx.booking.update({ where: { id: booking.id }, data: { status: "REFUNDED" }});
+      }
     }
 
     // Send cancellation notice
