@@ -139,9 +139,9 @@ export function TourGallery({
           </div>
         )}
 
-        <div className="mx-auto w-full max-w-7xl px-page pt-20" data-scroll-fade>
+        <div className="mx-auto flex w-full max-w-7xl flex-col items-center px-page pt-20 text-center" data-scroll-fade>
           <nav aria-label="Breadcrumb" className="mb-5">
-            <ol className="flex items-center gap-1.5 text-sm text-slate-200">
+            <ol className="flex items-center justify-center gap-1.5 text-sm text-slate-200">
               <li>
                 <Link href="/" className="hover:text-white hover:underline">
                   Home
@@ -174,11 +174,11 @@ export function TourGallery({
             </p>
           )}
 
-          <h1 className="max-w-4xl text-balance text-[clamp(2.25rem,9.5vw,2.75rem)] font-light leading-[1.05] tracking-tight text-white sm:text-6xl lg:text-7xl motion-safe:animate-[fadeUp_900ms_ease-out]">
+          <h1 className="mx-auto max-w-4xl text-balance text-[clamp(2.25rem,9.5vw,2.75rem)] font-light leading-[1.05] tracking-tight text-white sm:text-6xl lg:text-7xl motion-safe:animate-[fadeUp_900ms_ease-out]">
             {heading}
           </h1>
           {service && (
-            <p className="mt-3 max-w-xl text-base font-light leading-snug text-slate-100 sm:mt-4 sm:text-lg lg:text-xl motion-safe:animate-[fadeUp_1100ms_ease-out]">
+            <p className="mx-auto mt-3 max-w-xl text-base font-light leading-snug text-slate-100 sm:mt-4 sm:text-lg lg:text-xl motion-safe:animate-[fadeUp_1100ms_ease-out]">
               {shortTagline(service.tagline)}
             </p>
           )}
@@ -301,7 +301,7 @@ export function TourGallery({
           className="overflow-hidden py-16 sm:py-20"
         >
           <div className="mx-auto max-w-7xl px-page">
-            <div className="mb-8 max-w-2xl" data-reveal>
+            <div className="mx-auto mb-8 max-w-2xl text-center" data-reveal>
               <p className="mb-3 text-sm uppercase tracking-[0.22em] text-ocean-600">
                 Guest reviews
               </p>
@@ -312,7 +312,7 @@ export function TourGallery({
                 What guests say
               </h2>
               {rating !== null && (
-                <p className="mt-3 flex items-center gap-2 text-base text-slate-600">
+                <p className="mt-3 flex items-center justify-center gap-2 text-base text-slate-600">
                   <Star
                     className="h-4 w-4 fill-summit-500 text-summit-500"
                     aria-hidden="true"
@@ -459,14 +459,14 @@ export function TourGallery({
       <PinnedHorizontal
         label="Other ways to explore"
         heading={
-          <>
+          <div className="text-center">
             <p className="mb-3 text-sm uppercase tracking-[0.22em] text-ocean-600">
               Keep exploring
             </p>
             <h2 className="text-3xl font-light tracking-tight text-obsidian-900 sm:text-4xl lg:text-5xl">
               Other ways to explore
             </h2>
-          </>
+          </div>
         }
         itemClassName="w-[24rem] xl:w-[26rem]"
       >
