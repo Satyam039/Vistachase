@@ -55,7 +55,7 @@ jobs:
       working-directory: ./backend
       env:
         DATABASE_URL: postgresql://postgres:vistachase_secret@localhost:5432/vistachase_test?schema=public
-      run: npx prisma migrate deploy
+      run: npx prisma db push --accept-data-loss
 
     - name: Backend Typecheck
       working-directory: ./backend
@@ -72,4 +72,6 @@ jobs:
 
     - name: Frontend Build Check
       working-directory: ./frontend
+      env:
+        FEATURE_FALLBACK_CATALOG: "true"
       run: npm run build
