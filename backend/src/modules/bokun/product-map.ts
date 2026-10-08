@@ -36,10 +36,10 @@ export function slugForBokunId(id: string): string | undefined {
   return PRODUCT_MAP.find((p) => p.bokunId === id)?.slug;
 }
 
-/** Bokun API settings (.env). Empty until Vista Chase issues API keys. */
+/** Bókun API settings (.env). Live API by default; set BOKUN_API_URL=https://api.bokuntest.com for a test account. */
 export function bokunConfig() {
   return {
-    apiUrl: process.env.BOKUN_API_URL || "https://api.bokuntest.com",
+    apiUrl: process.env.BOKUN_API_URL || "https://api.bokun.io",
     accessKey: process.env.BOKUN_ACCESS_KEY || "",
     secretKey: process.env.BOKUN_SECRET_KEY || "",
     onlineSalesChannelId: process.env.BOKUN_ONLINE_SALES_CHANNEL_ID || productMap.bokun.onlineSalesChannelId || "",

@@ -9,6 +9,8 @@
 
 interface PricedDeparture {
   price: number;
+  /** Per-child price (cents) when it differs from the adult price; adults' price otherwise. */
+  childPrice?: number | null;
   capacityTotal: number;
   tour?: { category: string } | null;
 }
@@ -22,9 +24,13 @@ export function seatsToReserve(departure: PricedDeparture, guests: number): numb
   return isVehicleDeparture(departure) ? departure.capacityTotal : guests;
 }
 
-/** Fare before add-ons and tax, in cents (departure prices are stored in cents). */
-export function fareSubtotal(departure: PricedDeparture, guests: number): number {
-  return isVehicleDeparture(departure) ? departure.price : departure.price * guests;
+/**
+ * Fare before add-ons, in cents (departure prices are stored in cents). Private tours: one
+ * vehicle price. Otherwise adults at the departure price and children at the child price.
+ */
+export function fareSubtotal(departure: PricedDeparture, adults: number, children = 0): number {
+  if (isVehicleDeparture(departure)) return departure.price;
+  return departure.price * adults + (departure.childPrice ?? departure.price) * children;
 }
 
 /** Problem with the party size for this departure, if any. */

@@ -10,6 +10,8 @@ export interface DepartureAvailability {
   capacityHeld: number;
   seatsAvailable: number;
   price: number;
+  /** Per child when Bókun prices children differently; otherwise children pay `price`. */
+  childPrice?: number | null;
   currency: string;
   status: string;
 }
@@ -159,6 +161,7 @@ export interface CheckoutData {
     capacityHeld: number;
     seatsAvailable: number;
     price: number;
+    childPrice?: number | null;
     currency: string;
     tour: {
       id: string;

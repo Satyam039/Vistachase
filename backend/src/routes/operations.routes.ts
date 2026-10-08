@@ -9,9 +9,9 @@ import {
   toggleRunPassengerBoarding,
   getRunManifest,
 } from "@/modules/operations/operations.repository";
-import { getBokunOperationsProvider } from "@/modules/bokun/bokun.provider";
 import prisma from "@/lib/db/prisma";
 import { todayInMountainTime } from "@/lib/utils/time";
+import { syncBokunDepartures } from "@/jobs/tasks";
 
 const router = Router();
 
@@ -134,12 +134,11 @@ router.post("/runs/check-in", async (req, res) => {
   }
 });
 
-// 8. Trigger Bókun Synchronization
-router.post("/sync-bokun", async (req, res) => {
+// 8. "Sync now": departure dates, seats and prices for the next 60 days from Bókun.
+router.post("/sync-bokun", async (_req, res) => {
   try {
-    const date = (req.body?.date as string) || todayInMountainTime();
-    const bokunProvider = getBokunOperationsProvider();
-    const result = await bokunProvider.syncTodaysBookings(date);
+    const result = await syncBokunDepartures();
+    if ("skipped" in result) return res.status(409).json({ error: "Bókun isn't connected yet (BOKUN_ACCESS_KEY / BOKUN_SECRET_KEY)." });
     return res.json({ success: true, result });
   } catch (error: any) {
     return res.status(500).json({ error: "Bókun sync failed." });

@@ -37,6 +37,7 @@ export function promoPercent(code?: string | null): number | null {
 
 export interface PricedDeparture {
   price: number; // cents
+  childPrice?: number | null; // cents
   capacityTotal: number;
   tour?: { category: string } | null;
 }
@@ -50,13 +51,16 @@ export interface BookingTotals {
   totalCents: number;
 }
 
+/** `party`: adults and children (a plain number counts everyone as adults). */
 export function priceBooking(
   departure: PricedDeparture,
-  guests: number,
+  party: number | { adults: number; children: number },
   addOnChoices: AddOnChoice[] = [],
   promoCode?: string | null,
 ): BookingTotals {
-  const fareCents = fareSubtotal(departure, guests);
+  const { adults, children } = typeof party === "number" ? { adults: party, children: 0 } : party;
+  const guests = adults + children;
+  const fareCents = fareSubtotal(departure, adults, children);
   const discountPercent = promoPercent(promoCode) ?? 0;
   const discountCents = Math.round((fareCents * discountPercent) / 100);
 

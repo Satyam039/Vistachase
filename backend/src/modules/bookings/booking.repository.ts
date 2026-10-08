@@ -111,7 +111,7 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingR
       } as const;
     }
 
-    const totals = priceBooking(departure, totalSeats, input.addOns, input.promoCode);
+    const totals = priceBooking(departure, { adults: input.adultsCount, children: input.childrenCount }, input.addOns, input.promoCode);
     const bookingReference = newReference();
 
     const booking = await tx.booking.create({

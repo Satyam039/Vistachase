@@ -8,7 +8,7 @@ How Vista Chase runs in production, how to deploy it the first time, and what to
 |---|---|---|
 | `vistachase-frontend` | Next.js site. Proxies `/api/*` and `/media/*` to the API, so the browser stays on one origin. | `npm run start` |
 | `vistachase-backend` | Express API, 2 instances. Applies migrations at release (`preDeployCommand`). | `node dist/server.js` |
-| `vistachase-worker` | Background jobs (`src/worker.ts`): expires unpaid holds and bookings every 5 min, nightly booking check at 02:00 MT, review requests at 10:00 MT. | `npm run worker` |
+| `vistachase-worker` | Background jobs (`src/worker.ts`): expires unpaid holds and bookings every 5 min, reads Bókun departure dates, seats and prices every 15 min, nightly booking check at 02:00 MT, review requests at 10:00 MT. | `npm run worker` |
 | `vistachase-db` | PostgreSQL 16, daily backups with point-in-time recovery. | managed |
 | `vistachase-redis` | Redis, for rate limits, cache and the job queue. Must be `noeviction`. | managed |
 
@@ -24,7 +24,9 @@ Required for the backend:
 
 Required for the frontend: `BACKEND_URL` (read at build time), `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`.
 
-Optional: `SENTRY_DSN` and `NEXT_PUBLIC_SENTRY_DSN`, `ANTHROPIC_API_KEY` (AI concierge), and the Bókun keys once the live integration is built.
+Optional: `SENTRY_DSN` and `NEXT_PUBLIC_SENTRY_DSN`, `ANTHROPIC_API_KEY` (AI concierge), and the Bókun keys (`BOKUN_ACCESS_KEY`, `BOKUN_SECRET_KEY`, `BOKUN_API_URL=https://api.bokun.io`, `BOKUN_ONLINE_SALES_CHANNEL_ID`). With the keys set, departures come from Bókun: dates, start times, seats left, adult and child prices for the next 60 days, refreshed every 15 minutes (staff can press "Sync with Bókun" on the operations page).
+
+Without a worker (Render free plan) set `RUN_JOBS_IN_API=true` on the API so it runs the 5-minute hold expiry and the 15-minute Bókun sync itself. The nightly check and review emails still need the worker. Never set it while the worker runs.
 
 The worker must have the same `VOUCHER_SECRET` and `JWT_SECRET` as the API. `render.yaml` copies them from the API service, because the review links the worker emails are checked by the API.
 

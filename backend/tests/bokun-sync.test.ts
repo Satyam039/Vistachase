@@ -37,31 +37,26 @@ describe("Bókun Operations & Integration Layer", () => {
     expect(await prisma.tourDeparture.count()).toBe(before);
   });
 
-  it("syncs Bókun availability into departures without duplicating them (live provider, stubbed API)", async () => {
+  it("syncs one day of Bókun availability into departures without duplicating them (live provider, stubbed API)", async () => {
     const mapped = PRODUCT_MAP.find((p) => p.slug === "banff-highlights-tour")!;
-    const original = mapped.bokunId;
-    mapped.bokunId = "TEST-BOKUN-1";
-    try {
-      const live = new LiveBokunOperationsProvider();
-      (live as any).client = {
-        getAvailabilities: async () => [{ time: "07:45", capacity: 11 }],
-      };
-      live.fetchProducts = async () => [
-        { id: "TEST-BOKUN-1", slug: mapped.slug, title: "Test", category: "SHARED", durationHours: 10, capacity: 12, basePrice: 199, currency: "CAD" },
-      ];
+    const live = new LiveBokunOperationsProvider();
+    (live as any).client = {
+      getAvailabilities: async (id: string) =>
+        id === mapped.bokunId
+          ? [{ date: Date.parse("2027-03-09T00:00:00Z"), startTime: "07:45", availabilityCount: 11, bookedParticipants: 0, defaultRateId: 1, rates: [{ id: 1 }], pricesByRate: [{ activityRateId: 1, pricePerCategoryUnit: [{ id: 1, amount: { amount: 199 } }] }] }]
+          : [],
+      fetch: async () => ({ pricingCategories: [{ id: 1, title: "Adults" }] }),
+    };
 
-      const first = await live.syncTodaysBookings("2027-03-09");
-      expect(first).toEqual({ syncedCount: 1, updatedCount: 0, errors: [] });
+    const first = await live.syncTodaysBookings("2027-03-09");
+    expect(first).toEqual({ syncedCount: 1, updatedCount: 0, errors: [] });
 
-      const second = await live.syncTodaysBookings("2027-03-09");
-      expect(second).toEqual({ syncedCount: 0, updatedCount: 1, errors: [] });
+    const second = await live.syncTodaysBookings("2027-03-09");
+    expect(second).toEqual({ syncedCount: 0, updatedCount: 1, errors: [] });
 
-      const departures = await prisma.tourDeparture.findMany({ where: { date: dateOnly("2027-03-09"), tour: { slug: mapped.slug } } });
-      expect(departures).toHaveLength(1);
-      expect(departures[0].price).toBe(19900); // $199 from Bókun, stored in cents
-      expect(formatTimeOfDay(departures[0].departureTime)).toBe("07:45");
-    } finally {
-      mapped.bokunId = original;
-    }
+    const departures = await prisma.tourDeparture.findMany({ where: { date: dateOnly("2027-03-09"), tour: { slug: mapped.slug } } });
+    expect(departures).toHaveLength(1);
+    expect(departures[0].price).toBe(19900); // $199 from Bókun, stored in cents
+    expect(formatTimeOfDay(departures[0].departureTime)).toBe("07:45");
   });
 });

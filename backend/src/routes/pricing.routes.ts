@@ -26,7 +26,7 @@ router.post("/quote", rateLimitMiddleware("promo_quote", { maxRequests: 20, wind
     const departure = await prisma.tourDeparture.findUnique({ where: { id: body.departureId }, include: { tour: true } });
     if (!departure) return res.status(404).json({ success: false, error: "Departure not found" });
 
-    const totals = priceBooking(departure, body.adultsCount + body.childrenCount, [], body.promoCode);
+    const totals = priceBooking(departure, { adults: body.adultsCount, children: body.childrenCount }, [], body.promoCode);
     return res.json({
       success: true,
       promoCode: body.promoCode.toUpperCase(),

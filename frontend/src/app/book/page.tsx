@@ -38,6 +38,7 @@ export default async function BookPage({
         capacityHeld: departure.capacityHeld,
         seatsAvailable: departure.seatsAvailable,
         price: departure.price,
+        childPrice: departure.childPrice,
         currency: departure.currency,
         tour: departure.tour,
         shuttleRoute: departure.shuttleRoute,
