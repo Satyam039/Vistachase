@@ -127,7 +127,7 @@ router.post("/", rateLimitMiddleware("concierge", { maxRequests: 30, windowSecon
 });
 
 // POST /api/concierge/tool (Direct Tool Invocation with Validation & RBAC)
-router.post("/tool", async (req, res) => {
+router.post("/tool", rateLimitMiddleware("concierge_tool", { maxRequests: 30, windowSeconds: 600 }), async (req, res) => {
   try {
     const { toolName, args } = req.body ?? {};
     if (!toolName) {

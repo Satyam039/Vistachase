@@ -3,6 +3,10 @@ import { Router, Response } from "express";
 import prisma from "@/lib/db/prisma";
 import { hashPassword, verifyPassword, signToken, UserRole } from "@/lib/auth/auth";
 import { AUTH_COOKIE_NAME, getAuthenticatedUser } from "@/lib/auth/admin-guard";
+import crypto from "node:crypto";
+import { getEmailProvider } from "@/lib/email/email.provider";
+import { siteUrl } from "@/lib/security/signed-links";
+import { emailSchema, parseOr400, z } from "@/lib/security/validate";
 
 const router = Router();
 
@@ -163,54 +167,53 @@ router.get("/me", (req, res) => {
 });
 
 
-import crypto from "crypto";
-// import { getEmailProvider } from "@/lib/email/email.provider"; // Assumed existing
+// Password reset: the emailed link carries a random token; only its SHA-256 hash is stored, it
+// expires in an hour and works once. Responses never reveal whether an account exists.
+const sha256 = (value: string) => crypto.createHash("sha256").update(value).digest("hex");
 
-router.post("/forgot-password", async (req, res) => {
+router.post("/forgot-password", rateLimitMiddleware("forgot_password", { maxRequests: 3, windowSeconds: 900 }), async (req, res, next) => {
   try {
-    const { email } = req.body;
-    if (!email) return res.status(400).json({ error: "Email required" });
-    
-    const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
-    if (!user) return res.json({ success: true }); // Silent fail for security
-    
+    const body = parseOr400(z.object({ email: emailSchema }), req.body, res);
+    if (!body) return;
+    const done = { success: true, message: "If an account exists for that email, we've sent a reset link." };
+
+    const user = await prisma.user.findUnique({ where: { email: body.email } });
+    if (!user) return res.json(done);
+
     const token = crypto.randomBytes(32).toString("hex");
     await prisma.user.update({
       where: { id: user.id },
-      data: { resetToken: token, resetTokenExpiry: new Date(Date.now() + 60 * 60 * 1000) }
+      data: { resetToken: sha256(token), resetTokenExpiry: new Date(Date.now() + 60 * 60 * 1000) },
     });
-    
-    // In production we would send an email here using getEmailProvider().sendEmail(...)
-    console.log(`[AUTH] Password reset token for ${email}: ${token}`);
-    
-    res.json({ success: true, message: "If an account exists, a reset link was sent." });
+    const link = `${siteUrl()}/reset-password?token=${token}`;
+    await getEmailProvider()
+      .sendEmail({
+        to: user.email,
+        subject: "Reset your Vista Chase password",
+        html: `<p>Hi ${user.name.replace(/[<>&]/g, "")},</p><p><a href="${link}">Choose a new password</a>. This link works once and expires in an hour.</p><p>If you didn't ask for this, you can ignore this email.</p>`,
+        text: `Choose a new Vista Chase password: ${link}\nThis link works once and expires in an hour. If you didn't ask for this, ignore this email.`,
+      })
+      .catch((e) => console.error("Password reset email failed:", (e as Error).message));
+    return res.json(done);
   } catch (error) {
-    res.status(500).json({ error: "Internal server error" });
+    next(error);
   }
 });
 
-router.post("/reset-password", async (req, res) => {
+router.post("/reset-password", rateLimitMiddleware("reset_password", { maxRequests: 5, windowSeconds: 900 }), async (req, res, next) => {
   try {
-    const { token, newPassword } = req.body;
-    if (!token || !newPassword || newPassword.length < 8) {
-      return res.status(400).json({ error: "Invalid request" });
-    }
-    
-    const user = await prisma.user.findFirst({
-      where: { resetToken: token, resetTokenExpiry: { gt: new Date() } }
-    });
-    
-    if (!user) return res.status(400).json({ error: "Invalid or expired token" });
-    
-    const passwordHash = await hashPassword(newPassword);
+    const body = parseOr400(z.object({ token: z.string().regex(/^[a-f0-9]{64}$/), newPassword: z.string().min(8).max(200) }), req.body, res);
+    if (!body) return;
+    const user = await prisma.user.findFirst({ where: { resetToken: sha256(body.token), resetTokenExpiry: { gt: new Date() } } });
+    if (!user) return res.status(400).json({ success: false, error: "This reset link is invalid or has expired." });
+
     await prisma.user.update({
       where: { id: user.id },
-      data: { passwordHash, resetToken: null, resetTokenExpiry: null, lockedUntil: null, failedLoginAttempts: 0 }
+      data: { passwordHash: await hashPassword(body.newPassword), resetToken: null, resetTokenExpiry: null, lockedUntil: null, failedLoginAttempts: 0 },
     });
-    
-    res.json({ success: true, message: "Password updated successfully." });
+    return res.json({ success: true, message: "Password updated. You can sign in now." });
   } catch (error) {
-    res.status(500).json({ error: "Internal server error" });
+    next(error);
   }
 });
 

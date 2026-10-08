@@ -99,7 +99,7 @@ describe("Vista Chase AI Voice Assistant & Multi-Turn Conversational Booking Flo
     }
   });
 
-  it("7. Booking Confirmation & Voucher -> Generates reference, QR voucher URL, and WhatsApp notification notice", async () => {
+  it("7. Never confirms a booking itself: payment at checkout does, and the voucher comes by email", async () => {
     const messages: ChatMessage[] = [
       { role: "user", content: "I want to book the sunrise tour for two adults." },
       { role: "user", content: "Tomorrow" },
@@ -109,11 +109,10 @@ describe("Vista Chase AI Voice Assistant & Multi-Turn Conversational Booking Flo
     ];
     const res = await ai.chat(messages);
 
-    expect(res.message).toContain("officially confirmed");
-    expect(res.message).toContain("WhatsApp live tracking");
-    expect(res.data?.voucherUrl).toContain("/booking/VC-2026-");
-    expect(res.toolCalls?.some((t) => t.name === "confirmVoiceBooking")).toBe(true);
-    expect(res.sessionState?.stage).toBe("CONFIRMED");
+    expect(res.message).toContain("confirmed as soon as payment goes through");
+    expect(res.message).not.toMatch(/VC-\d{4}-/); // no invented booking reference
+    expect(res.toolCalls ?? []).toHaveLength(0);
+    expect(res.sessionState?.stage).not.toBe("CONFIRMED");
   });
 
   it("8. Live Shuttle Tracking & ETA Integration", async () => {

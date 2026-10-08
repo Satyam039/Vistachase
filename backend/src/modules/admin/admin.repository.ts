@@ -36,16 +36,15 @@ export async function getAdminMetrics() {
     }),
   ]);
 
-  const totalRevenue = revenueAgg._sum.amount || 0;
-
+  // Amounts are stored in cents; the dashboard shows dollars.
   return {
     totalBookings,
     confirmedBookings,
     totalUsers,
     totalDepartures,
     activeHoldsCount,
-    totalRevenue: Math.round(totalRevenue * 100) / 100,
-    recentBookings,
+    totalRevenue: (revenueAgg._sum.amount || 0) / 100,
+    recentBookings: recentBookings.map((b) => ({ ...b, subtotal: b.subtotal / 100, tax: b.tax / 100, addOnsTotal: b.addOnsTotal / 100, totalAmount: b.totalAmount / 100 })),
   };
 }
 
