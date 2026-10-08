@@ -25,3 +25,7 @@ export function departureInstant(date: string, time = "08:00"): Date {
 /** Free cancellation is open until 72 hours before departure. */
 export const canCancelFree = (date: string, time?: string, now = new Date()) =>
   departureInstant(date, time).getTime() - now.getTime() >= CANCEL_WINDOW_HOURS * 3600_000;
+
+/** Customer-facing availability line for a bookable departure (premium brief, item 7). Shown only when
+ * the backend reports seats open; never a count. Full departures keep their factual "Sold out". */
+export const SEATS_MESSAGE = "Seats get sold out fast";

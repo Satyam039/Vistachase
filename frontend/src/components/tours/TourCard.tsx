@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, Clock, MapPin, Star, Users } from "lucide-react";
 import { PriceTag } from "@/components/pricing/PriceTag";
-import { cancellationShort } from "@/lib/policy";
+import { cancellationShort, SEATS_MESSAGE } from "@/lib/policy";
 import type { TourWithAvailability } from "@/lib/api/types";
 import {
   CATEGORY_LABEL,
@@ -30,8 +30,6 @@ export {
   reviewsLabel,
 };
 
-const LOW_SEATS = 4;
-
 function formatShortDate(date: string) {
   const parsed = new Date(`${date}T00:00:00`);
   if (Number.isNaN(parsed.getTime())) return date;
@@ -55,10 +53,7 @@ function availability(tour: TourWithAvailability, seats: number, date?: string) 
   if (isVehicleTour(tour)) {
     return { variant: "success" as const, text: `Available · ${formatShortDate(next.date)}` };
   }
-  return {
-    variant: next.seatsAvailable <= LOW_SEATS ? ("warning" as const) : ("success" as const),
-    text: `${next.seatsAvailable} seats left · ${formatShortDate(next.date)}`,
-  };
+  return { variant: "success" as const, text: `${SEATS_MESSAGE} · ${formatShortDate(next.date)}` };
 }
 
 /** Earned badges only: the shared Banff tour is TripAdvisor's #6 experience in Canada (2025). */

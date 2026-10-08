@@ -47,6 +47,7 @@ import { TextInput } from "@astryxdesign/core/TextInput";
 import { Thumbnail } from "@astryxdesign/core/Thumbnail";
 import { QuantityInput } from "@/components/forms/QuantityInput";
 import { Dropdown } from "@/components/forms/Dropdown";
+import { SEATS_MESSAGE } from "@/lib/policy";
 import {
   CreditCard,
   Lock,
@@ -1024,7 +1025,7 @@ export function BookingCheckoutClient({
                                   ? seatCapacity > 0
                                     ? `Whole vehicle · up to ${seatCapacity} guests`
                                     : "Vehicle already booked"
-                                  : `${seatCapacity} ${seatCapacity === 1 ? "seat" : "seats"} left`
+                                  : SEATS_MESSAGE
                               }
                             />
                           </HStack>

@@ -125,7 +125,7 @@ export function VoiceBookingCardStream({ data, checkoutUrl, hasSafetyRefusal, on
                     <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-slate-600">
                       <Clock className="h-3 w-3" aria-hidden="true" />
                       {shortDate(dep.date)} · {dep.departureTime}
-                      <span className="text-emerald-700">{dep.availableSeats} seats left</span>
+                      <span className="text-emerald-700">{dep.availableSeats > 0 ? "Available" : "Sold out"}</span>
                     </span>
                   </span>
                   <span className="shrink-0 text-right">

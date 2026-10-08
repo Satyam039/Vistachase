@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { Dropdown } from "@/components/forms/Dropdown";
 import { PriceTag } from "@/components/pricing/PriceTag";
-import { cancellationShort } from "@/lib/policy";
+import { cancellationShort, SEATS_MESSAGE } from "@/lib/policy";
 import { Rail } from "@/components/motion/Rail";
 import { ProductGallery, type GallerySlide } from "@/components/tours/ProductGallery";
 import { TourSectionNav, TourSections } from "@/components/tours/TourSections";
@@ -495,7 +495,7 @@ export function TourDetailView({
                       description: departureFits(tour, d, 1)
                         ? isVehicle
                           ? `$${d.price} per vehicle`
-                          : `${d.seatsAvailable} seats left · $${d.price} CAD`
+                          : `${SEATS_MESSAGE} · $${d.price} CAD`
                         : "Sold out",
                       disabled: !departureFits(tour, d, 1),
                     }))}
