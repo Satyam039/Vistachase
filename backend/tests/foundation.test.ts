@@ -34,9 +34,11 @@ describe("Foundation & Provider Abstractions", () => {
     expect(intent.intentId).toBeDefined();
     expect(intent.currency).toBe("CAD");
 
-    const confirm = await payment.confirmPayment(intent.intentId);
-    expect(confirm.success).toBe(true);
-    expect(confirm.transactionId).toBeDefined();
+    expect(intent.paid).toBe(true); // the mock pays instantly
+    expect(intent.amount).toBe(15000);
+
+    const refund = await payment.refundPayment(intent.intentId, 15000);
+    expect(refund.success).toBe(true);
   });
 
   it("AI provider refuses credit card numbers and answers Rockies queries", async () => {

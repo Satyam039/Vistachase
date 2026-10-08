@@ -1,5 +1,4 @@
 import helmet from "helmet";
-import csurf from "csurf";
 import express from "express";
 import * as Sentry from "@sentry/node";
 import { MEDIA_DIR } from "@/modules/media/media.repository";
@@ -23,6 +22,8 @@ import operationsRoutes from "@/routes/operations.routes";
 import trackingRoutes from "@/routes/tracking.routes";
 import mediaRoutes from "@/routes/media.routes";
 import affiliatesRoutes from "@/routes/affiliates.routes";
+import pricingRoutes from "@/routes/pricing.routes";
+import webhooksRoutes from "@/routes/webhooks.routes";
 import { apiJsonReplacer } from "@/lib/utils/time";
 
 export function createApp() {
@@ -40,6 +41,9 @@ export function createApp() {
     .map((o) => o.trim())
     .filter(Boolean);
   app.use(cors({ origin: allowedOrigins, credentials: true }));
+
+  // Stripe signs the raw request bytes, so its webhook is mounted before the JSON parser.
+  app.use("/api/webhooks", express.raw({ type: "application/json", limit: "1mb" }), webhooksRoutes);
 
   app.use(express.json({ limit: "1mb" }));
   app.use(cookieParser());
@@ -62,9 +66,14 @@ export function createApp() {
     },
   }));
 
-  const csrfProtection = csurf({ cookie: true });
-  // Apply CSRF to specific authenticated write routes if needed, or globally with exceptions
-  // For now, since the API is called by nextjs proxy, we just ensure it's available.
+  // CSRF: the session cookie is SameSite=Lax, and state-changing requests a browser sends from any
+  // other site are refused here (browsers always send Origin on cross-site POST/PUT/PATCH/DELETE).
+  app.use("/api", (req, res, next) => {
+    if (["GET", "HEAD", "OPTIONS"].includes(req.method)) return next();
+    const origin = req.headers.origin;
+    if (!origin || allowedOrigins.includes(origin)) return next();
+    return res.status(403).json({ success: false, error: "Cross-site request refused" });
+  });
 
 
   app.use((_req, res, next) => {
@@ -106,6 +115,7 @@ export function createApp() {
   app.use("/api/track", trackingRoutes);
   app.use("/api/media", mediaRoutes);
   app.use("/api/affiliates", affiliatesRoutes);
+  app.use("/api/pricing", pricingRoutes);
 
   app.use("/api", (_req, res) => {
     res.status(404).json({ success: false, error: "Not found" });

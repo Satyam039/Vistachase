@@ -36,3 +36,14 @@ describe("API date and time format", () => {
     expect(body).not.toMatch(/"date":"\d{4}-\d{2}-\d{2}T00:00:00\.000Z"/);
   });
 });
+
+describe("checkout departure price", () => {
+  it("is in dollars, like the rest of the API", async () => {
+    const app = createApp();
+    const tour = (await request(app).get("/api/tours/banff-highlights-tour")).body;
+    const dep = (tour.tour ?? tour).departures[0];
+    const res = await request(app).get(`/api/departures/checkout?departureId=${dep.id}`);
+    expect(res.body.departure.price).toBe(dep.price);
+    expect(res.body.departure.price).toBeLessThan(1000);
+  });
+});

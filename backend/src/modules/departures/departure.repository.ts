@@ -53,6 +53,7 @@ export async function getCheckoutDeparture(departureId?: string) {
   return {
     departure: {
       ...departure,
+      price: departure.price / 100, // stored in cents; the checkout shows dollars
       ...liveCapacity(departure, expiredHeld),
     },
     stops,

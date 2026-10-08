@@ -53,8 +53,8 @@ describe("Private tours are priced and reserved per vehicle", () => {
       infantsCount: 0,
     });
     expect(booking.success).toBe(true);
-    // One vehicle price, not 4 × 1250: 1250 + 5% GST
-    expect(booking.booking?.totalAmount).toBe(1312.5);
+    // One vehicle price, not 4 × 1250 (no sales tax is added)
+    expect(booking.booking?.totalAmount).toBe(1250);
 
     const afterBooking = await prisma.tourDeparture.findUniqueOrThrow({ where: { id: departure.id } });
     expect(afterBooking.capacityBooked).toBe(6);
