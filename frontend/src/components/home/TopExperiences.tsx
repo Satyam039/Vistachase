@@ -49,7 +49,7 @@ export function TopExperiences({ tours }: { tours: TourWithAvailability[] }) {
               className={`min-h-11 shrink-0 rounded-full border px-5 text-sm transition-colors ${
                 filter === f.id
                   ? "border-obsidian-900 bg-obsidian-900 text-white"
-                  : "border-obsidian-900/15 bg-white text-obsidian-900 hover:border-obsidian-900/40"
+                  : "border-obsidian-900/10 bg-white text-obsidian-900 hover:border-obsidian-900/40"
               }`}
             >
               {f.label}

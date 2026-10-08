@@ -47,7 +47,7 @@ export function Rail({ label, children, itemClassName = "w-[80vw] max-w-[22rem] 
   const btn =
     tone === "dark"
       ? "border-white/25 text-white hover:bg-white hover:text-obsidian-900 disabled:opacity-30"
-      : "border-obsidian-900/15 bg-white text-obsidian-900 hover:bg-obsidian-900 hover:text-white disabled:opacity-30";
+      : "border-obsidian-900/10 bg-white text-obsidian-900 hover:bg-obsidian-900 hover:text-white disabled:opacity-30";
 
   return (
     <div className="relative">

@@ -98,7 +98,7 @@ export default function LoginPage() {
       </form>
 
       {DEV && (
-        <div className="mt-6 rounded-2xl border border-dashed border-obsidian-900/20 p-4">
+        <div className="mt-6 rounded-2xl border border-dashed border-obsidian-900/15 p-4">
           <p className="text-sm text-slate-600">Local development only: fill a demo account</p>
           <div className="mt-3 grid grid-cols-2 gap-2">
             {[
@@ -112,7 +112,7 @@ export default function LoginPage() {
                   setEmail(d.email);
                   setPassword(d.password);
                 }}
-                className="h-10 rounded-full border border-obsidian-900/15 text-sm text-obsidian-900 hover:bg-obsidian-50"
+                className="h-10 rounded-full border border-obsidian-900/10 text-sm text-obsidian-900 hover:bg-obsidian-50"
               >
                 {d.label}
               </button>

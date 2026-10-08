@@ -223,7 +223,7 @@ export function VoiceBookingCardStream({ data, checkoutUrl, hasSafetyRefusal, on
                 View voucher
               </Link>
             )}
-            <Link href="/pickup-finder" className="inline-flex h-10 items-center gap-1.5 rounded-full border border-obsidian-900/15 px-4 text-sm text-obsidian-900 hover:bg-obsidian-50">
+            <Link href="/pickup-finder" className="inline-flex h-10 items-center gap-1.5 rounded-full border border-obsidian-900/10 px-4 text-sm text-obsidian-900 hover:bg-obsidian-50">
               <MapPin className="h-4 w-4" aria-hidden="true" />
               Pickup directions
             </Link>

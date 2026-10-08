@@ -49,7 +49,7 @@ export default function AboutUsPage() {
       {/* Hero */}
       <section className="relative isolate flex min-h-[70vh] items-end overflow-hidden bg-ocean-950 text-white">
         <Image src="/media/photos/three-sisters-canmore.webp" alt="" fill priority sizes="100vw" className="-z-10 object-cover" data-parallax="10" />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/55 to-ocean-950/10" />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/40 to-ocean-950/10" />
         <div className="mx-auto flex w-full flex-col items-center text-center max-w-7xl px-page pb-14 pt-24" data-scroll-fade>
           <nav aria-label="Breadcrumb" className="mb-6">
             <ol className="flex items-center justify-center gap-1.5 text-sm text-slate-200">

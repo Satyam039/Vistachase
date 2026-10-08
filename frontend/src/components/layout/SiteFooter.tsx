@@ -199,7 +199,7 @@ export function SiteFooter() {
             className="-z-10 object-cover"
             data-parallax="10"
           />
-          <div className="absolute inset-0 -z-10 bg-gradient-to-r from-ocean-950/90 via-ocean-950/65 to-ocean-950/20" />
+          <div className="absolute inset-0 -z-10 bg-gradient-to-r from-ocean-950/80 via-ocean-950/65 to-ocean-950/20" />
           <div className="max-w-xl">
             <p className="text-sm uppercase tracking-[0.22em] text-summit-300">Plan your Rockies day</p>
             <h2 id="footer-plan-heading" className="mt-3 text-balance text-3xl font-light leading-tight tracking-tight text-white sm:text-5xl">

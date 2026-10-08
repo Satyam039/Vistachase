@@ -43,7 +43,7 @@ type SortValue = (typeof SORTS)[number]["value"];
 const KEYWORD_URL_DELAY_MS = 300;
 const EMPTY: SearchFilters = { q: "", category: "ALL", destination: "ALL", seats: 1, date: "" };
 const CONTROL =
-  "h-11 w-full appearance-none rounded-full border border-obsidian-900/15 bg-white pl-10 pr-4 text-sm text-obsidian-900 focus:border-ocean-600 focus:outline-none focus:ring-2 focus:ring-ocean-600/30";
+  "h-11 w-full appearance-none rounded-full border border-obsidian-900/10 bg-white pl-10 pr-4 text-sm text-obsidian-900 focus:border-ocean-600 focus:outline-none focus:ring-2 focus:ring-ocean-600/30";
 
 function todayIso() {
   const now = new Date();
@@ -159,7 +159,7 @@ export function TourSearch({
               value={filters.q}
               onChange={(e) => update({ q: e.target.value })}
               placeholder="Search Moraine Lake, sunrise, Icefields…"
-              className="h-14 w-full rounded-full border border-obsidian-900/15 bg-white pl-14 pr-5 text-base text-obsidian-900 shadow-[0_12px_30px_-20px_rgba(12,31,33,0.4)] placeholder:text-slate-500 focus:border-ocean-600 focus:outline-none focus:ring-2 focus:ring-ocean-600/30"
+              className="h-14 w-full rounded-full border border-obsidian-900/10 bg-white pl-14 pr-5 text-base text-obsidian-900 shadow-[0_12px_30px_-20px_rgba(12,31,33,0.4)] placeholder:text-slate-500 focus:border-ocean-600 focus:outline-none focus:ring-2 focus:ring-ocean-600/30"
             />
           </label>
 
@@ -171,7 +171,7 @@ export function TourSearch({
                 aria-pressed={filters.category === c}
                 onClick={() => update({ category: c })}
                 className={`min-h-11 shrink-0 rounded-full border px-5 text-sm transition-colors ${
-                  filters.category === c ? "border-obsidian-900 bg-obsidian-900 text-white" : "border-obsidian-900/15 bg-white text-obsidian-900 hover:border-obsidian-900/40"
+                  filters.category === c ? "border-obsidian-900 bg-obsidian-900 text-white" : "border-obsidian-900/10 bg-white text-obsidian-900 hover:border-obsidian-900/40"
                 }`}
               >
                 {c === "ALL" ? "All experiences" : CATEGORY_LABELS[c]}
@@ -228,7 +228,7 @@ export function TourSearch({
           <button
             type="button"
             onClick={() => setFilters(EMPTY)}
-            className="mb-6 inline-flex h-10 items-center gap-1.5 rounded-full border border-obsidian-900/15 bg-white px-4 text-sm text-obsidian-900 hover:bg-obsidian-100"
+            className="mb-6 inline-flex h-10 items-center gap-1.5 rounded-full border border-obsidian-900/10 bg-white px-4 text-sm text-obsidian-900 hover:bg-obsidian-100"
           >
             <X className="h-4 w-4" aria-hidden="true" />
             Clear filters
@@ -246,7 +246,7 @@ export function TourSearch({
               <button type="button" onClick={() => setFilters(EMPTY)} className="golden-summit-btn inline-flex h-11 items-center rounded-full px-6 text-sm">
                 Clear filters
               </button>
-              <Link href="/concierge" className="inline-flex h-11 items-center rounded-full border border-obsidian-900/15 px-6 text-sm text-obsidian-900 hover:bg-obsidian-50">
+              <Link href="/concierge" className="inline-flex h-11 items-center rounded-full border border-obsidian-900/10 px-6 text-sm text-obsidian-900 hover:bg-obsidian-50">
                 Ask the concierge
               </Link>
             </div>

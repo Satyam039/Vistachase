@@ -90,7 +90,7 @@ export function ProductGallery({ slides, title }: { slides: GallerySlide[]; titl
             type="button"
             onClick={() => dialog.current?.close()}
             aria-label="Close"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-obsidian-900/15 text-obsidian-900 hover:bg-obsidian-100"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-obsidian-900/10 text-obsidian-900 hover:bg-obsidian-100"
           >
             <X className="h-5 w-5" aria-hidden="true" />
           </button>

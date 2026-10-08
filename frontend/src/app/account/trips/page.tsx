@@ -290,7 +290,7 @@ export default function MyTripsPage() {
           sizes="100vw"
           className="-z-10 object-cover opacity-50"
         />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/60 to-ocean-950/20" />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/45 to-ocean-950/20" />
         <div className="mx-auto flex max-w-7xl flex-col gap-6 px-page pb-12 pt-14 sm:pb-16 sm:pt-20 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="mb-3 text-sm uppercase tracking-[0.22em] text-summit-300">Your Rockies journeys</p>
@@ -342,7 +342,7 @@ export default function MyTripsPage() {
                     onChange={(e) => setSearchRef(e.target.value)}
                     required
                     autoCapitalize="characters"
-                    className="h-12 w-full rounded-xl border border-obsidian-900/15 bg-white px-4 font-mono text-base text-obsidian-900 placeholder:text-slate-400 focus:border-ocean-600 focus:outline-none focus:ring-2 focus:ring-ocean-600/30"
+                    className="h-12 w-full rounded-xl border border-obsidian-900/10 bg-white px-4 font-mono text-base text-obsidian-900 placeholder:text-slate-400 focus:border-ocean-600 focus:outline-none focus:ring-2 focus:ring-ocean-600/30"
                   />
                 </label>
                 <label className="block">
@@ -353,7 +353,7 @@ export default function MyTripsPage() {
                     placeholder="you@example.com"
                     value={searchEmail}
                     onChange={(e) => setSearchEmail(e.target.value)}
-                    className="h-12 w-full rounded-xl border border-obsidian-900/15 bg-white px-4 text-base text-obsidian-900 placeholder:text-slate-400 focus:border-ocean-600 focus:outline-none focus:ring-2 focus:ring-ocean-600/30"
+                    className="h-12 w-full rounded-xl border border-obsidian-900/10 bg-white px-4 text-base text-obsidian-900 placeholder:text-slate-400 focus:border-ocean-600 focus:outline-none focus:ring-2 focus:ring-ocean-600/30"
                   />
                 </label>
                 <button
@@ -581,7 +581,7 @@ export default function MyTripsPage() {
                                     setReviewTitle("");
                                     setReviewBody("");
                                   }}
-                                  className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-obsidian-900/15 px-5 text-sm text-obsidian-900 hover:bg-obsidian-50"
+                                  className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-obsidian-900/10 px-5 text-sm text-obsidian-900 hover:bg-obsidian-50"
                                 >
                                   <Star className="h-4 w-4 text-summit-600" aria-hidden="true" />
                                   Write a review
@@ -655,7 +655,7 @@ export default function MyTripsPage() {
                     setCancellingBooking(null);
                     setCancelMessage(null);
                   }}
-                  className="inline-flex h-11 items-center rounded-full border border-obsidian-900/15 px-5 text-sm text-obsidian-900 hover:bg-obsidian-50"
+                  className="inline-flex h-11 items-center rounded-full border border-obsidian-900/10 px-5 text-sm text-obsidian-900 hover:bg-obsidian-50"
                 >
                   Keep booking
                 </button>
@@ -688,7 +688,7 @@ export default function MyTripsPage() {
                   type="button"
                   onClick={() => setReviewModalBooking(null)}
                   aria-label="Close"
-                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-obsidian-900/15 text-obsidian-900 hover:bg-obsidian-50"
+                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-obsidian-900/10 text-obsidian-900 hover:bg-obsidian-50"
                 >
                   <XCircle className="h-5 w-5" aria-hidden="true" />
                 </button>
@@ -722,7 +722,7 @@ export default function MyTripsPage() {
                     placeholder="An unforgettable sunrise at Moraine Lake"
                     value={reviewTitle}
                     onChange={(e) => setReviewTitle(e.target.value)}
-                    className="h-12 w-full rounded-xl border border-obsidian-900/15 px-4 text-base text-obsidian-900 placeholder:text-slate-400 focus:border-ocean-600 focus:outline-none focus:ring-2 focus:ring-ocean-600/30"
+                    className="h-12 w-full rounded-xl border border-obsidian-900/10 px-4 text-base text-obsidian-900 placeholder:text-slate-400 focus:border-ocean-600 focus:outline-none focus:ring-2 focus:ring-ocean-600/30"
                   />
                 </label>
                 <label className="block">
@@ -733,7 +733,7 @@ export default function MyTripsPage() {
                     placeholder="Your guide, the stops, the views…"
                     value={reviewBody}
                     onChange={(e) => setReviewBody(e.target.value)}
-                    className="w-full rounded-xl border border-obsidian-900/15 p-4 text-base text-obsidian-900 placeholder:text-slate-400 focus:border-ocean-600 focus:outline-none focus:ring-2 focus:ring-ocean-600/30"
+                    className="w-full rounded-xl border border-obsidian-900/10 p-4 text-base text-obsidian-900 placeholder:text-slate-400 focus:border-ocean-600 focus:outline-none focus:ring-2 focus:ring-ocean-600/30"
                   />
                 </label>
                 {reviewStatus && reviewStatus !== "SUCCESS" && (
@@ -752,7 +752,7 @@ export default function MyTripsPage() {
                   <button
                     type="button"
                     onClick={() => setReviewModalBooking(null)}
-                    className="inline-flex h-11 items-center rounded-full border border-obsidian-900/15 px-5 text-sm text-obsidian-900 hover:bg-obsidian-50"
+                    className="inline-flex h-11 items-center rounded-full border border-obsidian-900/10 px-5 text-sm text-obsidian-900 hover:bg-obsidian-50"
                   >
                     Cancel
                   </button>

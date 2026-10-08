@@ -223,11 +223,16 @@ html[data-announce-closed] .vc-announce {
 }
 
 /* Header elevation once the page scrolls (SiteFrame sets data-scrolled). */
+/* Navigation background: translucent white with a soft blur (premium brief, item 5), so the page
+   shows faintly through it as it scrolls; a light shadow once scrolled. */
 .astryx-app-shell-header {
+  background-color: rgb(255 255 255 / 0.86);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  backdrop-filter: blur(14px) saturate(1.2);
   transition: box-shadow 300ms var(--ease-out-expo), background-color 300ms var(--ease-out-expo);
 }
 [data-scrolled] .astryx-app-shell-header {
-  box-shadow: 0 10px 30px -18px rgba(12, 31, 33, 0.35);
+  box-shadow: 0 10px 30px -22px rgba(12, 31, 33, 0.22);
 }
 
 /* Continuous marquee (trust strip). Pauses on hover/focus; static with reduced motion. */

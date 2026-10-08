@@ -161,7 +161,7 @@ export default function LiveShuttleTrackingClient({ initialTelemetry, token }: {
             type="button"
             onClick={() => refresh(true)}
             disabled={refreshing}
-            className="inline-flex h-11 items-center gap-2 rounded-full border border-obsidian-900/15 bg-white px-5 text-sm text-obsidian-900 hover:bg-obsidian-50 disabled:opacity-60"
+            className="inline-flex h-11 items-center gap-2 rounded-full border border-obsidian-900/10 bg-white px-5 text-sm text-obsidian-900 hover:bg-obsidian-50 disabled:opacity-60"
           >
             <RefreshCw className={`h-4 w-4 ${refreshing ? "motion-safe:animate-spin" : ""}`} aria-hidden="true" />
             Refresh
@@ -256,7 +256,7 @@ export default function LiveShuttleTrackingClient({ initialTelemetry, token }: {
                 <CarFront className="mt-0.5 h-5 w-5 shrink-0 text-ocean-600" aria-hidden="true" />
                 <div className="min-w-0">
                   <p className="text-base text-obsidian-900">{t.vehicleName}</p>
-                  <p className="mt-1 inline-flex rounded-md border border-obsidian-900/15 bg-white px-2 py-0.5 font-mono text-sm tracking-wide text-obsidian-900">
+                  <p className="mt-1 inline-flex rounded-md border border-obsidian-900/10 bg-white px-2 py-0.5 font-mono text-sm tracking-wide text-obsidian-900">
                     {t.licensePlate}
                   </p>
                 </div>
@@ -269,7 +269,7 @@ export default function LiveShuttleTrackingClient({ initialTelemetry, token }: {
                   href={whatsapp}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-obsidian-900/15 px-4 text-sm text-obsidian-900 hover:bg-obsidian-50"
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-obsidian-900/10 px-4 text-sm text-obsidian-900 hover:bg-obsidian-50"
                 >
                   <MessageSquare className="h-4 w-4" aria-hidden="true" /> WhatsApp
                   <span className="sr-only">(opens in a new tab)</span>

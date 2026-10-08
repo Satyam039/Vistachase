@@ -71,7 +71,7 @@ export default function PickupFinderPage() {
           className="-z-10 object-cover"
           data-parallax="10"
         />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/60 to-ocean-950/20" />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/45 to-ocean-950/20" />
         <div className="mx-auto flex w-full max-w-6xl flex-col items-center px-page pb-24 pt-20 text-center">
           <nav aria-label="Breadcrumb" className="mb-6">
             <ol className="flex items-center justify-center gap-1.5 text-sm text-slate-200">
@@ -112,7 +112,7 @@ export default function PickupFinderPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Your hotel, e.g. Fairmont, Caribou Lodge, Coast Canmore"
-              className="h-14 w-full rounded-full border border-obsidian-900/15 bg-obsidian-50 pl-14 pr-5 text-base text-obsidian-900 placeholder:text-slate-500 focus:border-ocean-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-ocean-600/30"
+              className="h-14 w-full rounded-full border border-obsidian-900/10 bg-obsidian-50 pl-14 pr-5 text-base text-obsidian-900 placeholder:text-slate-500 focus:border-ocean-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-ocean-600/30"
             />
           </label>
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -130,7 +130,7 @@ export default function PickupFinderPage() {
                   className={`min-h-11 rounded-full border px-5 text-sm transition-colors ${
                     town === t
                       ? "border-obsidian-900 bg-obsidian-900 text-white"
-                      : "border-obsidian-900/15 bg-white text-obsidian-900 hover:border-obsidian-900/40"
+                      : "border-obsidian-900/10 bg-white text-obsidian-900 hover:border-obsidian-900/40"
                   }`}
                 >
                   {t === "All" ? "All towns" : t}
@@ -172,7 +172,7 @@ export default function PickupFinderPage() {
                   setQuery("");
                   setTown("All");
                 }}
-                className="inline-flex h-11 items-center rounded-full border border-obsidian-900/15 px-5 text-sm text-obsidian-900 hover:bg-obsidian-50"
+                className="inline-flex h-11 items-center rounded-full border border-obsidian-900/10 px-5 text-sm text-obsidian-900 hover:bg-obsidian-50"
               >
                 Show all pickup points
               </button>

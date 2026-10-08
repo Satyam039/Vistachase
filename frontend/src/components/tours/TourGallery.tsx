@@ -437,7 +437,7 @@ export function TourGallery({
               </p>
               <Link
                 href="/faq"
-                className="mt-5 inline-flex h-11 items-center gap-2 rounded-full border border-obsidian-900/15 px-5 text-sm text-obsidian-900 hover:bg-obsidian-50"
+                className="mt-5 inline-flex h-11 items-center gap-2 rounded-full border border-obsidian-900/10 px-5 text-sm text-obsidian-900 hover:bg-obsidian-50"
               >
                 All FAQs <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>

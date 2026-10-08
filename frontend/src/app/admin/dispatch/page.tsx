@@ -146,7 +146,7 @@ export default function DispatchBoardPage() {
         title="Dispatch board"
         subtitle="Pickup manifests and passenger check-in by departure."
         actions={
-          <div className="flex items-center gap-1 rounded-full bg-white p-1 ring-1 ring-obsidian-900/15">
+          <div className="flex items-center gap-1 rounded-full bg-white p-1 ring-1 ring-obsidian-900/10">
             <button type="button" onClick={() => shift(-1)} aria-label="Previous day" className="inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-obsidian-50">
               <ChevronLeft className="h-4 w-4" aria-hidden="true" />
             </button>
@@ -180,7 +180,7 @@ export default function DispatchBoardPage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl text-obsidian-900">{longDate(selectedDate)}</h2>
           {!isToday && (
-            <button type="button" onClick={() => setSelectedDate(toKey(new Date()))} className="inline-flex h-10 items-center rounded-full border border-obsidian-900/15 bg-white px-4 text-sm hover:bg-obsidian-50">
+            <button type="button" onClick={() => setSelectedDate(toKey(new Date()))} className="inline-flex h-10 items-center rounded-full border border-obsidian-900/10 bg-white px-4 text-sm hover:bg-obsidian-50">
               Back to today
             </button>
           )}
@@ -296,7 +296,7 @@ export default function DispatchBoardPage() {
                                       onClick={() => toggleBoarding(p.id, p.isBoarded)}
                                       disabled={updating}
                                       className={`inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full px-4 text-sm disabled:opacity-60 ${
-                                        p.isBoarded ? "border border-obsidian-900/15 bg-white text-obsidian-900 hover:bg-obsidian-50" : "bg-ocean-600 text-white hover:bg-ocean-700"
+                                        p.isBoarded ? "border border-obsidian-900/10 bg-white text-obsidian-900 hover:bg-obsidian-50" : "bg-ocean-600 text-white hover:bg-ocean-700"
                                       }`}
                                     >
                                       {updating && <RefreshCw className="h-3.5 w-3.5 motion-safe:animate-spin" aria-hidden="true" />}

@@ -76,7 +76,7 @@ export function LiveTrackingTeaser() {
                 <span className="block text-base">Pickup at 05:00</span>
                 <span className="block truncate text-sm text-slate-600">Main Motor Court entrance</span>
               </span>
-              <span className="rounded-md border border-obsidian-900/15 px-2 py-0.5 font-mono text-sm">7VC-894</span>
+              <span className="rounded-md border border-obsidian-900/10 px-2 py-0.5 font-mono text-sm">7VC-894</span>
             </div>
           </div>
         </div>

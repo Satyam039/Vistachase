@@ -26,8 +26,8 @@ type Variant = "field" | "pill" | "bare";
 
 const TRIGGER: Record<Variant, string> = {
   field:
-    "h-12 w-full rounded-2xl border border-obsidian-900/15 bg-white px-4 text-base text-obsidian-900 hover:border-obsidian-900/30 focus-visible:border-ocean-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-600/30",
-  pill: "h-11 w-full rounded-full border border-obsidian-900/15 bg-white px-4 text-sm text-obsidian-900 hover:border-obsidian-900/30 focus-visible:border-ocean-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-600/30",
+    "h-12 w-full rounded-2xl border border-obsidian-900/10 bg-white px-4 text-base text-obsidian-900 hover:border-obsidian-900/30 focus-visible:border-ocean-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-600/30",
+  pill: "h-11 w-full rounded-full border border-obsidian-900/10 bg-white px-4 text-sm text-obsidian-900 hover:border-obsidian-900/30 focus-visible:border-ocean-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-600/30",
   bare: "mt-0.5 w-full rounded-md bg-transparent text-base text-obsidian-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-600/40",
 };
 

@@ -210,7 +210,7 @@ export default async function VoucherPage({ params }: { params: Promise<{ ref: s
           <div className="relative h-px" aria-hidden="true">
             <span className="absolute -left-4 -top-4 h-8 w-8 rounded-full bg-obsidian-50 print:hidden" />
             <span className="absolute -right-4 -top-4 h-8 w-8 rounded-full bg-obsidian-50 print:hidden" />
-            <span className="absolute inset-x-8 top-0 border-t-2 border-dashed border-obsidian-900/15" />
+            <span className="absolute inset-x-8 top-0 border-t-2 border-dashed border-obsidian-900/10" />
           </div>
 
           <ul aria-label="Trip details" className="grid gap-x-8 gap-y-5 p-6 sm:grid-cols-2 sm:p-8">

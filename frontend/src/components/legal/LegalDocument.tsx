@@ -91,7 +91,7 @@ export function LegalDocument({ title, intro, sections, current }: { title: stri
             <ul className="mt-3 flex flex-wrap gap-2">
               {RELATED.filter((r) => r.href !== current).map((r) => (
                 <li key={r.href}>
-                  <Link href={r.href} className="inline-flex h-10 items-center rounded-full border border-obsidian-900/15 px-4 text-sm text-obsidian-900 hover:bg-obsidian-50">
+                  <Link href={r.href} className="inline-flex h-10 items-center rounded-full border border-obsidian-900/10 px-4 text-sm text-obsidian-900 hover:bg-obsidian-50">
                     {r.label}
                   </Link>
                 </li>

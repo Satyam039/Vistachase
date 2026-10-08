@@ -22,7 +22,7 @@ export default function NotFound() {
     <div className="bg-obsidian-50">
       <section className="relative isolate overflow-hidden bg-ocean-950">
         <Image src="/media/photos/moraine-lake-classic.webp" alt="" fill priority sizes="100vw" className="-z-10 object-cover opacity-60" />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/50 to-ocean-950/20" aria-hidden="true" />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/40 to-ocean-950/20" aria-hidden="true" />
         <div className="mx-auto flex max-w-5xl flex-col items-center px-page pb-14 pt-20 text-center sm:pb-20 sm:pt-28">
           <p className="inline-flex rounded-full bg-white/15 px-3 py-1 text-sm text-white backdrop-blur">Error 404</p>
           <h1 className="mx-auto mt-4 max-w-2xl text-4xl font-light tracking-tight text-white sm:text-5xl">This trail doesn&apos;t lead anywhere</h1>
