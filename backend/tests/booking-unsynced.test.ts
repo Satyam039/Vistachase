@@ -7,7 +7,9 @@ import { dateOnly, timeOfDay } from "@/lib/utils/time";
 // (the column is unique): the second booking of the day would fail.
 describe("Bookings for products not yet in Bókun", () => {
   it("accepts several bookings and leaves their Bókun booking ID empty", async () => {
-    const tour = await prisma.tour.findFirstOrThrow({ where: { category: "SHARED", bokunId: null } });
+    // Every product has a Bókun ID now; take one off temporarily to test a product not yet in Bókun.
+    const mapped = await prisma.tour.findFirstOrThrow({ where: { category: "SHARED", bookingMode: "BOKUN" } });
+    const tour = await prisma.tour.update({ where: { id: mapped.id }, data: { bokunId: null } });
     const departure = await prisma.tourDeparture.create({
       data: {
         tourId: tour.id,
@@ -40,5 +42,7 @@ describe("Bookings for products not yet in Bókun", () => {
     const stored = await prisma.booking.findMany({ where: { tourDepartureId: departure.id } });
     expect(stored).toHaveLength(2);
     expect(stored.every((b) => b.bokunBookingId === null)).toBe(true);
+
+    await prisma.tour.update({ where: { id: mapped.id }, data: { bokunId: mapped.bokunId } });
   });
 });
