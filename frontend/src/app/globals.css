@@ -350,3 +350,24 @@ b {
 /* StyleX app styles (stylex.create in src/) are emitted here by @stylexjs/postcss-plugin,
    in layers after reset, tw-preflight, astryx-base and astryx-theme. */
 @stylex;
+
+/* Departure calendar (components/booking/DepartureCalendar): a gold dot under each day with a
+   bookable departure; days without one are struck through so the state isn't colour alone. */
+.vc-departure-cal [role="gridcell"] button {
+  position: relative;
+}
+.vc-departure-cal [role="gridcell"] button:not(:disabled)::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 4px;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  border-radius: 9999px;
+  background: #f5bf03;
+}
+.vc-departure-cal [role="gridcell"] button:disabled {
+  text-decoration: line-through;
+  text-decoration-color: rgb(28 31 35 / 0.25);
+}

@@ -47,6 +47,8 @@ import { TextInput } from "@astryxdesign/core/TextInput";
 import { Thumbnail } from "@astryxdesign/core/Thumbnail";
 import { QuantityInput } from "@/components/forms/QuantityInput";
 import { Dropdown } from "@/components/forms/Dropdown";
+import { PhoneField } from "@/components/forms/PhoneField";
+import { dialCode } from "@/lib/countries";
 import { SEATS_MESSAGE } from "@/lib/policy";
 import {
   CreditCard,
@@ -265,7 +267,10 @@ export function BookingCheckoutClient({
   // Contact
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
+  const [phoneCountry, setPhoneCountry] = useState("CA");
+  const [phoneLocal, setPhoneLocal] = useState("");
+  // Stored and sent as one international number, e.g. "+1 403 555 0192".
+  const customerPhone = phoneLocal.trim() ? `+${dialCode(phoneCountry)} ${phoneLocal.trim()}` : "";
 
   // Pickup & extras
   const [pickupStopId, setPickupStopId] = useState(stops[0]?.id ?? "");
@@ -512,7 +517,7 @@ export function BookingCheckoutClient({
       contact.name = "Enter the lead guest's full name.";
     if (!EMAIL_PATTERN.test(customerEmail.trim()))
       contact.email = "Enter an email address for your boarding pass.";
-    if (customerPhone.replace(/\D/g, "").length < 7)
+    if (phoneLocal.replace(/\D/g, "").length < 6)
       contact.phone = "Enter a mobile number for pickup-day updates.";
 
     const pickup: Record<string, string> = {};
@@ -526,7 +531,7 @@ export function BookingCheckoutClient({
     isVehicle,
     customerName,
     customerEmail,
-    customerPhone,
+    phoneLocal,
     pickupStopId,
     customPickup,
   ]);
@@ -1100,14 +1105,14 @@ export function BookingCheckoutClient({
                                 description="Your boarding pass and confirmation go here."
                                 status={fieldError(currentErrors.email)}
                               />
-                              <TextInput
+                              <PhoneField
                                 label="Mobile phone"
-                                value={customerPhone}
-                                onChange={setCustomerPhone}
-                                autoComplete="tel"
-                                placeholder="+1 (403) 555-0192"
+                                country={phoneCountry}
+                                onCountryChange={setPhoneCountry}
+                                value={phoneLocal}
+                                onChange={setPhoneLocal}
                                 description="For pickup-day SMS updates."
-                                status={fieldError(currentErrors.phone)}
+                                error={currentErrors.phone}
                               />
                             </FormLayout>
                           </FormLayout>

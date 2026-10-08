@@ -24,6 +24,7 @@ import {
   Send,
 } from "lucide-react";
 import { Dropdown } from "@/components/forms/Dropdown";
+import { DepartureCalendar } from "@/components/booking/DepartureCalendar";
 import { PriceTag } from "@/components/pricing/PriceTag";
 import { cancellationShort, SEATS_MESSAGE } from "@/lib/policy";
 import { Rail } from "@/components/motion/Rail";
@@ -227,7 +228,7 @@ export function TourDetailView({
     ...rest.map((src) => ({ kind: "image" as const, src })),
   ];
 
-  // Booking state (Connected to Bókun System of Record)
+  // Booking state
   const isVehicle = isVehicleTour(tour);
   const bookableDepartures = tour.departures.filter((d) => departureFits(tour, d, 1));
   const [selectedDepartureId, setSelectedDepartureId] = useState(bookableDepartures[0]?.id ?? "");
@@ -483,22 +484,12 @@ export function TourDetailView({
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <Dropdown
-                    id="tour-departure"
-                    label="Departure date"
-                    labelClassName="mb-2 block text-sm text-slate-700"
+                  <DepartureCalendar
+                    departures={tour.departures}
+                    isBookable={(d) => departureFits(tour, d, 1)}
                     value={selectedDepartureId}
                     onChange={setSelectedDepartureId}
-                    options={tour.departures.map((d) => ({
-                      value: d.id,
-                      label: formatDeparture(d),
-                      description: departureFits(tour, d, 1)
-                        ? isVehicle
-                          ? `$${d.price} per vehicle`
-                          : `${SEATS_MESSAGE} · $${d.price} CAD`
-                        : "Sold out",
-                      disabled: !departureFits(tour, d, 1),
-                    }))}
+                    describe={(d) => (isVehicle ? `$${d.price} per vehicle` : `${SEATS_MESSAGE} · $${d.price} CAD per guest`)}
                   />
 
                   {/* Guests / Party Size */}
