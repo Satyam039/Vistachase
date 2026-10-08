@@ -63,4 +63,4 @@ export async function sendPostTripReviewRequests() {
   console.log(`Sent ${sent} review requests.`);
 }
 
-sendPostTripReviewRequests().catch(console.error).finally(() => prisma.$disconnect());
+
