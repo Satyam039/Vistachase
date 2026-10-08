@@ -2,6 +2,7 @@ import React from "react";
 import { ServicesHero, type HeroSlide } from "@/components/cinematic/ServicesHero";
 import { fromPrice, priceUnitLabel } from "@/lib/tours";
 import { getTours } from "@/lib/api/catalog";
+import type { TourWithAvailability } from "@/lib/api/types";
 import { SERVICES } from "@/lib/services";
 import { HeroSearch } from "@/components/home/HeroSearch";
 import { TrustRow } from "@/components/home/TrustRow";
@@ -42,10 +43,16 @@ export const metadata = {
 };
 
 export default async function HomePage() {
-  const tours = await getTours();
+  let tours: TourWithAvailability[] = [];
+  try {
+    tours = await getTours();
+  } catch (err) {
+    console.warn("[HomePage] getTours failed, fallback to empty array:", err);
+  }
+
   const slides: HeroSlide[] = SERVICES.map((service) => ({
     ...service,
-    tours: tours
+    tours: (tours || [])
       .filter((t) => t.category === service.category)
       .slice(0, 3)
       .map((t) => ({
