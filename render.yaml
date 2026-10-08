@@ -2,11 +2,12 @@ services:
   - type: web
     name: vistachase-backend
     env: node
-    plan: starter # F12: Move to paid plan for production matching
+    plan: standard # always-on; scale to 2+ instances for launch
+    numInstances: 2
     rootDir: backend
     buildCommand: npm ci && npx prisma generate && npm run build
-    preDeployCommand: npx prisma migrate deploy # F1: Run migrations as a release step
-    startCommand: npm run start
+    preDeployCommand: npx prisma migrate deploy # migrations as a release step
+    startCommand: node dist/server.js
     healthCheckPath: /api/health
     envVars:
       - key: NODE_VERSION
@@ -42,6 +43,108 @@ services:
         value: "false"
       - key: FEATURE_MOCK_PAYMENT
         value: "false"
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET # from the Stripe dashboard webhook for /api/webhooks/stripe
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM # e.g. "Vista Chase <bookings@vistachase.com>" on a verified domain
+        sync: false
+      - key: ENQUIRIES_TO
+        sync: false
+      - key: OPS_ALERT_EMAIL # receives the nightly booking check
+        sync: false
+      - key: PROMO_CODES # "CODE:percent,CODE:percent", same as in Bókun
+        sync: false
+      - key: VOUCHER_SECRET # signs voucher, check-in and review links
+        generateValue: true
+      - key: SENTRY_DSN
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: BOKUN_ACCESS_KEY
+        sync: false
+      - key: BOKUN_SECRET_KEY
+        sync: false
+      - key: BOKUN_API_URL
+        sync: false
+
+  # Background jobs (src/worker.ts): expire unpaid holds/bookings, nightly booking check,
+  # review requests. One instance; BullMQ in Redis makes each scheduled job run once.
+  - type: worker
+    name: vistachase-worker
+    env: node
+    plan: starter
+    rootDir: backend
+    buildCommand: npm ci && npx prisma generate && npm run build
+    startCommand: npm run worker
+    envVars:
+      - key: NODE_VERSION
+        value: 20.18.0
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: vistachase-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: vistachase-redis
+          property: connectionString
+      - key: EMAIL_PROVIDER
+        value: resend
+      - key: FRONTEND_URL
+        fromService:
+          type: web
+          name: vistachase-backend
+          envVarKey: FRONTEND_URL
+      - key: VOUCHER_SECRET
+        fromService:
+          type: web
+          name: vistachase-backend
+          envVarKey: VOUCHER_SECRET
+      - key: JWT_SECRET
+        fromService:
+          type: web
+          name: vistachase-backend
+          envVarKey: JWT_SECRET
+      - key: RESEND_API_KEY
+        fromService:
+          type: web
+          name: vistachase-backend
+          envVarKey: RESEND_API_KEY
+      - key: EMAIL_FROM
+        fromService:
+          type: web
+          name: vistachase-backend
+          envVarKey: EMAIL_FROM
+      - key: ENQUIRIES_TO
+        fromService:
+          type: web
+          name: vistachase-backend
+          envVarKey: ENQUIRIES_TO
+      - key: OPS_ALERT_EMAIL
+        fromService:
+          type: web
+          name: vistachase-backend
+          envVarKey: OPS_ALERT_EMAIL
+      - key: STRIPE_SECRET_KEY
+        fromService:
+          type: web
+          name: vistachase-backend
+          envVarKey: STRIPE_SECRET_KEY
+      - key: PAYMENT_PROVIDER
+        fromService:
+          type: web
+          name: vistachase-backend
+          envVarKey: PAYMENT_PROVIDER
+      - key: SENTRY_DSN
+        fromService:
+          type: web
+          name: vistachase-backend
+          envVarKey: SENTRY_DSN
 
   - type: web
     name: vistachase-frontend
@@ -61,14 +164,19 @@ services:
         sync: false
       - key: FEATURE_FALLBACK_CATALOG
         value: "false"
+      - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: NEXT_PUBLIC_SENTRY_DSN
+        sync: false
 
   - type: redis
     name: vistachase-redis
     plan: starter
+    maxmemoryPolicy: noeviction # required by BullMQ
     ipAllowList: [] # internal access only
 
 databases:
   - name: vistachase-db
-    plan: starter
+    plan: standard # daily backups with point-in-time recovery
     databaseName: vistachase
     user: vistachase_user

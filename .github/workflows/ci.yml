@@ -76,6 +76,10 @@ jobs:
       working-directory: ./backend
       run: npm run typecheck
 
+    - name: Backend Build (API and worker)
+      working-directory: ./backend
+      run: npm run build
+
     - name: Backend Tests
       working-directory: ./backend
       env:

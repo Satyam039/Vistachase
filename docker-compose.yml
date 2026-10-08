@@ -27,7 +27,6 @@ services:
       - NODE_ENV=production
       - PORT=4000
       - FRONTEND_URL=http://localhost:3000
-      # Note: prisma/schema.prisma uses the sqlite provider; switch it to postgresql to use this URL
       - DATABASE_URL=postgresql://postgres:vistachase_secret@postgres:5432/vistachase?schema=public
       - REDIS_URL=redis://redis:6379
       - CACHE_PROVIDER=redis
@@ -35,8 +34,27 @@ services:
       - EMAIL_PROVIDER=console
       - PAYMENT_PROVIDER=mock
       - AI_VOICE_PROVIDER=mock
+      - JWT_SECRET=${JWT_SECRET:-local-docker-secret-change-me-32-characters}
     depends_on:
       - postgres
+      - redis
+    restart: unless-stopped
+
+  # Background jobs (src/worker.ts)
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: ["node", "dist/worker.js"]
+    environment:
+      - NODE_ENV=production
+      - FRONTEND_URL=http://localhost:3000
+      - DATABASE_URL=postgresql://postgres:vistachase_secret@postgres:5432/vistachase?schema=public
+      - REDIS_URL=redis://redis:6379
+      - EMAIL_PROVIDER=console
+      - JWT_SECRET=${JWT_SECRET:-local-docker-secret-change-me-32-characters}
+    depends_on:
+      - backend
       - redis
     restart: unless-stopped
 
