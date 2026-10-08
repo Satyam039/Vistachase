@@ -13,7 +13,8 @@
  *   2. Contact         lead guest; continuing places the 10-minute seat hold, because
  *                      the hold API needs a name and email
  *   3. Pickup & extras hotel pickup, custom address, add-ons, special requests
- *   4. Review & pay    sandbox payment (no card is collected) and the booking request
+ *   4. Review & pay    the booking request; the server prices it and, with Stripe, the guest
+ *                      pays in Stripe's Payment Element (card details never touch this page)
  *
  * Every figure in the summary is derived from the same state the form writes, so the
  * total updates as the guest changes the party or add-ons.
@@ -50,6 +51,7 @@ import { Dropdown } from "@/components/forms/Dropdown";
 import { PhoneField } from "@/components/forms/PhoneField";
 import { dialCode } from "@/lib/countries";
 import { SEATS_MESSAGE } from "@/lib/policy";
+import { StripeCheckoutForm, stripeConfigured } from "@/components/booking/StripeCheckoutForm";
 import {
   CreditCard,
   Lock,
@@ -105,6 +107,10 @@ interface ConfirmedBooking {
   totalAmount: number;
   currency: string;
   qrCodeUrl: string | null;
+  status: string;
+  /** Signed voucher link and its token (the booking API needs the token to read the booking). */
+  voucherUrl: string;
+  voucherToken: string;
 }
 
 // ── Data ──────────────────────────────────────────────────────────────────────
@@ -149,7 +155,6 @@ const ADD_ONS = [
 
 type AddOnId = (typeof ADD_ONS)[number]["id"];
 
-const GST_RATE = 0.05; // Alberta GST
 const HOLD_SECONDS = 600;
 // Warn this long before a hold ends and offer to renew it (WCAG 2.2.1 asks for at least 20s).
 const HOLD_WARNING_SECONDS = 120;
@@ -331,6 +336,30 @@ export function BookingCheckoutClient({
   };
 
   const [confirmed, setConfirmed] = useState<ConfirmedBooking | null>(null);
+  const [awaitingPayment, setAwaitingPayment] = useState<{ booking: ConfirmedBooking; clientSecret: string } | null>(null);
+  const [paymentState, setPaymentState] = useState<"pay" | "confirming" | "slow">("pay");
+
+  // After Stripe accepts the card, wait for the server's confirmation (sent by Stripe's webhook).
+  const waitForConfirmation = async (booking: ConfirmedBooking) => {
+    setPaymentState("confirming");
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const res = await fetch(`/api/bookings?ref=${encodeURIComponent(booking.bookingReference)}&t=${booking.voucherToken}`).catch(() => null);
+      const data = res?.ok ? await res.json().catch(() => null) : null;
+      const status = data?.booking?.status as string | undefined;
+      if (status === "CONFIRMED" || status === "PAID_UNSYNCED") {
+        setAwaitingPayment(null);
+        setConfirmed({ ...booking, status, qrCodeUrl: data.booking.qrCodeUrl ?? booking.qrCodeUrl });
+        return;
+      }
+      if (status === "CANCELLED") {
+        setAwaitingPayment(null);
+        setSubmitError("The payment didn't complete, so the booking was released. Please try again.");
+        return;
+      }
+    }
+    setPaymentState("slow");
+  };
 
   const totalSeats = adults + children;
   // Private tours sell the whole vehicle: one price, every seat, guests up to the vehicle size.
@@ -514,9 +543,9 @@ const fareSubtotal = isVehicle
     (sum, addOn) => sum + addOn.total,
     0,
   );
-  const discount = appliedPromo ? Math.round(fareSubtotal * (appliedPromo.percent / 100)) : 0;
-  const tax = round2((fareSubtotal - discount + addOnsTotal) * GST_RATE);
-  const total = round2(fareSubtotal - discount + addOnsTotal + tax);
+  // Same rounding as the server (whole cents). No sales tax is added.
+  const discount = appliedPromo ? round2(fareSubtotal * (appliedPromo.percent / 100)) : 0;
+  const total = round2(fareSubtotal - discount + addOnsTotal);
 
   const selectedStop = stops.find((stop) => stop.id === pickupStopId);
   const experienceTitle =
@@ -617,12 +646,8 @@ const fareSubtotal = isVehicle
           childrenCount: children,
           infantsCount: infants,
           specialRequests: specialRequests.trim() || undefined,
-          addOns: selectedAddOns.map((addOn) => ({
-            name: addOn.name,
-            price: addOn.price,
-            quantity: addOn.quantity,
-          })),
-          paymentProvider: "mock",
+          // The server prices add-ons itself; only the choice is sent.
+          addOns: selectedAddOns.map((addOn) => ({ id: addOn.id })),
           promoCode: appliedPromo?.code,
         }),
       });
@@ -632,7 +657,12 @@ const fareSubtotal = isVehicle
         return;
       }
       clearHold();
-      setConfirmed(data.booking);
+      if (data.payment?.clientSecret) {
+        // The guest pays in Stripe's form; the booking is confirmed when Stripe tells our server.
+        setAwaitingPayment({ booking: data.booking, clientSecret: data.payment.clientSecret });
+      } else {
+        setConfirmed(data.booking);
+      }
     } catch {
       setSubmitError("We couldn't reach the booking server. Please try again.");
     } finally {
@@ -791,7 +821,9 @@ const fareSubtotal = isVehicle
             value={money(addOn.total)}
           />
         ))}
-        <SummaryRow label="GST (5%)" value={money(tax)} />
+        {appliedPromo && discount > 0 && (
+          <SummaryRow label={`Promo ${appliedPromo.code} (−${appliedPromo.percent}%)`} value={`−${money(discount)}`} />
+        )}
         <Divider />
         <HStack hAlign="between" vAlign="center">
           <Text type="large" weight="bold">
@@ -860,7 +892,9 @@ const fareSubtotal = isVehicle
   );
 
   const continueLabel = isLastStep
-    ? `Complete booking · ${money(total)}`
+    ? stripeConfigured
+      ? `Continue to payment · ${money(total)}`
+      : `Complete booking · ${money(total)}`
     : step === 1 && !holdToken
       ? "Hold my seats & continue"
       : "Continue";
@@ -973,7 +1007,7 @@ const fareSubtotal = isVehicle
         <Button
           label="Open boarding pass"
           variant="primary"
-          href={`/booking/${confirmed.bookingReference}/voucher`}
+          href={confirmed.voucherUrl.replace(/^https?:\/\/[^/]+/, "")}
           icon={<Icon icon={QrCode} size="sm" />}
         />
         <Button label="Back to home" variant="secondary" href="/" />
@@ -1293,19 +1327,49 @@ const fareSubtotal = isVehicle
                             </VStack>
                           </Card>
 
-                          <Banner
-                            status="info"
-                            icon={<Icon icon={CreditCard} size="sm" />}
-                            title="Sandbox payment"
-                            description="This environment uses the test payment simulator, so no card is charged. Complete booking to issue your confirmed reservation and digital boarding pass."
-                          />
+                          {awaitingPayment ? (
+                            <Card padding={4}>
+                              {paymentState === "pay" ? (
+                                <VStack gap={3}>
+                                  <Text weight="bold">Pay by card</Text>
+                                  <StripeCheckoutForm
+                                    clientSecret={awaitingPayment.clientSecret}
+                                    amountLabel={`${money(awaitingPayment.booking.totalAmount)} ${awaitingPayment.booking.currency}`}
+                                    onPaid={() => waitForConfirmation(awaitingPayment.booking)}
+                                  />
+                                </VStack>
+                              ) : paymentState === "confirming" ? (
+                                <Banner status="info" title="Confirming your payment…" description="This usually takes a few seconds. Please keep this page open." />
+                              ) : (
+                                <Banner
+                                  status="info"
+                                  title="Payment received"
+                                  description={`Your confirmation is taking longer than usual. It will reach ${customerEmail.trim()} shortly; your booking reference is ${awaitingPayment.booking.bookingReference}.`}
+                                />
+                              )}
+                            </Card>
+                          ) : stripeConfigured ? (
+                            <Banner
+                              status="info"
+                              icon={<Icon icon={CreditCard} size="sm" />}
+                              title="Secure card payment"
+                              description="Continue to pay by card. Card details go straight to our payment provider, Stripe; your booking is confirmed as soon as the payment goes through."
+                            />
+                          ) : (
+                            <Banner
+                              status="info"
+                              icon={<Icon icon={CreditCard} size="sm" />}
+                              title="Test mode"
+                              description="Card payments aren't set up on this site, so no card is charged."
+                            />
+                          )}
                           {submitError && (
                             <Banner status="error" title={submitError} />
                           )}
                         </VStack>
                       )}
 
-                      {!confirmed && actions}
+                      {!confirmed && !awaitingPayment && actions}
                     </VStack>
                   </div>
                 </StackItem>

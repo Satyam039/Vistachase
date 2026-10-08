@@ -72,7 +72,12 @@ export default function LoginPage() {
           <input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className={AUTH_FIELD} />
         </label>
         <label className="block">
-          <span className="mb-1.5 block text-sm text-slate-700">Password</span>
+          <span className="mb-1.5 flex items-baseline justify-between text-sm text-slate-700">
+            Password
+            <Link href="/forgot-password" className="text-ocean-700 underline underline-offset-2 hover:text-ocean-900">
+              Forgot password?
+            </Link>
+          </span>
           <span className="relative block">
             <input
               type={showPassword ? "text" : "password"}

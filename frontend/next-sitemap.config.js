@@ -2,7 +2,7 @@
 module.exports = {
   siteUrl: process.env.SITE_URL || 'https://vistachase.com',
   generateRobotsTxt: true,
-  exclude: ['/admin*', '/booking/*/voucher', '/account*'],
+  exclude: ['/admin*', '/booking/*/voucher', '/account*', '/forgot-password', '/reset-password', '/review/*'],
   robotsTxtOptions: {
     policies: [
       {

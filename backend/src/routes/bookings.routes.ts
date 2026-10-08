@@ -82,15 +82,17 @@ router.get("/", rateLimitMiddleware("booking_read", { maxRequests: 30, windowSec
         addOnsTotal: booking.addOnsTotal / 100,
         totalAmount: booking.totalAmount / 100,
         currency: booking.currency,
-        items: booking.items.map((i) => ({ name: i.name, quantity: i.quantity, price: i.price / 100 })),
+        items: booking.items.map((i) => ({ id: i.id, name: i.name, quantity: i.quantity, price: i.price / 100 })),
         tourDeparture: {
           date: booking.tourDeparture.date,
           departureTime: booking.tourDeparture.departureTime,
           returnTime: booking.tourDeparture.returnTime,
-          tour: booking.tourDeparture.tour ? { title: booking.tourDeparture.tour.title, slug: booking.tourDeparture.tour.slug } : null,
+          tour: booking.tourDeparture.tour ? { title: booking.tourDeparture.tour.title, slug: booking.tourDeparture.tour.slug, featuredImage: booking.tourDeparture.tour.featuredImage } : null,
           shuttleRoute: booking.tourDeparture.shuttleRoute ? { name: booking.tourDeparture.shuttleRoute.name } : null,
         },
-        pickupStop: booking.pickupStop ? { name: booking.pickupStop.name, address: booking.pickupStop.address, instructions: booking.pickupStop.instructions } : null,
+        pickupStop: booking.pickupStop
+          ? { name: booking.pickupStop.name, town: booking.pickupStop.town, address: booking.pickupStop.address, instructions: booking.pickupStop.instructions, latitude: booking.pickupStop.latitude, longitude: booking.pickupStop.longitude }
+          : null,
         createdAt: booking.createdAt,
       },
     });
