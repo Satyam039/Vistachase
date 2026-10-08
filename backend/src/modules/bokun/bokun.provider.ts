@@ -1,5 +1,6 @@
 import prisma from "@/lib/db/prisma";
 import { CATALOG, PRODUCT_MAP, bokunKey, slugForBokunId } from "@/modules/bokun/product-map";
+import { abortInBokun, cancelInBokun, confirmInBokun, reserveInBokun, type BokunPayment, type BokunReservationInput } from "./bokun-booking";
 
 export interface BokunProduct {
   /** Bokun experience ID, or `pending:<slug>` until Vista Chase provides it (see product-map.ts). */
@@ -14,26 +15,6 @@ export interface BokunProduct {
   currency: string;
 }
 
-export interface BokunBookingPayload {
-  bokunBookingId: string;
-  bookingReference: string; // e.g. "VC-2026-98412"
-  productBokunId: string;
-  departureDate: string; // YYYY-MM-DD
-  departureTime: string; // HH:mm
-  customerName: string;
-  customerEmail: string;
-  customerPhone: string;
-  totalSeats: number;
-  pickupLocation: string;
-  pickupTime?: string;
-  status: "CONFIRMED" | "CANCELLED";
-  totalAmount: number;
-  currency: string;
-  sourceChannel: "WEBSITE" | "VIATOR" | "GETYOURGUIDE" | "DIRECT";
-  specialRequests?: string;
-  promoCode?: string;
-}
-
 export interface BokunSyncResult {
   syncedCount: number;
   updatedCount: number;
@@ -43,9 +24,13 @@ export interface BokunSyncResult {
 export interface IBookingOperationsProvider {
   fetchProducts(): Promise<BokunProduct[]>;
   syncTodaysBookings(date: string): Promise<BokunSyncResult>;
-  createReservation(payload: BokunBookingPayload): Promise<{ bokunBookingId: string; totalAmount: number }>;
-  confirmReservation(bokunBookingId: string): Promise<void>;
-  cancelBooking(bokunBookingId: string): Promise<void>;
+  /** Holds the seats in Bókun while the guest pays; returns Bókun's confirmation code. */
+  reserve(input: BokunReservationInput): Promise<string>;
+  /** Confirms a reservation once paid. */
+  confirmReservation(code: string, bookingReference: string, payment: BokunPayment): Promise<void>;
+  /** Releases a reservation that was never paid. */
+  abortReservation(code: string): Promise<void>;
+  cancelBooking(code: string): Promise<void>;
   handleBookingWebhook(payload: unknown): Promise<{ success: boolean; bookingReference?: string; error?: string }>;
 }
 
@@ -93,34 +78,15 @@ export class MockBokunOperationsProvider implements IBookingOperationsProvider {
   }
 
 
-  async createReservation(payload: BokunBookingPayload): Promise<{ bokunBookingId: string; totalAmount: number }> {
-    // Bókun reservation endpoint logic
-    // Usually POST /booking.json/create
-    const bokunPayload = {
-      productActivityId: payload.productBokunId,
-      date: payload.departureDate,
-      time: payload.departureTime,
-      passengers: payload.totalSeats,
-      channelId: process.env.BOKUN_ONLINE_SALES_CHANNEL_ID || "90615648-3c90-4d07-9dac-d39089e7728b",
-      // Add more specifics like customer info, pricing categories, pickup...
-    };
-    
-    // As a placeholder for real API call which requires specific IDs
-    console.log("[BokunLive] Reserving in Bókun:", bokunPayload);
-    // const result = await this.client.post("/booking.json/create", bokunPayload);
-    // For now return dummy until we map exact Bókun payload
-    return { bokunBookingId: `live_bokun_${Date.now()}`, totalAmount: payload.totalAmount };
+  async reserve(input: BokunReservationInput): Promise<string> {
+    return `MOCK-${input.bookingReference}`;
   }
 
-  async confirmReservation(bokunBookingId: string): Promise<void> {
-    console.log(`[BokunLive] Confirming booking ${bokunBookingId} in Bókun.`);
-    // await this.client.post(`/booking.json/${bokunBookingId}/confirm`, {});
-  }
+  async confirmReservation(_code: string, _bookingReference: string, _payment: BokunPayment): Promise<void> {}
 
-  async cancelBooking(bokunBookingId: string): Promise<void> {
-    console.log(`[BokunLive] Cancelling booking ${bokunBookingId} in Bókun.`);
-    // await this.client.post(`/booking.json/${bokunBookingId}/cancel`, { note: "Cancelled by Vista Chase" });
-  }
+  async abortReservation(_code: string): Promise<void> {}
+
+  async cancelBooking(_code: string): Promise<void> {}
 
   async handleBookingWebhook(payload: unknown): Promise<{ success: boolean; bookingReference?: string; error?: string }> {
     return { success: true };
@@ -160,33 +126,20 @@ export class LiveBokunOperationsProvider implements IBookingOperationsProvider {
     return { syncedCount: result.created, updatedCount: result.updated, errors: result.errors };
   }
 
-  async createReservation(payload: BokunBookingPayload): Promise<{ bokunBookingId: string; totalAmount: number }> {
-    // Bókun reservation endpoint logic
-    // Usually POST /booking.json/create
-    const bokunPayload = {
-      productActivityId: payload.productBokunId,
-      date: payload.departureDate,
-      time: payload.departureTime,
-      passengers: payload.totalSeats,
-      channelId: process.env.BOKUN_ONLINE_SALES_CHANNEL_ID || "90615648-3c90-4d07-9dac-d39089e7728b",
-      // Add more specifics like customer info, pricing categories, pickup...
-    };
-    
-    // As a placeholder for real API call which requires specific IDs
-    console.log("[BokunLive] Reserving in Bókun:", bokunPayload);
-    // const result = await this.client.post("/booking.json/create", bokunPayload);
-    // For now return dummy until we map exact Bókun payload
-    return { bokunBookingId: `live_bokun_${Date.now()}`, totalAmount: payload.totalAmount };
+  reserve(input: BokunReservationInput): Promise<string> {
+    return reserveInBokun(this.client, input);
   }
 
-  async confirmReservation(bokunBookingId: string): Promise<void> {
-    console.log(`[BokunLive] Confirming booking ${bokunBookingId} in Bókun.`);
-    // await this.client.post(`/booking.json/${bokunBookingId}/confirm`, {});
+  confirmReservation(code: string, bookingReference: string, payment: BokunPayment): Promise<void> {
+    return confirmInBokun(this.client, code, bookingReference, payment);
   }
 
-  async cancelBooking(bokunBookingId: string): Promise<void> {
-    console.log(`[BokunLive] Cancelling booking ${bokunBookingId} in Bókun.`);
-    // await this.client.post(`/booking.json/${bokunBookingId}/cancel`, { note: "Cancelled by Vista Chase" });
+  abortReservation(code: string): Promise<void> {
+    return abortInBokun(this.client, code);
+  }
+
+  cancelBooking(code: string): Promise<void> {
+    return cancelInBokun(this.client, code);
   }
 
   async handleBookingWebhook(payload: unknown): Promise<{ success: boolean; bookingReference?: string; error?: string }> {
@@ -207,4 +160,9 @@ export function getBokunOperationsProvider(): IBookingOperationsProvider {
     bokunProviderInstance = new MockBokunOperationsProvider();
   }
   return bokunProviderInstance;
+}
+
+/** Tests: swap in a stand-in provider (null goes back to the default). */
+export function setBokunOperationsProvider(provider: IBookingOperationsProvider | null) {
+  bokunProviderInstance = provider;
 }

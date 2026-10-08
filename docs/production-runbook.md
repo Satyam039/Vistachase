@@ -55,12 +55,14 @@ Never run `prisma/seed-fixtures.js` in production. It creates demo staff account
 ## How a booking flows
 
 1. The guest holds seats for 10 minutes.
-2. The booking is saved as `PENDING_PAYMENT`, with its seats taken.
+2. The booking is saved as `PENDING_PAYMENT`, with its seats taken, and reserved in Bókun (Bókun holds the seats for up to 30 minutes; the reservation shows in Bókun as reserved, with the site's `VC-…` reference as external reference and the pickup and guest requests in the note).
+   - If Bókun says the departure is sold out, the booking is refused before the guest pays.
+   - If Bókun can't be reached, the booking goes ahead and is reserved after payment instead.
 3. The guest pays in Stripe's Payment Element.
-4. Stripe's webhook confirms the booking: it becomes `CONFIRMED` and the voucher email is sent.
-   - If the Bókun reservation fails at this step, the booking is `PAID_UNSYNCED` instead.
+4. Stripe's webhook confirms the booking: it is confirmed in Bókun with the amount paid, becomes `CONFIRMED`, and the voucher email is sent. Bókun doesn't email the guest; the site does.
+   - If Bókun can't confirm it, the booking is `PAID_UNSYNCED` instead, with the reason in its admin notes.
 
-Unpaid bookings are cancelled after 30 minutes and their seats freed (worker). The nightly check emails `OPS_ALERT_EMAIL` the bookings that need a person.
+Unpaid bookings are cancelled after 30 minutes, their seats freed and their Bókun reservation released. A guest's cancellation (72+ hours ahead) cancels the booking in Bókun too; the refund goes through Stripe. The nightly check emails `OPS_ALERT_EMAIL` the bookings that need a person.
 
 ## Monitoring
 
@@ -73,7 +75,7 @@ Unpaid bookings are cancelled after 30 minutes and their seats freed (worker). T
 | Symptom | Check | Fix |
 |---|---|---|
 | Guests paid but bookings stay "awaiting payment" | Stripe dashboard, webhook deliveries | Fix the endpoint or secret, then resend the failed events from Stripe. Confirming is idempotent. |
-| Bookings marked `PAID_UNSYNCED` | Nightly email, API logs | Create the reservation in Bókun by hand, add its ID to the booking in admin notes. |
+| Bookings marked `PAID_UNSYNCED` | Nightly email, the booking's admin notes, API logs | The guest has paid but Bókun has no confirmed booking. Create it in Bókun by hand (or confirm the reservation named in the notes if it's still there) and note the Bókun code on the booking. |
 | Seats look booked but nobody paid | Is the worker running? | Restart `vistachase-worker`. It frees expired holds within 5 minutes. |
 | No emails | Resend dashboard, `EMAIL_FROM` domain | Re-verify the domain; resend vouchers from Admin → booking → Resend voucher. |
 | Site shows "trouble loading" | API health, database | The site no longer serves a hard-coded catalog in production, so fix the API. |
