@@ -377,7 +377,7 @@ export function TourDetailView({
             </div>
           </div>
           <a
-            href="#cancellation-policy"
+            href="#cancellation"
             className="inline-flex shrink-0 items-center gap-2 self-start rounded-full bg-emerald-50 px-4 py-2 text-base text-emerald-900 ring-1 ring-emerald-200 hover:bg-emerald-100 lg:self-auto"
           >
             <CheckCircle2 className="h-5 w-5 text-emerald-700" aria-hidden="true" />

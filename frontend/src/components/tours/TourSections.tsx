@@ -1,7 +1,7 @@
 "use client";
 
-// Product page body laid out like Viator: a sticky "On this page" bar (Overview, What's included,
-// What to expect, Meeting & pickup, Additional info, Cancellation policy, FAQ, Reviews) over
+// Product page body laid out like Viator: a sticky "On this page" bar (Overview, Itinerary,
+// What's Included, Pickup, Cancellation, Reviews; FAQs follow without a tab) over
 // stacked sections, so everything can be scanned and linked. Content comes from the catalog
 // imported from the live product pages (tour.tabs, inclusions, faqs).
 
@@ -19,14 +19,14 @@ interface Review {
   date: string;
 }
 
+// The tab bar: the six sections every product page has, in booking order. FAQs follow Reviews
+// on the page without a tab of their own.
 const SECTIONS = [
   { id: "overview", label: "Overview" },
-  { id: "whats-included", label: "What's included" },
-  { id: "what-to-expect", label: "What to expect" },
-  { id: "meeting-pickup", label: "Meeting & pickup" },
-  { id: "additional-info", label: "Additional info" },
-  { id: "cancellation-policy", label: "Cancellation policy" },
-  { id: "faq", label: "FAQ" },
+  { id: "itinerary", label: "Itinerary" },
+  { id: "whats-included", label: "What's Included" },
+  { id: "pickup", label: "Pickup" },
+  { id: "cancellation", label: "Cancellation" },
   { id: "reviews", label: "Reviews" },
 ] as const;
 
@@ -183,10 +183,37 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
         {overviewSections.slice(1).map((s, i) => (
           <SectionBlock key={`${s.heading}-${i}`} section={s} />
         ))}
+        <div className="space-y-6">
+          <h3 className="text-xl font-light text-obsidian-900">Good to know</h3>
+          {tour.facts.length > 0 && (
+            <dl className="grid gap-4 rounded-3xl border border-slate-200/80 bg-white p-6 sm:grid-cols-2">
+              {tour.facts.map((f) => (
+                <div key={f.label}>
+                  <dt className="text-sm uppercase tracking-widest text-slate-600">{f.label}</dt>
+                  <dd className="text-lg font-light text-obsidian-900">{f.value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+          {isPrivate && tour.vehicleOptions.length > 0 && (
+            <p className="flex items-start gap-2.5 text-base text-slate-700">
+              <Car className="mt-1 h-4 w-4 shrink-0 text-ocean-600" aria-hidden="true" />
+              <span>Your private vehicle: {tour.vehicleOptions.map((v) => `${v.label} for up to ${v.seats}`).join(" or ")}.</span>
+            </p>
+          )}
+          {seasonal?.sections.map((s, i) => <SectionBlock key={`season-${i}`} section={s} level={4} />)}
+        </div>
+      </section>
+
+      <section id="itinerary" aria-labelledby="itinerary-heading" className="space-y-8">
+        <SectionHeading id="itinerary">Itinerary</SectionHeading>
+        {seeTab?.sections.map((s, i) => <SectionBlock key={`see-${i}`} section={s} />)}
+        {itinerary?.sections.map((s, i) => <SectionBlock key={`itin-${i}`} section={s} />)}
+        {!seeTab && !itinerary && <p className="text-base text-slate-700">Your guide shares the plan for the day at pickup.</p>}
       </section>
 
       <section id="whats-included" aria-labelledby="whats-included-heading" className="space-y-6">
-        <SectionHeading id="whats-included">What&apos;s included</SectionHeading>
+        <SectionHeading id="whats-included">What&apos;s Included</SectionHeading>
         <div className="grid gap-6 sm:grid-cols-2">
           <ul className="space-y-3 rounded-3xl border border-slate-200/80 bg-white p-6" aria-label="Included">
             {tour.inclusions.map((item) => (
@@ -209,15 +236,8 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
         </div>
       </section>
 
-      <section id="what-to-expect" aria-labelledby="what-to-expect-heading" className="space-y-8">
-        <SectionHeading id="what-to-expect">What to expect</SectionHeading>
-        {seeTab?.sections.map((s, i) => <SectionBlock key={`see-${i}`} section={s} />)}
-        {itinerary?.sections.map((s, i) => <SectionBlock key={`itin-${i}`} section={s} />)}
-        {!seeTab && !itinerary && <p className="text-base text-slate-700">Your guide shares the plan for the day at pickup.</p>}
-      </section>
-
-      <section id="meeting-pickup" aria-labelledby="meeting-pickup-heading" className="space-y-4">
-        <SectionHeading id="meeting-pickup">Meeting &amp; pickup</SectionHeading>
+      <section id="pickup" aria-labelledby="pickup-heading" className="space-y-4">
+        <SectionHeading id="pickup">Pickup</SectionHeading>
         <div className="space-y-3 rounded-3xl border border-slate-200/80 bg-white p-6 text-base text-slate-700">
           {isTicket ? (
             <p>
@@ -244,29 +264,8 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
         </div>
       </section>
 
-      <section id="additional-info" aria-labelledby="additional-info-heading" className="space-y-6">
-        <SectionHeading id="additional-info">Additional info</SectionHeading>
-        {tour.facts.length > 0 && (
-          <dl className="grid gap-4 rounded-3xl border border-slate-200/80 bg-white p-6 sm:grid-cols-2">
-            {tour.facts.map((f) => (
-              <div key={f.label}>
-                <dt className="text-sm uppercase tracking-widest text-slate-600">{f.label}</dt>
-                <dd className="text-lg font-light text-obsidian-900">{f.value}</dd>
-              </div>
-            ))}
-          </dl>
-        )}
-        {isPrivate && tour.vehicleOptions.length > 0 && (
-          <p className="flex items-start gap-2.5 text-base text-slate-700">
-            <Car className="mt-1 h-4 w-4 shrink-0 text-ocean-600" aria-hidden="true" />
-            <span>Your private vehicle: {tour.vehicleOptions.map((v) => `${v.label} for up to ${v.seats}`).join(" or ")}.</span>
-          </p>
-        )}
-        {seasonal?.sections.map((s, i) => <SectionBlock key={`season-${i}`} section={s} />)}
-      </section>
-
-      <section id="cancellation-policy" aria-labelledby="cancellation-policy-heading" className="space-y-4">
-        <SectionHeading id="cancellation-policy">Cancellation policy</SectionHeading>
+      <section id="cancellation" aria-labelledby="cancellation-heading" className="space-y-4">
+        <SectionHeading id="cancellation">Cancellation</SectionHeading>
         {isTicket ? (
           <div className="space-y-3 rounded-[1.75rem] bg-white p-6 text-base text-slate-700 ring-1 ring-obsidian-900/[0.07]">
             <p>Tickets are run by the attraction operator and follow their own cancellation rules, which we confirm with your request.</p>
@@ -294,6 +293,45 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
               Read the full cancellation policy
             </Link>
           </div>
+        )}
+      </section>
+
+
+      <section id="reviews" aria-labelledby="reviews-heading" className="space-y-6">
+        <SectionHeading id="reviews">Reviews</SectionHeading>
+        {tour.reviewCount > 0 && (
+          <p className="flex items-center gap-2 text-lg font-light text-obsidian-900">
+            <Star className="h-5 w-5 fill-summit-500 text-summit-500" aria-hidden="true" />
+            {tour.rating.toFixed(1)}
+            <span className="sr-only"> out of 5</span>
+            <span className="text-slate-600">
+              · {tour.reviewCount >= 1000 ? `${tour.reviewCount.toLocaleString("en-CA")}+ reviews across TripAdvisor and Google` : `${tour.reviewCount} ${tour.reviewCount === 1 ? "review" : "reviews"}`}
+            </span>
+          </p>
+        )}
+        {reviews && reviews.length > 0 ? (
+          <ul className="space-y-4">
+            {reviews.map((r) => (
+              <li key={r.id} className="space-y-2 rounded-3xl border border-slate-200 bg-white p-6">
+                <p className="flex items-center gap-1" role="img" aria-label={`${r.rating} out of 5`}>
+                  {Array.from({ length: 5 }, (_, i) => (
+                    <Star key={i} className={`h-4 w-4 ${i < r.rating ? "fill-summit-500 text-summit-500" : "text-slate-300"}`} aria-hidden="true" />
+                  ))}
+                </p>
+                <h3 className="text-lg font-light text-obsidian-900">{r.title}</h3>
+                <p className="text-base leading-relaxed text-slate-700">{r.body}</p>
+                <p className="text-sm text-slate-600">
+                  {r.authorName} · {r.date}
+                </p>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          reviews && (
+            <p className="text-base text-slate-700">
+              {tour.reviewCount > 0 ? "Guest reviews for this tour will appear here after their trips." : "This is new on Vista Chase. Be one of the first to review it."}
+            </p>
+          )
         )}
       </section>
 
@@ -348,44 +386,6 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
           </div>
         </section>
       )}
-
-      <section id="reviews" aria-labelledby="reviews-heading" className="space-y-6">
-        <SectionHeading id="reviews">Reviews</SectionHeading>
-        {tour.reviewCount > 0 && (
-          <p className="flex items-center gap-2 text-lg font-light text-obsidian-900">
-            <Star className="h-5 w-5 fill-summit-500 text-summit-500" aria-hidden="true" />
-            {tour.rating.toFixed(1)}
-            <span className="sr-only"> out of 5</span>
-            <span className="text-slate-600">
-              · {tour.reviewCount >= 1000 ? `${tour.reviewCount.toLocaleString("en-CA")}+ reviews across TripAdvisor and Google` : `${tour.reviewCount} ${tour.reviewCount === 1 ? "review" : "reviews"}`}
-            </span>
-          </p>
-        )}
-        {reviews && reviews.length > 0 ? (
-          <ul className="space-y-4">
-            {reviews.map((r) => (
-              <li key={r.id} className="space-y-2 rounded-3xl border border-slate-200 bg-white p-6">
-                <p className="flex items-center gap-1" role="img" aria-label={`${r.rating} out of 5`}>
-                  {Array.from({ length: 5 }, (_, i) => (
-                    <Star key={i} className={`h-4 w-4 ${i < r.rating ? "fill-summit-500 text-summit-500" : "text-slate-300"}`} aria-hidden="true" />
-                  ))}
-                </p>
-                <h3 className="text-lg font-light text-obsidian-900">{r.title}</h3>
-                <p className="text-base leading-relaxed text-slate-700">{r.body}</p>
-                <p className="text-sm text-slate-600">
-                  {r.authorName} · {r.date}
-                </p>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          reviews && (
-            <p className="text-base text-slate-700">
-              {tour.reviewCount > 0 ? "Guest reviews for this tour will appear here after their trips." : "This is new on Vista Chase. Be one of the first to review it."}
-            </p>
-          )
-        )}
-      </section>
     </div>
   );
 }
