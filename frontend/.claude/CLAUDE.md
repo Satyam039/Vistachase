@@ -170,6 +170,11 @@ behind the sticky header, traps). Report in `a11y-report/summary.md`. Keep it at
 - Announcement strip: `components/layout/AnnouncementBar.tsx`, rendered above (not inside) the sticky header so it
   scrolls away. Closing is stored in localStorage and applied before paint by `ANNOUNCE_SCRIPT`
   (`src/lib/announcement.ts`, inlined in the root layout). Bump `ANNOUNCEMENT.id` when the message changes.
+- Alignment: section headings are centred on the page axis (eyebrow, title, intro, main link/button):
+  `SectionHeading` is centred by default, page heroes are centred. Content below stays left-aligned
+  (cards, forms, tables, long text, product-page sections). Split photo/text sections keep their column
+  alignment. Centre chip rows with overflow-safe auto margins (`[&>*:first-child]:ml-auto
+  [&>*:last-child]:mr-auto`), never `justify-center`, which clips the first chips when the row overflows.
 - Client-component pages set their title in a sibling `layout.tsx` (every page needs its own title).
 
 Building pages from templates (https://astryx.atmeta.com/templates):
