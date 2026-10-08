@@ -56,9 +56,9 @@ function availability(tour: TourWithAvailability, seats: number, date?: string) 
   return { variant: "success" as const, text: `${SEATS_MESSAGE} · ${formatShortDate(next.date)}` };
 }
 
-/** Earned badges only: the shared Banff tour is TripAdvisor's #6 experience in Canada (2025). */
+/** Earned badges only: the shared Banff tour is TripAdvisor's #6 experience in Canada (2026). */
 const AWARD_BADGE: Record<string, string> = {
-  "banff-highlights-tour": "Best of the Best 2025",
+  "banff-highlights-tour": "Best of the Best 2026",
 };
 
 // Dark editorial card (premium brief, item 3): a large photo takes most of the card, then the

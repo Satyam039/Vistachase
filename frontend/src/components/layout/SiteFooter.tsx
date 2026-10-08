@@ -257,7 +257,7 @@ export function SiteFooter() {
             <AwardMark />
             <span className="min-w-0">
               <span className="block whitespace-nowrap text-base text-white">#6 experience in Canada</span>
-              <span className="block whitespace-nowrap text-xs text-white/70">TripAdvisor Best of the Best 2025</span>
+              <span className="block whitespace-nowrap text-xs text-white/70">TripAdvisor Best of the Best 2026</span>
               <span className="mt-1.5 flex items-center gap-1.5 whitespace-nowrap text-sm text-white/85">
                 <span className="flex" aria-hidden="true">
                   {[0, 1, 2, 3, 4].map((i) => (

@@ -1,6 +1,6 @@
 // About Vista Chase, structured like the "About" pages of the booking sites studied (photo hero,
 // numbers, story, values, fleet, recognition) in the brand system. Figures are the ones used across
-// the live site: since 2018, 10,000+ guests, 5.0 from 1,000+ reviews, #6 in Canada (2025).
+// the live site: since 2018, 10,000+ guests, 5.0 from 1,000+ reviews, #6 in Canada (2026).
 
 import Image from "next/image";
 import { AwardSeal } from "@/components/brand/AwardSeal";
@@ -11,7 +11,7 @@ import { ArrowUpRight, ChevronRight, HeartHandshake, MountainSnow, ShieldCheck, 
 export const metadata: Metadata = {
   title: "About Vista Chase | Banff's Top-Rated Tour & Shuttle Operator",
   description:
-    "Founded in 2018 in Canmore. TripAdvisor Best of the Best 2025 (#6 experience in Canada). Our story, local guides and fleet for the Canadian Rockies.",
+    "Founded in 2018 in Canmore. TripAdvisor Best of the Best 2026 (#6 experience in Canada). Our story, local guides and fleet for the Canadian Rockies.",
   alternates: { canonical: "/about-us" },
 };
 
@@ -19,7 +19,7 @@ const STATS = [
   { to: 2018, label: "guiding the Rockies since", plain: true },
   { to: 10000, suffix: "+", label: "guests guided" },
   { to: 5, decimals: 1, label: "average rating, 1,000+ reviews" },
-  { to: 6, prefix: "#", label: "experience in Canada, TripAdvisor 2025" },
+  { to: 6, prefix: "#", label: "experience in Canada, TripAdvisor 2026" },
 ];
 
 const VALUES = [
@@ -200,7 +200,7 @@ export default function AboutUsPage() {
               Named the #6 experience in all of Canada
             </h2>
             <p className="mt-4 max-w-2xl text-lg font-light leading-relaxed text-white/80">
-              Our shared Banff tour was chosen in TripAdvisor&rsquo;s 2025 Best of the Best awards, based on traveller
+              Our shared Banff tour was chosen in TripAdvisor&rsquo;s 2026 Best of the Best awards, based on traveller
               reviews.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">

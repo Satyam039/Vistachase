@@ -1,11 +1,10 @@
 // Tripadvisor award as a text seal: the real Tripadvisor wordmark (backend/media/badges) with the
-// award spelled out. Used instead of the badge image from the live site, which shows the 2026
-// Travelers' Choice artwork while the award Vista Chase holds is Best of the Best 2025. Swap in the
-// official 2025 badge file here when Vista Chase has it.
+// award spelled out: Travelers' Choice Best of the Best 2026, the year on the live site's badge.
+// Swap in the official badge file here when Vista Chase has it in high resolution.
 
 import Image from "next/image";
 
-export const AWARD = { name: "Travelers' Choice Best of the Best", year: "2025" };
+export const AWARD = { name: "Travelers' Choice Best of the Best", year: "2026" };
 
 /** Large seal (award section, About page). */
 export function AwardSeal({ className = "", size = "lg" }: { className?: string; size?: "md" | "lg" }) {

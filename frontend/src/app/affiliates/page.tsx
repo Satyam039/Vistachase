@@ -47,7 +47,7 @@ export default function AffiliatesPage() {
           <h1 className="text-balance text-4xl font-light leading-[1.1] tracking-tight text-white sm:text-6xl">Partner with Vista Chase</h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg font-light leading-relaxed text-slate-300">
             For agents, hotel concierge desks and tour operators. Small-group and private Rockies days for your guests, ranked the #6
-            experience in Canada by TripAdvisor (2025).
+            experience in Canada by TripAdvisor (2026).
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Link href="/partners#apply" className="golden-summit-btn inline-flex h-12 items-center gap-2 rounded-full px-7 text-base">

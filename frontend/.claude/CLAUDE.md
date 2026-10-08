@@ -166,8 +166,8 @@ behind the sticky header, traps). Report in `a11y-report/summary.md`. Keep it at
 - Live tracking is private: `/track/<token>` opens only with a tracking-session token or a booking's unexpired
   `trackingToken`, never a booking reference or id. The public `/api/bookings?ref=` lookup (voucher) omits the token,
   `POST /api/track/:id/notify` is staff-only, and the concierge reaches tracking only after its email check
-  (`getTelemetryForVerifiedBooking`). Award: Tripadvisor Travelers' Choice Best of the Best 2025, shown with
-  `components/brand/AwardSeal.tsx` (the live site's badge image says 2026 and is not used).
+  (`getTelemetryForVerifiedBooking`). Award: Tripadvisor Travelers' Choice Best of the Best 2026, shown with
+  `components/brand/AwardSeal.tsx` (the year matches the live site's badge).
 - Announcement strip: `components/layout/AnnouncementBar.tsx`, rendered above (not inside) the sticky header so it
   scrolls away. Closing is stored in localStorage and applied before paint by `ANNOUNCE_SCRIPT`
   (`src/lib/announcement.ts`, inlined in the root layout). Bump `ANNOUNCEMENT.id` when the message changes.

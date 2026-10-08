@@ -32,7 +32,7 @@ export function GuestTestimonials({ reviews }: { reviews: SliderReview[] }) {
           </div>
           <p className="mt-6 inline-flex items-center gap-2 text-sm text-slate-300">
             <Award className="h-4 w-4 text-summit-400" aria-hidden="true" />
-            Travellers&rsquo; Choice Best of the Best 2025
+            Travellers&rsquo; Choice Best of the Best 2026
           </p>
           <a
             href={TRIPADVISOR_URL}

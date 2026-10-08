@@ -17,11 +17,11 @@ import { TrustBar } from "@/components/cinematic/TrustBar";
 export const metadata = {
   title: "Vista Chase | Luxury Private Tours & Shuttles • Banff & Lake Louise",
   description:
-    "Banff's premier tour operator. Ranked #6 Experience in Canada by TripAdvisor Best of the Best 2025. Guaranteed Moraine Lake access, luxury private SUV tours & shuttles.",
+    "Banff's premier tour operator. Ranked #6 Experience in Canada by TripAdvisor Best of the Best 2026. Guaranteed Moraine Lake access, luxury private SUV tours & shuttles.",
   openGraph: {
     title: "Vista Chase | Canadian Rockies Luxury Tours & Shuttles",
     description:
-      "Ranked #6 Experience in Canada by TripAdvisor 2025. Explore Banff, Lake Louise & Moraine Lake in comfort.",
+      "Ranked #6 Experience in Canada by TripAdvisor 2026. Explore Banff, Lake Louise & Moraine Lake in comfort.",
     images: [
       {
         url: "/media/site/hero-background-image-3.webp",
