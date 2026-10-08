@@ -135,7 +135,7 @@ describe("Domain Repositories & Business Logic", () => {
     });
 
     expect(bookingResult.success).toBe(true);
-    expect(bookingResult.booking?.bookingReference).toMatch(/^VC-2026-\d+$/);
+    expect(bookingResult.booking?.bookingReference).toMatch(/^VC-\d{4}-[0-9A-F]{8}$/) // long, non-guessable (S2);
     expect(bookingResult.booking?.voucherCode).toMatch(/^VOUCH-/);
     expect(bookingResult.booking?.qrCodeUrl).toBeDefined();
 

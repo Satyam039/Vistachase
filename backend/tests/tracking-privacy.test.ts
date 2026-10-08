@@ -8,6 +8,9 @@ import { createApp } from "@/app";
 import prisma from "@/lib/db/prisma";
 import { getLiveTrackingProvider } from "@/lib/tracking/tracking.provider";
 
+// These tests exercise the tracking simulator, which is off unless FEATURE_TRACKING is "true".
+process.env.FEATURE_TRACKING = "true";
+
 let server: Server;
 let base = "";
 let reference = "";

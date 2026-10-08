@@ -3,7 +3,7 @@ import { getLiveTrackingProvider } from "@/lib/tracking/tracking.provider";
 import { getMapsProvider } from "@/lib/maps/maps.provider";
 import { createReservationHold } from "@/modules/reservations/reservation.repository";
 import { createBooking } from "@/modules/bookings/booking.repository";
-import { dateOnly, todayInMountainTime } from "@/lib/utils/time";
+import { dateOnly, formatDateOnly, formatTimeOfDay, todayInMountainTime } from "@/lib/utils/time";
 
 export interface ToolExecutionContext {
   isStaff?: boolean;
@@ -104,8 +104,8 @@ export async function checkBokunAvailability(args: { date: string; tourSlug?: st
 
   return departures.map((d) => ({
     departureId: d.id,
-    date: d.date.toISOString().split('T')[0],
-    departureTime: d.departureTime,
+    date: formatDateOnly(d.date),
+    departureTime: formatTimeOfDay(d.departureTime),
     tourTitle: d.tour?.title || d.shuttleRoute?.name,
     capacityTotal: d.capacityTotal,
     availableSeats: Math.max(0, d.capacityTotal - (d.capacityBooked + d.capacityHeld)),
@@ -138,7 +138,7 @@ export async function getBooking(args: { bookingReference: string; customerEmail
     customerName: booking.customerName,
     tourTitle: booking.tourDeparture.tour?.title || booking.tourDeparture.shuttleRoute?.name,
     departureDate: booking.tourDeparture.date.toISOString().split('T')[0],
-    departureTime: booking.tourDeparture.departureTime,
+    departureTime: formatTimeOfDay(booking.tourDeparture.departureTime),
     pickupLocation: booking.pickupStop?.name || booking.pickupCustomText || "Banff Station",
     pickupTime: booking.pickupTime || booking.tourDeparture.departureTime,
     totalSeats: booking.totalSeats,
@@ -265,8 +265,8 @@ export async function getAvailableDates(args: { tourSlug?: string }) {
       const remaining = Math.max(0, d.capacityTotal - (d.capacityBooked + d.capacityHeld));
       return {
         departureId: d.id,
-        date: d.date,
-        departureTime: d.departureTime,
+        date: formatDateOnly(d.date),
+        departureTime: formatTimeOfDay(d.departureTime),
         title: d.tour?.title || d.shuttleRoute?.name,
         slug: d.tour?.slug,
         availableSeats: remaining,
@@ -374,7 +374,7 @@ export async function getTodaysDepartures(args: { date?: string }, ctx: ToolExec
 
   return departures.map((d) => ({
     departureId: d.id,
-    departureTime: d.departureTime,
+    departureTime: formatTimeOfDay(d.departureTime),
     title: d.tour?.title || d.shuttleRoute?.name,
     capacityTotal: d.capacityTotal,
     capacityBooked: d.capacityBooked,

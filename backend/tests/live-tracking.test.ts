@@ -2,6 +2,9 @@ import { describe, it, expect } from "vitest";
 import prisma from "@/lib/db/prisma";
 import { getLiveTrackingProvider } from "@/lib/tracking/tracking.provider";
 
+// These tests exercise the tracking simulator, which is off unless FEATURE_TRACKING is "true".
+process.env.FEATURE_TRACKING = "true";
+
 describe("Live GPS Tracking & Telemetry System", () => {
   it("resolves active telemetry for a valid 64-character cryptographic token", async () => {
     const session = await prisma.trackingSession.findFirst();

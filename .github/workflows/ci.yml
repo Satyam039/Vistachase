@@ -62,11 +62,15 @@ jobs:
       working-directory: ./backend
       run: npx prisma generate
 
+    # Same command production runs at release; fails if the migrations don't match the schema.
     - name: Apply Prisma Migrations
       working-directory: ./backend
       env:
         DATABASE_URL: postgresql://postgres:vistachase_secret@localhost:5432/vistachase_test?schema=public
-      run: npx prisma db push --accept-data-loss
+      run: |
+        npx prisma migrate deploy
+        # The migrated database must match schema.prisma exactly (catches a schema change without a migration).
+        npx prisma migrate diff --from-url "$DATABASE_URL" --to-schema-datamodel prisma/schema.prisma --exit-code
 
     - name: Backend Typecheck
       working-directory: ./backend
@@ -75,6 +79,8 @@ jobs:
     - name: Backend Tests
       working-directory: ./backend
       env:
+        # Tests reset and seed this database (tests/test-database-url.ts); never a real one.
+        TEST_DATABASE_URL: postgresql://postgres:vistachase_secret@localhost:5432/vistachase_test?schema=public
         DATABASE_URL: postgresql://postgres:vistachase_secret@localhost:5432/vistachase_test?schema=public
         REDIS_URL: redis://localhost:6379
         JWT_SECRET: super-secret-test-key-must-be-32-chars!

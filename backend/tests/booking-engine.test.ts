@@ -84,7 +84,7 @@ describe("Phase 4: Booking Engine, Holds & Payment Abstraction", () => {
     });
 
     expect(bookingRes.success).toBe(true);
-    expect(bookingRes.booking?.bookingReference).toMatch(/^VC-2026-\d+$/);
+    expect(bookingRes.booking?.bookingReference).toMatch(/^VC-\d{4}-[0-9A-F]{8}$/) // long, non-guessable (S2);
     expect(bookingRes.booking?.qrCodeUrl).toContain("data:image/png;base64");
 
     // 3. Verify booking details from DB

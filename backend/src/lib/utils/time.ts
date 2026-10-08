@@ -65,3 +65,19 @@ export function formatTimeOfDay(value: Date | null | undefined): string | null {
 export function todayInMountainTime(now: Date = new Date()): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Edmonton", year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
 }
+
+/**
+ * Express "json replacer": every API response sends departure dates and times in the shape the
+ * frontend expects ("2026-10-08", "08:30"), even where a route returns database rows directly.
+ * Matches only the stored conventions above on the fields that use them.
+ */
+export function apiJsonReplacer(key: string, value: unknown): unknown {
+  if (typeof value !== "string") return value;
+  if ((key === "departureTime" || key === "returnTime") && /^1970-01-01T\d{2}:\d{2}:00\.000Z$/.test(value)) {
+    return value.slice(11, 16);
+  }
+  if (key === "date" && /^\d{4}-\d{2}-\d{2}T00:00:00\.000Z$/.test(value)) {
+    return value.slice(0, 10);
+  }
+  return value;
+}

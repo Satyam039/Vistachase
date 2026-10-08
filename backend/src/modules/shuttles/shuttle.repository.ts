@@ -1,5 +1,6 @@
 import prisma from "@/lib/db/prisma";
 import { getExpiredHeldSeats, liveCapacity } from "@/modules/reservations/reservation.repository";
+import { formatDateOnly, formatTimeOfDay } from "@/lib/utils/time";
 
 export interface ShuttleWithDepartures {
   id: string;
@@ -48,9 +49,9 @@ export async function getShuttleRoutes(): Promise<ShuttleWithDepartures[]> {
     notes: r.notes,
     departures: r.departures.map((d) => ({
       id: d.id,
-      date: d.date.toISOString().split('T')[0],
-      departureTime: d.departureTime.toISOString(),
-      returnTime: d.returnTime ? d.returnTime.toISOString() : null,
+      date: formatDateOnly(d.date),
+      departureTime: formatTimeOfDay(d.departureTime),
+      returnTime: formatTimeOfDay(d.returnTime),
       capacityTotal: d.capacityTotal,
       capacityBooked: d.capacityBooked,
       ...liveCapacity(d, expiredHeld),
@@ -87,9 +88,9 @@ export async function getShuttleBySlug(slug: string): Promise<ShuttleWithDepartu
     notes: r.notes,
     departures: r.departures.map((d) => ({
       id: d.id,
-      date: d.date.toISOString().split('T')[0],
-      departureTime: d.departureTime.toISOString(),
-      returnTime: d.returnTime ? d.returnTime.toISOString() : null,
+      date: formatDateOnly(d.date),
+      departureTime: formatTimeOfDay(d.departureTime),
+      returnTime: formatTimeOfDay(d.returnTime),
       capacityTotal: d.capacityTotal,
       capacityBooked: d.capacityBooked,
       ...liveCapacity(d, expiredHeld),

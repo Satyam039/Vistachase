@@ -1,5 +1,5 @@
 import { getBokunOperationsProvider } from "@/modules/bokun/bokun.provider";
-import { getMountainTimeInstant } from "@/lib/utils/time";
+import { formatDateOnly, formatTimeOfDay, getMountainTimeInstant } from "@/lib/utils/time";
 import prisma from "@/lib/db/prisma";
 import QRCode from "qrcode";
 import { getPaymentProvider } from "@/lib/payment/payment.provider";
@@ -258,8 +258,8 @@ let discountPercent = 0;
         qrCodeUrl: booking.qrCodeUrl,
       },
       tourTitle: departure.tour?.title || departure.shuttleRoute?.name || "Rockies Tour",
-      date: departure.date,
-      time: departure.departureTime,
+      date: formatDateOnly(departure.date),
+      time: formatTimeOfDay(departure.departureTime),
     };
   });
 
@@ -395,7 +395,7 @@ export async function cancelBooking(reference: string, customerEmail?: string) {
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #072019;">
           <h2 style="color: #991b1b;">Reservation Cancelled</h2>
-          <p>Your booking <strong>${booking.bookingReference}</strong> for <strong>${booking.tourDeparture.tour?.title || "Vista Chase Rockies Tour"}</strong> on ${booking.tourDeparture.date} has been cancelled under our 72-hour cancellation policy.</p>
+          <p>Your booking <strong>${booking.bookingReference}</strong> for <strong>${booking.tourDeparture.tour?.title || "Vista Chase Rockies Tour"}</strong> on ${formatDateOnly(booking.tourDeparture.date)} has been cancelled under our 72-hour cancellation policy.</p>
           <p>Bookings of 1–6 guests are refunded in full. For groups of 7 or more and multi-day trips, the 20% deposit is non-refundable and the rest is refunded. Approved refunds reach your original payment method within 5–10 business days.</p>
           <p>Questions? Email support@vistachase.com or call +1 (825) 734-9456 (6 a.m. – 9 p.m. Mountain Time).</p>
         </div>

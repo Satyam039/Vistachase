@@ -1,4 +1,5 @@
 import prisma from "@/lib/db/prisma";
+import { dateOnly, todayInMountainTime } from "@/lib/utils/time";
 
 export interface CreateReviewInput {
   bookingReference: string;
@@ -55,7 +56,6 @@ if (!booking) {
   }
 
   const now = new Date();
-  const dateFormatted = now.toLocaleDateString("en-US", { month: "long", year: "numeric" });
   const author = input.authorName || booking.customerName;
 
   const result = await prisma.$transaction(async (tx) => {
@@ -68,7 +68,7 @@ if (!booking) {
         title: input.title,
         body: input.body,
         isVerified: true,
-        date: dateFormatted,
+        date: dateOnly(todayInMountainTime(now)),
       },
     });
 

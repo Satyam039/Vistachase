@@ -35,7 +35,7 @@ describe("Phase 5: Customer Portal, My Trips & Reviews", () => {
         capacityHeld: 0,
         price: 15500,
         currency: "CAD",
-        status: "SCHEDULED" as any,
+        status: "ACTIVE",
       },
     });
     futureDepartureId = futureDep.id;
@@ -56,7 +56,7 @@ describe("Phase 5: Customer Portal, My Trips & Reviews", () => {
         capacityHeld: 0,
         price: 15500,
         currency: "CAD",
-        status: "SCHEDULED" as any,
+        status: "ACTIVE",
       },
     });
     imminentDepartureId = imminentDep.id;
@@ -160,7 +160,7 @@ describe("Phase 5: Customer Portal, My Trips & Reviews", () => {
         tax: 775,
         totalAmount: 16275,
         currency: "CAD",
-        status: "CONFIRMED",
+        status: "COMPLETED", // reviews are accepted only after the trip
         voucherCode: `VOUCH-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
       },
     });
@@ -220,7 +220,7 @@ describe("Phase 5: Customer Portal, My Trips & Reviews", () => {
         tax: 775,
         totalAmount: 16275,
         currency: "CAD",
-        status: "CONFIRMED",
+        status: "COMPLETED", // reviews are accepted only after the trip
         voucherCode: `VOUCH-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
       },
     });

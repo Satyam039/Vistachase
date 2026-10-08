@@ -155,7 +155,8 @@ export class LiveBokunOperationsProvider implements IBookingOperationsProvider {
 
   async syncTodaysBookings(date: string): Promise<BokunSyncResult> {
     const products = await this.fetchProducts();
-    let syncedCount = 0;
+    let syncedCount = 0; // departures created
+    let updatedCount = 0; // departures already known, capacity refreshed
     
     for (const prod of products) {
       try {
@@ -180,6 +181,7 @@ export class LiveBokunOperationsProvider implements IBookingOperationsProvider {
                 where: { id: existing.id },
                 data: { capacityTotal: capacityTotal }
               });
+              updatedCount++;
             } else {
               await prisma.tourDeparture.create({
                 data: {
@@ -192,8 +194,8 @@ export class LiveBokunOperationsProvider implements IBookingOperationsProvider {
                   price: Math.round(prod.basePrice * 100)
                 }
               });
+              syncedCount++;
             }
-            syncedCount++;
           }
         }
       } catch (err) {
@@ -201,7 +203,7 @@ export class LiveBokunOperationsProvider implements IBookingOperationsProvider {
       }
     }
     
-    return { syncedCount, updatedCount: 0, errors: [] };
+    return { syncedCount, updatedCount, errors: [] };
   }
 
 

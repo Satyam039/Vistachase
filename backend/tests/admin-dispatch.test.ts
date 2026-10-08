@@ -30,7 +30,7 @@ describe("Phase 6: Admin Panel, Dispatch Board & RBAC", () => {
         capacityHeld: 0,
         price: 16500,
         currency: "CAD",
-        status: "SCHEDULED" as any,
+        status: "ACTIVE",
       },
     });
     testDepartureId = dep.id;
