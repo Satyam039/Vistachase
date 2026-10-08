@@ -13,7 +13,7 @@ router.get("/", async (req, res) => {
 
     return res.json({ success: true, count: pickups.length, pickups });
   } catch (error: unknown) {
-    return res.status(500).json({ success: false, error: (error as Error).message || "Failed to fetch pickups" });
+    return res.status(500).json({ success: false, error: "Failed to fetch pickups" });
   }
 });
 

@@ -1,3 +1,5 @@
+import { getBokunOperationsProvider } from "@/modules/bokun/bokun.provider";
+import { getMountainTimeInstant } from "@/lib/utils/time";
 import prisma from "@/lib/db/prisma";
 import QRCode from "qrcode";
 import { getPaymentProvider } from "@/lib/payment/payment.provider";
@@ -107,8 +109,9 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingR
     const totalAmount = Math.round((subtotal + addOnsTotal + tax) * 100) / 100;
 
     // References
-    const randSuffix = Math.floor(10000 + Math.random() * 90000);
-    const bookingReference = `VC-2026-${randSuffix}`;
+    const crypto = require("crypto");
+    const randSuffix = crypto.randomBytes(4).toString("hex").toUpperCase();
+    const bookingReference = `VC-${new Date().getFullYear()}-${randSuffix}`;
     const voucherCode = `VOUCH-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
     // Generate QR code data URL
@@ -123,8 +126,41 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingR
     );
 
     // Create Booking
+
+    const bokunProvider = getBokunOperationsProvider();
+    
+    // B5: Reserve in Bókun first
+    let bokunBookingId = "pending_sync";
+    if (departure.tour?.bokunId) {
+      const departureDateStr = departure.date.toISOString().split("T")[0];
+      const departureTimeStr = departure.departureTime.toISOString().split("T")[1].substring(0, 5);
+      try {
+        const reserveRes = await bokunProvider.createReservation({
+          bokunBookingId: "",
+          bookingReference,
+          productBokunId: departure.tour.bokunId,
+          departureDate: departureDateStr,
+          departureTime: departureTimeStr,
+          customerName: input.customerName,
+          customerEmail: input.customerEmail,
+          customerPhone: input.customerPhone || "",
+          totalSeats: totalSeats,
+          pickupLocation: input.pickupCustomText || input.pickupStopId || "",
+          status: "CONFIRMED",
+          totalAmount: totalAmount,
+          currency: "CAD",
+          sourceChannel: "WEBSITE",
+          specialRequests: input.specialRequests
+        });
+        bokunBookingId = reserveRes.bokunBookingId;
+      } catch (e: any) {
+        throw new Error("Failed to reserve seats in Bókun: " + e.message);
+      }
+    }
+
     const booking = await tx.booking.create({
       data: {
+        bokunBookingId: bokunBookingId,
         bookingReference,
         customerId: input.customerId,
         affiliateId: (await findActiveAffiliateByCode(input.affiliateCode))?.id ?? null,
@@ -139,10 +175,10 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingR
         childrenCount: input.childrenCount,
         infantsCount: input.infantsCount,
         totalSeats,
-        subtotal,
-        tax,
-        addOnsTotal,
-        totalAmount,
+        subtotal: Math.round(subtotal * 100),
+        tax: Math.round(tax * 100),
+        addOnsTotal: Math.round(addOnsTotal * 100),
+        totalAmount: Math.round(totalAmount * 100),
         currency: departure.currency,
         status: "CONFIRMED",
         specialRequests: input.specialRequests,
@@ -206,7 +242,7 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingR
         id: booking.id,
         bookingReference: booking.bookingReference,
         voucherCode: booking.voucherCode,
-        totalAmount: booking.totalAmount,
+        totalAmount: booking.totalAmount / 100,
         currency: booking.currency,
         status: booking.status,
         qrCodeUrl: booking.qrCodeUrl,
@@ -281,8 +317,8 @@ export async function cancelBooking(reference: string, customerEmail?: string) {
       return { success: false, error: "Booking reference not found" };
     }
 
-    if (customerEmail && booking.customerEmail.toLowerCase() !== customerEmail.toLowerCase()) {
-      return { success: false, error: "Unauthorized: Booking belongs to another account" };
+    if (!customerEmail || booking.customerEmail.toLowerCase() !== customerEmail.toLowerCase()) {
+      return { success: false, error: "Unauthorized: Booking belongs to another account or email not provided" };
     }
 
     if (booking.status === "CANCELLED") {
@@ -291,9 +327,7 @@ export async function cancelBooking(reference: string, customerEmail?: string) {
 
     // Cancellation policy (vistachase.com legal terms): cancel at least 72 hours before departure.
     // 1–6 guests: full refund. 7+ guests and multi-day: refund minus the 20% non-refundable deposit.
-    const departureDateStr = booking.tourDeparture.date;
-    const departureTimeStr = booking.tourDeparture.departureTime || "08:00";
-    const departureDateTime = new Date(`${departureDateStr}T${departureTimeStr}`);
+    const departureDateTime = getMountainTimeInstant(booking.tourDeparture.date, booking.tourDeparture.departureTime as any);
     const now = new Date();
     const hoursDifference = (departureDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
 
@@ -321,6 +355,12 @@ export async function cancelBooking(reference: string, customerEmail?: string) {
         capacityBooked: { decrement: releasedSeats },
       },
     });
+
+    // B6: Cancel in Bókun
+    const bokunProvider = getBokunOperationsProvider();
+    if (booking.bokunBookingId && booking.bokunBookingId !== "pending_sync") {
+      await bokunProvider.cancelBooking(booking.bokunBookingId).catch(e => console.error("Bókun cancel error:", e));
+    }
 
     // Send cancellation notice
     emailProvider.sendEmail({

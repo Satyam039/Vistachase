@@ -1,3 +1,4 @@
+import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
 import { Router } from "express";
 import { z } from "zod";
 import { createEnquiry } from "@/modules/enquiries/enquiry.repository";
@@ -20,7 +21,7 @@ const schema = z.object({
 const hits = new Map<string, number[]>();
 
 // POST /api/enquiries: contact form and "Request this tour".
-router.post("/", async (req, res) => {
+router.post("/", rateLimitMiddleware("enquiry_create", { maxRequests: 5, windowSeconds: 600 }), async (req, res) => {
   const key = req.ip ?? "unknown";
   const now = Date.now();
   const recent = (hits.get(key) ?? []).filter((t) => now - t < 10 * 60_000);

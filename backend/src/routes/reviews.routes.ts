@@ -1,3 +1,4 @@
+import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
 import { Router } from "express";
 import { getAuthenticatedUser } from "@/lib/auth/admin-guard";
 import { createReview, getTourReviews } from "@/modules/reviews/review.repository";
@@ -20,7 +21,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.post("/", async (req, res) => {
+router.post("/", rateLimitMiddleware("review_create", { maxRequests: 3, windowSeconds: 3600 }), async (req, res) => {
   try {
     const { bookingReference, rating, title, body: reviewBody, authorName } = req.body ?? {};
 

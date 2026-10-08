@@ -8,7 +8,7 @@ router.get("/", async (_req, res) => {
     const destinations = await getDestinations();
     return res.json({ success: true, count: destinations.length, destinations });
   } catch (error: unknown) {
-    return res.status(500).json({ success: false, error: (error as Error).message || "Failed to load destinations" });
+    return res.status(500).json({ success: false, error: "Failed to load destinations" });
   }
 });
 
@@ -20,7 +20,7 @@ router.get("/:slug", async (req, res) => {
     }
     return res.json({ success: true, destination });
   } catch (error: unknown) {
-    return res.status(500).json({ success: false, error: (error as Error).message || "Failed to load destination" });
+    return res.status(500).json({ success: false, error: "Failed to load destination" });
   }
 });
 

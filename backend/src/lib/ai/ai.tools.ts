@@ -24,7 +24,7 @@ export interface ToolResult {
 export async function searchTours(args: { query?: string; category?: string }) {
   const tours = await prisma.tour.findMany({
     where: {
-      ...(args.category ? { category: args.category.toUpperCase() } : {}),
+      ...(args.category ? { category: args.category.toUpperCase() as any } : {}),
       ...(args.query
         ? {
             OR: [
@@ -72,21 +72,21 @@ export async function getTourDetails(args: { tourSlugOrBokunId: string }) {
     title: tour.title,
     category: tour.category,
     durationHours: tour.durationHours,
-    basePrice: tour.basePrice,
+    basePrice: tour.basePrice / 100,
     currency: tour.currency,
     summary: tour.summary,
     description: tour.description,
-    inclusions: JSON.parse(tour.inclusions || "[]"),
-    exclusions: JSON.parse(tour.exclusions || "[]"),
-    highlights: JSON.parse(tour.highlights || "[]"),
-    whatToBring: JSON.parse(tour.whatToBring || "[]"),
+    inclusions: (tour.inclusions as string[]) || [],
+    exclusions: (tour.exclusions as string[]) || [],
+    highlights: (tour.highlights as string[]) || [],
+    whatToBring: (tour.whatToBring as string[]) || [],
   };
 }
 
 export async function checkBokunAvailability(args: { date: string; tourSlug?: string }) {
   const departures = await prisma.tourDeparture.findMany({
     where: {
-      date: args.date,
+      date: new Date(args.date),
       status: "ACTIVE",
       ...(args.tourSlug
         ? {
@@ -103,12 +103,12 @@ export async function checkBokunAvailability(args: { date: string; tourSlug?: st
 
   return departures.map((d) => ({
     departureId: d.id,
-    date: d.date,
+    date: d.date.toISOString().split('T')[0],
     departureTime: d.departureTime,
     tourTitle: d.tour?.title || d.shuttleRoute?.name,
     capacityTotal: d.capacityTotal,
     availableSeats: Math.max(0, d.capacityTotal - (d.capacityBooked + d.capacityHeld)),
-    pricePerPerson: d.price,
+    pricePerPerson: d.price / 100,
     currency: d.currency,
   }));
 }
@@ -136,7 +136,7 @@ export async function getBooking(args: { bookingReference: string; customerEmail
     bookingReference: booking.bookingReference,
     customerName: booking.customerName,
     tourTitle: booking.tourDeparture.tour?.title || booking.tourDeparture.shuttleRoute?.name,
-    departureDate: booking.tourDeparture.date,
+    departureDate: booking.tourDeparture.date.toISOString().split('T')[0],
     departureTime: booking.tourDeparture.departureTime,
     pickupLocation: booking.pickupStop?.name || booking.pickupCustomText || "Banff Station",
     pickupTime: booking.pickupTime || booking.tourDeparture.departureTime,
@@ -247,7 +247,7 @@ export async function getAvailableDates(args: { tourSlug?: string }) {
   const today = new Date().toISOString().split("T")[0];
   const departures = await prisma.tourDeparture.findMany({
     where: {
-      date: { gte: today },
+      date: { gte: new Date(today) },
       status: "ACTIVE",
       ...(args.tourSlug ? { tour: { slug: args.tourSlug } } : {}),
     },
@@ -269,7 +269,7 @@ export async function getAvailableDates(args: { tourSlug?: string }) {
         title: d.tour?.title || d.shuttleRoute?.name,
         slug: d.tour?.slug,
         availableSeats: remaining,
-        price: d.price,
+        price: d.price / 100,
         currency: d.currency,
       };
     })
@@ -343,57 +343,6 @@ export async function createVoiceBookingPaymentIntent(args: {
   };
 }
 
-export async function confirmVoiceBooking(args: {
-  departureId: string;
-  holdToken?: string;
-  customerName: string;
-  customerEmail: string;
-  customerPhone?: string;
-  pickupLocation?: string;
-  adultsCount?: number;
-  childrenCount?: number;
-  paymentProvider?: "mock" | "stripe";
-}) {
-  let pickupStopId: string | undefined = undefined;
-  if (args.pickupLocation) {
-    const maps = getMapsProvider();
-    const stops = await maps.searchPickups(args.pickupLocation);
-    if (stops.length > 0) {
-      pickupStopId = stops[0].id;
-    }
-  }
-
-  const result = await createBooking({
-    departureId: args.departureId,
-    holdToken: args.holdToken,
-    customerName: args.customerName,
-    customerEmail: args.customerEmail,
-    customerPhone: args.customerPhone || "+1-825-734-9456",
-    pickupStopId,
-    pickupCustomText: pickupStopId ? undefined : args.pickupLocation,
-    adultsCount: args.adultsCount || 1,
-    childrenCount: args.childrenCount || 0,
-    infantsCount: 0,
-    paymentProvider: args.paymentProvider || "mock",
-  });
-
-  if (!result.success || !result.booking) {
-    return {
-      success: false,
-      error: result.error || "Failed to finalize booking.",
-    };
-  }
-
-  return {
-    success: true,
-    bookingReference: result.booking.bookingReference,
-    voucherCode: result.booking.voucherCode,
-    totalAmount: result.booking.totalAmount,
-    currency: result.booking.currency,
-    status: result.booking.status,
-    voucherUrl: `/booking/${encodeURIComponent(result.booking.bookingReference)}/voucher`,
-  };
-}
 
 // ---------------------------------------------------------------------------
 // 2. Staff-Facing Operations AI Assistant Tools (Staff Authorization Enforced)
@@ -579,8 +528,6 @@ export async function executeAiTool(toolName: string, args: Record<string, any>,
         return { toolName, success: true, data: await createVoiceReservationHold(args as any) };
       case "createVoiceBookingPaymentIntent":
         return { toolName, success: true, data: await createVoiceBookingPaymentIntent(args as any) };
-      case "confirmVoiceBooking":
-        return { toolName, success: true, data: await confirmVoiceBooking(args as any) };
       case "getLiveTracking":
         return { toolName, success: true, data: await getLiveTracking(args as any) };
       case "getETA":

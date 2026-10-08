@@ -156,7 +156,7 @@ export async function updateRunStatus(runId: string, status: string, notes?: str
   const updated = await prisma.operationRun.update({
     where: { id: runId },
     data: {
-      status,
+      status: status as any,
       ...(notes ? { notes } : {}),
     },
     include: {

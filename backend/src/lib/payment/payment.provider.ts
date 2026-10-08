@@ -21,7 +21,14 @@ export interface IPaymentProvider {
 }
 
 class MockPaymentProvider implements IPaymentProvider {
+  private assertNotProduction() {
+    if (process.env.NODE_ENV === "production" && process.env.FEATURE_MOCK_PAYMENT !== "true") {
+      throw new Error("Mock payments are disabled in production.");
+    }
+  }
+
   async createPaymentIntent(req: PaymentIntentRequest): Promise<PaymentIntentResponse> {
+    this.assertNotProduction();
     const intentId = `pi_mock_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
     return {
       clientSecret: `mock_secret_${intentId}`,
@@ -48,20 +55,30 @@ class MockPaymentProvider implements IPaymentProvider {
   }
 }
 
+
+import Stripe from "stripe";
+
 class StripePaymentProvider implements IPaymentProvider {
-  private secretKey: string;
+  private stripe: Stripe;
 
   constructor(secretKey: string) {
-    this.secretKey = secretKey;
+    this.stripe = new Stripe(secretKey, { apiVersion: "2024-06-20" as any });
   }
 
   async createPaymentIntent(req: PaymentIntentRequest): Promise<PaymentIntentResponse> {
-    // When Stripe is enabled with real key, call Stripe API
-    console.log(`[StripePaymentProvider] Creating Stripe payment intent for ${req.amount} ${req.currency}`);
-    const intentId = `pi_stripe_${Date.now()}`;
+    const intent = await this.stripe.paymentIntents.create({
+      amount: req.amount,
+      currency: req.currency.toLowerCase(),
+      metadata: {
+        bookingReference: req.bookingReference,
+        customerEmail: req.customerEmail,
+        ...req.metadata
+      }
+    });
+
     return {
-      clientSecret: `stripe_sec_${intentId}`,
-      intentId,
+      clientSecret: intent.client_secret || "",
+      intentId: intent.id,
       amount: req.amount,
       currency: req.currency,
       status: "requires_payment_method",
@@ -69,20 +86,23 @@ class StripePaymentProvider implements IPaymentProvider {
   }
 
   async confirmPayment(intentId: string): Promise<{ success: boolean; transactionId: string; status: string }> {
+    const intent = await this.stripe.paymentIntents.retrieve(intentId);
     return {
-      success: true,
-      transactionId: `ch_${intentId}`,
-      status: "succeeded",
+      success: intent.status === "succeeded",
+      transactionId: (intent as any).latest_charge || intentId,
+      status: intent.status,
     };
   }
 
   async refundPayment(transactionId: string): Promise<{ success: boolean; refundId: string }> {
+    const refund = await this.stripe.refunds.create({ charge: transactionId });
     return {
-      success: true,
-      refundId: `re_${transactionId}`,
+      success: refund.status === "succeeded",
+      refundId: refund.id,
     };
   }
 }
+
 
 let paymentInstance: IPaymentProvider | null = null;
 

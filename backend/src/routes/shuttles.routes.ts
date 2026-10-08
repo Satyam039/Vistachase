@@ -8,7 +8,7 @@ router.get("/", async (_req, res) => {
     const routes = await getShuttleRoutes();
     return res.json({ success: true, count: routes.length, routes });
   } catch (error: unknown) {
-    return res.status(500).json({ success: false, error: (error as Error).message || "Failed to load shuttles" });
+    return res.status(500).json({ success: false, error: "Failed to load shuttles" });
   }
 });
 
@@ -20,7 +20,7 @@ router.get("/:slug", async (req, res) => {
     }
     return res.json({ success: true, route });
   } catch (error: unknown) {
-    return res.status(500).json({ success: false, error: (error as Error).message || "Failed to load shuttle" });
+    return res.status(500).json({ success: false, error: "Failed to load shuttle" });
   }
 });
 

@@ -1,3 +1,4 @@
+import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
 import { Router } from "express";
 import { getAIProvider, ChatMessage } from "@/lib/ai/ai.provider";
 import { executeAiTool } from "@/lib/ai/ai.tools";
@@ -8,20 +9,7 @@ import type { Request, Response, NextFunction } from "express";
 const router = Router();
 
 // Simple per-IP limit so the AI model can't be run up: 30 messages per 10 minutes.
-const WINDOW_MS = 10 * 60_000;
-const LIMIT = 30;
-const hits = new Map<string, number[]>();
-function rateLimit(req: Request, res: Response, next: NextFunction) {
-  const key = req.ip ?? "unknown";
-  const now = Date.now();
-  const recent = (hits.get(key) ?? []).filter((t) => now - t < WINDOW_MS);
-  if (recent.length >= LIMIT) {
-    return res.status(429).json({ error: "You're sending messages quickly. Please wait a few minutes and try again." });
-  }
-  recent.push(now);
-  hits.set(key, recent);
-  next();
-}
+
 
 function staffContext(req: Request) {
   const staff = getAuthenticatedStaff(req, ["ADMIN", "OPERATOR", "DISPATCHER"]);
@@ -30,7 +18,7 @@ function staffContext(req: Request) {
 
 // POST /api/concierge/stream: Server-Sent Events. Events: status (what the agent is doing),
 // text (reply deltas), done (final payload: message, cards, sessionState), error.
-router.post("/stream", rateLimit, async (req, res) => {
+router.post("/stream", rateLimitMiddleware("concierge", { maxRequests: 30, windowSeconds: 600 }), async (req, res) => {
   const messages: ChatMessage[] = req.body?.messages || [];
   if (!Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ error: "Invalid messages array." });
@@ -65,7 +53,7 @@ router.post("/stream", rateLimit, async (req, res) => {
 });
 
 // POST /api/concierge (Chat interaction with safety refusal & tool execution)
-router.post("/", rateLimit, async (req, res) => {
+router.post("/", rateLimitMiddleware("concierge", { maxRequests: 30, windowSeconds: 600 }), async (req, res) => {
   try {
     const messages: ChatMessage[] = req.body?.messages || [];
     const sessionState = req.body?.sessionState;
@@ -147,11 +135,16 @@ router.post("/tool", async (req, res) => {
     }
 
     const staff = getAuthenticatedStaff(req, ["ADMIN", "OPERATOR", "DISPATCHER"]);
+    if (!staff) {
+      return res.status(401).json({ error: "UNAUTHORIZED: Staff credentials required." });
+    }
+
     const context = {
-      isStaff: !!staff,
-      role: staff?.role,
-      userEmail: staff?.email,
+      isStaff: true,
+      role: staff.role,
+      userEmail: staff.email,
     };
+
 
     const result = await executeAiTool(toolName, args || {}, context);
     if (!result.success) {
@@ -160,7 +153,7 @@ router.post("/tool", async (req, res) => {
 
     return res.json(result);
   } catch (error: any) {
-    return res.status(500).json({ error: error.message || "Failed to execute AI tool." });
+    return res.status(500).json({ error: "Failed to execute AI tool." });
   }
 });
 
