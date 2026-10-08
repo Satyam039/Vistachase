@@ -25,7 +25,7 @@ export const MENU_SECTIONS: MenuSection[] = [
       { title: "Private tours", description: "Your own vehicle and guide, your pace", href: "/private-tours" },
       { title: "Shuttles", description: "Guaranteed Moraine Lake & Lake Louise access", href: "/shuttles" },
       { title: "Multi-day packages", description: "2–7 days across the Rockies, airport transfers", href: "/multi-day-tour-package-for-banff" },
-      { title: "Banff activity tickets", description: "Gondola, lake cruise, Skywalk, hot springs", href: "/banff-activity-tickets" },
+      { title: "Banff activity tickets", description: "Gondola, Icefield, lake cruises, hot springs", href: "/banff-activity-tickets" },
     ],
   },
   {
