@@ -20,26 +20,30 @@ export async function apiGet<T>(path: string, params?: Record<string, string | u
     if (value !== undefined && value !== "") url.searchParams.set(key, value);
   }
 
-  try {
-    // 3.5s timeout ensures cold-starting backend containers never hang indefinitely or break SSR
-    const res = await fetch(url, {
-      cache: "no-store",
-      signal: AbortSignal.timeout(3500),
-      headers,
-    });
+  // Render's free plan has slow moments (a busy database, a restart). Wait up to 10 seconds and
+  // try once more on a timeout, network error or 5xx, instead of failing the whole page.
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const res = await fetch(url, {
+        cache: "no-store",
+        signal: AbortSignal.timeout(10_000),
+        headers,
+      });
 
-    if (!res.ok) {
-      const body = await res.json().catch(() => null);
-      throw new ApiError(res.status, body?.error || `Backend request failed: ${res.status} ${path}`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new ApiError(res.status, body?.error || `Backend request failed: ${res.status} ${path}`);
+      }
+      return (await res.json()) as T;
+    } catch (error) {
+      // Next.js signals "render this page per request" (live prices and seats) by throwing from
+      // fetch during the build; let that through instead of treating it as the backend being down.
+      unstable_rethrow(error);
+      const retryable = !(error instanceof ApiError) || error.status >= 500;
+      if (retryable && attempt < 2) continue;
+      if (error instanceof ApiError) throw error;
+      throw new ApiError(503, (error as Error).message || "Backend service unavailable");
     }
-    return (await res.json()) as T;
-  } catch (error) {
-    // Next.js signals "render this page per request" (live prices and seats) by throwing from
-    // fetch during the build; let that through instead of treating it as the backend being down.
-    unstable_rethrow(error);
-    if (error instanceof ApiError) throw error;
-    // Catch fetch/timeout/network errors gracefully
-    throw new ApiError(503, (error as Error).message || "Backend service unavailable");
   }
 }
 
