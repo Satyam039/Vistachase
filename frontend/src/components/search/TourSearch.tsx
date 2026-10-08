@@ -132,9 +132,9 @@ export function TourSearch({
     <div className="bg-obsidian-50 text-obsidian-900">
       {/* Header + keyword */}
       <section className="border-b border-obsidian-900/[0.06] bg-white">
-        <div className="mx-auto max-w-7xl px-page pb-8 pt-10 sm:pt-14">
+        <div className="mx-auto max-w-7xl px-page pb-8 pt-10 text-center sm:pt-14">
           <nav aria-label="Breadcrumb" className="mb-5">
-            <ol className="flex items-center gap-1.5 text-sm text-slate-600">
+            <ol className="flex items-center justify-center gap-1.5 text-sm text-slate-600">
               <li>
                 <Link href="/" className="hover:text-obsidian-900 hover:underline">
                   Home
@@ -149,9 +149,9 @@ export function TourSearch({
             </ol>
           </nav>
           <h1 className="text-balance text-4xl font-light leading-[1.05] tracking-tight text-obsidian-900 sm:text-5xl">Find your Rockies tour</h1>
-          <p className="mt-3 max-w-2xl text-lg font-light text-slate-600">Tours, shuttles and tickets across Banff, Lake Louise, Moraine Lake, Yoho and Jasper.</p>
+          <p className="mx-auto mt-3 max-w-2xl text-lg font-light text-slate-600">Tours, shuttles and tickets across Banff, Lake Louise, Moraine Lake, Yoho and Jasper.</p>
 
-          <label className="relative mt-7 block max-w-3xl">
+          <label className="relative mx-auto mt-7 block max-w-3xl text-left">
             <span className="sr-only">Search tours</span>
             <Search className="pointer-events-none absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" aria-hidden="true" />
             <input
@@ -163,7 +163,7 @@ export function TourSearch({
             />
           </label>
 
-          <div role="group" aria-label="Filter by type" className="vc-rail -mx-page mt-5 flex gap-2 overflow-x-auto px-page">
+          <div role="group" aria-label="Filter by type" className="vc-rail -mx-page mt-5 flex gap-2 overflow-x-auto px-page [&>*:first-child]:ml-auto [&>*:last-child]:mr-auto">
             {categories.map((c) => (
               <button
                 key={c}
