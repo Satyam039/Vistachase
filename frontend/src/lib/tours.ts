@@ -63,3 +63,12 @@ export function nextDepartureFor(tour: TourWithAvailability, seats: number, date
   const departures = Array.isArray(tour?.departures) ? tour.departures : [];
   return departures.find((d) => departureFits(tour, d, seats) && (!date || d.date === date));
 }
+
+/**
+ * Display wording for imported pickup inclusions: the catalog's "Doorstep pickup & drop-off"
+ * (and its "/drop-off" spelling) reads "Hotel pickup" on the site; any note after it, such as
+ * "(Banff, Canmore, Lake Louise)", is kept. Other inclusions pass through unchanged.
+ */
+export function pickupLabel(text: string) {
+  return text.replace(/^doorstep pickup\s*(?:&|\/|and)\s*drop-?off/i, "Hotel pickup");
+}

@@ -107,7 +107,7 @@ export default async function ShuttlesPage() {
               Sunrise or the day shuttle
             </h2>
           </div>
-          <ul className="grid gap-6 md:grid-cols-2 lg:gap-8" data-stagger>
+          <ul className="mx-auto grid max-w-3xl gap-4 sm:grid-cols-2 lg:gap-5" data-stagger>
             {shuttles.map((t) => (
               <li key={t.id}>
                 <TourCard tour={t} />

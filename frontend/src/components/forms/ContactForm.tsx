@@ -7,6 +7,7 @@
 import { useState } from "react";
 import { CheckCircle2, Send } from "lucide-react";
 import { Dropdown } from "@/components/forms/Dropdown";
+import { openDatePicker } from "@/lib/utils/datePicker";
 
 type Fields = "name" | "email" | "phone" | "message" | "date" | "guests";
 const FIELD =
@@ -112,7 +113,7 @@ export function ContactForm({
         <span className="mb-1.5 block text-sm text-slate-700">
           Preferred date <span className="text-slate-500">(optional)</span>
         </span>
-        <input name="date" type="date" min={today} className={FIELD} {...aria("date")} />
+        <input name="date" type="date" min={today} onClick={openDatePicker} onFocus={openDatePicker} className={FIELD} {...aria("date")} />
       </label>
       <label className="block">
         <span className="mb-1.5 block text-sm text-slate-700">

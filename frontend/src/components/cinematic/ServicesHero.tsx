@@ -2,24 +2,29 @@
 
 // Home hero, built on the pattern every booking site studied uses (GetYourGuide, Viator,
 // Expedia, Project Expedition, Civitatis): full-bleed imagery and one centred column in three
-// groups: the message, the search (with the booking promises as its footer) and an experience
-// switcher (each with its "from" price) whose selected item shows its line and link. The five
-// Vista Chase services rotate behind it (slow cross-fade with a gentle zoom, clips where they exist).
+// groups: the message, an experience switcher (each with its "from" price) whose selected item
+// shows its line and link, and a compact search (with the booking promises as its footer) right
+// under that line. Background, Rolls-Royce style: a full-screen clip plays automatically in a
+// seamless loop under light, transparent overlays (the selected service's clip, else the house
+// clip). The services' photos sit underneath as the fallback: they show on phones on data saver,
+// with reduced motion, and whenever a clip fails to load.
 //
 // Carousel accessibility (WAI-ARIA carousel pattern, WCAG 2.2.2): motion is bounded instead of
 // needing a pause button. Rotation makes one pass through the five services (~40s) and stops,
 // stops for good as soon as the visitor picks a service, pauses while the pointer or keyboard
-// focus is in the switcher, and never runs with reduced motion; the clip pauses when it stops. The switcher is a tablist; the caption above it is the tabpanel, and
-// changes are announced only when the visitor makes them.
+// focus is in the switcher, and never runs with reduced motion. The looping clip has its own
+// visible Pause / Play button (WCAG 2.2.2) and never plays with reduced motion. The switcher is a
+// tablist; the caption above it is the tabpanel, and changes are announced only when the visitor
+// makes them.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, CalendarCheck, MapPin, MountainSnow, Star } from "lucide-react";
+import { ArrowRight, CalendarCheck, MapPin, MountainSnow, Pause, Play, Star } from "lucide-react";
 import { AmbientVideo } from "@/components/cinematic/AmbientVideo";
 import { HeroSearch } from "@/components/home/HeroSearch";
 import { hasPrice, money } from "@/lib/pricing";
-import type { Service } from "@/lib/services";
+import { SERVICES, type Service } from "@/lib/services";
 
 export interface HeroTour {
   slug: string;
@@ -35,6 +40,9 @@ export interface HeroSlide extends Service {
 }
 
 const ROTATE_MS = 8000;
+
+/** Clip for services without one of their own, so the hero always has moving footage. */
+const HOUSE_CLIP = SERVICES.find((s) => s.video)?.video;
 
 /** Short switcher labels so all five fit one row. */
 const TAB_LABEL: Record<string, string> = {
@@ -55,6 +63,7 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
   const [hovering, setHovering] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(true);
   const [announce, setAnnounce] = useState(false);
+  const [videoPaused, setVideoPaused] = useState(false);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   useEffect(() => {
@@ -109,6 +118,7 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
   );
 
   const slide = slides[index];
+  const clip = slide.video ?? HOUSE_CLIP;
 
   return (
     <section
@@ -134,20 +144,33 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
             />
           </div>
         ))}
-        {slide.video && (
+        {clip && (
           <AmbientVideo
-            key={slide.id}
-            src={slide.video.src}
-            srcHd={slide.video.srcHd}
-            poster={slide.video.poster}
+            key={clip.src}
+            src={clip.src}
+            srcHd={clip.srcHd}
+            poster={clip.poster}
             className="absolute inset-0 h-full w-full object-cover"
-            paused={stopped}
+            paused={videoPaused}
           />
         )}
-        {/* Scrims: soft at the top, centre darkened for the headline, strong at the foot. */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-ocean-950/45 via-ocean-950/30 to-ocean-950/85" />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(6,19,20,0.45),transparent_75%)]" />
+        {/* Transparent overlays: clear in the middle so the footage reads, a soft shade behind the
+            headline and a deeper one at the foot for the switcher and search. */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/35 via-black/10 to-black/70" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.3),transparent_70%)]" />
       </div>
+
+      {/* The clip loops, so it gets a visible pause control (bottom left, clear of the concierge). */}
+      {clip && !reducedMotion && (
+        <button
+          type="button"
+          onClick={() => setVideoPaused((p) => !p)}
+          aria-label={videoPaused ? "Play background video" : "Pause background video"}
+          className="absolute bottom-4 left-4 z-20 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/25 bg-black/30 text-white backdrop-blur-md hover:bg-black/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-summit-500"
+        >
+          {videoPaused ? <Play className="h-4 w-4" aria-hidden="true" /> : <Pause className="h-4 w-4" aria-hidden="true" />}
+        </button>
+      )}
 
       {/* One centred column in three groups with even spacing (GetYourGuide / Airbnb hero
           hierarchy): 1 message (proof chip, headline, one line), 2 action (search with the three
@@ -174,26 +197,9 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
           Small-group tours, private journeys and guaranteed lake shuttles from Banff and Canmore.
         </p>
 
-        {/* 2 · Action: search + promises as one frosted unit */}
-        <div className="mt-9 w-full max-w-4xl rounded-[2.25rem] bg-white/10 p-1.5 ring-1 ring-white/20 backdrop-blur-md motion-safe:animate-[fadeUp_1300ms_ease-out] sm:mt-10">
-          <HeroSearch className="w-full" />
-          <ul className="flex flex-col items-center gap-1.5 px-4 py-3 text-xs text-white sm:text-sm sm:flex-row sm:flex-wrap sm:justify-center sm:gap-x-6" aria-label="Booking with Vista Chase">
-            {[
-              { icon: CalendarCheck, text: "Free cancellation up to 72 hours" },
-              { icon: MapPin, text: "Hotel pickup in Banff & Canmore" },
-              { icon: MountainSnow, text: "Guaranteed Moraine Lake access" },
-            ].map(({ icon: Icon, text }) => (
-              <li key={text} className="inline-flex items-center gap-1.5">
-                <Icon className="h-4 w-4 text-summit-400" aria-hidden="true" />
-                {text}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* 3 · Explore by experience */}
+        {/* 2 · Explore by experience */}
         <div
-          className="mt-10 w-full max-w-5xl sm:mt-12"
+          className="mt-9 w-full max-w-5xl sm:mt-10"
           onMouseEnter={() => setHovering(true)}
           onMouseLeave={() => setHovering(false)}
           onFocusCapture={() => setHovering(true)}
@@ -267,6 +273,22 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
             </Link>
           </div>
+        </div>
+        {/* 3 · Action: compact search + promises, right under the selected experience's line */}
+        <div className="mt-6 w-full max-w-3xl motion-safe:animate-[fadeUp_1300ms_ease-out]">
+          <HeroSearch className="w-full" />
+          <ul className="flex flex-col items-center gap-1 px-4 pt-3 text-xs text-white [text-shadow:0_1px_10px_rgba(0,0,0,0.5)] sm:flex-row sm:flex-wrap sm:justify-center sm:gap-x-5" aria-label="Booking with Vista Chase">
+            {[
+              { icon: CalendarCheck, text: "Free cancellation up to 72 hours" },
+              { icon: MapPin, text: "Hotel pickup in Banff & Canmore" },
+              { icon: MountainSnow, text: "Guaranteed Moraine Lake access" },
+            ].map(({ icon: Icon, text }) => (
+              <li key={text} className="inline-flex items-center gap-1.5">
+                <Icon className="h-3.5 w-3.5 text-summit-400" aria-hidden="true" />
+                {text}
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </section>
