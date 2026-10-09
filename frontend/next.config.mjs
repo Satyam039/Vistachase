@@ -6,6 +6,15 @@ const BACKEND_URL = (
   (process.env.RENDER ? 'https://vistachase-backend.onrender.com' : 'http://localhost:4000')
 ).replace(/\/$/, '');
 
+// Optional media CDN (see src/lib/media.ts): background clips and their posters stream from it.
+// Images stay local on purpose: they are in public/media, which Next serves before any rewrite, and
+// next/image resizes them per screen. Read at build time; must be an https URL (plain http only for
+// localhost testing), so a typo fails the build instead of breaking media.
+const MEDIA_CDN_URL = (process.env.NEXT_PUBLIC_MEDIA_CDN_URL || '').trim().replace(/\/+$/, '');
+if (MEDIA_CDN_URL && !/^(https:\/\/[^/\s]+|http:\/\/(localhost|127\.0\.0\.1)(:\d+)?)(\/\S*)?$/.test(MEDIA_CDN_URL)) {
+  throw new Error(`NEXT_PUBLIC_MEDIA_CDN_URL must be an https URL, got "${MEDIA_CDN_URL}"`);
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   distDir: process.env.NEXT_BUILD_DIR || '.next',

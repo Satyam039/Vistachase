@@ -9,10 +9,12 @@
 // Performance: nothing downloads until the clip scrolls into view; it pauses when it leaves the
 // viewport, and it stays on the poster on data-saver connections. Large screens get the 1080p
 // encode when there is one. If the clip can't load, the video is removed so whatever sits under
-// it (the poster or the parent's photo) shows instead.
+// it (the poster or the parent's photo) shows instead. With a media CDN configured the clip and
+// poster stream straight from it (lib/media.ts), so video bytes don't pass through the app server.
 
 import { useEffect, useRef, useState } from "react";
 import { Pause, Play } from "lucide-react";
+import { mediaUrl } from "@/lib/media";
 
 export interface AmbientVideoSource {
   src: string;
@@ -125,7 +127,7 @@ export function AmbientVideo({
         loop={!once}
         playsInline
         preload="metadata"
-        poster={poster}
+        poster={mediaUrl(poster)}
         aria-hidden="true"
         tabIndex={-1}
         onPlay={() => setPlaying(true)}
@@ -133,9 +135,9 @@ export function AmbientVideo({
         onError={() => setFailed(true)}
         className={className}
       >
-        {srcHd && <source src={srcHd} type="video/mp4" media="(min-width: 1024px)" />}
+        {srcHd && <source src={mediaUrl(srcHd)} type="video/mp4" media="(min-width: 1024px)" />}
         {/* The last source failing means no source could play. */}
-        <source src={src} type="video/mp4" onError={() => setFailed(true)} />
+        <source src={mediaUrl(src)} type="video/mp4" onError={() => setFailed(true)} />
       </video>
       {!controlled && (
       <button
