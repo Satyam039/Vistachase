@@ -88,14 +88,14 @@ export function DepartureCalendar({
   };
 
   const navBtn =
-    "inline-flex h-10 w-10 items-center justify-center rounded-full text-obsidian-900 transition-colors hover:bg-obsidian-900/[0.06] disabled:pointer-events-none disabled:text-slate-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ocean-600";
+    "inline-flex h-9 w-9 items-center justify-center rounded-full text-obsidian-900 transition-colors hover:bg-obsidian-900/[0.06] disabled:pointer-events-none disabled:text-slate-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ocean-600";
 
   return (
-    <fieldset className="space-y-3">
-      <legend className="mb-2 block text-sm text-slate-700">Departure date</legend>
+    <fieldset className="space-y-2.5">
+      <legend className="mb-1.5 block text-sm text-slate-700">Departure date</legend>
 
-      <div className="rounded-2xl border border-obsidian-900/10 bg-white p-3 sm:p-4">
-        <div className="mb-3 flex items-center justify-between">
+      <div className="rounded-2xl border border-obsidian-900/10 bg-white px-3 py-2">
+        <div className="mb-1 flex items-center justify-between">
           <button type="button" className={navBtn} onClick={() => prevMonth && setMonth(prevMonth)} disabled={!prevMonth} aria-label="Previous month">
             <ChevronLeft className="h-5 w-5" aria-hidden="true" />
           </button>
@@ -110,12 +110,12 @@ export function DepartureCalendar({
         <div ref={grid} role="group" aria-label={monthLabel}>
           <div className="grid grid-cols-7" aria-hidden="true">
             {WEEKDAYS.map((w) => (
-              <span key={w} className="pb-2 text-center text-[11px] uppercase tracking-[0.12em] text-slate-500">
+              <span key={w} className="pb-1 text-center text-[11px] uppercase tracking-[0.12em] text-slate-500">
                 {w}
               </span>
             ))}
           </div>
-          <div className="grid grid-cols-7 gap-y-1">
+          <div className="grid grid-cols-7 gap-y-0.5">
             {cells.map((day, i) => {
               if (!day) return <span key={`blank-${i}`} aria-hidden="true" />;
               const isSelected = day === selectedDay;
@@ -133,7 +133,7 @@ export function DepartureCalendar({
                     aria-label={`${longDate(day)}, ${state}`}
                     onClick={() => pick(day)}
                     onKeyDown={(e) => onKeyDown(e, day)}
-                    className={`flex aspect-square w-full max-w-12 flex-col items-center justify-center rounded-full text-base tabular-nums transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ocean-600 ${
+                    className={`flex h-10 w-full max-w-11 flex-col items-center justify-center rounded-full text-base tabular-nums transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ocean-600 ${
                       isSelected
                         ? "bg-obsidian-950 text-white"
                         : isAvailable
