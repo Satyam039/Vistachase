@@ -1,7 +1,6 @@
-```yaml
 name: Deploy VistaChase to AWS
 
-"on":
+on:
   push:
     branches:
       - main
@@ -82,4 +81,3 @@ jobs:
 
             pm2 list
             echo "Deployment health checks passed."
-```
