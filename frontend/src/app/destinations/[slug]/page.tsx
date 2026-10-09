@@ -182,7 +182,7 @@ export default async function DestinationDetailPage({ params }: { params: Promis
               </Link>
             </div>
           ) : (
-            <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8" data-stagger>
+            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5" data-stagger>
               {tours.map((t) => (
                 <li key={t.id}>
                   <TourCard tour={t} />

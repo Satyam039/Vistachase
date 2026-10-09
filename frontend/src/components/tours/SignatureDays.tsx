@@ -8,7 +8,7 @@ import Link from "next/link";
 import { ArrowRight, CalendarDays, Check, Clock, MapPin, Ticket } from "lucide-react";
 import { PriceTag } from "@/components/pricing/PriceTag";
 import { SectionHeading } from "@/components/home/SectionHeading";
-import { durationLabel, fromPrice, priceUnitLabel } from "@/lib/tours";
+import { durationLabel, fromPrice, pickupLabel, priceUnitLabel } from "@/lib/tours";
 import type { TourWithAvailability } from "@/lib/api/types";
 
 export interface SignaturePick {
@@ -100,7 +100,7 @@ export function SignatureDays({
 
                   <h4 className="mt-6 text-xs uppercase tracking-[0.2em] text-white/50">Pickup</h4>
                   <p className="mt-2 text-sm text-white/70">
-                    {pickup ?? "Hotel pickup"} ·{" "}
+                    {pickup ? pickupLabel(pickup) : "Hotel pickup"} ·{" "}
                     <Link href="/pickup-finder" className="text-summit-200 underline decoration-summit-200/40 underline-offset-4 hover:decoration-summit-200">
                       find your pickup point
                     </Link>

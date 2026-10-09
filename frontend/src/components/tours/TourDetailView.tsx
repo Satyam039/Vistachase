@@ -31,6 +31,7 @@ import { Rail } from "@/components/motion/Rail";
 import { ProductGallery, type GallerySlide } from "@/components/tours/ProductGallery";
 import { TourSectionNav, TourSections } from "@/components/tours/TourSections";
 import {
+  TOUR_CARD_RAIL_ITEM,
   TourCard,
   departureFits,
   durationLabel,
@@ -570,7 +571,7 @@ export function TourDetailView({
             <h2 id="related-heading" className="mb-8 text-3xl font-light tracking-tight text-obsidian-900 sm:text-4xl" data-reveal>
               You might also like
             </h2>
-            <Rail label="You might also like">
+            <Rail label="You might also like" itemClassName={TOUR_CARD_RAIL_ITEM}>
               {related.map((t) => (
                 <TourCard key={t.id} tour={t} />
               ))}
