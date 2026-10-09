@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, Clock, MapPin, Star, Users } from "lucide-react";
+import { ArrowRight, CalendarDays, CheckCircle2, Clock, MapPin, Star, Users } from "lucide-react";
 import { PriceTag } from "@/components/pricing/PriceTag";
 import { hasPrice } from "@/lib/pricing";
 import { cancellationShort, SEATS_MESSAGE } from "@/lib/policy";
@@ -65,10 +65,11 @@ const AWARD_BADGE: Record<string, string> = {
   "banff-highlights-tour": "Best of the Best 2026",
 };
 
-// Compact luxury card, Rolls-Royce style: a wide photo, then a tight near-black panel with the
-// title, a one-line description (the tour's own catalog summary), key details in one small row,
-// availability and the price. Near-square overall, hairline border, minimal spacing. The whole
-// card is one link (title link stretched over it), so there is a single tab stop per card.
+// Compact luxury card, Rolls-Royce style ("Explore further" tiles): a large 16:10 photo carrying
+// the badges and the destination, then a short near-black panel with a letter-spaced title, one
+// line of key facts, the cancellation terms with live availability, and a one-line price. Near-square
+// overall, hairline border, tight spacing; the catalog summary stays on the product page. The
+// whole card is one link (title link stretched over it), so there is a single tab stop per card.
 export function TourCard({
   tour,
   seats = 1,
@@ -81,20 +82,22 @@ export function TourCard({
   headingLevel?: 2 | 3;
 }) {
   const TitleTag = headingLevel === 2 ? "h2" : "h3";
-  const priceLabel = tour.priceUnit === "GROUP" ? "Per group from" : tour.category === "TICKET" ? "Per ticket from" : "Per guest from";
+  const unitLabel = tour.priceUnit === "GROUP" ? "group" : tour.category === "TICKET" ? "ticket" : "guest";
   const status = availability(tour, seats, date);
   const price = fromPrice(tour);
   const award = AWARD_BADGE[tour.slug];
+  // Short visible form of the policy; screen readers get the full wording.
+  const cancelLabel = tour.category === "TICKET" ? "Operator's cancellation rules" : "Free cancellation · 72 h";
 
   return (
-    <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl bg-obsidian-950 text-white ring-1 ring-white/[0.08] transition-[box-shadow,transform] duration-500 ease-out hover:-translate-y-0.5 hover:shadow-[0_24px_48px_-28px_rgba(0,0,0,0.6)]">
-      {/* Media: a wide photo with the badges on top and the destination over a soft scrim */}
-      <div className="relative aspect-[2/1] w-full overflow-hidden bg-obsidian-900">
+    <article className="group relative flex h-full flex-col overflow-hidden rounded-lg bg-obsidian-950 text-white ring-1 ring-white/[0.08] transition-shadow duration-500 ease-out hover:shadow-[0_24px_48px_-28px_rgba(0,0,0,0.6)]">
+      {/* Media: the photo leads; badges on top, destination over a soft scrim */}
+      <div className="relative aspect-[16/10] w-full overflow-hidden bg-obsidian-900">
         <Image
           src={tour.featuredImage}
           alt=""
           fill
-          sizes="(max-width: 640px) 85vw, (max-width: 1024px) 46vw, (max-width: 1280px) 31vw, 400px"
+          sizes="(max-width: 640px) 90vw, (max-width: 1024px) 46vw, (max-width: 1280px) 31vw, 400px"
           className="object-cover transition-transform duration-[1.4s] ease-out group-hover:scale-[1.04]"
         />
         <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-obsidian-950/85 to-transparent" aria-hidden="true" />
@@ -116,17 +119,16 @@ export function TourCard({
         </p>
       </div>
 
-      {/* Body: title, description, key details, availability, price */}
-      <div className="flex flex-1 flex-col px-4 pb-4 pt-3">
-        <TitleTag className="line-clamp-2 text-base font-light leading-snug tracking-[0.01em] text-white sm:text-lg">
+      {/* Body: title, key facts, terms + availability, price */}
+      <div className="flex flex-1 flex-col px-4 pb-3.5 pt-3.5">
+        <TitleTag className="line-clamp-2 text-sm font-light uppercase leading-snug tracking-[0.12em] text-white sm:text-[0.95rem]">
           <Link href={`/${tour.slug}`} className="focus-visible:outline-none">
-            <span className="absolute inset-0 z-10 rounded-2xl group-has-[:focus-visible]:outline group-has-[:focus-visible]:outline-2 group-has-[:focus-visible]:outline-offset-2 group-has-[:focus-visible]:outline-summit-300" />
+            <span className="absolute inset-0 z-10 rounded-lg group-has-[:focus-visible]:outline group-has-[:focus-visible]:outline-2 group-has-[:focus-visible]:outline-offset-2 group-has-[:focus-visible]:outline-summit-300" />
             {tour.title}
           </Link>
         </TitleTag>
-        {tour.summary && <p className="mt-1 line-clamp-1 text-xs leading-relaxed text-white/60">{tour.summary}</p>}
 
-        <ul className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-white/75" aria-label="Key details">
+        <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-white/75" aria-label="Key details">
           <li className="flex items-center gap-1">
             <Clock className="h-3 w-3 shrink-0 text-summit-300" aria-hidden="true" />
             {durationLabel(tour)}
@@ -148,22 +150,27 @@ export function TourCard({
               <span className="text-white/60">New on Vista Chase</span>
             )}
           </li>
-          <li className="flex items-center gap-1">
-            <CheckCircle2 className="h-3 w-3 shrink-0 text-summit-300" aria-hidden="true" />
-            {cancellationShort(tour.category)}
-          </li>
         </ul>
 
-        <p className={`mb-3 mt-1.5 text-xs ${status.variant === "error" ? "text-red-300" : "text-white/55"}`}>{status.text}</p>
+        <p className="mb-3 mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-white/55">
+          <span className="inline-flex items-center gap-1">
+            <CheckCircle2 className="h-3 w-3 shrink-0 text-summit-300" aria-hidden="true" />
+            <span aria-hidden="true">{cancelLabel}</span>
+            <span className="sr-only">{cancellationShort(tour.category)}.</span>
+          </span>
+          <span className={`inline-flex items-center gap-1 ${status.variant === "error" ? "text-red-300" : ""}`}>
+            <CalendarDays className="h-3 w-3 shrink-0 text-summit-300" aria-hidden="true" />
+            {status.text}
+          </span>
+        </p>
 
-        <div className="mt-auto flex items-end justify-between gap-3 border-t border-white/[0.08] pt-3">
-          <div className="min-w-0">
-            {hasPrice(price) && <p className="text-xs text-white/55">{priceLabel}</p>}
-            <PriceTag price={price} currency={tour.currency} unit={tour.currency} size="sm" tone="dark" layout="inline" />
+        <div className="mt-auto flex items-end justify-between gap-3 border-t border-white/[0.08] pt-2.5">
+          <div className="flex min-w-0 items-baseline gap-1.5 whitespace-nowrap">
+            {hasPrice(price) && <span className="text-xs text-white/55">From</span>}
+            <PriceTag price={price} currency={tour.currency} unit={`${tour.currency}/${unitLabel}`} size="sm" tone="dark" layout="inline" />
           </div>
-          <span className="inline-flex shrink-0 items-center gap-1 pb-1.5 text-xs uppercase tracking-[0.14em] text-summit-200" aria-hidden="true">
-            View
-            <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+          <span className="mb-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full ring-1 ring-summit-200/40 text-summit-200 transition-colors duration-300 group-hover:bg-summit-200 group-hover:text-obsidian-900" aria-hidden="true">
+            <ArrowRight className="h-3.5 w-3.5" />
           </span>
         </div>
       </div>

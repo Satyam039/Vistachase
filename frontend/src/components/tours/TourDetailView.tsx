@@ -18,7 +18,6 @@ import {
   Star,
   Users,
   ChevronRight,
-  ChevronDown,
   Coffee,
   CheckCircle2,
   Send,
@@ -150,7 +149,7 @@ function PartySizeStepper({
         <span>Guests</span>
         <span className="text-slate-500 font-normal normal-case tracking-normal">{hint}</span>
       </div>
-      <div className="flex items-center justify-between p-2 rounded-xl border border-slate-300 bg-slate-50">
+      <div className="flex items-center justify-between p-1.5 rounded-xl border border-slate-300 bg-slate-50">
         <button
           type="button"
           aria-label="Fewer guests"
@@ -285,26 +284,30 @@ export function TourDetailView({
       : []),
   ];
 
-  // "More below" hint for the booking panel when it scrolls inside itself (short screens).
+  // The booking panel is shown whole (no inner scroll). It stays pinned beside the page only
+  // while it fits the window below the header and the "On this page" bar; a taller panel (short
+  // screens) scrolls with the page instead, so the calendar and button are never cut off.
   const panelRef = useRef<HTMLDivElement>(null);
-  const [panelMore, setPanelMore] = useState(false);
-  const updatePanelHint = useCallback(() => {
+  const [panelFits, setPanelFits] = useState(true);
+  const updatePanelFit = useCallback(() => {
     const el = panelRef.current;
     if (!el) return;
-    setPanelMore(el.scrollHeight - el.clientHeight - el.scrollTop > 8);
+    const header = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--vc-header-h")) || 96;
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    setPanelFits(el.offsetHeight <= window.innerHeight - header - 5.25 * rem - rem);
   }, []);
   useEffect(() => {
     const el = panelRef.current;
     if (!el) return;
-    updatePanelHint();
-    const ro = new ResizeObserver(updatePanelHint);
+    updatePanelFit();
+    const ro = new ResizeObserver(updatePanelFit);
     ro.observe(el);
-    window.addEventListener("resize", updatePanelHint);
+    window.addEventListener("resize", updatePanelFit);
     return () => {
       ro.disconnect();
-      window.removeEventListener("resize", updatePanelHint);
+      window.removeEventListener("resize", updatePanelFit);
     };
-  }, [updatePanelHint]);
+  }, [updatePanelFit]);
 
   const calculatedTotal = currentDeparture
     ? isVehicle
@@ -431,15 +434,16 @@ export function TourDetailView({
           </div>
 
           {/* RIGHT 5 COLUMNS: STICKY BÓKUN BOOKING PANEL */}
-          <div id="booking" className="relative lg:col-span-5 lg:sticky lg:top-[calc(var(--vc-header-h,96px)+6.25rem)] scroll-mt-40">
-            {/* On short screens the sticky panel can be taller than the viewport: it is capped at
-                the space left below the header and scrolls inside, with a "more below" hint. */}
+          <div
+            id="booking"
+            className={`relative scroll-mt-40 lg:col-span-5 ${panelFits ? "lg:sticky lg:top-[calc(var(--vc-header-h,96px)+5.25rem)]" : ""}`}
+          >
+            {/* Shown whole: no inner scroll, so the full calendar is visible as soon as it opens. */}
             <div
               ref={panelRef}
-              onScroll={updatePanelHint}
-              className="rounded-[1.75rem] bg-white ring-1 ring-obsidian-900/[0.07] shadow-[0_30px_60px_-35px_rgba(12,31,33,0.4)] p-6 sm:p-8 space-y-6 lg:max-h-[calc(100vh-var(--vc-header-h,96px)-11.75rem)] lg:overflow-y-auto lg:overscroll-contain lg:scroll-pb-24 [scrollbar-width:thin]"
+              className="rounded-[1.75rem] bg-white ring-1 ring-obsidian-900/[0.07] shadow-[0_30px_60px_-35px_rgba(12,31,33,0.4)] p-6 space-y-3.5"
             >
-              <div className="space-y-3 border-b border-slate-100 pb-5">
+              <div className="border-b border-slate-100 pb-3">
                 <PriceTag
                   price={price}
                   currency={tour.currency}
@@ -484,7 +488,7 @@ export function TourDetailView({
                   </p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <DepartureCalendar
                     departures={tour.departures}
                     isBookable={(d) => departureFits(tour, d, 1)}
@@ -502,24 +506,24 @@ export function TourDetailView({
                   />
 
                   {/* Price Calculation Breakdown */}
-                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-2 text-xs">
+                  <div className="px-4 py-3 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5 text-xs">
                     <div className="flex items-center justify-between text-slate-600">
                       <span>
                         {isVehicle ? "Private vehicle flat rate" : `${partySize} × ${money(currentDeparture?.price ?? price)} CAD`}
                       </span>
                       <span>{money(calculatedTotal)} CAD</span>
                     </div>
-                    <div className="pt-2 border-t border-slate-200 flex items-center justify-between font-bold text-slate-900 text-sm">
+                    <div className="pt-1.5 border-t border-slate-200 flex items-center justify-between font-bold text-slate-900 text-sm">
                       <span>Estimated total</span>
                       <span className="text-base text-obsidian-900 font-serif">{money(calculatedTotal)} CAD</span>
                     </div>
                   </div>
 
                   {/* CTA Buttons */}
-                  <div className="space-y-3 pt-2">
+                  <div className="space-y-2">
                     <Link
                       href={`/book?departureId=${encodeURIComponent(selectedDepartureId || tour.departures[0]?.id || "")}&guests=${partySize}`}
-                      className="w-full h-13 py-4 rounded-full text-base text-obsidian-900 golden-summit-btn flex items-center justify-center gap-2 transition-all"
+                      className="w-full h-12 rounded-full text-base text-obsidian-900 golden-summit-btn flex items-center justify-center gap-2 transition-all"
                     >
                       <span>Book now</span>
                       <ChevronRight className="w-4 h-4" />
@@ -527,7 +531,7 @@ export function TourDetailView({
 
                     <Link
                       href="/concierge"
-                      className="w-full py-3 rounded-xl font-medium text-xs text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 flex items-center justify-center gap-2 transition-colors"
+                      className="w-full min-h-10 py-2.5 rounded-xl font-medium text-xs text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 flex items-center justify-center gap-2 transition-colors"
                     >
                       <Sparkles className="w-4 h-4 text-ocean-600" />
                       <span>Custom Inquiries &amp; Concierge</span>
@@ -537,7 +541,7 @@ export function TourDetailView({
               )}
 
               {/* Trust & Guarantee points */}
-              <div className="pt-4 border-t border-slate-100 space-y-2.5 text-sm text-slate-600">
+              <div className="pt-3 border-t border-slate-100 space-y-1 text-xs text-slate-600">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" aria-hidden="true" />
                   <span>{cancellationShort(tour.category)}</span>
@@ -548,18 +552,6 @@ export function TourDetailView({
                 </div>
               </div>
             </div>
-            {panelMore && (
-              <button
-                type="button"
-                onClick={() => panelRef.current?.scrollBy({ top: 240, behavior: "smooth" })}
-                className="absolute inset-x-px bottom-px hidden h-20 items-end justify-center rounded-b-[1.75rem] bg-gradient-to-t from-white via-white/90 to-transparent pb-3 text-sm text-obsidian-900 lg:flex"
-              >
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-obsidian-900 px-4 py-1.5 text-white shadow-lg">
-                  More below
-                  <ChevronDown className="h-4 w-4" aria-hidden="true" />
-                </span>
-              </button>
-            )}
           </div>
         </div>
       </section>

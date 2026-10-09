@@ -123,8 +123,10 @@ export function SiteMenu() {
         <span className="max-sm:sr-only">Menu</span>
       </button>
 
-      {/* Native modal dialog: focus is contained, Escape closes, the page behind is inert and its
-          ::backdrop is a dark tint over a light blur (globals.css .vc-menu). */}
+      {/* Native modal dialog: focus is contained, Escape closes, the page behind is inert. Like
+          Rolls-Royce's menu it is an overlay, not a black screen: the ::backdrop blurs and dims the
+          page, and the panel is a translucent gradient that only deepens behind the text
+          (globals.css .vc-menu). */}
       <dialog
         ref={dialog}
         aria-label="Site menu"
@@ -142,7 +144,7 @@ export function SiteMenu() {
         }}
         className="vc-menu"
       >
-        <nav aria-label="Site menu" className="vc-menu-panel flex h-[100dvh] w-[min(880px,calc(100vw-3.5rem))] flex-col bg-obsidian-950 text-white">
+        <nav aria-label="Site menu" className="vc-menu-panel flex h-[100dvh] w-[min(880px,calc(100vw-3.5rem))] flex-col text-white">
           {/* Top row: close + brand, like the header it replaces */}
           <div className="flex items-center justify-between px-5 py-4 sm:px-10 sm:py-6">
             <button
