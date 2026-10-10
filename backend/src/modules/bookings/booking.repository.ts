@@ -22,7 +22,7 @@ import { getPaymentProvider } from "@/lib/payment/payment.provider";
 import { getEmailProvider } from "@/lib/email/email.provider";
 import { isVehicleDeparture, partySizeError, seatsToReserve } from "@/modules/pricing/departure-pricing";
 import { priceBooking, type AddOnChoice } from "@/modules/pricing/booking-pricing";
-import { findActiveAffiliateByCode } from "@/modules/affiliates/affiliate.repository";
+import { referringAffiliateId } from "@/modules/affiliates/affiliate.repository";
 import { checkinLink, signBookingLink, voucherLink } from "@/lib/security/signed-links";
 
 export interface CreateBookingInput {
@@ -161,7 +161,7 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingR
       data: {
         bookingReference,
         customerId: input.customerId,
-        affiliateId: (await findActiveAffiliateByCode(input.affiliateCode))?.id ?? null,
+        affiliateId: await referringAffiliateId(input.affiliateCode, { customerId: input.customerId, customerEmail: input.customerEmail }),
         customerName: input.customerName,
         customerEmail: input.customerEmail,
         customerPhone: input.customerPhone,

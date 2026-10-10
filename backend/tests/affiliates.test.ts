@@ -63,6 +63,39 @@ describe("Partner (affiliate) program", () => {
     expect(b?.affiliateId).toBeNull();
   });
 
+  it("never credits a partner for their own booking (self-referral)", async () => {
+    const partner = await prisma.user.findUniqueOrThrow({ where: { email: "partner.demo@example.com" } });
+    const dep = await openDeparture();
+    const base = { departureId: dep.id, customerName: "Demo Partner", customerPhone: "+1-403-555-0100", adultsCount: 1, childrenCount: 0, infantsCount: 0, affiliateCode: "BANFFLODGE" };
+    const byEmail = await createBooking({ ...base, customerEmail: "Partner.Demo@example.com" });
+    const byAccount = await createBooking({ ...base, customerEmail: `other-${unique()}@example.com`, customerId: partner.id });
+    expect(byEmail.success && byAccount.success).toBe(true);
+    for (const r of [byEmail, byAccount]) {
+      const b = await prisma.booking.findUnique({ where: { bookingReference: r.booking!.bookingReference } });
+      expect(b?.affiliateId).toBeNull();
+    }
+  });
+
+  it("earns commission only on paid bookings, not unpaid, cancelled or refunded ones", async () => {
+    const id = unique();
+    const applied = await applyAffiliate({ name: `Ledger ${id}`, contactName: "L", email: `ledger-${id}@example.com`, password: "a-long-password", type: "AGENT" });
+    if (!applied.success) throw new Error("apply failed");
+    const affiliate = await prisma.affiliate.update({ where: { code: applied.affiliate.code }, data: { status: "ACTIVE", commissionRate: 0.1 } });
+    const dep = await openDeparture();
+    const statuses = ["CONFIRMED", "PENDING_PAYMENT", "CANCELLED", "REFUNDED"] as const;
+    for (const status of statuses) {
+      const r = await createBooking({ departureId: dep.id, customerName: "Guest", customerEmail: `g-${status}-${id}@example.com`, customerPhone: "+1-403-555-0100", adultsCount: 1, childrenCount: 0, infantsCount: 0, affiliateCode: affiliate.code });
+      expect(r.success).toBe(true);
+      await prisma.booking.update({ where: { bookingReference: r.booking!.bookingReference }, data: { status, totalAmount: 100 } });
+    }
+    const dashboard = await getAffiliateDashboard(affiliate.userId);
+    expect(dashboard!.totals.bookings).toBe(1);
+    expect(dashboard!.totals.revenue).toBe(100);
+    expect(dashboard!.totals.commission).toBe(10);
+    const byStatus = Object.fromEntries(dashboard!.recentBookings.map((b) => [b.status, b.commission]));
+    expect(byStatus).toEqual({ CONFIRMED: 10, PENDING_PAYMENT: 0, CANCELLED: 0, REFUNDED: 0 });
+  });
+
   it("shows partners their totals and bookings without guest names or contact details", async () => {
     const user = await prisma.user.findUnique({ where: { email: "partner.demo@example.com" } });
     const dashboard = await getAffiliateDashboard(user!.id);

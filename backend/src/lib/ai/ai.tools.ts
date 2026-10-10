@@ -140,7 +140,7 @@ export async function getBooking(args: { bookingReference: string; customerEmail
     departureDate: booking.tourDeparture.date.toISOString().split('T')[0],
     departureTime: formatTimeOfDay(booking.tourDeparture.departureTime),
     pickupLocation: booking.pickupStop?.name || booking.pickupCustomText || "Banff Station",
-    pickupTime: booking.pickupTime || booking.tourDeparture.departureTime,
+    pickupTime: booking.pickupTime || formatTimeOfDay(booking.tourDeparture.departureTime),
     totalSeats: booking.totalSeats,
     status: booking.status,
     voucherCode: booking.voucherCode,
