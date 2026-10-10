@@ -25,6 +25,7 @@ import affiliatesRoutes from "@/routes/affiliates.routes";
 import pricingRoutes from "@/routes/pricing.routes";
 import webhooksRoutes from "@/routes/webhooks.routes";
 import { apiJsonReplacer } from "@/lib/utils/time";
+import { isAllowedOrigin } from "@/lib/security/origin-check";
 
 export function createApp() {
   const app = express();
@@ -68,10 +69,13 @@ export function createApp() {
 
   // CSRF: the session cookie is SameSite=Lax, and state-changing requests a browser sends from any
   // other site are refused here (browsers always send Origin on cross-site POST/PUT/PATCH/DELETE).
+  // The site's own pages pass even when the address they're served on isn't configured (origin-check.ts).
   app.use("/api", (req, res, next) => {
     if (["GET", "HEAD", "OPTIONS"].includes(req.method)) return next();
     const origin = req.headers.origin;
-    if (!origin || allowedOrigins.includes(origin)) return next();
+    const requestHost = (req.headers["x-forwarded-host"] as string | undefined) || req.headers.host;
+    if (!origin || isAllowedOrigin(origin, requestHost, allowedOrigins)) return next();
+    console.warn(`Cross-site request refused: ${req.method} ${req.path} origin=${origin} host=${requestHost ?? "-"}`);
     return res.status(403).json({ success: false, error: "Cross-site request refused" });
   });
 
