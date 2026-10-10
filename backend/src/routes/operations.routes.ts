@@ -11,7 +11,6 @@ import {
 } from "@/modules/operations/operations.repository";
 import prisma from "@/lib/db/prisma";
 import { todayInMountainTime } from "@/lib/utils/time";
-import { syncBokunDepartures } from "@/jobs/tasks";
 
 const router = Router();
 
@@ -134,18 +133,7 @@ router.post("/runs/check-in", async (req, res) => {
   }
 });
 
-// 8. "Sync now": departure dates, seats and prices for the next 60 days from Bókun.
-router.post("/sync-bokun", async (_req, res) => {
-  try {
-    const result = await syncBokunDepartures();
-    if ("skipped" in result) return res.status(409).json({ error: "Bókun isn't connected yet (BOKUN_ACCESS_KEY / BOKUN_SECRET_KEY)." });
-    return res.json({ success: true, result });
-  } catch (error: any) {
-    return res.status(500).json({ error: "Bókun sync failed." });
-  }
-});
-
-// 9. Fleet List
+// 8. Fleet List
 router.get("/fleet", async (_req, res) => {
   try {
     const vehicles = await prisma.vehicle.findMany({
@@ -157,7 +145,7 @@ router.get("/fleet", async (_req, res) => {
   }
 });
 
-// 10. Drivers List
+// 9. Drivers List
 router.get("/drivers", async (_req, res) => {
   try {
     const drivers = await prisma.driver.findMany({

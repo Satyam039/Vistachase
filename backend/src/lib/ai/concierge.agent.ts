@@ -241,7 +241,7 @@ export async function runConciergeTool(name: string, input: Record<string, any>,
     }
     case "get_available_dates":
     case "check_availability": {
-      const r = await executeAiTool(name === "get_available_dates" ? "getAvailableDates" : "checkBokunAvailability", input, ctx);
+      const r = await executeAiTool(name === "get_available_dates" ? "getAvailableDates" : "checkAvailability", input, ctx);
       if (!r.success) return { result: { error: r.error } };
       const rows = (r.data as any[]) ?? [];
       const departures = rows.slice(0, 8).map((d) => ({

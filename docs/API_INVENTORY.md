@@ -66,7 +66,6 @@ Legend: **Guard** = who may call it. *public* = anyone. *user* = signed-in user,
 | GET | `/api/admin/staff`, PATCH `/api/admin/staff/:id` | staff [ADMIN] | zod (PATCH) | – | **API only.** Role changes. |
 | GET | `/api/operations/dashboard`, `/runs/:runId`, `/fleet`, `/drivers` | staff (file-level guard) | – | `/admin/operations` | |
 | POST | `/api/operations/runs`, `/runs/:runId/status`, `/runs/:runId/assign-booking`, `/runs/:runId/optimize-pickups`, `/runs/check-in` | staff | manual | `/admin/operations` | |
-| POST | `/api/operations/sync-bokun` | staff | – | `/admin/operations` | Runs the Bókun availability sync now. |
 | POST | `/api/track/:token/notify` | staff | – | – | WhatsApp T-60 message. |
 | GET | `/api/track/:token` | tracking token | – | `/track/[token]` | Private live tracking (token, not booking reference). |
 
