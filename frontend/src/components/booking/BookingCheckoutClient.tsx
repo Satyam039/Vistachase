@@ -233,12 +233,17 @@ export function BookingCheckoutClient({
   stops,
   initialHoldToken,
   initialGuests,
+  initialAdults,
+  initialChildren,
 }: {
   departure: DepartureData;
   stops: StopData[];
   initialHoldToken?: string;
   /** Party size chosen on the tour page (?guests=); a concierge hold overrides it. */
   initialGuests?: number;
+  /** Adults and children chosen on the tour page (?adults=&children=); take precedence over ?guests=. */
+  initialAdults?: number;
+  initialChildren?: number;
 }) {
   // The responsive variant changes rendered order, so measure the host rather than the viewport.
   const hostRef = useRef<HTMLElement | null>(null);
@@ -266,9 +271,11 @@ export function BookingCheckoutClient({
 
   // Party
   const [adults, setAdults] = useState(
-    Math.max(1, Math.min(initialGuests ?? 2, departure.seatsAvailable)),
+    Math.max(1, Math.min(initialAdults ?? initialGuests ?? 2, departure.seatsAvailable)),
   );
-  const [children, setChildren] = useState(0);
+  const [children, setChildren] = useState(() =>
+    initialAdults ? Math.max(0, Math.min(initialChildren ?? 0, departure.seatsAvailable - Math.min(initialAdults, departure.seatsAvailable))) : 0,
+  );
   const [infants, setInfants] = useState(0);
 
   // Contact

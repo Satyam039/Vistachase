@@ -3,7 +3,8 @@ import prisma from "@/lib/db/prisma";
 import { PRODUCT_MAP } from "@/modules/bokun/product-map";
 import { videosFor, type PageVideo } from "@/modules/media/media.repository";
 import { getExpiredHeldSeats, liveCapacity } from "@/modules/reservations/reservation.repository";
-import { formatDateOnly, formatTimeOfDay } from "@/lib/utils/time";
+import { dateOnly, formatDateOnly, formatTimeOfDay, todayInMountainTime } from "@/lib/utils/time";
+import { isBookable } from "@/modules/departures/booking-window";
 
 export interface TourFact {
   label: string;
@@ -108,6 +109,15 @@ const tourInclude = {
 
 type TourRow = Prisma.TourGetPayload<{ include: typeof tourInclude }>;
 
+// Departures listed for booking: from today (Banff time) on, so past dates never reach the
+// calendar. Departures later today that are past the booking cutoff are dropped in toTourDto.
+function bookableInclude() {
+  return {
+    ...tourInclude,
+    departures: { ...tourInclude.departures, where: { ...tourInclude.departures.where, date: { gte: dateOnly(todayInMountainTime()) } } },
+  };
+}
+
 function json<T>(value: any, fallback: T): T {
   if (!value) return fallback;
   return value as unknown as T;
@@ -152,7 +162,7 @@ function toTourDto(t: TourRow, expiredHeld: Map<string, number>): TourWithAvaila
     metaTitle: t.metaTitle,
     metaDescription: t.metaDescription,
     destination: t.destination,
-    departures: t.departures.map((d) => ({
+    departures: t.departures.filter((d) => isBookable(d)).map((d) => ({
       id: d.id,
       date: formatDateOnly(d.date),
       departureTime: formatTimeOfDay(d.departureTime),
@@ -184,7 +194,7 @@ export async function getTours(options?: {
   // Live-site order (sortOrder), so listings match vistachase.com
   const tours = await prisma.tour.findMany({
     where,
-    include: tourInclude,
+    include: bookableInclude(),
     orderBy: [{ sortOrder: "asc" }, { basePrice: "asc" }],
   });
 
@@ -193,7 +203,7 @@ export async function getTours(options?: {
 }
 
 export async function getTourBySlug(slug: string): Promise<TourWithAvailability | null> {
-  const t = await prisma.tour.findUnique({ where: { slug }, include: tourInclude });
+  const t = await prisma.tour.findUnique({ where: { slug }, include: bookableInclude() });
   if (!t) return null;
 
   const expiredHeld = await getExpiredHeldSeats(t.departures.map((d) => d.id));
