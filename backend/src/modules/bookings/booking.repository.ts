@@ -17,6 +17,7 @@ import prisma from "@/lib/db/prisma";
 import { getBokunOperationsProvider } from "@/modules/bokun/bokun.provider";
 import { BokunUnavailableError, type BokunReservationInput } from "@/modules/bokun/bokun-booking";
 import { formatDateOnly, formatTimeOfDay, getMountainTimeInstant } from "@/lib/utils/time";
+import { bookingClosedError } from "@/modules/departures/booking-window";
 import { getPaymentProvider } from "@/lib/payment/payment.provider";
 import { getEmailProvider } from "@/lib/email/email.provider";
 import { isVehicleDeparture, partySizeError, seatsToReserve } from "@/modules/pricing/departure-pricing";
@@ -131,6 +132,8 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingR
       include: { tour: true, shuttleRoute: true },
     });
     if (!departure || departure.status !== "ACTIVE") return { error: "Departure not found" } as const;
+    const closed = bookingClosedError(departure);
+    if (closed) return { error: closed } as const;
     if (departure.tour?.bookingMode === "ENQUIRY") {
       return { error: "This experience is booked on request. Please send us an enquiry." } as const;
     }

@@ -2,6 +2,7 @@ import prisma from "@/lib/db/prisma";
 import { getCacheProvider } from "@/lib/cache/cache.provider";
 import { isVehicleDeparture, partySizeError, seatsToReserve } from "@/modules/pricing/departure-pricing";
 import { formatDateOnly, formatTimeOfDay } from "@/lib/utils/time";
+import { bookingClosedError } from "@/modules/departures/booking-window";
 
 export interface CreateHoldInput {
   departureId: string;
@@ -69,6 +70,11 @@ export async function createReservationHold(input: CreateHoldInput): Promise<Hol
 
     if (departure.status !== "ACTIVE") {
       return { success: false, error: "Departure is not active for booking" };
+    }
+
+    const closed = bookingClosedError(departure);
+    if (closed) {
+      return { success: false, error: closed };
     }
 
     const partyError = partySizeError(departure, input.seatsCount);

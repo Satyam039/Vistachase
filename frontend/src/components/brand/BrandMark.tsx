@@ -3,8 +3,10 @@ import Image from "next/image";
 /**
  * Vista Chase horse-and-rider emblem, cropped tight from the official vector master (backend/media/
  * brand/horse-emblem-vector-*.svg are the full lockup on a 2000px square: emblem, name and tagline).
- * emblem-*.svg keep only the four horse-and-rider paths, so nothing of the lettering shows at small
- * sizes. A logo is a brand asset, so it keeps its own ink instead of theme tokens.
+ * emblem-*.svg keep only the horse-and-rider paths, so nothing of the lettering shows at small
+ * sizes. The vector masters lack the far hind leg, so the last path restores it, traced from the
+ * official raster (horse-emblem-gold.png): all four legs show. A logo is a brand asset, so it keeps
+ * its own ink instead of theme tokens.
  *
  * `size` is the height; the emblem is 1.2× as wide as it is tall.
  * variant:
