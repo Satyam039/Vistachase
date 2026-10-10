@@ -16,6 +16,7 @@
     "prisma:push": "prisma db push",
     "prisma:seed": "node -r dotenv/config prisma/seed.js",
     "seed:fixtures": "node -r dotenv/config prisma/seed-fixtures.js",
+    "seed:departures": "tsx scripts/seed-departures.ts",
     "worker": "node dist/worker.js",
     "dev:worker": "tsx watch src/worker.ts",
     "finance:export": "tsx scripts/finance-export.ts"
