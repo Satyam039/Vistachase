@@ -1,15 +1,12 @@
-// Seeds or syncs departures for the next 60 days for all Bókun-mapped products.
-// If BOKUN_ACCESS_KEY and BOKUN_SECRET_KEY are set, it syncs live from Bókun.
-// Otherwise, it seeds authoritative rolling departures for all 9 Bókun products
-// so the interactive DepartureCalendar and live booking flow always have dates.
+// Seeds the rolling schedule of departures for the next 60 days for the instant-booking products
+// (fixed times, capacity and prices below). Existing departures are left as they are.
 //
 // Usage:
 //   npx tsx scripts/seed-departures.ts
 //   npm run seed:departures
 
 import prisma from "../src/lib/db/prisma";
-import { PRODUCT_MAP, bokunConfig } from "../src/modules/bokun/product-map";
-import { syncBokunAvailability } from "../src/modules/bokun/availability-sync";
+import { PRODUCT_MAP } from "../src/modules/tours/product-map";
 import { dateOnly, timeOfDay, todayInMountainTime } from "../src/lib/utils/time";
 
 interface ScheduleConfig {
@@ -155,26 +152,6 @@ async function seedFallbackSchedule(daysCount = 60) {
 }
 
 async function main() {
-  const config = bokunConfig();
-
-  if (config.accessKey && config.secretKey) {
-    console.log("🔗 Bókun API keys detected. Attempting live Bókun availability sync...");
-    try {
-      const syncResult = await syncBokunAvailability();
-      console.log("✅ Bókun sync completed:", syncResult);
-      if (syncResult.created > 0 || syncResult.updated > 0) {
-        return;
-      }
-      console.log("ℹ️ Bókun returned 0 departures; falling back to schedule seed...");
-    } catch (err: any) {
-      console.warn("⚠️ Bókun live sync failed:", err.message);
-      console.log("Falling back to authoritative schedule seed...");
-    }
-  } else {
-    console.log("ℹ️ No BOKUN_ACCESS_KEY / BOKUN_SECRET_KEY set in environment.");
-    console.log("Seeding authoritative rolling departures schedule...");
-  }
-
   await seedFallbackSchedule(60);
 }
 

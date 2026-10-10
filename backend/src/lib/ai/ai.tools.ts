@@ -84,7 +84,7 @@ export async function getTourDetails(args: { tourSlugOrBokunId: string }) {
   };
 }
 
-export async function checkBokunAvailability(args: { date: string; tourSlug?: string }) {
+export async function checkAvailability(args: { date: string; tourSlug?: string }) {
   const departures = await prisma.tourDeparture.findMany({
     where: {
       date: new Date(args.date),
@@ -515,9 +515,9 @@ export async function executeAiTool(toolName: string, args: Record<string, any>,
         return { toolName, success: true, data: await searchTours(args) };
       case "getTourDetails":
         return { toolName, success: true, data: await getTourDetails(args as any) };
-      case "checkBokunAvailability":
       case "checkAvailability":
-        return { toolName, success: true, data: await checkBokunAvailability(args as any) };
+      case "checkAvailability":
+        return { toolName, success: true, data: await checkAvailability(args as any) };
       case "getAvailableDates":
         return { toolName, success: true, data: await getAvailableDates(args as any) };
       case "getBooking":

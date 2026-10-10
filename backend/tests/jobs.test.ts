@@ -40,7 +40,7 @@ describe("worker jobs", () => {
     expect(after.reviewRequestedAt).not.toBeNull();
   });
 
-  it("flags paid bookings that never reached Bókun", async () => {
+  it("flags paid bookings left unsynced by the former Bókun integration", async () => {
     const dep = await departure("2027-06-02");
     const ref = `VC-UNSYNC-${Date.now()}`;
     await prisma.booking.create({

@@ -1,5 +1,4 @@
-// When a departure stops taking bookings on this site. Bókun applies its own per-product cutoffs;
-// this is the website's server-side rule, applied when a seat hold or a booking is created and
+// When a departure stops taking bookings on this site. This is the website's server-side rule, applied when a seat hold or a booking is created and
 // when departures are listed, so a departure that has left (or is about to) can't be booked even
 // if the browser still shows it.
 //

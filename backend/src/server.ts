@@ -16,7 +16,6 @@ import { startInProcessJobs } from "./jobs/in-process";
 const requiredEnv = [
   'DATABASE_URL',
   'JWT_SECRET',
-  // 'BOKUN_API_URL', 'BOKUN_ACCESS_KEY', 'BOKUN_SECRET_KEY' // Can be checked here if required, though the roadmap says "provider keys"
 ];
 
 for (const env of requiredEnv) {

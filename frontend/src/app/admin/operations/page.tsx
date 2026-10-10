@@ -67,7 +67,7 @@ interface DepartureItem {
   capacityTotal: number;
   capacityBooked: number;
   status: string;
-  tour?: { title: string; bokunId?: string };
+  tour?: { title: string };
   shuttleRoute?: { name: string };
   operationRuns: OperationRunItem[];
 }
@@ -104,9 +104,7 @@ export default function OperationsPage() {
   const [loading, setLoading] = useState(true);
   const [unauthorized, setUnauthorized] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
-  const [syncing, setSyncing] = useState(false);
   const [updatingRunId, setUpdatingRunId] = useState<string | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
 
@@ -136,7 +134,7 @@ export default function OperationsPage() {
     void fetchDashboard(selectedDate);
   }, [selectedDate, fetchDashboard]);
 
-  // Each run with the departure it belongs to (real tour title, Bokun id and capacity).
+  // Each run with the departure it belongs to (real tour title and capacity).
   const runs = departures.flatMap((d) => d.operationRuns.map((run) => ({ run, dep: d })));
   const selected = runs.find((r) => r.run.id === selectedRunId) ?? null;
 
@@ -151,21 +149,6 @@ export default function OperationsPage() {
     const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
     if (!res.ok) throw new Error();
     await fetchDashboard(selectedDate);
-  }
-
-  async function syncBokun() {
-    setSyncing(true);
-    setNotice(null);
-    try {
-      const res = await fetch("/api/operations/sync-bokun", { method: "POST" });
-      const data = await res.json();
-      setNotice(data.success ? `Bókun synced: ${data.result.created} new and ${data.result.updated} updated departures, ${data.result.closed} closed${data.result.errors.length ? `; ${data.result.errors.length} product(s) failed` : ""}.` : data.error || "Bókun sync failed.");
-      if (data.success) await fetchDashboard(selectedDate);
-    } catch {
-      setNotice("Couldn't reach Bókun. Try again.");
-    } finally {
-      setSyncing(false);
-    }
   }
 
   async function changeStatus(runId: string, status: string) {
@@ -194,7 +177,7 @@ export default function OperationsPage() {
         current="/admin/operations"
         eyebrow="Staff · Operations"
         title="Fleet & runs"
-        subtitle="Vehicle runs, drivers and pickup order, synced with Bókun."
+        subtitle="Vehicle runs, drivers and pickup order."
         actions={
           <>
             <label htmlFor="ops-date" className="sr-only">
@@ -216,10 +199,6 @@ export default function OperationsPage() {
             >
               <RefreshCw className={`h-4 w-4 ${loading ? "motion-safe:animate-spin" : ""}`} aria-hidden="true" />
             </button>
-            <button type="button" onClick={syncBokun} disabled={syncing} className="golden-summit-btn inline-flex h-11 items-center gap-2 rounded-full px-5 text-sm disabled:opacity-60">
-              <RefreshCw className={`h-4 w-4 ${syncing ? "motion-safe:animate-spin" : ""}`} aria-hidden="true" />
-              {syncing ? "Syncing…" : "Sync Bókun"}
-            </button>
           </>
         }
       />
@@ -231,9 +210,6 @@ export default function OperationsPage() {
             {error}
           </p>
         )}
-        <p aria-live="polite" className={notice ? "rounded-2xl bg-ocean-50 px-5 py-3 text-sm text-ocean-800" : "sr-only"}>
-          {notice}
-        </p>
 
         {!unauthorized && (
           <>
@@ -272,7 +248,7 @@ export default function OperationsPage() {
                 <div className="px-6 py-12 text-center">
                   <Compass className="mx-auto h-8 w-8 text-slate-500" aria-hidden="true" />
                   <p className="mt-3 text-lg text-obsidian-900">No vehicle runs on this day</p>
-                  <p className="mt-1 text-base text-slate-600">Sync from Bókun to group the day&apos;s bookings into runs.</p>
+                  <p className="mt-1 text-base text-slate-600">Runs appear here once the day&apos;s bookings are grouped into vehicles.</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ocean-600" tabIndex={0} role="region" aria-label="Vehicle runs table">
@@ -304,7 +280,6 @@ export default function OperationsPage() {
                             </td>
                             <td className="w-[16rem] min-w-[14rem] px-6 py-4">
                               <span className="line-clamp-2 text-sm text-obsidian-900">{dep.tour?.title ?? dep.shuttleRoute?.name ?? "—"}</span>
-                              {dep.tour?.bokunId && <span className="font-mono text-sm text-slate-600">Bókun #{dep.tour.bokunId}</span>}
                             </td>
                             <td className="px-6 py-4">
                               <span className="tabular-nums text-obsidian-900">
@@ -418,7 +393,7 @@ export default function OperationsPage() {
 
             <div className="flex-1 space-y-3 overflow-y-auto p-6">
               {selected.run.bookings.length === 0 ? (
-                <p className="py-8 text-center text-base text-slate-600">No guests on this run yet. Sync from Bókun or assign bookings to the departure.</p>
+                <p className="py-8 text-center text-base text-slate-600">No guests on this run yet. Assign bookings to the departure.</p>
               ) : (
                 <ol className="space-y-3">
                   {selected.run.bookings.map((rb, i) => (

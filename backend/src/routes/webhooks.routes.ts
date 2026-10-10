@@ -1,7 +1,7 @@
 // Stripe webhook. Mounted in app.ts with express.raw() before the JSON parser, because Stripe signs
 // the exact bytes it sends. Unsigned or unverifiable events are refused; without
 // STRIPE_WEBHOOK_SECRET the endpoint is off.
-//   payment_intent.succeeded            → confirm the booking (Bókun, voucher email)
+//   payment_intent.succeeded            → confirm the booking (voucher email)
 //   payment_intent.payment_failed       → cancel the pending booking and release its seats
 //   payment_intent.canceled             → same
 

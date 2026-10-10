@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/db/prisma";
-import { PRODUCT_MAP } from "@/modules/bokun/product-map";
+import { PRODUCT_MAP } from "@/modules/tours/product-map";
 import { videosFor, type PageVideo } from "@/modules/media/media.repository";
 import { getExpiredHeldSeats, liveCapacity } from "@/modules/reservations/reservation.repository";
 import { dateOnly, formatDateOnly, formatTimeOfDay, todayInMountainTime } from "@/lib/utils/time";

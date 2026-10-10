@@ -14,9 +14,8 @@ export const ADD_ONS = [
 export type AddOnChoice = { id?: string; name?: string };
 
 /**
- * Promo codes as "CODE:percent" pairs in PROMO_CODES (e.g. "RIMROCKBANFF5:5,BANFF10:10"), the same
- * codes configured in Bókun. TESTVISTA100 (100% off, for end-to-end tests) works only outside
- * production.
+ * Promo codes as "CODE:percent" pairs in PROMO_CODES (e.g. "RIMROCKBANFF5:5,BANFF10:10").
+ * TESTVISTA100 (100% off, for end-to-end tests) works only outside production.
  */
 export function promoCodes(): Map<string, number> {
   const raw = process.env.PROMO_CODES ?? "RIMROCKBANFF5:5,BANFF10:10";
