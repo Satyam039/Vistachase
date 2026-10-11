@@ -78,6 +78,7 @@ jobs:
             if [ "$PREV" = "$NEW" ] || ! git diff --quiet "$PREV" "$NEW" -- package-lock.json; then npm ci; fi
             npx prisma generate
             npm run seed:departures || true
+            npm run seed:pickups || true
             rm -rf dist-prev
             if [ -d dist ]; then cp -a dist dist-prev; fi
             if ! npm run build; then
