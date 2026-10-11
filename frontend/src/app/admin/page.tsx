@@ -65,7 +65,7 @@ const money = (n: number) => `$${n.toLocaleString("en-CA", { minimumFractionDigi
 
 function statusTone(status: string) {
   if (status === "CONFIRMED") return "bg-emerald-50 text-emerald-800 ring-emerald-200";
-  if (status === "CANCELLED") return "bg-red-50 text-red-800 ring-red-200";
+  if (status === "CANCELLED" || status === "EXPIRED") return "bg-red-50 text-red-800 ring-red-200";
   if (status === "PENDING" || status === "HELD") return "bg-amber-50 text-amber-900 ring-amber-200";
   return "bg-slate-100 text-slate-700 ring-slate-200";
 }

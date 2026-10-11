@@ -28,6 +28,8 @@ export interface IPaymentProvider {
   createPaymentIntent(req: PaymentIntentRequest): Promise<PaymentIntentResponse>;
   /** Refunds `amount` cents (all of it when omitted) of the payment with this intent or charge ID. */
   refundPayment(transactionId: string, amount?: number): Promise<{ success: boolean; refundId: string }>;
+  /** Looks up an intent this provider created, so a retried checkout can resume the same payment. */
+  retrievePaymentIntent?(intentId: string): Promise<PaymentIntentResponse | null>;
 }
 
 class MockPaymentProvider implements IPaymentProvider {
@@ -76,6 +78,17 @@ class StripePaymentProvider implements IPaymentProvider {
       intentId: intent.id,
       amount: req.amount,
       currency: req.currency.toUpperCase(),
+      paid: intent.status === "succeeded",
+    };
+  }
+
+  async retrievePaymentIntent(intentId: string): Promise<PaymentIntentResponse | null> {
+    const intent = await this.stripe.paymentIntents.retrieve(intentId);
+    return {
+      clientSecret: intent.client_secret || "",
+      intentId: intent.id,
+      amount: intent.amount,
+      currency: intent.currency.toUpperCase(),
       paid: intent.status === "succeeded",
     };
   }

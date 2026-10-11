@@ -90,7 +90,7 @@ export default async function VoucherPage({
   const dateLabel = Number.isNaN(date.getTime())
     ? departure.date
     : date.toLocaleDateString("en-CA", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
-  const cancelled = booking.status === "CANCELLED";
+  const cancelled = booking.status === "CANCELLED" || booking.status === "EXPIRED";
   const pickupName = booking.pickupStop?.name || booking.pickupCustomText || "Pickup to be confirmed by email";
   const pickupAddress = booking.pickupStop?.address || (booking.pickupStop ? booking.pickupStop.town : null);
   const directions =

@@ -3,6 +3,7 @@ import { getLiveTrackingProvider } from "@/lib/tracking/tracking.provider";
 import { getMapsProvider } from "@/lib/maps/maps.provider";
 import { createReservationHold } from "@/modules/reservations/reservation.repository";
 import { createBooking } from "@/modules/bookings/booking.repository";
+import { sellableInventoryWhere } from "@/modules/departures/inventory";
 import { dateOnly, formatDateOnly, formatTimeOfDay, todayInMountainTime } from "@/lib/utils/time";
 
 export interface ToolExecutionContext {
@@ -89,6 +90,7 @@ export async function checkAvailability(args: { date: string; tourSlug?: string 
     where: {
       date: new Date(args.date),
       status: "ACTIVE",
+      ...sellableInventoryWhere,
       ...(args.tourSlug
         ? {
             tour: { slug: args.tourSlug },
@@ -250,6 +252,7 @@ export async function getAvailableDates(args: { tourSlug?: string }) {
     where: {
       date: { gte: dateOnly(today) },
       status: "ACTIVE",
+      ...sellableInventoryWhere,
       ...(args.tourSlug ? { tour: { slug: args.tourSlug } } : {}),
     },
     include: {

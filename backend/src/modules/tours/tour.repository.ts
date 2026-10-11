@@ -3,6 +3,7 @@ import prisma from "@/lib/db/prisma";
 import { PRODUCT_MAP } from "@/modules/tours/product-map";
 import { videosFor, type PageVideo } from "@/modules/media/media.repository";
 import { getExpiredHeldSeats, liveCapacity } from "@/modules/reservations/reservation.repository";
+import { sellableInventoryWhere } from "@/modules/departures/inventory";
 import { dateOnly, formatDateOnly, formatTimeOfDay, todayInMountainTime } from "@/lib/utils/time";
 import { isBookable } from "@/modules/departures/booking-window";
 
@@ -94,6 +95,7 @@ export interface TourWithAvailability {
     childPrice: number | null;
     currency: string;
     status: string;
+    inventorySource: string;
   }[];
 }
 
@@ -102,7 +104,8 @@ const tourInclude = {
     select: { id: true, slug: true, name: true },
   },
   departures: {
-    where: { status: "ACTIVE" as any },
+    // Only departures whose seats this site may sell (staff-confirmed); see departures/inventory.ts.
+    where: { status: "ACTIVE" as any, ...sellableInventoryWhere },
     orderBy: [{ date: "asc" as const }, { departureTime: "asc" as const }],
   },
 };
@@ -175,6 +178,7 @@ function toTourDto(t: TourRow, expiredHeld: Map<string, number>): TourWithAvaila
       childPrice: d.childPrice != null ? d.childPrice / 100 : null,
       currency: d.currency,
       status: d.status,
+      inventorySource: d.inventorySource,
     })),
   };
 }

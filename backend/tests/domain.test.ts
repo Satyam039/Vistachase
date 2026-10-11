@@ -41,7 +41,7 @@ describe("Domain Repositories & Business Logic", () => {
   it("creates a 10-minute reservation hold and locks seats", async () => {
     const tour = await prisma.tour.findFirst();
     const departure = await prisma.tourDeparture.create({
-      data: {
+      data: { inventorySource: "LOCAL",
         tourId: tour!.id,
         date: dateOnly("2026-11-20"),
         departureTime: timeOfDay("07:15"),
@@ -110,7 +110,7 @@ describe("Domain Repositories & Business Logic", () => {
   it("creates confirmed booking, generates QR voucher, and updates capacity", async () => {
     const tour = await prisma.tour.findFirst();
     const departure = await prisma.tourDeparture.create({
-      data: {
+      data: { inventorySource: "LOCAL",
         tourId: tour!.id,
         date: dateOnly("2026-11-25"),
         departureTime: timeOfDay("09:15"),

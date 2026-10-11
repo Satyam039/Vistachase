@@ -72,6 +72,9 @@ export interface DepartureData {
   capacityBooked: number;
   capacityHeld: number;
   seatsAvailable: number;
+  /** False when the server won't take a booking for it; the reason is shown instead. */
+  bookable?: boolean;
+  notBookableReason?: string | null;
   price: number;
   /** Per child when it differs from the adult price. */
   childPrice?: number | null;
@@ -307,14 +310,28 @@ export function BookingCheckoutClient({
   );
   const [now, setNow] = useState(() => Date.now());
   const [isPlacingHold, setIsPlacingHold] = useState(false);
+  const notBookable = departure.bookable === false;
+  const notBookableNotice = {
+    status: "error" as const,
+    title: departure.notBookableReason || "This departure can't be booked online. Please send us an enquiry.",
+  };
   const [holdNotice, setHoldNotice] = useState<{
     status: "warning" | "error";
     title: string;
-  } | null>(null);
+  } | null>(notBookable ? notBookableNotice : null);
 
   // Submission
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  // One key per booking attempt: a retried submit (double-click, dropped connection) returns the
+  // booking the server already made instead of a second one. Replaced once an attempt is over.
+  const idempotencyKeyRef = useRef("");
+  const newAttemptKey = () => {
+    idempotencyKeyRef.current =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+  };
   const [promoCodeInput, setPromoCodeInput] = useState("");
   const [appliedPromo, setAppliedPromo] = useState<{ code: string; percent: number; amount: number } | null>(null);
   const [promoError, setPromoError] = useState("");
@@ -361,7 +378,8 @@ export function BookingCheckoutClient({
         setConfirmed({ ...booking, status, qrCodeUrl: data.booking.qrCodeUrl ?? booking.qrCodeUrl });
         return;
       }
-      if (status === "CANCELLED") {
+      if (status === "CANCELLED" || status === "EXPIRED") {
+        idempotencyKeyRef.current = "";
         setAwaitingPayment(null);
         setSubmitError("The payment didn't complete, so the booking was released. Please try again.");
         return;
@@ -642,10 +660,11 @@ export function BookingCheckoutClient({
   const completeBooking = async () => {
     setSubmitError("");
     setIsSubmitting(true);
+    if (!idempotencyKeyRef.current) newAttemptKey();
     try {
       const res = await fetch("/api/bookings", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Idempotency-Key": idempotencyKeyRef.current },
         body: JSON.stringify({
           departureId: departure.id,
           holdToken: holdToken || undefined,
@@ -665,6 +684,8 @@ export function BookingCheckoutClient({
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
+        // The server answered, so this attempt is over (rate limits aside); a corrected retry is a new attempt.
+        if (res.status !== 429) idempotencyKeyRef.current = "";
         setSubmitError(data.error || "We couldn't complete this booking.");
         return;
       }
@@ -672,8 +693,12 @@ export function BookingCheckoutClient({
       if (data.payment?.clientSecret) {
         // The guest pays in Stripe's form; the booking is confirmed when Stripe tells our server.
         setAwaitingPayment({ booking: data.booking, clientSecret: data.payment.clientSecret });
-      } else {
+      } else if (data.booking?.status === "CONFIRMED" || data.booking?.status === "PAID_UNSYNCED") {
         setConfirmed(data.booking);
+      } else {
+        // A retried attempt whose booking was released (payment failed or expired): start afresh.
+        idempotencyKeyRef.current = "";
+        setSubmitError("This booking was released before payment completed. Please try again.");
       }
     } catch {
       setSubmitError("We couldn't reach the booking server. Please try again.");
@@ -683,6 +708,10 @@ export function BookingCheckoutClient({
   };
 
   const goNext = async () => {
+    if (notBookable) {
+      setHoldNotice(notBookableNotice);
+      return;
+    }
     markAttempted([step]);
     if (Object.keys(errorsByStep[step]).length > 0) {
       pendingFocusStepRef.current = step;

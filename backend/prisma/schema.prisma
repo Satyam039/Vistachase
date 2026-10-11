@@ -22,6 +22,7 @@ enum BookingStatus {
   REFUNDED
   COMPLETED
   PAID_UNSYNCED
+  EXPIRED // payment window passed before the guest paid; seats released
 }
 
 enum HoldStatus {
@@ -84,6 +85,30 @@ enum TourBookingMode {
 enum TourPriceUnit {
   PERSON
   GROUP
+}
+
+// Where a departure's date, seats and price come from. Only LOCAL is sold online today.
+enum InventorySource {
+  LOCAL // entered or confirmed by Vista Chase staff: this database is authoritative
+  EXTERNAL // synced from a provider such as Bókun (no sync exists yet, so not sold)
+  UNVERIFIED // seeded or unknown: shown to no one and never sold until staff confirm it
+}
+
+// Future provider sync (outbox). Nothing writes these yet; see docs/BOOKING_ENGINE.md.
+enum ExternalSyncStatus {
+  NOT_REQUIRED
+  PENDING
+  SYNCED
+  FAILED
+}
+
+enum SyncTaskStatus {
+  PENDING
+  IN_PROGRESS
+  SUCCEEDED
+  RETRYABLE_FAILURE
+  FAILED
+  SKIPPED
 }
 
 enum DepartureStatus {
@@ -223,6 +248,8 @@ model TourDeparture {
   childPrice     Int? // cents per child, when Bókun prices children differently
   currency       String            @default("CAD")
   status         DepartureStatus @default(ACTIVE) // ACTIVE, FULL, CANCELLED
+  inventorySource     InventorySource @default(UNVERIFIED)
+  inventoryVerifiedAt DateTime? // when staff confirmed it (LOCAL) or a provider last synced it (EXTERNAL)
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
   holds          ReservationHold[]
@@ -245,6 +272,7 @@ model ReservationHold {
   customerPhone   String?
   expiresAt       DateTime
   status          HoldStatus @default(ACTIVE) // ACTIVE, EXPIRED, CONVERTED, RELEASED
+  bookingId       String?       @unique // the booking this hold became (CONVERTED)
   createdAt       DateTime      @default(now())
 
   @@index([holdToken])
@@ -279,7 +307,12 @@ model Booking {
   addOnsTotal            Int                  @default(0)
   totalAmount            Int
   currency               String                 @default("CAD")
-  status                 BookingStatus @default(CONFIRMED) // CONFIRMED, PENDING_PAYMENT, CANCELLED, COMPLETED
+  status                 BookingStatus @default(CONFIRMED) // CONFIRMED, PENDING_PAYMENT, CANCELLED, EXPIRED, REFUNDED, COMPLETED
+  idempotencyKey         String?                @unique // client key: a retried submission returns this booking
+  priceSnapshot          Json? // what the server priced it with (unit prices, promo, add-ons, totals)
+  paymentExpiresAt       DateTime? // unpaid after this: EXPIRED and seats released
+  externalSyncStatus     ExternalSyncStatus     @default(NOT_REQUIRED)
+  lastSyncAttemptAt      DateTime?
   specialRequests        String?
   voucherCode            String                 @unique
   qrCodeUrl              String?
@@ -294,6 +327,7 @@ model Booking {
   review                 Review?
   runBookings            RunBooking[]
   whatsappNotifications  WhatsAppNotification[]
+  syncTasks              BookingSyncTask[]
 
   @@index([bookingReference])
   @@index([affiliateId])
@@ -471,6 +505,30 @@ model BokunSyncLog {
   status        String   @default("SUCCESS")
   details       Json? // JSON or error log
   createdAt     DateTime @default(now())
+}
+
+// Outbox for a future provider sync (Bókun). One row per booking change to send; the unique
+// idempotencyKey (provider:booking:operation:version) stops duplicates. Nothing writes or sends
+// these until a separate, approved integration phase.
+model BookingSyncTask {
+  id             String         @id @default(cuid())
+  bookingId      String
+  booking        Booking        @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+  provider       String // "BOKUN"
+  operation      String // CREATE, CANCEL, AMEND
+  idempotencyKey String         @unique
+  status         SyncTaskStatus @default(PENDING)
+  attempts       Int            @default(0)
+  nextAttemptAt  DateTime       @default(now())
+  lastAttemptAt  DateTime?
+  lastError      String?
+  externalRef    String? // provider booking / reservation reference once known
+  payload        Json? // snapshot of what was (to be) sent
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([status, nextAttemptAt])
+  @@index([bookingId])
 }
 
 model MediaAsset {

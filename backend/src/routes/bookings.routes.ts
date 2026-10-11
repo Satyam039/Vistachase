@@ -4,12 +4,14 @@
 
 import { Router } from "express";
 import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
-import { cancelBooking, createBooking, getBookingByReference } from "@/modules/bookings/booking.repository";
+import { cancelBooking, createBooking, getBookingByReference, paymentState } from "@/modules/bookings/booking.repository";
 import { getAuthenticatedStaff, getAuthenticatedUser } from "@/lib/auth/admin-guard";
 import { verifyBookingLink } from "@/lib/security/signed-links";
 import { emailSchema, parseOr400, referenceSchema, z } from "@/lib/security/validate";
 
 const router = Router();
+
+const IDEMPOTENCY_KEY = /^[A-Za-z0-9_-]{16,128}$/;
 
 const count = (max: number) => z.coerce.number().int().min(0).max(max);
 const createSchema = z.object({
@@ -32,15 +34,21 @@ router.post("/", rateLimitMiddleware("booking_create", { maxRequests: 5, windowS
   try {
     const body = parseOr400(createSchema, req.body, res);
     if (!body) return;
+    // Optional per-attempt key from the checkout: a retry with it returns the same booking.
+    const rawKey = req.get("Idempotency-Key");
+    if (rawKey !== undefined && !IDEMPOTENCY_KEY.test(rawKey)) {
+      return res.status(400).json({ success: false, error: "Invalid Idempotency-Key header." });
+    }
     const user = getAuthenticatedUser(req);
     const result = await createBooking({
       ...body,
+      idempotencyKey: rawKey,
       customerId: user && user.email.toLowerCase() === body.customerEmail ? user.userId : undefined,
       // Partner referral: the frontend stores ?ref=<code> in this cookie for 30 days.
       affiliateCode: typeof req.cookies?.vc_ref === "string" ? req.cookies.vc_ref : undefined,
     });
     if (!result.success) return res.status(409).json({ success: false, error: result.error });
-    return res.json({ success: true, booking: result.booking, payment: result.payment ?? null });
+    return res.json({ success: true, booking: result.booking, payment: result.payment ?? null, nextStep: result.nextStep, replayed: result.replayed ?? false });
   } catch (error) {
     next(error);
   }
@@ -68,6 +76,7 @@ router.get("/", rateLimitMiddleware("booking_read", { maxRequests: 30, windowSec
       booking: {
         bookingReference: booking.bookingReference,
         status: booking.status,
+        paymentStatus: paymentState(booking, booking.payments),
         customerName: booking.customerName,
         adultsCount: booking.adultsCount,
         childrenCount: booking.childrenCount,

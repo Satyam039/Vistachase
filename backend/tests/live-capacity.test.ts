@@ -9,7 +9,7 @@ describe("Live seat availability ignores expired holds", () => {
   it("counts live holds as taken but frees seats once a hold has expired", async () => {
     const tour = await prisma.tour.findFirstOrThrow();
     const departure = await prisma.tourDeparture.create({
-      data: {
+      data: { inventorySource: "LOCAL",
         tourId: tour.id,
         date: dateOnly("2027-01-15"),
         departureTime: timeOfDay("07:00"),
