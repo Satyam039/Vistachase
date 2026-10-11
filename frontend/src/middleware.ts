@@ -12,7 +12,8 @@ export function middleware(request: NextRequest) {
     response.cookies.set("vc_ref", ref.toUpperCase(), {
       maxAge: 60 * 60 * 24 * 30,
       sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      // Browsers drop Secure cookies on plain HTTP, so match the scheme the visitor used.
+      secure: (request.headers.get("x-forwarded-proto")?.split(",")[0].trim() || request.nextUrl.protocol.replace(":", "")) === "https",
       httpOnly: true,
       path: "/",
     });
