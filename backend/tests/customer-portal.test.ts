@@ -26,7 +26,7 @@ describe("Phase 5: Customer Portal, My Trips & Reviews", () => {
     const futureDateStr = futureDate.toISOString().split("T")[0];
 
     const futureDep = await prisma.tourDeparture.create({
-      data: {
+      data: { inventorySource: "LOCAL",
         tourId: testTourId,
         date: dateOnly(futureDateStr),
         departureTime: timeOfDay("09:00"),
@@ -47,7 +47,7 @@ describe("Phase 5: Customer Portal, My Trips & Reviews", () => {
     const imminentTimeStr = `${String(imminentDate.getHours()).padStart(2, "0")}:${String(imminentDate.getMinutes()).padStart(2, "0")}`;
 
     const imminentDep = await prisma.tourDeparture.create({
-      data: {
+      data: { inventorySource: "LOCAL",
         tourId: testTourId,
         date: dateOnly(imminentDateStr),
         departureTime: timeOfDay(imminentTimeStr),

@@ -128,10 +128,10 @@ export async function updateDepartureCapacity(departureId: string, newTotalCapac
     return { success: false, error: "Departure not found" };
   }
 
-  if (newTotalCapacity < dep.capacityBooked) {
+  if (newTotalCapacity < dep.capacityBooked + dep.capacityHeld) {
     return {
       success: false,
-      error: `Cannot reduce total capacity to ${newTotalCapacity} below already booked seats (${dep.capacityBooked}).`,
+      error: `Cannot reduce total capacity to ${newTotalCapacity} below seats already booked (${dep.capacityBooked}) and held (${dep.capacityHeld}).`,
     };
   }
 
@@ -141,4 +141,45 @@ export async function updateDepartureCapacity(departureId: string, newTotalCapac
   });
 
   return { success: true, departure: updated };
+}
+
+/** Departures of one tour with where their seats come from (admin inventory screen). */
+export async function listDepartureInventory(tourSlug: string, from?: string, to?: string) {
+  const departures = await prisma.tourDeparture.findMany({
+    where: {
+      tour: { slug: tourSlug },
+      ...(from || to ? { date: { ...(from ? { gte: dateOnly(from) } : {}), ...(to ? { lte: dateOnly(to) } : {}) } } : {}),
+    },
+    orderBy: [{ date: "asc" }, { departureTime: "asc" }],
+    take: 500,
+  });
+  return departures.map((d) => ({
+    id: d.id,
+    date: formatDateOnly(d.date),
+    departureTime: formatTimeOfDay(d.departureTime),
+    capacityTotal: d.capacityTotal,
+    capacityBooked: d.capacityBooked,
+    capacityHeld: d.capacityHeld,
+    price: d.price / 100,
+    childPrice: d.childPrice != null ? d.childPrice / 100 : null,
+    status: d.status,
+    inventorySource: d.inventorySource,
+    inventoryVerifiedAt: d.inventoryVerifiedAt,
+  }));
+}
+
+/** Marks departures LOCAL (confirmed by staff, sold online) or UNVERIFIED (off sale). Returns the count. */
+export async function setDepartureInventorySource(
+  filter: { departureIds?: string[]; tourSlug?: string; from?: string; to?: string },
+  source: "LOCAL" | "UNVERIFIED",
+) {
+  const result = await prisma.tourDeparture.updateMany({
+    where: {
+      ...(filter.departureIds ? { id: { in: filter.departureIds } } : {}),
+      ...(filter.tourSlug ? { tour: { slug: filter.tourSlug } } : {}),
+      ...(filter.from || filter.to ? { date: { ...(filter.from ? { gte: dateOnly(filter.from) } : {}), ...(filter.to ? { lte: dateOnly(filter.to) } : {}) } } : {}),
+    },
+    data: { inventorySource: source, inventoryVerifiedAt: source === "LOCAL" ? new Date() : null },
+  });
+  return result.count;
 }

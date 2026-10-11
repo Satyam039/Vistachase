@@ -27,7 +27,7 @@ async function sharedTour() {
 const created: string[] = [];
 async function departureAt(tourId: string, date: string, time: string) {
   const departure = await prisma.tourDeparture.create({
-    data: { tourId, date: dateOnly(date), departureTime: timeOfDay(time), capacityTotal: 10, capacityBooked: 0, capacityHeld: 0, price: 19900, status: "ACTIVE" },
+    data: { inventorySource: "LOCAL", tourId, date: dateOnly(date), departureTime: timeOfDay(time), capacityTotal: 10, capacityBooked: 0, capacityHeld: 0, price: 19900, status: "ACTIVE" },
   });
   created.push(departure.id);
   return departure;

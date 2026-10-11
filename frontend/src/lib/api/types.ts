@@ -153,6 +153,9 @@ export interface DestinationDetail extends Omit<DestinationSummary, "tours"> {
 export interface CheckoutData {
   departure: {
     id: string;
+    /** False when the server won't take a booking for it (unconfirmed date, closed, cancelled). */
+    bookable?: boolean;
+    notBookableReason?: string | null;
     date: string;
     departureTime: string;
     returnTime: string | null;

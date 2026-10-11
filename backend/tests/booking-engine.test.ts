@@ -8,7 +8,7 @@ describe("Phase 4: Booking Engine, Holds & Payment Abstraction", () => {
   it("holds seats for 10 minutes and prevents concurrent over-booking", async () => {
     const tour = await prisma.tour.findFirst();
     const departure = await prisma.tourDeparture.create({
-      data: {
+      data: { inventorySource: "LOCAL",
         tourId: tour!.id,
         date: dateOnly("2026-11-21"),
         departureTime: timeOfDay("06:00"),
@@ -45,7 +45,7 @@ describe("Phase 4: Booking Engine, Holds & Payment Abstraction", () => {
   it("converts reservation hold into confirmed booking with payment and QR code", async () => {
     const tour = await prisma.tour.findFirst();
     const departure = await prisma.tourDeparture.create({
-      data: {
+      data: { inventorySource: "LOCAL",
         tourId: tour!.id,
         date: dateOnly("2026-11-22"),
         departureTime: timeOfDay("07:30"),

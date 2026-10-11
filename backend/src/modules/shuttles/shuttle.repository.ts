@@ -1,6 +1,7 @@
 import prisma from "@/lib/db/prisma";
 import { getExpiredHeldSeats, liveCapacity } from "@/modules/reservations/reservation.repository";
 import { formatDateOnly, formatTimeOfDay } from "@/lib/utils/time";
+import { sellableInventoryWhere } from "@/modules/departures/inventory";
 
 export interface ShuttleWithDepartures {
   id: string;
@@ -23,6 +24,7 @@ export interface ShuttleWithDepartures {
     price: number;
     currency: string;
     status: string;
+    inventorySource: string;
   }[];
 }
 
@@ -30,7 +32,7 @@ export async function getShuttleRoutes(): Promise<ShuttleWithDepartures[]> {
   const routes = await prisma.shuttleRoute.findMany({
     include: {
       departures: {
-        where: { status: "ACTIVE" },
+        where: { status: "ACTIVE", ...sellableInventoryWhere },
         orderBy: [{ date: "asc" }, { departureTime: "asc" }],
       },
     },
@@ -59,6 +61,7 @@ export async function getShuttleRoutes(): Promise<ShuttleWithDepartures[]> {
       childPrice: d.childPrice != null ? d.childPrice / 100 : null,
       currency: d.currency,
       status: d.status,
+      inventorySource: d.inventorySource,
     })),
   }));
 }
@@ -68,7 +71,7 @@ export async function getShuttleBySlug(slug: string): Promise<ShuttleWithDepartu
     where: { slug },
     include: {
       departures: {
-        where: { status: "ACTIVE" },
+        where: { status: "ACTIVE", ...sellableInventoryWhere },
         orderBy: [{ date: "asc" }, { departureTime: "asc" }],
       },
     },
@@ -99,6 +102,7 @@ export async function getShuttleBySlug(slug: string): Promise<ShuttleWithDepartu
       childPrice: d.childPrice != null ? d.childPrice / 100 : null,
       currency: d.currency,
       status: d.status,
+      inventorySource: d.inventorySource,
     })),
   };
 }

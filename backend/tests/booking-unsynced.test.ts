@@ -9,7 +9,7 @@ describe("Bookings stay local", () => {
   it("confirms several bookings without a Bókun booking ID", async () => {
     const tour = await prisma.tour.findFirstOrThrow({ where: { category: "SHARED", bookingMode: "BOKUN", bokunId: { not: null } } });
     const departure = await prisma.tourDeparture.create({
-      data: {
+      data: { inventorySource: "LOCAL",
         tourId: tour.id,
         date: dateOnly("2027-02-03"),
         departureTime: timeOfDay("08:30"),

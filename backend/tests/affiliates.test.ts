@@ -2,16 +2,17 @@ import { describe, it, expect } from "vitest";
 import prisma from "@/lib/db/prisma";
 import { applyAffiliate, getAffiliateDashboard, findActiveAffiliateByCode } from "@/modules/affiliates/affiliate.repository";
 import { createBooking } from "@/modules/bookings/booking.repository";
+import { dateOnly, timeOfDay } from "@/lib/utils/time";
 
 const unique = () => Math.random().toString(36).slice(2, 8);
 
+// Its own bookable departure, so seats taken by other test files running at the same time
+// never get in the way.
 async function openDeparture() {
-  const dep = await prisma.tourDeparture.findFirst({
-    where: { status: "ACTIVE", tour: { category: "SHARED" } },
-    orderBy: { date: "asc" },
+  const tour = await prisma.tour.findFirstOrThrow({ where: { category: "SHARED", bookingMode: "BOKUN" } });
+  return prisma.tourDeparture.create({
+    data: { inventorySource: "LOCAL", tourId: tour.id, date: dateOnly("2027-08-20"), departureTime: timeOfDay("09:00"), capacityTotal: 30, price: 10000, status: "ACTIVE" },
   });
-  if (!dep) throw new Error("seed has no shared departure");
-  return dep;
 }
 
 describe("Partner (affiliate) program", () => {
