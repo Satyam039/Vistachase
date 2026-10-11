@@ -1,9 +1,10 @@
 // Seeds the rolling schedule of departures for the next 60 days for the instant-booking products
 // (fixed times, capacity and prices below). Existing departures are left as they are.
 //
-// These times, seats and prices are placeholders, not a confirmed schedule, so every departure
-// created here is UNVERIFIED: not listed publicly and not bookable until staff confirm it
-// (POST /api/admin/departures/inventory with inventorySource LOCAL).
+// The owner confirmed these times, seats and prices as the real schedule on 2026-10-11, so the
+// departures created here are LOCAL (listed and bookable). If a schedule below stops being
+// real, change or remove it here, and take existing dates off sale with
+// POST /api/admin/departures/inventory (inventorySource UNVERIFIED).
 //
 // Usage:
 //   npx tsx scripts/seed-departures.ts
@@ -144,7 +145,7 @@ async function seedFallbackSchedule(daysCount = 60) {
             childPrice: item.childPrice ?? null,
             currency: tour.currency || "CAD",
             status: "ACTIVE",
-            inventorySource: "UNVERIFIED",
+            inventorySource: "LOCAL",
           },
         });
         totalCreated++;

@@ -38,7 +38,8 @@ Holds: `ACTIVE → CONVERTED | EXPIRED | RELEASED`. Expired and released holds h
 - `TourDeparture.inventorySource`:
   - `LOCAL`: entered or confirmed by staff. This database is authoritative, and only these departures are listed and sold.
   - `EXTERNAL`: synced from a provider. Not sold until a sync exists and keeps it fresh.
-  - `UNVERIFIED`: seeded or unknown. This is the default for new rows. `scripts/seed-departures.ts` creates only these.
+  - `UNVERIFIED`: unknown. This is the default for new rows.
+  - `scripts/seed-departures.ts` creates `LOCAL` departures, because the owner confirmed its schedule (times, seats, prices) on 2026-10-11.
 - Staff confirm departures with `POST /api/admin/departures/inventory` (ADMIN or OPERATOR):
   ```json
   { "tourSlug": "banff-highlights-tour", "from": "2026-11-01", "to": "2026-11-30", "inventorySource": "LOCAL" }
