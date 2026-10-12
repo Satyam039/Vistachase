@@ -26,12 +26,16 @@ export function SignatureDays({
   intro,
   picks,
   tours,
+  ctaLabel,
+  ctaHref,
 }: {
   eyebrow: string;
   title: string;
   intro: string;
   picks: SignaturePick[];
   tours: TourWithAvailability[];
+  ctaLabel?: string;
+  ctaHref?: string;
 }) {
   const days = picks
     .map((p) => ({ ...p, tour: tours.find((t) => t.slug === p.slug) }))
@@ -49,8 +53,8 @@ export function SignatureDays({
             const included = tour.inclusions.filter((i) => i !== pickup);
             const addOns = tour.exclusions.filter((e) => /ticket|add-on/i.test(e));
             return (
-              <li key={tour.id} className="flex flex-col overflow-hidden rounded-lg bg-white/[0.04] ring-1 ring-white/[0.08]">
-                <div className="relative aspect-[3/2]">
+              <li key={tour.id} className="group relative flex flex-col overflow-hidden rounded-[2rem] bg-gradient-to-b from-[#181d21] via-[#121619] to-[#0a0d0f] ring-1 ring-white/[0.12] transition-[box-shadow,transform,border-color] duration-500 hover:-translate-y-1.5 hover:ring-summit-400/40 hover:shadow-[0_30px_70px_-25px_rgba(0,0,0,0.7)]">
+                <div className="relative aspect-[16/10]">
                   <Image src={tour.featuredImage} alt="" fill sizes="(min-width: 1024px) 400px, 100vw" className="object-cover" />
                   <div className="absolute inset-0 bg-gradient-to-t from-obsidian-950/80 via-transparent" />
                   <p className="absolute inset-x-0 bottom-0 px-4 pb-3 text-xs uppercase tracking-[0.18em] text-summit-200">{theme}</p>
@@ -131,6 +135,18 @@ export function SignatureDays({
             );
           })}
         </ul>
+
+        {ctaLabel && ctaHref && (
+          <div className="mt-14 flex justify-center" data-reveal>
+            <Link
+              href={ctaHref}
+              className="golden-summit-btn inline-flex h-13 items-center gap-2.5 rounded-full px-8 text-base font-medium shadow-xl transition-all duration-300 hover:scale-[1.03]"
+            >
+              <span>{ctaLabel}</span>
+              <ArrowRight className="h-5 w-5" aria-hidden="true" />
+            </Link>
+          </div>
+        )}
       </div>
     </section>
   );

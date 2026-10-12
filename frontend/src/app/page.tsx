@@ -10,6 +10,7 @@ import { ExperienceCategories } from "@/components/cinematic/ExperienceCategorie
 import { DestinationStoryStream } from "@/components/cinematic/DestinationStoryStream";
 import { PlanAheadGuaranteedAccess } from "@/components/cinematic/PlanAheadGuaranteedAccess";
 import { WhyTravelersLove } from "@/components/cinematic/WhyTravelersLove";
+import { NatGeoCertificateSection } from "@/components/brand/NatGeoCertificateSection";
 import { VerifiedAwardSection } from "@/components/cinematic/VerifiedAwardSection";
 import { GuestTestimonials } from "@/components/cinematic/GuestTestimonials";
 import { LiveTrackingTeaser } from "@/components/cinematic/LiveTrackingTeaser";
@@ -69,6 +70,7 @@ export default async function HomePage() {
     <div className="flex w-full flex-col bg-white selection:bg-summit-500 selection:text-obsidian-900">
       <ServicesHero slides={slides} />
       <TrustRow />
+      <NatGeoCertificateSection />
       <TopExperiences tours={tours} />
       <ExperienceCategories />
       <DestinationStoryStream />

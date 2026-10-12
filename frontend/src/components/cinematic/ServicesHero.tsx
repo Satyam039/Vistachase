@@ -20,7 +20,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, CalendarCheck, MapPin, MountainSnow, Pause, Play, Star } from "lucide-react";
+import { ArrowRight, Pause, Play, Star } from "lucide-react";
 import { AmbientVideo } from "@/components/cinematic/AmbientVideo";
 import { HeroSearch } from "@/components/home/HeroSearch";
 import { hasPrice, money } from "@/lib/pricing";
@@ -181,25 +181,30 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
         {/* 1 · Message */}
         <a
           href="#reviews-heading"
-          className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 text-xs text-white sm:px-4 sm:text-sm backdrop-blur-md hover:bg-white/15 motion-safe:animate-[fadeUp_700ms_ease-out]"
+          className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs text-white sm:text-sm backdrop-blur-md hover:bg-white/15 motion-safe:animate-[fadeUp_700ms_ease-out]"
         >
           <Star className="h-3.5 w-3.5 fill-summit-500 text-summit-500 sm:h-4 sm:w-4" aria-hidden="true" />
           5.0<span className="sr-only"> out of 5</span> · 1,000+ reviews
-          <span className="hidden text-white/50 sm:inline" aria-hidden="true">
+          <span className="text-white/50 sm:inline" aria-hidden="true">
             |
           </span>
-          <span className="hidden sm:inline">#6 experience in Canada</span>
+          <span>#6 experience in Canada</span>
         </a>
-        <h1 className="mt-5 max-w-6xl text-balance text-[clamp(2.25rem,9.5vw,2.75rem)] font-light leading-[1.05] tracking-tight text-white sm:text-6xl lg:text-7xl motion-safe:animate-[fadeUp_900ms_ease-out]">
+        <h1 className="mt-5 max-w-5xl text-balance text-[clamp(2.25rem,8vw,3.5rem)] font-light leading-[1.08] tracking-tight text-white sm:text-6xl lg:text-7xl motion-safe:animate-[fadeUp_900ms_ease-out]">
           The Canadian Rockies, your way
         </h1>
-        <p className="mt-3 max-w-2xl text-pretty text-base font-light leading-relaxed text-white/90 sm:mt-4 sm:text-lg lg:text-xl [text-shadow:0_1px_12px_rgba(0,0,0,0.45)] motion-safe:animate-[fadeUp_1100ms_ease-out]">
+        <p className="mt-4 max-w-2xl text-pretty text-base font-light leading-relaxed text-white/90 sm:text-lg lg:text-xl [text-shadow:0_1px_12px_rgba(0,0,0,0.45)] motion-safe:animate-[fadeUp_1100ms_ease-out]">
           Small-group tours, private journeys and guaranteed lake shuttles from Banff and Canmore.
         </p>
 
-        {/* 2 · Explore by experience */}
+        {/* 2 · Action: clean, sleek frosted search */}
+        <div className="mt-8 w-full max-w-3xl rounded-[2rem] bg-white/10 p-1.5 ring-1 ring-white/20 backdrop-blur-md motion-safe:animate-[fadeUp_1300ms_ease-out] shadow-2xl">
+          <HeroSearch className="w-full" />
+        </div>
+
+        {/* 3 · Clutter-free Experience Switcher */}
         <div
-          className="mt-9 w-full max-w-5xl sm:mt-10"
+          className="mt-8 w-full max-w-4xl"
           onMouseEnter={() => setHovering(true)}
           onMouseLeave={() => setHovering(false)}
           onFocusCapture={() => setHovering(true)}
@@ -207,13 +212,10 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
             if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setHovering(false);
           }}
         >
-          <p id="services-hero-label" className="text-xs uppercase tracking-[0.18em] text-white/75 sm:tracking-[0.2em]">
-            Or explore by experience
-          </p>
           <div
             role="tablist"
-            aria-labelledby="services-hero-label"
-            className="vc-rail -mx-page mt-4 flex gap-2 overflow-x-auto px-page pb-1 sm:mx-0 sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-0"
+            aria-label="Tour categories"
+            className="vc-rail -mx-page flex gap-2 overflow-x-auto px-page pb-1 sm:mx-0 sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-0"
           >
             {slides.map((s, i) => {
               const on = i === index;
@@ -230,20 +232,18 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
                   tabIndex={on ? 0 : -1}
                   onClick={() => go(i)}
                   onKeyDown={(e) => onTabKey(e, i)}
-                  className={`relative flex shrink-0 items-center gap-2.5 overflow-hidden rounded-2xl py-1.5 pl-1.5 pr-4 text-left ring-1 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-summit-500 ${
-                    on ? "bg-white text-obsidian-900 ring-white" : "bg-white/10 text-white ring-white/20 backdrop-blur-md hover:bg-white/20"
+                  className={`relative flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-left ring-1 transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-summit-500 ${
+                    on ? "bg-white text-obsidian-900 ring-white shadow-lg" : "bg-white/10 text-white ring-white/15 backdrop-blur-md hover:bg-white/20"
                   }`}
                 >
-                  <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl">
-                    <Image src={s.image} alt="" fill sizes="40px" className="object-cover" />
+                  <span className="text-xs sm:text-sm font-medium whitespace-nowrap">
+                    {TAB_LABEL[s.id] ?? s.title}
                   </span>
-                  <span className="min-w-0 whitespace-nowrap">
-                    <span className="block text-sm leading-tight">{TAB_LABEL[s.id] ?? s.title}</span>
-                    <span className={`block text-xs leading-tight ${on ? "text-slate-600" : "text-white/75"}`}>
-                      {fromPrices[i] !== null ? `From ${money(fromPrices[i] as number)}` : "Price on request"}
+                  {fromPrices[i] !== null && (
+                    <span className={`text-[11px] sm:text-xs whitespace-nowrap ${on ? "text-slate-600" : "text-white/70"}`}>
+                      · From {money(fromPrices[i] as number)}
                     </span>
-                  </span>
-                  {/* rotation progress along the active pill's foot */}
+                  )}
                   {on && (
                     <span className="absolute inset-x-3 bottom-0 h-0.5 bg-obsidian-900/10" aria-hidden="true">
                       <span
@@ -273,22 +273,6 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
             </Link>
           </div>
-        </div>
-        {/* 3 · Action: compact search + promises, right under the selected experience's line */}
-        <div className="mt-6 w-full max-w-3xl motion-safe:animate-[fadeUp_1300ms_ease-out]">
-          <HeroSearch className="w-full" />
-          <ul className="flex flex-col items-center gap-1 px-4 pt-3 text-xs text-white [text-shadow:0_1px_10px_rgba(0,0,0,0.5)] sm:flex-row sm:flex-wrap sm:justify-center sm:gap-x-5" aria-label="Booking with Vista Chase">
-            {[
-              { icon: CalendarCheck, text: "Free cancellation up to 72 hours" },
-              { icon: MapPin, text: "Hotel pickup in Banff & Canmore" },
-              { icon: MountainSnow, text: "Guaranteed Moraine Lake access" },
-            ].map(({ icon: Icon, text }) => (
-              <li key={text} className="inline-flex items-center gap-1.5">
-                <Icon className="h-3.5 w-3.5 text-summit-400" aria-hidden="true" />
-                {text}
-              </li>
-            ))}
-          </ul>
         </div>
       </div>
     </section>

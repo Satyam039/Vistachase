@@ -90,9 +90,12 @@ export function TourCard({
   const cancelLabel = tour.category === "TICKET" ? "Operator's cancellation rules" : "Free cancellation · 72 h";
 
   return (
-    <article className="group relative flex h-full flex-col overflow-hidden rounded-lg bg-obsidian-950 text-white ring-1 ring-white/[0.08] transition-shadow duration-500 ease-out hover:shadow-[0_24px_48px_-28px_rgba(0,0,0,0.6)]">
-      {/* Media: the photo leads; badges on top, destination over a soft scrim */}
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-obsidian-900">
+    <article className="group relative flex h-full flex-col overflow-hidden rounded-[2rem] bg-gradient-to-b from-[#181d21] via-[#121619] to-[#0a0d0f] text-white ring-1 ring-white/[0.12] transition-[box-shadow,transform,border-color] duration-500 ease-out hover:-translate-y-1.5 hover:ring-summit-400/50 hover:shadow-[0_32px_70px_-25px_rgba(0,0,0,0.7)]">
+      {/* Ambient background sheen */}
+      <div className="pointer-events-none absolute inset-0 -z-0 bg-[radial-gradient(ellipse_at_top,_rgba(255,255,255,0.05),_transparent_75%)] opacity-80 transition-opacity duration-500 group-hover:opacity-100" aria-hidden="true" />
+
+      {/* Media: the photo gets most of the card */}
+      <div className="relative aspect-[5/4] w-full overflow-hidden bg-obsidian-900">
         <Image
           src={tour.featuredImage}
           alt=""

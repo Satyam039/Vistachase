@@ -97,7 +97,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className="font-sans min-h-screen bg-slate-50 text-slate-900 antialiased">
+      <body suppressHydrationWarning className="font-sans min-h-screen bg-slate-50 text-slate-900 antialiased">
         <AstryxThemeProvider>
           <SiteFrame>{children}</SiteFrame>
         </AstryxThemeProvider>

@@ -568,7 +568,7 @@ export function TourDetailView({
                   </div>
 
                   {/* CTA Buttons */}
-                  <div className="space-y-2">
+                  <div className="space-y-3 pt-2">
                     <Link
                       href={`/book?${new URLSearchParams({
                         departureId: selectedDepartureId || tour.departures[0]?.id || "",
@@ -576,7 +576,7 @@ export function TourDetailView({
                           ? { guests: String(partySize) }
                           : { guests: String(adults + children), adults: String(adults), children: String(children) }),
                       }).toString()}`}
-                      className="w-full h-12 rounded-full text-base text-obsidian-900 golden-summit-btn flex items-center justify-center gap-2 transition-all"
+                      className="w-full h-13 py-4 rounded-full text-base font-medium text-obsidian-900 golden-summit-btn flex items-center justify-center gap-2 shadow-lg transition-all hover:scale-[1.01]"
                     >
                       <span>Book now</span>
                       <ChevronRight className="w-4 h-4" />
