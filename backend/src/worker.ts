@@ -5,12 +5,13 @@
 //   every 5 minutes   expire holds and unpaid bookings (frees their seats)
 //   02:00 Mountain    reconcile bookings and email staff anything that needs a person
 //   10:00 Mountain    ask yesterday's guests for a review (once each)
+//   03:00 Mountain    partner commission for tours that ran becomes payable; old clicks deleted
 
 import "dotenv/config";
 import { Queue, Worker } from "bullmq";
 import IORedis from "ioredis";
 import prisma from "@/lib/db/prisma";
-import { expireHoldsAndUnpaidBookings, reconcileBookings, sendReviewRequests } from "@/jobs/tasks";
+import { expireHoldsAndUnpaidBookings, maturePartnerCommissions, reconcileBookings, sendReviewRequests } from "@/jobs/tasks";
 
 const QUEUE = "vista-chase-jobs";
 const TZ = "America/Edmonton";
@@ -19,6 +20,7 @@ const JOBS: Record<string, () => Promise<unknown>> = {
   "expire-holds": () => expireHoldsAndUnpaidBookings(),
   "reconcile-bookings": () => reconcileBookings(),
   "review-requests": () => sendReviewRequests(),
+  "partner-commissions": () => maturePartnerCommissions(),
 };
 
 async function main() {
@@ -30,6 +32,7 @@ async function main() {
   await queue.removeJobScheduler("bokun-availability"); // retired Bókun sync, scheduled by older releases
   await queue.upsertJobScheduler("reconcile-bookings", { pattern: "0 2 * * *", tz: TZ }, { name: "reconcile-bookings" });
   await queue.upsertJobScheduler("review-requests", { pattern: "0 10 * * *", tz: TZ }, { name: "review-requests" });
+  await queue.upsertJobScheduler("partner-commissions", { pattern: "0 3 * * *", tz: TZ }, { name: "partner-commissions" });
 
   const worker = new Worker(
     QUEUE,

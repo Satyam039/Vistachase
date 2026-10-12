@@ -25,6 +25,8 @@ import { getEmailProvider } from "@/lib/email/email.provider";
 import { isVehicleDeparture, partySizeError, seatsToReserve } from "@/modules/pricing/departure-pricing";
 import { priceBooking, type AddOnChoice } from "@/modules/pricing/booking-pricing";
 import { referringAffiliateId } from "@/modules/affiliates/affiliate.repository";
+import { earnCommission, reverseCommissionForRefund } from "@/modules/affiliates/commission";
+import { sendCommissionEarnedEmail } from "@/modules/affiliates/partner-emails";
 import { checkinLink, signBookingLink, voucherLink } from "@/lib/security/signed-links";
 
 export interface CreateBookingInput {
@@ -390,15 +392,17 @@ export async function confirmPaidBooking(reference: string, verified?: VerifiedP
 
   const confirmedNow = await prisma.$transaction(async (tx) => {
     const moved = await transitionBooking(tx, booking.id, ["PENDING_PAYMENT"], "CONFIRMED", { transactionId: transactionId ?? null });
-    if (!moved) return false;
+    if (!moved) return null;
     await tx.payment.updateMany({
       where: { bookingId: booking.id, status: "PENDING" },
       data: { status: "SUCCEEDED", ...(transactionId ? { transactionId } : {}) },
     });
-    return true;
+    // Partner commission is earned only here, on a verified payment, in the same transaction.
+    return { commission: await earnCommission(tx, booking.id, verified?.amount ?? booking.totalAmount) };
   });
   const updated = await prisma.booking.findUniqueOrThrow({ where: { id: booking.id } });
   if (!confirmedNow) return updated; // a concurrent call confirmed (and emailed) it
+  if (confirmedNow.commission) notifyCommissionEarned(confirmedNow.commission.affiliateId, booking.bookingReference, confirmedNow.commission.amountCents, booking.currency);
 
   const tour = booking.tourDeparture.tour;
 
@@ -519,6 +523,10 @@ export async function cancelBooking(reference: string, customerEmail?: string) {
       if (refund.success) {
         refundedCents += amount;
         await prisma.payment.update({ where: { id: payment.id }, data: { status: "REFUNDED" } });
+        // Keyed by the provider's refund id, so the Stripe webhook for this refund is a no-op.
+        await reverseCommissionForRefund(booking.id, refund.refundId, amount, "guest cancelled").catch((e) =>
+          console.error(`Commission reversal failed for ${booking.bookingReference}:`, (e as Error).message),
+        );
       }
     } catch (error) {
       console.error(`Refund failed for ${booking.bookingReference}:`, (error as Error).message);
@@ -559,4 +567,14 @@ export async function getCustomerBookings(customerEmail: string) {
 
 function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+}
+
+/** Tell the partner a referred booking earned commission (fire and forget). */
+function notifyCommissionEarned(affiliateId: string, reference: string, amountCents: number, currency: string) {
+  prisma.affiliate
+    .findUnique({ where: { id: affiliateId }, include: { user: { select: { email: true, name: true } } } })
+    .then((a) => {
+      if (a) sendCommissionEarnedEmail({ email: a.user.email, contactName: a.user.name, bookingReference: reference, amount: amountCents / 100, currency });
+    })
+    .catch((e) => console.error("Commission email failed:", (e as Error).message));
 }

@@ -107,6 +107,20 @@ async function main() {
     },
   });
 
+  // The partner's commission on it, as the payment webhook would have recorded it (10% of the total).
+  await prisma.commissionLedger.create({
+    data: {
+      entryKey: `EARN:${sample.id}`,
+      affiliateId: demoPartner.id,
+      bookingId: sample.id,
+      type: "EARNED",
+      basisCents: sample.totalAmount,
+      amountCents: Math.round(sample.totalAmount * 0.1),
+      ruleSnapshot: { source: "partner-rate", percentBps: 1000, fixedCents: null },
+      status: "PENDING",
+    },
+  });
+
   // Fleet and guides
   const vehicle = (data) => prisma.vehicle.create({ data: { isActive: true, ...data } });
   const sprinter4 = await vehicle({ name: "Mercedes-Benz Sprinter Executive #4", type: "VAN_14", capacity: 14, licensePlate: "ALBERTA • 7VC-894", vinNumber: "WD3PF4CC2KP098412", trackingDeviceId: "GPS-VC-004", status: "ASSIGNED" });
