@@ -582,18 +582,6 @@ export function TourDetailView({
                       <ChevronRight className="w-4 h-4" />
                     </Link>
 
-                    {tour.bokunId && (
-                      <a
-                        href={`https://widgets.bokun.io/online-sales/90615648-3c90-4d07-9dac-d39089e7728b/experience/${tour.bokunId}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full py-3 rounded-xl font-medium text-xs text-obsidian-900 bg-summit-50 border border-summit-300 hover:bg-summit-100 flex items-center justify-center gap-2 transition-colors"
-                      >
-                        <CheckCircle2 className="w-4 h-4 text-emerald-700" />
-                        <span>Instant Bókun Live Checkout</span>
-                      </a>
-                    )}
-
                     <Link
                       href="/concierge"
                       className="w-full min-h-10 py-2.5 rounded-xl font-medium text-xs text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 flex items-center justify-center gap-2 transition-colors"

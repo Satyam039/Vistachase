@@ -101,11 +101,6 @@ export default function RootLayout({
         <AstryxThemeProvider>
           <SiteFrame>{children}</SiteFrame>
         </AstryxThemeProvider>
-        {/* Bókun Online Sales Engine & Widgets Loader */}
-        <Script
-          src="https://widgets.bokun.io/assets/javascripts/apps/build/BokunWidgetsLoader.js?bookingChannelUUID=90615648-3c90-4d07-9dac-d39089e7728b"
-          strategy="lazyOnload"
-        />
       </body>
     </html>
   );
