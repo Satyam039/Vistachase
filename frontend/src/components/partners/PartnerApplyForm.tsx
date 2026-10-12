@@ -68,7 +68,7 @@ export function PartnerApplyForm() {
   const err = (name: string) =>
     fields[name]?.length ? (
       <p id={`partner-${name}-error`} className="text-sm text-red-700">
-        {name === "website" ? "Enter a full web address, starting with https://" : name === "password" ? "Use at least 8 characters." : "Please check this field."}
+        {name === "website" ? "Enter a full web address, starting with https://" : name === "password" ? "Use at least 8 characters." : name === "phone" ? "Enter a phone number with digits, spaces or +." : "Please check this field."}
       </p>
     ) : null;
   const described = (name: string) => (fields[name]?.length ? `partner-${name}-error` : undefined);
@@ -114,7 +114,15 @@ export function PartnerApplyForm() {
           <input id="partner-website" name="website" type="url" placeholder="https://" autoComplete="url" className={field} aria-describedby={described("website")} aria-invalid={!!fields.website} />
           {err("website")}
         </div>
+        <div className="space-y-1.5">
+          <label htmlFor="partner-phone" className="text-sm text-slate-700">Phone (optional)</label>
+          <input id="partner-phone" name="phone" type="tel" autoComplete="tel" className={field} aria-describedby={described("phone")} aria-invalid={!!fields.phone} />
+          {err("phone")}
+        </div>
       </div>
+      <p className="text-sm text-slate-600">
+        We use these details only to run your partner account and pay your commission. Commission is earned when a guest you referred pays for a booking.
+      </p>
       <button
         type="submit"
         disabled={status === "sending"}

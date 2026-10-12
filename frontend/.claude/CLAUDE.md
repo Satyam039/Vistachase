@@ -90,9 +90,11 @@ Astryx setup (already done, don't redo):
 - Banff activity tickets: category `TICKET`, `/banff-activity-tickets`; content in
   `backend/prisma/catalog/extra-products.json` (not on the live site), ENQUIRY with prices on request until
   their Bokun products exist.
-- Partner program: `/partners` (apply), `/partners/login`, `/partners/dashboard` (link builder, totals,
-  referred bookings without guest details), `/admin/partners` (approve/suspend). `src/middleware.ts` stores
-  `?ref=CODE` in the `vc_ref` cookie for 30 days; the backend credits bookings to ACTIVE partners only.
+- Partner program: `/partners` (apply), `/partners/login`, `/partners/dashboard` (tabs: overview, links,
+  bookings, commission statement, payouts, profile; never guest details), `/admin/partners` (partners, rules,
+  commissions, payouts, report; panels in `components/admin/partners`). `src/middleware.ts` stores `?ref=CODE`
+  in the `vc_ref` cookie for 30 days and reports the click; the backend credits bookings to ACTIVE partners
+  only and earns commission only on paid bookings. Rules and lifecycle: `docs/AFFILIATES.md`.
 - Tour detail pages: every product is served by the top-level `src/app/[slug]/page.tsx` at its live
   vistachase.com URL (static routes win; unknown slugs 404; `/tours/<slug>` 308-redirects there). Metadata
   comes from the tour's imported `metaTitle` / `metaDescription`. They render `TourDetailView` (product-detail

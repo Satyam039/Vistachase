@@ -3,10 +3,12 @@
 // jobs don't run twice. Nightly emails stay with the worker. A run is skipped while the previous one
 // of the same job is still going.
 
-import { expireHoldsAndUnpaidBookings } from "@/jobs/tasks";
+import { expireHoldsAndUnpaidBookings, maturePartnerCommissions } from "@/jobs/tasks";
 
 const JOBS: { name: string; everyMs: number; run: () => Promise<unknown> }[] = [
   { name: "expire-holds", everyMs: 5 * 60 * 1000, run: () => expireHoldsAndUnpaidBookings() },
+  // Idempotent and cheap, so hourly is fine where there is no worker for the 03:00 run.
+  { name: "partner-commissions", everyMs: 60 * 60 * 1000, run: () => maturePartnerCommissions() },
 ];
 
 export function startInProcessJobs() {
