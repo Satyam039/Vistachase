@@ -6,7 +6,14 @@ import { Router, type Request, type Response, type NextFunction } from "express"
 import prisma from "@/lib/db/prisma";
 import { getAuthenticatedStaff } from "@/lib/auth/admin-guard";
 import type { TokenPayload, UserRole } from "@/lib/auth/auth";
-import { getAdminMetrics, getDispatchManifest, toggleBoardingStatus, updateDepartureCapacity } from "@/modules/admin/admin.repository";
+import {
+  getAdminMetrics,
+  getDispatchManifest,
+  listDepartureInventory,
+  setDepartureInventorySource,
+  toggleBoardingStatus,
+  updateDepartureCapacity,
+} from "@/modules/admin/admin.repository";
 import { getEmailProvider } from "@/lib/email/email.provider";
 import { verifyBookingLink, voucherLink } from "@/lib/security/signed-links";
 import { parseOr400, referenceSchema, z } from "@/lib/security/validate";
@@ -104,6 +111,47 @@ router.post("/departures/capacity", requireStaff(["ADMIN", "OPERATOR"]), async (
     if (!result.success) return res.status(400).json({ success: false, error: result.error });
     await audit(req, "UPDATE_CAPACITY", "TourDeparture", body.departureId, { capacityTotal: body.newTotalCapacity });
     res.json({ success: true, departure: result.departure });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// Inventory: staff confirm which departures are real (LOCAL, sold online) or take them off sale
+// (UNVERIFIED). Pick departures by id, or by tour and date range. GET lists them with their source.
+const inventoryFilter = z
+  .object({
+    departureIds: z.array(z.string().min(1).max(64)).min(1).max(500).optional(),
+    tourSlug: z.string().min(1).max(120).optional(),
+    from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  })
+  .refine((f) => f.departureIds || f.tourSlug, "Give departureIds or a tourSlug");
+
+router.get("/departures/inventory", requireStaff(["ADMIN", "OPERATOR"]), async (req, res, next) => {
+  try {
+    const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional();
+    const query = parseOr400(z.object({ tourSlug: z.string().min(1).max(120), from: day, to: day }), req.query, res);
+    if (!query) return;
+    const departures = await listDepartureInventory(query.tourSlug, query.from, query.to);
+    res.json({ success: true, departures });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post("/departures/inventory", requireStaff(["ADMIN", "OPERATOR"]), async (req, res, next) => {
+  try {
+    const body = parseOr400(inventoryFilter.and(z.object({ inventorySource: z.enum(["LOCAL", "UNVERIFIED"]) })), req.body, res);
+    if (!body) return;
+    const updated = await setDepartureInventorySource(body, body.inventorySource);
+    await audit(req, "SET_INVENTORY_SOURCE", "TourDeparture", body.departureIds?.join(",").slice(0, 190) || `tour:${body.tourSlug}`, {
+      inventorySource: body.inventorySource,
+      tourSlug: body.tourSlug ?? null,
+      from: body.from ?? null,
+      to: body.to ?? null,
+      count: updated,
+    });
+    res.json({ success: true, updated });
   } catch (e) {
     next(e);
   }

@@ -1,7 +1,10 @@
+import crypto from "node:crypto";
 import prisma from "@/lib/db/prisma";
 import { getCacheProvider } from "@/lib/cache/cache.provider";
 import { isVehicleDeparture, partySizeError, seatsToReserve } from "@/modules/pricing/departure-pricing";
 import { formatDateOnly, formatTimeOfDay } from "@/lib/utils/time";
+import { bookingClosedError } from "@/modules/departures/booking-window";
+import { endHold, freeExpiredSeats, inventoryError, takeHeldSeats } from "@/modules/departures/inventory";
 
 export interface CreateHoldInput {
   departureId: string;
@@ -27,40 +30,17 @@ export interface HoldResult {
 export async function createReservationHold(input: CreateHoldInput): Promise<HoldResult> {
   const duration = input.holdDurationSeconds || 600;
   const expiresAt = new Date(Date.now() + duration * 1000);
-  const holdToken = `hold_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+  const holdToken = `hold_${crypto.randomBytes(16).toString("hex")}`;
   const cache = getCacheProvider();
 
-  // 1. Transaction to guarantee atomic capacity check and reservation hold
+  // Seats from expired holds and unpaid bookings on this departure come back first, even when no
+  // job runner is on.
+  await freeExpiredSeats({ departureId: input.departureId });
+
   return await prisma.$transaction(async (tx) => {
-    // Clean any expired holds first
-    const now = new Date();
-    const expired = await tx.reservationHold.findMany({
-      where: {
-        tourDepartureId: input.departureId,
-        status: "ACTIVE",
-        expiresAt: { lt: now },
-      },
-    });
-
-    for (const exp of expired) {
-      await tx.reservationHold.update({
-        where: { id: exp.id },
-        data: { status: "EXPIRED" },
-      });
-      await tx.tourDeparture.update({
-        where: { id: input.departureId },
-        data: {
-          capacityHeld: {
-            decrement: exp.seatsCount,
-          },
-        },
-      });
-    }
-
-    // Fetch departure with fresh capacity
     const departure = await tx.tourDeparture.findUnique({
       where: { id: input.departureId },
-      include: { tour: { select: { category: true } } },
+      include: { tour: { select: { category: true, bookingMode: true } } },
     });
 
     if (!departure) {
@@ -71,6 +51,20 @@ export async function createReservationHold(input: CreateHoldInput): Promise<Hol
       return { success: false, error: "Departure is not active for booking" };
     }
 
+    if (departure.tour?.bookingMode === "ENQUIRY") {
+      return { success: false, error: "This experience is booked on request. Please send us an enquiry." };
+    }
+
+    const notSellable = inventoryError(departure);
+    if (notSellable) {
+      return { success: false, error: notSellable };
+    }
+
+    const closed = bookingClosedError(departure);
+    if (closed) {
+      return { success: false, error: closed };
+    }
+
     const partyError = partySizeError(departure, input.seatsCount);
     if (partyError) {
       return { success: false, error: partyError };
@@ -78,19 +72,20 @@ export async function createReservationHold(input: CreateHoldInput): Promise<Hol
 
     const isVehicle = isVehicleDeparture(departure);
     const reservedSeats = seatsToReserve(departure, input.seatsCount);
-    const currentAvailable = departure.capacityTotal - (departure.capacityBooked + departure.capacityHeld);
 
-    // CRITICAL: Over-capacity prevention (a private vehicle must be entirely free)
-    if (currentAvailable < reservedSeats) {
+    // One conditional update: the seats are held only if they are still free at this instant
+    // (a private vehicle must be entirely free). Nothing has been written when it fails.
+    if (!(await takeHeldSeats(tx, departure.id, reservedSeats))) {
+      const fresh = await tx.tourDeparture.findUnique({ where: { id: departure.id } });
+      const available = fresh ? fresh.capacityTotal - (fresh.capacityBooked + fresh.capacityHeld) : 0;
       return {
         success: false,
         error: isVehicle
           ? "This private vehicle is already reserved for this departure."
-          : `Only ${Math.max(0, currentAvailable)} seat(s) available for this departure. Requested: ${input.seatsCount}`,
+          : `Only ${Math.max(0, available)} seat(s) available for this departure. Requested: ${input.seatsCount}`,
       };
     }
 
-    // Create Hold in DB
     await tx.reservationHold.create({
       data: {
         holdToken,
@@ -101,16 +96,6 @@ export async function createReservationHold(input: CreateHoldInput): Promise<Hol
         customerPhone: input.customerPhone,
         expiresAt,
         status: "ACTIVE",
-      },
-    });
-
-    // Atomically increment held seats
-    await tx.tourDeparture.update({
-      where: { id: input.departureId },
-      data: {
-        capacityHeld: {
-          increment: reservedSeats,
-        },
       },
     });
 
@@ -210,36 +195,14 @@ export async function releaseHold(holdToken: string): Promise<boolean> {
   const cache = getCacheProvider();
   await cache.del(`hold:${holdToken}`);
 
-  return await prisma.$transaction(async (tx) => {
-    const hold = await tx.reservationHold.findUnique({
-      where: { holdToken },
-    });
-
-    if (!hold || hold.status !== "ACTIVE") {
-      return false;
-    }
-
-    await tx.reservationHold.update({
-      where: { id: hold.id },
-      data: { status: "RELEASED" },
-    });
-
-    await tx.tourDeparture.update({
-      where: { id: hold.tourDepartureId },
-      data: {
-        capacityHeld: {
-          decrement: hold.seatsCount,
-        },
-      },
-    });
-
-    return true;
-  });
+  const hold = await prisma.reservationHold.findUnique({ where: { holdToken } });
+  if (!hold || hold.status !== "ACTIVE") return false;
+  return await prisma.$transaction((tx) => endHold(tx, hold, "RELEASED"));
 }
 
 /**
- * Expired holds stay ACTIVE (and inside capacityHeld) until the next createReservationHold
- * call cleans them up, so availability reads subtract them here. One grouped query per read.
+ * Expired holds stay ACTIVE (and inside capacityHeld) until the next hold or booking on that
+ * departure (or the scheduled job) cleans them up, so availability reads subtract them here. One grouped query per read.
  */
 export async function getExpiredHeldSeats(departureIds: string[]): Promise<Map<string, number>> {
   if (departureIds.length === 0) return new Map();

@@ -32,7 +32,7 @@ describe("Vista Chase AI Voice Assistant & Multi-Turn Conversational Booking Flo
     expect(res.toolCalls?.some((t) => t.name === "getAvailableDates")).toBe(true);
   });
 
-  it("3. Bókun Availability -> Verifies live seats, CAD pricing, and requests hotel pickup", async () => {
+  it("3. Availability -> Verifies live seats, CAD pricing, and requests hotel pickup", async () => {
     const messages: ChatMessage[] = [
       { role: "user", content: "I want to book the sunrise tour for two adults." },
       { role: "assistant", content: "What date are you planning to travel?" },
@@ -44,7 +44,7 @@ describe("Vista Chase AI Voice Assistant & Multi-Turn Conversational Booking Flo
     expect(res.message).toContain("$89 CAD per person");
     expect(res.message).toContain("$178 CAD total");
     expect(res.message).toContain("hotel are you staying at");
-    expect(res.toolCalls?.some((t) => t.name === "checkBokunAvailability")).toBe(true);
+    expect(res.toolCalls?.some((t) => t.name === "checkAvailability")).toBe(true);
     expect(res.sessionState?.stage).toBe("PICKUP_REQUESTED");
   });
 

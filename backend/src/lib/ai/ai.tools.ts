@@ -3,6 +3,7 @@ import { getLiveTrackingProvider } from "@/lib/tracking/tracking.provider";
 import { getMapsProvider } from "@/lib/maps/maps.provider";
 import { createReservationHold } from "@/modules/reservations/reservation.repository";
 import { createBooking } from "@/modules/bookings/booking.repository";
+import { sellableInventoryWhere } from "@/modules/departures/inventory";
 import { dateOnly, formatDateOnly, formatTimeOfDay, todayInMountainTime } from "@/lib/utils/time";
 
 export interface ToolExecutionContext {
@@ -84,11 +85,12 @@ export async function getTourDetails(args: { tourSlugOrBokunId: string }) {
   };
 }
 
-export async function checkBokunAvailability(args: { date: string; tourSlug?: string }) {
+export async function checkAvailability(args: { date: string; tourSlug?: string }) {
   const departures = await prisma.tourDeparture.findMany({
     where: {
       date: new Date(args.date),
       status: "ACTIVE",
+      ...sellableInventoryWhere,
       ...(args.tourSlug
         ? {
             tour: { slug: args.tourSlug },
@@ -140,7 +142,7 @@ export async function getBooking(args: { bookingReference: string; customerEmail
     departureDate: booking.tourDeparture.date.toISOString().split('T')[0],
     departureTime: formatTimeOfDay(booking.tourDeparture.departureTime),
     pickupLocation: booking.pickupStop?.name || booking.pickupCustomText || "Banff Station",
-    pickupTime: booking.pickupTime || booking.tourDeparture.departureTime,
+    pickupTime: booking.pickupTime || formatTimeOfDay(booking.tourDeparture.departureTime),
     totalSeats: booking.totalSeats,
     status: booking.status,
     voucherCode: booking.voucherCode,
@@ -250,6 +252,7 @@ export async function getAvailableDates(args: { tourSlug?: string }) {
     where: {
       date: { gte: dateOnly(today) },
       status: "ACTIVE",
+      ...sellableInventoryWhere,
       ...(args.tourSlug ? { tour: { slug: args.tourSlug } } : {}),
     },
     include: {
@@ -515,9 +518,9 @@ export async function executeAiTool(toolName: string, args: Record<string, any>,
         return { toolName, success: true, data: await searchTours(args) };
       case "getTourDetails":
         return { toolName, success: true, data: await getTourDetails(args as any) };
-      case "checkBokunAvailability":
       case "checkAvailability":
-        return { toolName, success: true, data: await checkBokunAvailability(args as any) };
+      case "checkAvailability":
+        return { toolName, success: true, data: await checkAvailability(args as any) };
       case "getAvailableDates":
         return { toolName, success: true, data: await getAvailableDates(args as any) };
       case "getBooking":

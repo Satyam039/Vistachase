@@ -3,35 +3,13 @@
 
 import prisma from "@/lib/db/prisma";
 import { getEmailProvider } from "@/lib/email/email.provider";
-import { expireUnpaidBookings } from "@/modules/bookings/booking.repository";
+import { freeExpiredSeats } from "@/modules/departures/inventory";
 import { reviewLink } from "@/lib/security/signed-links";
 import { dateOnly, todayInMountainTime } from "@/lib/utils/time";
-import { syncBokunAvailability } from "@/modules/bokun/availability-sync";
-import { bokunConfig } from "@/modules/bokun/product-map";
 
 /** Every few minutes: free seats held by expired holds and by bookings never paid for. */
 export async function expireHoldsAndUnpaidBookings(now = new Date()) {
-  const holds = await prisma.reservationHold.findMany({ where: { status: "ACTIVE", expiresAt: { lt: now } } });
-  for (const hold of holds) {
-    await prisma.$transaction(async (tx) => {
-      const claimed = await tx.reservationHold.updateMany({ where: { id: hold.id, status: "ACTIVE" }, data: { status: "EXPIRED" } });
-      if (claimed.count === 0) return; // another run got it
-      const dep = await tx.tourDeparture.findUnique({ where: { id: hold.tourDepartureId }, select: { capacityHeld: true } });
-      await tx.tourDeparture.update({
-        where: { id: hold.tourDepartureId },
-        data: { capacityHeld: { decrement: Math.min(hold.seatsCount, dep?.capacityHeld ?? 0) } },
-      });
-    });
-  }
-  const bookings = await expireUnpaidBookings(now);
-  return { holds: holds.length, bookings };
-}
-
-/** Every 15 minutes: departure dates, seats and prices from Bókun (skipped until the keys are set). */
-export async function syncBokunDepartures() {
-  const { accessKey, secretKey } = bokunConfig();
-  if (!accessKey || !secretKey) return { skipped: "Bókun keys are not set" };
-  return syncBokunAvailability();
+  return await freeExpiredSeats({ now });
 }
 
 export interface ReconciliationIssue {
@@ -40,24 +18,15 @@ export interface ReconciliationIssue {
 }
 
 /**
- * Nightly: lists bookings that need a person. Paid but not in Bókun (PAID_UNSYNCED, or confirmed for
- * a Bókun product without a Bókun booking ID), stuck awaiting payment, or cancelled while a payment
- * is still marked succeeded. Emails the list to OPS_ALERT_EMAIL (or ENQUIRIES_TO) when not empty.
- * It compares our own records; checking each booking against Bókun's API comes with the live
- * Bókun integration.
+ * Nightly: lists bookings that need a person. Paid but left unsynced by the former Bókun
+ * integration (PAID_UNSYNCED), stuck awaiting payment, or cancelled while a payment is still marked
+ * succeeded. Emails the list to OPS_ALERT_EMAIL (or ENQUIRIES_TO) when not empty.
  */
 export async function reconcileBookings() {
   const issues: ReconciliationIssue[] = [];
   const add = (rows: { bookingReference: string }[], problem: string) => rows.forEach((r) => issues.push({ bookingReference: r.bookingReference, problem }));
 
-  add(await prisma.booking.findMany({ where: { status: "PAID_UNSYNCED" }, select: { bookingReference: true } }), "Paid, but the Bókun reservation failed: create it in Bókun");
-  add(
-    await prisma.booking.findMany({
-      where: { status: "CONFIRMED", bokunBookingId: null, tourDeparture: { tour: { bokunId: { not: null } } } },
-      select: { bookingReference: true },
-    }),
-    "Confirmed for a Bókun product but has no Bókun booking ID",
-  );
+  add(await prisma.booking.findMany({ where: { status: "PAID_UNSYNCED" }, select: { bookingReference: true } }), "Paid, but marked unsynced by the former Bókun integration: confirm it by hand");
   add(
     await prisma.booking.findMany({
       where: { status: "PENDING_PAYMENT", createdAt: { lt: new Date(Date.now() - 60 * 60 * 1000) } },
@@ -66,8 +35,15 @@ export async function reconcileBookings() {
     "Still awaiting payment after an hour",
   );
   add(
-    await prisma.booking.findMany({ where: { status: "CANCELLED", payments: { some: { status: "SUCCEEDED" } } }, select: { bookingReference: true } }),
-    "Cancelled, but a payment is still marked succeeded (refund not recorded)",
+    await prisma.booking.findMany({ where: { status: { in: ["CANCELLED", "EXPIRED"] }, payments: { some: { status: "SUCCEEDED" } } }, select: { bookingReference: true } }),
+    "Cancelled or expired, but a payment is marked succeeded (late payment or refund not recorded)",
+  );
+  add(
+    await prisma.booking.findMany({
+      where: { status: { notIn: ["CONFIRMED", "COMPLETED", "REFUNDED"] }, id: { in: (await prisma.auditLog.findMany({ where: { action: "PAYMENT_AMOUNT_MISMATCH", entityType: "Booking" }, select: { entityId: true } })).map((a) => a.entityId) } },
+      select: { bookingReference: true },
+    }),
+    "A payment arrived that doesn't match the booking total: check it in Stripe",
   );
 
   const to = process.env.OPS_ALERT_EMAIL || process.env.ENQUIRIES_TO;

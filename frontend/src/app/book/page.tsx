@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export default async function BookPage({
   searchParams: searchParamsPromise,
 }: {
-  searchParams: Promise<{ departureId?: string; holdToken?: string; pickupStopId?: string; guests?: string }>;
+  searchParams: Promise<{ departureId?: string; holdToken?: string; pickupStopId?: string; guests?: string; adults?: string; children?: string }>;
 }) {
   const searchParams = await searchParamsPromise;
   const checkout = await getCheckoutData(searchParams.departureId);
@@ -37,6 +37,8 @@ export default async function BookPage({
         capacityBooked: departure.capacityBooked,
         capacityHeld: departure.capacityHeld,
         seatsAvailable: departure.seatsAvailable,
+        bookable: departure.bookable,
+        notBookableReason: departure.notBookableReason,
         price: departure.price,
         childPrice: departure.childPrice,
         currency: departure.currency,
@@ -52,6 +54,8 @@ export default async function BookPage({
       }))}
       initialHoldToken={searchParams.holdToken}
       initialGuests={Number.parseInt(searchParams.guests ?? "", 10) || undefined}
+      initialAdults={Number.parseInt(searchParams.adults ?? "", 10) || undefined}
+      initialChildren={Number.parseInt(searchParams.children ?? "", 10) || undefined}
     />
   );
 }

@@ -1,5 +1,7 @@
 import prisma from "@/lib/db/prisma";
 import { getExpiredHeldSeats, liveCapacity } from "@/modules/reservations/reservation.repository";
+import { inventoryError, sellableInventoryWhere } from "@/modules/departures/inventory";
+import { bookingClosedError } from "@/modules/departures/booking-window";
 
 export async function getCheckoutDeparture(departureId?: string) {
   let id = departureId;
@@ -7,7 +9,7 @@ export async function getCheckoutDeparture(departureId?: string) {
   // If no departure specified, pick first active scheduled departure
   if (!id) {
     const firstActive = await prisma.tourDeparture.findFirst({
-      where: { status: "ACTIVE" },
+      where: { status: "ACTIVE", ...sellableInventoryWhere },
       orderBy: [{ date: "asc" }, { departureTime: "asc" }],
     });
     id = firstActive?.id;
@@ -56,6 +58,9 @@ export async function getCheckoutDeparture(departureId?: string) {
       price: departure.price / 100, // stored in cents; the checkout shows dollars
       childPrice: departure.childPrice != null ? departure.childPrice / 100 : null,
       ...liveCapacity(departure, expiredHeld),
+      // Whether this departure can be booked online now, and why not (shown by the checkout).
+      bookable: departure.status === "ACTIVE" && !inventoryError(departure) && !bookingClosedError(departure),
+      notBookableReason: departure.status !== "ACTIVE" ? "This departure is no longer available." : (inventoryError(departure) ?? bookingClosedError(departure)),
     },
     stops,
   };

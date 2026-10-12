@@ -492,7 +492,7 @@ export class MockAIProvider implements IAIProvider {
       };
     }
 
-    // 7. Booking Flow Step C: Date and party known, check Bókun availability & request pickup
+    // 7. Booking Flow Step C: Date and party known, check availability & request pickup
     if (state.tourSlug && state.date && !state.pickupHotel) {
       state.stage = "PICKUP_REQUESTED";
       state.adults = state.adults || 2;
@@ -507,7 +507,7 @@ export class MockAIProvider implements IAIProvider {
         }). Which hotel are you staying at in Banff or Canmore for your complimentary round-trip pickup?`,
         toolCalls: [
           {
-            name: "checkBokunAvailability",
+            name: "checkAvailability",
             arguments: { date: state.date, tourSlug: state.tourSlug },
           },
         ],

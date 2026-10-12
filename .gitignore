@@ -5,6 +5,10 @@ node_modules
 
 # Next.js build (frontend)
 .next/
+# Deploy staging and rollback copies (.github/workflows/deploy-aws.yml)
+.next-build/
+.next-prev/
+dist-prev/
 .next-prod/
 out/
 

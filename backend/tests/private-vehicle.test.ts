@@ -7,7 +7,7 @@ import { dateOnly, timeOfDay } from "@/lib/utils/time";
 async function createPrivateDeparture(date: string) {
   const tour = await prisma.tour.findFirstOrThrow({ where: { category: "PRIVATE" } });
   return prisma.tourDeparture.create({
-    data: {
+    data: { inventorySource: "LOCAL",
       tourId: tour.id,
       date: dateOnly(date),
       departureTime: timeOfDay("08:00"),

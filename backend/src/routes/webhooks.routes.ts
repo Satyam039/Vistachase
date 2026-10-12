@@ -1,7 +1,7 @@
 // Stripe webhook. Mounted in app.ts with express.raw() before the JSON parser, because Stripe signs
 // the exact bytes it sends. Unsigned or unverifiable events are refused; without
 // STRIPE_WEBHOOK_SECRET the endpoint is off.
-//   payment_intent.succeeded            → confirm the booking (Bókun, voucher email)
+//   payment_intent.succeeded            → confirm the booking (voucher email) if the amount matches
 //   payment_intent.payment_failed       → cancel the pending booking and release its seats
 //   payment_intent.canceled             → same
 
@@ -36,8 +36,8 @@ router.post("/stripe", async (req: Request, res: Response) => {
     const reference = intent?.metadata?.bookingReference;
     if (reference) {
       if (event.type === "payment_intent.succeeded") {
-        const charge = typeof intent.latest_charge === "string" ? intent.latest_charge : undefined;
-        await confirmPaidBooking(reference, intent.id ?? charge);
+        // Confirms only if Stripe's amount and currency match the booking's server-computed total.
+        await confirmPaidBooking(reference, { amount: intent.amount_received || intent.amount || 0, currency: intent.currency ?? "", transactionId: intent.id });
       } else if (event.type === "payment_intent.payment_failed" || event.type === "payment_intent.canceled") {
         await failPendingBooking(reference, event.type === "payment_intent.canceled" ? "payment cancelled" : "payment failed");
       }

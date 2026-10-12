@@ -18,7 +18,6 @@ import {
   Star,
   Users,
   ChevronRight,
-  ChevronDown,
   Coffee,
   CheckCircle2,
   Send,
@@ -31,6 +30,7 @@ import { Rail } from "@/components/motion/Rail";
 import { ProductGallery, type GallerySlide } from "@/components/tours/ProductGallery";
 import { TourSectionNav, TourSections } from "@/components/tours/TourSections";
 import {
+  TOUR_CARD_RAIL_ITEM,
   TourCard,
   departureFits,
   durationLabel,
@@ -137,34 +137,40 @@ function PartySizeStepper({
   max,
   onChange,
   hint,
+  label = "Guests",
+  unit = ["Guest", "Guests"],
+  min = 1,
 }: {
   value: number;
   max: number;
   onChange: (n: number) => void;
   hint: string;
+  label?: string;
+  unit?: [string, string];
+  min?: number;
 }) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-700">
-        <span>Guests</span>
+        <span>{label}</span>
         <span className="text-slate-500 font-normal normal-case tracking-normal">{hint}</span>
       </div>
-      <div className="flex items-center justify-between p-2 rounded-xl border border-slate-300 bg-slate-50">
+      <div className="flex items-center justify-between p-1.5 rounded-xl border border-slate-300 bg-slate-50">
         <button
           type="button"
-          aria-label="Fewer guests"
-          onClick={() => onChange(Math.max(1, value - 1))}
-          disabled={value <= 1}
+          aria-label={`Fewer ${unit[1].toLowerCase()}`}
+          onClick={() => onChange(Math.max(min, value - 1))}
+          disabled={value <= min}
           className="w-10 h-10 rounded-lg bg-white border border-slate-200 flex items-center justify-center font-bold text-slate-700 hover:bg-slate-100 disabled:opacity-40"
         >
           -
         </button>
         <span className="font-bold text-base text-slate-900" aria-live="polite">
-          {value} {value === 1 ? "Guest" : "Guests"}
+          {value} {value === 1 ? unit[0] : unit[1]}
         </span>
         <button
           type="button"
-          aria-label="More guests"
+          aria-label={`More ${unit[1].toLowerCase()}`}
           onClick={() => onChange(Math.min(max, value + 1))}
           disabled={value >= max}
           className="w-10 h-10 rounded-lg bg-white border border-slate-200 flex items-center justify-center font-bold text-slate-700 hover:bg-slate-100 disabled:opacity-40"
@@ -237,6 +243,13 @@ export function TourDetailView({
   const maxPartySize = Math.max(1, Math.min(maxAvailableSeats ?? tour.maxGroupSize, tour.maxGroupSize));
   const [guests, setPartySize] = useState(2);
   const partySize = Math.min(guests, maxPartySize);
+  // Per-guest departures take adults and children separately (children pay the departure's child
+  // price when it has one; the server re-prices at checkout). Together they fit the seats left.
+  const [adultsWanted, setAdults] = useState(2);
+  const [childrenWanted, setChildren] = useState(0);
+  const adults = Math.max(1, Math.min(adultsWanted, maxPartySize));
+  const children = Math.max(0, Math.min(childrenWanted, maxPartySize - adults));
+  const childFare = currentDeparture?.childPrice ?? currentDeparture?.price ?? price;
 
   // FAQ accordion state
 
@@ -284,31 +297,35 @@ export function TourDetailView({
       : []),
   ];
 
-  // "More below" hint for the booking panel when it scrolls inside itself (short screens).
+  // The booking panel is shown whole (no inner scroll). It stays pinned beside the page only
+  // while it fits the window below the header and the "On this page" bar; a taller panel (short
+  // screens) scrolls with the page instead, so the calendar and button are never cut off.
   const panelRef = useRef<HTMLDivElement>(null);
-  const [panelMore, setPanelMore] = useState(false);
-  const updatePanelHint = useCallback(() => {
+  const [panelFits, setPanelFits] = useState(true);
+  const updatePanelFit = useCallback(() => {
     const el = panelRef.current;
     if (!el) return;
-    setPanelMore(el.scrollHeight - el.clientHeight - el.scrollTop > 8);
+    const header = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--vc-header-h")) || 96;
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    setPanelFits(el.offsetHeight <= window.innerHeight - header - 5.25 * rem - rem);
   }, []);
   useEffect(() => {
     const el = panelRef.current;
     if (!el) return;
-    updatePanelHint();
-    const ro = new ResizeObserver(updatePanelHint);
+    updatePanelFit();
+    const ro = new ResizeObserver(updatePanelFit);
     ro.observe(el);
-    window.addEventListener("resize", updatePanelHint);
+    window.addEventListener("resize", updatePanelFit);
     return () => {
       ro.disconnect();
-      window.removeEventListener("resize", updatePanelHint);
+      window.removeEventListener("resize", updatePanelFit);
     };
-  }, [updatePanelHint]);
+  }, [updatePanelFit]);
 
   const calculatedTotal = currentDeparture
     ? isVehicle
       ? currentDeparture.price
-      : currentDeparture.price * partySize
+      : currentDeparture.price * adults + childFare * children
     : price * partySize;
 
   // Facts strip: the live page's four facts, or generic ones when a tour has none.
@@ -430,15 +447,16 @@ export function TourDetailView({
           </div>
 
           {/* RIGHT 5 COLUMNS: STICKY BÓKUN BOOKING PANEL */}
-          <div id="booking" className="relative lg:col-span-5 lg:sticky lg:top-[calc(var(--vc-header-h,96px)+6.25rem)] scroll-mt-40">
-            {/* On short screens the sticky panel can be taller than the viewport: it is capped at
-                the space left below the header and scrolls inside, with a "more below" hint. */}
+          <div
+            id="booking"
+            className={`relative scroll-mt-40 lg:col-span-5 ${panelFits ? "lg:sticky lg:top-[calc(var(--vc-header-h,96px)+5.25rem)]" : ""}`}
+          >
+            {/* Shown whole: no inner scroll, so the full calendar is visible as soon as it opens. */}
             <div
               ref={panelRef}
-              onScroll={updatePanelHint}
-              className="rounded-[1.75rem] bg-white ring-1 ring-obsidian-900/[0.07] shadow-[0_30px_60px_-35px_rgba(12,31,33,0.4)] p-6 sm:p-8 space-y-6 lg:max-h-[calc(100vh-var(--vc-header-h,96px)-11.75rem)] lg:overflow-y-auto lg:overscroll-contain lg:scroll-pb-24 [scrollbar-width:thin]"
+              className="rounded-[1.75rem] bg-white ring-1 ring-obsidian-900/[0.07] shadow-[0_30px_60px_-35px_rgba(12,31,33,0.4)] p-6 space-y-3.5"
             >
-              <div className="space-y-3 border-b border-slate-100 pb-5">
+              <div className="border-b border-slate-100 pb-3">
                 <PriceTag
                   price={price}
                   currency={tour.currency}
@@ -483,7 +501,7 @@ export function TourDetailView({
                   </p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <DepartureCalendar
                     departures={tour.departures}
                     isBookable={(d) => departureFits(tour, d, 1)}
@@ -492,32 +510,72 @@ export function TourDetailView({
                     describe={(d) => (isVehicle ? `$${d.price} per vehicle` : `${SEATS_MESSAGE} · $${d.price} CAD per guest`)}
                   />
 
-                  {/* Guests / Party Size */}
-                  <PartySizeStepper
-                    value={partySize}
-                    max={maxPartySize}
-                    onChange={setPartySize}
-                    hint={isVehicle ? `Vehicle seats up to ${maxPartySize}` : `Max ${maxPartySize} on this departure`}
-                  />
+                  {/* Party: one guest count for a private vehicle, adults + children otherwise */}
+                  {isVehicle ? (
+                    <PartySizeStepper
+                      value={partySize}
+                      max={maxPartySize}
+                      onChange={setPartySize}
+                      hint={`Vehicle seats up to ${maxPartySize}`}
+                    />
+                  ) : (
+                    <>
+                      <PartySizeStepper
+                        label="Adults"
+                        unit={["Adult", "Adults"]}
+                        value={adults}
+                        max={maxPartySize - children}
+                        onChange={setAdults}
+                        hint={`Max ${maxPartySize} guests on this departure`}
+                      />
+                      <PartySizeStepper
+                        label="Children"
+                        unit={["Child", "Children"]}
+                        min={0}
+                        value={children}
+                        max={maxPartySize - adults}
+                        onChange={setChildren}
+                        hint={currentDeparture?.childPrice != null ? `${money(currentDeparture.childPrice)} CAD each` : "Same fare as adults"}
+                      />
+                    </>
+                  )}
 
                   {/* Price Calculation Breakdown */}
-                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-2 text-xs">
-                    <div className="flex items-center justify-between text-slate-600">
-                      <span>
-                        {isVehicle ? "Private vehicle flat rate" : `${partySize} × ${money(currentDeparture?.price ?? price)} CAD`}
-                      </span>
-                      <span>{money(calculatedTotal)} CAD</span>
-                    </div>
-                    <div className="pt-2 border-t border-slate-200 flex items-center justify-between font-bold text-slate-900 text-sm">
+                  <div className="px-4 py-3 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5 text-xs">
+                    {isVehicle ? (
+                      <div className="flex items-center justify-between text-slate-600">
+                        <span>Private vehicle flat rate</span>
+                        <span>{money(calculatedTotal)} CAD</span>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center justify-between text-slate-600">
+                          <span>{`${adults} × ${money(currentDeparture?.price ?? price)} CAD (${adults === 1 ? "adult" : "adults"})`}</span>
+                          <span>{money((currentDeparture?.price ?? price) * adults)} CAD</span>
+                        </div>
+                        {children > 0 && (
+                          <div className="flex items-center justify-between text-slate-600">
+                            <span>{`${children} × ${money(childFare)} CAD (${children === 1 ? "child" : "children"})`}</span>
+                            <span>{money(childFare * children)} CAD</span>
+                          </div>
+                        )}
+                      </>
+                    )}
+                    <div className="pt-1.5 border-t border-slate-200 flex items-center justify-between font-bold text-slate-900 text-sm">
                       <span>Estimated total</span>
                       <span className="text-base text-obsidian-900 font-serif">{money(calculatedTotal)} CAD</span>
                     </div>
                   </div>
 
-                  {/* CTA Buttons - Bókun Integrated */}
+                  {/* CTA Buttons */}
                   <div className="space-y-3 pt-2">
                     <Link
-                      href={`/book?departureId=${encodeURIComponent(selectedDepartureId || tour.departures[0]?.id || "")}&guests=${partySize}`}
+                      href={`/book?${new URLSearchParams({
+                        departureId: selectedDepartureId || tour.departures[0]?.id || "",
+                        ...(isVehicle
+                          ? { guests: String(partySize) }
+                          : { guests: String(adults + children), adults: String(adults), children: String(children) }),
+                      }).toString()}`}
                       className="w-full h-13 py-4 rounded-full text-base font-medium text-obsidian-900 golden-summit-btn flex items-center justify-center gap-2 shadow-lg transition-all hover:scale-[1.01]"
                     >
                       <span>Book now</span>
@@ -538,7 +596,7 @@ export function TourDetailView({
 
                     <Link
                       href="/concierge"
-                      className="w-full py-3 rounded-xl font-medium text-xs text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 flex items-center justify-center gap-2 transition-colors"
+                      className="w-full min-h-10 py-2.5 rounded-xl font-medium text-xs text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 flex items-center justify-center gap-2 transition-colors"
                     >
                       <Sparkles className="w-4 h-4 text-ocean-600" />
                       <span>Custom Inquiries &amp; Concierge</span>
@@ -548,7 +606,7 @@ export function TourDetailView({
               )}
 
               {/* Trust & Guarantee points */}
-              <div className="pt-4 border-t border-slate-100 space-y-2.5 text-sm text-slate-600">
+              <div className="pt-3 border-t border-slate-100 space-y-1 text-xs text-slate-600">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" aria-hidden="true" />
                   <span>{cancellationShort(tour.category)}</span>
@@ -559,18 +617,6 @@ export function TourDetailView({
                 </div>
               </div>
             </div>
-            {panelMore && (
-              <button
-                type="button"
-                onClick={() => panelRef.current?.scrollBy({ top: 240, behavior: "smooth" })}
-                className="absolute inset-x-px bottom-px hidden h-20 items-end justify-center rounded-b-[1.75rem] bg-gradient-to-t from-white via-white/90 to-transparent pb-3 text-sm text-obsidian-900 lg:flex"
-              >
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-obsidian-900 px-4 py-1.5 text-white shadow-lg">
-                  More below
-                  <ChevronDown className="h-4 w-4" aria-hidden="true" />
-                </span>
-              </button>
-            )}
           </div>
         </div>
       </section>
@@ -582,7 +628,7 @@ export function TourDetailView({
             <h2 id="related-heading" className="mb-8 text-3xl font-light tracking-tight text-obsidian-900 sm:text-4xl" data-reveal>
               You might also like
             </h2>
-            <Rail label="You might also like">
+            <Rail label="You might also like" itemClassName={TOUR_CARD_RAIL_ITEM}>
               {related.map((t) => (
                 <TourCard key={t.id} tour={t} />
               ))}

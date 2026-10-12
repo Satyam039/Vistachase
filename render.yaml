@@ -39,8 +39,6 @@ services:
         generateValue: true
       - key: FEATURE_TRACKING
         value: "false"
-      - key: FEATURE_MOCK_BOKUN
-        value: "false"
       - key: FEATURE_MOCK_PAYMENT
         value: "false"
       - key: STRIPE_SECRET_KEY
@@ -55,7 +53,7 @@ services:
         sync: false
       - key: OPS_ALERT_EMAIL # receives the nightly booking check
         sync: false
-      - key: PROMO_CODES # "CODE:percent,CODE:percent", same as in Bókun
+      - key: PROMO_CODES # "CODE:percent,CODE:percent"
         sync: false
       - key: VOUCHER_SECRET # signs voucher, check-in and review links
         generateValue: true
@@ -63,20 +61,12 @@ services:
         sync: false
       - key: ANTHROPIC_API_KEY
         sync: false
-      - key: BOKUN_ACCESS_KEY
-        sync: false
-      - key: BOKUN_SECRET_KEY
-        sync: false
-      - key: BOKUN_API_URL
-        value: https://api.bokun.io
-      - key: BOKUN_ONLINE_SALES_CHANNEL_ID
-        sync: false
       # true only when no worker runs (Render free plan): the API then expires unpaid holds every
-      # 5 min and reads Bókun departures every 15 min itself. Leave false with the worker below.
+      # 5 min itself. Leave false with the worker below.
       - key: RUN_JOBS_IN_API
         value: "false"
 
-  # Background jobs (src/worker.ts): expire unpaid holds/bookings, Bókun departures every 15 min,
+  # Background jobs (src/worker.ts): expire unpaid holds/bookings,
   # nightly booking check, review requests. One instance; BullMQ in Redis makes each scheduled job run once.
   - type: worker
     name: vistachase-worker
@@ -99,21 +89,6 @@ services:
           type: redis
           name: vistachase-redis
           property: connectionString
-      - key: BOKUN_ACCESS_KEY
-        fromService:
-          type: web
-          name: vistachase-backend
-          envVarKey: BOKUN_ACCESS_KEY
-      - key: BOKUN_SECRET_KEY
-        fromService:
-          type: web
-          name: vistachase-backend
-          envVarKey: BOKUN_SECRET_KEY
-      - key: BOKUN_API_URL
-        fromService:
-          type: web
-          name: vistachase-backend
-          envVarKey: BOKUN_API_URL
       - key: EMAIL_PROVIDER
         value: resend
       - key: FRONTEND_URL

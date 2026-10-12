@@ -3,7 +3,6 @@
 // BullMQ queue in Redis, so only one worker runs each job even with several instances.
 //
 //   every 5 minutes   expire holds and unpaid bookings (frees their seats)
-//   every 15 minutes  read departure dates, seats and prices from Bókun
 //   02:00 Mountain    reconcile bookings and email staff anything that needs a person
 //   10:00 Mountain    ask yesterday's guests for a review (once each)
 
@@ -11,14 +10,13 @@ import "dotenv/config";
 import { Queue, Worker } from "bullmq";
 import IORedis from "ioredis";
 import prisma from "@/lib/db/prisma";
-import { expireHoldsAndUnpaidBookings, reconcileBookings, sendReviewRequests, syncBokunDepartures } from "@/jobs/tasks";
+import { expireHoldsAndUnpaidBookings, reconcileBookings, sendReviewRequests } from "@/jobs/tasks";
 
 const QUEUE = "vista-chase-jobs";
 const TZ = "America/Edmonton";
 
 const JOBS: Record<string, () => Promise<unknown>> = {
   "expire-holds": () => expireHoldsAndUnpaidBookings(),
-  "bokun-availability": () => syncBokunDepartures(),
   "reconcile-bookings": () => reconcileBookings(),
   "review-requests": () => sendReviewRequests(),
 };
@@ -29,7 +27,7 @@ async function main() {
   const queue = new Queue(QUEUE, { connection });
 
   await queue.upsertJobScheduler("expire-holds", { every: 5 * 60 * 1000 }, { name: "expire-holds" });
-  await queue.upsertJobScheduler("bokun-availability", { every: 15 * 60 * 1000 }, { name: "bokun-availability" });
+  await queue.removeJobScheduler("bokun-availability"); // retired Bókun sync, scheduled by older releases
   await queue.upsertJobScheduler("reconcile-bookings", { pattern: "0 2 * * *", tz: TZ }, { name: "reconcile-bookings" });
   await queue.upsertJobScheduler("review-requests", { pattern: "0 10 * * *", tz: TZ }, { name: "review-requests" });
 

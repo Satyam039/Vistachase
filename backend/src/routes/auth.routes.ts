@@ -1,5 +1,5 @@
 import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
-import { Router, Response } from "express";
+import { Router, type Request, type Response } from "express";
 import prisma from "@/lib/db/prisma";
 import { hashPassword, verifyPassword, signToken, UserRole } from "@/lib/auth/auth";
 import { AUTH_COOKIE_NAME, getAuthenticatedUser } from "@/lib/auth/admin-guard";
@@ -10,10 +10,20 @@ import { emailSchema, parseOr400, z } from "@/lib/security/validate";
 
 const router = Router();
 
-function setAuthCookie(res: Response, token: string) {
+// Secure cookies are only stored by browsers on HTTPS. Until the site has HTTPS (it is served on
+// plain http://<ip> today), a Secure cookie is silently dropped and nobody can stay signed in.
+// So the flag follows the request's own scheme (nginx/Next pass X-Forwarded-Proto; trust proxy
+// is on). COOKIE_SECURE=true or false overrides it.
+export function secureCookie(req: Request) {
+  if (process.env.COOKIE_SECURE === "true") return true;
+  if (process.env.COOKIE_SECURE === "false") return false;
+  return req.secure;
+}
+
+function setAuthCookie(req: Request, res: Response, token: string) {
   res.cookie(AUTH_COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: secureCookie(req),
     sameSite: "lax",
     maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
     path: "/",
@@ -72,7 +82,7 @@ const user = await prisma.user.findUnique({
       role: user.role as UserRole,
     });
 
-    setAuthCookie(res, token);
+    setAuthCookie(req, res, token);
     return res.json({
       success: true,
       user: {
@@ -129,7 +139,7 @@ router.post("/register", rateLimitMiddleware("register", { maxRequests: 3, windo
       role: user.role as "CUSTOMER",
     });
 
-    setAuthCookie(res, token);
+    setAuthCookie(req, res, token);
     return res.json({
       success: true,
       user: {

@@ -8,7 +8,7 @@ import { dateOnly, timeOfDay, todayInMountainTime } from "@/lib/utils/time";
 async function departure(day: string, capacityHeld = 0) {
   const tour = await prisma.tour.findFirstOrThrow({ where: { category: "SHARED" } });
   return prisma.tourDeparture.create({
-    data: { tourId: tour.id, date: dateOnly(day), departureTime: timeOfDay("09:00"), capacityTotal: 12, capacityBooked: 0, capacityHeld, price: 10000, status: "ACTIVE" },
+    data: { inventorySource: "LOCAL", tourId: tour.id, date: dateOnly(day), departureTime: timeOfDay("09:00"), capacityTotal: 12, capacityBooked: 0, capacityHeld, price: 10000, status: "ACTIVE" },
   });
 }
 
@@ -40,7 +40,7 @@ describe("worker jobs", () => {
     expect(after.reviewRequestedAt).not.toBeNull();
   });
 
-  it("flags paid bookings that never reached Bókun", async () => {
+  it("flags paid bookings left unsynced by the former Bókun integration", async () => {
     const dep = await departure("2027-06-02");
     const ref = `VC-UNSYNC-${Date.now()}`;
     await prisma.booking.create({

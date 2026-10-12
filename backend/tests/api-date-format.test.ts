@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import request from "supertest";
 import { createApp } from "../src/app";
+import { apiJsonReplacer } from "../src/lib/utils/time";
 
 // The frontend shows departure dates and times exactly as the API sends them ("2026-10-08",
 // "08:30"). Stored values are Date objects (lib/utils/time.ts), so every response must convert
@@ -45,5 +46,16 @@ describe("checkout departure price", () => {
     const res = await request(app).get(`/api/departures/checkout?departureId=${dep.id}`);
     expect(res.body.departure.price).toBe(dep.price);
     expect(res.body.departure.price).toBeLessThan(1000);
+  });
+});
+
+describe("pickup time fallback", () => {
+  it("sends a pickup time that fell back to the departure time as HH:MM, not a 1970 timestamp", () => {
+    const body = JSON.parse(JSON.stringify({ pickupTime: new Date("1970-01-01T09:00:00.000Z"), note: "1970-01-01T09:00:00.000Z" }, apiJsonReplacer));
+    expect(body.pickupTime).toBe("09:00");
+    // Other fields that happen to hold such a string are left alone.
+    expect(body.note).toBe("1970-01-01T09:00:00.000Z");
+    // A pickup time a guest or staff typed passes through unchanged.
+    expect(JSON.parse(JSON.stringify({ pickupTime: "05:00 AM" }, apiJsonReplacer)).pickupTime).toBe("05:00 AM");
   });
 });

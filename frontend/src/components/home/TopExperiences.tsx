@@ -5,7 +5,7 @@
 
 import { useMemo, useState } from "react";
 import { Rail } from "@/components/motion/Rail";
-import { TourCard } from "@/components/tours/TourCard";
+import { TOUR_CARD_RAIL_ITEM, TourCard } from "@/components/tours/TourCard";
 import { SectionHeading } from "@/components/home/SectionHeading";
 import type { TourWithAvailability } from "@/lib/api/types";
 
@@ -60,7 +60,7 @@ export function TopExperiences({ tours }: { tours: TourWithAvailability[] }) {
           {shown.length} experiences shown
         </p>
 
-        <Rail key={filter} label="Top experiences">
+        <Rail key={filter} label="Top experiences" itemClassName={TOUR_CARD_RAIL_ITEM}>
           {shown.map((tour) => (
             <TourCard key={tour.slug} tour={tour} />
           ))}

@@ -44,7 +44,8 @@ async function main() {
 
   // Departures for the next 7 days
   const days = Array.from({ length: 7 }, (_, i) => isoDay(i + 1));
-  const departure = (data) => prisma.tourDeparture.create({ data: { capacityHeld: 0, status: "ACTIVE", ...data } });
+  // Test departures are staff-confirmed inventory (LOCAL), so they can be held and booked.
+  const departure = (data) => prisma.tourDeparture.create({ data: { capacityHeld: 0, status: "ACTIVE", inventorySource: "LOCAL", ...data } });
 
   const highlights = [];
   for (const day of days) {

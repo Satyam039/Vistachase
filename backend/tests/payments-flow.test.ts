@@ -28,7 +28,7 @@ let departureId = "";
 beforeAll(async () => {
   const tour = await prisma.tour.findFirstOrThrow({ where: { category: "SHARED", bookingMode: "BOKUN" } });
   const departure = await prisma.tourDeparture.create({
-    data: { tourId: tour.id, date: dateOnly("2027-05-04"), departureTime: timeOfDay("08:30"), capacityTotal: 12, capacityBooked: 0, capacityHeld: 0, price: 19900, status: "ACTIVE" },
+    data: { inventorySource: "LOCAL", tourId: tour.id, date: dateOnly("2027-05-04"), departureTime: timeOfDay("08:30"), capacityTotal: 12, capacityBooked: 0, capacityHeld: 0, price: 19900, status: "ACTIVE" },
   });
   departureId = departure.id;
   process.env.STRIPE_WEBHOOK_SECRET = WEBHOOK_SECRET;
@@ -49,12 +49,12 @@ const guest = (n: number) => ({
   infantsCount: 0,
 });
 
-function signedEvent(type: string, reference: string) {
+function signedEvent(type: string, reference: string, amount = 39800, currency = "cad") {
   const payload = JSON.stringify({
     id: `evt_${reference}`,
     object: "event",
     type,
-    data: { object: { id: `pi_${reference}`, object: "payment_intent", metadata: { bookingReference: reference }, latest_charge: `ch_${reference}` } },
+    data: { object: { id: `pi_${reference}`, object: "payment_intent", amount, amount_received: type === "payment_intent.succeeded" ? amount : 0, currency, metadata: { bookingReference: reference }, latest_charge: `ch_${reference}` } },
   });
   const header = Stripe.webhooks.generateTestHeaderString({ payload, secret: WEBHOOK_SECRET });
   return { payload, header };
@@ -131,7 +131,7 @@ describe("paid booking flow", () => {
     expect((await prisma.booking.findUniqueOrThrow({ where: { bookingReference: failed } })).status).toBe("CANCELLED");
 
     expect(await expireUnpaidBookings(new Date(Date.now() + 31 * 60 * 1000))).toBeGreaterThanOrEqual(1);
-    expect((await prisma.booking.findUniqueOrThrow({ where: { bookingReference: abandoned } })).status).toBe("CANCELLED");
+    expect((await prisma.booking.findUniqueOrThrow({ where: { bookingReference: abandoned } })).status).toBe("EXPIRED");
     // Seats still taken are exactly those of paid (confirmed) bookings.
     const paid = await prisma.booking.aggregate({ where: { tourDepartureId: departureId, status: "CONFIRMED" }, _sum: { totalSeats: true } });
     expect((await prisma.tourDeparture.findUniqueOrThrow({ where: { id: departureId } })).capacityBooked).toBe(paid._sum.totalSeats ?? 0);

@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import prisma from "@/lib/db/prisma";
-import { dateOnly, todayInMountainTime } from "@/lib/utils/time";
+import { dateOnly, formatTimeOfDay, todayInMountainTime } from "@/lib/utils/time";
 
 export interface WhatsAppMessagePayload {
   toPhoneNumber: string;
@@ -305,7 +305,7 @@ export async function dispatchShuttleTrackingAlert(
       customerName: booking.customerName,
       tourName: tourTitle,
       pickupLocation: stopName,
-      pickupTime: booking.pickupTime || departure.departureTime.toISOString(),
+      pickupTime: booking.pickupTime || formatTimeOfDay(departure.departureTime),
       vehicleName: activeRun?.vehicle?.name || "Mercedes-Benz Sprinter Executive #4",
       licensePlate: activeRun?.vehicle?.licensePlate || "ALBERTA • 7VC-894",
       driverName: activeRun?.driver?.publicName || activeRun?.driver?.name || "Marc Tremblay",

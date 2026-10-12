@@ -21,7 +21,7 @@ describe("Phase 6: Admin Panel, Dispatch Board & RBAC", () => {
 
     // 2. Create departure for dispatch test
     const dep = await prisma.tourDeparture.create({
-      data: {
+      data: { inventorySource: "LOCAL",
         tourId: tour!.id,
         date: dateOnly(dispatchDate),
         departureTime: timeOfDay("07:30"),

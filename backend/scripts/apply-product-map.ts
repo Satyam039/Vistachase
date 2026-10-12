@@ -6,7 +6,7 @@
 //   DATABASE_URL=… npx tsx scripts/apply-product-map.ts --apply    write
 
 import prisma from "../src/lib/db/prisma";
-import { PRODUCT_MAP } from "../src/modules/bokun/product-map";
+import { PRODUCT_MAP } from "../src/modules/tours/product-map";
 
 async function main() {
   const apply = process.argv.includes("--apply");

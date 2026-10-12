@@ -123,8 +123,10 @@ export function SiteMenu() {
         <span className="max-sm:sr-only">Menu</span>
       </button>
 
-      {/* Native modal dialog: focus is contained, Escape closes, the page behind is inert and its
-          ::backdrop is a dark tint over a light blur (globals.css .vc-menu). */}
+      {/* Native modal dialog: focus is contained, Escape closes, the page behind is inert. Like
+          Rolls-Royce's menu it is an overlay, not a black screen: the ::backdrop blurs and dims the
+          page, and the panel is a translucent gradient that only deepens behind the text
+          (globals.css .vc-menu). */}
       <dialog
         ref={dialog}
         aria-label="Site menu"

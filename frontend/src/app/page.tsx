@@ -2,6 +2,7 @@ import React from "react";
 import { ServicesHero, type HeroSlide } from "@/components/cinematic/ServicesHero";
 import { fromPrice, priceUnitLabel } from "@/lib/tours";
 import { getCategoryExtras, getTours } from "@/lib/api/catalog";
+import type { TourWithAvailability } from "@/lib/api/types";
 import { SERVICES } from "@/lib/services";
 import { TrustRow } from "@/components/home/TrustRow";
 import { TopExperiences } from "@/components/home/TopExperiences";
@@ -35,13 +36,24 @@ export const metadata = {
 };
 
 export default async function HomePage() {
-  // Each hero slide lists its service's tours with rating, reviews and price.
-  const tours = await getTours();
-  // Real guest reviews (left against a booking) for the review slider.
-  const { reviews } = await getCategoryExtras(tours);
+  let tours: TourWithAvailability[] = [];
+  try {
+    tours = await getTours();
+  } catch (err) {
+    console.warn("[HomePage] getTours failed, fallback to empty array:", err);
+  }
+
+  let reviews: any[] = [];
+  try {
+    const extras = await getCategoryExtras(tours);
+    reviews = extras?.reviews || [];
+  } catch (err) {
+    console.warn("[HomePage] getCategoryExtras failed:", err);
+  }
+
   const slides: HeroSlide[] = SERVICES.map((service) => ({
     ...service,
-    tours: tours
+    tours: (tours || [])
       .filter((t) => t.category === service.category)
       .slice(0, 3)
       .map((t) => ({
@@ -54,9 +66,6 @@ export default async function HomePage() {
       })),
   }));
 
-  // Page order follows the booking sites the redesign studied (GetYourGuide, Viator, Expedia,
-  // Civitatis): search first, reassurance, the most-booked experiences, browse by style and by
-  // place, proof (award, reviews); the footer's banner is the closing call to action. The search lives in the hero.
   return (
     <div className="flex w-full flex-col bg-white selection:bg-summit-500 selection:text-obsidian-900">
       <ServicesHero slides={slides} />

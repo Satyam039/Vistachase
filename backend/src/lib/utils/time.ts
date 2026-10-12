@@ -73,7 +73,8 @@ export function todayInMountainTime(now: Date = new Date()): string {
  */
 export function apiJsonReplacer(key: string, value: unknown): unknown {
   if (typeof value !== "string") return value;
-  if ((key === "departureTime" || key === "returnTime") && /^1970-01-01T\d{2}:\d{2}:00\.000Z$/.test(value)) {
+  // pickupTime falls back to the departure time (a stored time of day) when a booking has none.
+  if ((key === "departureTime" || key === "returnTime" || key === "pickupTime") && /^1970-01-01T\d{2}:\d{2}:00\.000Z$/.test(value)) {
     return value.slice(11, 16);
   }
   if (key === "date" && /^\d{4}-\d{2}-\d{2}T00:00:00\.000Z$/.test(value)) {

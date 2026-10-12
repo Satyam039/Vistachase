@@ -12,6 +12,7 @@ import { Car, Check, CheckCircle2, Clock, MapPin, Plus, Star, X } from "lucide-r
 import type { TourSection, TourWithAvailability } from "@/lib/api/types";
 import { ReviewSlider } from "@/components/reviews/ReviewSlider";
 import { vehiclesFor } from "@/lib/vehicles";
+import { pickupLabel } from "@/lib/tours";
 
 interface Review {
   id: string;
@@ -217,7 +218,7 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
             {tour.inclusions.map((item) => (
               <li key={item} className="flex items-start gap-2.5 text-base text-slate-800">
                 <Check className="mt-1 h-4 w-4 shrink-0 text-emerald-700" aria-hidden="true" />
-                <span>{item}</span>
+                <span>{pickupLabel(item)}</span>
               </li>
             ))}
           </ul>

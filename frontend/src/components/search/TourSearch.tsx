@@ -15,6 +15,7 @@ import { CalendarDays, ChevronRight, MapPin, Search, SlidersHorizontal, Users, X
 import { Dropdown } from "@/components/forms/Dropdown";
 import { TourCard, fromPrice, nextDepartureFor } from "@/components/tours/TourCard";
 import type { TourWithAvailability } from "@/lib/api/types";
+import { openDatePicker } from "@/lib/utils/datePicker";
 
 export interface SearchFilters {
   q: string;
@@ -205,7 +206,7 @@ export function TourSearch({
           <label className="relative block">
             <span className="sr-only">Date</span>
             <CalendarDays className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ocean-600" aria-hidden="true" />
-            <input type="date" value={filters.date} min={todayIso()} onChange={(e) => update({ date: e.target.value })} className={CONTROL} />
+            <input type="date" value={filters.date} min={todayIso()} onChange={(e) => update({ date: e.target.value })} onClick={openDatePicker} onFocus={openDatePicker} className={CONTROL} />
           </label>
           <Dropdown
             variant="pill"
@@ -261,7 +262,7 @@ export function TourSearch({
                   </h2>
                   <span className="text-sm text-slate-600">{section.items.length}</span>
                 </div>
-                <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
+                <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
                   {section.items.map((tour) => (
                     <li key={tour.id}>
                       <TourCard tour={tour} seats={filters.seats} date={filters.date || undefined} />
