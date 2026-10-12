@@ -514,15 +514,27 @@ export function TourDetailView({
                     </div>
                   </div>
 
-                  {/* CTA Buttons */}
+                  {/* CTA Buttons - Bókun Integrated */}
                   <div className="space-y-3 pt-2">
                     <Link
                       href={`/book?departureId=${encodeURIComponent(selectedDepartureId || tour.departures[0]?.id || "")}&guests=${partySize}`}
-                      className="w-full h-13 py-4 rounded-full text-base text-obsidian-900 golden-summit-btn flex items-center justify-center gap-2 transition-all"
+                      className="w-full h-13 py-4 rounded-full text-base font-medium text-obsidian-900 golden-summit-btn flex items-center justify-center gap-2 shadow-lg transition-all hover:scale-[1.01]"
                     >
                       <span>Book now</span>
                       <ChevronRight className="w-4 h-4" />
                     </Link>
+
+                    {tour.bokunId && (
+                      <a
+                        href={`https://widgets.bokun.io/online-sales/90615648-3c90-4d07-9dac-d39089e7728b/experience/${tour.bokunId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full py-3 rounded-xl font-medium text-xs text-obsidian-900 bg-summit-50 border border-summit-300 hover:bg-summit-100 flex items-center justify-center gap-2 transition-colors"
+                      >
+                        <CheckCircle2 className="w-4 h-4 text-emerald-700" />
+                        <span>Instant Bókun Live Checkout</span>
+                      </a>
+                    )}
 
                     <Link
                       href="/concierge"

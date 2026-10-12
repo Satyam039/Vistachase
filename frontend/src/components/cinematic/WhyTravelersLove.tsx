@@ -43,11 +43,11 @@ export function WhyTravelersLove() {
 
           <ul className="grid gap-4 sm:grid-cols-2 lg:col-span-7" data-stagger>
             {REASONS.map(({ icon: Icon, title, body }) => (
-              <li key={title} className="h-full rounded-[1.5rem] bg-white/[0.04] p-6 ring-1 ring-white/10 transition-[background-color,transform] duration-300 hover:-translate-y-1 hover:bg-white/[0.07]">
-                <span className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-summit-500/15 text-summit-400">
+              <li key={title} className="group h-full rounded-[1.75rem] bg-gradient-to-b from-[#181d21] via-[#121619] to-[#0a0d0f] p-6 ring-1 ring-white/[0.12] transition-[transform,box-shadow,border-color] duration-500 hover:-translate-y-1.5 hover:ring-summit-400/40 hover:shadow-[0_24px_50px_-20px_rgba(0,0,0,0.6)]">
+                <span className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-summit-500/15 text-summit-400 transition-colors group-hover:bg-summit-500/25">
                   <Icon className="h-5 w-5" aria-hidden="true" />
                 </span>
-                <h3 className="text-lg text-white">{title}</h3>
+                <h3 className="text-lg text-white font-medium">{title}</h3>
                 <p className="mt-1.5 text-base font-light leading-relaxed text-slate-300">{body}</p>
               </li>
             ))}

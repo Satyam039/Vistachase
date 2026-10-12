@@ -40,6 +40,8 @@ export default async function SharedToursPage() {
           intro="Three different days in the Rockies, each with its own route. Compare them here, or see every shared tour below."
           picks={SIGNATURE}
           tours={tours}
+          ctaLabel="Explore all shared tours"
+          ctaHref="#all-tours"
         />
       }
       service={serviceById("shared")}

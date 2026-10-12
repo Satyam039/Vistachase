@@ -142,9 +142,9 @@ export function SiteMenu() {
         }}
         className="vc-menu"
       >
-        <nav aria-label="Site menu" className="vc-menu-panel flex h-[100dvh] w-[min(880px,calc(100vw-3.5rem))] flex-col bg-obsidian-950 text-white">
+        <nav aria-label="Site menu" className="vc-menu-panel flex h-[100dvh] w-full sm:w-[min(880px,calc(100vw-3.5rem))] flex-col bg-obsidian-950 text-white">
           {/* Top row: close + brand, like the header it replaces */}
-          <div className="flex items-center justify-between px-5 py-4 sm:px-10 sm:py-6">
+          <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4 sm:px-10 sm:py-6">
             <button
               type="button"
               onClick={close}
@@ -204,8 +204,8 @@ export function SiteMenu() {
               </div>
             </div>
 
-            {/* Phones: each section expands in place */}
-            <ul className="divide-y divide-white/[0.08] px-5 md:hidden">
+            {/* Mobile: full-width, clean accordion with descriptions and easy tap targets */}
+            <ul className="divide-y divide-white/[0.08] px-5 py-4 md:hidden">
               {MENU_SECTIONS.map((s, i) => {
                 const isExpanded = expanded === s.id;
                 return (
@@ -215,16 +215,22 @@ export function SiteMenu() {
                       onClick={() => setExpanded(isExpanded ? null : s.id)}
                       aria-expanded={isExpanded}
                       aria-controls={`menu-section-${s.id}`}
-                      className="flex w-full items-center justify-between py-5 text-left text-2xl font-light text-white focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-summit-300"
+                      className="flex min-h-[52px] w-full items-center justify-between py-4 text-left text-xl font-light text-white focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-summit-300"
                     >
                       <span>{s.title}</span>
-                      <ChevronDown className={`h-5 w-5 text-white/60 transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`} aria-hidden="true" />
+                      <ChevronDown className={`h-5 w-5 text-summit-300 transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`} aria-hidden="true" />
                     </button>
-                    <ul id={`menu-section-${s.id}`} hidden={!isExpanded} className="pb-4">
+                    <ul id={`menu-section-${s.id}`} hidden={!isExpanded} className="space-y-1 pb-4 pt-1">
                       {s.links.map((link) => (
                         <li key={link.href}>
-                          <Link href={link.href} className="block py-3 pl-3 text-lg font-light text-white/75 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-summit-300">
-                            {link.title}
+                          <Link
+                            href={link.href}
+                            className="block rounded-xl px-3 py-3 text-base text-white/85 hover:bg-white/[0.06] hover:text-white active:bg-white/[0.1] focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-summit-300"
+                          >
+                            <span className="font-medium text-white">{link.title}</span>
+                            {link.description && (
+                              <span className="mt-0.5 block text-xs text-white/55">{link.description}</span>
+                            )}
                           </Link>
                         </li>
                       ))}
@@ -235,19 +241,21 @@ export function SiteMenu() {
             </ul>
           </div>
 
-          {/* Bottom row: book, call, concierge */}
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-white/[0.08] px-5 py-5 sm:px-10 sm:py-6">
-            <Link href="/banff-highlights-tour" className="golden-summit-btn inline-flex h-11 items-center rounded-full px-6 text-sm">
+          {/* Bottom row: book, call, concierge - mobile stacked & responsive */}
+          <div className="flex flex-col gap-3 border-t border-white/[0.08] bg-obsidian-950/90 p-5 backdrop-blur-md sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-6 sm:px-10 sm:py-6">
+            <Link href="/banff-highlights-tour" className="golden-summit-btn flex h-12 items-center justify-center rounded-full px-6 text-sm font-medium">
               Book a tour
             </Link>
-            <a href="tel:+18257349456" className="inline-flex h-11 items-center gap-2 text-sm text-white/75 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-summit-300">
-              <Phone className="h-4 w-4" aria-hidden="true" />
-              +1 (825) 734-9456
-            </a>
-            <Link href="/concierge" className="inline-flex h-11 items-center gap-2 text-sm text-white/75 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-summit-300">
-              <Sparkles className="h-4 w-4" aria-hidden="true" />
-              Ask the AI concierge
-            </Link>
+            <div className="flex items-center justify-between gap-4 pt-1 sm:pt-0">
+              <a href="tel:+18257349456" className="inline-flex h-11 items-center gap-2 text-sm text-white/75 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-summit-300">
+                <Phone className="h-4 w-4" aria-hidden="true" />
+                +1 (825) 734-9456
+              </a>
+              <Link href="/concierge" className="inline-flex h-11 items-center gap-2 text-sm text-white/75 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-summit-300">
+                <Sparkles className="h-4 w-4 text-summit-300" aria-hidden="true" />
+                AI Concierge
+              </Link>
+            </div>
           </div>
         </nav>
       </dialog>

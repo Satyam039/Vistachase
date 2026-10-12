@@ -40,6 +40,8 @@ export default async function PrivateToursPage() {
           intro="Three different private days, each with your own vehicle and guide. Compare them here, or see every private tour below."
           picks={SIGNATURE}
           tours={tours}
+          ctaLabel="Explore all private tours"
+          ctaHref="#all-tours"
         />
       }
       service={serviceById("private")}

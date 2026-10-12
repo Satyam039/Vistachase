@@ -96,7 +96,7 @@ export function ExperienceCategories() {
               <li key={category.id} className={`${SPAN[idx]} ${idx === 4 ? "sm:col-span-2 lg:col-span-2" : ""}`}>
                 <Link
                   href={category.href}
-                  className="group relative flex h-[26rem] flex-col justify-end overflow-hidden rounded-[2rem] text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ocean-600 lg:h-full lg:min-h-[24rem]"
+                  className="group relative flex h-[26rem] flex-col justify-end overflow-hidden rounded-[2.25rem] text-white ring-1 ring-obsidian-900/[0.1] shadow-[0_20px_50px_-20px_rgba(12,31,33,0.25)] transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_32px_70px_-25px_rgba(12,31,33,0.4)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ocean-600 lg:h-full lg:min-h-[24rem]"
                 >
                   <div className="absolute inset-0 overflow-hidden">
                     <div className="absolute inset-0 transition-transform duration-[1.4s] ease-out group-hover:scale-[1.06]">

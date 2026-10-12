@@ -240,8 +240,9 @@ export function TourGallery({
 
       {/* Results */}
       <section
+        id="all-tours"
         aria-labelledby="results-heading"
-        className="mx-auto max-w-7xl px-page py-14 sm:py-20"
+        className="mx-auto max-w-7xl px-page py-14 sm:py-20 scroll-mt-28"
       >
         {tours.length === 0 ? (
           <div className="mx-auto max-w-xl space-y-4 rounded-3xl bg-white p-12 text-center ring-1 ring-obsidian-900/[0.07]">
