@@ -301,17 +301,17 @@ export function TourDetailView({
       : []),
   ];
 
-  // The booking panel is shown whole (no inner scroll). It stays pinned beside the page only
-  // while it fits the window below the header and the "On this page" bar; a taller panel (short
-  // screens) scrolls with the page instead, so the calendar and button are never cut off.
+  // The booking panel stays put beside the page on desktop, pinned 16px under the header, so
+  // the calendar never moves with the page. It is shown whole when it fits the window; a taller
+  // panel (short laptop screens) keeps the calendar in view and scrolls inside itself instead.
   const panelRef = useRef<HTMLDivElement>(null);
-  const [panelFits, setPanelFits] = useState(true);
+  const [panelScrolls, setPanelScrolls] = useState(false);
   const updatePanelFit = useCallback(() => {
     const el = panelRef.current;
     if (!el) return;
     const header = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--vc-header-h")) || 96;
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-    setPanelFits(el.offsetHeight <= window.innerHeight - header - 5.25 * rem - rem);
+    setPanelScrolls(el.scrollHeight > window.innerHeight - header - 2 * rem);
   }, []);
   useEffect(() => {
     const el = panelRef.current;
@@ -319,6 +319,7 @@ export function TourDetailView({
     updatePanelFit();
     const ro = new ResizeObserver(updatePanelFit);
     ro.observe(el);
+    Array.from(el.children).forEach((child) => ro.observe(child)); // content growth while the panel is capped
     window.addEventListener("resize", updatePanelFit);
     return () => {
       ro.disconnect();
@@ -422,9 +423,10 @@ export function TourDetailView({
 
       {/* 02. MAIN CONTENT + STICKY BOOKING PANEL */}
       <section className="mx-auto max-w-7xl px-page pb-16 pt-4">
-        <TourSectionNav />
         <div className="grid grid-cols-1 items-start gap-12 lg:grid-cols-12">
           <div className="space-y-12 lg:col-span-7">
+            {/* The "On this page" bar spans this column only, so it never slides over the booking panel. */}
+            <TourSectionNav />
             {/* Key facts as icon rows (Civitatis / Expedia "Features") */}
             <ul aria-label="Key facts" className="grid grid-cols-1 gap-x-8 gap-y-5 rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:grid-cols-2 sm:p-8" data-stagger>
               {facts.map((fact) => (
@@ -461,15 +463,14 @@ export function TourDetailView({
             <TourSections tour={tour} />
           </div>
 
-          {/* RIGHT 5 COLUMNS: STICKY BÓKUN BOOKING PANEL */}
+          {/* RIGHT 5 COLUMNS: STICKY BOOKING PANEL */}
           <div
             id="booking"
-            className={`relative scroll-mt-40 lg:col-span-5 ${panelFits ? "lg:sticky lg:top-[calc(var(--vc-header-h,96px)+5.25rem)]" : ""}`}
+            className="relative scroll-mt-40 lg:sticky lg:top-[calc(var(--vc-header-h,96px)+1rem)] lg:col-span-5"
           >
-            {/* Shown whole: no inner scroll, so the full calendar is visible as soon as it opens. */}
             <div
               ref={panelRef}
-              className="rounded-[1.75rem] bg-white ring-1 ring-obsidian-900/[0.07] shadow-[0_30px_60px_-35px_rgba(12,31,33,0.4)] p-6 space-y-3.5"
+              className={`${panelScrolls ? "lg:max-h-[calc(100vh-var(--vc-header-h,96px)-2rem)] lg:overflow-y-auto lg:overscroll-contain" : ""} rounded-[1.75rem] bg-white ring-1 ring-obsidian-900/[0.07] shadow-[0_30px_60px_-35px_rgba(12,31,33,0.4)] p-6 space-y-3.5`}
             >
               <div className="border-b border-slate-100 pb-3">
                 <PriceTag

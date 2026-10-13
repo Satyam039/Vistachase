@@ -128,20 +128,20 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
                 {/* Phones and tablets: My trips as an icon on the right, where it is easy to reach. */}
               <Link
                 href="/account/trips"
-                aria-label="My trips"
+                aria-label="MY TRIPS"
                 className="vc-trips-mobile inline-flex h-11 w-11 items-center justify-center rounded-full text-obsidian-900 hover:bg-obsidian-900/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-600 lg:hidden"
               >
                 <User className="h-5 w-5" aria-hidden="true" />
               </Link>
               <Button
-                  label="My trips"
+                  label="MY TRIPS"
                   variant="ghost"
                   href="/account/trips"
                   icon={<Icon icon={User} size="sm" />}
                   className="vc-trips-desktop max-lg:hidden"
                 />
                 <Button
-                  label="Book tours"
+                  label="BOOK TOURS"
                   variant="primary"
                   href={BOOK_HREF}
                   icon={<Icon icon={Calendar} size="sm" />}
