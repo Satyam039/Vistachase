@@ -345,8 +345,8 @@ export function SiteFooter() {
         <p className="text-sm text-white/65">
           © {year} Vista Chase Tours Ltd. · 121 Bow Meadows Crescent #110, Canmore, AB · Prices in CAD
         </p>
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-          <ul className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
+        <div className="flex flex-col items-end gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-x-6 sm:gap-y-3">
+          <ul className="flex flex-wrap items-center justify-end gap-x-5 gap-y-2 text-sm">
             {LEGAL.map((link) => (
               <li key={link.label}>
                 <Link href={link.href} className="text-white/65 hover:text-white hover:underline hover:underline-offset-4">
@@ -358,7 +358,7 @@ export function SiteFooter() {
           <button
             type="button"
             onClick={toTop}
-            className="inline-flex h-10 items-center gap-2 rounded-full border border-white/15 px-4 text-sm text-white/85 transition-colors hover:border-white/40 hover:text-white"
+            className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-white/15 px-4 text-sm text-white/85 transition-colors hover:border-white/40 hover:text-white self-end ml-auto"
           >
             <ArrowUp className="h-4 w-4" aria-hidden="true" />
             Back to top

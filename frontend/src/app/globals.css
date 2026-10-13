@@ -74,24 +74,25 @@
 .vc-menu {
   margin: 0;
   padding: 0;
-  max-width: none;
+  max-width: 100vw;
+  width: 100vw;
   max-height: none;
   height: 100dvh;
   border: 0;
   background: transparent;
-  overflow: visible;
+  overflow: hidden;
 }
-/* Overlay, Rolls-Royce style: the page stays visible behind the menu, softly blurred and dimmed.
-   The panel is translucent (deep behind the text for contrast, clearing toward its edge) rather
-   than an opaque sheet. Without backdrop-filter support the tint alone keeps text readable. */
+/* Overlay, Rolls-Royce style: full-width end-to-end luxury backdrop on web */
 .vc-menu::backdrop {
-  background: rgb(8 10 12 / 0.5);
-  -webkit-backdrop-filter: blur(18px) saturate(1.1);
-  backdrop-filter: blur(18px) saturate(1.1);
+  background: rgb(8 10 12 / 0.85);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  backdrop-filter: blur(24px) saturate(1.2);
   animation: vcMenuFade 420ms ease-out both;
 }
 .vc-menu-panel {
-  background: linear-gradient(90deg, rgb(10 12 14 / 0.85) 0%, rgb(10 12 14 / 0.72) 50%, rgb(10 12 14 / 0) 100%);
+  width: 100vw;
+  max-width: 100vw;
+  background: #090c0f;
   animation: vcMenuIn 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
@@ -229,19 +230,96 @@ html[data-announce-closed] .vc-announce {
 }
 
 /* Header elevation once the page scrolls (SiteFrame sets data-scrolled). */
-/* Navigation background: translucent white with a soft blur (premium brief, item 5), so the page
-   shows faintly through it as it scrolls; a light shadow once scrolled. */
-.astryx-app-shell-header {
-  background-color: rgb(255 255 255 / 0.65);
-  -webkit-backdrop-filter: blur(20px) saturate(1.3);
-  backdrop-filter: blur(20px) saturate(1.3);
-  border-bottom: 1px solid rgba(28, 31, 35, 0.06);
-  transition: box-shadow 300ms var(--ease-out-expo), background-color 300ms var(--ease-out-expo), border-color 300ms var(--ease-out-expo);
+/* Navigation background: transparent over hero pages, frosted luxury glass on scroll or non-hero pages */
+.astryx-app-shell-header,
+.astryx-layout-header,
+.astryx-top-nav {
+  border: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
 }
+
+.astryx-app-shell-header {
+  background-color: rgba(255, 255, 255, 0.72);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  border: none !important;
+  border-bottom: none !important;
+  transition: box-shadow 300ms var(--ease-out-expo), background-color 300ms var(--ease-out-expo), -webkit-backdrop-filter 300ms var(--ease-out-expo), backdrop-filter 300ms var(--ease-out-expo);
+}
+
+/* On pages with a hero, float transparently over the hero */
+html[data-hero-page] .astryx-app-shell-header {
+  margin-bottom: calc(-1 * var(--vc-header-h, 62px));
+}
+
+html[data-hero-page]:not([data-scrolled]) .astryx-app-shell-header {
+  background-color: transparent !important;
+  border: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+html[data-hero-page]:not([data-scrolled]) .astryx-layout-header {
+  border: none !important;
+  border-bottom: none !important;
+}
+
+/* Over the dark cinematic hero when not scrolled: white text, white emblem, subtle text shadow */
+html[data-hero-page]:not([data-scrolled]) .vc-brandmark-dark {
+  display: none !important;
+}
+html[data-hero-page]:not([data-scrolled]) .vc-brandmark-white {
+  display: inline-flex !important;
+}
+html[data-hero-page]:not([data-scrolled]) .vc-nav-brand-text {
+  color: #ffffff !important;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.55);
+}
+html[data-hero-page]:not([data-scrolled]) .vc-menu-btn {
+  color: #ffffff !important;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.55);
+}
+html[data-hero-page]:not([data-scrolled]) .vc-menu-btn:hover {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+}
+html[data-hero-page]:not([data-scrolled]) .vc-trips-mobile {
+  color: #ffffff !important;
+}
+html[data-hero-page]:not([data-scrolled]) .vc-trips-mobile:hover {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+}
+html[data-hero-page]:not([data-scrolled]) .vc-trips-desktop {
+  color: #ffffff !important;
+}
+html[data-hero-page]:not([data-scrolled]) .vc-trips-desktop span,
+html[data-hero-page]:not([data-scrolled]) .vc-trips-desktop svg {
+  color: #ffffff !important;
+}
+html[data-hero-page]:not([data-scrolled]) .vc-trips-desktop:hover {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* Scrolled state: frosted glass with dark text and dark emblem, no borders */
 [data-scrolled] .astryx-app-shell-header {
-  background-color: rgb(255 255 255 / 0.92);
-  border-bottom-color: rgba(28, 31, 35, 0.1);
-  box-shadow: 0 10px 30px -22px rgba(12, 31, 33, 0.22);
+  background-color: rgba(255, 255, 255, 0.72) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  border: none !important;
+  border-bottom: none !important;
+  box-shadow: 0 10px 30px -15px rgba(12, 31, 33, 0.12), inset 0 1px 0 0 rgba(255, 255, 255, 0.6) !important;
+}
+[data-scrolled] .astryx-layout-header {
+  border: none !important;
+  border-bottom: none !important;
+}
+[data-scrolled] .vc-brandmark-dark {
+  display: inline-flex !important;
+}
+[data-scrolled] .vc-brandmark-white {
+  display: none !important;
 }
 
 /* Continuous marquee (trust strip). Pauses on hover/focus; static with reduced motion. */

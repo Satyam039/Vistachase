@@ -116,7 +116,7 @@ export function SiteMenu() {
         onClick={open}
         aria-haspopup="dialog"
         aria-expanded={isOpen}
-        className="inline-flex h-11 items-center gap-2.5 rounded-full px-3 text-sm uppercase tracking-[0.18em] text-obsidian-900 hover:bg-obsidian-900/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-600"
+        className="vc-menu-btn inline-flex h-11 items-center gap-2.5 rounded-full px-3 text-sm uppercase tracking-[0.18em] text-obsidian-900 hover:bg-obsidian-900/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-600"
       >
         <Menu className="h-5 w-5" aria-hidden="true" />
         {/* Icon-only on phones so the centred brand name has room; still announced as "Menu". */}
@@ -144,9 +144,9 @@ export function SiteMenu() {
         }}
         className="vc-menu"
       >
-        <nav aria-label="Site menu" className="vc-menu-panel flex h-[100dvh] w-full sm:w-[min(880px,calc(100vw-3.5rem))] flex-col bg-obsidian-950 text-white">
+        <nav aria-label="Site menu" className="vc-menu-panel flex h-[100dvh] w-full w-screen flex-col bg-obsidian-950 text-white">
           {/* Top row: close + brand, like the header it replaces */}
-          <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4 sm:px-10 sm:py-6">
+          <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4 sm:px-10 lg:px-16 sm:py-6">
             <button
               type="button"
               onClick={close}
@@ -162,9 +162,9 @@ export function SiteMenu() {
           </div>
 
           <div className="flex-1 overflow-y-auto">
-            {/* Desktop and tablet: sections on the left, the hovered/focused section's links on the right */}
-            <div className="hidden min-h-full md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
-              <ul className="space-y-2 px-10 py-12">
+            {/* Desktop and tablet: end-to-end panel with left-aligned navigation columns */}
+            <div className="hidden min-h-full md:flex md:items-start px-5 sm:px-10 lg:px-16">
+              <ul className="w-80 lg:w-[380px] shrink-0 space-y-2 py-10 lg:py-14 pr-8 lg:pr-12">
                 {MENU_SECTIONS.map((s, i) => (
                   <li key={s.id} className="vc-menu-item" style={{ "--i": i } as React.CSSProperties}>
                     <button
@@ -186,7 +186,8 @@ export function SiteMenu() {
                   </li>
                 ))}
               </ul>
-              <div className="border-l border-white/[0.08] px-10 py-12" aria-live="polite">
+              <div className="w-px self-stretch bg-white/[0.08]" aria-hidden="true" />
+              <div className="w-96 lg:w-[480px] shrink-0 py-10 lg:py-14 pl-8 lg:pl-12" aria-live="polite">
                 <p className="mb-6 text-xs uppercase tracking-[0.24em] text-white/50">{section.title}</p>
                 <ul key={section.id} className="vc-menu-links space-y-1">
                   {section.links.map((link) => (
@@ -244,7 +245,7 @@ export function SiteMenu() {
           </div>
 
           {/* Bottom row: book, call, concierge - mobile stacked & responsive */}
-          <div className="flex flex-col gap-3 border-t border-white/[0.08] bg-obsidian-950/90 p-5 backdrop-blur-md sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-6 sm:px-10 sm:py-6">
+          <div className="flex flex-col gap-3 border-t border-white/[0.08] bg-obsidian-950/90 p-5 backdrop-blur-md sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-6 sm:px-10 lg:px-16 sm:py-6">
             <Link href="/banff-highlights-tour" className="golden-summit-btn flex h-12 items-center justify-center rounded-full px-6 text-sm font-medium">
               Book a tour
             </Link>
