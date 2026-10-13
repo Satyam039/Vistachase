@@ -142,7 +142,9 @@ async function replayBooking(key: string, input: CreateBookingInput): Promise<Bo
     if (existing.status === "PENDING_PAYMENT" && existing.totalAmount > 0) {
       const pending = existing.payments.find((p) => p.status === "PENDING");
       const provider = getPaymentProvider();
-      const intent = pending && provider.retrievePaymentIntent ? await provider.retrievePaymentIntent(pending.transactionId) : null;
+      // Staff bookings paid offline (Quick Book) have no online payment to look up.
+      const online = pending && pending.provider !== "offline" ? pending : null;
+      const intent = online && provider.retrievePaymentIntent ? await provider.retrievePaymentIntent(online.transactionId) : null;
       if (!intent?.clientSecret || intent.paid) {
         if (attempt < 15) {
           await new Promise((resolve) => setTimeout(resolve, 200));
@@ -164,7 +166,15 @@ function isUniqueViolation(error: unknown, field: string) {
   );
 }
 
-export async function createBooking(input: CreateBookingInput): Promise<BookingResult> {
+/** Staff bookings (Quick Book, modules/admin/booking-admin.ts): paid outside the online checkout. */
+export interface CreateBookingOptions {
+  /** Don't start an online payment: the caller records how the guest paid, then confirms. */
+  offlinePayment?: boolean;
+  /** Staff may still book after online booking closes, up to the departure time. */
+  allowAfterCutoff?: boolean;
+}
+
+export async function createBooking(input: CreateBookingInput, options: CreateBookingOptions = {}): Promise<BookingResult> {
   const totalSeats = input.adultsCount + input.childrenCount;
   if (input.adultsCount < 1) return { success: false, error: "At least one adult is required." };
 
@@ -198,7 +208,9 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingR
       if (!departure || departure.status !== "ACTIVE") throw new BookingRefused("Departure not found");
       const notSellable = inventoryError(departure);
       if (notSellable) throw new BookingRefused(notSellable);
-      const closed = bookingClosedError(departure);
+      const closed = options.allowAfterCutoff
+        ? getMountainTimeInstant(departure.date, departure.departureTime) <= now && "This departure has already left."
+        : bookingClosedError(departure);
       if (closed) throw new BookingRefused(closed);
       if (departure.tour?.bookingMode === "ENQUIRY") {
         throw new BookingRefused("This experience is booked on request. Please send us an enquiry.");
@@ -303,6 +315,8 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingR
     if (error instanceof BookingRefused) return { success: false, error: error.message };
     throw error;
   }
+
+  if (options.offlinePayment) return { success: true, booking: bookingDto(booking, []), nextStep: "PAY" };
 
   // Start the payment outside the transaction (network call). Free bookings (100% promo) skip it.
   const provider = getPaymentProvider();
@@ -434,12 +448,13 @@ export async function confirmPaidBooking(reference: string, verified?: VerifiedP
   return updated;
 }
 
-/** Notes a problem on the booking for staff and in the audit log. */
-async function flagBooking(bookingId: string, action: string, note: string, existingNotes: string | null) {
+/** Notes a problem on the booking for staff, in the audit log and as an open flag (Admin → Bookings → Flags). */
+async function flagBooking(bookingId: string, action: "PAYMENT_AMOUNT_MISMATCH" | "LATE_PAYMENT", note: string, existingNotes: string | null) {
   console.warn(`Booking ${bookingId} flagged: ${action}`);
   await prisma.$transaction([
     prisma.booking.update({ where: { id: bookingId }, data: { adminNotes: [existingNotes, note].filter(Boolean).join("\n") } }),
     prisma.auditLog.create({ data: { action, entityType: "Booking", entityId: bookingId, details: { note } } }),
+    prisma.bookingFlag.create({ data: { bookingId, type: action, note } }),
   ]);
 }
 

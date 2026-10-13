@@ -1,4 +1,5 @@
 import type { Request } from "express";
+import prisma from "@/lib/db/prisma";
 import { verifyToken, hasPermission, UserRole, TokenPayload } from "@/lib/auth/auth";
 
 export const AUTH_COOKIE_NAME = "vc_token";
@@ -21,16 +22,22 @@ export function getAuthenticatedUser(req: Request): TokenPayload | null {
   return verifyToken(token);
 }
 
-export function getAuthenticatedStaff(
+/**
+ * The signed-in staff member, or null. The role comes from the database on every request, not
+ * from the token, so a role change (or a deleted account) takes effect on the next request
+ * instead of when the 7-day token expires.
+ */
+export async function getAuthenticatedStaff(
   req: Request,
   requiredRoles: UserRole[] = ["ADMIN", "OPERATOR", "DISPATCHER"]
-): TokenPayload | null {
+): Promise<TokenPayload | null> {
   const payload = getAuthenticatedUser(req);
   if (!payload) return null;
 
-  if (!hasPermission(payload.role, requiredRoles)) {
+  const user = await prisma.user.findUnique({ where: { id: payload.userId }, select: { id: true, email: true, name: true, role: true } });
+  if (!user || !hasPermission(user.role as UserRole, requiredRoles)) {
     return null;
   }
 
-  return payload;
+  return { userId: user.id, email: user.email, name: user.name, role: user.role as UserRole };
 }

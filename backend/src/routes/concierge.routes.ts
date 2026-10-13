@@ -11,8 +11,8 @@ const router = Router();
 // Simple per-IP limit so the AI model can't be run up: 30 messages per 10 minutes.
 
 
-function staffContext(req: Request) {
-  const staff = getAuthenticatedStaff(req, ["ADMIN", "OPERATOR", "DISPATCHER"]);
+async function staffContext(req: Request) {
+  const staff = await getAuthenticatedStaff(req, ["ADMIN", "OPERATOR", "DISPATCHER"]);
   return { isStaff: !!staff, role: staff?.role, userEmail: staff?.email };
 }
 
@@ -31,7 +31,7 @@ router.post("/stream", rateLimitMiddleware("concierge", { maxRequests: 30, windo
 
   try {
     if (isClaudeConfigured()) {
-      await runConciergeAgent(messages, req.body?.sessionState, staffContext(req), (e) => {
+      await runConciergeAgent(messages, req.body?.sessionState, await staffContext(req), (e) => {
         if (e.type === "text") send("text", { text: e.text });
         else if (e.type === "status") send("status", { text: e.text });
         else send("done", { success: true, ...e.response });
@@ -39,7 +39,7 @@ router.post("/stream", rateLimitMiddleware("concierge", { maxRequests: 30, windo
     } else {
       // No AI key configured: the scripted assistant answers in one piece.
       const response = await getAIProvider().chat(messages, req.body?.sessionState);
-      const ctx = staffContext(req);
+      const ctx = await staffContext(req);
       for (const call of response.toolCalls ?? []) await executeAiTool(call.name, call.arguments, ctx);
       send("text", { text: response.message });
       send("done", { success: true, ...response, toolCalls: undefined });
@@ -64,7 +64,7 @@ router.post("/", rateLimitMiddleware("concierge", { maxRequests: 30, windowSecon
 
     // Real AI agent when an Anthropic key is configured (tools run inside the agent loop).
     if (isClaudeConfigured()) {
-      const response = await runConciergeAgent(messages, sessionState, staffContext(req));
+      const response = await runConciergeAgent(messages, sessionState, await staffContext(req));
       return res.json({ success: true, ...response, toolCalls: [], toolResults: [] });
     }
 
@@ -73,7 +73,7 @@ router.post("/", rateLimitMiddleware("concierge", { maxRequests: 30, windowSecon
     // 1. Send chat to AI provider (with built-in credit card refusal guardrail)
     const response = await aiProvider.chat(messages, sessionState);
 
-    const staff = getAuthenticatedStaff(req, ["ADMIN", "OPERATOR", "DISPATCHER"]);
+    const staff = await getAuthenticatedStaff(req, ["ADMIN", "OPERATOR", "DISPATCHER"]);
     const toolContext = {
       isStaff: !!staff,
       role: staff?.role,
@@ -134,7 +134,7 @@ router.post("/tool", rateLimitMiddleware("concierge_tool", { maxRequests: 30, wi
       return res.status(400).json({ error: "toolName is required." });
     }
 
-    const staff = getAuthenticatedStaff(req, ["ADMIN", "OPERATOR", "DISPATCHER"]);
+    const staff = await getAuthenticatedStaff(req, ["ADMIN", "OPERATOR", "DISPATCHER"]);
     if (!staff) {
       return res.status(401).json({ error: "UNAUTHORIZED: Staff credentials required." });
     }

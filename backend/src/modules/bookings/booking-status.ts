@@ -2,11 +2,12 @@
 // below, applies them with a conditional update (so two racing callers can't both make the same
 // move, and the winner is the one that releases seats or sends email), and writes an audit row.
 //
-//   PENDING_PAYMENT → CONFIRMED     verified payment (Stripe webhook, or an instant/free booking)
+//   PENDING_PAYMENT → CONFIRMED     verified payment (Stripe webhook, or an instant/free booking),
+//                                   or staff Quick Book (paid offline, or unpaid with a PAYMENT_DUE flag)
 //   PENDING_PAYMENT → EXPIRED       payment window passed
 //   PENDING_PAYMENT → CANCELLED     payment failed, was cancelled or couldn't start
-//   CONFIRMED       → CANCELLED     guest cancelled within policy
-//   CANCELLED       → REFUNDED      refund issued
+//   CONFIRMED       → CANCELLED     guest cancelled within policy, or staff cancelled (docs/ADMIN.md)
+//   CANCELLED       → REFUNDED      refund issued (by the provider, or marked sent by staff)
 //   CONFIRMED       → COMPLETED     the day after the trip (review request job)
 // A submitted form never confirms a booking by itself.
 

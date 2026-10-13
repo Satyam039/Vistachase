@@ -183,3 +183,80 @@ export async function setDepartureInventorySource(
   });
   return result.count;
 }
+
+/**
+ * One departure's passenger manifest for the driver or guide (printable page and CSV): every
+ * booking that is travelling, in pickup order, with contact, party, pickup and requests.
+ */
+export async function getDepartureManifest(departureId: string) {
+  const dep = await prisma.tourDeparture.findUnique({
+    where: { id: departureId },
+    include: {
+      tour: { select: { title: true } },
+      shuttleRoute: { select: { name: true } },
+      bookings: {
+        where: { status: { in: ["CONFIRMED", "PAID_UNSYNCED", "COMPLETED"] } },
+        include: { pickupStop: { select: { name: true, town: true, address: true, sortOrder: true } }, items: { select: { name: true, quantity: true } }, flags: { where: { status: "OPEN" }, select: { type: true } } },
+      },
+    },
+  });
+  if (!dep) return null;
+  const departureTime = formatTimeOfDay(dep.departureTime);
+  const passengers = dep.bookings
+    .map((b) => ({
+      bookingId: b.id,
+      bookingReference: b.bookingReference,
+      status: b.status,
+      customerName: b.customerName,
+      customerPhone: b.customerPhone,
+      customerEmail: b.customerEmail,
+      adults: b.adultsCount,
+      children: b.childrenCount,
+      infants: b.infantsCount,
+      seats: b.totalSeats,
+      pickupStop: b.pickupStop ? `${b.pickupStop.name}, ${b.pickupStop.town}` : b.pickupCustomText || "Not chosen",
+      pickupAddress: b.pickupStop?.address ?? null,
+      pickupTime: b.pickupTime || departureTime,
+      stopOrder: b.pickupStop?.sortOrder ?? 9999,
+      addOns: b.items.map((i) => (i.quantity > 1 ? `${i.name} × ${i.quantity}` : i.name)),
+      specialRequests: b.specialRequests,
+      paymentDue: b.flags.some((f) => f.type === "PAYMENT_DUE"),
+      isBoarded: b.isBoarded,
+    }))
+    .sort((a, b) => a.pickupTime.localeCompare(b.pickupTime) || a.stopOrder - b.stopOrder || a.customerName.localeCompare(b.customerName));
+
+  return {
+    departureId: dep.id,
+    experience: dep.tour?.title ?? dep.shuttleRoute?.name ?? "Departure",
+    date: formatDateOnly(dep.date),
+    departureTime,
+    returnTime: formatTimeOfDay(dep.returnTime),
+    status: dep.status,
+    capacityTotal: dep.capacityTotal,
+    totals: {
+      bookings: passengers.length,
+      adults: passengers.reduce((s, p) => s + p.adults, 0),
+      children: passengers.reduce((s, p) => s + p.children, 0),
+      infants: passengers.reduce((s, p) => s + p.infants, 0),
+      seats: passengers.reduce((s, p) => s + p.seats, 0),
+      boarded: passengers.filter((p) => p.isBoarded).reduce((s, p) => s + p.seats, 0),
+    },
+    passengers,
+  };
+}
+
+/** A CSV cell; values that a spreadsheet would run as a formula are prefixed with a quote. */
+function csvCell(value: unknown) {
+  let text = value == null ? "" : String(value);
+  if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
+  return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
+
+export function manifestCsv(manifest: NonNullable<Awaited<ReturnType<typeof getDepartureManifest>>>) {
+  const head = ["Pickup time", "Pickup stop", "Reference", "Guest", "Phone", "Email", "Adults", "Children", "Infants", "Seats", "Add-ons", "Special requests", "Payment due", "Boarded"];
+  const rows = manifest.passengers.map((p) => [
+    p.pickupTime, p.pickupStop, p.bookingReference, p.customerName, p.customerPhone, p.customerEmail, p.adults, p.children, p.infants, p.seats,
+    p.addOns.join("; "), p.specialRequests ?? "", p.paymentDue ? "Yes" : "", p.isBoarded ? "Yes" : "",
+  ]);
+  return [head, ...rows].map((r) => r.map(csvCell).join(",")).join("\r\n") + "\r\n";
+}

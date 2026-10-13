@@ -43,8 +43,8 @@ function invalid(res: Response, error: z.ZodError) {
   return res.status(400).json({ success: false, error: "Please check the highlighted fields.", fields: error.flatten().fieldErrors });
 }
 
-function requireAdmin(req: Request, res: Response) {
-  const staff = getAuthenticatedStaff(req, ["ADMIN"]);
+async function requireAdmin(req: Request, res: Response) {
+  const staff = await getAuthenticatedStaff(req, ["ADMIN"]);
   if (!staff) res.status(403).json({ success: false, error: "Admins only." });
   return staff;
 }
@@ -164,7 +164,7 @@ router.get("/me/payouts", async (req, res) => {
 // Admin
 
 router.get("/admin", async (req, res) => {
-  if (!requireAdmin(req, res)) return;
+  if (!(await requireAdmin(req, res))) return;
   return res.json({ success: true, affiliates: await listAffiliates() });
 });
 
@@ -174,7 +174,7 @@ const createSchema = applySchema.extend({
 });
 
 router.post("/admin", async (req, res) => {
-  const staff = requireAdmin(req, res);
+  const staff = await requireAdmin(req, res);
   if (!staff) return;
   const parsed = createSchema.safeParse(req.body ?? {});
   if (!parsed.success) return invalid(res, parsed.error);
@@ -198,7 +198,7 @@ const updateSchema = z
   .strict();
 
 router.patch("/admin/:id", async (req, res) => {
-  const staff = requireAdmin(req, res);
+  const staff = await requireAdmin(req, res);
   if (!staff) return;
   const parsed = updateSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ success: false, error: "Invalid update." });
@@ -248,7 +248,7 @@ function ruleDto(r: { id: string; name: string; affiliateId: string | null; tour
 }
 
 router.get("/admin/rules", async (req, res) => {
-  if (!requireAdmin(req, res)) return;
+  if (!(await requireAdmin(req, res))) return;
   const rules = await prisma.commissionRule.findMany({ orderBy: { createdAt: "desc" }, include: { affiliate: { select: { name: true } } } });
   const tourIds = [...new Set(rules.map((r) => r.tourId).filter((id): id is string => !!id))];
   const tours = tourIds.length ? await prisma.tour.findMany({ where: { id: { in: tourIds } }, select: { id: true, title: true } }) : [];
@@ -259,7 +259,7 @@ router.get("/admin/rules", async (req, res) => {
 });
 
 router.post("/admin/rules", async (req, res) => {
-  const staff = requireAdmin(req, res);
+  const staff = await requireAdmin(req, res);
   if (!staff) return;
   const parsed = ruleSchema.safeParse(req.body ?? {});
   if (!parsed.success) return invalid(res, parsed.error);
@@ -297,7 +297,7 @@ router.post("/admin/rules", async (req, res) => {
 const ruleUpdateSchema = z.object({ active: z.boolean().optional(), validTo: z.coerce.date().nullable().optional() }).strict();
 
 router.patch("/admin/rules/:id", async (req, res) => {
-  const staff = requireAdmin(req, res);
+  const staff = await requireAdmin(req, res);
   if (!staff) return;
   const parsed = ruleUpdateSchema.safeParse(req.body ?? {});
   if (!parsed.success) return invalid(res, parsed.error);
@@ -316,7 +316,7 @@ router.patch("/admin/rules/:id", async (req, res) => {
 // Commission ledger ---------------------------------------------------------------------------
 
 router.get("/admin/commissions", async (req, res) => {
-  if (!requireAdmin(req, res)) return;
+  if (!(await requireAdmin(req, res))) return;
   const parsed = pageQuery.extend({ status: commissionStatus.optional(), affiliateId: z.string().max(40).optional() }).safeParse(req.query);
   if (!parsed.success) return invalid(res, parsed.error);
   const { status, affiliateId, ...paging } = parsed.data;
@@ -325,7 +325,7 @@ router.get("/admin/commissions", async (req, res) => {
 });
 
 router.post("/admin/commissions/approve", async (req, res) => {
-  const staff = requireAdmin(req, res);
+  const staff = await requireAdmin(req, res);
   if (!staff) return;
   const parsed = z.object({ ids: z.array(z.string().min(1).max(40)).min(1).max(500) }).strict().safeParse(req.body ?? {});
   if (!parsed.success) return invalid(res, parsed.error);
@@ -342,7 +342,7 @@ const adjustSchema = z
   .strict();
 
 router.post("/admin/commissions/adjust", async (req, res) => {
-  const staff = requireAdmin(req, res);
+  const staff = await requireAdmin(req, res);
   if (!staff) return;
   const parsed = adjustSchema.safeParse(req.body ?? {});
   if (!parsed.success) return invalid(res, parsed.error);
@@ -360,14 +360,14 @@ router.post("/admin/commissions/adjust", async (req, res) => {
 // Payouts -------------------------------------------------------------------------------------
 
 router.get("/admin/payouts", async (req, res) => {
-  if (!requireAdmin(req, res)) return;
+  if (!(await requireAdmin(req, res))) return;
   const parsed = z.object({ status: z.enum(["DRAFT", "PAID", "CANCELLED"]).optional(), affiliateId: z.string().max(40).optional() }).safeParse(req.query);
   if (!parsed.success) return invalid(res, parsed.error);
   return res.json({ success: true, payouts: await listPayouts(parsed.data) });
 });
 
 router.post("/admin/payouts", async (req, res) => {
-  const staff = requireAdmin(req, res);
+  const staff = await requireAdmin(req, res);
   if (!staff) return;
   const parsed = z.object({ affiliateId: z.string().min(1).max(40), method: z.string().trim().max(60).optional() }).strict().safeParse(req.body ?? {});
   if (!parsed.success) return invalid(res, parsed.error);
@@ -377,7 +377,7 @@ router.post("/admin/payouts", async (req, res) => {
 });
 
 router.post("/admin/payouts/:id/mark-paid", async (req, res) => {
-  const staff = requireAdmin(req, res);
+  const staff = await requireAdmin(req, res);
   if (!staff) return;
   const parsed = z.object({ reference: z.string().trim().min(2).max(120) }).strict().safeParse(req.body ?? {});
   if (!parsed.success) return invalid(res, parsed.error);
@@ -391,7 +391,7 @@ router.post("/admin/payouts/:id/mark-paid", async (req, res) => {
 });
 
 router.post("/admin/payouts/:id/cancel", async (req, res) => {
-  const staff = requireAdmin(req, res);
+  const staff = await requireAdmin(req, res);
   if (!staff) return;
   const result = await cancelPayout({ payoutId: String(req.params.id), staffId: staff.userId });
   if (!result.ok) return res.status(400).json({ success: false, error: result.error });
@@ -401,7 +401,7 @@ router.post("/admin/payouts/:id/cancel", async (req, res) => {
 // Reports -------------------------------------------------------------------------------------
 
 router.get("/admin/report", async (req, res) => {
-  if (!requireAdmin(req, res)) return;
+  if (!(await requireAdmin(req, res))) return;
   const parsed = z
     .object({ from: z.coerce.date(), to: z.coerce.date(), format: z.enum(["json", "csv"]).default("json") })
     .refine((q) => q.from <= q.to, { message: "from must be before to", path: ["from"] })

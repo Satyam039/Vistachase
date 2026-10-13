@@ -1,6 +1,7 @@
 // Adds the hotel pickup points the checkout offers (ShuttleStop rows), from the same list the AI
-// concierge uses (src/lib/maps/maps.provider.ts). Only stops missing by name are added; existing
-// ones, including any staff edited or turned off (isActive = false), are left as they are.
+// concierge uses (src/lib/maps/maps.provider.ts). Only stops missing by name and by address are
+// added; existing ones, including any staff renamed, edited or turned off (isActive = false) in
+// Admin → Pickup stops, are left as they are.
 // Safe to run on every deploy.
 //
 // Usage:
@@ -12,7 +13,9 @@ import { ROCKIES_PICKUP_LOCATIONS } from "../src/lib/maps/maps.provider";
 async function main() {
   let added = 0;
   for (const [index, loc] of ROCKIES_PICKUP_LOCATIONS.entries()) {
-    const existing = await prisma.shuttleStop.findFirst({ where: { name: loc.name } });
+    const existing = await prisma.shuttleStop.findFirst({
+      where: { OR: [{ name: { equals: loc.name, mode: "insensitive" } }, { address: { equals: loc.address, mode: "insensitive" } }] },
+    });
     if (existing) continue;
     await prisma.shuttleStop.create({
       data: {

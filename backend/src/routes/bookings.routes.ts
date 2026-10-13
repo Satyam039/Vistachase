@@ -68,7 +68,7 @@ router.get("/", rateLimitMiddleware("booking_read", { maxRequests: 30, windowSec
       booking &&
       (verifyBookingLink(booking.bookingReference, "voucher", query.t) ||
         (user && user.email.toLowerCase() === booking.customerEmail.toLowerCase()) ||
-        getAuthenticatedStaff(req));
+        (await getAuthenticatedStaff(req)));
     if (!booking || !allowed) return res.status(404).json({ success: false, error: "Booking not found" });
 
     return res.json({
