@@ -29,18 +29,20 @@ export async function overview() {
     if (!p.lastCrawledAt) neverCrawled++;
     if (!p.robotsIndex || /noindex/i.test(live?.robots ?? "")) noindex++;
     if (p.status === "ARCHIVED") continue;
+    if (!p.focusKeyword && p.pageType !== "LEGAL" && p.pageType !== "STATIC") missing.focusKeyword++;
+    // Without a crawl the page's own (coded) title is unknown, so it isn't counted as missing;
+    // neverCrawled says how many pages that leaves out.
+    if (!live) continue;
     if (!(p.seoTitle ?? live?.title)) missing.title++;
     if (!(p.metaDescription ?? live?.description)) missing.description++;
     if (!(p.h1 ?? live?.h1?.[0])) missing.h1++;
     if (!(p.canonicalUrl ?? live?.canonical)) missing.canonical++;
-    if (!p.focusKeyword && p.pageType !== "LEGAL" && p.pageType !== "STATIC") missing.focusKeyword++;
   }
 
   const issueCount = (types: string[]) => openIssues.filter((i) => types.includes(i.type)).length;
   const bySeverity: Record<SeoIssueSeverity, number> = { CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0 };
   for (const i of openIssues) bySeverity[i.severity]++;
 
-  const primaryCount = new Map<string, number>();
   const fixes = openIssues
     .map((i) => ({
       id: i.id,
@@ -62,7 +64,6 @@ export async function overview() {
     if (k.mappings.length > 0) mapped++;
     const primaries = k.mappings.filter((m) => m.role === "PRIMARY").length;
     if (primaries > 1) cannibalised++;
-    primaryCount.set(String(primaries), (primaryCount.get(String(primaries)) ?? 0) + 1);
   }
 
   return {

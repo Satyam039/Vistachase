@@ -7,8 +7,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Briefcase, Building, CheckCircle2, ExternalLink, Phone, Route } from "lucide-react";
 import { SectionHeading } from "@/components/home/SectionHeading";
+import { withSeo } from "@/lib/seo/server";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Travel Trade & Agents | Vista Chase",
   description:
     "For travel agents, hotel concierge desks and tour operators: small-group and private Canadian Rockies tours with hotel pickup and commercial access to Moraine Lake.",
@@ -117,4 +118,8 @@ export default function AffiliatesPage() {
       </section>
     </div>
   );
+}
+
+export function generateMetadata(): Promise<Metadata> {
+  return withSeo("/affiliates", baseMetadata);
 }

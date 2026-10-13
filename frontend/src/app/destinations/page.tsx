@@ -7,8 +7,9 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { ArrowUpRight, ChevronRight, MapPin } from "lucide-react";
 import { getDestinations } from "@/lib/api/catalog";
+import { withSeo } from "@/lib/seo/server";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Canadian Rockies Destinations | Banff, Lake Louise, Moraine Lake & Jasper | Vista Chase",
   description: "Moraine Lake, Lake Louise, Banff, Yoho and Jasper national parks: where Vista Chase tours go and how to see them.",
   alternates: { canonical: "/destinations" },
@@ -89,4 +90,8 @@ export default async function DestinationsPage() {
       </section>
     </div>
   );
+}
+
+export function generateMetadata(): Promise<Metadata> {
+  return withSeo("/destinations", baseMetadata);
 }

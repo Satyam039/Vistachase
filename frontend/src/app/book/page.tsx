@@ -4,6 +4,8 @@ import { BookingCheckoutClient } from "@/components/booking/BookingCheckoutClien
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
+  // Checkout and search results have no search value of their own; keep them out of the index.
+  robots: { index: false, follow: true },
   title: "Secure Booking & Checkout | Vista Chase Canadian Rockies",
   description:
     "Complete your reservation for Lake Louise, Moraine Lake shuttles, and luxury private tours with guaranteed access.",

@@ -2,8 +2,9 @@
 
 import type { Metadata } from "next";
 import { LegalDocument, type LegalSection } from "@/components/legal/LegalDocument";
+import { withSeo } from "@/lib/seo/server";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Privacy Policy | Vista Chase",
   description: "How Vista Chase collects, uses and protects your personal information.",
   alternates: { canonical: "/privacy-policy" },
@@ -157,4 +158,8 @@ export default function PrivacyPolicyPage() {
       current="/privacy-policy"
     />
   );
+}
+
+export function generateMetadata(): Promise<Metadata> {
+  return withSeo("/privacy-policy", baseMetadata);
 }

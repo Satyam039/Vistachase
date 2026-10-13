@@ -2,8 +2,9 @@
 
 import type { Metadata } from "next";
 import { LegalDocument, type LegalSection } from "@/components/legal/LegalDocument";
+import { withSeo } from "@/lib/seo/server";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Terms & Conditions | Vista Chase",
   description: "The terms that govern the Vista Chase website, bookings and participation in our tours and services.",
   alternates: { canonical: "/terms-and-conditions" },
@@ -205,4 +206,8 @@ export default function TermsPage() {
       current="/terms-and-conditions"
     />
   );
+}
+
+export function generateMetadata(): Promise<Metadata> {
+  return withSeo("/terms-and-conditions", baseMetadata);
 }
