@@ -36,7 +36,7 @@ router.get("/:token", async (req, res) => {
 // anyone holding a booking reference.
 router.post("/:token/notify", async (req, res) => {
   try {
-    if (!getAuthenticatedStaff(req, ["ADMIN", "OPERATOR", "DISPATCHER"])) {
+    if (!(await getAuthenticatedStaff(req, ["ADMIN", "OPERATOR", "DISPATCHER"]))) {
       return res.status(403).json({ success: false, error: "Access denied. Staff privileges required." });
     }
     const token = req.params.token;

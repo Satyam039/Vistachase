@@ -159,21 +159,22 @@ router.post("/logout", (_req, res) => {
   return res.json({ success: true, message: "Logged out" });
 });
 
-router.get("/me", (req, res) => {
-  const payload = getAuthenticatedUser(req);
-  if (!payload) {
-    return res.json({ authenticated: false, user: null });
-  }
+// The role comes from the database, so the site stops showing staff pages as soon as a role changes.
+router.get("/me", async (req, res, next) => {
+  try {
+    const payload = getAuthenticatedUser(req);
+    const user = payload ? await prisma.user.findUnique({ where: { id: payload.userId }, select: { id: true, email: true, name: true, role: true } }) : null;
+    if (!user) {
+      return res.json({ authenticated: false, user: null });
+    }
 
-  return res.json({
-    authenticated: true,
-    user: {
-      id: payload.userId,
-      email: payload.email,
-      name: payload.name,
-      role: payload.role,
-    },
-  });
+    return res.json({
+      authenticated: true,
+      user: { id: user.id, email: user.email, name: user.name, role: user.role },
+    });
+  } catch (e) {
+    next(e);
+  }
 });
 
 

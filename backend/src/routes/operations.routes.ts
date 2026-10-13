@@ -15,12 +15,16 @@ import { todayInMountainTime } from "@/lib/utils/time";
 const router = Router();
 
 // Staff authentication guard middleware for all operations routes
-router.use((req, res, next) => {
-  const staff = getAuthenticatedStaff(req, ["ADMIN", "OPERATOR", "DISPATCHER"]);
-  if (!staff) {
-    return res.status(403).json({ error: "Access denied. Operations staff privileges required." });
+router.use(async (req, res, next) => {
+  try {
+    const staff = await getAuthenticatedStaff(req, ["ADMIN", "OPERATOR", "DISPATCHER"]);
+    if (!staff) {
+      return res.status(403).json({ error: "Access denied. Operations staff privileges required." });
+    }
+    next();
+  } catch (e) {
+    next(e);
   }
-  next();
 });
 
 // 1. Operations Dashboard

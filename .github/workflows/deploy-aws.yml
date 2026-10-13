@@ -80,6 +80,12 @@ jobs:
             cd backend
             if [ "$PREV" = "$NEW" ] || ! git diff --quiet "$PREV" "$NEW" -- package-lock.json; then npm ci; fi
             npx prisma generate
+            # The API applies pending database migrations when it restarts (scripts/start-production.js);
+            # back the database up first. If that fails, stop before anything is built or restarted.
+            if ! node scripts/backup-before-migrate.js; then
+              echo "ERROR: database backup before migrating failed; nothing restarted."
+              exit 1
+            fi
             npm run seed:departures || true
             npm run seed:pickups || true
             rm -rf dist-prev

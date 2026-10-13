@@ -330,6 +330,7 @@ model Booking {
   whatsappNotifications  WhatsAppNotification[]
   syncTasks              BookingSyncTask[]
   commissions            CommissionLedger[]
+  flags                  BookingFlag[]
 
   @@index([bookingReference])
   @@index([affiliateId])
@@ -1072,4 +1073,39 @@ model SeoSearchMetric {
 
   @@unique([source, path, date, query])
   @@index([path, date])
+}
+
+// ---------------------------------------------------------------------------------------------
+// Staff follow-ups on a booking (docs/ADMIN.md): payments that didn't match or came late, refunds
+// owed after a staff cancellation, Quick Book bookings still to be paid. Open until staff resolve them.
+
+enum BookingFlagType {
+  PAYMENT_AMOUNT_MISMATCH
+  LATE_PAYMENT
+  REFUND_DUE
+  PAYMENT_DUE
+  OTHER
+}
+
+enum BookingFlagStatus {
+  OPEN
+  RESOLVED
+}
+
+model BookingFlag {
+  id           String            @id @default(cuid())
+  bookingId    String
+  booking      Booking           @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  type         BookingFlagType
+  status       BookingFlagStatus @default(OPEN)
+  note         String
+  amountCents  Int? // refund owed or payment due, when the flag is about money
+  createdById  String? // staff member who raised it; null when the system did
+  resolvedById String?
+  resolvedAt   DateTime?
+  resolution   String?
+  createdAt    DateTime          @default(now())
+
+  @@index([status, type])
+  @@index([bookingId])
 }

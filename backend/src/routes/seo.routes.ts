@@ -133,8 +133,8 @@ router.get("/public/llms.txt", publicLimit, wrap(async (req, res) => {
 // ---------------------------------------------------------------------------------------------
 // Admin
 
-router.use("/admin", (req, res, next) => {
-  const staff = getAuthenticatedStaff(req, ["ADMIN"]);
+router.use("/admin", async (req, res, next) => {
+  const staff = await getAuthenticatedStaff(req, ["ADMIN"]).catch(() => null);
   if (!staff) return res.status(req.cookies?.vc_token || req.headers.authorization ? 403 : 401).json({ success: false, error: "Admins only." });
   res.locals.staff = staff;
   // Admin data is per-user and never cached.
