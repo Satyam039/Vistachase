@@ -239,12 +239,12 @@ html[data-announce-closed] .vc-announce {
 }
 
 .astryx-app-shell-header {
-  background-color: rgb(255 255 255 / 0.85);
-  -webkit-backdrop-filter: blur(20px) saturate(1.3);
-  backdrop-filter: blur(20px) saturate(1.3);
+  background-color: rgba(255, 255, 255, 0.72);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
   border: none !important;
   border-bottom: none !important;
-  transition: box-shadow 300ms var(--ease-out-expo), background-color 300ms var(--ease-out-expo);
+  transition: box-shadow 300ms var(--ease-out-expo), background-color 300ms var(--ease-out-expo), -webkit-backdrop-filter 300ms var(--ease-out-expo), backdrop-filter 300ms var(--ease-out-expo);
 }
 
 /* On pages with a hero, float transparently over the hero */
@@ -303,12 +303,12 @@ html[data-hero-page]:not([data-scrolled]) .vc-trips-desktop:hover {
 
 /* Scrolled state: frosted glass with dark text and dark emblem, no borders */
 [data-scrolled] .astryx-app-shell-header {
-  background-color: rgb(255 255 255 / 0.94) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(1.3) !important;
-  backdrop-filter: blur(20px) saturate(1.3) !important;
+  background-color: rgba(255, 255, 255, 0.72) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
   border: none !important;
   border-bottom: none !important;
-  box-shadow: 0 10px 30px -22px rgba(12, 31, 33, 0.22) !important;
+  box-shadow: 0 10px 30px -15px rgba(12, 31, 33, 0.12), inset 0 1px 0 0 rgba(255, 255, 255, 0.6) !important;
 }
 [data-scrolled] .astryx-layout-header {
   border: none !important;
