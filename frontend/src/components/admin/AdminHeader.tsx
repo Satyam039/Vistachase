@@ -1,15 +1,16 @@
 // Shared header for the staff pages: eyebrow, light title, actions on the right and the section
-// tabs (Overview, Dispatch, Operations, Partners) underlined under the current page.
+// tabs (Overview, Dispatch, Operations, Partners, SEO) underlined under the current page.
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Handshake, LayoutDashboard, Lock, ArrowRight, Truck, Workflow } from "lucide-react";
+import { Handshake, LayoutDashboard, Lock, ArrowRight, Search, Truck, Workflow } from "lucide-react";
 
 export const ADMIN_TABS = [
   { label: "Overview", href: "/admin", icon: LayoutDashboard },
   { label: "Dispatch", href: "/admin/dispatch", icon: Truck },
   { label: "Operations", href: "/admin/operations", icon: Workflow },
   { label: "Partners", href: "/admin/partners", icon: Handshake },
+  { label: "SEO", href: "/admin/seo", icon: Search },
 ];
 
 export function AdminHeader({
