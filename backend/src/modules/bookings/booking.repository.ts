@@ -142,7 +142,9 @@ async function replayBooking(key: string, input: CreateBookingInput): Promise<Bo
     if (existing.status === "PENDING_PAYMENT" && existing.totalAmount > 0) {
       const pending = existing.payments.find((p) => p.status === "PENDING");
       const provider = getPaymentProvider();
-      const intent = pending && provider.retrievePaymentIntent ? await provider.retrievePaymentIntent(pending.transactionId) : null;
+      // Staff bookings paid offline (Quick Book) have no online payment to look up.
+      const online = pending && pending.provider !== "offline" ? pending : null;
+      const intent = online && provider.retrievePaymentIntent ? await provider.retrievePaymentIntent(online.transactionId) : null;
       if (!intent?.clientSecret || intent.paid) {
         if (attempt < 15) {
           await new Promise((resolve) => setTimeout(resolve, 200));

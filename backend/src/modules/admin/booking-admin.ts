@@ -287,7 +287,8 @@ export async function quickBook(input: QuickBookInput, staffId: string) {
   const created = await createBooking(booking, { offlinePayment: true, allowAfterCutoff: true });
   if (!created.success || !created.booking) return { status: 409, error: created.error ?? "The booking could not be made." } as const;
   const { id, bookingReference } = created.booking;
-  if (created.replayed && created.booking.status !== "PENDING_PAYMENT") return { status: 200, booking: created.booking, replayed: true } as const;
+  // A repeated submit (same idempotency key) answers with the booking the first one made.
+  if (created.replayed) return { status: 200, booking: created.booking, replayed: true } as const;
 
   const record = await prisma.booking.findUniqueOrThrow({ where: { id } });
   await prisma.auditLog.create({
