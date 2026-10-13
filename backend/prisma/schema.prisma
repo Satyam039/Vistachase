@@ -152,6 +152,7 @@ model Destination {
   metaDescription String?
   createdAt       DateTime @default(now())
   tours           Tour[]
+  seoPage         SeoPage?
 
   @@index([slug])
 }
@@ -195,6 +196,7 @@ model Tour {
   updatedAt       DateTime        @updatedAt
   departures      TourDeparture[]
   reviews         Review[]
+  seoPage         SeoPage?
 
   @@index([slug])
   @@index([bokunId])
@@ -704,4 +706,370 @@ model AffiliateClick {
 
   @@index([affiliateId, createdAt])
   @@index([visitorHash, createdAt])
+}
+
+// ---------------------------------------------------------------------------------------------
+// SEO (docs/SEO.md). Additive: these tables only describe and override page metadata; tours,
+// destinations and bookings are never changed by them. Metrics are nullable on purpose: a value we
+// have not researched stays null ("unknown") rather than being guessed.
+
+enum SeoPageType {
+  HOME
+  TOUR // a product page, /<tour slug>
+  DESTINATION // /destinations/<slug>
+  LANDING // category pages such as /private-tours, /shuttles
+  GUIDE // editorial content managed here, /guides/<slug>
+  STATIC // about, contact, faq, gallery…
+  LEGAL // policies and terms
+}
+
+enum SeoPageSource {
+  STATIC_ROUTE // a page built in code (frontend/src/app)
+  TOUR
+  DESTINATION
+  CMS // created and rendered from this table (/guides/<slug>)
+}
+
+enum SeoPublishStatus {
+  DRAFT // overrides saved, not live
+  SCHEDULED // goes live at publishAt
+  PUBLISHED
+  ARCHIVED
+}
+
+enum SeoConversionGoal {
+  BOOKING
+  ENQUIRY
+  CALL
+  NEWSLETTER
+  NONE
+}
+
+enum SeoSearchIntent {
+  INFORMATIONAL
+  COMMERCIAL // commercial investigation
+  TRANSACTIONAL
+  NAVIGATIONAL
+}
+
+enum SeoFunnelStage {
+  TOFU
+  MOFU
+  BOFU
+}
+
+enum SeoStrategyTrack {
+  TRAFFIC_ACQUISITION // destination guides, planning, sightseeing information
+  BOOKING_CONVERSION // tours, shuttles and services Vista Chase actually sells
+}
+
+enum SeoPriority {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum SeoKeywordStatus {
+  IDEA
+  PLANNED
+  IN_PROGRESS
+  IMPLEMENTED
+  ARCHIVED
+}
+
+enum SeoValidationStatus {
+  UNVERIFIED // a hypothesis; no keyword tool has confirmed it
+  VERIFIED // metrics checked against the named source on lastVerifiedAt
+  REJECTED // checked and not worth targeting
+}
+
+enum SeoMetricBasis {
+  UNKNOWN // no value
+  ESTIMATE // a guess or a third-party figure we have not checked
+  RESEARCHED // from a named keyword tool, with a date
+}
+
+enum SeoMappingRole {
+  PRIMARY
+  SECONDARY
+}
+
+enum SeoIssueSeverity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum SeoIssueStatus {
+  OPEN
+  IGNORED
+  RESOLVED
+}
+
+enum SeoAuditTrigger {
+  MANUAL
+  SCHEDULED
+}
+
+enum SeoAuditStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum SeoLlmsSection {
+  PRIMARY
+  SECONDARY
+}
+
+/// One row per public URL whose search appearance is managed here. Empty fields fall back to the
+/// page's own defaults in code (or the tour / destination record), so a new row changes nothing.
+model SeoPage {
+  id                 String              @id @default(cuid())
+  path               String              @unique // "/", "/private-tours", "/banff-highlights-tour"
+  pageType           SeoPageType
+  source             SeoPageSource
+  tourId             String?             @unique
+  tour               Tour?               @relation(fields: [tourId], references: [id], onDelete: SetNull)
+  destinationId      String?             @unique
+  destination        Destination?        @relation(fields: [destinationId], references: [id], onDelete: SetNull)
+  label              String // name shown in the dashboard
+  status             SeoPublishStatus    @default(DRAFT)
+  publishAt          DateTime?
+  publishedAt        DateTime?
+  important          Boolean             @default(false) // noindex needs an explicit confirmation
+  seoTitle           String?
+  metaDescription    String?
+  h1                 String?
+  focusKeyword       String?
+  secondaryKeywords  String[]            @default([])
+  canonicalUrl       String?
+  robotsIndex        Boolean             @default(true)
+  robotsFollow       Boolean             @default(true)
+  ogTitle            String?
+  ogDescription      String?
+  ogImage            String?
+  twitterTitle       String?
+  twitterDescription String?
+  twitterImage       String?
+  breadcrumbLabel    String?
+  excerpt            String?
+  body               String? // CMS pages only: a small markdown subset rendered as text, never HTML
+  answerSnippet      String? // TL;DR / direct answer, 40-60 words
+  citationFact       String?
+  faqs               Json                @default("[]") // [{question, answer}]
+  authorName         String?
+  authorBio          String?
+  reviewedAt         DateTime?
+  featuredImage      String?
+  featuredImageAlt   String?
+  imageTitle         String?
+  imageCaption       String?
+  imageFileName      String?
+  ctaText            String?
+  ctaUrl             String?
+  conversionGoal     SeoConversionGoal   @default(NONE)
+  utmSource          String?
+  utmMedium          String?
+  utmCampaign        String?
+  pillar             String?
+  tags               String[]            @default([])
+  relatedPaths       String[]            @default([])
+  sitemapPriority    Float?
+  lastCrawl          Json? // what the audit saw on the live page: title, description, h1s, canonical…
+  lastCrawledAt      DateTime?
+  createdById        String?
+  updatedById        String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  revisions          SeoPageRevision[]
+  mappings           SeoKeywordMapping[]
+  issues             SeoIssue[]
+
+  @@index([pageType])
+  @@index([status])
+}
+
+/// Append-only change log for a page (content freshness / update log).
+model SeoPageRevision {
+  id        String   @id @default(cuid())
+  pageId    String
+  page      SeoPage  @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  userId    String?
+  action    String // UPDATED, PUBLISHED, UNPUBLISHED, SCHEDULED, ARCHIVED, CREATED
+  changes   Json // {field: {from, to}}
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@index([pageId, createdAt])
+}
+
+model SeoKeywordCluster {
+  id          String           @id @default(cuid())
+  name        String           @unique
+  pillar      String?
+  track       SeoStrategyTrack
+  description String?
+  hubPath     String? // the page the cluster points to
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  keywords    SeoKeyword[]
+}
+
+model SeoKeyword {
+  id                String              @id @default(cuid())
+  keyword           String
+  normalized        String              @unique // lower-case, single spaces: duplicate detection
+  designation       SeoMappingRole      @default(SECONDARY)
+  searchVolume      Int?
+  volumeBasis       SeoMetricBasis      @default(UNKNOWN)
+  volumeSource      String?
+  difficulty        Int? // 0-100
+  difficultyBasis   SeoMetricBasis      @default(UNKNOWN)
+  difficultySource  String?
+  intent            SeoSearchIntent
+  funnelStage       SeoFunnelStage
+  track             SeoStrategyTrack
+  clusterId         String?
+  cluster           SeoKeywordCluster?  @relation(fields: [clusterId], references: [id], onDelete: SetNull)
+  targetPath        String? // planned URL when no page exists yet
+  targetPageType    SeoPageType?
+  priority          SeoPriority         @default(MEDIUM)
+  businessRelevance Int? // 1-5
+  competitionNotes  String?
+  competitors       String[]            @default([])
+  status            SeoKeywordStatus    @default(IDEA)
+  dataSource        String?
+  lastVerifiedAt    DateTime?
+  validationStatus  SeoValidationStatus @default(UNVERIFIED)
+  notes             String?
+  archivedAt        DateTime?
+  createdById       String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  mappings          SeoKeywordMapping[]
+
+  @@index([clusterId])
+  @@index([status])
+  @@index([track, priority])
+}
+
+/// Keyword -> page. A keyword should be PRIMARY on at most one page; the audit flags more
+/// (cannibalisation) instead of the database refusing it, so staff can see and fix it.
+model SeoKeywordMapping {
+  id        String         @id @default(cuid())
+  keywordId String
+  keyword   SeoKeyword     @relation(fields: [keywordId], references: [id], onDelete: Cascade)
+  pageId    String
+  page      SeoPage        @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  role      SeoMappingRole @default(SECONDARY)
+  createdAt DateTime       @default(now())
+
+  @@unique([keywordId, pageId])
+  @@index([pageId])
+}
+
+/// 301/308 (permanent) or 302 (temporary) redirects served by the frontend middleware. Only
+/// same-site paths: never an external URL, so this can't become an open redirect.
+model SeoRedirect {
+  id          String   @id @default(cuid())
+  fromPath    String   @unique
+  toPath      String
+  statusCode  Int      @default(301)
+  active      Boolean  @default(true)
+  source      String   @default("MANUAL") // MANUAL | SLUG_CHANGE | IMPORT
+  note        String?
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([active])
+}
+
+model SeoAuditRun {
+  id          String          @id @default(cuid())
+  trigger     SeoAuditTrigger
+  status      SeoAuditStatus  @default(RUNNING)
+  startedById String?
+  baseUrl     String?
+  summary     Json            @default("{}")
+  error       String?
+  startedAt   DateTime        @default(now())
+  finishedAt  DateTime?
+  issues      SeoIssue[]
+
+  @@index([startedAt])
+}
+
+/// One row per problem; the fingerprint (type + path + detail) keeps the same problem on the same
+/// row across audits. Problems an audit no longer finds become RESOLVED; IGNORED stays ignored.
+model SeoIssue {
+  id          String           @id @default(cuid())
+  fingerprint String           @unique
+  type        String
+  severity    SeoIssueSeverity
+  status      SeoIssueStatus   @default(OPEN)
+  path        String?
+  pageId      String?
+  page        SeoPage?         @relation(fields: [pageId], references: [id], onDelete: SetNull)
+  message     String
+  detail      Json             @default("{}")
+  lastRunId   String?
+  lastRun     SeoAuditRun?     @relation(fields: [lastRunId], references: [id], onDelete: SetNull)
+  firstSeenAt DateTime         @default(now())
+  lastSeenAt  DateTime         @default(now())
+  resolvedAt  DateTime?
+
+  @@index([status, severity])
+  @@index([pageId])
+}
+
+/// Site-wide settings, one row (id "site"): llms.txt header, business details for structured data.
+model SeoSiteSettings {
+  id                String   @id @default("site")
+  siteName          String   @default("Vista Chase")
+  summary           String?
+  aboutText         String?
+  contactEmail      String?
+  contactPhone      String?
+  address           String?
+  serviceArea       String[] @default([])
+  businessHours     String?
+  googleBusinessUrl String?
+  sameAs            String[] @default([])
+  llmsEnabled       Boolean  @default(false)
+  updatedById       String?
+  updatedAt         DateTime @updatedAt
+}
+
+model SeoLlmsEntry {
+  id          String         @id @default(cuid())
+  title       String
+  path        String // same-site path or https URL
+  description String?
+  section     SeoLlmsSection @default(PRIMARY)
+  sortOrder   Int            @default(0)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([section, sortOrder])
+}
+
+/// Search Console / analytics figures, filled only by a configured provider. Empty until then:
+/// the dashboard shows "not connected" rather than any number.
+model SeoSearchMetric {
+  id          String   @id @default(cuid())
+  source      String // "google-search-console"
+  path        String
+  date        DateTime @db.Date
+  clicks      Int
+  impressions Int
+  ctr         Float
+  position    Float
+  query       String?
+  fetchedAt   DateTime @default(now())
+
+  @@unique([source, path, date, query])
+  @@index([path, date])
 }

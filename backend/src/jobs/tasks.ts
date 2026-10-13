@@ -101,3 +101,16 @@ export async function sendReviewRequests(now = new Date()) {
 export async function maturePartnerCommissions(now = new Date()) {
   return { ...(await approveMaturedCommissions(now)), ...(await pruneOldClicks(now)) };
 }
+
+/** SEO: scheduled guide and metadata changes go live; blocked ones stay scheduled and show in the audit. */
+export async function publishScheduledSeoPages(now = new Date()) {
+  const { publishDuePages } = await import("@/modules/seo/seo.pages");
+  return publishDuePages(now);
+}
+
+/** SEO: nightly audit of the live pages (SEO_AUDIT_BASE_URL, default the local frontend). */
+export async function runNightlySeoAudit() {
+  const { runAudit } = await import("@/modules/seo/seo.audit");
+  const { run } = await runAudit({ trigger: "SCHEDULED" });
+  return { status: run.status, summary: run.summary };
+}
