@@ -127,7 +127,7 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
   return (
     <section
       aria-label="Vista Chase: tours in the Canadian Rockies"
-      className="relative isolate flex min-h-[max(42rem,calc(100svh-var(--vc-header-h,80px)))] flex-col overflow-hidden bg-obsidian-950 text-white"
+      className="relative isolate flex min-h-[100vh] min-h-[100dvh] flex-col overflow-hidden bg-obsidian-950 text-white"
     >
       {/* Background: each service's photo cross-fades with a slow zoom; the active clip plays. */}
       <div className="absolute inset-0 -z-10">
@@ -177,7 +177,7 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
       )}
 
       {/* Clutter-free luxury hero: clear message, clean search, minimal experience switcher */}
-      <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col items-center justify-center px-page pb-8 pt-16 text-center sm:pt-20 lg:pt-24 lg:pb-16" data-scroll-fade>
+      <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col items-center justify-center px-page pb-10 pt-20 text-center sm:pt-24 sm:pb-14 lg:pt-28 lg:pb-16" data-scroll-fade>
         {/* 1 · Message */}
         <a
           href="#reviews-heading"
@@ -193,18 +193,18 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
         <h1 className="mt-5 max-w-5xl text-balance text-[clamp(2.25rem,8vw,3.5rem)] font-light leading-[1.08] tracking-wider uppercase text-white sm:text-6xl lg:text-7xl motion-safe:animate-[fadeUp_900ms_ease-out]">
           THE CANADIAN ROCKIES, YOUR WAY
         </h1>
-        <p className="mt-4 max-w-2xl text-pretty text-base font-light leading-relaxed text-white/90 sm:text-lg lg:text-xl [text-shadow:0_1px_12px_rgba(0,0,0,0.45)] motion-safe:animate-[fadeUp_1100ms_ease-out]">
+        <p className="mt-5 max-w-2xl text-pretty text-base font-light leading-relaxed text-white/90 sm:text-lg lg:text-xl [text-shadow:0_1px_12px_rgba(0,0,0,0.45)] motion-safe:animate-[fadeUp_1100ms_ease-out]">
           Small-group tours, private journeys and guaranteed lake shuttles from Banff and Canmore.
         </p>
 
-        {/* 2 · Action: clean, sleek frosted search */}
-        <div className="mt-8 w-full max-w-3xl rounded-[2rem] bg-white/10 p-1.5 ring-1 ring-white/20 backdrop-blur-md motion-safe:animate-[fadeUp_1300ms_ease-out] shadow-2xl">
+        {/* 2 · Action: clean, sleek frosted search with generous luxury breathing room */}
+        <div className="mt-12 sm:mt-16 lg:mt-20 w-full max-w-3xl rounded-[2rem] bg-white/10 p-1.5 ring-1 ring-white/20 backdrop-blur-md motion-safe:animate-[fadeUp_1300ms_ease-out] shadow-2xl">
           <HeroSearch className="w-full" />
         </div>
 
         {/* 3 · Clutter-free Experience Switcher */}
         <div
-          className="mt-8 w-full max-w-4xl"
+          className="mt-10 sm:mt-12 w-full max-w-4xl"
           onMouseEnter={() => setHovering(true)}
           onMouseLeave={() => setHovering(false)}
           onFocusCapture={() => setHovering(true)}
