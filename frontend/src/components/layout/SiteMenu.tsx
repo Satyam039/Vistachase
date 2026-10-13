@@ -116,7 +116,7 @@ export function SiteMenu() {
         onClick={open}
         aria-haspopup="dialog"
         aria-expanded={isOpen}
-        className="inline-flex h-11 items-center gap-2.5 rounded-full px-3 text-sm uppercase tracking-[0.18em] text-obsidian-900 hover:bg-obsidian-900/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-600"
+        className="vc-menu-btn inline-flex h-11 items-center gap-2.5 rounded-full px-3 text-sm uppercase tracking-[0.18em] text-obsidian-900 hover:bg-obsidian-900/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-600"
       >
         <Menu className="h-5 w-5" aria-hidden="true" />
         {/* Icon-only on phones so the centred brand name has room; still announced as "Menu". */}

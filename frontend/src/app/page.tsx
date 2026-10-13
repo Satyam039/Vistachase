@@ -51,7 +51,9 @@ export default async function HomePage() {
     console.warn("[HomePage] getCategoryExtras failed:", err);
   }
 
-  const slides: HeroSlide[] = SERVICES.map((service) => ({
+  const slides: HeroSlide[] = SERVICES.filter(
+    (service) => service.id !== "tickets" && service.category !== "TICKET",
+  ).map((service) => ({
     ...service,
     tours: (tours || [])
       .filter((t) => t.category === service.category)

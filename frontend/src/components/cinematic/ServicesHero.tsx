@@ -57,6 +57,10 @@ const TAB_LABEL: Record<string, string> = {
 const shortTagline = (tagline: string) => tagline.split("? ").pop() ?? tagline;
 
 export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
+  const items = useMemo(
+    () => slides.filter((s) => s.id !== "tickets" && s.category !== "TICKET"),
+    [slides],
+  );
   const [index, setIndex] = useState(0);
   // Rotation ends for good after one full pass, or as soon as the visitor picks a service.
   const [stopped, setStopped] = useState(false);
@@ -81,44 +85,44 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
     const timer = window.setTimeout(() => {
       setAnnounce(false);
       setIndex((i) => {
-        const next = (i + 1) % slides.length;
+        const next = (i + 1) % items.length;
         if (next === 0) setStopped(true); // back at the start: one pass done, rest here
         return next;
       });
     }, ROTATE_MS);
     return () => window.clearTimeout(timer);
-  }, [rotating, index, slides.length]);
+  }, [rotating, index, items.length]);
 
   const go = useCallback(
     (next: number, focus = false) => {
-      const i = (next + slides.length) % slides.length;
+      const i = (next + items.length) % items.length;
       setAnnounce(true);
       setStopped(true);
       setIndex(i);
       if (focus) tabRefs.current[i]?.focus();
     },
-    [slides.length],
+    [items.length],
   );
 
   const onTabKey = (e: React.KeyboardEvent, i: number) => {
     if (e.key === "ArrowRight") { e.preventDefault(); go(i + 1, true); }
     if (e.key === "ArrowLeft") { e.preventDefault(); go(i - 1, true); }
     if (e.key === "Home") { e.preventDefault(); go(0, true); }
-    if (e.key === "End") { e.preventDefault(); go(slides.length - 1, true); }
+    if (e.key === "End") { e.preventDefault(); go(items.length - 1, true); }
   };
 
   // Lowest real price per service for the switcher ("From $99").
   const fromPrices = useMemo(
     () =>
-      slides.map((s) => {
+      items.map((s) => {
         const priced = s.tours.filter((t) => hasPrice(t.price));
         return priced.length ? Math.min(...priced.map((t) => t.price)) : null;
       }),
-    [slides],
+    [items],
   );
 
-  const slide = slides[index];
-  const clip = slide.video ?? HOUSE_CLIP;
+  const slide = items[index] ?? items[0];
+  const clip = slide?.video ?? HOUSE_CLIP;
 
   return (
     <section
@@ -127,7 +131,7 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
     >
       {/* Background: each service's photo cross-fades with a slow zoom; the active clip plays. */}
       <div className="absolute inset-0 -z-10">
-        {slides.map((s, i) => (
+        {items.map((s, i) => (
           <div
             key={s.id}
             className={`absolute inset-0 transition-opacity duration-[1400ms] ease-out ${i === index ? "opacity-100" : "opacity-0"}`}
@@ -172,12 +176,8 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
         </button>
       )}
 
-      {/* One centred column in three groups with even spacing (GetYourGuide / Airbnb hero
-          hierarchy): 1 message (proof chip, headline, one line), 2 action (search with the three
-          booking promises as its footer, one frosted unit), 3 explore (experience switcher with
-          the selected one's line and link). Bottom padding keeps the floating concierge button
-          clear of the switcher. */}
-      <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col items-center justify-center px-page pb-10 pt-12 text-center sm:pt-16 lg:pb-24" data-scroll-fade>
+      {/* Clutter-free luxury hero: clear message, clean search, minimal experience switcher */}
+      <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col items-center justify-center px-page pb-8 pt-16 text-center sm:pt-20 lg:pt-24 lg:pb-16" data-scroll-fade>
         {/* 1 · Message */}
         <a
           href="#reviews-heading"
@@ -190,8 +190,8 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
           </span>
           <span>#6 experience in Canada</span>
         </a>
-        <h1 className="mt-5 max-w-5xl text-balance text-[clamp(2.25rem,8vw,3.5rem)] font-light leading-[1.08] tracking-tight text-white sm:text-6xl lg:text-7xl motion-safe:animate-[fadeUp_900ms_ease-out]">
-          The Canadian Rockies, your way
+        <h1 className="mt-5 max-w-5xl text-balance text-[clamp(2.25rem,8vw,3.5rem)] font-light leading-[1.08] tracking-wider uppercase text-white sm:text-6xl lg:text-7xl motion-safe:animate-[fadeUp_900ms_ease-out]">
+          THE CANADIAN ROCKIES, YOUR WAY
         </h1>
         <p className="mt-4 max-w-2xl text-pretty text-base font-light leading-relaxed text-white/90 sm:text-lg lg:text-xl [text-shadow:0_1px_12px_rgba(0,0,0,0.45)] motion-safe:animate-[fadeUp_1100ms_ease-out]">
           Small-group tours, private journeys and guaranteed lake shuttles from Banff and Canmore.
@@ -217,7 +217,7 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
             aria-label="Tour categories"
             className="vc-rail -mx-page flex gap-2 overflow-x-auto px-page pb-1 sm:mx-0 sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-0"
           >
-            {slides.map((s, i) => {
+            {items.map((s, i) => {
               const on = i === index;
               return (
                 <button
@@ -261,7 +261,7 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
           <div
             id="services-hero-panel"
             role="tabpanel"
-            aria-label={`${index + 1} of ${slides.length}: ${slide.title}`}
+            aria-label={`${index + 1} of ${items.length}: ${slide.title}`}
             aria-live={announce ? "polite" : "off"}
             className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm text-white/90 sm:text-base"
           >

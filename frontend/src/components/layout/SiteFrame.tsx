@@ -7,6 +7,7 @@
 //   all widths: footer columns reflow through Grid minWidth; page margin from px-page
 
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { AppShell } from "@astryxdesign/core/AppShell";
 import { Button } from "@astryxdesign/core/Button";
 import { Icon } from "@astryxdesign/core/Icon";
@@ -41,6 +42,23 @@ const styles = stylex.create({
 });
 
 export function SiteFrame({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const isHeroPage =
+    pathname === "/" ||
+    pathname === "/shared-tours" ||
+    pathname === "/private-tours" ||
+    pathname === "/shuttles" ||
+    pathname === "/multi-day-tour-package-for-banff";
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (isHeroPage) {
+      root.setAttribute("data-hero-page", "true");
+    } else {
+      root.removeAttribute("data-hero-page");
+    }
+  }, [isHeroPage]);
+
   // The header is sticky, so anything scrolled into view under it would be hidden. Reserve its
   // height as scroll padding: focused elements and #anchors then land below the header
   // (WCAG 2.4.11 Focus Not Obscured). Tracks the header as it wraps or resizes.
@@ -93,8 +111,13 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
                   aria-label="Vista Chase home"
                   className="absolute left-1/2 top-1/2 inline-flex -translate-x-1/2 -translate-y-1/2 items-center gap-2.5 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ocean-600"
                 >
-                  <BrandMark size={30} />
-                  <span className="whitespace-nowrap text-lg tracking-[0.02em] text-obsidian-900 sm:text-xl">
+                  <span className="vc-brandmark-dark inline-flex items-center">
+                    <BrandMark size={30} variant="dark" />
+                  </span>
+                  <span className="vc-brandmark-white hidden items-center">
+                    <BrandMark size={30} variant="white" />
+                  </span>
+                  <span className="vc-nav-brand-text whitespace-nowrap text-lg tracking-[0.02em] text-obsidian-900 sm:text-xl">
                     Vista Chase
                   </span>
                 </Link>
@@ -106,7 +129,7 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
               <Link
                 href="/account/trips"
                 aria-label="My trips"
-                className="inline-flex h-11 w-11 items-center justify-center rounded-full text-obsidian-900 hover:bg-obsidian-900/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-600 lg:hidden"
+                className="vc-trips-mobile inline-flex h-11 w-11 items-center justify-center rounded-full text-obsidian-900 hover:bg-obsidian-900/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-600 lg:hidden"
               >
                 <User className="h-5 w-5" aria-hidden="true" />
               </Link>
@@ -115,7 +138,7 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
                   variant="ghost"
                   href="/account/trips"
                   icon={<Icon icon={User} size="sm" />}
-                  className="max-lg:hidden"
+                  className="vc-trips-desktop max-lg:hidden"
                 />
                 <Button
                   label="Book tours"

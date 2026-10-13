@@ -92,6 +92,12 @@ export default function RootLayout({
       <head>
         {/* Before paint: keep a closed announcement closed on reload (no flash). */}
         <script dangerouslySetInnerHTML={{ __html: ANNOUNCE_SCRIPT }} />
+        {/* Before paint: mark hero pages so transparent header renders without flash. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var p=window.location.pathname;if(p==='/'||p==='/shared-tours'||p==='/private-tours'||p==='/shuttles'||p==='/multi-day-tour-package-for-banff'){document.documentElement.setAttribute('data-hero-page','true');}}catch(e){}})();`,
+          }}
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
