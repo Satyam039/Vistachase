@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getTourBySlug, getTours } from "@/lib/api/catalog";
 import { TourDetailView } from "@/components/tours/TourDetailView";
+import { siteOrigin, withSeo } from "@/lib/seo/server";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -18,12 +19,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!tour) return { title: "Page not found | Vista Chase" };
   const title = tour.metaTitle ?? `${tour.title} | Vista Chase`;
   const description = tour.metaDescription ?? tour.summary;
-  return {
+  return withSeo(`/${tour.slug}`, {
     title,
     description,
     alternates: { canonical: `/${tour.slug}` },
     openGraph: { title, description, images: tour.featuredImage ? [tour.featuredImage] : undefined },
-  };
+  });
 }
 
 export default async function TourPage({ params }: Props) {
@@ -35,5 +36,5 @@ export default async function TourPage({ params }: Props) {
   const bySlug = new Map(related.map((t) => [t.slug, t]));
   const crossSells = tour.crossSells.flatMap((s) => bySlug.get(s) ?? []);
 
-  return <TourDetailView tour={tour} related={crossSells} />;
+  return <TourDetailView tour={tour} related={crossSells} siteOrigin={siteOrigin()} />;
 }

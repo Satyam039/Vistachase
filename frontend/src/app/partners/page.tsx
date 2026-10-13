@@ -7,8 +7,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { BadgePercent, Briefcase, ChevronRight, Hotel, Link2, LineChart, Megaphone } from "lucide-react";
 import { PartnerApplyForm } from "@/components/partners/PartnerApplyForm";
+import { withSeo } from "@/lib/seo/server";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Partner Program | Earn on Banff Tours & Shuttles | Vista Chase",
   description: "Affiliates and associates (hotels, travel agents and creators) earn commission on Vista Chase tours, shuttles and tickets booked through their link.",
   alternates: { canonical: "/partners" },
@@ -141,4 +142,8 @@ export default function PartnersPage() {
       </section>
     </div>
   );
+}
+
+export function generateMetadata(): Promise<Metadata> {
+  return withSeo("/partners", baseMetadata);
 }

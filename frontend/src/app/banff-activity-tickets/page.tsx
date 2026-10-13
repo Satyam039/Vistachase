@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { getCategoryExtras, getTours } from "@/lib/api/catalog";
 import { TourGallery } from "@/components/tours/TourGallery";
 import { serviceById } from "@/lib/services";
+import { withSeo } from "@/lib/seo/server";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Banff & Jasper Activity Tickets | Gondola, Icefield, Lake Cruises | Vista Chase",
   description:
     "Add the Banff Gondola, Open Top Touring, a Lake Minnewanka or Maligne Lake cruise, the Columbia Icefield Adventure or the Banff Upper Hot Springs to your Rockies trip. One request, timed around your Vista Chase tour.",
@@ -25,4 +26,8 @@ export default async function BanffActivityTicketsPage() {
       service={serviceById("tickets")}
     />
   );
+}
+
+export function generateMetadata(): Promise<Metadata> {
+  return withSeo("/banff-activity-tickets", baseMetadata);
 }

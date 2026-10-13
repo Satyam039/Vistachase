@@ -7,8 +7,9 @@ import { AwardSeal } from "@/components/brand/AwardSeal";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { ArrowUpRight, ChevronRight, HeartHandshake, MountainSnow, ShieldCheck, Users } from "lucide-react";
+import { withSeo } from "@/lib/seo/server";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "About Vista Chase | Banff's Top-Rated Tour & Shuttle Operator",
   description:
     "Founded in 2018 in Canmore. TripAdvisor Best of the Best 2026 (#6 experience in Canada). Our story, local guides and fleet for the Canadian Rockies.",
@@ -250,4 +251,8 @@ export default function AboutUsPage() {
       </section>
     </div>
   );
+}
+
+export function generateMetadata(): Promise<Metadata> {
+  return withSeo("/about-us", baseMetadata);
 }

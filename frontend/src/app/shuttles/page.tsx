@@ -12,8 +12,9 @@ import { AmbientVideo } from "@/components/cinematic/AmbientVideo";
 import { TourCard } from "@/components/tours/TourCard";
 import { TrustRow } from "@/components/home/TrustRow";
 import { getShuttleRoutes, getTours } from "@/lib/api/catalog";
+import { withSeo } from "@/lib/seo/server";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Moraine Lake & Lake Louise Shuttles | Vista Chase (Guaranteed Access)",
   description:
     "Sunrise and day shuttles to Moraine Lake and Lake Louise from Canmore and Banff. Parks Canada entry, a local guide and guaranteed access included.",
@@ -224,4 +225,8 @@ export default async function ShuttlesPage() {
       <TrustRow />
     </div>
   );
+}
+
+export function generateMetadata(): Promise<Metadata> {
+  return withSeo("/shuttles", baseMetadata);
 }

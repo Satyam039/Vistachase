@@ -22,7 +22,45 @@ function reportClick(request: NextRequest, code: string) {
   }).catch(() => undefined); // stats only: never delay or break the page
 }
 
-export function middleware(request: NextRequest, event: NextFetchEvent) {
+// SEO redirects managed under Admin → SEO → Redirects (old URL → new URL). The map is fetched from
+// the API at most once a minute and refreshed in the background; if the API is slow or down, pages
+// load as normal (fail open). The backend refuses loops, off-site targets and app paths.
+type RedirectMap = Record<string, [to: string, status: number]>;
+const REDIRECT_TTL_MS = 60_000;
+let redirectCache: { map: RedirectMap; at: number } | null = null;
+let redirectLoad: Promise<void> | null = null;
+
+function loadRedirects(): Promise<void> {
+  redirectLoad ??= fetch(`${BACKEND_URL}/api/seo/public/redirects`, { signal: AbortSignal.timeout(1500) })
+    .then((res) => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
+    .then((body: { redirects?: RedirectMap }) => {
+      redirectCache = { map: body.redirects ?? {}, at: Date.now() };
+    })
+    .catch(() => {
+      // Keep serving the last map; try again after the next TTL.
+      redirectCache = { map: redirectCache?.map ?? {}, at: Date.now() };
+    })
+    .finally(() => {
+      redirectLoad = null;
+    });
+  return redirectLoad;
+}
+
+async function findRedirect(pathname: string, event: NextFetchEvent) {
+  if (!redirectCache) await loadRedirects();
+  else if (Date.now() - redirectCache.at > REDIRECT_TTL_MS) event.waitUntil(loadRedirects());
+  const path = pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
+  return redirectCache?.map[path] ?? null;
+}
+
+export async function middleware(request: NextRequest, event: NextFetchEvent) {
+  const redirect = await findRedirect(request.nextUrl.pathname, event);
+  if (redirect && redirect[0].startsWith("/") && !redirect[0].startsWith("//")) {
+    const target = request.nextUrl.clone();
+    target.pathname = redirect[0]; // the query string (utm, ref) is kept
+    return NextResponse.redirect(target, redirect[1]);
+  }
+
   const ref = request.nextUrl.searchParams.get("ref");
   const response = NextResponse.next();
   if (ref && REF.test(ref)) {

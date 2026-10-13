@@ -3,8 +3,9 @@ import { TourGallery } from "@/components/tours/TourGallery";
 import { SignatureDays } from "@/components/tours/SignatureDays";
 import { serviceById } from "@/lib/services";
 import type { Metadata } from "next";
+import { withSeo } from "@/lib/seo/server";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Shared Tours in Banff & Lake Louise | Vista Chase (Max 12 Guests)",
   description:
     "Explore Banff, Moraine Lake, and Lake Louise with award-winning small group shared tours. Max 12 passengers, local expert guides, and guaranteed access.",
@@ -47,4 +48,8 @@ export default async function SharedToursPage() {
       service={serviceById("shared")}
     />
   );
+}
+
+export function generateMetadata(): Promise<Metadata> {
+  return withSeo("/shared-tours", baseMetadata);
 }

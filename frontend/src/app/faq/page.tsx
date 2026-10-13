@@ -6,8 +6,9 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { ChevronRight, MessageCircle, Phone, Sparkles } from "lucide-react";
 import { FaqBrowser, type FaqItem } from "@/components/faq/FaqBrowser";
+import { withSeo } from "@/lib/seo/server";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "FAQ | Vista Chase Tours & Shuttles",
   description:
     "Answers on booking, the 72-hour cancellation policy, hotel pickups, Moraine Lake access, Parks Canada passes, what to bring and weather.",
@@ -103,4 +104,8 @@ export default function FAQPage() {
       </div>
     </div>
   );
+}
+
+export function generateMetadata(): Promise<Metadata> {
+  return withSeo("/faq", baseMetadata);
 }

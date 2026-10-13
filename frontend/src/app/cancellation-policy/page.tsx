@@ -3,8 +3,9 @@
 
 import type { Metadata } from "next";
 import { LegalDocument, type LegalSection } from "@/components/legal/LegalDocument";
+import { withSeo } from "@/lib/seo/server";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Cancellation Policy | Vista Chase",
   description: "Vista Chase booking, payment and 72-hour cancellation policy, including group, multi-day and third-party terms.",
   alternates: { canonical: "/cancellation-policy" },
@@ -119,4 +120,8 @@ export default function CancellationPolicyPage() {
       current="/cancellation-policy"
     />
   );
+}
+
+export function generateMetadata(): Promise<Metadata> {
+  return withSeo("/cancellation-policy", baseMetadata);
 }
