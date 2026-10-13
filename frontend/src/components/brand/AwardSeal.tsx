@@ -3,6 +3,7 @@
 // Swap in the official badge file here when Vista Chase has it in high resolution.
 
 import Image from "next/image";
+import { Star } from "lucide-react";
 
 export const AWARD = { name: "Travelers' Choice Best of the Best", year: "2026" };
 
@@ -10,11 +11,35 @@ export const AWARD = { name: "Travelers' Choice Best of the Best", year: "2026" 
 export function AwardSeal({ className = "", size = "lg" }: { className?: string; size?: "md" | "lg" }) {
   const md = size === "md";
   return (
-    <div role="img" aria-label={`Tripadvisor ${AWARD.name} ${AWARD.year}`} className={`flex flex-col items-center justify-center text-center ${className}`}>
-      <Image src="/media/badges/tripadvisor-logo.png" alt="" width={800} height={122} className="h-auto w-[62%]" />
-      <span className={`${md ? "mt-2" : "mt-4"} text-xs uppercase tracking-[0.2em] text-slate-600`}>Travelers&apos; Choice</span>
-      <span className={`mt-1 font-light text-obsidian-900 ${md ? "text-sm" : "text-xl sm:text-2xl"}`}>Best of the Best</span>
-      <span className={`font-light tabular-nums tracking-tight text-obsidian-900 ${md ? "mt-1 text-3xl" : "mt-2 text-5xl sm:text-6xl"}`}>{AWARD.year}</span>
+    <div
+      role="img"
+      aria-label={`Tripadvisor ${AWARD.name} ${AWARD.year}`}
+      className={`flex flex-col items-center justify-center text-center ${className}`}
+    >
+      <Image
+        src="/media/badges/tripadvisor-logo.png"
+        alt="Tripadvisor"
+        width={800}
+        height={122}
+        className={`h-auto ${md ? "w-[56%]" : "w-[62%]"}`}
+      />
+      
+      {/* 5 gleaming gold stars */}
+      <div className={`flex items-center gap-1 ${md ? "mt-1.5" : "mt-3"} text-summit-500`}>
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Star key={i} className={`${md ? "h-3 w-3" : "h-3.5 w-3.5"} fill-summit-500 text-summit-500`} />
+        ))}
+      </div>
+
+      <span className={`${md ? "mt-1 text-[10px]" : "mt-2 text-xs"} uppercase tracking-[0.22em] text-[#85641b] font-medium`}>
+        Travelers&apos; Choice
+      </span>
+      <span className={`font-serif tracking-wide text-obsidian-900 font-medium ${md ? "text-xs" : "text-xl sm:text-2xl mt-0.5"}`}>
+        Best of the Best
+      </span>
+      <span className={`font-light tabular-nums tracking-tight text-obsidian-900 ${md ? "mt-0.5 text-2xl" : "mt-1 text-5xl sm:text-6xl"}`}>
+        {AWARD.year}
+      </span>
     </div>
   );
 }
