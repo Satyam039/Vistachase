@@ -12,6 +12,8 @@ import { TourCard } from "@/components/tours/TourCard";
 import { TrustRow } from "@/components/home/TrustRow";
 import { Rail } from "@/components/motion/Rail";
 import { getDestinationBySlug, getDestinations, getTours } from "@/lib/api/catalog";
+import { siteOrigin, withSeo } from "@/lib/seo/server";
+import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 
 type Highlight = { name: string; body: string; image: string };
 
@@ -69,11 +71,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const dest = await getDestinationBySlug(slug);
   if (!dest) return { title: "Destination not found | Vista Chase" };
-  return {
+  return withSeo(`/destinations/${dest.slug}`, {
     title: dest.metaTitle || `${dest.name} Tours & Shuttles | Vista Chase`,
     description: dest.metaDescription || dest.description,
     alternates: { canonical: `/destinations/${dest.slug}` },
-  };
+  });
 }
 
 export default async function DestinationDetailPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -90,6 +92,14 @@ export default async function DestinationDetailPage({ params }: { params: Promis
 
   return (
     <div className="bg-obsidian-50 text-obsidian-900">
+      <BreadcrumbJsonLd
+        origin={siteOrigin()}
+        items={[
+          { name: "Home", path: "/" },
+          { name: "Destinations", path: "/destinations" },
+          { name: dest.name, path: `/destinations/${dest.slug}` },
+        ]}
+      />
       {/* Hero */}
       <section className="relative isolate flex min-h-[72vh] items-end overflow-hidden bg-obsidian-950 text-white">
         <div className="absolute inset-0 -z-10">

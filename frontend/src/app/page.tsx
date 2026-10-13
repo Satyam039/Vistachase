@@ -15,8 +15,10 @@ import { VerifiedAwardSection } from "@/components/cinematic/VerifiedAwardSectio
 import { GuestTestimonials } from "@/components/cinematic/GuestTestimonials";
 import { LiveTrackingTeaser } from "@/components/cinematic/LiveTrackingTeaser";
 import { TrustBar } from "@/components/cinematic/TrustBar";
+import type { Metadata } from "next";
+import { withSeo } from "@/lib/seo/server";
 
-export const metadata = {
+const baseMetadata: Metadata = {
   title: "Vista Chase | Luxury Private Tours & Shuttles • Banff & Lake Louise",
   description:
     "Banff's premier tour operator. Ranked #6 Experience in Canada by TripAdvisor Best of the Best 2026. Guaranteed Moraine Lake access, luxury private SUV tours & shuttles.",
@@ -84,4 +86,8 @@ export default async function HomePage() {
       <TrustBar />
     </div>
   );
+}
+
+export function generateMetadata(): Promise<Metadata> {
+  return withSeo("/", baseMetadata);
 }

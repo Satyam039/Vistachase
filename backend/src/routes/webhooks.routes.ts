@@ -4,10 +4,15 @@
 //   payment_intent.succeeded            → confirm the booking (voucher email) if the amount matches
 //   payment_intent.payment_failed       → cancel the pending booking and release its seats
 //   payment_intent.canceled             → same
+//   charge.refunded                     → reverse partner commission for each refund (also refunds
+//                                         made in the Stripe dashboard); the booking's status is
+//                                         left to staff
 
 import { Router, type Request, type Response } from "express";
 import Stripe from "stripe";
 import { confirmPaidBooking, failPendingBooking } from "@/modules/bookings/booking.repository";
+import { reverseCommissionForRefund } from "@/modules/affiliates/commission";
+import prisma from "@/lib/db/prisma";
 
 const router = Router();
 
@@ -32,6 +37,10 @@ router.post("/stripe", async (req: Request, res: Response) => {
   }
 
   try {
+    if (event.type === "charge.refunded") {
+      await handleChargeRefunded(event.data.object as Stripe.Charge);
+      return res.json({ received: true });
+    }
     const intent = event.data.object as Stripe.PaymentIntent;
     const reference = intent?.metadata?.bookingReference;
     if (reference) {
@@ -49,5 +58,23 @@ router.post("/stripe", async (req: Request, res: Response) => {
     return res.status(500).json({ error: "Webhook handling failed" });
   }
 });
+
+/** Reverse commission for each succeeded refund on the charge. Keyed by refund id, so retries and refunds already handled by the cancel flow are no-ops. */
+async function handleChargeRefunded(charge: Stripe.Charge) {
+  const intentId = typeof charge.payment_intent === "string" ? charge.payment_intent : charge.payment_intent?.id;
+  if (!intentId) return;
+  const payment = await prisma.payment.findUnique({ where: { transactionId: intentId }, select: { bookingId: true } });
+  if (!payment) return;
+  const refunds = charge.refunds?.data ?? [];
+  for (const refund of refunds) {
+    if (refund.status !== "succeeded" && refund.status !== "pending") continue;
+    const line = await reverseCommissionForRefund(payment.bookingId, refund.id, refund.amount, "refund in Stripe");
+    if (line) {
+      await prisma.auditLog.create({
+        data: { action: "COMMISSION_REVERSED", entityType: "Booking", entityId: payment.bookingId, details: { refundId: refund.id, refundedCents: refund.amount, commissionCents: line.amountCents } },
+      });
+    }
+  }
+}
 
 export default router;

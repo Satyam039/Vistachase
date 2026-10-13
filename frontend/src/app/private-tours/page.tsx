@@ -3,8 +3,9 @@ import { TourGallery } from "@/components/tours/TourGallery";
 import { SignatureDays } from "@/components/tours/SignatureDays";
 import { serviceById } from "@/lib/services";
 import type { Metadata } from "next";
+import { withSeo } from "@/lib/seo/server";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Luxury Private SUV Tours in Banff & Canadian Rockies | Vista Chase",
   description:
     "Private tours with your own guide: a luxury SUV for up to 6 guests or an executive van for up to 13. Customizable itineraries, hotel pickup and guaranteed Moraine Lake access.",
@@ -47,4 +48,8 @@ export default async function PrivateToursPage() {
       service={serviceById("private")}
     />
   );
+}
+
+export function generateMetadata(): Promise<Metadata> {
+  return withSeo("/private-tours", baseMetadata);
 }

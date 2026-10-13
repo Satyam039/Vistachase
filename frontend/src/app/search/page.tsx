@@ -3,6 +3,8 @@ import { TourSearch, type SearchFilters } from "@/components/search/TourSearch";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
+  // Checkout and search results have no search value of their own; keep them out of the index.
+  robots: { index: false, follow: true },
   title: "Search Canadian Rockies Tours & Shuttles | Vista Chase",
   description: "Find real-time departures, live seat availability, and guaranteed Moraine Lake tours across Banff and the Rockies.",
   alternates: {

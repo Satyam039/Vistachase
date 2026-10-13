@@ -1,23 +1,24 @@
 // Partner program landing (GetYourGuide / Viator affiliate pages): hero, what partners get, who
-// it's for, how it works, then the application form. The commission rate is set per partner
-// (default 10%) in the partner record.
+// it's for, how it works, then the application form. Commission comes from the admin rules
+// (/admin/partners), falling back to the partner record (default 10%).
 
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { BadgePercent, Briefcase, ChevronRight, Hotel, Link2, LineChart, Megaphone } from "lucide-react";
 import { PartnerApplyForm } from "@/components/partners/PartnerApplyForm";
+import { withSeo } from "@/lib/seo/server";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Partner Program | Earn on Banff Tours & Shuttles | Vista Chase",
-  description: "Hotels, travel agents and creators earn commission on Vista Chase tours, shuttles and tickets booked through their link.",
+  description: "Affiliates and associates (hotels, travel agents and creators) earn commission on Vista Chase tours, shuttles and tickets booked through their link.",
   alternates: { canonical: "/partners" },
 };
 
 const BENEFITS = [
-  { icon: BadgePercent, title: "Commission on bookings", text: "Earn 10% of every tour, shuttle and ticket booked through your links." },
+  { icon: BadgePercent, title: "Commission on bookings", text: "Earn commission on every paid tour, shuttle and ticket booked through your links." },
   { icon: Link2, title: "Links to any page", text: "Share any tour or the whole site. Bookings within 30 days of a click count." },
-  { icon: LineChart, title: "Your own dashboard", text: "See referred bookings, guests and earnings as they come in." },
+  { icon: LineChart, title: "Your own dashboard", text: "See clicks, referred bookings, commission statements and payouts as they come in." },
 ];
 
 const WHO = [
@@ -54,7 +55,7 @@ export default function PartnersPage() {
             Recommend the Rockies. Earn on every booking.
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg font-light leading-relaxed text-white/85 motion-safe:animate-[fadeUp_1100ms_ease-out]">
-            For hotels, travel agents and creators. Share your link, your guests book top-rated tours and shuttles, and you earn commission.
+            For affiliates and associates: hotels, travel agents and creators. Share your link, your guests book top-rated tours and shuttles, and you earn commission.
           </p>
           <div className="mt-7 flex flex-wrap gap-3 motion-safe:animate-[fadeUp_1300ms_ease-out]">
             <a href="#apply" className="golden-summit-btn inline-flex h-12 items-center rounded-full px-7 text-base">
@@ -141,4 +142,8 @@ export default function PartnersPage() {
       </section>
     </div>
   );
+}
+
+export function generateMetadata(): Promise<Metadata> {
+  return withSeo("/partners", baseMetadata);
 }

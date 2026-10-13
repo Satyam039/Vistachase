@@ -1,10 +1,22 @@
 import { describe, it, expect } from "vitest";
 import prisma from "@/lib/db/prisma";
 import { applyAffiliate, getAffiliateDashboard, findActiveAffiliateByCode } from "@/modules/affiliates/affiliate.repository";
-import { createBooking } from "@/modules/bookings/booking.repository";
+import { cancelBooking, createBooking } from "@/modules/bookings/booking.repository";
+import { setPaymentProviderForTests, type IPaymentProvider } from "@/lib/payment/payment.provider";
 import { dateOnly, timeOfDay } from "@/lib/utils/time";
 
 const unique = () => Math.random().toString(36).slice(2, 8);
+
+// Behaves like Stripe: the guest still has to pay in the browser, so nothing is confirmed yet.
+const browserPays: IPaymentProvider = {
+  name: "stripe",
+  async createPaymentIntent(req) {
+    return { clientSecret: `pi_${req.bookingReference}_secret`, intentId: `pi_${req.bookingReference}`, amount: req.amount, currency: req.currency, paid: false };
+  },
+  async refundPayment() {
+    return { success: true, refundId: `re_${unique()}` };
+  },
+};
 
 // Its own bookable departure, so seats taken by other test files running at the same time
 // never get in the way.
@@ -77,24 +89,34 @@ describe("Partner (affiliate) program", () => {
     }
   });
 
-  it("earns commission only on paid bookings, not unpaid, cancelled or refunded ones", async () => {
+  it("earns commission only on paid bookings, not unpaid ones, and takes it back on a refund", async () => {
     const id = unique();
     const applied = await applyAffiliate({ name: `Ledger ${id}`, contactName: "L", email: `ledger-${id}@example.com`, password: "a-long-password", type: "AGENT" });
     if (!applied.success) throw new Error("apply failed");
     const affiliate = await prisma.affiliate.update({ where: { code: applied.affiliate.code }, data: { status: "ACTIVE", commissionRate: 0.1 } });
     const dep = await openDeparture();
-    const statuses = ["CONFIRMED", "PENDING_PAYMENT", "CANCELLED", "REFUNDED"] as const;
-    for (const status of statuses) {
-      const r = await createBooking({ departureId: dep.id, customerName: "Guest", customerEmail: `g-${status}-${id}@example.com`, customerPhone: "+1-403-555-0100", adultsCount: 1, childrenCount: 0, infantsCount: 0, affiliateCode: affiliate.code });
-      expect(r.success).toBe(true);
-      await prisma.booking.update({ where: { bookingReference: r.booking!.bookingReference }, data: { status, totalAmount: 100 } });
-    }
+    const book = (tag: string) =>
+      createBooking({ departureId: dep.id, customerName: "Guest", customerEmail: `g-${tag}-${id}@example.com`, customerPhone: "+1-403-555-0100", adultsCount: 1, childrenCount: 0, infantsCount: 0, affiliateCode: affiliate.code });
+
+    // The mock provider pays at once, so these two are confirmed by a verified payment.
+    const paid = await book("paid");
+    const refunded = await book("refunded");
+    // A payment the guest never finishes: stays PENDING_PAYMENT, earns nothing.
+    setPaymentProviderForTests(browserPays);
+    const unpaid = await book("unpaid");
+    setPaymentProviderForTests(null);
+    expect(paid.booking!.status).toBe("CONFIRMED");
+    expect(unpaid.booking!.status).toBe("PENDING_PAYMENT");
+    const cancelled = await cancelBooking(refunded.booking!.bookingReference, `g-refunded-${id}@example.com`);
+    expect(cancelled.success).toBe(true);
+
     const dashboard = await getAffiliateDashboard(affiliate.userId);
     expect(dashboard!.totals.bookings).toBe(1);
-    expect(dashboard!.totals.revenue).toBe(100);
+    expect(dashboard!.totals.revenue).toBe(100); // dollars: one $100 booking
     expect(dashboard!.totals.commission).toBe(10);
+    expect(dashboard!.totals.reversed).toBe(10);
     const byStatus = Object.fromEntries(dashboard!.recentBookings.map((b) => [b.status, b.commission]));
-    expect(byStatus).toEqual({ CONFIRMED: 10, PENDING_PAYMENT: 0, CANCELLED: 0, REFUNDED: 0 });
+    expect(byStatus).toEqual({ CONFIRMED: 10, PENDING_PAYMENT: 0, REFUNDED: 0 });
   });
 
   it("shows partners their totals and bookings without guest names or contact details", async () => {
@@ -103,7 +125,7 @@ describe("Partner (affiliate) program", () => {
     expect(dashboard?.affiliate.code).toBe("BANFFLODGE");
     expect(dashboard!.totals.bookings).toBeGreaterThan(0);
     expect(dashboard!.totals.commission).toBeCloseTo(dashboard!.totals.revenue * 0.1, 1);
-    const json = JSON.stringify(dashboard);
+    const json = JSON.stringify({ totals: dashboard!.totals, recentBookings: dashboard!.recentBookings }); // the partner's own profile email is expected
     expect(json).not.toMatch(/@example\.com|Sarah Jenkins|\+1-403/);
   });
 });

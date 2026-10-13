@@ -6,6 +6,8 @@ import { getEmailProvider } from "@/lib/email/email.provider";
 import { freeExpiredSeats } from "@/modules/departures/inventory";
 import { reviewLink } from "@/lib/security/signed-links";
 import { dateOnly, todayInMountainTime } from "@/lib/utils/time";
+import { approveMaturedCommissions } from "@/modules/affiliates/commission";
+import { pruneOldClicks } from "@/modules/affiliates/affiliate.repository";
 
 /** Every few minutes: free seats held by expired holds and by bookings never paid for. */
 export async function expireHoldsAndUnpaidBookings(now = new Date()) {
@@ -93,4 +95,22 @@ export async function sendReviewRequests(now = new Date()) {
       .catch((e) => console.error(`Review request for ${booking.bookingReference} failed:`, (e as Error).message));
   }
   return sent;
+}
+
+/** Nightly: partner commission for tours that have run becomes payable; old referral clicks are deleted. */
+export async function maturePartnerCommissions(now = new Date()) {
+  return { ...(await approveMaturedCommissions(now)), ...(await pruneOldClicks(now)) };
+}
+
+/** SEO: scheduled guide and metadata changes go live; blocked ones stay scheduled and show in the audit. */
+export async function publishScheduledSeoPages(now = new Date()) {
+  const { publishDuePages } = await import("@/modules/seo/seo.pages");
+  return publishDuePages(now);
+}
+
+/** SEO: nightly audit of the live pages (SEO_AUDIT_BASE_URL, default the local frontend). */
+export async function runNightlySeoAudit() {
+  const { runAudit } = await import("@/modules/seo/seo.audit");
+  const { run } = await runAudit({ trigger: "SCHEDULED" });
+  return { status: run.status, summary: run.summary };
 }

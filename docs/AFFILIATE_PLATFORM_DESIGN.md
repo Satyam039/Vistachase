@@ -18,6 +18,8 @@ The screenshots of a third-party reseller portal (attractions/lodging tiles, pro
 
 Missing: click events, campaigns/UTM, a commission **ledger** (commission is computed live from the current rate, so changing a partner's rate rewrites history), payouts, contracts, marketing materials, partner-specific promo codes, reseller booking on behalf, audit of partner actions, reports.
 
+**Update (2026-10-12):** click events, the commission ledger with rules, payouts, partner profile editing, audit of admin actions, partner emails and reports are now built. See `AFFILIATES.md`. Still missing: campaigns/UTM, contracts, marketing materials, partner promo codes and reseller booking on behalf.
+
 ## 2. Booking models — assessment
 
 | Model | Fit | Decision |

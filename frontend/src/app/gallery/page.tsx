@@ -6,8 +6,9 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { ChevronRight } from "lucide-react";
 import { GalleryBrowser, type GalleryPhoto } from "@/components/gallery/GalleryBrowser";
+import { withSeo } from "@/lib/seo/server";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Rockies Photo Gallery | Vista Chase Banff",
   description: "Photos of Moraine Lake, Lake Louise, Yoho, the Icefields Parkway, Jasper and Rockies wildlife from Vista Chase tours.",
   alternates: { canonical: "/gallery" },
@@ -80,4 +81,8 @@ export default function GalleryPage() {
       </section>
     </div>
   );
+}
+
+export function generateMetadata(): Promise<Metadata> {
+  return withSeo("/gallery", baseMetadata);
 }

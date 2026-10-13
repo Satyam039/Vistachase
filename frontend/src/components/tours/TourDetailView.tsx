@@ -27,6 +27,7 @@ import { DepartureCalendar } from "@/components/booking/DepartureCalendar";
 import { PriceTag } from "@/components/pricing/PriceTag";
 import { cancellationShort, SEATS_MESSAGE } from "@/lib/policy";
 import { Rail } from "@/components/motion/Rail";
+import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { ProductGallery, type GallerySlide } from "@/components/tours/ProductGallery";
 import { TourSectionNav, TourSections } from "@/components/tours/TourSections";
 import {
@@ -212,10 +213,13 @@ function MobileBookingBar({ children }: { children: React.ReactNode }) {
 export function TourDetailView({
   tour,
   related = [],
+  siteOrigin,
 }: {
   tour: TourWithAvailability;
   /** Cross-sell tours ("Explore more"), in the order the live page lists them. */
   related?: TourWithAvailability[];
+  /** Public site address; when given, the visible breadcrumb is also published as JSON-LD. */
+  siteOrigin?: string;
 }) {
   const categoryKey = tour.category as keyof typeof CATEGORY;
   const categoryInfo = CATEGORY[categoryKey] ?? CATEGORY.SHARED;
@@ -342,6 +346,17 @@ export function TourDetailView({
   return (
     <div className="min-h-screen bg-obsidian-50 text-obsidian-900">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      {siteOrigin && (
+        <BreadcrumbJsonLd
+          origin={siteOrigin}
+          items={[
+            { name: "Home", path: "/" },
+            // Search results aren't indexed, so a category that lands on /search gets no URL.
+            { name: categoryInfo.label, path: categoryInfo.href.includes("?") ? undefined : categoryInfo.href },
+            { name: tour.title, path: `/${tour.slug}` },
+          ]}
+        />
+      )}
 
       {/* 01. HEADER: breadcrumb, title, rating and badges, then the mosaic gallery
           (GetYourGuide / Viator product page order). */}

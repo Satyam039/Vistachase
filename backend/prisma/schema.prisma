@@ -117,25 +117,24 @@ enum DepartureStatus {
   CANCELLED
 }
 
-
 model User {
-  id           String     @id @default(cuid())
-  email        String     @unique
-  passwordHash String
-  name         String
-  phone        String?
-role         Role @default(CUSTOMER) // ADMIN, OPERATOR, DISPATCHER, CUSTOMER, AFFILIATE
-  failedLoginAttempts Int @default(0)
+  id                  String     @id @default(cuid())
+  email               String     @unique
+  passwordHash        String
+  name                String
+  phone               String?
+  role                Role       @default(CUSTOMER) // ADMIN, OPERATOR, DISPATCHER, CUSTOMER, AFFILIATE
+  failedLoginAttempts Int        @default(0)
   lockedUntil         DateTime?
-  emailVerified       Boolean @default(false)
+  emailVerified       Boolean    @default(false)
   verificationToken   String?
   resetToken          String?
   resetTokenExpiry    DateTime?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  bookings     Booking[]
-  auditLogs    AuditLog[]
-  affiliate    Affiliate?
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+  bookings            Booking[]
+  auditLogs           AuditLog[]
+  affiliate           Affiliate?
 
   @@index([email])
 }
@@ -153,6 +152,7 @@ model Destination {
   metaDescription String?
   createdAt       DateTime @default(now())
   tours           Tour[]
+  seoPage         SeoPage?
 
   @@index([slug])
 }
@@ -182,11 +182,11 @@ model Tour {
   // Catalog content imported from the live site (backend/prisma/catalog/products.json)
   bookingMode     TourBookingMode @default(BOKUN) // BOKUN (instant booking), ENQUIRY (request form)
   priceUnit       TourPriceUnit   @default(PERSON) // PERSON, GROUP (whole vehicle)
-  facts           Json          @default("[]") // JSON [{label, value}]
-  tabs            Json          @default("[]") // JSON [{label, sections: [{heading, body[], items[], steps[{time,text}], note}]}]
-  faqs            Json          @default("[]") // JSON [{question, answer}]
-  crossSells      Json          @default("[]") // JSON array of tour slugs
-  vehicleOptions  Json          @default("[]") // JSON [{id, label, seats}] for PRIVATE / MULTIDAY
+  facts           Json            @default("[]") // JSON [{label, value}]
+  tabs            Json            @default("[]") // JSON [{label, sections: [{heading, body[], items[], steps[{time,text}], note}]}]
+  faqs            Json            @default("[]") // JSON [{question, answer}]
+  crossSells      Json            @default("[]") // JSON array of tour slugs
+  vehicleOptions  Json            @default("[]") // JSON [{id, label, seats}] for PRIVATE / MULTIDAY
   sortOrder       Int             @default(0)
   metaTitle       String?
   metaDescription String?
@@ -196,6 +196,7 @@ model Tour {
   updatedAt       DateTime        @updatedAt
   departures      TourDeparture[]
   reviews         Review[]
+  seoPage         SeoPage?
 
   @@index([slug])
   @@index([bokunId])
@@ -233,28 +234,28 @@ model ShuttleStop {
 }
 
 model TourDeparture {
-  id             String            @id @default(cuid())
-  tourId         String?
-  tour           Tour?             @relation(fields: [tourId], references: [id], onDelete: Cascade)
-  shuttleRouteId String?
-  shuttleRoute   ShuttleRoute?     @relation(fields: [shuttleRouteId], references: [id], onDelete: Cascade)
-  date           DateTime // YYYY-MM-DD
-  departureTime  DateTime // e.g. "05:00", "08:30"
-  returnTime     DateTime? // e.g. "10:30", "16:30"
-  capacityTotal  Int               @default(14)
-  capacityBooked Int               @default(0)
-  capacityHeld   Int               @default(0)
-  price          Int // cents: per guest (adult), or per vehicle for private tours
-  childPrice     Int? // cents per child, when Bókun prices children differently
-  currency       String            @default("CAD")
-  status         DepartureStatus @default(ACTIVE) // ACTIVE, FULL, CANCELLED
-  inventorySource     InventorySource @default(UNVERIFIED)
+  id                  String            @id @default(cuid())
+  tourId              String?
+  tour                Tour?             @relation(fields: [tourId], references: [id], onDelete: Cascade)
+  shuttleRouteId      String?
+  shuttleRoute        ShuttleRoute?     @relation(fields: [shuttleRouteId], references: [id], onDelete: Cascade)
+  date                DateTime // YYYY-MM-DD
+  departureTime       DateTime // e.g. "05:00", "08:30"
+  returnTime          DateTime? // e.g. "10:30", "16:30"
+  capacityTotal       Int               @default(14)
+  capacityBooked      Int               @default(0)
+  capacityHeld        Int               @default(0)
+  price               Int // cents: per guest (adult), or per vehicle for private tours
+  childPrice          Int? // cents per child, when Bókun prices children differently
+  currency            String            @default("CAD")
+  status              DepartureStatus   @default(ACTIVE) // ACTIVE, FULL, CANCELLED
+  inventorySource     InventorySource   @default(UNVERIFIED)
   inventoryVerifiedAt DateTime? // when staff confirmed it (LOCAL) or a provider last synced it (EXTERNAL)
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-  holds          ReservationHold[]
-  bookings       Booking[]
-  operationRuns  OperationRun[]
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  holds               ReservationHold[]
+  bookings            Booking[]
+  operationRuns       OperationRun[]
 
   @@index([date])
   @@index([tourId])
@@ -271,7 +272,7 @@ model ReservationHold {
   customerEmail   String
   customerPhone   String?
   expiresAt       DateTime
-  status          HoldStatus @default(ACTIVE) // ACTIVE, EXPIRED, CONVERTED, RELEASED
+  status          HoldStatus    @default(ACTIVE) // ACTIVE, EXPIRED, CONVERTED, RELEASED
   bookingId       String?       @unique // the booking this hold became (CONVERTED)
   createdAt       DateTime      @default(now())
 
@@ -285,8 +286,8 @@ model Booking {
   affiliateId            String? // partner whose ?ref= link brought this booking
   affiliate              Affiliate?             @relation(fields: [affiliateId], references: [id], onDelete: SetNull)
   bokunBookingId         String?                @unique // Bókun external confirmation reference
-  adminNotes             String?                // Staff-only notes (admin booking screen)
-  reviewRequestedAt      DateTime?              // When the post-trip review email went out (sent once)
+  adminNotes             String? // Staff-only notes (admin booking screen)
+  reviewRequestedAt      DateTime? // When the post-trip review email went out (sent once)
   customerId             String?
   customer               User?                  @relation(fields: [customerId], references: [id], onDelete: SetNull)
   customerName           String
@@ -303,11 +304,11 @@ model Booking {
   infantsCount           Int                    @default(0)
   totalSeats             Int
   subtotal               Int
-  tax                    Int                  @default(0)
-  addOnsTotal            Int                  @default(0)
+  tax                    Int                    @default(0)
+  addOnsTotal            Int                    @default(0)
   totalAmount            Int
   currency               String                 @default("CAD")
-  status                 BookingStatus @default(CONFIRMED) // CONFIRMED, PENDING_PAYMENT, CANCELLED, EXPIRED, REFUNDED, COMPLETED
+  status                 BookingStatus          @default(CONFIRMED) // CONFIRMED, PENDING_PAYMENT, CANCELLED, EXPIRED, REFUNDED, COMPLETED
   idempotencyKey         String?                @unique // client key: a retried submission returns this booking
   priceSnapshot          Json? // what the server priced it with (unit prices, promo, add-ons, totals)
   paymentExpiresAt       DateTime? // unpaid after this: EXPIRED and seats released
@@ -328,6 +329,7 @@ model Booking {
   runBookings            RunBooking[]
   whatsappNotifications  WhatsAppNotification[]
   syncTasks              BookingSyncTask[]
+  commissions            CommissionLedger[]
 
   @@index([bookingReference])
   @@index([affiliateId])
@@ -347,15 +349,15 @@ model BookingAddOn {
 }
 
 model Payment {
-  id            String   @id @default(cuid())
+  id            String        @id @default(cuid())
   bookingId     String
-  booking       Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  booking       Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   amount        Int
-  currency      String   @default("CAD")
+  currency      String        @default("CAD")
   provider      String // mock, stripe
-  transactionId String   @unique
+  transactionId String        @unique
   status        PaymentStatus
-  createdAt     DateTime @default(now())
+  createdAt     DateTime      @default(now())
 
   @@index([transactionId])
   @@index([bookingId])
@@ -392,7 +394,7 @@ model Vehicle {
   vinNumber        String?
   trackingDeviceId String?           @unique
   isActive         Boolean           @default(true)
-  status           VehicleStatus @default(AVAILABLE) // AVAILABLE, ASSIGNED, IN_SERVICE, MAINTENANCE
+  status           VehicleStatus     @default(AVAILABLE) // AVAILABLE, ASSIGNED, IN_SERVICE, MAINTENANCE
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   runs             OperationRun[]
@@ -430,7 +432,7 @@ model OperationRun {
   vehicle         Vehicle?         @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
   driverId        String?
   driver          Driver?          @relation(fields: [driverId], references: [id], onDelete: SetNull)
-  status          RunStatus @default(PLANNED) // PLANNED, READY, DISPATCHED, BOARDING, IN_PROGRESS, COMPLETED, CANCELLED, DELAYED
+  status          RunStatus        @default(PLANNED) // PLANNED, READY, DISPATCHED, BOARDING, IN_PROGRESS, COMPLETED, CANCELLED, DELAYED
   notes           String?
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
@@ -558,19 +560,25 @@ model AuditLog {
 // Partner program: hotels, agents and creators who refer bookings with their ?ref= link.
 // Each partner maps to a Bokun booking channel once Vista Chase's Bokun API access exists.
 model Affiliate {
-  id             String    @id @default(cuid())
-  userId         String    @unique
-  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  code           String    @unique // referral code used in ?ref=CODE links
-  name           String // business or creator name
-  type           String    @default("HOTEL") // HOTEL, AGENT, CREATOR, OTHER
-  website        String?
-  status         AffiliateStatus @default(PENDING) // PENDING, ACTIVE, SUSPENDED
-  commissionRate Float     @default(0.1)
-  bokunChannelId String? // Bokun booking channel for this partner (placeholder until API access)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  bookings       Booking[]
+  id              String             @id @default(cuid())
+  userId          String             @unique
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code            String             @unique // referral code used in ?ref=CODE links
+  name            String // business or creator name
+  type            String             @default("HOTEL") // HOTEL, AGENT, CREATOR, OTHER
+  website         String?
+  status          AffiliateStatus    @default(PENDING) // PENDING, ACTIVE, SUSPENDED
+  commissionRate  Float              @default(0.1)
+  bokunChannelId  String? // Bokun booking channel for this partner (placeholder until API access)
+  phone           String?
+  payoutEmail     String? // where Vista Chase sends the partner's payouts (paid outside the app)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  bookings        Booking[]
+  commissionRules CommissionRule[]
+  commissions     CommissionLedger[]
+  payouts         AffiliatePayout[]
+  clicks          AffiliateClick[]
 
   @@index([status])
 }
@@ -578,7 +586,7 @@ model Affiliate {
 // Messages from the contact form and "Request this tour" (custom quotes). The team is emailed a
 // copy; the record keeps it if email delivery fails.
 model Enquiry {
-  id        String   @id @default(cuid())
+  id        String        @id @default(cuid())
   name      String
   email     String
   phone     String?
@@ -587,8 +595,481 @@ model Enquiry {
   date      DateTime?
   message   String
   status    EnquiryStatus @default(NEW) // NEW | REPLIED | CLOSED
-  createdAt DateTime @default(now())
+  createdAt DateTime      @default(now())
 
   @@index([status])
   @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------------------------------
+// Partner commissions (docs/AFFILIATE_PLATFORM_DESIGN.md). Money is integer cents, CAD.
+
+enum CommissionEntryType {
+  EARNED // the booking's payment was verified
+  REVERSAL // part or all of the booking was refunded (negative amount)
+  ADJUSTMENT // staff correction, reason required (either sign)
+}
+
+enum CommissionStatus {
+  PENDING // the tour hasn't run yet
+  APPROVED // payable: the tour date has passed, or approved by an admin
+  PAID // included in a payout an admin marked paid
+}
+
+enum PayoutStatus {
+  DRAFT
+  PAID
+  CANCELLED
+}
+
+/// What a partner earns. The most specific active rule wins: partner + tour, partner + category,
+/// partner, then the same three for everyone (affiliateId null). With no rule, the partner's
+/// commissionRate applies. Exactly one of percentBps (1000 = 10%) or fixedCents is set.
+model CommissionRule {
+  id          String             @id @default(cuid())
+  name        String
+  affiliateId String? // null = every partner
+  affiliate   Affiliate?         @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  tourId      String? // null = every tour
+  category    TourCategory? // null = every category
+  percentBps  Int?
+  fixedCents  Int? // per booking, never more than the amount paid
+  active      Boolean            @default(true)
+  validFrom   DateTime           @default(now())
+  validTo     DateTime?
+  createdById String?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  entries     CommissionLedger[]
+
+  @@index([affiliateId])
+}
+
+/// Append-only: amounts are never edited. A refund adds a negative REVERSAL line; corrections are
+/// ADJUSTMENT lines. entryKey makes every write idempotent (webhook and job retries).
+model CommissionLedger {
+  id           String              @id @default(cuid())
+  entryKey     String              @unique // EARN:<bookingId> | REFUND:<refundId> | ADJUST:<uuid>
+  affiliateId  String
+  affiliate    Affiliate           @relation(fields: [affiliateId], references: [id], onDelete: Restrict)
+  bookingId    String?
+  booking      Booking?            @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+  type         CommissionEntryType
+  basisCents   Int // amount paid (EARNED) or refunded (REVERSAL) the line was computed on
+  amountCents  Int // negative for reversals
+  currency     String              @default("CAD")
+  ruleId       String?
+  rule         CommissionRule?     @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+  ruleSnapshot Json? // the rule as it stood: {source, percentBps | fixedCents}
+  status       CommissionStatus    @default(PENDING)
+  payoutId     String?
+  payout       AffiliatePayout?    @relation(fields: [payoutId], references: [id], onDelete: SetNull)
+  reason       String?
+  createdById  String?
+  approvedAt   DateTime?
+  paidAt       DateTime?
+  createdAt    DateTime            @default(now())
+
+  @@index([affiliateId, status])
+  @@index([bookingId])
+  @@index([payoutId])
+}
+
+/// A payout is prepared and marked paid by an admin; the app never moves money.
+model AffiliatePayout {
+  id          String             @id @default(cuid())
+  affiliateId String
+  affiliate   Affiliate          @relation(fields: [affiliateId], references: [id], onDelete: Restrict)
+  amountCents Int
+  currency    String             @default("CAD")
+  status      PayoutStatus       @default(DRAFT)
+  method      String? // bank transfer, Interac e-Transfer, PayPal…
+  reference   String? // the transfer reference staff enter when marking paid
+  createdById String?
+  paidById    String?
+  paidAt      DateTime?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  entries     CommissionLedger[]
+
+  @@index([affiliateId, status])
+}
+
+/// One row per referral landing, de-duplicated per visitor per day. No raw IP or user agent.
+model AffiliateClick {
+  id          String    @id @default(cuid())
+  affiliateId String
+  affiliate   Affiliate @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  visitorHash String // salted hash of IP + user agent
+  landingPath String
+  createdAt   DateTime  @default(now())
+
+  @@index([affiliateId, createdAt])
+  @@index([visitorHash, createdAt])
+}
+
+// ---------------------------------------------------------------------------------------------
+// SEO (docs/SEO.md). Additive: these tables only describe and override page metadata; tours,
+// destinations and bookings are never changed by them. Metrics are nullable on purpose: a value we
+// have not researched stays null ("unknown") rather than being guessed.
+
+enum SeoPageType {
+  HOME
+  TOUR // a product page, /<tour slug>
+  DESTINATION // /destinations/<slug>
+  LANDING // category pages such as /private-tours, /shuttles
+  GUIDE // editorial content managed here, /guides/<slug>
+  STATIC // about, contact, faq, gallery…
+  LEGAL // policies and terms
+}
+
+enum SeoPageSource {
+  STATIC_ROUTE // a page built in code (frontend/src/app)
+  TOUR
+  DESTINATION
+  CMS // created and rendered from this table (/guides/<slug>)
+}
+
+enum SeoPublishStatus {
+  DRAFT // overrides saved, not live
+  SCHEDULED // goes live at publishAt
+  PUBLISHED
+  ARCHIVED
+}
+
+enum SeoConversionGoal {
+  BOOKING
+  ENQUIRY
+  CALL
+  NEWSLETTER
+  NONE
+}
+
+enum SeoSearchIntent {
+  INFORMATIONAL
+  COMMERCIAL // commercial investigation
+  TRANSACTIONAL
+  NAVIGATIONAL
+}
+
+enum SeoFunnelStage {
+  TOFU
+  MOFU
+  BOFU
+}
+
+enum SeoStrategyTrack {
+  TRAFFIC_ACQUISITION // destination guides, planning, sightseeing information
+  BOOKING_CONVERSION // tours, shuttles and services Vista Chase actually sells
+}
+
+enum SeoPriority {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum SeoKeywordStatus {
+  IDEA
+  PLANNED
+  IN_PROGRESS
+  IMPLEMENTED
+  ARCHIVED
+}
+
+enum SeoValidationStatus {
+  UNVERIFIED // a hypothesis; no keyword tool has confirmed it
+  VERIFIED // metrics checked against the named source on lastVerifiedAt
+  REJECTED // checked and not worth targeting
+}
+
+enum SeoMetricBasis {
+  UNKNOWN // no value
+  ESTIMATE // a guess or a third-party figure we have not checked
+  RESEARCHED // from a named keyword tool, with a date
+}
+
+enum SeoMappingRole {
+  PRIMARY
+  SECONDARY
+}
+
+enum SeoIssueSeverity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum SeoIssueStatus {
+  OPEN
+  IGNORED
+  RESOLVED
+}
+
+enum SeoAuditTrigger {
+  MANUAL
+  SCHEDULED
+}
+
+enum SeoAuditStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum SeoLlmsSection {
+  PRIMARY
+  SECONDARY
+}
+
+/// One row per public URL whose search appearance is managed here. Empty fields fall back to the
+/// page's own defaults in code (or the tour / destination record), so a new row changes nothing.
+model SeoPage {
+  id                 String              @id @default(cuid())
+  path               String              @unique // "/", "/private-tours", "/banff-highlights-tour"
+  pageType           SeoPageType
+  source             SeoPageSource
+  tourId             String?             @unique
+  tour               Tour?               @relation(fields: [tourId], references: [id], onDelete: SetNull)
+  destinationId      String?             @unique
+  destination        Destination?        @relation(fields: [destinationId], references: [id], onDelete: SetNull)
+  label              String // name shown in the dashboard
+  status             SeoPublishStatus    @default(DRAFT)
+  publishAt          DateTime?
+  publishedAt        DateTime?
+  important          Boolean             @default(false) // noindex needs an explicit confirmation
+  seoTitle           String?
+  metaDescription    String?
+  h1                 String?
+  focusKeyword       String?
+  secondaryKeywords  String[]            @default([])
+  canonicalUrl       String?
+  robotsIndex        Boolean             @default(true)
+  robotsFollow       Boolean             @default(true)
+  ogTitle            String?
+  ogDescription      String?
+  ogImage            String?
+  twitterTitle       String?
+  twitterDescription String?
+  twitterImage       String?
+  breadcrumbLabel    String?
+  excerpt            String?
+  body               String? // CMS pages only: a small markdown subset rendered as text, never HTML
+  answerSnippet      String? // TL;DR / direct answer, 40-60 words
+  citationFact       String?
+  faqs               Json                @default("[]") // [{question, answer}]
+  authorName         String?
+  authorBio          String?
+  reviewedAt         DateTime?
+  featuredImage      String?
+  featuredImageAlt   String?
+  imageTitle         String?
+  imageCaption       String?
+  imageFileName      String?
+  ctaText            String?
+  ctaUrl             String?
+  conversionGoal     SeoConversionGoal   @default(NONE)
+  utmSource          String?
+  utmMedium          String?
+  utmCampaign        String?
+  pillar             String?
+  tags               String[]            @default([])
+  relatedPaths       String[]            @default([])
+  sitemapPriority    Float?
+  lastCrawl          Json? // what the audit saw on the live page: title, description, h1s, canonical…
+  lastCrawledAt      DateTime?
+  createdById        String?
+  updatedById        String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  revisions          SeoPageRevision[]
+  mappings           SeoKeywordMapping[]
+  issues             SeoIssue[]
+
+  @@index([pageType])
+  @@index([status])
+}
+
+/// Append-only change log for a page (content freshness / update log).
+model SeoPageRevision {
+  id        String   @id @default(cuid())
+  pageId    String
+  page      SeoPage  @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  userId    String?
+  action    String // UPDATED, PUBLISHED, UNPUBLISHED, SCHEDULED, ARCHIVED, CREATED
+  changes   Json // {field: {from, to}}
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@index([pageId, createdAt])
+}
+
+model SeoKeywordCluster {
+  id          String           @id @default(cuid())
+  name        String           @unique
+  pillar      String?
+  track       SeoStrategyTrack
+  description String?
+  hubPath     String? // the page the cluster points to
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  keywords    SeoKeyword[]
+}
+
+model SeoKeyword {
+  id                String              @id @default(cuid())
+  keyword           String
+  normalized        String              @unique // lower-case, single spaces: duplicate detection
+  designation       SeoMappingRole      @default(SECONDARY)
+  searchVolume      Int?
+  volumeBasis       SeoMetricBasis      @default(UNKNOWN)
+  volumeSource      String?
+  difficulty        Int? // 0-100
+  difficultyBasis   SeoMetricBasis      @default(UNKNOWN)
+  difficultySource  String?
+  intent            SeoSearchIntent
+  funnelStage       SeoFunnelStage
+  track             SeoStrategyTrack
+  clusterId         String?
+  cluster           SeoKeywordCluster?  @relation(fields: [clusterId], references: [id], onDelete: SetNull)
+  targetPath        String? // planned URL when no page exists yet
+  targetPageType    SeoPageType?
+  priority          SeoPriority         @default(MEDIUM)
+  businessRelevance Int? // 1-5
+  competitionNotes  String?
+  competitors       String[]            @default([])
+  status            SeoKeywordStatus    @default(IDEA)
+  dataSource        String?
+  lastVerifiedAt    DateTime?
+  validationStatus  SeoValidationStatus @default(UNVERIFIED)
+  notes             String?
+  archivedAt        DateTime?
+  createdById       String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  mappings          SeoKeywordMapping[]
+
+  @@index([clusterId])
+  @@index([status])
+  @@index([track, priority])
+}
+
+/// Keyword -> page. A keyword should be PRIMARY on at most one page; the audit flags more
+/// (cannibalisation) instead of the database refusing it, so staff can see and fix it.
+model SeoKeywordMapping {
+  id        String         @id @default(cuid())
+  keywordId String
+  keyword   SeoKeyword     @relation(fields: [keywordId], references: [id], onDelete: Cascade)
+  pageId    String
+  page      SeoPage        @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  role      SeoMappingRole @default(SECONDARY)
+  createdAt DateTime       @default(now())
+
+  @@unique([keywordId, pageId])
+  @@index([pageId])
+}
+
+/// 301/308 (permanent) or 302 (temporary) redirects served by the frontend middleware. Only
+/// same-site paths: never an external URL, so this can't become an open redirect.
+model SeoRedirect {
+  id          String   @id @default(cuid())
+  fromPath    String   @unique
+  toPath      String
+  statusCode  Int      @default(301)
+  active      Boolean  @default(true)
+  source      String   @default("MANUAL") // MANUAL | SLUG_CHANGE | IMPORT
+  note        String?
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([active])
+}
+
+model SeoAuditRun {
+  id          String          @id @default(cuid())
+  trigger     SeoAuditTrigger
+  status      SeoAuditStatus  @default(RUNNING)
+  startedById String?
+  baseUrl     String?
+  summary     Json            @default("{}")
+  error       String?
+  startedAt   DateTime        @default(now())
+  finishedAt  DateTime?
+  issues      SeoIssue[]
+
+  @@index([startedAt])
+}
+
+/// One row per problem; the fingerprint (type + path + detail) keeps the same problem on the same
+/// row across audits. Problems an audit no longer finds become RESOLVED; IGNORED stays ignored.
+model SeoIssue {
+  id          String           @id @default(cuid())
+  fingerprint String           @unique
+  type        String
+  severity    SeoIssueSeverity
+  status      SeoIssueStatus   @default(OPEN)
+  path        String?
+  pageId      String?
+  page        SeoPage?         @relation(fields: [pageId], references: [id], onDelete: SetNull)
+  message     String
+  detail      Json             @default("{}")
+  lastRunId   String?
+  lastRun     SeoAuditRun?     @relation(fields: [lastRunId], references: [id], onDelete: SetNull)
+  firstSeenAt DateTime         @default(now())
+  lastSeenAt  DateTime         @default(now())
+  resolvedAt  DateTime?
+
+  @@index([status, severity])
+  @@index([pageId])
+}
+
+/// Site-wide settings, one row (id "site"): llms.txt header, business details for structured data.
+model SeoSiteSettings {
+  id                String   @id @default("site")
+  siteName          String   @default("Vista Chase")
+  summary           String?
+  aboutText         String?
+  contactEmail      String?
+  contactPhone      String?
+  address           String?
+  serviceArea       String[] @default([])
+  businessHours     String?
+  googleBusinessUrl String?
+  sameAs            String[] @default([])
+  llmsEnabled       Boolean  @default(false)
+  updatedById       String?
+  updatedAt         DateTime @updatedAt
+}
+
+model SeoLlmsEntry {
+  id          String         @id @default(cuid())
+  title       String
+  path        String // same-site path or https URL
+  description String?
+  section     SeoLlmsSection @default(PRIMARY)
+  sortOrder   Int            @default(0)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([section, sortOrder])
+}
+
+/// Search Console / analytics figures, filled only by a configured provider. Empty until then:
+/// the dashboard shows "not connected" rather than any number.
+model SeoSearchMetric {
+  id          String   @id @default(cuid())
+  source      String // "google-search-console"
+  path        String
+  date        DateTime @db.Date
+  clicks      Int
+  impressions Int
+  ctr         Float
+  position    Float
+  query       String?
+  fetchedAt   DateTime @default(now())
+
+  @@unique([source, path, date, query])
+  @@index([path, date])
 }

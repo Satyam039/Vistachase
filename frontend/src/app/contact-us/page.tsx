@@ -8,8 +8,9 @@ import type { Metadata } from "next";
 import { ArrowUpRight, ChevronRight, HelpCircle, Mail, MapPin, Phone, Sparkles, Ticket } from "lucide-react";
 import { ContactForm } from "@/components/forms/ContactForm";
 import { getTours } from "@/lib/api/catalog";
+import { withSeo } from "@/lib/seo/server";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Contact Us | Vista Chase Banff & Canmore",
   description: "Call +1 (825) 734-9456, email info@vistachase.com or send us a message. Vista Chase is based in Canmore, Alberta.",
   alternates: { canonical: "/contact-us" },
@@ -141,4 +142,8 @@ export default async function ContactUsPage({ searchParams }: { searchParams: Pr
       </section>
     </div>
   );
+}
+
+export function generateMetadata(): Promise<Metadata> {
+  return withSeo("/contact-us", baseMetadata);
 }
