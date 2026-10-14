@@ -8,7 +8,7 @@ import prisma from "@/lib/db/prisma";
 import { normalizeKeyword } from "@/modules/seo/paths";
 import { parseCsv, toCsv } from "@/modules/seo/seo.csv";
 import { SeoError } from "@/modules/seo/seo.errors";
-import { keywordCreateSchema, type keywordListQuery } from "@/modules/seo/seo.validation";
+import { keywordCreateSchema, type keywordBulkSchema, type keywordListQuery } from "@/modules/seo/seo.validation";
 
 type KeywordInput = z.infer<typeof keywordCreateSchema>;
 
@@ -29,10 +29,15 @@ export function intentMismatch(k: Pick<SeoKeyword, "intent" | "funnelStage" | "t
   return null;
 }
 
+/** The keyword ID people use in sheets and conversations: KW-0001. */
+export const keywordCode = (ref: number) => `KW-${String(ref).padStart(4, "0")}`;
+
 export function keywordDto(k: KeywordRow) {
   const primaryPages = k.mappings.filter((m) => m.role === "PRIMARY");
   return {
     id: k.id,
+    ref: k.ref,
+    code: keywordCode(k.ref),
     keyword: k.keyword,
     designation: k.designation,
     searchVolume: k.searchVolume,
@@ -55,6 +60,14 @@ export function keywordDto(k: KeywordRow) {
     dataSource: k.dataSource,
     lastVerifiedAt: k.lastVerifiedAt,
     validationStatus: k.validationStatus,
+    researchStatus: k.researchStatus,
+    parentTopic: k.parentTopic,
+    market: k.market,
+    language: k.language,
+    bookingIntent: k.bookingIntent,
+    competitorEvidence: k.competitorEvidence,
+    contentGap: k.contentGap,
+    recommendedAction: k.recommendedAction,
     notes: k.notes,
     archivedAt: k.archivedAt,
     mappings: k.mappings.map((m) => ({ id: m.id, role: m.role, page: m.page })),
@@ -71,23 +84,71 @@ export function keywordDto(k: KeywordRow) {
 export async function listKeywords(query: z.infer<typeof keywordListQuery>) {
   const where: Prisma.SeoKeywordWhereInput = {};
   if (query.includeArchived !== "true") where.archivedAt = null;
-  if (query.q) where.keyword = { contains: query.q, mode: "insensitive" };
-  for (const key of ["track", "intent", "funnelStage", "priority", "status", "validationStatus", "clusterId"] as const) {
+  if (query.q) {
+    const ref = /^kw-?0*(\d+)$/i.exec(query.q)?.[1];
+    where.OR = [
+      { keyword: { contains: query.q, mode: "insensitive" } },
+      { parentTopic: { contains: query.q, mode: "insensitive" } },
+      ...(ref ? [{ ref: Number(ref) }] : []),
+    ];
+  }
+  for (const key of ["track", "intent", "funnelStage", "priority", "status", "validationStatus", "researchStatus", "targetPageType", "clusterId"] as const) {
     if (query[key]) (where as Record<string, unknown>)[key] = query[key];
   }
   if (query.mapped === "yes") where.mappings = { some: {} };
   if (query.mapped === "no") where.mappings = { none: {} };
+  const dir = query.dir;
+  const orderBy: Prisma.SeoKeywordOrderByWithRelationInput[] =
+    query.sort === "priority"
+      ? [{ priority: dir }, { keyword: "asc" }]
+      : query.sort === "searchVolume" || query.sort === "difficulty"
+        ? [{ [query.sort]: { sort: dir, nulls: "last" } }, { keyword: "asc" }]
+        : [{ [query.sort]: dir }];
+
+  // Flags are computed from mappings, so flag filters work on the whole (small) list in memory.
+  if (query.flag) {
+    const rows = (await prisma.seoKeyword.findMany({ where, include: KEYWORD_INCLUDE, orderBy })).map(keywordDto).filter((k) => {
+      if (query.flag === "cannibalised") return k.flags.cannibalised;
+      if (query.flag === "intentMismatch") return !!k.flags.intentMismatch;
+      if (query.flag === "unmapped") return k.flags.unmapped;
+      return k.flags.plannedOnly;
+    });
+    const start = (query.page - 1) * query.pageSize;
+    return { total: rows.length, page: query.page, pageSize: query.pageSize, keywords: rows.slice(start, start + query.pageSize) };
+  }
   const [total, rows] = await Promise.all([
     prisma.seoKeyword.count({ where }),
     prisma.seoKeyword.findMany({
       where,
       include: KEYWORD_INCLUDE,
-      orderBy: [{ priority: "asc" }, { keyword: "asc" }],
+      orderBy,
       skip: (query.page - 1) * query.pageSize,
       take: query.pageSize,
     }),
   ]);
   return { total, page: query.page, pageSize: query.pageSize, keywords: rows.map(keywordDto) };
+}
+
+/** Sets the same fields on many keywords in one transaction, with one audit entry per keyword. */
+export async function bulkUpdateKeywords(input: z.infer<typeof keywordBulkSchema>, userId: string) {
+  const ids = [...new Set(input.ids)];
+  const { status, ...set } = input.set;
+  if (set.clusterId && !(await prisma.seoKeywordCluster.findUnique({ where: { id: set.clusterId } }))) throw new SeoError(400, "That cluster doesn't exist.");
+  const found = await prisma.seoKeyword.findMany({ where: { id: { in: ids } }, select: { id: true } });
+  if (found.length !== ids.length) throw new SeoError(404, "Some of the selected keywords no longer exist. Reload and try again.");
+  await prisma.$transaction(
+    async (tx) => {
+      await tx.seoKeyword.updateMany({
+        where: { id: { in: ids } },
+        data: { ...set, ...(status ? { status, archivedAt: status === "ARCHIVED" ? new Date() : null } : {}) },
+      });
+      await tx.auditLog.createMany({
+        data: ids.map((entityId) => ({ userId, action: "SEO_KEYWORD_BULK_UPDATED", entityType: "SeoKeyword", entityId, details: { fields: input.set } as Prisma.InputJsonValue })),
+      });
+    },
+    { timeout: 30_000 },
+  );
+  return { updated: ids.length };
 }
 
 async function audit(tx: Prisma.TransactionClient, userId: string, action: string, entityType: string, entityId: string, details: object) {
@@ -176,7 +237,11 @@ export async function mapKeyword(keywordId: string, pageId: string, role: "PRIMA
   }
   await prisma.$transaction(async (tx) => {
     await tx.seoKeywordMapping.upsert({ where: { keywordId_pageId: { keywordId, pageId } }, create: { keywordId, pageId, role }, update: { role } });
-    if (keyword.status === "IDEA") await tx.seoKeyword.update({ where: { id: keywordId }, data: { status: "PLANNED" } });
+    // Mapping moves the workflow on: an idea becomes planned, a researched keyword becomes mapped.
+    const research = ["UNVERIFIED", "RESEARCHED", "VALIDATED"].includes(keyword.researchStatus) ? { researchStatus: "MAPPED" as const } : {};
+    if (keyword.status === "IDEA" || research.researchStatus) {
+      await tx.seoKeyword.update({ where: { id: keywordId }, data: { ...(keyword.status === "IDEA" ? { status: "PLANNED" as const } : {}), ...research } });
+    }
     await audit(tx, userId, "SEO_KEYWORD_MAPPED", "SeoKeyword", keywordId, { path: page.path, role });
   });
   const k = await prisma.seoKeyword.findUniqueOrThrow({ where: { id: keywordId }, include: KEYWORD_INCLUDE });
@@ -227,20 +292,25 @@ export async function saveCluster(id: string | null, input: { name: string; trac
 // CSV export
 
 export const CSV_COLUMNS = [
-  "keyword", "designation", "searchVolume", "volumeBasis", "volumeSource", "difficulty", "difficultyBasis", "difficultySource",
-  "intent", "funnelStage", "track", "cluster", "targetPath", "targetPageType", "mappedPages", "priority", "businessRelevance",
-  "competitors", "competitionNotes", "status", "dataSource", "lastVerifiedAt", "validationStatus", "notes",
+  "keywordId", "keyword", "designation", "cluster", "parentTopic", "searchVolume", "volumeBasis", "volumeSource", "market", "language",
+  "difficulty", "difficultyBasis", "difficultySource", "intent", "funnelStage", "track", "targetPath", "targetPageType", "mappedPages",
+  "competitors", "competitorEvidence", "competitionNotes", "businessRelevance", "bookingIntent", "priority", "status", "researchStatus",
+  "contentGap", "recommendedAction", "dataSource", "lastVerifiedAt", "validationStatus", "notes",
 ] as const;
+
+/** Fields an import column can be mapped to (keywordId and mappedPages are export-only). */
+export const IMPORT_FIELDS = CSV_COLUMNS.filter((c) => c !== "keywordId" && c !== "mappedPages");
 
 export async function exportKeywordsCsv(includeArchived: boolean) {
   const rows = await prisma.seoKeyword.findMany({ where: includeArchived ? {} : { archivedAt: null }, include: KEYWORD_INCLUDE, orderBy: { keyword: "asc" } });
   return toCsv(
     [...CSV_COLUMNS],
     rows.map((k) => [
-      k.keyword, k.designation, k.searchVolume, k.volumeBasis, k.volumeSource, k.difficulty, k.difficultyBasis, k.difficultySource,
-      k.intent, k.funnelStage, k.track, k.cluster?.name ?? "", k.targetPath, k.targetPageType,
-      k.mappings.map((m) => `${m.page.path} (${m.role.toLowerCase()})`).join("; "), k.priority, k.businessRelevance,
-      k.competitors.join("; "), k.competitionNotes, k.status, k.dataSource, k.lastVerifiedAt, k.validationStatus, k.notes,
+      keywordCode(k.ref), k.keyword, k.designation, k.cluster?.name ?? "", k.parentTopic, k.searchVolume, k.volumeBasis, k.volumeSource, k.market, k.language,
+      k.difficulty, k.difficultyBasis, k.difficultySource, k.intent, k.funnelStage, k.track, k.targetPath, k.targetPageType,
+      k.mappings.map((m) => `${m.page.path} (${m.role.toLowerCase()})`).join("; "),
+      k.competitors.join("; "), k.competitorEvidence, k.competitionNotes, k.businessRelevance, k.bookingIntent, k.priority, k.status, k.researchStatus,
+      k.contentGap, k.recommendedAction, k.dataSource, k.lastVerifiedAt, k.validationStatus, k.notes,
     ]),
   );
 }
@@ -274,6 +344,17 @@ const HEADER_ALIASES: Record<string, string> = {
   lastverifiedat: "lastVerifiedAt", "last verified": "lastVerifiedAt", "last verified at": "lastVerifiedAt",
   validationstatus: "validationStatus", "validation status": "validationStatus", validation: "validationStatus",
   notes: "notes",
+  keywordid: "ignore", "keyword id": "ignore", "s no": "ignore", "s. no": "ignore", "#": "ignore", mappedpages: "ignore", "mapped pages": "ignore",
+  parenttopic: "parentTopic", "parent topic": "parentTopic", topic: "parentTopic",
+  market: "market", country: "market",
+  language: "language", lang: "language",
+  bookingintent: "bookingIntent", "booking intent": "bookingIntent",
+  competitorevidence: "competitorEvidence", "competitor evidence": "competitorEvidence", evidence: "competitorEvidence",
+  contentgap: "contentGap", "content gap": "contentGap",
+  recommendedaction: "recommendedAction", "recommended action": "recommendedAction", action: "recommendedAction",
+  researchstatus: "researchStatus", "research status": "researchStatus",
+  "research source": "dataSource", "verification date": "lastVerifiedAt", "verified on": "lastVerifiedAt",
+  "keyword mapping": "ignore",
 };
 
 const ENUM_WORDS: Record<string, Record<string, string>> = {
@@ -285,6 +366,7 @@ const ENUM_WORDS: Record<string, Record<string, string>> = {
   designation: { primary: "PRIMARY", secondary: "SECONDARY" },
   status: { idea: "IDEA", planned: "PLANNED", in_progress: "IN_PROGRESS", "in progress": "IN_PROGRESS", implemented: "IMPLEMENTED", done: "IMPLEMENTED", archived: "ARCHIVED" },
   validationStatus: { unverified: "UNVERIFIED", verified: "VERIFIED", rejected: "REJECTED" },
+  researchStatus: { unverified: "UNVERIFIED", researched: "RESEARCHED", validated: "VALIDATED", mapped: "MAPPED", implemented: "IMPLEMENTED", monitored: "MONITORED" },
   volumeBasis: { unknown: "UNKNOWN", estimate: "ESTIMATE", estimated: "ESTIMATE", researched: "RESEARCHED" },
   difficultyBasis: { unknown: "UNKNOWN", estimate: "ESTIMATE", estimated: "ESTIMATE", researched: "RESEARCHED" },
 };
@@ -309,7 +391,14 @@ interface ParsedRow {
 /** Strips the ' a spreadsheet export adds before = + - @. */
 const unguard = (v: string) => (/^'[=+\-@]/.test(v) ? v.slice(1) : v).trim();
 
-function parseRows(csv: string, defaults: { track?: string; dataSource?: string }): { header: string[]; rows: ParsedRow[]; unknownColumns: string[] } {
+export interface ImportDefaults {
+  track?: string;
+  dataSource?: string;
+  /** Header -> field (or "ignore"), chosen in the preview; overrides the automatic match. */
+  columnMap?: Record<string, string>;
+}
+
+function parseRows(csv: string, defaults: ImportDefaults): { header: string[]; columns: (string | null)[]; rows: ParsedRow[]; unknownColumns: string[] } {
   if (csv.length > 1_000_000) throw new SeoError(413, "The file is larger than 1 MB.");
   let table: string[][];
   try {
@@ -320,9 +409,15 @@ function parseRows(csv: string, defaults: { track?: string; dataSource?: string 
   if (table.length < 2) throw new SeoError(400, "The file needs a header row and at least one keyword row.");
   if (table.length - 1 > MAX_IMPORT_ROWS) throw new SeoError(413, `Import up to ${MAX_IMPORT_ROWS} keywords at a time.`);
   const header = table[0].map((h) => h.trim());
-  const columns = header.map((h) => HEADER_ALIASES[h.toLowerCase().replace(/\s+/g, " ")] ?? null);
-  if (!columns.includes("keyword")) throw new SeoError(400, 'The header row needs a "keyword" column.');
-  const unknownColumns = header.filter((_, i) => !columns[i]);
+  const columns = header.map((h) => {
+    const chosen = defaults.columnMap?.[h];
+    const field = chosen !== undefined ? chosen : HEADER_ALIASES[h.toLowerCase().replace(/\s+/g, " ")] ?? null;
+    return field === "ignore" ? null : field;
+  });
+  if (!columns.includes("keyword")) throw new SeoError(400, 'The header row needs a "keyword" column, or map one of the columns to Keyword.');
+  const dupes = columns.filter((c, i) => c && columns.indexOf(c) !== i);
+  if (dupes.length > 0) throw new SeoError(400, `More than one column is mapped to ${[...new Set(dupes)].join(", ")}.`);
+  const unknownColumns = header.filter((h, i) => !columns[i] && defaults.columnMap?.[h] !== "ignore" && HEADER_ALIASES[h.toLowerCase().replace(/\s+/g, " ")] !== "ignore");
 
   const rows: ParsedRow[] = table.slice(1).map((cells, idx) => {
     const line = idx + 2;
@@ -393,6 +488,7 @@ function parseRows(csv: string, defaults: { track?: string; dataSource?: string 
       else lastVerifiedAt = d;
     }
     const relevance = intValue("businessRelevance", 5);
+    const bookingIntent = intValue("bookingIntent", 5);
 
     const candidate = {
       keyword,
@@ -416,6 +512,14 @@ function parseRows(csv: string, defaults: { track?: string; dataSource?: string 
       dataSource: raw.dataSource || defaults.dataSource || "CSV import",
       lastVerifiedAt,
       validationStatus: enumValue("validationStatus", false),
+      researchStatus: enumValue("researchStatus", false),
+      parentTopic: raw.parentTopic || null,
+      market: raw.market || undefined,
+      language: raw.language || undefined,
+      bookingIntent: bookingIntent === 0 ? null : bookingIntent ?? null,
+      competitorEvidence: raw.competitorEvidence || null,
+      contentGap: raw.contentGap || null,
+      recommendedAction: raw.recommendedAction || null,
       notes: raw.notes || null,
     };
     const result: ImportRowResult = { line, keyword, action: "create", errors, notes, cluster: raw.cluster || null };
@@ -427,12 +531,12 @@ function parseRows(csv: string, defaults: { track?: string; dataSource?: string 
     }
     return { line, input: { ...parsed.data, clusterName: raw.cluster || null }, result };
   });
-  return { header, rows, unknownColumns };
+  return { header, columns, rows, unknownColumns };
 }
 
 /** Parses and checks a CSV without saving. mode "skip" leaves existing keywords alone; "update" overwrites them. */
-export async function previewImport(csv: string, mode: "skip" | "update", defaults: { track?: string; dataSource?: string } = {}) {
-  const { rows, unknownColumns } = parseRows(csv, defaults);
+export async function previewImport(csv: string, mode: "skip" | "update", defaults: ImportDefaults = {}) {
+  const { header, columns, rows, unknownColumns } = parseRows(csv, defaults);
   const normals = rows.map((r) => (r.input ? normalizeKeyword(r.input.keyword) : null));
   const existing = new Map(
     (await prisma.seoKeyword.findMany({ where: { normalized: { in: normals.filter((n): n is string => !!n) } }, select: { normalized: true, keyword: true } })).map((k) => [k.normalized, k]),
@@ -458,6 +562,8 @@ export async function previewImport(csv: string, mode: "skip" | "update", defaul
   const results = rows.map((r) => r.result);
   return {
     rows: results,
+    columns: header.map((h, i) => ({ header: h, field: columns[i] ?? "ignore" })),
+    fields: IMPORT_FIELDS,
     unknownColumns,
     newClusters: [...newClusters],
     counts: {
@@ -471,7 +577,7 @@ export async function previewImport(csv: string, mode: "skip" | "update", defaul
 }
 
 /** Saves the valid rows of a previewed CSV in one transaction. Rows with errors are never saved. */
-export async function commitImport(csv: string, mode: "skip" | "update", userId: string, defaults: { track?: string; dataSource?: string } = {}) {
+export async function commitImport(csv: string, mode: "skip" | "update", userId: string, defaults: ImportDefaults = {}) {
   const preview = await previewImport(csv, mode, defaults);
   const toSave = preview.parsed.filter((r) => r.input && (r.result.action === "create" || r.result.action === "update"));
   await prisma.$transaction(
@@ -492,7 +598,21 @@ export async function commitImport(csv: string, mode: "skip" | "update", userId:
         }
       }
       await tx.auditLog.create({
-        data: { userId, action: "SEO_KEYWORDS_IMPORTED", entityType: "SeoKeyword", entityId: "import", details: { ...preview.counts, newClusters: preview.newClusters } },
+        data: {
+          userId,
+          action: "SEO_KEYWORDS_IMPORTED",
+          entityType: "SeoKeyword",
+          entityId: "import",
+          // The transformations applied, so an import can be traced back to the original sheet.
+          details: {
+            ...preview.counts,
+            mode,
+            dataSource: defaults.dataSource ?? null,
+            newClusters: preview.newClusters,
+            columns: preview.columns,
+            normalised: preview.rows.filter((r) => r.notes.length > 0).slice(0, 200).map((r) => ({ line: r.line, notes: r.notes })),
+          } as Prisma.InputJsonValue,
+        },
       });
     },
     { timeout: 60_000 },

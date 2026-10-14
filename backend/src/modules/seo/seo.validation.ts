@@ -144,6 +144,7 @@ export const TRACKS = ["TRAFFIC_ACQUISITION", "BOOKING_CONVERSION"] as const;
 export const PRIORITIES = ["HIGH", "MEDIUM", "LOW"] as const;
 export const KEYWORD_STATUSES = ["IDEA", "PLANNED", "IN_PROGRESS", "IMPLEMENTED", "ARCHIVED"] as const;
 export const VALIDATION_STATUSES = ["UNVERIFIED", "VERIFIED", "REJECTED"] as const;
+export const RESEARCH_STATUSES = ["UNVERIFIED", "RESEARCHED", "VALIDATED", "MAPPED", "IMPLEMENTED", "MONITORED"] as const;
 export const METRIC_BASES = ["UNKNOWN", "ESTIMATE", "RESEARCHED"] as const;
 export const ROLES = ["PRIMARY", "SECONDARY"] as const;
 export const PAGE_TYPES = ["HOME", "TOUR", "DESTINATION", "LANDING", "GUIDE", "STATIC", "LEGAL"] as const;
@@ -183,6 +184,14 @@ const keywordFields = z.object({
   dataSource: text(200),
   lastVerifiedAt: z.coerce.date().nullable(),
   validationStatus: z.enum(VALIDATION_STATUSES),
+  researchStatus: z.enum(RESEARCH_STATUSES),
+  parentTopic: text(120),
+  market: z.string().trim().toUpperCase().regex(/^[A-Z]{2}$/, "Use a two-letter country code, such as CA."),
+  language: z.string().trim().regex(/^[a-z]{2}(-[A-Za-z]{2})?$/, "Use a language code, such as en or fr-CA."),
+  bookingIntent: z.number().int().min(1).max(5).nullable(),
+  competitorEvidence: text(1000),
+  contentGap: text(1000),
+  recommendedAction: text(1000),
   notes: text(2000),
 });
 
@@ -230,12 +239,42 @@ export const keywordCreateSchema = keywordFields
     dataSource: true,
     lastVerifiedAt: true,
     validationStatus: true,
+    researchStatus: true,
+    parentTopic: true,
+    market: true,
+    language: true,
+    bookingIntent: true,
+    competitorEvidence: true,
+    contentGap: true,
+    recommendedAction: true,
     notes: true,
   })
   .strict()
   .superRefine(metricsConsistent(true));
 
 export const keywordUpdateSchema = keywordFields.partial().strict().superRefine(metricsConsistent(false));
+
+/** Bulk edit: the same values on up to 500 keywords. Metrics and the keyword text are per keyword. */
+export const keywordBulkSchema = z
+  .object({
+    ids: z.array(z.string().min(10).max(40)).min(1, "Select at least one keyword.").max(500),
+    set: z
+      .object({
+        priority: z.enum(PRIORITIES),
+        status: z.enum(KEYWORD_STATUSES),
+        researchStatus: z.enum(RESEARCH_STATUSES),
+        track: z.enum(TRACKS),
+        intent: z.enum(INTENTS),
+        funnelStage: z.enum(FUNNEL_STAGES),
+        clusterId: z.string().max(40).nullable(),
+        parentTopic: text(120),
+        targetPageType: z.enum(PAGE_TYPES).nullable(),
+      })
+      .partial()
+      .strict()
+      .refine((v) => Object.keys(v).length > 0, "Choose at least one field to change."),
+  })
+  .strict();
 
 export const mappingSchema = z.object({ pageId: z.string().min(1).max(40), role: z.enum(ROLES) }).strict();
 
@@ -270,8 +309,13 @@ export const keywordListQuery = z.object({
   priority: z.enum(PRIORITIES).optional(),
   status: z.enum(KEYWORD_STATUSES).optional(),
   validationStatus: z.enum(VALIDATION_STATUSES).optional(),
+  researchStatus: z.enum(RESEARCH_STATUSES).optional(),
+  targetPageType: z.enum(PAGE_TYPES).optional(),
   clusterId: z.string().max(40).optional(),
   mapped: z.enum(["yes", "no"]).optional(),
+  flag: z.enum(["cannibalised", "intentMismatch", "unmapped", "planned"]).optional(),
+  sort: z.enum(["priority", "keyword", "ref", "searchVolume", "difficulty", "updatedAt"]).default("priority"),
+  dir: z.enum(["asc", "desc"]).default("asc"),
   includeArchived: z.enum(["true", "false"]).optional(),
   page: z.coerce.number().int().min(1).max(10_000).default(1),
   pageSize: z.coerce.number().int().min(1).max(200).default(50),

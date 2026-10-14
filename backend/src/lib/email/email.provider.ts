@@ -18,7 +18,9 @@ class ConsoleEmailProvider implements IEmailProvider {
     console.log(`From: ${payload.from || process.env.EMAIL_FROM || "bookings@vistachase.com"}`);
     console.log(`Subject: ${payload.subject}`);
     console.log("----------------------- [EMAIL CONTENT PREVIEW] -----------------------");
-    console.log(payload.text || payload.html.replace(/<[^>]*>?/gm, "").substring(0, 300) + "...");
+    // One-time tokens (password reset, staff invites) never go to the logs.
+    const preview = payload.text || payload.html.replace(/<[^>]*>?/gm, "").substring(0, 300) + "...";
+    console.log(preview.replace(/[a-f0-9]{64}/gi, "[redacted]"));
     console.log("===================================================================\n");
     return { success: true, messageId };
   }
@@ -67,6 +69,12 @@ class SESEmailProvider implements IEmailProvider {
 }
 
 let emailInstance: IEmailProvider | null = null;
+
+/** True when emails really leave the server (not the console provider used in development). */
+export function emailDeliveryConfigured(): boolean {
+  const providerType = process.env.EMAIL_PROVIDER || "console";
+  return (providerType === "resend" && !!process.env.RESEND_API_KEY) || (providerType === "ses" && !!process.env.AWS_ACCESS_KEY_ID);
+}
 
 export function getEmailProvider(): IEmailProvider {
   if (emailInstance) return emailInstance;
