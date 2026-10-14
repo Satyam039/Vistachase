@@ -1,7 +1,6 @@
 import type React from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { ArrowUpRight, Compass, Shield, Ticket, Users, Sparkles } from "lucide-react";
+import { MediaCard } from "@/components/cards/MediaCard";
+import { Compass, Shield, Ticket, Users, Sparkles } from "lucide-react";
 import { SectionHeading } from "@/components/home/SectionHeading";
 
 interface CategoryCard {
@@ -74,9 +73,11 @@ const CATEGORIES: CategoryCard[] = [
   },
 ];
 
-// Bento layout: the two tour styles get the large tiles, the rest share the second row. Photos
-// drift slowly against the scroll (data-parallax) and zoom on hover.
-const SPAN = ["lg:col-span-3 lg:row-span-1 lg:h-[34rem]", "lg:col-span-3 lg:h-[34rem]", "lg:col-span-2", "lg:col-span-2", "lg:col-span-2"];
+// The two tour styles get the wide cards in the first row, the rest share the second row. Every
+// card is a MediaCard (photo on top, content panel below); photos drift slowly against the scroll
+// (data-parallax) and zoom on hover. Cards in the same row share an aspect so their heights match.
+const SPAN = ["lg:col-span-3", "lg:col-span-3", "lg:col-span-2", "lg:col-span-2", "sm:col-span-2 lg:col-span-2"];
+const ASPECT = ["aspect-[5/4] lg:aspect-[16/9]", "aspect-[5/4] lg:aspect-[16/9]", "aspect-[5/4]", "aspect-[5/4]", "aspect-[5/4] sm:aspect-[21/9] lg:aspect-[5/4]"];
 
 export function ExperienceCategories() {
   return (
@@ -93,42 +94,20 @@ export function ExperienceCategories() {
           {CATEGORIES.map((category, idx) => {
             const Icon = category.icon;
             return (
-              <li key={category.id} className={`${SPAN[idx]} ${idx === 4 ? "sm:col-span-2 lg:col-span-2" : ""}`}>
-                <Link
+              <li key={category.id} className={SPAN[idx]}>
+                <MediaCard
                   href={category.href}
-                  className="group relative flex h-[26rem] flex-col justify-end overflow-hidden rounded-[2.25rem] text-white ring-1 ring-obsidian-900/[0.1] shadow-[0_20px_50px_-20px_rgba(12,31,33,0.25)] transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_32px_70px_-25px_rgba(12,31,33,0.4)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ocean-600 lg:h-full lg:min-h-[24rem]"
-                >
-                  <div className="absolute inset-0 overflow-hidden">
-                    <div className="absolute inset-0 transition-transform duration-[1.4s] ease-out group-hover:scale-[1.06]">
-                      <Image
-                        src={category.image}
-                        alt=""
-                        fill
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 50vw"
-                        className="object-cover"
-                        data-parallax="6"
-                      />
-                    </div>
-                    <div className={`vc-scrim ${idx < 2 ? "vc-scrim-tall" : "vc-scrim-full"}`} aria-hidden="true" />
-                  </div>
-
-                  {category.badge && (
-                    <span className="absolute left-5 top-5 rounded-full bg-white/95 px-3 py-1 text-xs text-obsidian-900">{category.badge}</span>
-                  )}
-
-                  <div className="relative p-6 sm:p-7">
-                    <p className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-summit-400/40 bg-summit-500/15 px-3 py-1 text-sm text-summit-300 backdrop-blur-md">
-                      <Icon className="h-3.5 w-3.5" aria-hidden="true" />
-                      {category.tagline}
-                    </p>
-                    <h3 className="text-2xl font-light text-white sm:text-3xl">{category.title}</h3>
-                    <p className="mt-2 max-w-md text-base font-light leading-relaxed text-slate-100">{category.description}</p>
-                    <span className="mt-5 inline-flex items-center gap-2 text-sm">
-                      <span className="border-b border-summit-500 pb-0.5">Explore {category.title.toLowerCase()}</span>
-                      <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true" />
-                    </span>
-                  </div>
-                </Link>
+                  image={category.image}
+                  sizes={idx < 2 ? "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 640px" : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 420px"}
+                  aspect={ASPECT[idx]}
+                  badge={category.badge}
+                  eyebrow={category.tagline}
+                  eyebrowIcon={Icon}
+                  title={category.title}
+                  description={category.description}
+                  cta={`Explore ${category.title.toLowerCase()}`}
+                  parallax
+                />
               </li>
             );
           })}

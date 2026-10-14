@@ -9,6 +9,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { MediaCard } from "@/components/cards/MediaCard";
 import {
   ArrowRight,
   BadgeCheck,
@@ -390,33 +391,15 @@ export function TourGallery({
         itemClassName="w-[24rem] xl:w-[26rem]"
       >
         {others.map((s) => (
-          <Link
+          <MediaCard
             key={s.id}
             href={s.href}
-            className="group relative flex aspect-[4/5] flex-col justify-end overflow-hidden rounded-[1.75rem] p-7 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ocean-600 lg:aspect-auto lg:h-[min(32rem,calc(100vh-var(--vc-header-h,80px)-18rem))]"
-          >
-            <Image
-              src={s.image}
-              alt=""
-              fill
-              sizes="(max-width: 640px) 80vw, 26rem"
-              className="object-cover transition-transform duration-[1.2s] ease-out group-hover:scale-[1.06]"
-            />
-            <span className="vc-scrim" aria-hidden="true" />
-            <span className="relative text-2xl font-light sm:text-3xl">
-              {s.title}
-            </span>
-            <span className="relative mt-2 max-w-xs text-base font-light text-slate-200">
-              {shortTagline(s.tagline)}
-            </span>
-            <span className="relative mt-4 inline-flex items-center gap-1.5 text-sm text-white">
-              <span className="border-b border-summit-500 pb-0.5">{s.cta}</span>
-              <ArrowRight
-                className="h-4 w-4 transition-transform group-hover:translate-x-1"
-                aria-hidden="true"
-              />
-            </span>
-          </Link>
+            image={s.image}
+            sizes="(max-width: 640px) 80vw, 26rem"
+            title={s.title}
+            description={shortTagline(s.tagline)}
+            cta={s.cta}
+          />
         ))}
       </PinnedHorizontal>
     </div>

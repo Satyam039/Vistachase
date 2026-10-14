@@ -2,9 +2,9 @@
 // Guides are written in the SEO workspace and live at /guides/<slug>; this page only lists them.
 
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { CalendarDays, ChevronRight } from "lucide-react";
+import { MediaCard } from "@/components/cards/MediaCard";
 import { seoFetch, siteOrigin, withSeo } from "@/lib/seo/server";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 
@@ -18,6 +18,9 @@ interface GuideSummary {
 }
 
 export const dynamic = "force-dynamic";
+
+// Shown on a guide card when the guide has no featured image yet (decorative only).
+const FALLBACK_IMAGE = "/media/photos/moraine-lake-perfect-reflection.webp";
 
 export async function generateMetadata(): Promise<Metadata> {
   return withSeo("/guides", {
@@ -66,21 +69,21 @@ export default async function GuidesPage() {
             No guides are published yet. In the meantime, our <Link href="/faq" className="text-ocean-600 underline">FAQ</Link> answers the common planning questions.
           </p>
         ) : (
-          <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {guides.map((g) => (
               <li key={g.path}>
-                <Link href={g.path} className="group flex h-full flex-col overflow-hidden rounded-2xl border border-obsidian-900/[0.06] bg-white hover:border-obsidian-900/20">
-                  {g.featuredImage?.startsWith("/media/") && (
-                    <span className="relative block aspect-[16/9] bg-obsidian-100">
-                      <Image src={g.featuredImage} alt={g.featuredImageAlt ?? ""} fill sizes="(min-width: 1024px) 22rem, (min-width: 640px) 50vw, 100vw" className="object-cover" />
-                    </span>
-                  )}
-                  <span className="flex flex-1 flex-col gap-2 p-5">
-                    <span className="text-xl font-light text-obsidian-900 group-hover:underline">{g.label}</span>
-                    {g.excerpt && <span className="text-slate-700">{g.excerpt}</span>}
-                    {g.publishedAt && <span className="mt-auto pt-2 text-sm text-slate-600">{date(g.publishedAt)}</span>}
-                  </span>
-                </Link>
+                <MediaCard
+                  href={g.path}
+                  image={g.featuredImage?.startsWith("/media/") ? g.featuredImage : FALLBACK_IMAGE}
+                  imageAlt={g.featuredImage?.startsWith("/media/") ? (g.featuredImageAlt ?? "") : ""}
+                  sizes="(min-width: 1024px) 22rem, (min-width: 640px) 50vw, 100vw"
+                  aspect="aspect-[16/10]"
+                  eyebrow={g.publishedAt ? date(g.publishedAt) : "Travel guide"}
+                  eyebrowIcon={CalendarDays}
+                  title={g.label}
+                  description={g.excerpt ?? undefined}
+                  cta="Read the guide"
+                />
               </li>
             ))}
           </ul>
