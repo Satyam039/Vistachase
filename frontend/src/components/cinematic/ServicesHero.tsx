@@ -197,81 +197,85 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
           Small-group tours, private journeys and guaranteed lake shuttles from Banff and Canmore.
         </p>
 
-        {/* 2 · Action: clean, sleek frosted search with generous luxury breathing room */}
-        <div className="mt-12 sm:mt-16 lg:mt-20 w-full max-w-3xl rounded-[2rem] bg-white/10 p-1.5 ring-1 ring-white/20 backdrop-blur-md motion-safe:animate-[fadeUp_1300ms_ease-out] shadow-2xl">
-          <HeroSearch className="w-full" />
-        </div>
-
-        {/* 3 · Clutter-free Experience Switcher */}
-        <div
-          className="mt-10 sm:mt-12 w-full max-w-4xl"
-          onMouseEnter={() => setHovering(true)}
-          onMouseLeave={() => setHovering(false)}
-          onFocusCapture={() => setHovering(true)}
-          onBlurCapture={(e) => {
-            if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setHovering(false);
-          }}
-        >
-          <div
-            role="tablist"
-            aria-label="Tour categories"
-            className="vc-rail -mx-page flex gap-2 overflow-x-auto px-page pb-1 sm:mx-0 sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-0"
-          >
-            {items.map((s, i) => {
-              const on = i === index;
-              return (
-                <button
-                  key={s.id}
-                  ref={(el) => {
-                    tabRefs.current[i] = el;
-                  }}
-                  type="button"
-                  role="tab"
-                  aria-selected={on}
-                  aria-controls="services-hero-panel"
-                  tabIndex={on ? 0 : -1}
-                  onClick={() => go(i)}
-                  onKeyDown={(e) => onTabKey(e, i)}
-                  className={`relative flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-left ring-1 transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-summit-500 ${
-                    on ? "bg-white text-obsidian-900 ring-white shadow-lg" : "bg-white/10 text-white ring-white/15 backdrop-blur-md hover:bg-white/20"
-                  }`}
-                >
-                  <span className="text-xs sm:text-sm font-medium whitespace-nowrap">
-                    {TAB_LABEL[s.id] ?? s.title}
-                  </span>
-                  {fromPrices[i] !== null && (
-                    <span className={`text-[11px] sm:text-xs whitespace-nowrap ${on ? "text-slate-600" : "text-white/70"}`}>
-                      · From {money(fromPrices[i] as number)}
-                    </span>
-                  )}
-                  {on && (
-                    <span className="absolute inset-x-3 bottom-0 h-0.5 bg-obsidian-900/10" aria-hidden="true">
-                      <span
-                        key={`${index}-${rotating}`}
-                        className={`block h-full bg-summit-500 ${rotating ? "animate-[heroProgress_8000ms_linear_forwards]" : "w-full"}`}
-                      />
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+        {/* Search and switcher share one width: the chip row sets it (w-fit), the search fills it without
+            widening it (w-0 min-w-full), so the bar runs from the first chip to the last. */}
+        <div className="w-full sm:w-fit sm:max-w-4xl">
+          {/* 2 · Action: clean, sleek frosted search with generous luxury breathing room */}
+          <div className="mt-12 sm:mt-16 lg:mt-20 w-0 min-w-full rounded-[2rem] bg-white/10 p-1.5 ring-1 ring-white/20 backdrop-blur-md motion-safe:animate-[fadeUp_1300ms_ease-out] shadow-2xl">
+            <HeroSearch className="w-full" />
           </div>
 
-          {/* The selected experience (tabpanel): its line and link, right under the switcher. */}
+          {/* 3 · Clutter-free Experience Switcher */}
           <div
-            id="services-hero-panel"
-            role="tabpanel"
-            aria-label={`${index + 1} of ${items.length}: ${slide.title}`}
-            aria-live={announce ? "polite" : "off"}
-            className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm text-white/90 sm:text-base"
+            className="mt-10 sm:mt-12 w-full"
+            onMouseEnter={() => setHovering(true)}
+            onMouseLeave={() => setHovering(false)}
+            onFocusCapture={() => setHovering(true)}
+            onBlurCapture={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setHovering(false);
+            }}
           >
-            <span key={slide.id} className="[text-shadow:0_1px_10px_rgba(0,0,0,0.5)] motion-safe:animate-[fadeUp_600ms_ease-out]">
-              {shortTagline(slide.tagline)}
-            </span>
-            <Link href={slide.href} className="group inline-flex items-center gap-1.5 text-summit-300 underline decoration-summit-300/50 underline-offset-4 hover:decoration-summit-300">
-              Explore {(TAB_LABEL[slide.id] ?? slide.title).toLowerCase()}
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-            </Link>
+            <div
+              role="tablist"
+              aria-label="Tour categories"
+              className="vc-rail -mx-page flex gap-2 overflow-x-auto px-page pb-1 sm:mx-0 sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-0"
+            >
+              {items.map((s, i) => {
+                const on = i === index;
+                return (
+                  <button
+                    key={s.id}
+                    ref={(el) => {
+                      tabRefs.current[i] = el;
+                    }}
+                    type="button"
+                    role="tab"
+                    aria-selected={on}
+                    aria-controls="services-hero-panel"
+                    tabIndex={on ? 0 : -1}
+                    onClick={() => go(i)}
+                    onKeyDown={(e) => onTabKey(e, i)}
+                    className={`relative flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-left ring-1 transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-summit-500 ${
+                      on ? "bg-white text-obsidian-900 ring-white shadow-lg" : "bg-white/10 text-white ring-white/15 backdrop-blur-md hover:bg-white/20"
+                    }`}
+                  >
+                    <span className="text-xs sm:text-sm font-medium whitespace-nowrap">
+                      {TAB_LABEL[s.id] ?? s.title}
+                    </span>
+                    {fromPrices[i] !== null && (
+                      <span className={`text-[11px] sm:text-xs whitespace-nowrap ${on ? "text-slate-600" : "text-white/70"}`}>
+                        · From {money(fromPrices[i] as number)}
+                      </span>
+                    )}
+                    {on && (
+                      <span className="absolute inset-x-3 bottom-0 h-0.5 bg-obsidian-900/10" aria-hidden="true">
+                        <span
+                          key={`${index}-${rotating}`}
+                          className={`block h-full bg-summit-500 ${rotating ? "animate-[heroProgress_8000ms_linear_forwards]" : "w-full"}`}
+                        />
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* The selected experience (tabpanel): its line and link, right under the switcher. */}
+            <div
+              id="services-hero-panel"
+              role="tabpanel"
+              aria-label={`${index + 1} of ${items.length}: ${slide.title}`}
+              aria-live={announce ? "polite" : "off"}
+              className="mt-4 flex w-0 min-w-full flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm text-white/90 sm:text-base"
+            >
+              <span key={slide.id} className="[text-shadow:0_1px_10px_rgba(0,0,0,0.5)] motion-safe:animate-[fadeUp_600ms_ease-out]">
+                {shortTagline(slide.tagline)}
+              </span>
+              <Link href={slide.href} className="group inline-flex items-center gap-1.5 text-summit-300 underline decoration-summit-300/50 underline-offset-4 hover:decoration-summit-300">
+                Explore {(TAB_LABEL[slide.id] ?? slide.title).toLowerCase()}
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+              </Link>
+            </div>
           </div>
         </div>
       </div>
