@@ -1,22 +1,54 @@
-// Shared header for the staff pages: eyebrow, light title, actions on the right and the section
-// tabs underlined under the current page.
+"use client";
 
-import type { ReactNode } from "react";
+// Shared header for the staff pages: eyebrow, light title, actions on the right and the section
+// tabs underlined under the current page. Tabs follow the signed-in role (the API enforces the
+// same rules; this only hides sections a role can't open).
+
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { CalendarDays, Handshake, LayoutDashboard, Lock, ArrowRight, MapPin, ScrollText, Search, Ticket, Truck, Users, Workflow } from "lucide-react";
+import { CalendarDays, FileText, Handshake, LayoutDashboard, Lock, ArrowRight, MapPin, ScrollText, Search, Ticket, Truck, Users, Workflow } from "lucide-react";
+
+const OPS = ["ADMIN", "OPERATOR", "DISPATCHER"];
+const CONTENT = ["ADMIN", "SEO_MANAGER", "EDITOR", "VIEWER"];
 
 export const ADMIN_TABS = [
-  { label: "Overview", href: "/admin", icon: LayoutDashboard },
-  { label: "Bookings", href: "/admin/bookings", icon: Ticket },
-  { label: "Departures", href: "/admin/departures", icon: CalendarDays },
-  { label: "Dispatch", href: "/admin/dispatch", icon: Truck },
-  { label: "Operations", href: "/admin/operations", icon: Workflow },
-  { label: "Partners", href: "/admin/partners", icon: Handshake },
-  { label: "Pickup stops", href: "/admin/pickup-stops", icon: MapPin },
-  { label: "SEO", href: "/admin/seo", icon: Search },
-  { label: "Audit log", href: "/admin/audit", icon: ScrollText },
-  { label: "Staff", href: "/admin/staff", icon: Users },
+  { label: "Overview", href: "/admin", icon: LayoutDashboard, roles: OPS },
+  { label: "Bookings", href: "/admin/bookings", icon: Ticket, roles: OPS },
+  { label: "Departures", href: "/admin/departures", icon: CalendarDays, roles: OPS },
+  { label: "Dispatch", href: "/admin/dispatch", icon: Truck, roles: OPS },
+  { label: "Operations", href: "/admin/operations", icon: Workflow, roles: OPS },
+  { label: "Partners", href: "/admin/partners", icon: Handshake, roles: ["ADMIN"] },
+  { label: "Pickup stops", href: "/admin/pickup-stops", icon: MapPin, roles: OPS },
+  { label: "Content", href: "/admin/content", icon: FileText, roles: CONTENT },
+  { label: "SEO", href: "/admin/seo", icon: Search, roles: CONTENT },
+  { label: "Audit log", href: "/admin/audit", icon: ScrollText, roles: ["ADMIN"] },
+  { label: "Staff", href: "/admin/staff", icon: Users, roles: ["ADMIN"] },
 ];
+
+/** Where each role lands after signing in. */
+export function homeForRole(role: string | undefined): string {
+  if (role && OPS.includes(role)) return "/admin";
+  if (role === "EDITOR") return "/admin/content";
+  if (role && CONTENT.includes(role)) return "/admin/seo";
+  if (role === "AFFILIATE") return "/partners/dashboard";
+  return "/account/trips";
+}
+
+/** The signed-in person's role, or null while loading / signed out. */
+export function useStaffRole() {
+  const [role, setRole] = useState<string | null>(null);
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/auth/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => alive && setRole(d?.user?.role ?? ""))
+      .catch(() => alive && setRole(""));
+    return () => {
+      alive = false;
+    };
+  }, []);
+  return role;
+}
 
 export function AdminHeader({
   eyebrow = "Staff · Operations",
@@ -31,6 +63,9 @@ export function AdminHeader({
   actions?: ReactNode;
   current: string;
 }) {
+  const role = useStaffRole();
+  // Until the role is known show only the current tab, so a role never sees tabs flash that it can't use.
+  const tabs = ADMIN_TABS.filter((t) => (role ? t.roles.includes(role) : t.href === current));
   return (
     <div className="border-b border-obsidian-900/[0.07] bg-white">
       <div className="mx-auto max-w-7xl px-page pt-8">
@@ -43,7 +78,7 @@ export function AdminHeader({
           {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
         </div>
         <nav aria-label="Admin sections" className="vc-rail -mx-page mt-7 flex gap-1 overflow-x-auto px-page">
-          {ADMIN_TABS.map(({ label, href, icon: Icon }) => {
+          {tabs.map(({ label, href, icon: Icon }) => {
             const isCurrent = href === current;
             return (
               <Link

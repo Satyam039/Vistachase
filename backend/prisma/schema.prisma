@@ -13,6 +13,9 @@ enum Role {
   DISPATCHER
   CUSTOMER
   AFFILIATE
+  SEO_MANAGER // SEO workspace: keywords, page metadata, redirects, audits, llms.txt; no bookings or payments
+  EDITOR // site content: tour and destination copy, page content fields; no SEO configuration
+  VIEWER // read-only SEO workspace and content
 }
 
 enum BookingStatus {
@@ -123,7 +126,7 @@ model User {
   passwordHash        String
   name                String
   phone               String?
-  role                Role       @default(CUSTOMER) // ADMIN, OPERATOR, DISPATCHER, CUSTOMER, AFFILIATE
+  role                Role       @default(CUSTOMER) // see enum Role
   failedLoginAttempts Int        @default(0)
   lockedUntil         DateTime?
   emailVerified       Boolean    @default(false)
@@ -784,6 +787,15 @@ enum SeoValidationStatus {
   REJECTED // checked and not worth targeting
 }
 
+enum SeoResearchStatus {
+  UNVERIFIED // a hypothesis; nobody has researched it yet
+  RESEARCHED // metrics looked up in a named tool
+  VALIDATED // checked as worth targeting for Vista Chase
+  MAPPED // assigned to a page
+  IMPLEMENTED // the page targets it
+  MONITORED // live and being tracked
+}
+
 enum SeoMetricBasis {
   UNKNOWN // no value
   ESTIMATE // a guess or a third-party figure we have not checked
@@ -919,41 +931,51 @@ model SeoKeywordCluster {
 }
 
 model SeoKeyword {
-  id                String              @id @default(cuid())
-  keyword           String
-  normalized        String              @unique // lower-case, single spaces: duplicate detection
-  designation       SeoMappingRole      @default(SECONDARY)
-  searchVolume      Int?
-  volumeBasis       SeoMetricBasis      @default(UNKNOWN)
-  volumeSource      String?
-  difficulty        Int? // 0-100
-  difficultyBasis   SeoMetricBasis      @default(UNKNOWN)
-  difficultySource  String?
-  intent            SeoSearchIntent
-  funnelStage       SeoFunnelStage
-  track             SeoStrategyTrack
-  clusterId         String?
-  cluster           SeoKeywordCluster?  @relation(fields: [clusterId], references: [id], onDelete: SetNull)
-  targetPath        String? // planned URL when no page exists yet
-  targetPageType    SeoPageType?
-  priority          SeoPriority         @default(MEDIUM)
-  businessRelevance Int? // 1-5
-  competitionNotes  String?
-  competitors       String[]            @default([])
-  status            SeoKeywordStatus    @default(IDEA)
-  dataSource        String?
-  lastVerifiedAt    DateTime?
-  validationStatus  SeoValidationStatus @default(UNVERIFIED)
-  notes             String?
-  archivedAt        DateTime?
-  createdById       String?
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-  mappings          SeoKeywordMapping[]
+  id                 String              @id @default(cuid())
+  ref                Int                 @unique @default(autoincrement()) // human keyword ID, shown as KW-0001
+  keyword            String
+  normalized         String              @unique // lower-case, single spaces: duplicate detection
+  designation        SeoMappingRole      @default(SECONDARY)
+  searchVolume       Int?
+  volumeBasis        SeoMetricBasis      @default(UNKNOWN)
+  volumeSource       String?
+  difficulty         Int? // 0-100
+  difficultyBasis    SeoMetricBasis      @default(UNKNOWN)
+  difficultySource   String?
+  intent             SeoSearchIntent
+  funnelStage        SeoFunnelStage
+  track              SeoStrategyTrack
+  clusterId          String?
+  cluster            SeoKeywordCluster?  @relation(fields: [clusterId], references: [id], onDelete: SetNull)
+  targetPath         String? // planned URL when no page exists yet
+  targetPageType     SeoPageType?
+  priority           SeoPriority         @default(MEDIUM)
+  businessRelevance  Int? // 1-5
+  competitionNotes   String?
+  competitors        String[]            @default([])
+  status             SeoKeywordStatus    @default(IDEA)
+  dataSource         String?
+  lastVerifiedAt     DateTime?
+  validationStatus   SeoValidationStatus @default(UNVERIFIED)
+  researchStatus     SeoResearchStatus   @default(UNVERIFIED)
+  parentTopic        String?
+  market             String              @default("CA") // ISO country code of the search market
+  language           String              @default("en")
+  bookingIntent      Int? // 1-5: how likely a searcher is to book
+  competitorEvidence String? // where the competitor ranking was seen (tool, date, URL)
+  contentGap         String?
+  recommendedAction  String?
+  notes              String?
+  archivedAt         DateTime?
+  createdById        String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  mappings           SeoKeywordMapping[]
 
   @@index([clusterId])
   @@index([status])
   @@index([track, priority])
+  @@index([researchStatus])
 }
 
 /// Keyword -> page. A keyword should be PRIMARY on at most one page; the audit flags more

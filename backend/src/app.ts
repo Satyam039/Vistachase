@@ -25,6 +25,7 @@ import affiliatesRoutes from "@/routes/affiliates.routes";
 import pricingRoutes from "@/routes/pricing.routes";
 import webhooksRoutes from "@/routes/webhooks.routes";
 import seoRoutes from "@/routes/seo.routes";
+import contentRoutes from "@/routes/content.routes";
 import { apiJsonReplacer } from "@/lib/utils/time";
 import { isAllowedOrigin } from "@/lib/security/origin-check";
 
@@ -122,6 +123,7 @@ export function createApp() {
   app.use("/api/affiliates", affiliatesRoutes);
   app.use("/api/pricing", pricingRoutes);
   app.use("/api/seo", seoRoutes);
+  app.use("/api/content", contentRoutes);
 
   app.use("/api", (_req, res) => {
     res.status(404).json({ success: false, error: "Not found" });

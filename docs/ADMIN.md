@@ -4,16 +4,21 @@ Everything here lives under `/admin` (frontend) and `/api/admin` (backend, `src/
 Every request checks the signed-in person's **current role in the database**, and every change is
 written to the audit log with who made it.
 
+"Operations staff" below means Admin, Operator and Dispatcher. SEO managers, editors and viewers never see
+bookings, guests, payments, partners or commissions.
+
 | Screen | Who | What |
 | --- | --- | --- |
-| Bookings → Bookings | all staff (actions: Admin, Operator) | Search, booking detail with payments, flags and history; edit notes; resend voucher; **cancel** with a refund decision |
-| Bookings → Flags | all staff (actions: Admin, Operator; Mark refunded: Admin) | Payments that didn't match or came late, refunds owed, Quick Book payments due |
+| Bookings → Bookings | operations staff (actions: Admin, Operator) | Search, booking detail with payments, flags and history; edit notes; resend voucher; **cancel** with a refund decision |
+| Bookings → Flags | operations staff (actions: Admin, Operator; Mark refunded: Admin) | Payments that didn't match or came late, refunds owed, Quick Book payments due |
 | Bookings → Quick Book | Admin, Operator | Book a departure for a guest on the phone or at the desk |
-| Departures | all staff (changes: Admin, Operator) | List, add many dates at once, edit seats and prices, take off sale, manifest |
-| Departures → Manifest | all staff | Printable passenger list per departure, CSV download |
-| Pickup stops | all staff (changes: Admin, Operator) | Add, edit, turn stops on and off |
+| Departures | operations staff (changes: Admin, Operator) | List, add many dates at once, edit seats and prices, take off sale, manifest |
+| Departures → Manifest | operations staff | Printable passenger list per departure, CSV download |
+| Pickup stops | operations staff (changes: Admin, Operator) | Add, edit, turn stops on and off |
 | Audit log | Admin | Every recorded action, filterable, paged |
-| Staff | Admin | Give or remove staff roles |
+| Content | Admin, SEO manager, Editor (Viewer reads) | Tour and destination words and photos, with change history ([SEO_WORKSPACE.md](SEO_WORKSPACE.md)) |
+| SEO | Admin, SEO manager (Editor writes copy, Viewer reads) | See [SEO.md](SEO.md) |
+| Staff | Admin | Invite staff (one-time password link), give or remove staff roles |
 
 ## Roles take effect at once
 

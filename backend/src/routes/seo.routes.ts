@@ -2,20 +2,25 @@
 //
 // /api/seo/public/*  read-only, what the public site needs: published overrides, published guides,
 //                    sitemap entries, redirects and llms.txt. No drafts, research or audit data.
-// /api/seo/admin/*   the SEO dashboard. ADMIN role only, every request; every write is validated
-//                    with zod (unknown fields refused) and written to AuditLog.
+// /api/seo/admin/*   the SEO workspace. Reads: ADMIN, SEO_MANAGER, EDITOR, VIEWER. Writes: ADMIN and
+//                    SEO_MANAGER, except page content (EDITOR may change the words and images of a
+//                    page or guide, not its indexing, URL or status). See lib/auth/permissions.ts.
+//                    Every write is validated with zod (unknown fields refused) and audited.
 
 import { Router, type NextFunction, type Request, type Response } from "express";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import prisma from "@/lib/db/prisma";
 import { getAuthenticatedStaff } from "@/lib/auth/admin-guard";
+import { capabilities, can, EDITOR_PAGE_FIELDS, SEO_CONTENT, SEO_MANAGE, SEO_READ } from "@/lib/auth/permissions";
 import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
 import { SeoError } from "@/modules/seo/seo.errors";
 import { changeStatus, checksFor, createGuide, getPage, listPages, syncPages, updatePage } from "@/modules/seo/seo.pages";
 import {
+  bulkUpdateKeywords,
   commitImport,
   createKeyword,
+  IMPORT_FIELDS,
   exportKeywordsCsv,
   listClusters,
   listKeywords,
@@ -36,6 +41,7 @@ import { activeRedirectMap, llmsTxt, publicGuide, publicGuides, publicMeta, site
 import {
   clusterSchema,
   createGuideSchema,
+  keywordBulkSchema,
   keywordCreateSchema,
   keywordListQuery,
   keywordUpdateSchema,
@@ -133,9 +139,28 @@ router.get("/public/llms.txt", publicLimit, wrap(async (req, res) => {
 // ---------------------------------------------------------------------------------------------
 // Admin
 
+// Writes an EDITOR may make (page and guide content). Every other write needs SEO_MANAGE.
+const CONTENT_WRITES: [string, RegExp][] = [
+  ["POST", /^\/admin\/pages\/?$/],
+  ["PATCH", /^\/admin\/pages\/[^/]+\/?$/],
+  ["POST", /^\/admin\/pages\/[^/]+\/validate\/?$/],
+];
+
 router.use("/admin", async (req, res, next) => {
-  const staff = await getAuthenticatedStaff(req, ["ADMIN"]).catch(() => null);
-  if (!staff) return res.status(req.cookies?.vc_token || req.headers.authorization ? 403 : 401).json({ success: false, error: "Admins only." });
+  const staff = await getAuthenticatedStaff(req, SEO_READ).catch(() => null);
+  if (!staff) return res.status(req.cookies?.vc_token || req.headers.authorization ? 403 : 401).json({ success: false, error: "Sign in with an SEO, editor or admin account." });
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    const path = `/admin${req.path}`;
+    const contentWrite = CONTENT_WRITES.some(([method, pattern]) => method === req.method && pattern.test(path));
+    if (!can(staff.role, contentWrite ? SEO_CONTENT : SEO_MANAGE)) {
+      return res.status(403).json({ success: false, error: "Your role can view this but not change it." });
+    }
+    // Editors change words and images only, never indexing, canonicals, slugs or schedules.
+    if (contentWrite && req.method === "PATCH" && !can(staff.role, SEO_MANAGE)) {
+      const blocked = Object.keys(req.body ?? {}).filter((key) => !EDITOR_PAGE_FIELDS.has(key));
+      if (blocked.length > 0) return res.status(403).json({ success: false, error: `Only an SEO manager or admin can change: ${blocked.join(", ")}.` });
+    }
+  }
   res.locals.staff = staff;
   // Admin data is per-user and never cached.
   res.setHeader("Cache-Control", "no-store");
@@ -143,6 +168,8 @@ router.use("/admin", async (req, res, next) => {
 });
 
 const userId = (res: Response): string => res.locals.staff.userId;
+
+router.get("/admin/me", (_req, res) => res.json({ success: true, name: res.locals.staff.name, ...capabilities(res.locals.staff.role) }));
 
 router.get("/admin/overview", wrap(async (_req, res) => res.json({ success: true, overview: await overview() })));
 
@@ -208,6 +235,11 @@ router.post("/admin/keywords", wrap(async (req, res) => {
   return res.status(201).json({ success: true, keyword: await createKeyword(input, userId(res)) });
 }));
 
+router.post("/admin/keywords/bulk", wrap(async (req, res) => {
+  const input = keywordBulkSchema.parse(req.body ?? {});
+  return res.json({ success: true, result: await bulkUpdateKeywords(input, userId(res)) });
+}));
+
 router.patch("/admin/keywords/:id", wrap(async (req, res) => {
   const input = keywordUpdateSchema.parse(req.body ?? {});
   return res.json({ success: true, keyword: await updateKeyword(id(req), input, userId(res)) });
@@ -241,18 +273,24 @@ const importSchema = z
     mode: z.enum(["skip", "update"]).default("skip"),
     track: z.enum(["TRAFFIC_ACQUISITION", "BOOKING_CONVERSION"]).optional(),
     dataSource: z.string().trim().max(200).optional(),
+    columnMap: z
+      .record(z.string().max(200), z.enum(["ignore", ...IMPORT_FIELDS] as [string, ...string[]]))
+      .refine((m) => Object.keys(m).length <= 100, "Too many columns.")
+      .optional(),
   })
   .strict();
 
+const importDefaults = (input: z.infer<typeof importSchema>) => ({ track: input.track, dataSource: input.dataSource, columnMap: input.columnMap });
+
 router.post("/admin/keywords/import/preview", wrap(async (req, res) => {
   const input = importSchema.parse(req.body ?? {});
-  const { parsed: _parsed, ...preview } = await previewImport(input.csv, input.mode, { track: input.track, dataSource: input.dataSource });
+  const { parsed: _parsed, ...preview } = await previewImport(input.csv, input.mode, importDefaults(input));
   return res.json({ success: true, preview });
 }));
 
 router.post("/admin/keywords/import", rateLimitMiddleware("seo_import", { maxRequests: 20, windowSeconds: 3600 }), wrap(async (req, res) => {
   const input = importSchema.parse(req.body ?? {});
-  return res.json({ success: true, result: await commitImport(input.csv, input.mode, userId(res), { track: input.track, dataSource: input.dataSource }) });
+  return res.json({ success: true, result: await commitImport(input.csv, input.mode, userId(res), importDefaults(input)) });
 }));
 
 router.get("/admin/clusters", wrap(async (_req, res) => res.json({ success: true, clusters: await listClusters() })));

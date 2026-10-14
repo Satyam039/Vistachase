@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Eye, EyeOff } from "lucide-react";
 import { AUTH_FIELD, AuthShell } from "@/components/forms/AuthShell";
+import { homeForRole } from "@/components/admin/AdminHeader";
 
 const DEV = process.env.NODE_ENV !== "production";
 
@@ -33,12 +34,8 @@ export default function LoginPage() {
       const data = await res.json();
       if (!res.ok || !data.success) {
         setErrorMsg(data.error || "That email and password don't match.");
-      } else if (["ADMIN", "OPERATOR", "DISPATCHER"].includes(data.user?.role)) {
-        router.push("/admin");
-      } else if (data.user?.role === "AFFILIATE") {
-        router.push("/partners/dashboard");
       } else {
-        router.push("/account/trips");
+        router.push(homeForRole(data.user?.role));
       }
     } catch {
       setErrorMsg("We couldn't reach the server. Please try again.");

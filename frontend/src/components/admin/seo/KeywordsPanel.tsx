@@ -3,7 +3,8 @@
 // Keyword research and clusters for /admin/seo. Keywords are entered or imported by staff:
 // search volume and difficulty appear only when someone typed them in with a basis (estimate or
 // researched) and, for researched figures, a named source. Nothing here is live ranking or traffic data.
-// Every call goes through /api/seo/admin/*, which is admin-only and audited there.
+// Every call goes through /api/seo/admin/*, which checks the role (admins and SEO managers change
+// keywords; editors and viewers read them) and audits every change.
 
 import Link from "next/link";
 import { useCallback, useEffect, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
@@ -32,7 +33,7 @@ import {
   type Track,
 } from "@/components/admin/seo/shared";
 
-const SIGNED_OUT = "Sign in with an admin account.";
+const SIGNED_OUT = "Sign in with an SEO or admin account.";
 const denied = (status: number) => status === 401 || status === 403;
 
 const INTENTS = ["INFORMATIONAL", "COMMERCIAL", "TRANSACTIONAL", "NAVIGATIONAL"] as const;
@@ -41,6 +42,7 @@ const TRACKS: Track[] = ["TRAFFIC_ACQUISITION", "BOOKING_CONVERSION"];
 const PRIORITIES = ["HIGH", "MEDIUM", "LOW"] as const;
 const KEYWORD_STATUSES = ["IDEA", "PLANNED", "IN_PROGRESS", "IMPLEMENTED", "ARCHIVED"] as const;
 const VALIDATION_STATUSES = ["UNVERIFIED", "VERIFIED", "REJECTED"] as const;
+const RESEARCH_STATUSES = ["UNVERIFIED", "RESEARCHED", "VALIDATED", "MAPPED", "IMPLEMENTED", "MONITORED"] as const;
 const METRIC_BASES = ["UNKNOWN", "ESTIMATE", "RESEARCHED"] as const;
 const PAGE_TYPES = ["HOME", "TOUR", "DESTINATION", "LANDING", "GUIDE", "STATIC", "LEGAL"] as const;
 
@@ -57,6 +59,14 @@ const VALIDATION_STYLE: Record<Keyword["validationStatus"], string> = {
   VERIFIED: "bg-ocean-50 text-ocean-800",
   UNVERIFIED: "bg-obsidian-100 text-slate-700",
   REJECTED: "bg-red-50 text-red-800",
+};
+const RESEARCH_STYLE: Record<Keyword["researchStatus"], string> = {
+  UNVERIFIED: "bg-obsidian-100 text-slate-700",
+  RESEARCHED: "bg-summit-100 text-obsidian-900",
+  VALIDATED: "bg-ocean-50 text-ocean-800",
+  MAPPED: "bg-ocean-50 text-ocean-800",
+  IMPLEMENTED: "bg-emerald-50 text-emerald-900",
+  MONITORED: "bg-emerald-50 text-emerald-900",
 };
 const PRIORITY_STYLE: Record<Keyword["priority"], string> = {
   HIGH: "bg-summit-100 text-obsidian-900",
@@ -109,6 +119,14 @@ type FormState = {
   dataSource: string;
   lastVerifiedAt: string;
   validationStatus: string;
+  researchStatus: string;
+  parentTopic: string;
+  market: string;
+  language: string;
+  bookingIntent: string;
+  competitorEvidence: string;
+  contentGap: string;
+  recommendedAction: string;
   notes: string;
 };
 
@@ -138,6 +156,14 @@ function fromKeyword(k?: Keyword): FormState {
     dataSource: k?.dataSource ?? "",
     lastVerifiedAt: k?.lastVerifiedAt ? k.lastVerifiedAt.slice(0, 10) : "",
     validationStatus: k?.validationStatus ?? "UNVERIFIED",
+    researchStatus: k?.researchStatus ?? "UNVERIFIED",
+    parentTopic: k?.parentTopic ?? "",
+    market: k?.market ?? "CA",
+    language: k?.language ?? "en",
+    bookingIntent: num(k?.bookingIntent),
+    competitorEvidence: k?.competitorEvidence ?? "",
+    contentGap: k?.contentGap ?? "",
+    recommendedAction: k?.recommendedAction ?? "",
     notes: k?.notes ?? "",
   };
 }
@@ -172,6 +198,14 @@ function toPayload(f: FormState): Record<string, unknown> {
     dataSource: textOrNull(f.dataSource),
     lastVerifiedAt: f.lastVerifiedAt || null,
     validationStatus: f.validationStatus,
+    researchStatus: f.researchStatus,
+    parentTopic: textOrNull(f.parentTopic),
+    market: f.market.trim().toUpperCase() || "CA",
+    language: f.language.trim() || "en",
+    bookingIntent: numOrNull(f.bookingIntent),
+    competitorEvidence: textOrNull(f.competitorEvidence),
+    contentGap: textOrNull(f.contentGap),
+    recommendedAction: textOrNull(f.recommendedAction),
     notes: textOrNull(f.notes),
   };
 }
@@ -316,6 +350,39 @@ function KeywordForm({
         </TextField>
       </div>
 
+      <fieldset className="grid gap-4 md:grid-cols-3">
+        <legend className="mb-2 text-base text-obsidian-900">Research</legend>
+        <Dropdown id={`${pre}-research`} label="Research status" value={f.researchStatus} onChange={set("researchStatus")} options={opts(RESEARCH_STATUSES)} />
+        <TextField id={`${pre}-topic`} label="Parent topic">
+          {(id) => <input id={id} value={f.parentTopic} onChange={input("parentTopic")} maxLength={120} placeholder="Moraine Lake" className={field} />}
+        </TextField>
+        <Dropdown
+          id={`${pre}-booking-intent`}
+          label="Booking intent (1–5)"
+          value={f.bookingIntent}
+          onChange={set("bookingIntent")}
+          options={[{ value: "", label: "Not set" }, ...["1", "2", "3", "4", "5"].map((v) => ({ value: v, label: v }))]}
+        />
+        <TextField id={`${pre}-market`} label="Market (country code)">
+          {(id) => <input id={id} value={f.market} onChange={input("market")} maxLength={2} className={field} />}
+        </TextField>
+        <TextField id={`${pre}-language`} label="Language">
+          {(id) => <input id={id} value={f.language} onChange={input("language")} maxLength={5} className={field} />}
+        </TextField>
+        <TextField id={`${pre}-evidence`} label="Competitor evidence (where and when seen)">
+          {(id) => <input id={id} value={f.competitorEvidence} onChange={input("competitorEvidence")} maxLength={1000} className={field} />}
+        </TextField>
+      </fieldset>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <TextField id={`${pre}-gap`} label="Content gap">
+          {(id) => <textarea id={id} rows={2} value={f.contentGap} onChange={input("contentGap")} maxLength={1000} className={field} />}
+        </TextField>
+        <TextField id={`${pre}-action`} label="Recommended action">
+          {(id) => <textarea id={id} rows={2} value={f.recommendedAction} onChange={input("recommendedAction")} maxLength={1000} className={field} />}
+        </TextField>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2">
         <TextField id={`${pre}-competition`} label="Competition notes">
           {(id) => <textarea id={id} rows={3} value={f.competitionNotes} onChange={input("competitionNotes")} maxLength={1000} className={field} />}
@@ -360,6 +427,8 @@ interface ImportRow {
 }
 interface ImportSummary {
   rows: ImportRow[];
+  columns?: { header: string; field: string }[];
+  fields?: string[];
   unknownColumns: string[];
   newClusters: string[];
   counts: { create: number; update: number; skip: number; error: number };
@@ -367,7 +436,7 @@ interface ImportSummary {
 
 const MAX_CSV_BYTES = 1_000_000;
 const CSV_HEADERS =
-  "keyword, designation, searchVolume, volumeBasis, volumeSource, difficulty, difficultyBasis, difficultySource, intent, funnelStage, track, cluster, targetPath, targetPageType, priority, businessRelevance, competitors, competitionNotes, status, dataSource, lastVerifiedAt, validationStatus, notes";
+  "keyword, designation, cluster, parentTopic, searchVolume, volumeBasis, volumeSource, market, language, difficulty, difficultyBasis, difficultySource, intent, funnelStage, track, targetPath, targetPageType, competitors, competitorEvidence, competitionNotes, businessRelevance, bookingIntent, priority, status, researchStatus, contentGap, recommendedAction, dataSource, lastVerifiedAt, validationStatus, notes";
 
 const ACTION_STYLE: Record<ImportRow["action"], string> = {
   create: "bg-ocean-50 text-ocean-800",
@@ -385,14 +454,22 @@ function ImportForm({ onImported, onSignedOut, notify }: { onImported: () => voi
   const [preview, setPreview] = useState<ImportSummary | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [columnMap, setColumnMap] = useState<Record<string, string>>({});
 
-  const body = () => ({ csv, mode, ...(track ? { track } : {}), ...(dataSource.trim() ? { dataSource: dataSource.trim() } : {}) });
+  const body = () => ({
+    csv,
+    mode,
+    ...(track ? { track } : {}),
+    ...(dataSource.trim() ? { dataSource: dataSource.trim() } : {}),
+    ...(Object.keys(columnMap).length ? { columnMap } : {}),
+  });
 
   function chooseFile(e: ChangeEvent<HTMLInputElement>) {
     setError("");
     setPreview(null);
     setCsv("");
     setFileName("");
+    setColumnMap({});
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > MAX_CSV_BYTES) {
@@ -494,6 +571,30 @@ function ImportForm({ onImported, onSignedOut, notify }: { onImported: () => voi
             {preview.counts.create} to add, {preview.counts.update} to update, {preview.counts.skip} skipped, {preview.counts.error} with errors (rows with errors are never saved).
           </p>
           {preview.unknownColumns.length > 0 && <p className="text-sm text-slate-700">Ignored columns: {preview.unknownColumns.join(", ")}</p>}
+          {preview.columns && preview.fields && (
+            <details className="rounded-2xl bg-white p-4 ring-1 ring-obsidian-900/[0.07]" open={preview.unknownColumns.length > 0}>
+              <summary className="cursor-pointer text-base text-obsidian-900">Column mapping</summary>
+              <p className="mt-2 text-sm text-slate-600">Each column of your file and the field it fills. Change one, then preview again; nothing is saved until you import.</p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {preview.columns.map((c, i) => (
+                  <Dropdown
+                    key={`${c.header}-${i}`}
+                    id={`kw-map-${i}`}
+                    label={c.header || `Column ${i + 1}`}
+                    value={columnMap[c.header] ?? c.field}
+                    searchable
+                    onChange={(v) => setColumnMap((m) => ({ ...m, [c.header]: v }))}
+                    options={[{ value: "ignore", label: "Ignore this column" }, ...preview.fields!.map((f) => ({ value: f, label: f }))]}
+                  />
+                ))}
+              </div>
+              {Object.keys(columnMap).length > 0 && (
+                <button type="button" onClick={runPreview} disabled={busy} className={`${quietBtn} mt-3`}>
+                  Preview with this mapping
+                </button>
+              )}
+            </details>
+          )}
           {preview.newClusters.length > 0 && <p className="text-sm text-slate-700">New clusters to create: {preview.newClusters.join(", ")}</p>}
           <div className="overflow-hidden rounded-2xl bg-white ring-1 ring-obsidian-900/[0.07]">
             <Grid label="Import preview" head={[["Line"], ["Keyword"], ["Result"], ["Cluster"], ["Errors and notes"]]}>
@@ -545,10 +646,26 @@ interface KeywordSummary {
 }
 
 const PAGE_SIZE = 50;
-const EMPTY_FILTERS = { q: "", track: "", intent: "", funnelStage: "", priority: "", status: "", validationStatus: "", clusterId: "", mapped: "", includeArchived: "" };
+const EMPTY_FILTERS = {
+  q: "",
+  track: "",
+  intent: "",
+  funnelStage: "",
+  priority: "",
+  status: "",
+  validationStatus: "",
+  researchStatus: "",
+  targetPageType: "",
+  clusterId: "",
+  mapped: "",
+  flag: "",
+  includeArchived: "",
+  sort: "priority",
+  dir: "asc",
+};
 type Filters = typeof EMPTY_FILTERS;
 
-export function KeywordsPanel({ notify }: { notify: (message: string) => void }) {
+export function KeywordsPanel({ notify, canManage = true }: { notify: (message: string) => void; canManage?: boolean }) {
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -560,6 +677,7 @@ export function KeywordsPanel({ notify }: { notify: (message: string) => void })
   const [editing, setEditing] = useState<string | null>(null); // keyword id or "new"
   const [importing, setImporting] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const loadSide = useCallback(async () => {
     const [o, c] = await Promise.all([seoApi<{ overview: { keywords: KeywordSummary } }>("/overview"), seoApi<{ clusters: Cluster[] }>("/clusters")]);
@@ -589,6 +707,7 @@ export function KeywordsPanel({ notify }: { notify: (message: string) => void })
 
   const reloadAll = () => {
     setEditing(null);
+    setSelected(new Set());
     void load();
     void loadSide();
   };
@@ -634,13 +753,17 @@ export function KeywordsPanel({ notify }: { notify: (message: string) => void })
             <Download className="h-4 w-4" aria-hidden="true" />
             Export CSV
           </a>
-          <button type="button" onClick={() => setImporting((v) => !v)} aria-expanded={importing} className={quietBtn}>
-            <Upload className="h-4 w-4" aria-hidden="true" />
-            Import CSV
-          </button>
-          <button type="button" onClick={() => setEditing(editing === "new" ? null : "new")} aria-expanded={editing === "new"} className={primaryBtn}>
-            Add keyword
-          </button>
+          {canManage && (
+            <>
+              <button type="button" onClick={() => setImporting((v) => !v)} aria-expanded={importing} className={quietBtn}>
+                <Upload className="h-4 w-4" aria-hidden="true" />
+                Import CSV
+              </button>
+              <button type="button" onClick={() => setEditing(editing === "new" ? null : "new")} aria-expanded={editing === "new"} className={primaryBtn}>
+                Add keyword
+              </button>
+            </>
+          )}
         </>
       }
     >
@@ -688,6 +811,45 @@ export function KeywordsPanel({ notify }: { notify: (message: string) => void })
         <Dropdown id="kw-f-priority" label="Priority" value={filters.priority} onChange={setFilter("priority")} options={opts(PRIORITIES, "All priorities")} />
         <Dropdown id="kw-f-status" label="Status" value={filters.status} onChange={setFilter("status")} options={opts(KEYWORD_STATUSES, "All statuses")} />
         <Dropdown id="kw-f-validation" label="Validation" value={filters.validationStatus} onChange={setFilter("validationStatus")} options={opts(VALIDATION_STATUSES, "Any validation")} />
+        <Dropdown id="kw-f-research" label="Research status" value={filters.researchStatus} onChange={setFilter("researchStatus")} options={opts(RESEARCH_STATUSES, "Any research status")} />
+        <Dropdown id="kw-f-page-type" label="Target page type" value={filters.targetPageType} onChange={setFilter("targetPageType")} options={opts(PAGE_TYPES, "Any page type")} />
+        <Dropdown
+          id="kw-f-flag"
+          label="Problems"
+          value={filters.flag}
+          onChange={setFilter("flag")}
+          options={[
+            { value: "", label: "Any" },
+            { value: "unmapped", label: "Unmapped" },
+            { value: "planned", label: "Planned page only" },
+            { value: "cannibalised", label: "Cannibalised" },
+            { value: "intentMismatch", label: "Intent mismatch" },
+          ]}
+        />
+        <Dropdown
+          id="kw-f-sort"
+          label="Sort by"
+          value={filters.sort}
+          onChange={setFilter("sort")}
+          options={[
+            { value: "priority", label: "Priority" },
+            { value: "keyword", label: "Keyword" },
+            { value: "ref", label: "Keyword ID" },
+            { value: "searchVolume", label: "Search volume" },
+            { value: "difficulty", label: "Difficulty" },
+            { value: "updatedAt", label: "Last changed" },
+          ]}
+        />
+        <Dropdown
+          id="kw-f-dir"
+          label="Order"
+          value={filters.dir}
+          onChange={setFilter("dir")}
+          options={[
+            { value: "asc", label: "Ascending" },
+            { value: "desc", label: "Descending" },
+          ]}
+        />
         <Dropdown id="kw-f-cluster" label="Cluster" value={filters.clusterId} onChange={setFilter("clusterId")} options={clusterOptions} searchable />
         <Dropdown
           id="kw-f-mapped"
@@ -721,6 +883,20 @@ export function KeywordsPanel({ notify }: { notify: (message: string) => void })
         </div>
       )}
 
+      {canManage && list && list.keywords.length > 0 && (
+        <BulkBar
+          ids={Array.from(selected)}
+          clusters={clusters}
+          allOnPage={list.keywords.every((k) => selected.has(k.id))}
+          onToggleAll={(on) => setSelected(on ? new Set(list.keywords.map((k) => k.id)) : new Set())}
+          onDone={(n) => {
+            notify(`Updated ${n} ${n === 1 ? "keyword" : "keywords"}.`);
+            reloadAll();
+          }}
+          onSignedOut={() => setSignedOut(true)}
+        />
+      )}
+
       {!list ? (
         <Loading />
       ) : list.keywords.length === 0 ? (
@@ -728,8 +904,21 @@ export function KeywordsPanel({ notify }: { notify: (message: string) => void })
       ) : (
         <Grid
           label="Keywords"
-          minWidth="min-w-[88rem]"
-          head={[["Keyword"], ["Track"], ["Intent / funnel"], ["Cluster"], ["Target path"], ["Priority"], ["Volume", true], ["Difficulty", true], ["Validation"], ["Status"], [""]]}
+          minWidth="min-w-[96rem]"
+          head={[
+            ...(canManage ? [["Select"] as [string]] : []),
+            ["Keyword"],
+            ["Track"],
+            ["Intent / funnel"],
+            ["Cluster"],
+            ["Target path"],
+            ["Priority"],
+            ["Volume", true],
+            ["Difficulty", true],
+            ["Research"],
+            ["Status"],
+            [""],
+          ]}
         >
           {list.keywords.map((k) => (
             <KeywordRow
@@ -737,6 +926,16 @@ export function KeywordsPanel({ notify }: { notify: (message: string) => void })
               k={k}
               open={editing === k.id}
               busy={busyId === k.id}
+              canManage={canManage}
+              selected={selected.has(k.id)}
+              onSelect={(on) =>
+                setSelected((prev) => {
+                  const next = new Set(prev);
+                  if (on) next.add(k.id);
+                  else next.delete(k.id);
+                  return next;
+                })
+              }
               onEdit={() => setEditing(editing === k.id ? null : k.id)}
               onArchive={() => void toggleArchive(k)}
             >
@@ -765,13 +964,41 @@ export function KeywordsPanel({ notify }: { notify: (message: string) => void })
   );
 }
 
-function KeywordRow({ k, open, busy, onEdit, onArchive, children }: { k: Keyword; open: boolean; busy: boolean; onEdit: () => void; onArchive: () => void; children: ReactNode }) {
+function KeywordRow({
+  k,
+  open,
+  busy,
+  canManage,
+  selected,
+  onSelect,
+  onEdit,
+  onArchive,
+  children,
+}: {
+  k: Keyword;
+  open: boolean;
+  busy: boolean;
+  canManage: boolean;
+  selected: boolean;
+  onSelect: (on: boolean) => void;
+  onEdit: () => void;
+  onArchive: () => void;
+  children: ReactNode;
+}) {
   return (
     <>
       <tr className="align-top">
+        {canManage && (
+          <td className="px-6 py-4">
+            <input type="checkbox" className="h-5 w-5" checked={selected} onChange={(e) => onSelect(e.target.checked)} aria-label={`Select ${k.keyword}`} />
+          </td>
+        )}
         <td className="px-6 py-4">
           <p className="text-obsidian-900">{k.keyword}</p>
-          <p className="text-sm text-slate-600">{words(k.designation)}</p>
+          <p className="text-sm text-slate-600">
+            {k.code} · {words(k.designation)}
+            {k.parentTopic && ` · ${k.parentTopic}`}
+          </p>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {k.archivedAt && <Chip className="bg-obsidian-100 text-slate-700">Archived</Chip>}
             {k.flags.unmapped && <Chip className="bg-red-50 text-red-800">Unmapped</Chip>}
@@ -784,6 +1011,7 @@ function KeywordRow({ k, open, busy, onEdit, onArchive, children }: { k: Keyword
               On: {k.mappings.map((m) => `${m.page.path}${m.role === "PRIMARY" ? " (primary)" : ""}`).join(", ")}
             </p>
           )}
+          {k.recommendedAction && <p className="mt-2 max-w-xs text-sm text-slate-700">Next: {k.recommendedAction}</p>}
         </td>
         <td className="px-6 py-4 text-slate-700">{TRACK_LABEL[k.track]}</td>
         <td className="px-6 py-4 text-slate-700">
@@ -808,29 +1036,104 @@ function KeywordRow({ k, open, busy, onEdit, onArchive, children }: { k: Keyword
           {k.difficultyBasis !== "UNKNOWN" && k.difficultySource && <span className="block text-sm text-slate-600">{k.difficultySource}</span>}
         </td>
         <td className="px-6 py-4">
-          <Chip className={VALIDATION_STYLE[k.validationStatus]}>{words(k.validationStatus)}</Chip>
+          <Chip className={RESEARCH_STYLE[k.researchStatus]}>{words(k.researchStatus)}</Chip>
+          <span className="mt-1 block">
+            <Chip className={VALIDATION_STYLE[k.validationStatus]}>Metrics {words(k.validationStatus).toLowerCase()}</Chip>
+          </span>
           {k.lastVerifiedAt && <span className="mt-1 block text-sm text-slate-600">{day(k.lastVerifiedAt)}</span>}
+          {k.bookingIntent !== null && <span className="mt-1 block text-sm text-slate-600">Booking intent {k.bookingIntent}/5</span>}
         </td>
         <td className="px-6 py-4 text-slate-700">{words(k.status)}</td>
         <td className="px-6 py-4">
-          <div className="flex justify-end gap-2">
-            <button type="button" onClick={onEdit} aria-expanded={open} aria-label={`Edit ${k.keyword}`} className={quietBtn}>
-              {open ? "Close" : "Edit"}
-            </button>
-            <button type="button" onClick={onArchive} disabled={busy} aria-label={`${k.archivedAt ? "Restore" : "Archive"} ${k.keyword}`} className={k.archivedAt ? quietBtn : dangerBtn}>
-              {k.archivedAt ? "Restore" : "Archive"}
-            </button>
-          </div>
+          {canManage && (
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={onEdit} aria-expanded={open} aria-label={`Edit ${k.keyword}`} className={quietBtn}>
+                {open ? "Close" : "Edit"}
+              </button>
+              <button type="button" onClick={onArchive} disabled={busy} aria-label={`${k.archivedAt ? "Restore" : "Archive"} ${k.keyword}`} className={k.archivedAt ? quietBtn : dangerBtn}>
+                {k.archivedAt ? "Restore" : "Archive"}
+              </button>
+            </div>
+          )}
         </td>
       </tr>
       {open && (
         <tr>
-          <td colSpan={11} className="p-0">
+          <td colSpan={12} className="p-0">
             {children}
           </td>
         </tr>
       )}
     </>
+  );
+}
+
+/** Sets the same values on the selected keywords (one request, one audit entry per keyword). */
+function BulkBar({
+  ids,
+  clusters,
+  allOnPage,
+  onToggleAll,
+  onDone,
+  onSignedOut,
+}: {
+  ids: string[];
+  clusters: Cluster[];
+  allOnPage: boolean;
+  onToggleAll: (on: boolean) => void;
+  onDone: (n: number) => void;
+  onSignedOut: () => void;
+}) {
+  const [set, setSet] = useState({ priority: "", researchStatus: "", status: "", clusterId: "" });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const pick = (key: keyof typeof set) => (v: string) => setSet((s) => ({ ...s, [key]: v }));
+  const changes = Object.fromEntries(Object.entries(set).filter(([, v]) => v !== "").map(([k, v]) => [k, k === "clusterId" && v === "none" ? null : v]));
+
+  async function apply() {
+    setBusy(true);
+    const { ok, status, data } = await seoApi<{ result: { updated: number } }>("/keywords/bulk", "POST", { ids, set: changes });
+    setBusy(false);
+    if (denied(status)) return onSignedOut();
+    if (!ok) return setError(errorOf(data, "Couldn't update the keywords."));
+    setError("");
+    setSet({ priority: "", researchStatus: "", status: "", clusterId: "" });
+    onDone(data.result.updated);
+  }
+
+  return (
+    <div className="space-y-3 border-t border-obsidian-900/[0.06] px-6 py-4">
+      <div className="flex flex-wrap items-center gap-4">
+        <label className="flex items-center gap-2 text-sm text-obsidian-900">
+          <input type="checkbox" className="h-5 w-5" checked={allOnPage} onChange={(e) => onToggleAll(e.target.checked)} />
+          Select all on this page
+        </label>
+        <span className="text-sm text-slate-600">{ids.length} selected</span>
+      </div>
+      {ids.length > 0 && (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5 lg:items-end">
+          <Dropdown id="kw-bulk-priority" label="Set priority" value={set.priority} onChange={pick("priority")} options={opts(PRIORITIES, "Leave as is")} />
+          <Dropdown id="kw-bulk-research" label="Set research status" value={set.researchStatus} onChange={pick("researchStatus")} options={opts(RESEARCH_STATUSES, "Leave as is")} />
+          <Dropdown id="kw-bulk-status" label="Set status" value={set.status} onChange={pick("status")} options={opts(KEYWORD_STATUSES, "Leave as is")} />
+          <Dropdown
+            id="kw-bulk-cluster"
+            label="Set cluster"
+            value={set.clusterId}
+            onChange={pick("clusterId")}
+            searchable
+            options={[{ value: "", label: "Leave as is" }, { value: "none", label: "No cluster" }, ...clusters.map((c) => ({ value: c.id, label: c.name }))]}
+          />
+          <button type="button" className={primaryBtn} disabled={busy || Object.keys(changes).length === 0} onClick={apply}>
+            {busy ? "Updating…" : `Update ${ids.length}`}
+          </button>
+          {error && (
+            <div className="sm:col-span-2 lg:col-span-5">
+              <Alert>{error}</Alert>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 

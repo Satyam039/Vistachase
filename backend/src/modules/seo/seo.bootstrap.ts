@@ -3,8 +3,8 @@
 // removes anything staff have changed.
 //
 // Every keyword here is a hypothesis: volume and difficulty are null ("unknown") and validation is
-// UNVERIFIED. Where the Banff Elite reference sheet listed a figure for a generic place name, it is
-// quoted in the notes as an unverified lead, never stored as a metric.
+// UNVERIFIED. Where the Banff Elite reference sheet listed a generic place name, the note says so
+// as an unverified lead; its figures are never copied into Vista Chase records.
 // Not seeded on purpose: services Vista Chase doesn't sell today (Calgary airport transfers,
 // chauffeur and corporate transport, helicopter tours, weddings, honeymoon packages).
 
@@ -56,7 +56,7 @@ interface StarterKeyword {
   note?: string;
 }
 
-const ref = (volume: string, kd: string) => `The Banff Elite reference sheet listed about ${volume}/month and difficulty ${kd} (tool, date and region not stated). Unverified: check in a keyword tool before relying on it.`;
+const ref = (_volume: string, _kd: string) => `Hypothesis: Banff Elite's reference sheet lists this term. Its volume and difficulty belong to that sheet, not Vista Chase, and are not copied here; research it in a keyword tool before relying on it.`;
 
 export const STARTER_KEYWORDS: StarterKeyword[] = [
   // Brand

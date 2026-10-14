@@ -1,6 +1,7 @@
 # SEO dashboard
 
-Admin → **SEO** (`/admin/seo`, admins only) manages page metadata, the keyword map, redirects,
+Admin → **SEO** (`/admin/seo`; admins and SEO managers change it, editors write page copy, viewers
+read; roles and the keyword sheet are in [SEO_WORKSPACE.md](SEO_WORKSPACE.md)) manages page metadata, the keyword map, redirects,
 audits and `llms.txt`. It extends the existing site: pages keep their coded titles, descriptions
 and JSON-LD, and a published override replaces only the fields it sets.
 
@@ -152,7 +153,8 @@ Until then the dashboard says "Not connected" and shows no ranking or traffic fi
 Built from the Vista Chase catalogue only: shared, private and multi-day tours, Moraine Lake and
 Lake Louise shuttles, and attraction tickets, with pickup in Banff, Canmore and Lake Louise. No
 figures are included; Banff Elite's volume and difficulty numbers come from an unnamed tool for a
-different business and are mentioned only in keyword notes, marked unverified.
+different business and are never copied: a keyword note only says the term appears on their sheet
+and is a hypothesis until researched.
 
 | Track | Cluster | Hub page | Example keywords |
 | --- | --- | --- | --- |
@@ -171,6 +173,8 @@ different business and are mentioned only in keyword notes, marked unverified.
 | Traffic | Johnston Canyon | `/guides/johnston-canyon`* | johnston canyon |
 | Traffic | Icefields Parkway & Columbia Icefield | `/guides/icefields-parkway`* | icefields parkway, columbia icefield, peyto lake |
 | Traffic | Seasonal trip planning | `/guides/best-time-to-visit-banff`* | best time to visit banff, banff in winter |
+
+Published guides are listed at `/guides` (footer → Travel guides).
 
 \* Planned guide, not built yet (flagged "planned page" until it is published).
 

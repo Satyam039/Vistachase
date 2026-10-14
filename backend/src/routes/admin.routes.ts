@@ -19,7 +19,12 @@ import {
 import { listFlags, markRefunded, OFFLINE_METHODS, quickBook, recordPayment, resolveFlag, staffCancelBooking, staffRefundsViaProvider } from "@/modules/admin/booking-admin";
 import { createDepartures, departureProducts, listDepartures, setDepartureStatus, updateDeparture } from "@/modules/admin/departure-admin";
 import { createStop, listStops, updateStop } from "@/modules/admin/pickup-admin";
-import { getEmailProvider } from "@/lib/email/email.provider";
+import { emailDeliveryConfigured, getEmailProvider } from "@/lib/email/email.provider";
+import { hashPassword } from "@/lib/auth/auth";
+import { ASSIGNABLE_ROLES, STAFF_LIST_ROLES } from "@/lib/auth/permissions";
+import crypto from "node:crypto";
+import { siteUrl } from "@/lib/security/signed-links";
+import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
 import { verifyBookingLink, voucherLink } from "@/lib/security/signed-links";
 import { emailSchema, parseOr400, referenceSchema, z } from "@/lib/security/validate";
 import { dateOnly, getMountainTimeInstant, timeOfDay, todayInMountainTime } from "@/lib/utils/time";
@@ -620,31 +625,99 @@ router.get("/audit-logs", requireStaff(["ADMIN"]), async (req, res, next) => {
 router.get("/staff", requireStaff(["ADMIN"]), async (_req, res, next) => {
   try {
     const staff = await prisma.user.findMany({
-      where: { role: { in: ["ADMIN", "DISPATCHER", "OPERATOR"] } },
+      where: { role: { in: STAFF_LIST_ROLES as never } },
       orderBy: { createdAt: "desc" },
-      select: { id: true, email: true, name: true, phone: true, role: true, lockedUntil: true, createdAt: true },
+      select: { id: true, email: true, name: true, phone: true, role: true, lockedUntil: true, createdAt: true, resetTokenExpiry: true },
     });
-    res.json({ success: true, staff });
+    // "Invited" = has never chosen a password; the link itself is never sent back here.
+    const invited = new Set(
+      (await prisma.auditLog.findMany({ where: { action: "STAFF_INVITED", entityId: { in: staff.map((s) => s.id) } }, select: { entityId: true } })).map((a) => a.entityId),
+    );
+    const passwordSet = new Set(
+      (await prisma.auditLog.findMany({ where: { action: "STAFF_PASSWORD_SET", entityId: { in: [...invited] } }, select: { entityId: true } })).map((a) => a.entityId),
+    );
+    res.json({
+      success: true,
+      staff: staff.map(({ resetTokenExpiry, ...s }) => ({ ...s, pendingInvite: invited.has(s.id) && !passwordSet.has(s.id), linkExpires: resetTokenExpiry })),
+      emailConfigured: emailDeliveryConfigured(),
+    });
   } catch (e) {
     next(e);
   }
 });
 
-const roleChange = z.object({ role: z.enum(["ADMIN", "OPERATOR", "DISPATCHER", "CUSTOMER"]) });
+const roleChange = z.object({ role: z.enum([...ASSIGNABLE_ROLES, "CUSTOMER"]) });
+const INVITE_HOURS = 72;
+const sha256 = (value: string) => crypto.createHash("sha256").update(value).digest("hex");
 
-// Gives an existing account (the person signs up on the site first) a staff role. Access follows
-// the role from the next request; demoting someone (role CUSTOMER) ends their staff access at once.
-router.post("/staff", requireStaff(["ADMIN"]), async (req, res, next) => {
+/**
+ * A one-time "choose your password" link (the same token the password-reset page uses; only its
+ * hash is stored). It is emailed when email is set up, and returned once to the admin so they can
+ * pass it on themselves. It is never logged or written to the audit log.
+ */
+async function issueSetupLink(user: { id: string; email: string; name: string }, purpose: "invite" | "reset") {
+  const token = crypto.randomBytes(32).toString("hex");
+  const expires = new Date(Date.now() + INVITE_HOURS * 60 * 60 * 1000);
+  await prisma.user.update({ where: { id: user.id }, data: { resetToken: sha256(token), resetTokenExpiry: expires } });
+  const link = `${siteUrl()}/reset-password?token=${token}`;
+  let emailed = false;
+  if (emailDeliveryConfigured()) {
+    const name = user.name.replace(/[<>&]/g, "");
+    const result = await getEmailProvider()
+      .sendEmail({
+        to: user.email,
+        subject: purpose === "invite" ? "Your Vista Chase staff account" : "Set a new Vista Chase password",
+        html: `<p>Hi ${name},</p><p>${purpose === "invite" ? "An account has been created for you on the Vista Chase dashboard." : "An admin asked for a new password link for you."} <a href="${link}">Choose your password</a>. The link works once and expires in ${INVITE_HOURS} hours.</p>`,
+        text: `Choose your Vista Chase password: ${link}\nThe link works once and expires in ${INVITE_HOURS} hours.`,
+      })
+      .catch(() => ({ success: false }));
+    emailed = !!result.success;
+  }
+  return { link, emailed, expires };
+}
+
+// Gives an account a staff role. With a name and no existing account, it creates the account
+// (no password yet) and returns a one-time link for the person to choose their own password.
+// Access follows the role from the next request; role CUSTOMER ends staff access at once.
+router.post("/staff", requireStaff(["ADMIN"]), rateLimitMiddleware("staff_invite", { maxRequests: 30, windowSeconds: 3600 }), async (req, res, next) => {
   try {
-    const body = parseOr400(z.object({ email: emailSchema, role: z.enum(["ADMIN", "OPERATOR", "DISPATCHER"]) }), req.body, res);
+    const body = parseOr400(
+      z.object({ email: emailSchema, role: z.enum(ASSIGNABLE_ROLES), name: z.string().trim().min(2).max(80).optional() }).strict(),
+      req.body,
+      res,
+    );
     if (!body) return;
     const existing = await prisma.user.findFirst({ where: { email: { equals: body.email, mode: "insensitive" } }, select: { id: true, role: true } });
-    if (!existing) return res.status(404).json({ success: false, error: "No account uses this email. Ask them to create an account on the site first." });
+    if (!existing) {
+      if (!body.name) return res.status(404).json({ success: false, error: "No account uses this email. Add their name to create one and send an invite link." });
+      // An unguessable hash nobody knows: the account can't be signed into until the link is used.
+      const passwordHash = await hashPassword(crypto.randomBytes(32).toString("hex"));
+      const user = await prisma.user.create({
+        data: { email: body.email.toLowerCase(), name: body.name, role: body.role, passwordHash, emailVerified: false },
+        select: { id: true, email: true, name: true, role: true },
+      });
+      await audit(req, "STAFF_INVITED", "User", user.id, { role: body.role, email: user.email });
+      const setup = await issueSetupLink(user, "invite");
+      return res.status(201).json({ success: true, user, invited: true, setupLink: setup.link, emailed: setup.emailed, linkExpires: setup.expires });
+    }
     if (existing.id === staffId(req)) return res.status(400).json({ success: false, error: "You can't change your own role." });
     if (existing.role === "AFFILIATE") return res.status(400).json({ success: false, error: "This is a partner account. Use a separate account for staff work." });
     const user = await prisma.user.update({ where: { id: existing.id }, data: { role: body.role }, select: { id: true, email: true, name: true, role: true } });
     await audit(req, "CHANGE_ROLE", "User", user.id, { role: body.role, previous: existing.role });
-    res.json({ success: true, user });
+    res.json({ success: true, user, invited: false });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// A fresh one-time password link for a staff member (lost invite, forgotten password).
+router.post("/staff/:id/setup-link", requireStaff(["ADMIN"]), rateLimitMiddleware("staff_invite", { maxRequests: 30, windowSeconds: 3600 }), async (req, res, next) => {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: String(req.params.id) }, select: { id: true, email: true, name: true, role: true } });
+    if (!user || !(STAFF_LIST_ROLES as string[]).includes(user.role)) return res.status(404).json({ success: false, error: "Staff account not found" });
+    const setup = await issueSetupLink(user, "reset");
+    await audit(req, "STAFF_SETUP_LINK_ISSUED", "User", user.id, { emailed: setup.emailed });
+    res.json({ success: true, setupLink: setup.link, emailed: setup.emailed, linkExpires: setup.expires });
   } catch (e) {
     next(e);
   }

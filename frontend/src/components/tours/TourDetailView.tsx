@@ -27,7 +27,7 @@ import { DepartureCalendar } from "@/components/booking/DepartureCalendar";
 import { PriceTag } from "@/components/pricing/PriceTag";
 import { cancellationShort, SEATS_MESSAGE } from "@/lib/policy";
 import { Rail } from "@/components/motion/Rail";
-import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
+import { BreadcrumbJsonLd, JsonLd } from "@/components/seo/JsonLd";
 import { ProductGallery, type GallerySlide } from "@/components/tours/ProductGallery";
 import { TourSectionNav, TourSections } from "@/components/tours/TourSections";
 import {
@@ -346,7 +346,8 @@ export function TourDetailView({
 
   return (
     <div className="min-h-screen bg-obsidian-50 text-obsidian-900">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      {/* Tour text is editable in the admin, so "<" is escaped (JsonLd) and can't close the script. */}
+      <JsonLd data={jsonLd} />
       {siteOrigin && (
         <BreadcrumbJsonLd
           origin={siteOrigin}

@@ -222,6 +222,10 @@ router.post("/reset-password", rateLimitMiddleware("reset_password", { maxReques
       where: { id: user.id },
       data: { passwordHash: await hashPassword(body.newPassword), resetToken: null, resetTokenExpiry: null, lockedUntil: null, failedLoginAttempts: 0 },
     });
+    // Staff accounts: record it (completes an invite on the Staff screen). Never the password or token.
+    if (!["CUSTOMER", "AFFILIATE"].includes(user.role)) {
+      await prisma.auditLog.create({ data: { userId: user.id, action: "STAFF_PASSWORD_SET", entityType: "User", entityId: user.id, details: {} } });
+    }
     return res.json({ success: true, message: "Password updated. You can sign in now." });
   } catch (error) {
     next(error);
