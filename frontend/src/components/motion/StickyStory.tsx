@@ -11,6 +11,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { CardMedia } from "@/components/cards/MediaCard";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { AmbientVideo } from "@/components/cinematic/AmbientVideo";
@@ -50,7 +51,7 @@ export function StickyStory({ chapters, tone = "dark" }: { chapters: StoryChapte
     <div className="relative lg:grid lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:gap-16">
       {/* Pinned media frame (large screens) */}
       <div className="hidden lg:block">
-        <div className="sticky top-[calc(var(--vc-header-h,80px)+2rem)] h-[calc(100vh-var(--vc-header-h,80px)-4rem)] overflow-hidden rounded-[2rem]">
+        <div className="sticky top-[calc(var(--vc-header-h,80px)+2rem)] h-[calc(100vh-var(--vc-header-h,80px)-4rem)] overflow-hidden">
           {chapters.map((c, i) => (
             <div
               key={c.id}
@@ -89,17 +90,23 @@ export function StickyStory({ chapters, tone = "dark" }: { chapters: StoryChapte
               refs.current[i] = el;
             }}
             data-index={i}
-            className="flex min-h-0 flex-col justify-center py-10 lg:min-h-[85vh] lg:pl-12"
+            className="flex min-h-0 flex-col justify-center py-5 sm:py-6 lg:min-h-[85vh] lg:py-10 lg:pl-12"
           >
-            <div className="relative mb-6 aspect-[4/3] overflow-hidden rounded-3xl lg:hidden" data-reveal="clip">
-              <Image src={c.image} alt={c.imageAlt} fill sizes="100vw" className="object-cover" />
+            {/* Below lg each chapter is a card: rectangular photo on top, content panel below
+                (the CardMedia / CARD_PANEL pieces every image card uses). From lg the photo lives in
+                the pinned frame and the chapter is plain text beside it. */}
+            <div className="lg:hidden" data-reveal="clip">
+              <CardMedia src={c.image} alt={c.imageAlt} sizes="100vw" aspect="aspect-[4/3] sm:aspect-[16/9]" />
             </div>
-            <div data-reveal>
+            <div
+              className={`border border-t-0 px-5 py-6 sm:px-6 lg:border-0 lg:bg-transparent lg:p-0 ${dark ? "border-white/[0.12] bg-[#161a1d]" : "border-obsidian-900/[0.08] bg-white"}`}
+              data-reveal
+            >
               <p className={`text-sm uppercase tracking-[0.22em] ${dark ? "text-summit-300" : "text-ocean-600"}`}>{c.eyebrow}</p>
-              <h3 className={`mt-3 text-3xl font-light leading-tight sm:text-4xl lg:text-5xl ${dark ? "text-white" : "text-obsidian-900"}`}>
+              <h3 className={`mt-3 text-2xl font-light leading-tight sm:text-4xl lg:text-5xl ${dark ? "text-white" : "text-obsidian-900"}`}>
                 {c.title}
               </h3>
-              <p className={`mt-5 max-w-xl text-lg font-light leading-relaxed ${dark ? "text-slate-300" : "text-slate-600"}`}>{c.body}</p>
+              <p className={`mt-4 max-w-xl text-base font-light sm:text-lg lg:mt-5 leading-relaxed ${dark ? "text-slate-300" : "text-slate-600"}`}>{c.body}</p>
               {c.facts && (
                 <ul className="mt-6 flex flex-wrap gap-2">
                   {c.facts.map((f) => (
