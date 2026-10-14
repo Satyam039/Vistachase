@@ -26,6 +26,7 @@ export const STATIC_ROUTES: StaticRoute[] = [
   { path: "/about-us", label: "About us", pageType: "STATIC", indexable: true, sitemapPriority: 0.5 },
   { path: "/contact-us", label: "Contact us", pageType: "STATIC", indexable: true, conversionGoal: "ENQUIRY", sitemapPriority: 0.5 },
   { path: "/faq", label: "FAQ", pageType: "STATIC", indexable: true, sitemapPriority: 0.6 },
+  { path: "/guides", label: "Travel guides", pageType: "LANDING", indexable: true, sitemapPriority: 0.6 },
   { path: "/gallery", label: "Gallery", pageType: "STATIC", indexable: true, sitemapPriority: 0.4 },
   { path: "/pickup-finder", label: "Pickup finder", pageType: "STATIC", indexable: true, sitemapPriority: 0.4 },
   { path: "/concierge", label: "Concierge", pageType: "STATIC", indexable: true, sitemapPriority: 0.3 },

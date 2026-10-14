@@ -7,7 +7,7 @@
 import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/db/prisma";
 import { z } from "@/lib/security/validate";
-import { checkImageRef } from "@/modules/seo/paths";
+import { normalizePath } from "@/modules/seo/paths";
 
 export class ContentError extends Error {
   constructor(public status: number, message: string) {
@@ -26,13 +26,15 @@ const list = (maxItems: number, maxLen: number) =>
     .max(maxItems, `Up to ${maxItems} items.`)
     .refine((items) => new Set(items.map((i) => i.toLowerCase())).size === items.length, "Remove the repeated item.");
 
+// Site images only: pages render them with next/image, which serves /media/* from the backend and
+// has no remote hosts configured, so an outside URL would break the page.
 const image = z.string().transform((value, ctx) => {
-  const check = checkImageRef(value);
-  if (!check.ok) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: check.error });
+  const path = normalizePath(value);
+  if (!path || !path.startsWith("/media/") || !/\.(webp|jpe?g|png|avif|gif)$/i.test(path)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Use a site image under /media/, such as /media/photos/peyto-lake.webp." });
     return z.NEVER;
   }
-  return check.value;
+  return path;
 });
 
 const section = z

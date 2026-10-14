@@ -2,7 +2,7 @@
 
 // Admin SEO dashboard: overview, pages (editor at /admin/seo/pages/[id]), keyword map, clusters,
 // redirects, audits and issues, llms.txt and the search data providers. Panels live in
-// components/admin/seo; every action goes through /api/seo/admin/* (admins only, audited).
+// components/admin/seo; every action goes through /api/seo/admin/* (SEO managers and admins change it, editors write copy, viewers read; audited).
 
 import { useCallback, useEffect, useState } from "react";
 import { AdminHeader, StaffSignIn } from "@/components/admin/AdminHeader";
@@ -29,6 +29,7 @@ export default function AdminSeoPage() {
   const [section, setSection] = useState<SectionId>("overview");
   const [access, setAccess] = useState<"checking" | "ok" | "denied" | "error">("checking");
   const [message, setMessage] = useState("");
+  const [me, setMe] = useState<{ role: string; seo: { manage: boolean; editContent: boolean } } | null>(null);
 
   // The section is kept in the address (#keywords) so it survives reloads and can be linked.
   useEffect(() => {
@@ -48,8 +49,11 @@ export default function AdminSeoPage() {
   }, []);
 
   useEffect(() => {
-    fetch("/api/seo/admin/integrations")
-      .then((res) => setAccess(res.status === 401 || res.status === 403 ? "denied" : res.ok ? "ok" : "error"))
+    fetch("/api/seo/admin/me")
+      .then(async (res) => {
+        if (res.ok) setMe(await res.json());
+        setAccess(res.status === 401 || res.status === 403 ? "denied" : res.ok ? "ok" : "error");
+      })
       .catch(() => setAccess("error"));
   }, []);
 
@@ -63,7 +67,7 @@ export default function AdminSeoPage() {
       />
 
       <div className="mx-auto max-w-7xl space-y-6 px-page py-8 sm:py-10">
-        {access === "denied" && <StaffSignIn body="Sign in with an admin account to manage SEO." />}
+        {access === "denied" && <StaffSignIn body="Sign in with an SEO manager, editor, viewer or admin account." />}
         {access === "error" && (
           <p role="alert" className="rounded-2xl bg-red-50 px-5 py-4 text-sm text-red-800 ring-1 ring-red-200">
             Couldn&apos;t reach the SEO service. Try again in a moment.
@@ -72,6 +76,14 @@ export default function AdminSeoPage() {
         <p aria-live="polite" className={message ? "rounded-2xl bg-ocean-50 px-5 py-3 text-sm text-ocean-800" : "sr-only"}>
           {message}
         </p>
+
+        {access === "ok" && me && !me.seo.manage && (
+          <p className="rounded-2xl bg-white px-5 py-3 text-sm text-obsidian-700 ring-1 ring-obsidian-900/10">
+            {me.seo.editContent
+              ? "You're signed in as an editor: you can write page copy, FAQs and guides. Titles, URLs, keywords, redirects and publishing stay with the SEO manager."
+              : "You're signed in as a viewer: you can see everything here but not change it."}
+          </p>
+        )}
 
         {access === "ok" && (
           <>
@@ -97,7 +109,7 @@ export default function AdminSeoPage() {
             <div id={`seo-panel-${section}`} role="tabpanel" aria-labelledby={`seo-tab-${section}`}>
               {section === "overview" && <OverviewPanel notify={setMessage} goTo={goTo} />}
               {section === "pages" && <PagesPanel notify={setMessage} />}
-              {section === "keywords" && <KeywordsPanel notify={setMessage} />}
+              {section === "keywords" && <KeywordsPanel notify={setMessage} canManage={me?.seo.manage ?? false} />}
               {section === "clusters" && <ClustersPanel notify={setMessage} />}
               {section === "redirects" && <RedirectsPanel notify={setMessage} />}
               {section === "audit" && <AuditPanel notify={setMessage} />}

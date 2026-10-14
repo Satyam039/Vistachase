@@ -197,7 +197,7 @@ describe("tour and destination content", () => {
       expect((await as(admin).patch(`/api/content/tours/${tourId}`, { fields })).status).toBe(400);
     }
     expect((await as(admin).patch(`/api/content/tours/${tourId}`, { fields: { featuredImage: "javascript:alert(1)" } })).status).toBe(400);
-    expect((await as(admin).patch(`/api/content/tours/${tourId}`, { fields: { galleryImages: ["http://evil.example/x.jpg"] } })).status).toBe(400);
+    expect((await as(admin).patch(`/api/content/tours/${tourId}`, { fields: { galleryImages: ["https://evil.example/x.jpg"] } })).status).toBe(400);
     expect((await as(admin).patch(`/api/content/tours/${tourId}`, { fields: { crossSells: ["no-such-tour"] } })).status).toBe(400);
     const after = await prisma.tour.findUniqueOrThrow({ where: { id: tourId } });
     expect({ price: after.basePrice, mode: after.bookingMode, slug: after.slug, max: after.maxGroupSize }).toEqual({ price: tour.basePrice, mode: tour.bookingMode, slug: tour.slug, max: tour.maxGroupSize });

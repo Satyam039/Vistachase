@@ -33,3 +33,9 @@ CREATE INDEX "SeoKeyword_researchStatus_idx" ON "SeoKeyword"("researchStatus");
 
 -- Keywords already verified against a tool start as validated.
 UPDATE "SeoKeyword" SET "researchStatus" = 'VALIDATED' WHERE "validationStatus" = 'VERIFIED';
+
+-- Starter notes no longer quote Banff Elite's volume and difficulty figures (they are another
+-- business's data); notes written in that exact starter wording are reworded, nothing else.
+UPDATE "SeoKeyword"
+SET "notes" = 'Hypothesis: Banff Elite''s reference sheet lists this term. Its volume and difficulty belong to that sheet, not Vista Chase, and are not copied here; research it in a keyword tool before relying on it.' || substring("notes" from position('before relying on it.' in "notes") + 21)
+WHERE "notes" LIKE 'The Banff Elite reference sheet listed about %before relying on it.%';

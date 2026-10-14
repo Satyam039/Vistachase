@@ -1,7 +1,7 @@
 // Structured data for search engines. "<" is escaped so text from the database can never close
 // the script element. Only describe what the page visibly shows.
 
-export function JsonLd({ data }: { data: Record<string, unknown> }) {
+export function JsonLd({ data }: { data: Record<string, unknown> | Record<string, unknown>[] }) {
   const json = JSON.stringify(data).replace(/</g, "\\u003c");
   return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: json }} />;
 }

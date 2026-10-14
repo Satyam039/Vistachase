@@ -56,8 +56,13 @@ export interface Cluster {
   highPriority: number;
 }
 
+export type ResearchStatus = "UNVERIFIED" | "RESEARCHED" | "VALIDATED" | "MAPPED" | "IMPLEMENTED" | "MONITORED";
+
 export interface Keyword {
   id: string;
+  ref: number;
+  /** KW-0001 */
+  code: string;
   keyword: string;
   designation: "PRIMARY" | "SECONDARY";
   searchVolume: number | null;
@@ -80,6 +85,14 @@ export interface Keyword {
   dataSource: string | null;
   lastVerifiedAt: string | null;
   validationStatus: "UNVERIFIED" | "VERIFIED" | "REJECTED";
+  researchStatus: ResearchStatus;
+  parentTopic: string | null;
+  market: string;
+  language: string;
+  bookingIntent: number | null;
+  competitorEvidence: string | null;
+  contentGap: string | null;
+  recommendedAction: string | null;
   notes: string | null;
   archivedAt: string | null;
   mappings: { id: string; role: "PRIMARY" | "SECONDARY"; page: { id: string; path: string; label: string; pageType: PageType } }[];

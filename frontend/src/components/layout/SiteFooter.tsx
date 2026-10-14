@@ -49,6 +49,7 @@ const GROUPS: { heading: string; links: FooterLink[] }[] = [
       { label: "Hotel pickup finder", href: "/pickup-finder" },
       { label: "My trips & vouchers", href: "/account/trips" },
       { label: "FAQ & cancellation", href: "/faq" },
+      { label: "Travel guides", href: "/guides" },
       { label: "AI concierge", href: "/concierge" },
       { label: "Photo gallery", href: "/gallery" },
     ],
