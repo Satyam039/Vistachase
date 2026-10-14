@@ -1,11 +1,12 @@
 // Destinations, in the "Top destinations" pattern of the booking sites studied: photo hero, then
-// large image tiles (bento) with parallax and the number of tours based there (places visited on
+// image-on-top cards (MediaCard) with parallax and the number of tours based there (places visited on
 // other destinations' tours, like Lake Louise, show no count).
 
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowUpRight, ChevronRight, MapPin } from "lucide-react";
+import { ChevronRight, MapPin } from "lucide-react";
+import { MediaCard } from "@/components/cards/MediaCard";
 import { getDestinations } from "@/lib/api/catalog";
 import { withSeo } from "@/lib/seo/server";
 
@@ -15,8 +16,10 @@ const baseMetadata: Metadata = {
   alternates: { canonical: "/destinations" },
 };
 
-// Tile sizes for the bento grid on large screens (first two large).
-const SPAN = ["lg:col-span-4 lg:row-span-2", "lg:col-span-2 lg:row-span-2", "lg:col-span-2", "lg:col-span-2", "lg:col-span-2"];
+// Card widths on large screens: the first two share the first row, the rest the second. Every
+// card is a MediaCard (photo on top, content below); cards in a row share an aspect so they line up.
+const SPAN = ["lg:col-span-3", "lg:col-span-3", "lg:col-span-2", "lg:col-span-2", "lg:col-span-2"];
+const ASPECT = ["aspect-[5/4] sm:aspect-[21/9] lg:aspect-[16/9]", "aspect-[5/4] lg:aspect-[16/9]", "aspect-[5/4]", "aspect-[5/4]", "aspect-[5/4]"];
 
 export default async function DestinationsPage() {
   const destinations = await getDestinations();
@@ -52,37 +55,24 @@ export default async function DestinationsPage() {
       </section>
 
       <section aria-label="Destinations" className="mx-auto max-w-7xl px-page py-14 sm:py-20">
-        <ul className="grid auto-rows-[22rem] grid-cols-1 gap-5 sm:grid-cols-2 lg:auto-rows-[18rem] lg:grid-cols-6" data-stagger>
+        <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-6" data-stagger>
           {destinations.map((d, i) => {
             const count = d.tours.length;
-            const href = `/destinations/${d.slug}`;
             return (
               <li key={d.id} className={`${SPAN[i] ?? "lg:col-span-2"} ${i === 0 ? "sm:col-span-2" : ""}`}>
-                <Link
-                  href={href}
-                  className="group relative flex h-full flex-col justify-end overflow-hidden rounded-[2rem] p-6 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ocean-600 sm:p-7"
-                >
-                  <div className="absolute inset-0 -z-0 overflow-hidden">
-                    <div className="absolute inset-0 transition-transform duration-[1.4s] ease-out group-hover:scale-[1.06]">
-                      <Image src={d.heroImage} alt="" fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 60vw" className="object-cover" data-parallax="6" />
-                    </div>
-                    <div className="vc-scrim" aria-hidden="true" />
-                  </div>
-                  <div className="relative">
-                    <p className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-sm text-white backdrop-blur-md">
-                      <MapPin className="h-3.5 w-3.5 text-summit-300" aria-hidden="true" />
-                      {d.province}
-                    </p>
-                    <h2 className={`font-light leading-tight text-white ${i < 2 ? "text-3xl sm:text-4xl" : "text-2xl"}`}>{d.name}</h2>
-                    {i < 2 && <p className="mt-2 max-w-md text-base font-light leading-relaxed text-white/85 line-clamp-2">{d.description}</p>}
-                    <span className="mt-4 inline-flex items-center gap-1.5 text-sm text-white">
-                      <span className="border-b border-summit-500 pb-0.5">
-                        {count > 0 ? `${count} ${count === 1 ? "tour" : "tours"} · Explore` : "Explore"}
-                      </span>
-                      <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true" />
-                    </span>
-                  </div>
-                </Link>
+                <MediaCard
+                  href={`/destinations/${d.slug}`}
+                  image={d.heroImage}
+                  sizes={i < 2 ? "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 640px" : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 420px"}
+                  aspect={ASPECT[i] ?? "aspect-[5/4]"}
+                  eyebrow={d.province}
+                  eyebrowIcon={MapPin}
+                  title={d.name}
+                  headingLevel={2}
+                  description={d.description}
+                  cta={count > 0 ? `${count} ${count === 1 ? "tour" : "tours"} · Explore` : "Explore"}
+                  parallax
+                />
               </li>
             );
           })}

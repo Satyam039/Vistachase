@@ -479,10 +479,10 @@ export default function MyTripsPage() {
                         : "bg-slate-100 text-slate-700 ring-slate-200";
                     return (
                       <li key={b.id}>
-                        <article className="grid overflow-hidden rounded-[1.75rem] bg-white ring-1 ring-obsidian-900/[0.07] md:grid-cols-[16rem_minmax(0,1fr)] lg:grid-cols-[18rem_minmax(0,1fr)_16rem]">
+                        <article className="grid overflow-hidden rounded-[1.75rem] bg-white ring-1 ring-obsidian-900/[0.07] lg:grid-cols-[minmax(0,1fr)_16rem]">
                           {/* Photo with date badge */}
-                          <div className="relative aspect-[16/9] md:aspect-auto md:min-h-full">
-                            <Image src={image} alt="" fill sizes="(max-width: 768px) 100vw, 18rem" className="object-cover" />
+                          <div className="relative aspect-[16/9] sm:aspect-[21/9] lg:col-span-2 lg:aspect-[3/1]">
+                            <Image src={image} alt="" fill sizes="(max-width: 1280px) 100vw, 80rem" className="object-cover" />
                             {valid && (
                               <span className="absolute left-4 top-4 flex flex-col items-center rounded-2xl bg-white px-3 py-2 text-center shadow-lg">
                                 <span className="text-xs uppercase tracking-wider text-ocean-700">
@@ -557,7 +557,7 @@ export default function MyTripsPage() {
                           </div>
 
                           {/* Total + actions */}
-                          <div className="flex flex-col gap-3 border-t border-obsidian-900/[0.07] p-6 md:col-span-2 lg:col-span-1 lg:border-l lg:border-t-0">
+                          <div className="flex flex-col gap-3 border-t border-obsidian-900/[0.07] p-6 lg:border-l lg:border-t-0">
                             <div>
                               <p className="text-sm text-slate-600">Total paid</p>
                               <p className="text-2xl font-light text-obsidian-900">

@@ -75,12 +75,12 @@ export default async function HomePage() {
       <ServicesHero slides={slides} />
       <TrustRow />
       <NatGeoCertificateSection />
+      <VerifiedAwardSection />
       <TopExperiences tours={tours} />
       <ExperienceCategories />
       <DestinationStoryStream />
       <PlanAheadGuaranteedAccess />
       <WhyTravelersLove />
-      <VerifiedAwardSection />
       <GuestTestimonials reviews={reviews} />
       <LiveTrackingTeaser />
       <TrustBar />

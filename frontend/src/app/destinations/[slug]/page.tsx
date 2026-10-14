@@ -5,8 +5,9 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { MediaCard } from "@/components/cards/MediaCard";
 import type { Metadata } from "next";
-import { ArrowUpRight, ChevronRight, Sparkles } from "lucide-react";
+import { ChevronRight, MapPin, Sparkles } from "lucide-react";
 import { AmbientVideo } from "@/components/cinematic/AmbientVideo";
 import { TourCard } from "@/components/tours/TourCard";
 import { TrustRow } from "@/components/home/TrustRow";
@@ -213,19 +214,16 @@ export default async function DestinationDetailPage({ params }: { params: Promis
           </h2>
           <Rail label="Other destinations" itemClassName="w-[78vw] max-w-[22rem] sm:w-[20rem]">
             {others.map((d) => (
-              <Link
+              <MediaCard
                 key={d.slug}
                 href={`/destinations/${d.slug}`}
-                className="group relative flex aspect-[4/5] flex-col justify-end overflow-hidden rounded-[1.75rem] p-6 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ocean-600"
-              >
-                <Image src={d.heroImage} alt="" fill sizes="20rem" className="object-cover transition-transform duration-[1.2s] ease-out group-hover:scale-[1.06]" />
-                <span className="vc-scrim" aria-hidden="true" />
-                <span className="relative text-2xl font-light">{d.name}</span>
-                <span className="relative mt-2 inline-flex items-center gap-1.5 text-sm text-slate-200">
-                  Explore
-                  <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true" />
-                </span>
-              </Link>
+                image={d.heroImage}
+                sizes="(max-width: 640px) 78vw, 20rem"
+                eyebrow={d.province}
+                eyebrowIcon={MapPin}
+                title={d.name}
+                cta="Explore"
+              />
             ))}
           </Rail>
         </div>
