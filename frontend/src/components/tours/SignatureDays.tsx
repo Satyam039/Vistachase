@@ -4,7 +4,7 @@
 // tickets the price doesn't cover are listed so nobody is surprised at the lake. Cards are compact
 // (photo, title, duration, price); the stops, inclusions and pickup open in place.
 
-import Image from "next/image";
+import { CARD_BADGE, CARD_PANEL, CARD_TITLE, CardMedia } from "@/components/cards/MediaCard";
 import Link from "next/link";
 import { ArrowRight, CalendarDays, Check, ChevronDown, Clock, MapPin, Ticket } from "lucide-react";
 import { PriceTag } from "@/components/pricing/PriceTag";
@@ -53,14 +53,12 @@ export function SignatureDays({
             const included = tour.inclusions.filter((i) => i !== pickup);
             const addOns = tour.exclusions.filter((e) => /ticket|add-on/i.test(e));
             return (
-              <li key={tour.id} className="group relative flex flex-col overflow-hidden rounded-[2rem] bg-gradient-to-b from-[#181d21] via-[#121619] to-[#0a0d0f] ring-1 ring-white/[0.12] transition-[box-shadow,transform,border-color] duration-500 hover:-translate-y-1.5 hover:ring-summit-400/40 hover:shadow-[0_30px_70px_-25px_rgba(0,0,0,0.7)]">
-                <div className="relative aspect-[16/10]">
-                  <Image src={tour.featuredImage} alt="" fill sizes="(min-width: 1024px) 400px, 100vw" className="object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-obsidian-950/80 via-transparent" />
-                  <p className="absolute inset-x-0 bottom-0 px-4 pb-3 text-xs uppercase tracking-[0.18em] text-summit-200">{theme}</p>
-                </div>
-                <div className="flex flex-1 flex-col px-4 pb-4 pt-3.5">
-                  <h3 className="line-clamp-2 text-sm font-light uppercase leading-snug tracking-[0.12em] text-white sm:text-[0.95rem]">{tour.title}</h3>
+              <li key={tour.id} className="group relative flex flex-col transition-transform duration-500 ease-out hover:-translate-y-1">
+                <CardMedia src={tour.featuredImage} sizes="(min-width: 1024px) 400px, 100vw" aspect="aspect-[16/10]">
+                  <span className={`absolute left-3 top-3 ${CARD_BADGE}`}>{theme}</span>
+                </CardMedia>
+                <div className={CARD_PANEL}>
+                  <h3 className={CARD_TITLE}>{tour.title}</h3>
 
                   <dl className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-white/70">
                     <div className="flex items-center gap-1">

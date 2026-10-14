@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { CARD_BADGE, CARD_EYEBROW, CARD_PANEL, CARD_TITLE } from "@/components/cards/MediaCard";
 import { ArrowRight, CalendarDays, CheckCircle2, Clock, MapPin, Star, Users } from "lucide-react";
 import { PriceTag } from "@/components/pricing/PriceTag";
 import { hasPrice } from "@/lib/pricing";
@@ -104,23 +105,23 @@ export function TourCard({
           {award ? (
             <span className="bg-summit-200 px-2.5 py-1 text-[0.7rem] uppercase tracking-[0.12em] text-obsidian-900">{award}</span>
           ) : (
-            <span className="bg-obsidian-950/70 px-2.5 py-1 text-[0.7rem] uppercase tracking-[0.12em] text-white backdrop-blur-md">
+            <span className={CARD_BADGE}>
               {CATEGORY_LABEL[tour.category] ?? tour.category}
             </span>
           )}
           {tour.category === "SHUTTLE" && (
-            <span className="bg-obsidian-950/70 px-2.5 py-1 text-[0.7rem] uppercase tracking-[0.12em] text-white backdrop-blur-md">Guaranteed lake access</span>
+            <span className={CARD_BADGE}>Guaranteed lake access</span>
           )}
         </div>
       </div>
 
       {/* Content panel: separate from the photo, square, hairline border */}
-      <div className="flex flex-1 flex-col border border-t-0 border-white/[0.12] bg-[#161a1d] px-5 pb-5 pt-5 transition-colors duration-500 group-hover:border-summit-400/40 sm:px-6">
-        <p className="mb-2 flex min-w-0 items-center gap-1 text-[0.7rem] uppercase tracking-[0.16em] text-white/60">
+      <div className={CARD_PANEL}>
+        <p className={CARD_EYEBROW}>
           <MapPin className="h-3 w-3 shrink-0 text-summit-300" aria-hidden="true" />
           <span className="truncate">{tour.destination.name}</span>
         </p>
-        <TitleTag className="line-clamp-2 text-base font-normal uppercase leading-snug tracking-[0.14em] text-white">
+        <TitleTag className={CARD_TITLE}>
           <Link href={`/${tour.slug}`} className="focus-visible:outline-none">
             <span className="absolute inset-0 z-10 group-has-[:focus-visible]:outline group-has-[:focus-visible]:outline-2 group-has-[:focus-visible]:outline-offset-2 group-has-[:focus-visible]:outline-summit-300" />
             {tour.title}

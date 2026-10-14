@@ -9,6 +9,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { CARD_BADGE, CARD_PANEL, CARD_TITLE } from "@/components/cards/MediaCard";
 import {
   ArrowUpRight,
   Building2,
@@ -196,10 +197,10 @@ export default function PickupFinderPage() {
                 <li key={p.id}>
                   <article
                     aria-labelledby={`pickup-${p.id}`}
-                    className="group flex h-full flex-col overflow-hidden rounded-[1.75rem] bg-white ring-1 ring-obsidian-900/[0.07] transition-[box-shadow,transform] duration-300 hover:-translate-y-1 hover:shadow-[0_30px_60px_-36px_rgba(12,31,33,0.55)]"
+                    className="group flex h-full flex-col transition-transform duration-500 ease-out hover:-translate-y-1"
                   >
                     {/* Photo with the town and, for area photos, an honest label */}
-                    <div className="relative aspect-[16/10] overflow-hidden bg-obsidian-100">
+                    <div className="relative aspect-[16/10] overflow-hidden bg-obsidian-900">
                       {photo && (
                         <Image
                           src={photo.src}
@@ -209,36 +210,36 @@ export default function PickupFinderPage() {
                           className="object-cover transition-transform duration-[1.2s] ease-out group-hover:scale-[1.05]"
                         />
                       )}
-                      <span className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1 text-sm text-obsidian-900 shadow-sm">
+                      <span className={`absolute left-3 top-3 inline-flex items-center gap-1.5 ${CARD_BADGE}`}>
                         <MapPin
-                          className="h-3.5 w-3.5 text-ocean-600"
+                          className="h-3 w-3 text-summit-300"
                           aria-hidden="true"
                         />
                         {p.town}
                       </span>
                       {photo?.kind === "area" && (
-                        <span className="absolute bottom-3 right-3 rounded-full bg-obsidian-950/70 px-2.5 py-0.5 text-xs text-white backdrop-blur-sm">
+                        <span className="absolute bottom-3 right-3 bg-obsidian-950/70 px-2.5 py-0.5 text-xs text-white backdrop-blur-sm">
                           Area photo · {photo.place}
                         </span>
                       )}
                     </div>
 
-                    <div className="flex flex-1 flex-col p-6">
+                    <div className={CARD_PANEL}>
                       <h2
                         id={`pickup-${p.id}`}
-                        className="text-xl font-light leading-snug text-obsidian-900"
+                        className={CARD_TITLE}
                       >
                         {p.name}
                       </h2>
-                      <p className="mt-1 text-sm text-slate-600">{p.address}</p>
+                      <p className="mt-1 text-sm text-white/65">{p.address}</p>
 
                       {/* Where exactly to wait */}
                       <div className="mt-5 flex items-start gap-3">
-                        <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-summit-100 text-obsidian-900">
+                        <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-summit-500/15 text-summit-300">
                           <Footprints className="h-4 w-4" aria-hidden="true" />
                         </span>
-                        <p className="text-sm leading-relaxed text-slate-700">
-                          <span className="block text-xs uppercase tracking-[0.14em] text-slate-600">
+                        <p className="text-sm leading-relaxed text-white/80">
+                          <span className="block text-xs uppercase tracking-[0.14em] text-white/55">
                             Where to wait
                           </span>
                           {p.instructions}
@@ -247,18 +248,18 @@ export default function PickupFinderPage() {
 
                       {p.shuttleLines.length > 0 && (
                         <div className="mt-4 flex items-start gap-3">
-                          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ocean-50 text-ocean-700">
+                          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-summit-500/15 text-summit-300">
                             <Bus className="h-4 w-4" aria-hidden="true" />
                           </span>
                           <div className="min-w-0">
-                            <p className="text-xs uppercase tracking-[0.14em] text-slate-600">
+                            <p className="text-xs uppercase tracking-[0.14em] text-white/55">
                               Picked up here
                             </p>
                             <ul className="mt-1.5 flex flex-wrap gap-1.5">
                               {p.shuttleLines.map((line) => (
                                 <li
                                   key={line}
-                                  className="rounded-full bg-obsidian-50 px-2.5 py-0.5 text-sm text-obsidian-900 ring-1 ring-obsidian-900/[0.06]"
+                                  className="rounded-full bg-white/[0.06] px-2.5 py-0.5 text-sm text-white/85 ring-1 ring-white/[0.1]"
                                 >
                                   {line}
                                 </li>
@@ -271,12 +272,12 @@ export default function PickupFinderPage() {
                       {/* mt-auto keeps the footer at the card's foot; pt-6 guarantees a gap above the
                           divider even on the fullest card. */}
                       <div className="mt-auto pt-6">
-                        <div className="flex items-center justify-between gap-3 border-t border-obsidian-900/[0.06] pt-5">
+                        <div className="flex items-center justify-between gap-3 border-t border-white/[0.1] pt-5">
                           <a
                             href={`https://www.google.com/maps/dir/?api=1&destination=${p.latitude},${p.longitude}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex h-10 items-center gap-1.5 rounded-full bg-ocean-600 px-4 text-sm text-white hover:bg-ocean-700"
+                            className="golden-summit-btn inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-sm"
                           >
                             Directions
                             <ArrowUpRight
@@ -289,7 +290,7 @@ export default function PickupFinderPage() {
                           </a>
                           <Link
                             href="/search"
-                            className="inline-flex h-10 items-center gap-1 text-sm text-ocean-700 underline-offset-4 hover:underline"
+                            className="inline-flex h-10 items-center gap-1 text-sm text-summit-200 underline-offset-4 hover:underline"
                           >
                             Find a tour
                             <ChevronRight

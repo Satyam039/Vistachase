@@ -5,6 +5,7 @@
 import Image from "next/image";
 import { AwardSeal } from "@/components/brand/AwardSeal";
 import Link from "next/link";
+import { MediaCard } from "@/components/cards/MediaCard";
 import type { Metadata } from "next";
 import { ArrowUpRight, ChevronRight, HeartHandshake, MountainSnow, ShieldCheck, Users } from "lucide-react";
 import { withSeo } from "@/lib/seo/server";
@@ -176,14 +177,17 @@ export default function AboutUsPage() {
             { src: "/media/photos/cadillac-escalade-mountains.webp", title: "Luxury SUV", body: "Up to 6 guests. Private tours with your own guide and pace.", alt: "Black Cadillac Escalade in the mountains" },
             { src: "/media/photos/vista-chase-sprinter-canmore.webp", title: "Executive van", body: "Up to 13 guests. Shared tours, shuttles and larger private groups.", alt: "Vista Chase Mercedes Sprinter van in Canmore" },
           ].map((v) => (
-            <li key={v.title} className="group overflow-hidden rounded-[1.75rem] bg-white ring-1 ring-obsidian-900/[0.07]">
-              <div className="relative aspect-[16/10] overflow-hidden">
-                <Image src={v.src} alt={v.alt} fill sizes="(max-width: 768px) 100vw, 640px" className="object-cover transition-transform duration-[1.2s] ease-out group-hover:scale-105" />
-              </div>
-              <div className="p-6 sm:p-7">
-                <h3 className="text-2xl font-light text-obsidian-900">{v.title}</h3>
-                <p className="mt-2 text-base font-light text-slate-700">{v.body}</p>
-              </div>
+            <li key={v.title}>
+              <MediaCard
+                image={v.src}
+                imageAlt={v.alt}
+                sizes="(max-width: 768px) 100vw, 640px"
+                aspect="aspect-[16/10]"
+                eyebrow="Our fleet"
+                title={v.title}
+                description={v.body}
+                clampDescription={false}
+              />
             </li>
           ))}
         </ul>

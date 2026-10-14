@@ -160,14 +160,18 @@ export default async function DestinationDetailPage({ params }: { params: Promis
           </div>
           <ul className={`grid gap-5 sm:grid-cols-2 ${story.highlights.length > 3 ? "lg:grid-cols-4" : "lg:grid-cols-3"}`} data-stagger>
             {story.highlights.map((h) => (
-              <li key={h.name} className="group overflow-hidden rounded-[1.75rem] bg-white ring-1 ring-obsidian-900/[0.07]">
-                <div className="relative aspect-[4/3] overflow-hidden">
-                  <Image src={h.image} alt={h.name} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-cover transition-transform duration-[1.2s] ease-out group-hover:scale-105" />
-                </div>
-                <div className="p-6">
-                  <h3 className="text-xl font-light text-obsidian-900">{h.name}</h3>
-                  <p className="mt-2 text-base font-light leading-relaxed text-slate-700">{h.body}</p>
-                </div>
+              <li key={h.name}>
+                <MediaCard
+                  image={h.image}
+                  imageAlt={h.name}
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  aspect="aspect-[4/3]"
+                  eyebrow={dest.name.split(" & ")[0]}
+                  eyebrowIcon={MapPin}
+                  title={h.name}
+                  description={h.body}
+                  clampDescription={false}
+                />
               </li>
             ))}
           </ul>
