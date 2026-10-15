@@ -4,7 +4,7 @@
 
 import type { Prisma, SeoPage, SeoPublishStatus } from "@prisma/client";
 import prisma from "@/lib/db/prisma";
-import { GUIDE_PREFIX, STATIC_ROUTES } from "@/modules/seo/static-routes";
+import { BLOG_PREFIX, cmsPrefixOf, GUIDE_PREFIX, STATIC_ROUTES, type CmsPrefix } from "@/modules/seo/static-routes";
 import { checkPage, completeness, type FieldCheck, type PageUpdateInput } from "@/modules/seo/seo.validation";
 import { findRedirectLoop } from "@/modules/seo/seo.redirects";
 import { SeoError } from "@/modules/seo/seo.errors";
@@ -25,6 +25,36 @@ export interface LiveCrawl {
   wordCount?: number;
   internalLinks?: number;
   error?: string;
+  // Added by the SEO portal audit (older crawls don't have them).
+  ogUrl?: string | null;
+  ogType?: string | null;
+  twitterCard?: string | null;
+  viewport?: boolean;
+  verification?: string | null;
+  images?: CrawledImage[];
+  imageCount?: number;
+  jsonLd?: CrawledJsonLd[];
+  gtagIds?: string[];
+  blockingScripts?: number;
+  htmlBytes?: number;
+  responseMs?: number;
+}
+
+export interface CrawledImage {
+  src: string;
+  alt: string | null; // null = no alt attribute; "" = marked decorative
+  width: number | null;
+  height: number | null;
+  lazy: boolean;
+  kind: "img" | "og" | "schema";
+}
+
+export interface CrawledJsonLd {
+  ok: boolean;
+  error?: string;
+  types: string[];
+  ids: string[];
+  data?: unknown;
 }
 
 export const liveOf = (page: Pick<SeoPage, "lastCrawl">): LiveCrawl | null => (page.lastCrawl as LiveCrawl | null) ?? null;
@@ -183,8 +213,11 @@ const TRACKED_FIELDS = [
   "ogTitle", "ogDescription", "ogImage", "twitterTitle", "twitterDescription", "twitterImage", "breadcrumbLabel", "excerpt", "body",
   "answerSnippet", "citationFact", "faqs", "authorName", "authorBio", "reviewedAt", "featuredImage", "featuredImageAlt", "imageTitle",
   "imageCaption", "imageFileName", "ctaText", "ctaUrl", "conversionGoal", "utmSource", "utmMedium", "utmCampaign", "pillar", "tags",
-  "relatedPaths", "sitemapPriority", "path",
+  "relatedPaths", "sitemapPriority", "path", "sitemapInclude", "datePublished", "dateModified", "featured", "thumbnailImage", "thumbnailAlt",
 ] as const;
+
+/** Fields whose change counts as a content update of a blog post (moves its dateModified). */
+const BLOG_CONTENT_FIELDS = new Set(["label", "h1", "body", "excerpt", "answerSnippet", "faqs", "featuredImage", "seoTitle", "metaDescription"]);
 
 function diff(before: Record<string, unknown>, after: Record<string, unknown>) {
   const changes: Record<string, { from: unknown; to: unknown }> = {};
@@ -217,7 +250,7 @@ export async function updatePage(id: string, input: PageUpdateInput, userId: str
   let newPath: string | null = null;
   if (slug !== undefined) {
     if (!isCms) throw new SeoError(400, "This page's address comes from the site's code or the tour record, so it can't be changed here.");
-    newPath = `${GUIDE_PREFIX}${slug}`;
+    newPath = `${cmsPrefixOf(current.path) ?? GUIDE_PREFIX}${slug}`;
     if (newPath === current.path) newPath = null;
     else if (await prisma.seoPage.findUnique({ where: { path: newPath } })) throw new SeoError(409, `Another page already uses ${newPath}.`);
   }
@@ -234,11 +267,13 @@ export async function updatePage(id: string, input: PageUpdateInput, userId: str
 
   const changes = diff(current as unknown as Record<string, unknown>, { ...fields, ...(newPath ? { path: newPath } : {}) } as Record<string, unknown>);
   if (Object.keys(changes).length === 0) return { page: current, changed: false };
+  // A blog post's "modified" date follows its content (kept from Webflow until the first real edit).
+  const bumpModified = isCms && current.path.startsWith(BLOG_PREFIX) && fields.dateModified === undefined && Object.keys(changes).some((k) => BLOG_CONTENT_FIELDS.has(k));
 
   const page = await prisma.$transaction(async (tx) => {
     const updated = await tx.seoPage.update({
       where: { id },
-      data: { ...(fields as Prisma.SeoPageUpdateInput), ...(newPath ? { path: newPath } : {}), updatedById: userId },
+      data: { ...(fields as Prisma.SeoPageUpdateInput), ...(newPath ? { path: newPath } : {}), ...(bumpModified ? { dateModified: new Date() } : {}), updatedById: userId },
     });
     if (newPath) await moveRedirects(tx, current.path, newPath, current.publishedAt !== null, userId);
     await tx.seoPageRevision.create({ data: { pageId: id, userId, action: "UPDATED", changes: changes as Prisma.InputJsonValue } });
@@ -266,8 +301,8 @@ async function moveRedirects(tx: Tx, oldPath: string, newPath: string, wasPublic
   });
 }
 
-export async function createGuide(input: { label: string; slug: string; focusKeyword?: string | null }, userId: string) {
-  const path = `${GUIDE_PREFIX}${input.slug}`;
+export async function createGuide(input: { label: string; slug: string; focusKeyword?: string | null }, userId: string, prefix: CmsPrefix = GUIDE_PREFIX) {
+  const path = `${prefix}${input.slug}`;
   if (await prisma.seoPage.findUnique({ where: { path } })) throw new SeoError(409, `A page already uses ${path}.`);
   if (await prisma.seoRedirect.findFirst({ where: { fromPath: path, active: true } })) throw new SeoError(409, `${path} is the source of an active redirect. Remove the redirect first.`);
   return prisma.$transaction(async (tx) => {
@@ -275,7 +310,7 @@ export async function createGuide(input: { label: string; slug: string; focusKey
       data: { path, label: input.label, pageType: "GUIDE", source: "CMS", status: "DRAFT", focusKeyword: input.focusKeyword ?? null, conversionGoal: "ENQUIRY", createdById: userId, updatedById: userId },
     });
     await tx.seoPageRevision.create({ data: { pageId: page.id, userId, action: "CREATED", changes: { path: { from: null, to: path } } } });
-    await audit(tx, userId, "SEO_PAGE_CREATED", page.id, { path });
+    await audit(tx, userId, prefix === BLOG_PREFIX ? "SEO_BLOG_POST_CREATED" : "SEO_PAGE_CREATED", page.id, { path });
     return page;
   });
 }
