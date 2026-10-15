@@ -5,6 +5,10 @@ read; roles and the keyword sheet are in [SEO_WORKSPACE.md](SEO_WORKSPACE.md)) m
 audits and `llms.txt`. It extends the existing site: pages keep their coded titles, descriptions
 and JSON-LD, and a published override replaces only the fields it sets.
 
+The SEO team's own workspace, `/seo` (drafts and publishing, Webflow import, blog posts at
+`/blog-post/<slug>`, technical checks, schema, migration checklist, tasks, approvals), is described in
+[SEO_PORTAL.md](SEO_PORTAL.md).
+
 Nothing in the dashboard is invented. Search volume and difficulty appear only when someone enters
 them with a basis (estimate or researched, with the tool named) and every keyword starts
 **unverified**. Rankings, clicks, impressions and traffic are not shown anywhere until a Search
