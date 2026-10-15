@@ -291,14 +291,18 @@ html[data-hero-page]:not([data-scrolled]) .vc-trips-mobile {
 html[data-hero-page]:not([data-scrolled]) .vc-trips-mobile:hover {
   background-color: rgba(255, 255, 255, 0.15) !important;
 }
-html[data-hero-page]:not([data-scrolled]) .vc-trips-desktop {
+html[data-hero-page]:not([data-scrolled]) .vc-trips-desktop,
+html[data-hero-page]:not([data-scrolled]) .vc-book-desktop {
   color: #ffffff !important;
 }
 html[data-hero-page]:not([data-scrolled]) .vc-trips-desktop span,
-html[data-hero-page]:not([data-scrolled]) .vc-trips-desktop svg {
+html[data-hero-page]:not([data-scrolled]) .vc-trips-desktop svg,
+html[data-hero-page]:not([data-scrolled]) .vc-book-desktop span,
+html[data-hero-page]:not([data-scrolled]) .vc-book-desktop svg {
   color: #ffffff !important;
 }
-html[data-hero-page]:not([data-scrolled]) .vc-trips-desktop:hover {
+html[data-hero-page]:not([data-scrolled]) .vc-trips-desktop:hover,
+html[data-hero-page]:not([data-scrolled]) .vc-book-desktop:hover {
   background-color: rgba(255, 255, 255, 0.15) !important;
 }
 
@@ -320,6 +324,30 @@ html[data-hero-page]:not([data-scrolled]) .vc-trips-desktop:hover {
 }
 [data-scrolled] .vc-brandmark-white {
   display: none !important;
+}
+
+/* Centred brand: the name sits beside the emblem at the top of the page and folds away once the
+   page scrolls (SiteFrame sets data-nav-compact), leaving only the emblem, still centred. Width,
+   spacing and opacity animate together, so the emblem glides to the centre without a jump. */
+.vc-nav-brand-text {
+  display: inline-block;
+  overflow: hidden;
+  max-width: 12rem;
+  margin-left: 0.625rem;
+  opacity: 1;
+  transition: max-width 450ms var(--ease-out-expo), margin-left 450ms var(--ease-out-expo), opacity 250ms ease;
+}
+[data-nav-compact] .vc-nav-brand-text {
+  max-width: 0;
+  margin-left: 0;
+  opacity: 0;
+  transition: max-width 450ms var(--ease-out-expo), margin-left 450ms var(--ease-out-expo), opacity 200ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .vc-nav-brand-text,
+  [data-nav-compact] .vc-nav-brand-text {
+    transition: none;
+  }
 }
 
 /* Continuous marquee (trust strip). Pauses on hover/focus; static with reduced motion. */
