@@ -40,6 +40,8 @@ export const EDITOR_PAGE_FIELDS = new Set([
   "imageTitle",
   "imageCaption",
   "ctaText",
+  "thumbnailImage",
+  "thumbnailAlt",
 ]);
 
 export const can = (role: UserRole, roles: UserRole[]) => role === "ADMIN" || roles.includes(role);

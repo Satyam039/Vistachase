@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Dropdown } from "@/components/forms/Dropdown";
-import { Chip, Empty, Grid, Loading, Panel, SEVERITY_STYLE, Stat, errorOf, primaryBtn, quietBtn, seoApi, when, words, type AuditRun, type Issue, type Severity } from "./shared";
+import { Chip, Empty, Grid, Loading, Panel, SEVERITY_STYLE, Stat, errorOf, primaryBtn, quietBtn, seoApi, when, words, useSeoBase, type AuditRun, type Issue, type Severity } from "./shared";
 
 type IssueStatus = Issue["status"];
 
@@ -32,6 +32,7 @@ function Alert({ children }: { children: string }) {
 const num = (v: number | undefined) => (typeof v === "number" ? v.toLocaleString("en-CA") : "–");
 
 export function AuditPanel({ notify, initialSeverity }: { notify: (m: string) => void; initialSeverity?: Severity }) {
+  const base = useSeoBase();
   const [status, setStatus] = useState<IssueStatus>("OPEN");
   const [severity, setSeverity] = useState<string>(initialSeverity ?? "");
   const [type, setType] = useState("");
@@ -203,7 +204,7 @@ export function AuditPanel({ notify, initialSeverity }: { notify: (m: string) =>
                     !i.page?.label && <span className="text-slate-500">Site-wide</span>
                   )}
                   {i.pageId && (
-                    <Link href={`/admin/seo/pages/${i.pageId}`} className="mt-1 block text-sm text-ocean-700 underline underline-offset-2 hover:text-ocean-800">
+                    <Link href={`${base}/pages/${i.pageId}`} className="mt-1 block text-sm text-ocean-700 underline underline-offset-2 hover:text-ocean-800">
                       Edit<span className="sr-only"> {i.page?.label ?? i.path ?? "page"}</span>
                     </Link>
                   )}

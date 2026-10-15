@@ -88,6 +88,10 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  // The SEO portal (/seo, /seo/*) is a staff workspace with its own frame: no public header,
+  // footer, announcement or concierge there. Every other route renders exactly as before.
+  if (pathname === "/seo" || pathname?.startsWith("/seo/")) return <>{children}</>;
+
   return (
     <>
       {/* Above the sticky header, so it scrolls away instead of staying pinned (AnnouncementBar). */}

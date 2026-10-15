@@ -16,7 +16,7 @@ import { GuestTestimonials } from "@/components/cinematic/GuestTestimonials";
 import { LiveTrackingTeaser } from "@/components/cinematic/LiveTrackingTeaser";
 import { TrustBar } from "@/components/cinematic/TrustBar";
 import type { Metadata } from "next";
-import { withSeo } from "@/lib/seo/server";
+import { getSiteConfig, withSeo } from "@/lib/seo/server";
 
 const baseMetadata: Metadata = {
   title: "Vista Chase | Luxury Private Tours & Shuttles • Banff & Lake Louise",
@@ -88,6 +88,8 @@ export default async function HomePage() {
   );
 }
 
-export function generateMetadata(): Promise<Metadata> {
-  return withSeo("/", baseMetadata);
+export async function generateMetadata(): Promise<Metadata> {
+  // The Google site verification tag sits on the home page only (approved in the SEO portal).
+  const [metadata, config] = await Promise.all([withSeo("/", baseMetadata), getSiteConfig()]);
+  return config?.verification ? { ...metadata, verification: { google: config.verification } } : metadata;
 }

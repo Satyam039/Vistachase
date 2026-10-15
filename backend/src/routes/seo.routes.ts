@@ -37,7 +37,8 @@ import { overview } from "@/modules/seo/seo.overview";
 import { bootstrapSeo } from "@/modules/seo/seo.bootstrap";
 import { getSettings, saveSettings } from "@/modules/seo/seo.settings";
 import { integrationStatus } from "@/modules/seo/search-console";
-import { activeRedirectMap, llmsTxt, publicGuide, publicGuides, publicMeta, sitemapEntries } from "@/modules/seo/seo.public";
+import { activeRedirectMap, llmsTxt, publicBlogPosts, publicGuide, publicGuides, publicMeta, publicSiteConfig, sitemapEntries } from "@/modules/seo/seo.public";
+import { BLOG_PREFIX } from "@/modules/seo/static-routes";
 import {
   clusterSchema,
   createGuideSchema,
@@ -109,6 +110,23 @@ router.get("/public/guides/:slug", publicLimit, wrap(async (req, res) => {
   if (!guide) return res.status(404).json({ success: false, error: "Not found." });
   publicCache(res);
   return res.json({ success: true, guide });
+}));
+
+router.get("/public/blog", publicLimit, wrap(async (_req, res) => {
+  publicCache(res);
+  return res.json({ success: true, posts: await publicBlogPosts() });
+}));
+
+router.get("/public/blog/:slug", publicLimit, wrap(async (req, res) => {
+  const post = await publicGuide(String(req.params.slug ?? ""), BLOG_PREFIX);
+  if (!post) return res.status(404).json({ success: false, error: "Not found." });
+  publicCache(res);
+  return res.json({ success: true, post });
+}));
+
+router.get("/public/site-config", publicLimit, wrap(async (_req, res) => {
+  publicCache(res);
+  return res.json({ success: true, ...(await publicSiteConfig()) });
 }));
 
 router.get("/public/sitemap", publicLimit, wrap(async (_req, res) => {
@@ -354,7 +372,15 @@ router.patch("/admin/issues/:id", wrap(async (req, res) => {
   return res.json({ success: true, issue });
 }));
 
-router.get("/admin/audits", wrap(async (_req, res) => res.json({ success: true, audits: await prisma.seoAuditRun.findMany({ orderBy: { startedAt: "desc" }, take: 30 }) })));
+router.get("/admin/audits", wrap(async (_req, res) => {
+  const runs = await prisma.seoAuditRun.findMany({ orderBy: { startedAt: "desc" }, take: 30 });
+  // The per-run findings list is only for comparing runs (SEO portal); it isn't sent here.
+  const audits = runs.map(({ summary, ...run }) => {
+    const { findings: _f, ...rest } = (summary ?? {}) as Record<string, unknown>;
+    return { ...run, summary: rest };
+  });
+  return res.json({ success: true, audits });
+}));
 
 router.post("/admin/audits", rateLimitMiddleware("seo_audit", { maxRequests: 12, windowSeconds: 3600 }), wrap(async (_req, res) => {
   const result = await runAudit({ trigger: "MANUAL", userId: userId(res) });

@@ -7,7 +7,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
-import { Chip, Empty, Grid, Loading, Panel, SEVERITY_STYLE, Stat, TRACK_LABEL, errorOf, primaryBtn, seoApi, when, words, type Cluster, type Severity, type Track } from "@/components/admin/seo/shared";
+import { Chip, Empty, Grid, Loading, Panel, SEVERITY_STYLE, Stat, TRACK_LABEL, errorOf, primaryBtn, seoApi, useSeoBase, when, words, type Cluster, type Severity, type Track } from "@/components/admin/seo/shared";
 
 export interface Overview {
   pages: {
@@ -47,6 +47,7 @@ export interface Overview {
 export type SectionId = "overview" | "pages" | "keywords" | "clusters" | "redirects" | "audit" | "llms" | "integrations";
 
 export function OverviewPanel({ notify, goTo }: { notify: (m: string) => void; goTo: (section: SectionId) => void }) {
+  const base = useSeoBase();
   const [data, setData] = useState<Overview | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -183,7 +184,7 @@ export function OverviewPanel({ notify, goTo }: { notify: (m: string) => void; g
                 <td className="px-6 py-4 text-sm text-slate-700">{f.message}</td>
                 <td className="px-6 py-4 text-right">
                   {f.pageId && (
-                    <Link href={`/admin/seo/pages/${f.pageId}`} className="text-sm text-ocean-700 hover:underline">
+                    <Link href={`${base}/pages/${f.pageId}`} className="text-sm text-ocean-700 hover:underline">
                       Edit page
                     </Link>
                   )}

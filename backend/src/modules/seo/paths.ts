@@ -3,7 +3,7 @@
 // an open redirect.
 
 /** Paths a redirect may never start from: app internals and signed-in areas. */
-const RESERVED_PREFIXES = ["/api", "/_next", "/media", "/admin", "/account", "/booking", "/book", "/review", "/track", "/partners/dashboard"];
+const RESERVED_PREFIXES = ["/api", "/_next", "/media", "/admin", "/account", "/booking", "/book", "/review", "/track", "/partners/dashboard", "/seo"];
 
 const PATH_CHARS = /^\/[A-Za-z0-9\-._~/%]*$/;
 

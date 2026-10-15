@@ -27,6 +27,7 @@ export const STATIC_ROUTES: StaticRoute[] = [
   { path: "/contact-us", label: "Contact us", pageType: "STATIC", indexable: true, conversionGoal: "ENQUIRY", sitemapPriority: 0.5 },
   { path: "/faq", label: "FAQ", pageType: "STATIC", indexable: true, sitemapPriority: 0.6 },
   { path: "/guides", label: "Travel guides", pageType: "LANDING", indexable: true, sitemapPriority: 0.6 },
+  { path: "/blog", label: "Blog", pageType: "LANDING", indexable: true, sitemapPriority: 0.6 },
   { path: "/gallery", label: "Gallery", pageType: "STATIC", indexable: true, sitemapPriority: 0.4 },
   { path: "/pickup-finder", label: "Pickup finder", pageType: "STATIC", indexable: true, sitemapPriority: 0.4 },
   { path: "/concierge", label: "Concierge", pageType: "STATIC", indexable: true, sitemapPriority: 0.3 },
@@ -48,7 +49,19 @@ export const NON_INDEXABLE_PATHS = [
   "/partners/login",
   "/partners/dashboard",
   "/privacy-policy-vista-chase", // redirects to /privacy-policy
+  "/seo", // SEO workspace (staff only)
+  "/seo/login",
 ];
 
 /** Prefix of CMS-managed editorial pages (frontend/src/app/guides/[slug]). */
 export const GUIDE_PREFIX = "/guides/";
+
+/** Blog posts keep the Webflow address /blog-post/<slug> (frontend/src/app/blog-post/[slug]). */
+export const BLOG_PREFIX = "/blog-post/";
+
+/** Every prefix a CMS page can live under. */
+export const CMS_PREFIXES = [GUIDE_PREFIX, BLOG_PREFIX] as const;
+export type CmsPrefix = (typeof CMS_PREFIXES)[number];
+
+/** The CMS prefix of a path ("/guides/" or "/blog-post/"), else null. */
+export const cmsPrefixOf = (path: string): CmsPrefix | null => CMS_PREFIXES.find((p) => path.startsWith(p)) ?? null;

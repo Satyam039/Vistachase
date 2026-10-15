@@ -10,6 +10,8 @@ import "./globals.css";
 import Script from "next/script";
 import { AstryxThemeProvider } from "@/components/providers/AstryxThemeProvider";
 import { SiteFrame } from "@/components/layout/SiteFrame";
+import { TrackingTags } from "@/components/seo/TrackingTags";
+import { getSiteConfig } from "@/lib/seo/server";
 
 export const metadata: Metadata = {
   title: "Vista Chase | Luxury Private Tours & Shuttles in Banff & Rockies",
@@ -82,11 +84,23 @@ const jsonLd = {
   },
 };
 
-export default function RootLayout({
+/**
+ * Site-wide JSON-LD: the coded organisation block above, unless an admin published a replacement
+ * with the same @id in the SEO portal; other published site-wide blocks are added after it.
+ */
+function siteSchema(published: Record<string, unknown>[]) {
+  const replacesOrg = published.some((b) => b["@id"] === jsonLd["@id"]);
+  return [...(replacesOrg ? [] : [jsonLd]), ...published];
+}
+
+const ldJson = (data: unknown) => JSON.stringify(data).replace(/</g, "\\u003c");
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const config = await getSiteConfig();
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -98,15 +112,15 @@ export default function RootLayout({
             __html: `(function(){try{var p=window.location.pathname;if(p==='/'||p==='/shared-tours'||p==='/private-tours'||p==='/shuttles'||p==='/multi-day-tour-package-for-banff'){document.documentElement.setAttribute('data-hero-page','true');}}catch(e){}})();`,
           }}
         />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
+        {siteSchema(config?.siteSchema ?? []).map((block, i) => (
+          <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(block) }} />
+        ))}
       </head>
       <body suppressHydrationWarning className="font-sans min-h-screen bg-slate-50 text-slate-900 antialiased">
         <AstryxThemeProvider>
           <SiteFrame>{children}</SiteFrame>
         </AstryxThemeProvider>
+        <TrackingTags tracking={config?.tracking ?? null} />
       </body>
     </html>
   );

@@ -4,7 +4,22 @@
 // form styles and labels. Every call goes through /api/seo/admin/*, which is admin-only and
 // audited there. Figures shown are Vista Chase's own data; nothing here invents search metrics.
 
-import type { ReactNode } from "react";
+import { createContext, useContext, type ReactNode } from "react";
+
+/**
+ * Where the page editor lives: /admin/seo (admin dashboard) or /seo (SEO portal). The panels are
+ * shared, so links to a page read the base from here.
+ */
+export const SeoBaseContext = createContext("/admin/seo");
+export const useSeoBase = () => useContext(SeoBaseContext);
+
+/** In the SEO portal a lapsed session goes back to its sign-in page instead of showing errors. */
+function portalSessionExpired(status: number) {
+  if (status !== 401 || typeof window === "undefined" || !/^\/seo(\/|$)/.test(window.location.pathname)) return;
+  if (window.location.pathname.startsWith("/seo/login")) return;
+  const next = encodeURIComponent(window.location.pathname + window.location.search);
+  window.location.assign(`/seo/login?expired=1&next=${next}`);
+}
 
 export type Severity = "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
 export type PublishStatus = "DRAFT" | "SCHEDULED" | "PUBLISHED" | "ARCHIVED";
@@ -144,6 +159,23 @@ export async function seoApi<T = Record<string, unknown>>(path: string, method =
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
     const data = await res.json().catch(() => ({}));
+    portalSessionExpired(res.status);
+    return { ok: res.ok, status: res.status, data };
+  } catch {
+    return { ok: false, status: 0, data: { error: "Network error. Please try again." } as never };
+  }
+}
+
+/** The SEO portal's own API (/api/seo/portal/*); same shape as seoApi. */
+export async function portalApi<T = Record<string, unknown>>(path: string, method = "GET", body?: unknown): Promise<{ ok: boolean; status: number; data: T & { error?: string; fields?: Record<string, string[]>; checks?: FieldCheck[] } }> {
+  try {
+    const res = await fetch(`/api/seo/portal${path}`, {
+      method,
+      headers: body !== undefined ? { "Content-Type": "application/json" } : undefined,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+    const data = await res.json().catch(() => ({}));
+    portalSessionExpired(res.status);
     return { ok: res.ok, status: res.status, data };
   } catch {
     return { ok: false, status: 0, data: { error: "Network error. Please try again." } as never };

@@ -54,6 +54,15 @@ const nextConfig = {
   },
   async headers() {
     return [
+      // The SEO portal is a staff workspace: never indexed, whatever robots.txt says.
+      {
+        source: '/seo/:path*',
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],
+      },
+      {
+        source: '/seo',
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],
+      },
       {
         source: '/:path*',
         headers: [

@@ -892,6 +892,18 @@ model SeoPage {
   sitemapPriority    Float?
   lastCrawl          Json? // what the audit saw on the live page: title, description, h1s, canonical…
   lastCrawledAt      DateTime?
+  // SEO portal (migration 8): blog posts at /blog-post/<slug>, drafts of live pages, import provenance
+  datePublished      DateTime? // original publish date (kept from Webflow); shown and used in BlogPosting
+  dateModified       DateTime? // content last changed (kept from Webflow, then bumped by content edits)
+  sitemapInclude     Boolean             @default(true) // false = left out of sitemap.xml (page still served)
+  featured           Boolean             @default(false) // pinned on the blog landing page
+  thumbnailImage     String?
+  thumbnailAlt       String?
+  draft              Json? // unpublished changes to a live page: {field: value}; applied by "Publish changes"
+  draftUpdatedAt     DateTime?
+  draftUpdatedById   String?
+  importSource       String? // WEBFLOW_API | WEBFLOW_CSV | JSON | MANUAL
+  originalUrl        String? // the URL on the old (Webflow) site
   createdById        String?
   updatedById        String?
   createdAt          DateTime            @default(now())
@@ -1028,21 +1040,25 @@ model SeoAuditRun {
 /// One row per problem; the fingerprint (type + path + detail) keeps the same problem on the same
 /// row across audits. Problems an audit no longer finds become RESOLVED; IGNORED stays ignored.
 model SeoIssue {
-  id          String           @id @default(cuid())
-  fingerprint String           @unique
-  type        String
-  severity    SeoIssueSeverity
-  status      SeoIssueStatus   @default(OPEN)
-  path        String?
-  pageId      String?
-  page        SeoPage?         @relation(fields: [pageId], references: [id], onDelete: SetNull)
-  message     String
-  detail      Json             @default("{}")
-  lastRunId   String?
-  lastRun     SeoAuditRun?     @relation(fields: [lastRunId], references: [id], onDelete: SetNull)
-  firstSeenAt DateTime         @default(now())
-  lastSeenAt  DateTime         @default(now())
-  resolvedAt  DateTime?
+  id            String           @id @default(cuid())
+  fingerprint   String           @unique
+  type          String
+  severity      SeoIssueSeverity
+  status        SeoIssueStatus   @default(OPEN)
+  path          String?
+  pageId        String?
+  page          SeoPage?         @relation(fields: [pageId], references: [id], onDelete: SetNull)
+  message       String
+  detail        Json             @default("{}")
+  lastRunId     String?
+  lastRun       SeoAuditRun?     @relation(fields: [lastRunId], references: [id], onDelete: SetNull)
+  firstSeenAt   DateTime         @default(now())
+  lastSeenAt    DateTime         @default(now())
+  resolvedAt    DateTime?
+  // An audit finding is automated until someone confirms it is a real problem (SEO portal).
+  confirmedAt   DateTime?
+  confirmedById String?
+  note          String?
 
   @@index([status, severity])
   @@index([pageId])
@@ -1050,20 +1066,25 @@ model SeoIssue {
 
 /// Site-wide settings, one row (id "site"): llms.txt header, business details for structured data.
 model SeoSiteSettings {
-  id                String   @id @default("site")
-  siteName          String   @default("Vista Chase")
-  summary           String?
-  aboutText         String?
-  contactEmail      String?
-  contactPhone      String?
-  address           String?
-  serviceArea       String[] @default([])
-  businessHours     String?
-  googleBusinessUrl String?
-  sameAs            String[] @default([])
-  llmsEnabled       Boolean  @default(false)
-  updatedById       String?
-  updatedAt         DateTime @updatedAt
+  id                     String   @id @default("site")
+  siteName               String   @default("Vista Chase")
+  summary                String?
+  aboutText              String?
+  contactEmail           String?
+  contactPhone           String?
+  address                String?
+  serviceArea            String[] @default([])
+  businessHours          String?
+  googleBusinessUrl      String?
+  sameAs                 String[] @default([])
+  llmsEnabled            Boolean  @default(false)
+  // SEO portal (migration 8). Each is off / empty by default, so the public site is unchanged until set.
+  crawlerRules           Json? // {"GPTBot": "allow" | "block", ...}; absent or "allow" = robots.txt unchanged
+  googleSiteVerification String? // meta google-site-verification on the home page (admin-approved)
+  tracking               Json? // {enabled, ga4Id, adsId, adsConversionLabel, conversionValue, currency, consentDefault} (admin-approved)
+  conversionScript       String? // the Webflow footer script, kept for reference only; never rendered
+  updatedById            String?
+  updatedAt              DateTime @updatedAt
 }
 
 model SeoLlmsEntry {
@@ -1130,4 +1151,173 @@ model BookingFlag {
 
   @@index([status, type])
   @@index([bookingId])
+}
+
+// ---------------------------------------------------------------------------------------------
+// SEO portal (/seo, docs/SEO_PORTAL.md): schema drafts, tasks, the migration checklist, approvals,
+// imports and the live-site baseline. Migration 8_seo_portal (additive).
+
+enum SeoSchemaScope {
+  SITE // rendered on every page (replaces the coded block with the same @id)
+  PAGE // one page (CMS pages: guides and blog posts)
+}
+
+enum SeoSchemaStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+/// JSON-LD managed in the portal. `json` is the published version; `draftJson` is being edited.
+model SeoSchemaBlock {
+  id          String          @id @default(cuid())
+  scope       SeoSchemaScope
+  pageId      String?
+  name        String
+  schemaType  String // "@type" of the block, for listing
+  json        Json? // published
+  draftJson   Json?
+  status      SeoSchemaStatus @default(DRAFT)
+  validation  Json            @default("[]")
+  publishedAt DateTime?
+  updatedById String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([scope, status])
+  @@index([pageId])
+}
+
+enum SeoTaskStatus {
+  TODO
+  IN_PROGRESS
+  BLOCKED
+  DONE
+}
+
+model SeoTask {
+  id          String        @id @default(cuid())
+  title       String
+  description String?
+  status      SeoTaskStatus @default(TODO)
+  priority    SeoPriority   @default(MEDIUM)
+  category    String? // e.g. Metadata, Blog, Redirects, Images, Schema, Technical
+  assigneeId  String?
+  dueDate     DateTime?
+  path        String?
+  keywordId   String?
+  issueId     String?
+  createdById String?
+  completedAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([status])
+  @@index([assigneeId])
+}
+
+enum SeoChecklistPhase {
+  BEFORE_LAUNCH
+  AFTER_LAUNCH
+}
+
+enum SeoChecklistStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  BLOCKED
+  DONE
+  NOT_APPLICABLE
+}
+
+/// The Webflow → custom site migration checklist. DONE needs evidence or a recorded confirmation.
+model SeoChecklistItem {
+  id            String             @id @default(cuid())
+  key           String             @unique
+  phase         SeoChecklistPhase
+  section       String
+  title         String
+  description   String?
+  source        String             @default("HANDOFF") // HANDOFF | STANDARD
+  sortOrder     Int                @default(0)
+  status        SeoChecklistStatus @default(NOT_STARTED)
+  notes         String?
+  assigneeName  String?
+  evidence      String[]           @default([])
+  confirmedById String?
+  confirmedAt   DateTime?
+  autoCheck     String? // key of the automated check that gives evidence
+  lastCheck     Json? // {ok, message, at}
+  updatedById   String?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  @@index([phase, sortOrder])
+}
+
+enum SeoChangeRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+/// A change only an admin may make (tracking tags, site verification, site-wide JSON-LD). An SEO
+/// manager requests it; an admin approves (which applies it) or rejects it.
+model SeoChangeRequest {
+  id            String                 @id @default(cuid())
+  kind          String // TRACKING | VERIFICATION | SITE_SCHEMA
+  targetId      String?
+  title         String
+  payload       Json
+  before        Json?
+  reason        String?
+  status        SeoChangeRequestStatus @default(PENDING)
+  requestedById String?
+  reviewedById  String?
+  reviewNote    String?
+  reviewedAt    DateTime?
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+
+  @@index([status, createdAt])
+}
+
+/// One import (Webflow API, CSV or JSON): the original data is kept as the migration record.
+model SeoImportBatch {
+  id          String    @id @default(cuid())
+  kind        String // BLOG_POSTS | PAGE_METADATA | REDIRECTS
+  source      String // WEBFLOW_API | CSV | JSON
+  status      String    @default("PREVIEWED") // PREVIEWED | APPLIED | DISCARDED
+  fileName    String?
+  raw         Json // the export as received (items normalised to plain objects)
+  preview     Json      @default("{}")
+  result      Json?
+  createdById String?
+  appliedById String?
+  appliedAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([kind, createdAt])
+}
+
+/// A URL of the live site before migration (crawled from its sitemap, or from an uploaded crawl).
+model SeoBaselineUrl {
+  id          String   @id @default(cuid())
+  batchId     String
+  url         String
+  path        String
+  statusCode  Int?
+  redirectTo  String?
+  title       String?
+  description String?
+  canonical   String?
+  h1          String[] @default([])
+  robots      String?
+  ogTitle     String?
+  ogImage     String?
+  source      String   @default("CRAWL") // CRAWL | UPLOAD
+  crawledAt   DateTime @default(now())
+
+  @@unique([batchId, path])
+  @@index([path])
 }

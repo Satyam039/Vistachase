@@ -111,6 +111,12 @@ export const pageUpdateSchema = z
     tags: tagList(20, 40),
     relatedPaths: z.array(sitePath).max(20).transform((l) => [...new Set(l)]),
     sitemapPriority: z.number().min(0).max(1).nullable(),
+    sitemapInclude: z.boolean(),
+    datePublished: z.coerce.date().nullable(),
+    dateModified: z.coerce.date().nullable(),
+    featured: z.boolean(),
+    thumbnailImage: refined(checkImageRef),
+    thumbnailAlt: text(200),
     /** Required to switch an important page to noindex. */
     confirmNoindex: z.boolean(),
   })

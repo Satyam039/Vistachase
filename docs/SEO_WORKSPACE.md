@@ -69,7 +69,7 @@ roles.
 2. **Add staff**: their email, their name, role **SEO manager**.
 3. The screen shows a one-time password link (valid 72 hours). If email is set up (Resend key) it is
    also emailed. Send it to the person yourself over a private channel.
-4. They open the link, choose their own password, and sign in at `/login`. They land on Admin → SEO.
+4. They open the link, choose their own password, and sign in at `/login`. They land on Admin → SEO. The SEO portal has its own sign-in at `/seo/login`.
 
 The link's token is stored only as a hash, is never written to the audit log or server logs, and is
 shown once. If it expires, use **Password link** on their row to make a new one. If the email
@@ -82,6 +82,9 @@ Admin → SEO → **Pages** → **New guide**. Write the title, URL slug, body, 
 publish (or schedule). The post appears at `https://<site>/guides/<slug>`, on the `/guides` index
 (footer → Travel guides) and in `sitemap.xml`. Editors can write the copy; an SEO
 manager or admin sets the title, slug and publishes.
+
+Posts migrated from the Webflow blog keep their old address, `/blog-post/<slug>`, and are listed
+on `/blog`; they are created in the SEO portal (`/seo/blog`, see [SEO_PORTAL.md](SEO_PORTAL.md)).
 
 ## 5. Keyword strategy
 
