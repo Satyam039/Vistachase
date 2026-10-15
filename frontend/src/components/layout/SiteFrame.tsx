@@ -74,16 +74,30 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
       root.style.setProperty("--vc-header-h", `${height}px`); // offset for sticky in-page bars
     };
     update();
-    // Lift the header with a shadow once the page has scrolled (globals.css: [data-scrolled]).
-    const onScroll = () =>
-      root.toggleAttribute("data-scrolled", window.scrollY > 8);
-    onScroll();
+    // Lift the header with a shadow once the page has scrolled (globals.css: [data-scrolled]), and
+    // fold the "Vista Chase" name away further down so only the emblem stays centred
+    // ([data-nav-compact]). The fold uses two thresholds so it can't flicker at one scroll position,
+    // and reads scrollY at most once per frame.
+    let frame = 0;
+    const sync = () => {
+      frame = 0;
+      const y = window.scrollY;
+      root.toggleAttribute("data-scrolled", y > 8);
+      if (y > 96) root.setAttribute("data-nav-compact", "");
+      else if (y < 48) root.removeAttribute("data-nav-compact");
+    };
+    const onScroll = () => {
+      if (!frame) frame = window.requestAnimationFrame(sync);
+    };
+    sync();
     window.addEventListener("scroll", onScroll, { passive: true });
     const observer = new ResizeObserver(update);
     observer.observe(header);
     return () => {
       observer.disconnect();
       window.removeEventListener("scroll", onScroll);
+      if (frame) window.cancelAnimationFrame(frame);
+      root.removeAttribute("data-nav-compact");
       root.style.scrollPaddingTop = "";
     };
   }, []);
@@ -113,7 +127,7 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
                 <Link
                   href="/"
                   aria-label="Vista Chase home"
-                  className="absolute left-1/2 top-1/2 inline-flex -translate-x-1/2 -translate-y-1/2 items-center gap-2.5 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ocean-600"
+                  className="absolute left-1/2 top-1/2 inline-flex -translate-x-1/2 -translate-y-1/2 items-center rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ocean-600"
                 >
                   <span className="vc-brandmark-dark inline-flex items-center">
                     <BrandMark size={30} variant="dark" />
@@ -121,6 +135,8 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
                   <span className="vc-brandmark-white hidden items-center">
                     <BrandMark size={30} variant="white" />
                   </span>
+                  {/* Folds away once the page scrolls (globals.css: [data-nav-compact]); the link
+                    keeps its "Vista Chase home" name either way. */}
                   <span className="vc-nav-brand-text whitespace-nowrap text-lg tracking-[0.02em] text-obsidian-900 sm:text-xl">
                     Vista Chase
                   </span>
@@ -146,10 +162,10 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
                 />
                 <Button
                   label="BOOK TOURS"
-                  variant="primary"
+                  variant="ghost"
                   href={BOOK_HREF}
                   icon={<Icon icon={Calendar} size="sm" />}
-                  className="max-sm:hidden"
+                  className="vc-book-desktop max-sm:hidden"
                 />
               </>
             }
