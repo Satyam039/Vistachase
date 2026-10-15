@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Dropdown } from "@/components/forms/Dropdown";
-import { Chip, Empty, Grid, Loading, Panel, STATUS_STYLE, errorOf, field, labelCls, primaryBtn, quietBtn, seoApi, when, words, type PageRow } from "@/components/admin/seo/shared";
+import { Chip, Empty, Grid, Loading, Panel, STATUS_STYLE, errorOf, field, labelCls, primaryBtn, quietBtn, seoApi, useSeoBase, when, words, type PageRow } from "@/components/admin/seo/shared";
 
 const TYPES = ["HOME", "TOUR", "DESTINATION", "LANDING", "GUIDE", "STATIC", "LEGAL"];
 const STATUSES = ["PUBLISHED", "DRAFT", "SCHEDULED", "ARCHIVED"];
@@ -20,6 +20,7 @@ const MISSING = [
 ] as const;
 
 export function PagesPanel({ notify }: { notify: (m: string) => void }) {
+  const base = useSeoBase();
   const router = useRouter();
   const [pages, setPages] = useState<PageRow[] | null>(null);
   const [error, setError] = useState("");
@@ -71,7 +72,7 @@ export function PagesPanel({ notify }: { notify: (m: string) => void }) {
         </>
       }
     >
-      {adding && <NewGuideForm notify={notify} onCreated={(id) => router.push(`/admin/seo/pages/${id}`)} />}
+      {adding && <NewGuideForm notify={notify} onCreated={(id) => router.push(`${base}/pages/${id}`)} />}
 
       <div className="grid gap-3 border-b border-obsidian-900/[0.06] px-6 py-4 sm:grid-cols-2 lg:grid-cols-4">
         <div>
@@ -135,7 +136,7 @@ export function PagesPanel({ notify }: { notify: (m: string) => void }) {
                 {p.liveStatus && p.liveStatus !== 200 && <span className="block text-red-700">HTTP {p.liveStatus}</span>}
               </td>
               <td className="px-6 py-4 text-right">
-                <Link href={`/admin/seo/pages/${p.id}`} className="inline-flex h-10 items-center rounded-full border border-obsidian-900/10 px-4 text-sm text-obsidian-900 hover:bg-obsidian-50">
+                <Link href={`${base}/pages/${p.id}`} className="inline-flex h-10 items-center rounded-full border border-obsidian-900/10 px-4 text-sm text-obsidian-900 hover:bg-obsidian-50">
                   Edit <span className="sr-only">{p.label}</span>
                 </Link>
               </td>

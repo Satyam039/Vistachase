@@ -99,3 +99,26 @@ export function mergeSeo(defaults: Metadata, meta: SeoMeta | null): Metadata {
   }
   return merged;
 }
+
+/**
+ * Site-wide settings from the SEO portal: the Google site verification token, the Google tag
+ * (only once an admin switched it on), published site-wide JSON-LD and per-crawler robots rules.
+ * Null when the backend can't be reached, in which case the site renders exactly as before.
+ */
+export interface SiteConfig {
+  verification: string | null;
+  tracking: { ga4Id: string | null; adsId: string | null; consentDefault: "denied" | null } | null;
+  siteSchema: Record<string, unknown>[];
+  crawlerRules: string[];
+}
+
+export async function getSiteConfig(): Promise<SiteConfig | null> {
+  const body = await seoFetch<SiteConfig>("/site-config", 1500);
+  if (!body) return null;
+  return {
+    verification: typeof body.verification === "string" ? body.verification : null,
+    tracking: body.tracking ?? null,
+    siteSchema: Array.isArray(body.siteSchema) ? body.siteSchema.filter((b) => b && typeof b === "object") : [],
+    crawlerRules: Array.isArray(body.crawlerRules) ? body.crawlerRules.filter((a) => typeof a === "string" && /^[A-Za-z0-9_.-]{2,40}$/.test(a)) : [],
+  };
+}

@@ -31,6 +31,8 @@ interface Guide extends SeoMeta {
   utmMedium: string | null;
   utmCampaign: string | null;
   related: { path: string; label: string }[];
+  /** JSON-LD published for this guide in the SEO portal (validated there). */
+  schema?: Record<string, unknown>[];
 }
 
 type Props = { params: Promise<{ slug: string }> };
@@ -100,6 +102,9 @@ export default async function GuidePage({ params }: Props) {
         }}
       />
       <BreadcrumbJsonLd origin={origin} items={[{ name: "Home", path: "/" }, { name: guide.breadcrumbLabel ?? guide.label, path: guide.path }]} />
+      {(Array.isArray(guide.schema) ? guide.schema : []).map((b, i) => (
+        <JsonLd key={`schema-${i}`} data={b} />
+      ))}
       {faqs.length > 0 && (
         <JsonLd
           data={{

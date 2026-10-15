@@ -1,13 +1,15 @@
-// Renders a guide's body, written in the SEO editor, as React elements. Only a small Markdown
-// subset is understood ("## " and "### " headings, paragraphs, "- " and "1. " lists, "> " quotes,
-// **strong**, *emphasis* and [links](/path)); everything else is plain text. No HTML from the
+// Renders a guide's or blog post's body, written in the SEO editor, as React elements. Only a small
+// Markdown subset is understood ("## ", "### " and "#### " headings, paragraphs, "- " and "1. "
+// lists, "> " quotes, **strong**, *emphasis*, [links](/path) and ![alt](src) images); everything
+// else is plain text. No HTML from the
 // database is ever injected, so a guide can't carry scripts or styles.
 
 import Link from "next/link";
 import type { ReactNode } from "react";
 
 type Block =
-  | { kind: "h2" | "h3" | "p" | "quote"; text: string }
+  | { kind: "h2" | "h3" | "h4" | "p" | "quote"; text: string }
+  | { kind: "img"; src: string; alt: string }
   | { kind: "ul" | "ol"; items: string[] };
 
 export function headingId(text: string) {
@@ -31,9 +33,13 @@ export function parseGuide(body: string): Block[] {
       continue;
     }
     let m: RegExpMatchArray | null;
-    if ((m = line.match(/^(#{2,3})\s+(.+)$/))) {
+    if ((m = line.match(/^(#{2,6})\s+(.+)$/))) {
       flush();
-      blocks.push({ kind: m[1].length === 2 ? "h2" : "h3", text: m[2] });
+      blocks.push({ kind: m[1].length === 2 ? "h2" : m[1].length === 3 ? "h3" : "h4", text: m[2] });
+    } else if ((m = line.match(/^!\[([^\]]*)\]\(([^)\s]+)\)$/))) {
+      flush();
+      const src = imageSrc(m[2]);
+      if (src) blocks.push({ kind: "img", src, alt: m[1] });
     } else if ((m = line.match(/^[-*]\s+(.+)$/)) || (m = line.match(/^\d+[.)]\s+(.+)$/))) {
       const kind = /^\d/.test(line) ? "ol" : "ul";
       if (para.length) {
@@ -68,6 +74,20 @@ export function safeHref(href: string): string | null {
   if (/^https:\/\/[^\s\\]+$/i.test(h)) return h;
   if (/^(mailto|tel):[^\s\\]+$/i.test(h)) return h;
   return null;
+}
+
+/** Images: site media (/media/…) or https addresses only. */
+export function imageSrc(src: string): string | null {
+  const s = src.trim();
+  if (/^\/media\/[^\s\\]+$/.test(s)) return s;
+  if (/^https:\/\/[^\s\\]+$/i.test(s)) return s;
+  return null;
+}
+
+function BodyImage({ src, alt }: { src: string; alt: string }) {
+  // Plain <img>: body images come in any size, so next/image (which needs dimensions) isn't used.
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={src} alt={alt} loading="lazy" decoding="async" className="h-auto w-full rounded-2xl bg-obsidian-100" />;
 }
 
 /** Inline markup: [text](href), **strong**, *em*. */
@@ -120,6 +140,18 @@ export function GuideMarkdown({ body }: { body: string }) {
               <h3 key={i} className="pt-2 text-lg text-obsidian-900">
                 {b.text}
               </h3>
+            );
+          case "h4":
+            return (
+              <h4 key={i} className="pt-1 text-base text-obsidian-900">
+                {b.text}
+              </h4>
+            );
+          case "img":
+            return (
+              <figure key={i}>
+                <BodyImage src={b.src} alt={b.alt} />
+              </figure>
             );
           case "quote":
             return (

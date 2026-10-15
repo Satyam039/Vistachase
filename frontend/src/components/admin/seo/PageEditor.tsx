@@ -1,8 +1,10 @@
 "use client";
 
-// Admin SEO page editor (/admin/seo/pages/[id]): metadata overrides, guide content (CMS pages
-// only), publishing, keyword mappings and the change log for one page. Every call goes through
-// seoApi (/api/seo/admin/*). Empty fields fall back to what the page shows today (the tour or
+// SEO page editor (/admin/seo/pages/[id] and the SEO portal's /seo/pages/[id]): metadata overrides,
+// guide and blog post content (CMS pages only), publishing, keyword mappings and the change log for
+// one page. Every call goes through seoApi (/api/seo/admin/*); in the portal (mode="draft") edits to
+// a published page are saved as a draft (/api/seo/portal/pages/:id/draft) and go live only when
+// someone with publishing rights publishes the draft. Empty fields fall back to what the page shows today (the tour or
 // destination record, else the last crawl), shown as placeholders.
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
@@ -25,6 +27,7 @@ import {
   labelCls,
   primaryBtn,
   quietBtn,
+  portalApi,
   seoApi,
   when,
   words,
@@ -127,6 +130,12 @@ interface SeoPage {
   tags: string[];
   relatedPaths: string[];
   sitemapPriority: number | null;
+  sitemapInclude: boolean;
+  featured: boolean;
+  thumbnailImage: string | null;
+  thumbnailAlt: string | null;
+  datePublished: string | null;
+  dateModified: string | null;
   lastCrawledAt: string | null;
   updatedAt: string;
   mappings: Mapping[];
@@ -171,12 +180,12 @@ const TEXT_FIELDS = [
   "label", "seoTitle", "metaDescription", "h1", "focusKeyword", "canonicalUrl", "ogTitle", "ogDescription", "ogImage",
   "twitterTitle", "twitterDescription", "twitterImage", "breadcrumbLabel", "excerpt", "body", "answerSnippet", "citationFact",
   "authorName", "authorBio", "featuredImage", "featuredImageAlt", "imageTitle", "imageCaption", "imageFileName", "ctaText",
-  "ctaUrl", "utmSource", "utmMedium", "utmCampaign", "pillar",
+  "ctaUrl", "utmSource", "utmMedium", "utmCampaign", "pillar", "thumbnailImage", "thumbnailAlt",
 ] as const;
 type TextKey = (typeof TEXT_FIELDS)[number];
 
 /** Fields that only exist for CMS (guide) pages. */
-const CMS_ONLY = new Set(["slug", "excerpt", "body", "answerSnippet", "citationFact", "faqs", "authorName", "authorBio", "reviewedAt", "relatedPaths", "pillar", "tags"]);
+const CMS_ONLY = new Set(["slug", "excerpt", "body", "answerSnippet", "citationFact", "faqs", "authorName", "authorBio", "reviewedAt", "relatedPaths", "pillar", "tags", "thumbnailImage", "thumbnailAlt", "datePublished", "dateModified", "featured"]);
 
 type Form = Record<TextKey, string> & {
   slug: string;
@@ -184,7 +193,11 @@ type Form = Record<TextKey, string> & {
   tags: string;
   relatedPaths: string;
   reviewedAt: string;
+  datePublished: string;
+  dateModified: string;
   sitemapPriority: string;
+  sitemapInclude: boolean;
+  featured: boolean;
   conversionGoal: ConversionGoal;
   robotsIndex: boolean;
   robotsFollow: boolean;
@@ -192,7 +205,9 @@ type Form = Record<TextKey, string> & {
   faqs: Faq[];
 };
 
-const GUIDE_PREFIX = "/guides/";
+/** CMS pages live under /guides/ (guides) or /blog-post/ (blog posts migrated from Webflow). */
+const BLOG_PREFIX = "/blog-post/";
+const cmsPrefix = (path: string) => (path.startsWith(BLOG_PREFIX) ? BLOG_PREFIX : "/guides/");
 
 function faqsOf(value: unknown): Faq[] {
   if (!Array.isArray(value)) return [];
@@ -205,12 +220,16 @@ function formOf(p: SeoPage): Form {
   const text = Object.fromEntries(TEXT_FIELDS.map((k) => [k, (p[k] as string | null) ?? ""])) as Record<TextKey, string>;
   return {
     ...text,
-    slug: p.path.startsWith(GUIDE_PREFIX) ? p.path.slice(GUIDE_PREFIX.length) : "",
+    slug: p.source === "CMS" && p.path.startsWith(cmsPrefix(p.path)) ? p.path.slice(cmsPrefix(p.path).length) : "",
     secondaryKeywords: p.secondaryKeywords.join(", "),
     tags: p.tags.join(", "),
     relatedPaths: p.relatedPaths.join("\n"),
     reviewedAt: p.reviewedAt ? p.reviewedAt.slice(0, 10) : "",
-    sitemapPriority: p.sitemapPriority === null ? "" : String(p.sitemapPriority),
+    datePublished: p.datePublished ? p.datePublished.slice(0, 10) : "",
+    dateModified: p.dateModified ? p.dateModified.slice(0, 10) : "",
+    sitemapPriority: p.sitemapPriority === null || p.sitemapPriority === undefined ? "" : String(p.sitemapPriority),
+    sitemapInclude: p.sitemapInclude ?? true,
+    featured: p.featured ?? false,
     conversionGoal: p.conversionGoal,
     robotsIndex: p.robotsIndex,
     robotsFollow: p.robotsFollow,
@@ -231,12 +250,27 @@ function changesOf(form: Form, saved: Form, isCms: boolean): Record<string, unkn
     const v = form[key];
     if (key === "secondaryKeywords" || key === "tags") out[key] = commaList(v as string);
     else if (key === "relatedPaths") out[key] = lineList(v as string);
-    else if (key === "reviewedAt") out[key] = v === "" ? null : v;
+    else if (key === "reviewedAt" || key === "datePublished" || key === "dateModified") out[key] = v === "" ? null : v;
     else if (key === "sitemapPriority") out[key] = v === "" ? null : Number(v);
     else if (key === "faqs") out[key] = (v as Faq[]).map((f) => ({ question: f.question.trim(), answer: f.answer.trim() }));
     else out[key] = v;
   }
   return out;
+}
+
+/** The page as it would look with its draft applied (the draft holds API-shaped values). */
+function withDraft(page: SeoPage, draft: Record<string, unknown> | null): SeoPage {
+  if (!draft) return page;
+  const { slug, ...rest } = draft;
+  const merged = { ...page, ...rest } as SeoPage;
+  if (typeof slug === "string" && page.source === "CMS") merged.path = `${cmsPrefix(page.path)}${slug}`;
+  return merged;
+}
+
+interface DraftState {
+  draft: Record<string, unknown> | null;
+  changes: Record<string, { from: unknown; to: unknown }>;
+  updatedAt: string | null;
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -350,7 +384,7 @@ const GOALS: { value: ConversionGoal; label: string }[] = [
 // ---------------------------------------------------------------------------------------------
 // Editor
 
-export function SeoPageEditor({ id }: { id: string }) {
+export function SeoPageEditor({ id, mode = "direct", canPublish = true }: { id: string; mode?: "direct" | "draft"; canPublish?: boolean }) {
   const uid = useId();
   const f = (name: string) => `${uid}-${name}`;
 
@@ -373,12 +407,23 @@ export function SeoPageEditor({ id }: { id: string }) {
 
   const [statusBusy, setStatusBusy] = useState<string | null>(null);
   const [publishAt, setPublishAt] = useState("");
+  const [draftState, setDraftState] = useState<DraftState | null>(null);
+  const [draftBusy, setDraftBusy] = useState<string | null>(null);
 
-  const apply = useCallback((d: Detail, resetForm: boolean) => {
+  const apply = useCallback((d: Detail, resetForm: boolean, draft: Record<string, unknown> | null = null) => {
     setDetail(d);
     setChecks(d.checks ?? []);
-    if (resetForm) setForm(formOf(d.page));
+    if (resetForm) setForm(formOf(withDraft(d.page, draft)));
   }, []);
+
+  /** Portal only: the page's pending draft, if any. */
+  const loadDraft = useCallback(async () => {
+    if (mode !== "draft") return null;
+    const res = await portalApi<DraftState>(`/pages/${encodeURIComponent(id)}/draft`);
+    const state = res.ok ? { draft: res.data.draft ?? null, changes: res.data.changes ?? {}, updatedAt: res.data.updatedAt ?? null } : null;
+    setDraftState(state);
+    return state;
+  }, [id, mode]);
 
   const load = useCallback(
     async (resetForm: boolean) => {
@@ -395,9 +440,10 @@ export function SeoPageEditor({ id }: { id: string }) {
         setLoadError(errorOf(res.data, "Couldn't load this page. Try again in a moment."));
         return;
       }
-      apply(res.data, resetForm);
+      const draft = await loadDraft();
+      apply(res.data, resetForm, draft?.draft ?? null);
     },
-    [id, apply],
+    [id, apply, loadDraft],
   );
 
   useEffect(() => {
@@ -406,7 +452,11 @@ export function SeoPageEditor({ id }: { id: string }) {
 
   const page = detail?.page ?? null;
   const isCms = page?.source === "CMS";
-  const saved = useMemo(() => (page ? formOf(page) : null), [page]);
+  // In the portal, edits to a published page go to its draft; the baseline is the draft version.
+  const draftMode = mode === "draft" && page?.status === "PUBLISHED";
+  const pendingDraft = draftMode ? draftState?.draft ?? null : null;
+  const liveForm = useMemo(() => (page ? formOf(page) : null), [page]);
+  const saved = useMemo(() => (page ? formOf(withDraft(page, pendingDraft)) : null), [page, pendingDraft]);
   const changes = useMemo(() => (form && saved ? changesOf(form, saved, isCms) : {}), [form, saved, isCms]);
   const dirty = Object.keys(changes).length > 0;
   const changesKey = JSON.stringify(changes);
@@ -460,6 +510,26 @@ export function SeoPageEditor({ id }: { id: string }) {
     setError("");
     setMessage("");
     setBlocking([]);
+    if (draftMode && form && liveForm) {
+      // The draft holds every field that differs from the live page; fields put back to the live
+      // value are sent too so the server drops them from the draft.
+      const all = changesOf(form, {} as Form, isCms);
+      const draftBody: Record<string, unknown> = { ...changesOf(form, liveForm, isCms) };
+      for (const key of Object.keys(pendingDraft ?? {})) if (key in all) draftBody[key] = all[key];
+      const res = await portalApi<DraftState>(`/pages/${encodeURIComponent(id)}/draft`, "PUT", draftBody);
+      setSaving(false);
+      if (res.ok) {
+        const state = { draft: res.data.draft ?? null, changes: res.data.changes ?? {}, updatedAt: new Date().toISOString() };
+        setDraftState(state);
+        setForm(formOf(withDraft(page!, state.draft)));
+        setMessage(state.draft ? "Draft saved. The live page is unchanged until the draft is published." : "No differences from the live page: the draft was cleared.");
+        return;
+      }
+      if (res.status === 403) return setError(errorOf(res.data, "Your role can't save these fields."));
+      if (res.status === 422 && res.data.checks) setBlocking(res.data.checks);
+      setError(errorOf(res.data, "Couldn't save the draft. Try again in a moment."));
+      return;
+    }
     const body = needsNoindexConfirm && confirmNoindex ? { ...changes, confirmNoindex: true } : changes;
     const res = await seoApi<Detail & { changed: boolean }>(`/pages/${encodeURIComponent(id)}`, "PATCH", body);
     setSaving(false);
@@ -474,6 +544,38 @@ export function SeoPageEditor({ id }: { id: string }) {
     if (res.status === 409 && /noindex/i.test(res.data.error ?? "")) setNeedsNoindexConfirm(true);
     if (res.status === 422 && res.data.checks) setBlocking(res.data.checks);
     setError(errorOf(res.data, "Couldn't save. Try again in a moment."));
+  }
+
+  async function publishPendingDraft() {
+    setDraftBusy("publish");
+    setError("");
+    setMessage("");
+    setBlocking([]);
+    const res = await portalApi<Detail>(`/pages/${encodeURIComponent(id)}/draft/publish`, "POST", needsNoindexConfirm && confirmNoindex ? { confirmNoindex: true } : {});
+    setDraftBusy(null);
+    if (res.ok) {
+      setDraftState({ draft: null, changes: {}, updatedAt: null });
+      apply(res.data, true, null);
+      setNeedsNoindexConfirm(false);
+      setConfirmNoindex(false);
+      setMessage("Draft published: the live page now shows these changes.");
+      return;
+    }
+    if (res.status === 409 && /noindex/i.test(res.data.error ?? "")) setNeedsNoindexConfirm(true);
+    if (res.status === 422 && res.data.checks) setBlocking(res.data.checks);
+    setError(errorOf(res.data, "Couldn't publish the draft."));
+  }
+
+  async function discardPendingDraft() {
+    if (!window.confirm("Discard the saved draft? The live page stays as it is.")) return;
+    setDraftBusy("discard");
+    const res = await portalApi(`/pages/${encodeURIComponent(id)}/draft`, "DELETE");
+    setDraftBusy(null);
+    if (res.ok) {
+      setDraftState({ draft: null, changes: {}, updatedAt: null });
+      if (page) setForm(formOf(page));
+      setMessage("Draft discarded.");
+    } else setError(errorOf(res.data, "Couldn't discard the draft."));
   }
 
   async function changeStatus(action: "publish" | "unpublish" | "schedule" | "archive") {
@@ -533,6 +635,8 @@ export function SeoPageEditor({ id }: { id: string }) {
   }
 
   const { live, defaults } = detail;
+  const prefix = cmsPrefix(page.path);
+  const isBlog = isCms && prefix === BLOG_PREFIX;
   const defTitle = defaults.title ?? live?.title ?? null;
   const defDescription = defaults.description ?? live?.description ?? null;
   const defH1 = defaults.h1 ?? live?.h1?.[0] ?? null;
@@ -545,7 +649,7 @@ export function SeoPageEditor({ id }: { id: string }) {
   const effOgDescription = form.ogDescription.trim() || effDescription;
   const effOgImage = form.ogImage.trim() || form.featuredImage.trim() || defImage;
 
-  const urlPath = (isCms && form.slug ? `${GUIDE_PREFIX}${form.slug}` : page.path).split("/").filter(Boolean);
+  const urlPath = (isCms && form.slug ? `${prefix}${form.slug}` : page.path).split("/").filter(Boolean);
   const snippetText = form.answerSnippet;
 
   return (
@@ -663,6 +767,7 @@ export function SeoPageEditor({ id }: { id: string }) {
                 <legend className={labelCls}>Robots</legend>
                 <Toggle id={f("robotsIndex")} label="Allow search engines to index this page" checked={form.robotsIndex} onChange={(v) => set("robotsIndex", v)} hint={live?.robots ? `Live page robots tag: ${live.robots}` : undefined} />
                 <Toggle id={f("robotsFollow")} label="Allow search engines to follow its links" checked={form.robotsFollow} onChange={(v) => set("robotsFollow", v)} />
+                <Toggle id={f("sitemapInclude")} label="List this page in sitemap.xml" checked={form.sitemapInclude} onChange={(v) => set("sitemapInclude", v)} hint="Noindex pages are never listed, whatever this says." />
               </fieldset>
             </div>
           </Panel>
@@ -681,14 +786,18 @@ export function SeoPageEditor({ id }: { id: string }) {
 
           {/* Content */}
           {isCms ? (
-            <Panel id={f("content")} title="Content" description="The guide's visible content.">
+            <Panel id={f("content")} title="Content" description={isBlog ? "The blog post's visible content." : "The guide's visible content."}>
               <div className="grid gap-5 px-6 py-6">
                 <TextField
                   id={f("slug")}
                   label="Address (slug)"
                   value={form.slug}
                   onChange={(v) => set("slug", v)}
-                  hint={`The page lives at ${GUIDE_PREFIX}${form.slug || "…"}. Changing it on a published guide redirects the old address.`}
+                  hint={
+                    isBlog
+                      ? `The post lives at ${prefix}${form.slug || "…"}, its Webflow address. Keep the slug exactly as it was on Webflow; changing it on a published post redirects the old address.`
+                      : `The page lives at ${prefix}${form.slug || "…"}. Changing it on a published guide redirects the old address.`
+                  }
                   mono
                 />
                 <TextField id={f("excerpt")} label="Excerpt" value={form.excerpt} onChange={(v) => set("excerpt", v)} multiline rows={2} />
@@ -700,8 +809,19 @@ export function SeoPageEditor({ id }: { id: string }) {
                   multiline
                   rows={14}
                   mono
-                  hint="Supports ## headings, - lists, **bold** and [links](/path). Everything else shows as plain text."
+                  hint="Supports ##, ### and #### headings, - lists, **bold**, [links](/path) and ![alt text](/media/…) images. Everything else shows as plain text."
                 />
+                {isBlog && (
+                  <div className="grid gap-5 sm:grid-cols-2">
+                    <TextField id={f("datePublished")} label="Originally published" type="date" value={form.datePublished} onChange={(v) => set("datePublished", v)} hint="Keep the Webflow date (Created On)." />
+                    <TextField id={f("dateModified")} label="Last modified" type="date" value={form.dateModified} onChange={(v) => set("dateModified", v)} hint="Updated automatically when the post's content changes." />
+                    <TextField id={f("thumbnailImage")} label="Thumbnail image" value={form.thumbnailImage} onChange={(v) => set("thumbnailImage", v)} hint="Shown on the blog list. A /media/… path." mono />
+                    <TextField id={f("thumbnailAlt")} label="Thumbnail alt text" value={form.thumbnailAlt} onChange={(v) => set("thumbnailAlt", v)} />
+                    <div className="sm:col-span-2">
+                      <Toggle id={f("featured")} label="Featured post" checked={form.featured} onChange={(v) => set("featured", v)} hint="Featured posts are listed first on /blog." />
+                    </div>
+                  </div>
+                )}
                 <div>
                   <TextField
                     id={f("answerSnippet")}
@@ -776,17 +896,18 @@ export function SeoPageEditor({ id }: { id: string }) {
           <div className="space-y-6 lg:sticky lg:top-[calc(var(--vc-header-h,0px)+1.5rem)]">
             <section aria-labelledby={f("save-heading")} className="rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07]">
               <h2 id={f("save-heading")} className="text-xl text-obsidian-900">
-                Save
+                {draftMode ? "Save draft" : "Save"}
               </h2>
               <p className="mt-1 text-sm text-slate-600">
                 {dirty ? `${Object.keys(changes).length} unsaved ${Object.keys(changes).length === 1 ? "change" : "changes"}.` : "No unsaved changes."}
+                {draftMode && " This page is live, so your changes are saved as a draft first."}
               </p>
               <div className="mt-4 flex flex-wrap gap-2">
                 <button type="button" onClick={() => void save()} disabled={!dirty || saving} className={primaryBtn}>
-                  {saving ? "Saving…" : "Save changes"}
+                  {saving ? "Saving…" : draftMode ? "Save draft" : "Save changes"}
                 </button>
                 <button type="button" onClick={() => {
-                    setForm(formOf(page));
+                    setForm(formOf(withDraft(page, pendingDraft)));
                     setNeedsNoindexConfirm(false);
                     setConfirmNoindex(false);
                     setBlocking([]);
@@ -795,6 +916,37 @@ export function SeoPageEditor({ id }: { id: string }) {
                 </button>
               </div>
             </section>
+
+            {draftMode && pendingDraft && (
+              <section aria-labelledby={f("draft-heading")} className="rounded-[1.75rem] bg-summit-100 p-6 ring-1 ring-summit-300">
+                <h2 id={f("draft-heading")} className="text-xl text-obsidian-900">
+                  Draft waiting to publish
+                </h2>
+                <p className="mt-1 text-sm text-slate-700">
+                  {Object.keys(draftState?.changes ?? {}).length} field{Object.keys(draftState?.changes ?? {}).length === 1 ? "" : "s"} differ from the live page
+                  {draftState?.updatedAt ? `, saved ${when(draftState.updatedAt)}` : ""}.
+                </p>
+                <ul className="mt-3 space-y-1 text-sm text-slate-700">
+                  {Object.entries(draftState?.changes ?? {}).slice(0, 12).map(([k, c]) => (
+                    <li key={k} className="break-words">
+                      <span className="text-obsidian-900">{k}</span>: {clip(String(c.to ?? "(empty)"), 80)}
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {canPublish && (
+                    <button type="button" onClick={() => void publishPendingDraft()} disabled={draftBusy !== null || dirty} className={primaryBtn}>
+                      {draftBusy === "publish" ? "Publishing…" : "Publish draft"}
+                    </button>
+                  )}
+                  <button type="button" onClick={() => void discardPendingDraft()} disabled={draftBusy !== null} className={quietBtn}>
+                    Discard draft
+                  </button>
+                </div>
+                {!canPublish && <p className="mt-3 text-sm text-slate-700">An SEO manager or admin publishes drafts.</p>}
+                {dirty && canPublish && <p className="mt-3 text-sm text-slate-700">Save your edits to the draft before publishing it.</p>}
+              </section>
+            )}
 
             <section aria-labelledby={f("preview-heading")} className="rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07]">
               <h2 id={f("preview-heading")} className="text-xl text-obsidian-900">
@@ -809,6 +961,28 @@ export function SeoPageEditor({ id }: { id: string }) {
                 <p className="mt-1 text-sm text-slate-700">{effDescription ? clip(effDescription, 160) : <span className="text-slate-500">No description: search engines will pick text from the page.</span>}</p>
               </div>
               {!form.robotsIndex && <p className="mt-3 text-sm text-red-700">Set to noindex: this page won&apos;t appear in search results.</p>}
+            </section>
+
+            <section aria-labelledby={f("social-preview-heading")} className="rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07]">
+              <h2 id={f("social-preview-heading")} className="text-xl text-obsidian-900">
+                Social preview
+              </h2>
+              <p className="mt-1 text-sm text-slate-600">Roughly how a shared link looks (Open Graph).</p>
+              <div className="mt-4 overflow-hidden rounded-2xl border border-obsidian-900/10">
+                {effOgImage && /^\/media\//.test(effOgImage) ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={effOgImage} alt="" className="aspect-[1.91/1] w-full bg-obsidian-100 object-cover" />
+                ) : (
+                  <p className="flex aspect-[1.91/1] items-center justify-center bg-obsidian-100 px-4 text-center text-sm text-slate-600">
+                    {effOgImage ? "Image hosted elsewhere (not previewed here)." : "No image: platforms may pick one or show none."}
+                  </p>
+                )}
+                <div className="p-4">
+                  <p className="text-sm uppercase text-slate-600">vistachase.com</p>
+                  <p className="mt-1 text-base text-obsidian-900">{clip(effOgTitle, 70)}</p>
+                  <p className="mt-1 text-sm text-slate-700">{clip(effOgDescription, 120)}</p>
+                </div>
+              </div>
             </section>
 
             <section aria-labelledby={f("checks-heading")} className="rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07]">
