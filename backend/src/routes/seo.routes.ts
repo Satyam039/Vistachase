@@ -372,7 +372,15 @@ router.patch("/admin/issues/:id", wrap(async (req, res) => {
   return res.json({ success: true, issue });
 }));
 
-router.get("/admin/audits", wrap(async (_req, res) => res.json({ success: true, audits: await prisma.seoAuditRun.findMany({ orderBy: { startedAt: "desc" }, take: 30 }) })));
+router.get("/admin/audits", wrap(async (_req, res) => {
+  const runs = await prisma.seoAuditRun.findMany({ orderBy: { startedAt: "desc" }, take: 30 });
+  // The per-run findings list is only for comparing runs (SEO portal); it isn't sent here.
+  const audits = runs.map(({ summary, ...run }) => {
+    const { findings: _f, ...rest } = (summary ?? {}) as Record<string, unknown>;
+    return { ...run, summary: rest };
+  });
+  return res.json({ success: true, audits });
+}));
 
 router.post("/admin/audits", rateLimitMiddleware("seo_audit", { maxRequests: 12, windowSeconds: 3600 }), wrap(async (_req, res) => {
   const result = await runAudit({ trigger: "MANUAL", userId: userId(res) });

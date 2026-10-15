@@ -25,6 +25,7 @@ import affiliatesRoutes from "@/routes/affiliates.routes";
 import pricingRoutes from "@/routes/pricing.routes";
 import webhooksRoutes from "@/routes/webhooks.routes";
 import seoRoutes from "@/routes/seo.routes";
+import seoPortalRoutes, { LARGE_BODY_PATHS, largeBodyForSeoManagers } from "@/routes/seo-portal.routes";
 import contentRoutes from "@/routes/content.routes";
 import { apiJsonReplacer } from "@/lib/utils/time";
 import { isAllowedOrigin } from "@/lib/security/origin-check";
@@ -48,6 +49,8 @@ export function createApp() {
   // Stripe signs the raw request bytes, so its webhook is mounted before the JSON parser.
   app.use("/api/webhooks", express.raw({ type: "application/json", limit: "1mb" }), webhooksRoutes);
 
+  // SEO portal imports accept larger files (10 MB), for signed-in SEO managers only (seo-portal.routes.ts).
+  app.use(LARGE_BODY_PATHS, ...largeBodyForSeoManagers);
   app.use(express.json({ limit: "1mb" }));
   app.use(cookieParser());
 
@@ -122,6 +125,7 @@ export function createApp() {
   app.use("/api/media", mediaRoutes);
   app.use("/api/affiliates", affiliatesRoutes);
   app.use("/api/pricing", pricingRoutes);
+  app.use("/api/seo/portal", seoPortalRoutes);
   app.use("/api/seo", seoRoutes);
   app.use("/api/content", contentRoutes);
 

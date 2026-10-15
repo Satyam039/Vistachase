@@ -307,13 +307,21 @@ export async function runTechnicalChecks(opts: { fetchImpl?: FetchLike; baseUrl?
   const counts = { pass: 0, warn: 0, fail: 0, info: 0, not_checked: 0 } as Record<CheckStatus, number>;
   for (const c of checks) counts[c.status]++;
   const result = { checkedAt: new Date().toISOString(), baseUrl: base, canonicalOrigin: canonical, siteUrl: site?.origin ?? null, blockAll, counts, checks };
-  await prisma.auditLog.create({ data: { action: "SEO_TECHNICAL_CHECK", entityType: "SeoSiteSettings", entityId: "site", details: { counts, at: result.checkedAt } } }).catch(() => undefined);
+  await prisma.auditLog.create({ data: { action: "SEO_TECHNICAL_CHECK", entityType: "SeoSiteSettings", entityId: "site", details: JSON.parse(JSON.stringify(result)) } }).catch(() => undefined);
   latestTechnical = result;
   return result;
 }
 
 /** The last result in this process (the checklist reads it as evidence). */
 export let latestTechnical: Awaited<ReturnType<typeof runTechnicalChecks>> | null = null;
+
+/** The last result, from this process or (after a restart) from the audit log. */
+export async function getLatestTechnical(): Promise<Awaited<ReturnType<typeof runTechnicalChecks>> | null> {
+  if (latestTechnical) return latestTechnical;
+  const row = await prisma.auditLog.findFirst({ where: { action: "SEO_TECHNICAL_CHECK" }, orderBy: { createdAt: "desc" }, select: { details: true } });
+  const details = row?.details as { checks?: unknown } | null;
+  return details && Array.isArray(details.checks) ? (details as unknown as Awaited<ReturnType<typeof runTechnicalChecks>>) : null;
+}
 
 // ---------------------------------------------------------------------------------------------
 // Crawler rules (the one setting changed from here)

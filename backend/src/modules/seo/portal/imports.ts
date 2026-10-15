@@ -474,7 +474,9 @@ export async function createPreview(input: PreviewInput, userId: string, fetchIm
     if (input.source === "WEBFLOW_API") throw new SeoError(400, "Webflow's API doesn't expose 301 redirects. Copy them from Site settings → Publishing → 301 redirects into a CSV (from, to).");
     const text = input.text!;
     // A bare two-column list without a header is accepted too.
-    const csvText = input.source === "CSV" && !/^(.*\b(source|from|old)\b.*)$/im.test(text.split(/\r?\n/)[0] ?? "") ? `from,to\n${text}` : text;
+    // A bare two-column list (first cell is already a path or URL) gets a header added.
+    const firstCell = (text.split(/\r?\n/)[0] ?? "").split(",")[0].trim().replace(/^"/, "");
+    const csvText = input.source === "CSV" && /^(\/|https?:\/\/)/i.test(firstCell) ? `from,to\n${text}` : text;
     const list = input.source === "CSV" ? csvRecords(csvText) : jsonRecords(text);
     raw = input.source === "CSV" ? { csv: text } : { json: list };
     preview = await previewRedirects(list.map(redirectFromRecord));
@@ -505,6 +507,19 @@ export async function applyBatch(id: string, opts: ApplyOptions, userId: string)
   if (!batch) throw new SeoError(404, "Import not found.");
   if (batch.status !== "PREVIEWED") throw new SeoError(409, "This import was already applied or discarded. Upload it again for a fresh preview.");
   if (Date.now() - batch.createdAt.getTime() > 24 * 3600_000) throw new SeoError(409, "This preview is more than a day old. Preview again so it reflects the site as it is now.");
+  // Claim the batch so two clicks (or two people) can't apply it twice.
+  const claimed = await prisma.seoImportBatch.updateMany({ where: { id, status: "PREVIEWED" }, data: { status: "RUNNING" } });
+  if (claimed.count === 0) throw new SeoError(409, "This import is already being applied.");
+  try {
+    return await applyClaimed(batch, opts, userId);
+  } catch (error) {
+    await prisma.seoImportBatch.update({ where: { id }, data: { status: "FAILED", result: { error: (error as Error).message.slice(0, 300) } } });
+    throw error;
+  }
+}
+
+async function applyClaimed(batch: NonNullable<Awaited<ReturnType<typeof prisma.seoImportBatch.findUnique>>>, opts: ApplyOptions, userId: string) {
+  const id = batch.id;
 
   const result = { created: 0, drafted: 0, skipped: 0, failed: [] as { ref: string; error: string }[], ids: [] as string[] };
   const now = new Date();
