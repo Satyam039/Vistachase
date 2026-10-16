@@ -1,6 +1,6 @@
 // Webflow rich text (HTML) → the guide body format (frontend/src/components/seo/GuideMarkdown.tsx):
-// ## / ### / #### headings, paragraphs, - and 1. lists, > quotes, **strong**, *em*, [links](href)
-// and ![alt](src) images. Nothing else survives: scripts, iframes, styles and embeds are dropped and
+// ## / ### / #### headings, paragraphs, - and 1. lists, > quotes, **strong**, *em*, [links](href),
+// ![alt](src) images and | pipe | tables | (cells keep their text, links and emphasis). Nothing else survives: scripts, iframes, styles and embeds are dropped and
 // reported, so imported posts can never carry markup or code into the site.
 
 export interface ConvertResult {
@@ -49,6 +49,15 @@ const clean = (s: string) => s.replace(/\s+/g, " ").trim();
 const BLOCKS = new Set(["p", "div", "section", "article", "figure", "figcaption", "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "li", "blockquote", "table", "tr", "hr", "pre"]);
 const DROP_WITH_CONTENT = /<(script|style|iframe|noscript|object|embed|video|audio|form|svg|template|canvas)\b[\s\S]*?<\/\1\s*>/gi;
 
+/** Rows of cell text → a pipe table; the first row is the header (the body format needs one). */
+export function pipeTable(rows: string[][]): string[] {
+  const filled = rows.filter((r) => r.some((c) => c));
+  if (!filled.length) return [];
+  const cols = Math.max(...filled.map((r) => r.length));
+  const line = (r: string[]) => `| ${Array.from({ length: cols }, (_, i) => r[i] ?? "").join(" | ")} |`;
+  return [line(filled[0]), `| ${Array.from({ length: cols }, () => "---").join(" | ")} |`, ...filled.slice(1).map(line), ""];
+}
+
 export function htmlToMarkdown(html: string, opts: { siteHosts?: string[]; mapImage?: (src: string) => string | null } = {}): ConvertResult {
   const siteHosts = (opts.siteHosts ?? ["www.vistachase.com", "vistachase.com"]).map((h) => h.toLowerCase());
   const notes: string[] = [];
@@ -71,6 +80,7 @@ export function htmlToMarkdown(html: string, opts: { siteHosts?: string[]; mapIm
   const listStack: ("ul" | "ol")[] = [];
   const olCounters: number[] = [];
   const inline: { tag: string; start: number; href?: string | null }[] = [];
+  let table: { rows: string[][] } | null = null;
 
   const flush = () => {
     const text = clean(buf);
@@ -96,6 +106,32 @@ export function htmlToMarkdown(html: string, opts: { siteHosts?: string[]; mapIm
     if (tag === "br") {
       buf += " ";
       continue;
+    }
+    if (tag === "table") {
+      if (!closing) {
+        blank();
+        table = { rows: [] };
+      } else if (table) {
+        lines.push(...pipeTable(table.rows));
+        table = null;
+        buf = "";
+        blank();
+      }
+      continue;
+    }
+    if (table) {
+      // Inside a table only rows, cells and inline markup count; images and blocks in cells are dropped.
+      if (tag === "tr" && !closing) table.rows.push([]);
+      else if (tag === "td" || tag === "th") {
+        if (!closing) buf = "";
+        else {
+          if (!table.rows.length) table.rows.push([]);
+          table.rows[table.rows.length - 1].push(clean(buf).replace(/\|/g, "/"));
+          buf = "";
+        }
+        continue;
+      }
+      if (!["a", "strong", "b", "em", "i"].includes(tag)) continue;
     }
     if (tag === "img" && !closing) {
       const original = attr(rawTag, "src");
@@ -203,7 +239,7 @@ export function htmlToMarkdown(html: string, opts: { siteHosts?: string[]; mapIm
 
   let markdown = lines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
   markdown = markdown.replace(/^(#{2,4}) \*\*(.+)\*\*$/gm, "$1 $2");
-  stats.words = markdown.replace(/[#>*\-[\]()!]/g, " ").split(/\s+/).filter(Boolean).length;
+  stats.words = markdown.replace(/[#>*|\-[\]()!]/g, " ").split(/\s+/).filter(Boolean).length;
 
   if (stats.h1InBody) notes.push(`${stats.h1InBody} H1 heading${stats.h1InBody === 1 ? "" : "s"} in the body became H2, so the post name stays the only H1.`);
   if (stats.headings.h5 || stats.headings.h6) notes.push("H5/H6 headings became H4 (the deepest level the blog template shows).");

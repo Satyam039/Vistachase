@@ -2,11 +2,10 @@
 
 // Blog SEO: every post at /blog-post/<slug> with its checks (title, description, headings, alt
 // text, Webflow images, internal links, dates, sitemap, BlogPosting schema), the Webflow import,
-// and "new post". Posts open in the page editor, so drafts and publishing work as for any page.
+// and "new post". Posts open in the blog post editor (BlogPostEditor.tsx).
 
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Chip, Empty, Grid, Loading, Panel, STATUS_STYLE, Stat, day, errorOf, field, labelCls, portalApi, primaryBtn, quietBtn, words, type PublishStatus } from "@/components/admin/seo/shared";
 import { Dropdown } from "@/components/forms/Dropdown";
@@ -76,89 +75,12 @@ const PROBLEMS: { value: string; label: string }[] = [
 ];
 const PROBLEM_LABEL = Object.fromEntries(PROBLEMS.map((p) => [p.value, p.label]));
 
-/** "Lake Louise in Winter!" → "lake-louise-in-winter" (the address can be changed later). */
-const slugify = (s: string) =>
-  s
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/&/g, " and ")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 80);
-
-function NewPost({ onDone }: { onDone: () => void }) {
-  const uid = useId();
-  const router = useRouter();
-  const [label, setLabel] = useState("");
-  const [slug, setSlug] = useState("");
-  const [slugEdited, setSlugEdited] = useState(false);
-  const titleRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    titleRef.current?.focus();
-    titleRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
-  }, []);
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  async function create(e: React.FormEvent) {
-    e.preventDefault();
-    setBusy(true);
-    setError("");
-    const res = await portalApi<{ page: { id: string } }>("/blog", "POST", { label, slug });
-    setBusy(false);
-    if (!res.ok) return setError(errorOf(res.data, "Couldn't create the post."));
-    onDone();
-    router.push(`/seo/pages/${res.data.page.id}`);
-  }
-
-  return (
-    <form onSubmit={create} className="grid gap-4 border-b border-obsidian-900/[0.06] px-6 py-5 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
-      <div>
-        <label htmlFor={`${uid}-label`} className={labelCls}>
-          Post title
-        </label>
-        <input
-          ref={titleRef}
-          id={`${uid}-label`}
-          required
-          minLength={2}
-          value={label}
-          onChange={(e) => {
-            setLabel(e.target.value);
-            if (!slugEdited) setSlug(slugify(e.target.value));
-          }}
-          className={field}
-        />
-      </div>
-      <div>
-        <label htmlFor={`${uid}-slug`} className={labelCls}>
-          Address: /blog-post/…
-        </label>
-        <input id={`${uid}-slug`} required pattern="[a-z0-9]+(-[a-z0-9]+)*" value={slug} onChange={(e) => {
-            setSlug(e.target.value.toLowerCase());
-            setSlugEdited(true);
-          }} className={`${field} font-mono text-sm`} />
-      </div>
-      <button type="submit" disabled={busy} className={primaryBtn}>
-        {busy ? "Creating…" : "Create draft"}
-      </button>
-      {error && (
-        <p role="alert" className="text-sm text-red-700 sm:col-span-3">
-          {error}
-        </p>
-      )}
-    </form>
-  );
-}
-
 export function BlogView() {
   const { me } = usePortal();
   const uid = useId();
   const [data, setData] = useState<{ posts: Post[]; summary: Summary } | null>(null);
   const [problem, setProblem] = useState("");
   const [q, setQ] = useState("");
-  const [adding, setAdding] = useState(false);
 
   const load = useCallback(async () => {
     const params = new URLSearchParams();
@@ -180,15 +102,15 @@ export function BlogView() {
         title="Blog SEO"
         actions={
           me.seo.manage && (
-            <button type="button" onClick={() => setAdding(true)} className={primaryBtn}>
+            <Link href="/seo/blog/new" className={primaryBtn}>
               <Plus className="h-4 w-4" aria-hidden="true" />
               New blog post
-            </button>
+            </Link>
           )
         }
         intro={
           <>
-            Blog posts live at /blog-post/&lt;address&gt; and are listed on <Link href="/blog" className="text-ocean-700 underline underline-offset-2">/blog</Link>. Open a post to write it, set its featured image, keywords and social image, change its address (the old address then redirects to the new one) and publish it. The BlogPosting column reads the last audit.
+            Blog posts live at /blog-post/&lt;address&gt; and are listed on <Link href="/blog" className="text-ocean-700 underline underline-offset-2">/blog</Link>. Open a post to write it (title, address, meta title and description, keywords, featured image and the content with images, links and tables) and publish it. Changing a published post&apos;s address redirects the old one. The BlogPosting column reads the last audit.
           </>
         }
       />
@@ -205,14 +127,13 @@ export function BlogView() {
         title="Posts"
         actions={
           me.seo.manage && (
-            <button type="button" onClick={() => setAdding((a) => !a)} className={quietBtn}>
+            <Link href="/seo/blog/new" className={quietBtn}>
               <Plus className="h-4 w-4" aria-hidden="true" />
               New post
-            </button>
+            </Link>
           )
         }
       >
-        {adding && <NewPost onDone={() => setAdding(false)} />}
         <div className="grid gap-4 px-6 py-5 sm:grid-cols-2">
           <div>
             <label htmlFor={`${uid}-q`} className={labelCls}>
@@ -231,11 +152,11 @@ export function BlogView() {
             <div className="px-6 py-8 text-center">
               <p className="text-base text-obsidian-900">No blog posts yet.</p>
               <p className="mt-1 text-sm text-slate-600">Write a new post, or bring the existing posts over from Webflow with the import below.</p>
-              {me.seo.manage && !adding && (
-                <button type="button" onClick={() => setAdding(true)} className={`${primaryBtn} mt-4`}>
+              {me.seo.manage && (
+                <Link href="/seo/blog/new" className={`${primaryBtn} mt-4`}>
                   <Plus className="h-4 w-4" aria-hidden="true" />
                   Write the first post
-                </button>
+                </Link>
               )}
             </div>
           )
@@ -284,7 +205,7 @@ export function BlogView() {
                   <span className="mt-1 block text-slate-600">BlogPosting: {p.blogPosting === null ? "Not audited" : p.blogPosting ? "found" : "not found"}</span>
                 </td>
                 <td className="px-6 py-3 text-right">
-                  <Link href={`/seo/pages/${p.id}`} className="inline-flex h-10 items-center rounded-full border border-obsidian-900/10 px-4 text-sm text-obsidian-900 hover:bg-obsidian-50">
+                  <Link href={`/seo/blog/${p.id}`} className="inline-flex h-10 items-center rounded-full border border-obsidian-900/10 px-4 text-sm text-obsidian-900 hover:bg-obsidian-50">
                     Edit post
                     <span className="sr-only"> {p.label}</span>
                   </Link>

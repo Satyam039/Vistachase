@@ -1,6 +1,6 @@
 "use client";
 
-// Portal overview: the migration at a glance (checklist, blog posts, approvals, imports, technical
+// Portal overview: the migration at a glance (blog posts, approvals, imports, technical
 // checks, images, my tasks), then the existing SEO dashboard. All counts come from Vista Chase's own
 // records; search and traffic figures appear only once a provider is connected.
 
@@ -62,8 +62,7 @@ export function OverviewView() {
       {error && <p className="rounded-2xl bg-red-50 px-5 py-3 text-sm text-red-800">{error}</p>}
       {m && (
         <>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Stat label="Before-launch checklist" value={`${m.checklist.before.done}/${m.checklist.before.total}`} hint={m.checklist.before.blocked ? `${m.checklist.before.blocked} blocked` : "Done with evidence"} />
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <Stat label="Blog posts published" value={`${m.blog.PUBLISHED ?? 0}/${m.blog.expected}`} hint={`${m.blog.DRAFT ?? 0} drafts here`} tone={(m.blog.PUBLISHED ?? 0) >= m.blog.expected ? "good" : undefined} />
             <Stat label="Waiting for an admin" value={m.pendingRequests} hint="Tag, verification or site schema" />
             <Stat label="Webflow images still linked" value={m.images.webflowReferences} hint={`${m.images.missingAlt} images missing alt text (last audit)`} tone={m.images.webflowReferences ? "warn" : "good"} />
