@@ -25,7 +25,7 @@ import affiliatesRoutes from "@/routes/affiliates.routes";
 import pricingRoutes from "@/routes/pricing.routes";
 import webhooksRoutes from "@/routes/webhooks.routes";
 import seoRoutes from "@/routes/seo.routes";
-import seoPortalRoutes, { LARGE_BODY_PATHS, largeBodyForSeoManagers } from "@/routes/seo-portal.routes";
+import seoPortalRoutes, { IMAGE_UPLOAD_PATH, LARGE_BODY_PATHS, largeBodyForImageUploads, largeBodyForSeoManagers } from "@/routes/seo-portal.routes";
 import contentRoutes from "@/routes/content.routes";
 import { apiJsonReplacer } from "@/lib/utils/time";
 import { isAllowedOrigin } from "@/lib/security/origin-check";
@@ -51,6 +51,7 @@ export function createApp() {
 
   // SEO portal imports accept larger files (10 MB), for signed-in SEO managers only (seo-portal.routes.ts).
   app.use(LARGE_BODY_PATHS, ...largeBodyForSeoManagers);
+  app.use(IMAGE_UPLOAD_PATH, ...largeBodyForImageUploads);
   app.use(express.json({ limit: "1mb" }));
   app.use(cookieParser());
 

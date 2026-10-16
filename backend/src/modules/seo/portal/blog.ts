@@ -51,6 +51,7 @@ export async function blogOverview(filter: { q?: string; status?: string; proble
     if (!p.metaDescription) problems.push("no-description");
     if (outline.problems.length) problems.push("headings");
     if (images.some((i) => !i.alt.trim()) || (p.featuredImage && !p.featuredImageAlt)) problems.push("alt-text");
+    if (!p.featuredImage) problems.push("no-featured-image");
     if ([p.featuredImage, p.thumbnailImage, p.ogImage, ...images.map((i) => i.src)].some((s) => s && isWebflowUrl(s))) problems.push("webflow-images");
     if (viaRedirect.length) problems.push("links-redirect");
     if (unknown.length) problems.push("links-unknown");
@@ -66,6 +67,9 @@ export async function blogOverview(filter: { q?: string; status?: string; proble
       label: p.label,
       status: p.status,
       featured: p.featured,
+      featuredImage: p.featuredImage,
+      thumbnailImage: p.thumbnailImage,
+      ogImage: p.ogImage,
       importSource: p.importSource,
       seoTitle: p.seoTitle,
       metaDescription: p.metaDescription,

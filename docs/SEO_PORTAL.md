@@ -14,8 +14,10 @@ Sign in at `/seo/login` (staff accounts only, no self-registration). The sidebar
 | Overview | Migration progress (checklist, blog posts here vs. the 84 in the handoff, pending approvals, last import, baseline, Webflow connection, technical checks, images) plus the SEO dashboard overview. |
 | Website audit | Run the crawl-and-check audit, compare two runs (new / fixed / unchanged issues), confirm an issue as fixed with a note. **Baseline**: crawl the live Webflow site's sitemap (or upload a CSV of URLs) and compare it with the new site: missing pages, changed titles/descriptions/canonicals. |
 | Pages & metadata | Every page's title, description, canonical, robots, Open Graph, dates, sitemap flag. Changes to a published page are saved as a **draft** and go live only when an SEO manager presses Publish. |
-| Blog SEO | Posts at `/blog-post/<slug>` with checks (title, description, headings, alt text, images still on Webflow's CDN, links through redirects or to unknown pages, dates, sitemap, BlogPosting). New post. Webflow import. |
+| Blog SEO | Posts at `/blog-post/<slug>` with checks (title, description, headings, alt text, featured image, images still on Webflow's CDN, links through redirects or to unknown pages, dates, sitemap, BlogPosting). **New blog post** (address generated from the title, editable). Each post's editor has a featured image (upload or pick from the library), thumbnail, Open Graph image and keywords; changing a published post's address 301-redirects the old one. Webflow import. |
 | Keywords | The existing keyword sheet. |
+| Keywords by page | Every page and blog post (tabs: pages, tours, destinations, blog, guides) with the keywords it targets. Add as many as needed per page, primary or secondary; a keyword not in the sheet yet is added to it (unverified, no volume) and mapped in one step. Change role or remove per page; the keyword stays in the sheet. SEO manager/admin only; others read. |
+| Social images | The Open Graph image of every page (what shows when the page is shared). Upload or pick from the library; saving goes live for SEO managers (a page with no SEO row yet can be made live with only the image). Pages without one use the featured image, then the site default (Moraine Lake). |
 | Technical SEO | Live checks of robots.txt, sitemap, crawler access, llms.txt, canonical, verification tag, Google tag, viewport, response time, real 404s and the http/www redirects. Per-crawler access for AI crawlers (search engines always allowed) with a robots.txt preview. |
 | Schema markup | Inventory of JSON-LD per page, validation, managed blocks (page blocks: SEO manager; site-wide blocks: admin approval). |
 | Redirects | Existing redirects screen plus Webflow redirect import (saved switched off, switched on after review), CSV export and history. |
@@ -154,7 +156,23 @@ DELETE FROM "_prisma_migrations" WHERE migration_name = '8_seo_portal';
   Imported blog posts are ordinary `SeoPage` rows (`importSource` set) and go with the revert only
   if you delete them.
 
+## Image uploads
+
+`POST /api/seo/portal/media` (SEO manager, editor, admin; 60 an hour) takes JPEG, PNG, WebP, GIF or
+AVIF up to 8 MB (no SVG, at least 200×200). Every upload is re-encoded with sharp to WebP (rotated,
+metadata stripped, at most 2400px wide) and saved to `MEDIA_DIR/uploads/seo/<yyyy-mm>/`
+(`backend/media/uploads/seo` by default), served at `/media/uploads/seo/...`. The folder is in
+`.gitignore`, so uploads stay on the server across deploys (`git pull` leaves untracked files) and
+should be included in server backups. `GET /api/seo/portal/media?q=` lists uploads (from the audit
+log) and the site's photo library. Other endpoints: `GET /page-keywords`, `POST /pages/:id/keywords`,
+`PATCH|DELETE /pages/:id/keywords/:mappingId`, `PUT /pages/:id/social-image`.
+
 ## Tests
+
+- `backend/tests/seo-portal-media-keywords.test.ts` (8 tests): upload permissions, WebP re-encode and
+  resize, rejected files (text, SVG, tiny), five keywords on one page and a case-insensitive duplicate,
+  role change and removal, editor/viewer refused, social image draft vs. publish and clearing, blog
+  address change creating a 301 and the featured image on the public blog API.
 
 - `backend/tests/seo-portal.test.ts` (23 tests): 401/403 for signed-out users and customers, viewer
   read-only, editor field limits, SEO roles refused on bookings/staff/payouts, admin-only approvals,
@@ -162,7 +180,7 @@ DELETE FROM "_prisma_migrations" WHERE migration_name = '8_seo_portal';
   re-import becomes a draft), redirect import switched off then activated, missing Webflow token,
   checklist evidence rule, verification approval and ID warning, tracking apply, crawler rules,
   robots parsing, tasks.
-- Full backend suite: 36 files, 247 tests pass. Backend and frontend typecheck, lint and production
+- Full backend suite: 37 files, 255 tests pass. Backend and frontend typecheck, lint and production
   builds pass; migrations apply to an empty database and match the schema.
 - Browser run against a local copy (all 14 screens as SEO manager, viewer and admin; draft save
   keeps the live title, publish makes it live; blog CSV import via the UI; task; checklist refuses
