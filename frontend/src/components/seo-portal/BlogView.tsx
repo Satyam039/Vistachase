@@ -4,7 +4,7 @@
 // text, Webflow images, internal links, dates, sitemap, BlogPosting schema), the Webflow import,
 // and "new post". Posts open in the page editor, so drafts and publishing work as for any page.
 
-import { useCallback, useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
@@ -20,6 +20,10 @@ interface Post {
   label: string;
   status: PublishStatus;
   featured: boolean;
+  featuredImage: string | null;
+  thumbnailImage: string | null;
+  ogImage: string | null;
+  keywords: number;
   importSource: string | null;
   seoTitle: string | null;
   metaDescription: string | null;
@@ -61,6 +65,7 @@ const PROBLEMS: { value: string; label: string }[] = [
   { value: "no-title", label: "No SEO title" },
   { value: "no-description", label: "No meta description" },
   { value: "headings", label: "Heading structure" },
+  { value: "no-featured-image", label: "No featured image" },
   { value: "alt-text", label: "Images without alt text" },
   { value: "webflow-images", label: "Images still on Webflow" },
   { value: "links-redirect", label: "Links through a redirect" },
@@ -71,11 +76,28 @@ const PROBLEMS: { value: string; label: string }[] = [
 ];
 const PROBLEM_LABEL = Object.fromEntries(PROBLEMS.map((p) => [p.value, p.label]));
 
+/** "Lake Louise in Winter!" → "lake-louise-in-winter" (the address can be changed later). */
+const slugify = (s: string) =>
+  s
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+
 function NewPost({ onDone }: { onDone: () => void }) {
   const uid = useId();
   const router = useRouter();
   const [label, setLabel] = useState("");
   const [slug, setSlug] = useState("");
+  const [slugEdited, setSlugEdited] = useState(false);
+  const titleRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    titleRef.current?.focus();
+    titleRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, []);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -94,15 +116,29 @@ function NewPost({ onDone }: { onDone: () => void }) {
     <form onSubmit={create} className="grid gap-4 border-b border-obsidian-900/[0.06] px-6 py-5 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
       <div>
         <label htmlFor={`${uid}-label`} className={labelCls}>
-          Post name
+          Post title
         </label>
-        <input id={`${uid}-label`} required minLength={2} value={label} onChange={(e) => setLabel(e.target.value)} className={field} />
+        <input
+          ref={titleRef}
+          id={`${uid}-label`}
+          required
+          minLength={2}
+          value={label}
+          onChange={(e) => {
+            setLabel(e.target.value);
+            if (!slugEdited) setSlug(slugify(e.target.value));
+          }}
+          className={field}
+        />
       </div>
       <div>
         <label htmlFor={`${uid}-slug`} className={labelCls}>
-          Slug (address after /blog-post/)
+          Address: /blog-post/…
         </label>
-        <input id={`${uid}-slug`} required pattern="[a-z0-9]+(-[a-z0-9]+)*" value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase())} className={`${field} font-mono text-sm`} />
+        <input id={`${uid}-slug`} required pattern="[a-z0-9]+(-[a-z0-9]+)*" value={slug} onChange={(e) => {
+            setSlug(e.target.value.toLowerCase());
+            setSlugEdited(true);
+          }} className={`${field} font-mono text-sm`} />
       </div>
       <button type="submit" disabled={busy} className={primaryBtn}>
         {busy ? "Creating…" : "Create draft"}
@@ -142,9 +178,17 @@ export function BlogView() {
     <div className="space-y-6">
       <PortalHeading
         title="Blog SEO"
+        actions={
+          me.seo.manage && (
+            <button type="button" onClick={() => setAdding(true)} className={primaryBtn}>
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              New blog post
+            </button>
+          )
+        }
         intro={
           <>
-            Blog posts keep their Webflow addresses at /blog-post/&lt;slug&gt; and are listed on <Link href="/blog" className="text-ocean-700 underline underline-offset-2">/blog</Link>. Checks run on the stored post; the BlogPosting column reads the last audit.
+            Blog posts live at /blog-post/&lt;address&gt; and are listed on <Link href="/blog" className="text-ocean-700 underline underline-offset-2">/blog</Link>. Open a post to write it, set its featured image, keywords and social image, change its address (the old address then redirects to the new one) and publish it. The BlogPosting column reads the last audit.
           </>
         }
       />
@@ -181,19 +225,42 @@ export function BlogView() {
         {!data ? (
           <Loading />
         ) : data.posts.length === 0 ? (
-          <Empty>{s?.total ? "No posts match." : "No blog posts yet. Import them from Webflow below."}</Empty>
+          s?.total ? (
+            <Empty>No posts match.</Empty>
+          ) : (
+            <div className="px-6 py-8 text-center">
+              <p className="text-base text-obsidian-900">No blog posts yet.</p>
+              <p className="mt-1 text-sm text-slate-600">Write a new post, or bring the existing posts over from Webflow with the import below.</p>
+              {me.seo.manage && !adding && (
+                <button type="button" onClick={() => setAdding(true)} className={`${primaryBtn} mt-4`}>
+                  <Plus className="h-4 w-4" aria-hidden="true" />
+                  Write the first post
+                </button>
+              )}
+            </div>
+          )
         ) : (
           <Grid label="Blog posts" head={[["Post"], ["Status"], ["Published"], ["Checks"], [""]]} minWidth="min-w-[56rem]">
             {data.posts.map((p) => (
               <tr key={p.id} className="align-top">
                 <td className="px-6 py-3">
+                  <span className="flex gap-3">
+                  {(p.thumbnailImage || p.featuredImage) ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- small preview of the post's image
+                    <img src={(p.thumbnailImage || p.featuredImage) as string} alt="" loading="lazy" className="mt-1 h-14 w-20 shrink-0 rounded-lg object-cover ring-1 ring-obsidian-900/10" />
+                  ) : (
+                    <span className="mt-1 flex h-14 w-20 shrink-0 items-center justify-center rounded-lg bg-obsidian-100 text-center text-sm text-slate-600">No image</span>
+                  )}
+                  <span className="min-w-0">
                   <span className="block text-base text-obsidian-900">
                     {p.label}
                     {p.featured && <span className="ml-2 text-sm text-slate-600">Featured</span>}
                   </span>
                   <span className="block font-mono text-sm text-slate-600">{p.path}</span>
                   <span className="text-sm text-slate-600">
-                    {p.words} words · H2 {p.headings.h2} · H3 {p.headings.h3} · {p.images} images · {p.internalLinks} internal links
+                    {p.words} words · H2 {p.headings.h2} · H3 {p.headings.h3} · {p.images} images · {p.internalLinks} internal links · {p.keywords} {p.keywords === 1 ? "keyword" : "keywords"}
+                  </span>
+                  </span>
                   </span>
                 </td>
                 <td className="px-6 py-3">
@@ -218,7 +285,8 @@ export function BlogView() {
                 </td>
                 <td className="px-6 py-3 text-right">
                   <Link href={`/seo/pages/${p.id}`} className="inline-flex h-10 items-center rounded-full border border-obsidian-900/10 px-4 text-sm text-obsidian-900 hover:bg-obsidian-50">
-                    Edit
+                    Edit post
+                    <span className="sr-only"> {p.label}</span>
                   </Link>
                 </td>
               </tr>

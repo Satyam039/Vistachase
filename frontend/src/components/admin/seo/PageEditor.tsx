@@ -10,6 +10,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { ExternalLink, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { StaffSignIn } from "@/components/admin/AdminHeader";
+import { ImageField } from "@/components/admin/seo/ImageField";
 import { Dropdown } from "@/components/forms/Dropdown";
 import {
   CheckList,
@@ -779,7 +780,17 @@ export function SeoPageEditor({ id, mode = "direct", canPublish = true }: { id: 
               <TextField id={f("twitterTitle")} label="X (Twitter) title" value={form.twitterTitle} onChange={(v) => set("twitterTitle", v)} placeholder={effOgTitle} />
               <TextField id={f("ogDescription")} label="Open Graph description" value={form.ogDescription} onChange={(v) => set("ogDescription", v)} placeholder={effDescription} multiline />
               <TextField id={f("twitterDescription")} label="X (Twitter) description" value={form.twitterDescription} onChange={(v) => set("twitterDescription", v)} placeholder={effOgDescription} multiline />
-              <TextField id={f("ogImage")} label="Open Graph image" value={form.ogImage} onChange={(v) => set("ogImage", v)} placeholder={form.featuredImage || defImage} hint="A /media/… path or https:// address." mono />
+              <div className="sm:col-span-2">
+                <ImageField
+                  id={f("ogImage")}
+                  label="Open Graph image"
+                  value={form.ogImage}
+                  onChange={(v) => set("ogImage", v)}
+                  fallback={form.featuredImage || defImage}
+                  fallbackLabel={form.featuredImage ? "Featured image" : "Default"}
+                  hint="The picture shown when this page is shared on Facebook, LinkedIn, WhatsApp and similar. Best at 1200 × 630 px. Empty uses the featured image, or the site default."
+                />
+              </div>
               <TextField id={f("twitterImage")} label="X (Twitter) image" value={form.twitterImage} onChange={(v) => set("twitterImage", v)} placeholder={effOgImage} mono />
             </div>
           </Panel>
@@ -790,12 +801,12 @@ export function SeoPageEditor({ id, mode = "direct", canPublish = true }: { id: 
               <div className="grid gap-5 px-6 py-6">
                 <TextField
                   id={f("slug")}
-                  label="Address (slug)"
+                  label={isBlog ? "Post address (URL slug)" : "Address (slug)"}
                   value={form.slug}
                   onChange={(v) => set("slug", v)}
                   hint={
                     isBlog
-                      ? `The post lives at ${prefix}${form.slug || "…"}, its Webflow address. Keep the slug exactly as it was on Webflow; changing it on a published post redirects the old address.`
+                      ? `The post lives at ${prefix}${form.slug || "…"}. You can change it: on a published post the old address then redirects (301) to the new one. Posts brought over from Webflow should keep their Webflow address.`
                       : `The page lives at ${prefix}${form.slug || "…"}. Changing it on a published guide redirects the old address.`
                   }
                   mono
@@ -815,8 +826,20 @@ export function SeoPageEditor({ id, mode = "direct", canPublish = true }: { id: 
                   <div className="grid gap-5 sm:grid-cols-2">
                     <TextField id={f("datePublished")} label="Originally published" type="date" value={form.datePublished} onChange={(v) => set("datePublished", v)} hint="Keep the Webflow date (Created On)." />
                     <TextField id={f("dateModified")} label="Last modified" type="date" value={form.dateModified} onChange={(v) => set("dateModified", v)} hint="Updated automatically when the post's content changes." />
-                    <TextField id={f("thumbnailImage")} label="Thumbnail image" value={form.thumbnailImage} onChange={(v) => set("thumbnailImage", v)} hint="Shown on the blog list. A /media/… path." mono />
-                    <TextField id={f("thumbnailAlt")} label="Thumbnail alt text" value={form.thumbnailAlt} onChange={(v) => set("thumbnailAlt", v)} />
+                    <div className="sm:col-span-2">
+                      <ImageField
+                        id={f("thumbnailImage")}
+                        label="Thumbnail image"
+                        value={form.thumbnailImage}
+                        onChange={(v) => set("thumbnailImage", v)}
+                        onUploaded={({ alt }) => alt && !form.thumbnailAlt.trim() && set("thumbnailAlt", alt)}
+                        fallback={form.featuredImage || null}
+                        fallbackLabel="Featured image"
+                        aspect="aspect-square"
+                        hint="Shown on the /blog list. Empty uses the featured image."
+                      />
+                    </div>
+                    <TextField id={f("thumbnailAlt")} label="Thumbnail alt text" value={form.thumbnailAlt} onChange={(v) => set("thumbnailAlt", v)} className="sm:col-span-2" />
                     <div className="sm:col-span-2">
                       <Toggle id={f("featured")} label="Featured post" checked={form.featured} onChange={(v) => set("featured", v)} hint="Featured posts are listed first on /blog." />
                     </div>
@@ -854,9 +877,20 @@ export function SeoPageEditor({ id, mode = "direct", canPublish = true }: { id: 
           )}
 
           {/* Image */}
-          <Panel id={f("image")} title="Image" description="The page's featured image and how it is described.">
+          <Panel id={f("image")} title={isBlog ? "Featured image" : "Image"} description={isBlog ? "The picture at the top of the post, on its card on /blog, and when it is shared (unless a separate Open Graph image is set)." : "The page's featured image and how it is described."}>
             <div className="grid gap-5 px-6 py-6 sm:grid-cols-2">
-              <TextField id={f("featuredImage")} label="Featured image" value={form.featuredImage} onChange={(v) => set("featuredImage", v)} placeholder={defaults.image} hint="A /media/… path or https:// address." mono className="sm:col-span-2" />
+              <div className="sm:col-span-2">
+                <ImageField
+                  id={f("featuredImage")}
+                  label="Featured image"
+                  value={form.featuredImage}
+                  onChange={(v) => set("featuredImage", v)}
+                  onUploaded={({ alt }) => alt && !form.featuredImageAlt.trim() && set("featuredImageAlt", alt)}
+                  fallback={defaults.image}
+                  aspect="aspect-video"
+                  hint={isBlog ? "Best at least 1600 px wide. Pick from the library or upload a JPEG, PNG or WebP (up to 8 MB); uploads are converted to WebP." : "A /media/… path or https:// address, or pick or upload one."}
+                />
+              </div>
               <TextField id={f("featuredImageAlt")} label="Alt text" value={form.featuredImageAlt} onChange={(v) => set("featuredImageAlt", v)} className="sm:col-span-2" />
               <TextField id={f("imageTitle")} label="Image title" value={form.imageTitle} onChange={(v) => set("imageTitle", v)} />
               <TextField id={f("imageFileName")} label="File name" value={form.imageFileName} onChange={(v) => set("imageFileName", v)} hint="Like lake-louise-sunrise.webp." mono />
@@ -1143,6 +1177,22 @@ function KeywordsPanel({ pageId, mappings, idBase, onChanged }: { pageId: string
     onChanged();
   }
 
+  /** A keyword that isn't in the sheet yet: create it there and map it here in one step. */
+  async function addNew(role: Role) {
+    const keyword = q.trim();
+    setBusy(`new-${role}`);
+    setError("");
+    setNotice("");
+    setWarnings([]);
+    const res = await portalApi<{ warnings?: string[]; created?: boolean }>(`/pages/${encodeURIComponent(pageId)}/keywords`, "POST", { keyword, role });
+    setBusy(null);
+    if (!res.ok) return setError(errorOf(res.data, "Couldn't add that keyword."));
+    setWarnings(res.data.warnings ?? []);
+    setNotice(`Added “${keyword}” as ${role === "PRIMARY" ? "primary" : "secondary"}${res.data.created ? " (new in the keyword sheet, unverified)" : ""}.`);
+    setQ("");
+    onChanged();
+  }
+
   async function unmap(m: Mapping) {
     setBusy(m.id);
     setError("");
@@ -1234,6 +1284,19 @@ function KeywordsPanel({ pageId, mappings, idBase, onChanged }: { pageId: string
                 </li>
               ))}
             </ul>
+          )}
+          {results && q.trim().length >= 2 && !results.some((k) => k.keyword.trim().toLowerCase() === q.trim().toLowerCase().replace(/\s+/g, " ")) && (
+            <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl border border-dashed border-obsidian-900/15 px-4 py-3">
+              <span className="mr-1 text-sm text-slate-700">
+                Not in the keyword sheet yet. Add <span className="text-obsidian-900">“{q.trim()}”</span> to this page as
+              </span>
+              <button type="button" onClick={() => void addNew("PRIMARY")} disabled={busy !== null} className={quietBtn}>
+                {busy === "new-PRIMARY" ? "Adding…" : "primary"}
+              </button>
+              <button type="button" onClick={() => void addNew("SECONDARY")} disabled={busy !== null} className={quietBtn}>
+                {busy === "new-SECONDARY" ? "Adding…" : "secondary"}
+              </button>
+            </div>
           )}
         </div>
       </div>

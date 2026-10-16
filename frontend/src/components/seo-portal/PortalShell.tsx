@@ -27,6 +27,8 @@ import {
   Settings,
   Shuffle,
   X,
+  Share2,
+  Tags,
 } from "lucide-react";
 import { BrandMark } from "@/components/brand/BrandMark";
 import { SeoBaseContext } from "@/components/admin/seo/shared";
@@ -58,6 +60,8 @@ export const NAV = [
   { href: "/seo/pages", label: "Pages & metadata", icon: FileText },
   { href: "/seo/blog", label: "Blog SEO", icon: Newspaper },
   { href: "/seo/keywords", label: "Keywords", icon: KeyRound },
+  { href: "/seo/page-keywords", label: "Keywords by page", icon: Tags },
+  { href: "/seo/social-images", label: "Social images", icon: Share2 },
   { href: "/seo/technical", label: "Technical SEO", icon: Gauge },
   { href: "/seo/schema", label: "Schema markup", icon: Braces },
   { href: "/seo/redirects", label: "Redirects", icon: Shuffle },
