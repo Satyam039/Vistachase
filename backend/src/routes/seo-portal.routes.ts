@@ -18,7 +18,8 @@ import { can, capabilities, EDITOR_PAGE_FIELDS, SEO_CONTENT, SEO_MANAGE, SEO_REA
 import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
 import prisma from "@/lib/db/prisma";
 import { SeoError } from "@/modules/seo/seo.errors";
-import { createGuide, getPage } from "@/modules/seo/seo.pages";
+import { changeStatus, createGuide, getPage, updatePage } from "@/modules/seo/seo.pages";
+import { mapKeyword, unmapKeyword } from "@/modules/seo/seo.keywords";
 import { createGuideSchema, pageUpdateSchema } from "@/modules/seo/seo.validation";
 import { integrationStatus } from "@/modules/seo/search-console";
 import { BLOG_PREFIX } from "@/modules/seo/static-routes";
@@ -36,6 +37,8 @@ import { createTask, deleteTask, listTasks, seoTeam, updateTask } from "@/module
 import { listChecklist, refreshAutoChecks, updateChecklistItem } from "@/modules/seo/portal/checklist";
 import { adminSettingsState, applyDirect, cancelRequest, createRequest, listRequests, requestSchema, reviewRequest } from "@/modules/seo/portal/requests";
 import { changeLog, compareAudits, confirmIssue } from "@/modules/seo/portal/activity";
+import { imageLibrary, uploadImage } from "@/modules/seo/portal/media";
+import { addPageKeyword, pageKeywords } from "@/modules/seo/portal/page-keywords";
 
 const router = Router();
 
@@ -185,6 +188,82 @@ router.post("/schema/:id/unpublish", need(SEO_MANAGE), wrap(async (req, res) => 
 // Images (read-only)
 
 router.get("/images", wrap(async (_req, res) => res.json({ success: true, ...(await imageInventory()) })));
+
+// ---------------------------------------------------------------------------------------------
+// Image library and uploads (featured images, Open Graph images)
+
+router.get("/media", wrap(async (req, res) => {
+  const { q } = z.object({ q: z.string().trim().max(100).optional() }).parse(req.query);
+  return res.json({ success: true, ...(await imageLibrary(q)) });
+}));
+
+const uploadSchema = z
+  .object({
+    data: z.string().min(1, "Choose an image.").max(12_000_000, "The image is larger than 8 MB."),
+    fileName: z.string().trim().min(1).max(200),
+    alt: z.string().trim().max(300).nullable().optional(),
+  })
+  .strict();
+
+router.post("/media", need(SEO_CONTENT), rateLimitMiddleware("seo_image_upload", { maxRequests: 60, windowSeconds: 3600 }), wrap(async (req, res) => {
+  const input = uploadSchema.parse(req.body ?? {});
+  return res.status(201).json({ success: true, image: await uploadImage(input, userId(res)) });
+}));
+
+// ---------------------------------------------------------------------------------------------
+// Keywords by page (several keywords per page or blog post; typed keywords join the keyword sheet)
+
+const groupSchema = z.enum(["pages", "tours", "destinations", "blog", "guides"]);
+
+router.get("/page-keywords", wrap(async (req, res) => {
+  const filter = z.object({ q: z.string().trim().max(100).optional(), group: groupSchema.optional() }).parse(req.query);
+  return res.json({ success: true, ...(await pageKeywords(filter)) });
+}));
+
+const roleSchema = z.enum(["PRIMARY", "SECONDARY"]);
+
+router.post("/pages/:id/keywords", need(SEO_MANAGE), wrap(async (req, res) => {
+  const input = z.object({ keyword: z.string().trim().min(2, "Type a keyword of at least 2 characters.").max(120), role: roleSchema }).strict().parse(req.body ?? {});
+  return res.status(201).json({ success: true, ...(await addPageKeyword(id(req), input, userId(res))) });
+}));
+
+async function pageMapping(req: Request) {
+  const mapping = await prisma.seoKeywordMapping.findUnique({ where: { id: id(req, "mappingId") } });
+  if (!mapping || mapping.pageId !== id(req)) throw new SeoError(404, "That keyword isn't on this page.");
+  return mapping;
+}
+
+router.patch("/pages/:id/keywords/:mappingId", need(SEO_MANAGE), wrap(async (req, res) => {
+  const { role } = z.object({ role: roleSchema }).strict().parse(req.body ?? {});
+  const mapping = await pageMapping(req);
+  return res.json({ success: true, ...(await mapKeyword(mapping.keywordId, mapping.pageId, role, userId(res))) });
+}));
+
+router.delete("/pages/:id/keywords/:mappingId", need(SEO_MANAGE), wrap(async (req, res) => {
+  const mapping = await pageMapping(req);
+  await unmapKeyword(mapping.id, userId(res));
+  return res.json({ success: true });
+}));
+
+// ---------------------------------------------------------------------------------------------
+// Social sharing (Open Graph) image per page. Saves straight to the page; an unpublished page row
+// is published when asked, which changes nothing but the fields staff have set.
+
+const socialSchema = z
+  .object({
+    ogImage: pageUpdateSchema.shape.ogImage,
+    publish: z.boolean().optional(),
+  })
+  .strict();
+
+router.put("/pages/:id/social-image", need(SEO_MANAGE), wrap(async (req, res) => {
+  const { ogImage, publish } = socialSchema.parse(req.body ?? {});
+  const pageId = id(req);
+  await updatePage(pageId, { ogImage: ogImage ?? null }, userId(res));
+  const current = await prisma.seoPage.findUniqueOrThrow({ where: { id: pageId }, select: { status: true } });
+  if (publish && current.status !== "PUBLISHED") await changeStatus(pageId, "publish", userId(res));
+  return res.json({ success: true, ...(await getPage(pageId)) });
+}));
 
 // ---------------------------------------------------------------------------------------------
 // Imports (Webflow API, CSV or JSON) → preview → apply. Bodies up to 10 MB (app.ts).
@@ -377,6 +456,19 @@ export const largeBodyForSeoManagers = [
     const staff = await getAuthenticatedStaff(req, SEO_MANAGE).catch(() => null);
     if (!staff) return next();
     return largeJson(req, res, next);
+  },
+];
+
+/** Image uploads (an 8 MB image is about 11 MB as base64 JSON): staff who may edit page content only. */
+export const IMAGE_UPLOAD_PATH = "/api/seo/portal/media";
+const uploadJson = express.json({ limit: "12mb" });
+export const largeBodyForImageUploads = [
+  parseCookies,
+  async (req: Request, res: Response, next: NextFunction) => {
+    if (req.method !== "POST") return next();
+    const staff = await getAuthenticatedStaff(req, SEO_CONTENT).catch(() => null);
+    if (!staff) return next();
+    return uploadJson(req, res, next);
   },
 ];
 
