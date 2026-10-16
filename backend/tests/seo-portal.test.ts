@@ -174,6 +174,12 @@ describe("Webflow HTML conversion", () => {
     expect(out.stats.embedsRemoved).toBe(1);
   });
 
+  it("turns tables into pipe tables with their links and emphasis", () => {
+    const html = `<p>Before</p><table><thead><tr><th>Tour</th><th>Price</th></tr></thead><tbody><tr><td><p><strong>Banff</strong> | day</p></td><td>$189</td></tr><tr><td><a href="https://www.vistachase.com/lake-louise">Lake Louise</a><img src="/x.jpg"></td><td>$99</td></tr></tbody></table><p>After</p>`;
+    const out = htmlToMarkdown(html, { siteHosts: ["www.vistachase.com"] });
+    expect(out.markdown).toBe("Before\n\n| Tour | Price |\n| --- | --- |\n| **Banff** / day | $189 |\n| [Lake Louise](/lake-louise) | $99 |\n\nAfter");
+  });
+
   it("reports heading jumps", () => {
     expect(headingOutline("## A\n#### B").problems.length).toBe(1);
     expect(headingOutline("## A\n### B").problems.length).toBe(0);

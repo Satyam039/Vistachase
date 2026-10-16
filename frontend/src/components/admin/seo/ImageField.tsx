@@ -144,6 +144,7 @@ export function ImageField({
   aspect = "aspect-[1200/630]",
   disabled,
   onUploaded,
+  stacked,
 }: {
   id: string;
   label: ReactNode;
@@ -157,6 +158,8 @@ export function ImageField({
   disabled?: boolean;
   /** Called after an upload or a library pick, with the image's alt text when it has one. */
   onUploaded?: (img: { src: string; alt: string }) => void;
+  /** Preview above the controls, for narrow columns. */
+  stacked?: boolean;
 }) {
   const uid = useId();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -197,7 +200,7 @@ export function ImageField({
       <p id={`${id}-label`} className={labelCls}>
         {label}
       </p>
-      <div className="grid gap-4 sm:grid-cols-[minmax(0,16rem)_1fr]">
+      <div className={`grid gap-4 ${stacked ? "" : "sm:grid-cols-[minmax(0,16rem)_1fr]"}`}>
         <div className={`relative ${aspect} w-full overflow-hidden rounded-xl bg-obsidian-100 ring-1 ring-obsidian-900/10`}>
           {shown && previewable(shown) ? (
             // eslint-disable-next-line @next/next/no-img-element -- preview of whatever address is entered
