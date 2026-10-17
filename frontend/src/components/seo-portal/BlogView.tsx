@@ -5,12 +5,13 @@
 // and "new post". Posts open in the blog post editor (BlogPostEditor.tsx). The list works like
 // Webflow's collection list: filters (status, draft changes, indexing, featured, published / created
 // / modified in the last day, week or month), sortable columns, 25 posts a page and a CSV export of
-// the filtered list.
+// the filtered list. "Select" (managers) ticks posts for bulk publish, unpublish, archive, feature
+// or unfeature; each post still goes through its own checks, and there is no bulk delete.
 
 import { useCallback, useEffect, useId, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowUp, Download, Plus, SlidersHorizontal } from "lucide-react";
-import { Chip, Empty, Loading, Panel, STATUS_STYLE, Stat, day, errorOf, field, labelCls, portalApi, primaryBtn, quietBtn, words, type PublishStatus } from "@/components/admin/seo/shared";
+import { ArrowDown, ArrowUp, CheckSquare, Download, Plus, SlidersHorizontal } from "lucide-react";
+import { Chip, Empty, Loading, dangerBtn, Panel, STATUS_STYLE, Stat, day, errorOf, field, labelCls, portalApi, primaryBtn, quietBtn, words, type PublishStatus } from "@/components/admin/seo/shared";
 import { Dropdown } from "@/components/forms/Dropdown";
 import { PortalHeading, usePortal } from "@/components/seo-portal/PortalShell";
 import { ImportPanel } from "@/components/seo-portal/ImportPanel";
@@ -108,6 +109,21 @@ const FILTER_FIELDS: { key: keyof Filters; label: string; options: { value: stri
   { key: "modified", label: "Modified", options: WINDOWS },
 ];
 
+type BulkAction = "publish" | "unpublish" | "archive" | "feature" | "unfeature";
+const BULK: { action: BulkAction; label: string; done: string }[] = [
+  { action: "publish", label: "Publish", done: "published" },
+  { action: "unpublish", label: "Unpublish", done: "moved to draft" },
+  { action: "feature", label: "Feature", done: "featured" },
+  { action: "unfeature", label: "Unfeature", done: "unfeatured" },
+  { action: "archive", label: "Archive", done: "archived" },
+];
+interface BulkReply {
+  results: { id: string; label: string | null; ok: boolean; skipped?: boolean; error?: string }[];
+  done: number;
+  skipped: number;
+  failed: number;
+}
+
 function SortHeader({ label, value, sort, dir, onSort }: { label: string; value: Sort; sort: Sort; dir: "asc" | "desc"; onSort: (s: Sort) => void }) {
   const active = sort === value;
   const Icon = dir === "asc" ? ArrowUp : ArrowDown;
@@ -130,6 +146,10 @@ export function BlogView() {
   const [sort, setSort] = useState<Sort>("published");
   const [dir, setDir] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(1);
+  const [selecting, setSelecting] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [busy, setBusy] = useState<BulkAction | null>(null);
+  const [bulkNote, setBulkNote] = useState<{ text: string; failures: string[] } | null>(null);
 
   const query = useMemo(() => {
     const params = new URLSearchParams();
@@ -168,6 +188,53 @@ export function BlogView() {
     }
   };
 
+  const toggle = (postId: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(postId)) next.delete(postId);
+      else next.add(postId);
+      return next;
+    });
+  const pageIds = data?.posts.map((p) => p.id) ?? [];
+  const allOnPage = pageIds.length > 0 && pageIds.every((x) => selected.has(x));
+  const someOnPage = pageIds.some((x) => selected.has(x));
+  const togglePage = () =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      for (const x of pageIds) {
+        if (allOnPage) next.delete(x);
+        else next.add(x);
+      }
+      return next;
+    });
+  const stopSelecting = () => {
+    setSelecting(false);
+    setSelected(new Set());
+  };
+
+  const runBulk = async (action: BulkAction) => {
+    const ids = Array.from(selected);
+    if (ids.length === 0) return;
+    const meta = BULK.find((b) => b.action === action)!;
+    if ((action === "archive" || action === "unpublish") && !window.confirm(`${meta.label} ${ids.length} ${ids.length === 1 ? "post" : "posts"}? ${action === "archive" ? "Archived posts leave the site." : "Unpublished posts leave the site until published again."}`)) return;
+    setBusy(action);
+    setBulkNote(null);
+    const res = await portalApi<BulkReply>("/blog/bulk", "POST", { ids, action });
+    setBusy(null);
+    if (!res.ok) {
+      setBulkNote({ text: errorOf(res.data, "That didn't work. Try again."), failures: [] });
+      return;
+    }
+    const r = res.data;
+    const parts = [`${r.done} ${r.done === 1 ? "post" : "posts"} ${meta.done}`];
+    if (r.skipped) parts.push(`${r.skipped} already ${meta.done}`);
+    if (r.failed) parts.push(`${r.failed} couldn't be changed`);
+    setBulkNote({ text: `${parts.join(", ")}.`, failures: r.results.filter((x) => !x.ok).map((x) => `${x.label ?? "Unknown post"}: ${x.error}`) });
+    // Keep the ones that failed ticked so they can be fixed and tried again.
+    setSelected(new Set(r.results.filter((x) => !x.ok).map((x) => x.id)));
+    void load();
+  };
+
   const s = data?.summary;
   return (
     <div className="space-y-6">
@@ -204,6 +271,12 @@ export function BlogView() {
               <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
               Filter{activeFilters ? ` (${activeFilters})` : ""}
             </button>
+            {me.seo.manage && (
+              <button type="button" onClick={() => (selecting ? stopSelecting() : setSelecting(true))} aria-pressed={selecting} className={quietBtn}>
+                <CheckSquare className="h-4 w-4" aria-hidden="true" />
+                {selecting ? "Done selecting" : "Select"}
+              </button>
+            )}
             <a href={`/api/seo/portal/blog/export.csv?${queryKey}`} className={quietBtn}>
               <Download className="h-4 w-4" aria-hidden="true" />
               Export CSV
@@ -247,6 +320,35 @@ export function BlogView() {
             {pages > 1 ? ` · page ${page} of ${pages}` : ""}
           </p>
         )}
+        {selecting && (
+          <div role="region" aria-label="Bulk actions" className="flex flex-wrap items-center gap-2 border-t border-obsidian-900/[0.06] bg-obsidian-50/60 px-6 py-3">
+            <span className="mr-2 text-sm text-obsidian-900" aria-live="polite">
+              {selected.size} selected
+            </span>
+            {BULK.map((b) => (
+              <button key={b.action} type="button" onClick={() => void runBulk(b.action)} disabled={selected.size === 0 || busy !== null} className={b.action === "archive" ? dangerBtn : quietBtn}>
+                {busy === b.action ? "Working…" : b.label}
+              </button>
+            ))}
+            {selected.size > 0 && (
+              <button type="button" onClick={() => setSelected(new Set())} className="ml-auto text-sm text-slate-600 underline underline-offset-2 hover:text-obsidian-900">
+                Clear selection
+              </button>
+            )}
+          </div>
+        )}
+        {bulkNote && (
+          <div role="status" className="border-t border-obsidian-900/[0.06] px-6 py-3 text-sm text-obsidian-900">
+            <p>{bulkNote.text}</p>
+            {bulkNote.failures.length > 0 && (
+              <ul className="mt-1 list-disc space-y-0.5 pl-5 text-red-800">
+                {bulkNote.failures.map((f) => (
+                  <li key={f}>{f}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
         {!data ? (
           <Loading />
         ) : data.posts.length === 0 ? (
@@ -265,9 +367,14 @@ export function BlogView() {
             </div>
           )
         ) : (
-          <SortableGrid sort={sort} dir={dir} onSort={onSort}>
+          <SortableGrid sort={sort} dir={dir} onSort={onSort} select={selecting ? { all: allOnPage, some: someOnPage, onToggle: togglePage } : undefined}>
             {data.posts.map((p) => (
-              <tr key={p.id} className="align-top">
+              <tr key={p.id} className={`align-top ${selecting && selected.has(p.id) ? "bg-ocean-50/60" : ""}`}>
+                {selecting && (
+                  <td className="py-3 pl-6">
+                    <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggle(p.id)} aria-label={`Select ${p.label}`} className="mt-1 h-5 w-5 accent-obsidian-900" />
+                  </td>
+                )}
                 <td className="px-6 py-3">
                   <span className="flex gap-3">
                   {(p.thumbnailImage || p.featuredImage) ? (
@@ -338,13 +445,27 @@ export function BlogView() {
 }
 
 /** The posts table with Webflow-style sortable column headers. */
-function SortableGrid({ sort, dir, onSort, children }: { sort: Sort; dir: "asc" | "desc"; onSort: (s: Sort) => void; children: ReactNode }) {
+function SortableGrid({ sort, dir, onSort, select, children }: { sort: Sort; dir: "asc" | "desc"; onSort: (s: Sort) => void; select?: { all: boolean; some: boolean; onToggle: () => void }; children: ReactNode }) {
   const cols: { label: string; value?: Sort }[] = [{ label: "Name", value: "name" }, { label: "Status", value: "status" }, { label: "Published", value: "published" }, { label: "Created", value: "created" }, { label: "Modified", value: "modified" }, { label: "Featured" }, { label: "Checks" }, { label: "" }];
   return (
     <div className="overflow-x-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ocean-600" tabIndex={0} role="region" aria-label="Blog posts">
       <table className="w-full min-w-[72rem] text-left text-base">
         <thead className="bg-obsidian-50/70 text-sm text-slate-600">
           <tr>
+            {select && (
+              <th scope="col" className="py-3 pl-6 font-normal">
+                <input
+                  type="checkbox"
+                  checked={select.all}
+                  ref={(el) => {
+                    if (el) el.indeterminate = select.some && !select.all;
+                  }}
+                  onChange={select.onToggle}
+                  aria-label="Select every post on this page"
+                  className="h-5 w-5 accent-obsidian-900"
+                />
+              </th>
+            )}
             {cols.map((c, i) => (
               <th key={`${c.label}-${i}`} scope="col" aria-sort={c.value && c.value === sort ? (dir === "asc" ? "ascending" : "descending") : undefined} className="px-6 py-3 font-normal">
                 {c.value ? <SortHeader label={c.label} value={c.value} sort={sort} dir={dir} onSort={onSort} /> : c.label || <span className="sr-only">Action</span>}

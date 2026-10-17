@@ -16,6 +16,7 @@ import { ImageField } from "@/components/admin/seo/ImageField";
 import { CheckList, Chip, STATUS_STYLE, errorOf, field, labelCls, portalApi, primaryBtn, quietBtn, seoApi, words, type FieldCheck, type PublishStatus } from "@/components/admin/seo/shared";
 import { usePortal } from "@/components/seo-portal/PortalShell";
 import { RichTextEditor } from "@/components/seo-portal/editor/RichTextEditor";
+import { AiGenerate, type AiDraft } from "@/components/admin/seo/AiGenerate";
 
 const BLOG_PREFIX = "/blog-post/";
 /** The publish check refuses thinner posts (backend seo validation). */
@@ -547,6 +548,9 @@ export function BlogPostEditor({ id }: { id: string | null }) {
   const previewDescription = form.metaDescription.trim() || form.excerpt.trim() || "Add a meta description: the sentence or two Google shows under the title.";
   const seoDescription = form.metaDescription.trim() || form.excerpt.trim();
   const ogPreviewTitle = form.ogTitle.trim() || previewTitle;
+  // AI Generate needs a saved post to read; it uses the words on screen, saved or not.
+  const canGenerate = postId !== null && !readOnly && !managerField;
+  const aiDraft = (): AiDraft => ({ label: form.label, h1: form.label, excerpt: form.excerpt, body: form.body, seoTitle: form.seoTitle, metaDescription: form.metaDescription });
   const ogPreviewDescription = form.ogDescription.trim() || seoDescription || "Add a meta description to show text here.";
   const ogPreviewImage = [form.ogImage, form.featuredImage].map((v) => v.trim()).find((v) => v.startsWith("/media/") || v.startsWith("https://")) ?? null;
   const wordCount = form.body.replace(/!\[[^\]]*\]\([^)]*\)|\]\([^)]*\)|[#>*|[\]-]/g, " ").split(/\s+/).filter(Boolean).length;
@@ -709,6 +713,7 @@ export function BlogPostEditor({ id }: { id: string | null }) {
               </label>
               <input id={f("seoTitle")} maxLength={120} value={form.seoTitle} disabled={readOnly || managerField} onChange={(e) => set("seoTitle", e.target.value)} placeholder={form.label ? `${form.label} | Vista Chase` : "Uses the post title when empty"} className={field} />
               <Counter value={form.seoTitle} min={30} max={60} />
+              {canGenerate && postId && <AiGenerate id={f("seoTitle")} pageId={postId} field="seoTitle" label="meta title" draft={aiDraft} onUse={(v) => set("seoTitle", v)} />}
             </div>
             <div>
               <label htmlFor={f("metaDescription")} className={labelCls}>
@@ -716,6 +721,7 @@ export function BlogPostEditor({ id }: { id: string | null }) {
               </label>
               <textarea id={f("metaDescription")} rows={3} maxLength={320} value={form.metaDescription} disabled={readOnly || managerField} onChange={(e) => set("metaDescription", e.target.value)} className={`${field} h-auto py-2.5`} />
               <Counter value={form.metaDescription} min={120} max={160} />
+              {canGenerate && postId && <AiGenerate id={f("metaDescription")} pageId={postId} field="metaDescription" label="meta description" draft={aiDraft} onUse={(v) => set("metaDescription", v)} />}
             </div>
             <label className="flex items-start gap-3">
               <input
@@ -752,8 +758,14 @@ export function BlogPostEditor({ id }: { id: string | null }) {
                 <p className="mt-1 line-clamp-2 text-sm text-slate-700">{ogPreviewDescription}</p>
               </div>
             </div>
-            <SameAsInput id={f("ogTitle")} label="Open Graph title" sameLabel="Same as meta title" value={form.ogTitle} inherited={previewTitle} onChange={(v) => set("ogTitle", v)} disabled={readOnly || managerField} />
-            <SameAsInput id={f("ogDescription")} label="Open Graph description" sameLabel="Same as meta description" value={form.ogDescription} inherited={seoDescription} onChange={(v) => set("ogDescription", v)} disabled={readOnly || managerField} multiline />
+            <div>
+              <SameAsInput id={f("ogTitle")} label="Open Graph title" sameLabel="Same as meta title" value={form.ogTitle} inherited={previewTitle} onChange={(v) => set("ogTitle", v)} disabled={readOnly || managerField} />
+              {canGenerate && postId && <AiGenerate id={f("ogTitle")} pageId={postId} field="ogTitle" label="Open Graph title" draft={aiDraft} onUse={(v) => set("ogTitle", v)} />}
+            </div>
+            <div>
+              <SameAsInput id={f("ogDescription")} label="Open Graph description" sameLabel="Same as meta description" value={form.ogDescription} inherited={seoDescription} onChange={(v) => set("ogDescription", v)} disabled={readOnly || managerField} multiline />
+              {canGenerate && postId && <AiGenerate id={f("ogDescription")} pageId={postId} field="ogDescription" label="Open Graph description" draft={aiDraft} onUse={(v) => set("ogDescription", v)} />}
+            </div>
             <ImageField
               id={f("ogImage")}
               label="Open Graph image"

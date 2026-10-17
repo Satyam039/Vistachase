@@ -7,8 +7,10 @@
 // - Custom code: Webflow's "Inside <head> tag" and "Before </body> tag" boxes. Anyone can check the
 //   code; only an admin can save it, and the server accepts a short list of tags only
 //   (backend/src/modules/seo/portal/custom-code.ts).
+// Both boxes have Prettify and Find (CodeTools.tsx).
 
-import { useCallback, useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { CodeToolbar } from "@/components/admin/seo/CodeTools";
 import { CheckList, Chip, Empty, Panel, STATUS_STYLE, errorOf, field, labelCls, portalApi, primaryBtn, quietBtn, when, words, type FieldCheck, type PublishStatus } from "@/components/admin/seo/shared";
 
 type Level = "error" | "warning" | "info";
@@ -65,6 +67,7 @@ function BlockEditor({ pageId, block, canManage, onDone }: { pageId: string; blo
   const [saved, setSaved] = useState<Block | null>(block);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const jsonRef = useRef<HTMLTextAreaElement>(null);
 
   async function validate() {
     setBusy("check");
@@ -113,7 +116,9 @@ function BlockEditor({ pageId, block, canManage, onDone }: { pageId: string; blo
         <label htmlFor={`${uid}-json`} className={labelCls}>
           JSON-LD
         </label>
+        <CodeToolbar id={`${uid}-json`} target={jsonRef} value={json} onChange={setJson} kind="json" />
         <textarea
+          ref={jsonRef}
           id={`${uid}-json`}
           value={json}
           onChange={(e) => setJson(e.target.value)}
@@ -274,12 +279,15 @@ interface CheckResult {
 }
 
 function CodeBox({ id, label, hint, value, onChange, wrap }: { id: string; label: string; hint: string; value: string; onChange: (v: string) => void; wrap: boolean }) {
+  const ref = useRef<HTMLTextAreaElement>(null);
   return (
     <div>
       <label htmlFor={id} className={labelCls}>
         {label}
       </label>
+      <CodeToolbar id={id} target={ref} value={value} onChange={onChange} kind="html" />
       <textarea
+        ref={ref}
         id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}

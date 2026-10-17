@@ -8,6 +8,7 @@
 // destination record, else the last crawl), shown as placeholders.
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
+import { AiGenerate, type AiDraft } from "@/components/admin/seo/AiGenerate";
 import { ExternalLink, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { StaffSignIn } from "@/components/admin/AdminHeader";
 import { ImageField } from "@/components/admin/seo/ImageField";
@@ -717,6 +718,8 @@ export function SeoPageEditor({ id, mode = "direct", canPublish = true, compact 
   const effDescription = form.metaDescription.trim() || defDescription || "";
   const effOgTitle = form.ogTitle.trim() || live?.ogTitle || effTitle;
   const effOgDescription = form.ogDescription.trim() || effDescription;
+  // What AI Generate reads: the editor's current (possibly unsaved) words.
+  const aiDraft = (): AiDraft => ({ label: form.label, h1: form.h1, focusKeyword: form.focusKeyword, excerpt: form.excerpt, body: isCms ? form.body : undefined, seoTitle: form.seoTitle, metaDescription: form.metaDescription });
   const effOgImage = form.ogImage.trim() || form.featuredImage.trim() || defImage;
 
   const urlPath = (isCms && form.slug ? `${prefix}${form.slug}` : page.path).split("/").filter(Boolean);
@@ -813,6 +816,7 @@ export function SeoPageEditor({ id, mode = "direct", canPublish = true, compact 
               <div>
                 <TextField id={f("seoTitle")} label="SEO title" value={form.seoTitle} onChange={(v) => set("seoTitle", v)} placeholder={defTitle} describedBy={f("seoTitle-count")} />
                 <Counter id={f("seoTitle-count")} count={effTitle.length} min={50} max={60} unit="characters" usingDefault={!form.seoTitle.trim()} />
+                <AiGenerate id={f("seoTitle")} pageId={id} field="seoTitle" label="SEO title" draft={aiDraft} onUse={(v) => set("seoTitle", v)} />
               </div>
               <div>
                 <TextField
@@ -825,6 +829,7 @@ export function SeoPageEditor({ id, mode = "direct", canPublish = true, compact 
                   multiline
                 />
                 <Counter id={f("metaDescription-count")} count={effDescription.length} min={150} max={160} unit="characters" usingDefault={!form.metaDescription.trim()} />
+                <AiGenerate id={f("metaDescription")} pageId={id} field="metaDescription" label="meta description" draft={aiDraft} onUse={(v) => set("metaDescription", v)} />
               </div>
               <div className="grid gap-5 sm:grid-cols-2">
                 <TextField id={f("focusKeyword")} label="Focus keyword" value={form.focusKeyword} onChange={(v) => set("focusKeyword", v)} />
@@ -855,24 +860,30 @@ export function SeoPageEditor({ id, mode = "direct", canPublish = true, compact 
           {/* Social */}
           <Panel id={f("social")} title="Social sharing" description="Shown when the page is shared. Empty fields use the search title, description and image.">
             <div className="grid gap-5 px-6 py-6 sm:grid-cols-2">
-              <SameAsField
-                id={f("ogTitle")}
-                label="Open Graph title"
-                sameLabel="Same as SEO title"
-                value={form.ogTitle}
-                onChange={(v) => set("ogTitle", v)}
-                inherited={live?.ogTitle ?? effTitle}
-              />
+              <div>
+                <SameAsField
+                  id={f("ogTitle")}
+                  label="Open Graph title"
+                  sameLabel="Same as SEO title"
+                  value={form.ogTitle}
+                  onChange={(v) => set("ogTitle", v)}
+                  inherited={live?.ogTitle ?? effTitle}
+                />
+                <AiGenerate id={f("ogTitle")} pageId={id} field="ogTitle" label="Open Graph title" draft={aiDraft} onUse={(v) => set("ogTitle", v)} />
+              </div>
               <TextField id={f("twitterTitle")} label="X (Twitter) title" value={form.twitterTitle} onChange={(v) => set("twitterTitle", v)} placeholder={effOgTitle} />
-              <SameAsField
-                id={f("ogDescription")}
-                label="Open Graph description"
-                sameLabel="Same as meta description"
-                value={form.ogDescription}
-                onChange={(v) => set("ogDescription", v)}
-                inherited={effDescription}
-                multiline
-              />
+              <div>
+                <SameAsField
+                  id={f("ogDescription")}
+                  label="Open Graph description"
+                  sameLabel="Same as meta description"
+                  value={form.ogDescription}
+                  onChange={(v) => set("ogDescription", v)}
+                  inherited={effDescription}
+                  multiline
+                />
+                <AiGenerate id={f("ogDescription")} pageId={id} field="ogDescription" label="Open Graph description" draft={aiDraft} onUse={(v) => set("ogDescription", v)} />
+              </div>
               <TextField id={f("twitterDescription")} label="X (Twitter) description" value={form.twitterDescription} onChange={(v) => set("twitterDescription", v)} placeholder={effOgDescription} multiline />
               <div className="sm:col-span-2">
                 <ImageField

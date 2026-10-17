@@ -17,6 +17,9 @@ Sign in at `/seo/login` (staff accounts only, no self-registration). The sidebar
 | Pages & metadata | Every page's title, description, canonical, robots, Open Graph, dates, sitemap flag. Changes to a published page are saved as a **draft** and go live only when an SEO manager presses Publish. |
 | Blog SEO | Posts at `/blog-post/<slug>` with checks (title, description, headings, alt text, featured image, images still on Webflow's CDN, links through redirects or to unknown pages, dates, sitemap, BlogPosting). **New blog post** and **Edit post** open the post editor (`/seo/blog/new`, `/seo/blog/<id>`): title, address (from the title, editable), summary, content in a rich text editor (headings, bold, italic, lists, quotes, links to site pages, images by upload or library, tables), meta title and description with a search preview, keywords, featured image, author and date, then Save draft / Publish. Also Featured, sitemap indexing, Open Graph (same-as-SEO boxes, image, share preview), thumbnail and the created / modified / published dates. The list filters by status, changes in draft, sitemap indexing, featured and published / created / modified in the last 24 h, 7 or 30 days, sorts by any date, name or status, pages 25 at a time and exports the filtered list as CSV (`GET /api/seo/portal/blog/export.csv`, cells starting with `= + - @` are prefixed with `'`). A published post's edits stay a draft until Publish changes. Content is stored in the blog's Markdown subset (tables as pipe tables), so no HTML reaches the site. Webflow import. |
 | Keywords | The existing keyword sheet. |
+| Select (on Blog SEO) | **Select** (SEO manager / admin) adds a tick box to each post and a select-all box for the page. Ticked posts can be published, unpublished, featured, unfeatured or archived together (`POST /api/seo/portal/blog/bulk`, up to 100). Each post goes through the same checks, revisions and audit log as doing it alone; posts that fail (for example a publish check) are listed with the reason and stay ticked. There is no bulk delete. |
+| AI Generate | A **Generate** button under the SEO title, meta description and Open Graph title/description (Page settings, Pages & metadata, blog post editor). Claude reads the words on screen (saved or not) and suggests three options with their length; **Use this** puts one in the field and nothing is saved until Save. SEO manager / admin only (the people who can change those fields). Needs `ANTHROPIC_API_KEY`; without it the button is disabled with a note. |
+| Code boxes | The JSON-LD and custom code boxes have **Prettify** (JSON laid out with indents; custom code one tag per line, script and style contents kept as written, JSON-LD scripts laid out like JSON; invalid JSON is left alone) and **Find** (Enter / Shift+Enter or the arrows jump between matches). Browser only; nothing is saved by either. |
 | Keywords by page | Every page and blog post (tabs: pages, tours, destinations, blog, guides) with the keywords it targets. Add as many as needed per page, primary or secondary; a keyword not in the sheet yet is added to it (unverified, no volume) and mapped in one step. Change role or remove per page; the keyword stays in the sheet. SEO manager/admin only; others read. |
 | Social images | The Open Graph image of every page (what shows when the page is shared). Upload or pick from the library; saving goes live for SEO managers (a page with no SEO row yet can be made live with only the image). Pages without one use the featured image, then the site default (Moraine Lake). |
 | Technical SEO | Live checks of robots.txt, sitemap, crawler access, llms.txt, canonical, verification tag, Google tag, viewport, response time, real 404s and the http/www redirects. Per-crawler access for AI crawlers (search engines always allowed) with a robots.txt preview. |
@@ -45,6 +48,7 @@ Enforced on the server for every request (role read from the database each time)
 | Request tracking / verification / site-wide schema | ✓ | ✓ | – | – |
 | Approve those requests, apply them directly | ✓ | – | – | – |
 | Site search fields, Featured, Open Graph, sitemap indexing | ✓ | ✓ | – | – |
+| Blog bulk actions (Select), AI Generate | ✓ | ✓ | – | – |
 | Save page custom code (head / before `</body>`) | ✓ | – | – | – |
 
 No SEO role can reach bookings, payments, refunds, prices or inventory, customer payment details,
@@ -70,6 +74,8 @@ They sign in at `/seo/login`. Removing the role ends access on the next request.
 | `SEO_BASELINE_HOSTS` | `www.vistachase.com,vistachase.com` | Hosts the baseline crawler may read (allow-list). |
 | `SEO_CHECK_DOMAIN` | on | `false` skips the http/www redirect checks (e.g. before DNS moves). |
 | `SEO_AUDIT_BASE_URL`, `SITE_URL` | as in SEO.md | Unchanged. |
+| `ANTHROPIC_API_KEY` | – | Turns on AI Generate (the same key the AI concierge uses). Server only. Rate limited to 60 requests an hour per address. |
+| `ANTHROPIC_SEO_MODEL` | `claude-opus-5-5` | Model for AI Generate. Requests use low effort, a JSON answer format and Anthropic's server-side fallback (`fallbacks: "default"`), so a declined request is retried on Anthropic's recommended fallback model in the same call. |
 
 No frontend variables are added. Tracking IDs and the verification ID are not env vars: they are
 entered in Settings and only take effect after an admin approves them.
@@ -192,6 +198,13 @@ log) and the site's photo library. Other endpoints: `GET /page-keywords`, `POST 
 `PATCH|DELETE /pages/:id/keywords/:mappingId`, `PUT /pages/:id/social-image`.
 
 ## Tests
+
+- `backend/tests/seo-bulk-ai.test.ts` (7 tests): bulk actions are manager-only, refuse unknown actions
+  and empty lists, publish only posts that pass their checks (others reported, non-blog pages refused,
+  already-published skipped), audit log per post, feature / unfeature / archive; AI Generate answers 503
+  without a key, is manager-only, sends the page's content and focus keyword with fallbacks on, returns
+  cleaned suggestions with lengths without saving anything, and reports a refusal. The AI tests use a fake
+  client; a real Anthropic call has not been made from here (no key).
 
 - `backend/tests/seo-page-settings.test.ts` (10 tests): custom code parser (allowed tags; iframes,
   `on*` handlers, http scripts, `http-equiv`, unknown script types, unclosed tags, stray text refused),

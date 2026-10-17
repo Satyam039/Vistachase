@@ -25,6 +25,8 @@ import { integrationStatus } from "@/modules/seo/search-console";
 import { BLOG_PREFIX } from "@/modules/seo/static-routes";
 import { portalOverview } from "@/modules/seo/portal/overview";
 import { blogCsv, blogOverview } from "@/modules/seo/portal/blog";
+import { BULK_ACTIONS, BULK_MAX, bulkBlogAction } from "@/modules/seo/portal/bulk";
+import { AI_FIELDS, generateSeoText, isAiConfigured } from "@/modules/seo/portal/ai-generate";
 import { CUSTOM_CODE_MAX, parseCustomCode, saveCustomCode } from "@/modules/seo/portal/custom-code";
 import { discardDraft, getDraft, publishDraft, saveDraft } from "@/modules/seo/portal/drafts";
 import { getCrawlerRules, getLatestTechnical, runTechnicalChecks, saveCrawlerRules } from "@/modules/seo/portal/technical";
@@ -155,6 +157,31 @@ router.get("/blog/export.csv", wrap(async (req, res) => {
 router.post("/blog", need(SEO_MANAGE), wrap(async (req, res) => {
   const input = createGuideSchema.parse(req.body ?? {});
   return res.status(201).json({ success: true, page: await createGuide(input, userId(res), BLOG_PREFIX) });
+}));
+
+/** Select mode: publish, unpublish, archive, feature or unfeature several posts. Never deletes. */
+const bulkBody = z.object({ ids: z.array(z.string().regex(/^[a-z0-9]{10,40}$/i)).min(1).max(BULK_MAX), action: z.enum(BULK_ACTIONS) }).strict();
+router.post("/blog/bulk", need(SEO_MANAGE), wrap(async (req, res) => {
+  const { ids, action } = bulkBody.parse(req.body ?? {});
+  return res.json({ success: true, ...(await bulkBlogAction(ids, action, userId(res))) });
+}));
+
+// ---------------------------------------------------------------------------------------------
+// AI Generate (suggestions only; nothing is saved)
+
+router.get("/ai/status", (_req, res) => res.json({ success: true, configured: isAiConfigured() }));
+
+const aiText = (n: number) => z.string().max(n).optional();
+const aiBody = z
+  .object({
+    pageId: z.string().regex(/^[a-z0-9]{10,40}$/i),
+    field: z.enum(AI_FIELDS),
+    draft: z.object({ label: aiText(200), h1: aiText(200), focusKeyword: aiText(120), excerpt: aiText(2000), body: aiText(100_000), seoTitle: aiText(300), metaDescription: aiText(600) }).strict().optional(),
+  })
+  .strict();
+router.post("/ai/generate", need(SEO_MANAGE), rateLimitMiddleware("seo_ai_generate", { maxRequests: 60, windowSeconds: 3600 }), wrap(async (req, res) => {
+  const { pageId, field, draft } = aiBody.parse(req.body ?? {});
+  return res.json({ success: true, ...(await generateSeoText(pageId, field, draft)) });
 }));
 
 // ---------------------------------------------------------------------------------------------
