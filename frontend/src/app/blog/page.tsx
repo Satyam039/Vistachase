@@ -8,6 +8,7 @@ import { CalendarDays, ChevronRight } from "lucide-react";
 import { MediaCard } from "@/components/cards/MediaCard";
 import { seoFetch, siteOrigin, withSeo } from "@/lib/seo/server";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
+import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 interface PostSummary {
   path: string;
@@ -47,6 +48,8 @@ export default async function BlogPage() {
   const posts = body?.posts ?? [];
 
   return (
+    <>
+      <PageSeoExtras path="/blog" />
     <div className="bg-obsidian-50 text-obsidian-900">
       <BreadcrumbJsonLd origin={siteOrigin()} items={[{ name: "Home", path: "/" }, { name: "Blog", path: "/blog" }]} />
       <section aria-label="Introduction" className="border-b border-obsidian-900/[0.06] bg-white">
@@ -101,5 +104,6 @@ export default async function BlogPage() {
         )}
       </div>
     </div>
+    </>
   );
 }

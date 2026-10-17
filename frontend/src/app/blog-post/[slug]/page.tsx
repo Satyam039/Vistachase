@@ -13,6 +13,7 @@ import { ChevronRight } from "lucide-react";
 import { mergeSeo, seoFetch, siteOrigin, type SeoMeta } from "@/lib/seo/server";
 import { BreadcrumbJsonLd, JsonLd } from "@/components/seo/JsonLd";
 import { GuideMarkdown, inline, safeHref } from "@/components/seo/GuideMarkdown";
+import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 interface Post extends SeoMeta {
   label: string;
@@ -84,6 +85,8 @@ export default async function BlogPostPage({ params }: Props) {
   const socialImage = post.ogImage ?? post.featuredImage;
 
   return (
+    <>
+      <PageSeoExtras path={`/blog-post/${slug}`} schema={false} />
     <div className="bg-obsidian-50 text-obsidian-900">
       {!hasPostingBlock && (
         <JsonLd
@@ -236,5 +239,6 @@ export default async function BlogPostPage({ params }: Props) {
         </p>
       </article>
     </div>
+    </>
   );
 }

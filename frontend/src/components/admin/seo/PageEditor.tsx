@@ -11,6 +11,7 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNod
 import { ExternalLink, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { StaffSignIn } from "@/components/admin/AdminHeader";
 import { ImageField } from "@/components/admin/seo/ImageField";
+import { PageCustomCodePanel, PageSchemaPanel } from "@/components/admin/seo/PageCodePanels";
 import { Dropdown } from "@/components/forms/Dropdown";
 import {
   CheckList,
@@ -135,6 +136,12 @@ interface SeoPage {
   featured: boolean;
   thumbnailImage: string | null;
   thumbnailAlt: string | null;
+  searchTitle: string | null;
+  searchDescription: string | null;
+  searchImage: string | null;
+  searchExclude: boolean;
+  customHeadCode: string | null;
+  customBodyCode: string | null;
   datePublished: string | null;
   dateModified: string | null;
   lastCrawledAt: string | null;
@@ -182,6 +189,7 @@ const TEXT_FIELDS = [
   "twitterTitle", "twitterDescription", "twitterImage", "breadcrumbLabel", "excerpt", "body", "answerSnippet", "citationFact",
   "authorName", "authorBio", "featuredImage", "featuredImageAlt", "imageTitle", "imageCaption", "imageFileName", "ctaText",
   "ctaUrl", "utmSource", "utmMedium", "utmCampaign", "pillar", "thumbnailImage", "thumbnailAlt",
+  "searchTitle", "searchDescription", "searchImage",
 ] as const;
 type TextKey = (typeof TEXT_FIELDS)[number];
 
@@ -198,6 +206,7 @@ type Form = Record<TextKey, string> & {
   dateModified: string;
   sitemapPriority: string;
   sitemapInclude: boolean;
+  searchExclude: boolean;
   featured: boolean;
   conversionGoal: ConversionGoal;
   robotsIndex: boolean;
@@ -230,6 +239,7 @@ function formOf(p: SeoPage): Form {
     dateModified: p.dateModified ? p.dateModified.slice(0, 10) : "",
     sitemapPriority: p.sitemapPriority === null || p.sitemapPriority === undefined ? "" : String(p.sitemapPriority),
     sitemapInclude: p.sitemapInclude ?? true,
+    searchExclude: p.searchExclude ?? false,
     featured: p.featured ?? false,
     conversionGoal: p.conversionGoal,
     robotsIndex: p.robotsIndex,
@@ -304,6 +314,7 @@ function TextField({
   type = "text",
   className = "",
   mono,
+  disabled,
 }: {
   id: string;
   label: ReactNode;
@@ -317,6 +328,7 @@ function TextField({
   type?: string;
   className?: string;
   mono?: boolean;
+  disabled?: boolean;
 }) {
   const hintId = hint ? `${id}-hint` : undefined;
   const described = [describedBy, hintId].filter(Boolean).join(" ") || undefined;
@@ -327,9 +339,9 @@ function TextField({
         {label}
       </label>
       {multiline ? (
-        <textarea id={id} rows={rows} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder ?? undefined} aria-describedby={described} className={cls} />
+        <textarea id={id} rows={rows} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder ?? undefined} aria-describedby={described} disabled={disabled} className={`${cls} disabled:bg-obsidian-50 disabled:text-slate-600`} />
       ) : (
-        <input id={id} type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder ?? undefined} aria-describedby={described} className={cls} />
+        <input id={id} type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder ?? undefined} aria-describedby={described} disabled={disabled} className={`${cls} disabled:bg-obsidian-50 disabled:text-slate-600`} />
       )}
       {hint && (
         <p id={hintId} className="mt-1.5 text-sm text-slate-600">
@@ -354,6 +366,61 @@ function Toggle({ id, label, checked, onChange, hint }: { id: string; label: Rea
           </p>
         )}
       </div>
+    </div>
+  );
+}
+
+/**
+ * A field that can reuse another value (Webflow's "Same as SEO" box). Ticked, the field is empty, so
+ * the page keeps using the inherited value, which is shown read-only. Unticking copies that value in
+ * as a starting point.
+ */
+function SameAsField({
+  id,
+  label,
+  sameLabel,
+  value,
+  onChange,
+  inherited,
+  multiline,
+  disabled,
+}: {
+  id: string;
+  label: string;
+  sameLabel: string;
+  value: string;
+  onChange: (v: string) => void;
+  inherited: string | null;
+  multiline?: boolean;
+  disabled?: boolean;
+}) {
+  const [custom, setCustom] = useState(Boolean(value.trim()));
+  const same = !custom && !value.trim();
+  return (
+    <div>
+      <TextField
+        id={id}
+        label={label}
+        value={same ? "" : value}
+        onChange={onChange}
+        placeholder={inherited}
+        multiline={multiline}
+        disabled={disabled || same}
+        hint={same ? "Uses the value shown." : undefined}
+      />
+      <label className="mt-2 inline-flex items-center gap-2 text-sm text-slate-700">
+        <input
+          type="checkbox"
+          checked={same}
+          disabled={disabled}
+          onChange={(e) => {
+            setCustom(!e.target.checked);
+            onChange(e.target.checked ? "" : inherited ?? "");
+          }}
+          className="h-4 w-4 accent-ocean-600"
+        />
+        {sameLabel}
+      </label>
     </div>
   );
 }
@@ -385,7 +452,8 @@ const GOALS: { value: ConversionGoal; label: string }[] = [
 // ---------------------------------------------------------------------------------------------
 // Editor
 
-export function SeoPageEditor({ id, mode = "direct", canPublish = true }: { id: string; mode?: "direct" | "draft"; canPublish?: boolean }) {
+/** `compact`: for narrower spaces (Page settings, beside its page list): one column with the save and preview cards on top until very wide screens. */
+export function SeoPageEditor({ id, mode = "direct", canPublish = true, compact = false }: { id: string; mode?: "direct" | "draft"; canPublish?: boolean; compact?: boolean }) {
   const uid = useId();
   const f = (name: string) => `${uid}-${name}`;
 
@@ -410,6 +478,7 @@ export function SeoPageEditor({ id, mode = "direct", canPublish = true }: { id: 
   const [publishAt, setPublishAt] = useState("");
   const [draftState, setDraftState] = useState<DraftState | null>(null);
   const [draftBusy, setDraftBusy] = useState<string | null>(null);
+  const [ogSize, setOgSize] = useState<{ src: string; w: number; h: number } | null>(null);
 
   const apply = useCallback((d: Detail, resetForm: boolean, draft: Record<string, unknown> | null = null) => {
     setDetail(d);
@@ -667,8 +736,18 @@ export function SeoPageEditor({ id, mode = "direct", canPublish = true }: { id: 
               <ExternalLink className="h-4 w-4 shrink-0" aria-hidden="true" />
               <span className="sr-only">(opens the live page in a new tab)</span>
             </a>
+            {!isCms && (
+              <p className="mt-2 max-w-2xl text-sm text-slate-600">
+                {page.pageType === "HOME"
+                  ? "This is the site's home page (/). Its address is fixed."
+                  : page.source === "TOUR"
+                    ? "This address comes from the tour catalog, which is loaded on every deploy, so it can't be changed here. To move a tour, ask a developer and add a redirect."
+                    : "This address is set by the site's code, so it can't be changed here. Guides and blog posts can change their address (the old one redirects)."}
+              </p>
+            )}
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            {page.pageType === "HOME" && <Chip className="bg-obsidian-900 text-white">Home page</Chip>}
             <Chip className={STATUS_STYLE[page.status]}>{words(page.status)}</Chip>
             {page.status === "SCHEDULED" && page.publishAt && <span className="text-sm text-slate-600">for {when(page.publishAt)}</span>}
             <button type="button" onClick={() => void load(false)} disabled={loading} className={quietBtn}>
@@ -726,7 +805,7 @@ export function SeoPageEditor({ id, mode = "direct", canPublish = true }: { id: 
         {message}
       </p>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+      <div className={compact ? "grid gap-6 2xl:grid-cols-[minmax(0,1fr)_22rem]" : "grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]"}>
         <div className="min-w-0 space-y-6">
           {/* Search result */}
           <Panel id={f("search")} title="Search result" description="What search engines show. Empty fields keep the value shown in grey, which is what the page uses today.">
@@ -776,9 +855,24 @@ export function SeoPageEditor({ id, mode = "direct", canPublish = true }: { id: 
           {/* Social */}
           <Panel id={f("social")} title="Social sharing" description="Shown when the page is shared. Empty fields use the search title, description and image.">
             <div className="grid gap-5 px-6 py-6 sm:grid-cols-2">
-              <TextField id={f("ogTitle")} label="Open Graph title" value={form.ogTitle} onChange={(v) => set("ogTitle", v)} placeholder={live?.ogTitle ?? effTitle} />
+              <SameAsField
+                id={f("ogTitle")}
+                label="Open Graph title"
+                sameLabel="Same as SEO title"
+                value={form.ogTitle}
+                onChange={(v) => set("ogTitle", v)}
+                inherited={live?.ogTitle ?? effTitle}
+              />
               <TextField id={f("twitterTitle")} label="X (Twitter) title" value={form.twitterTitle} onChange={(v) => set("twitterTitle", v)} placeholder={effOgTitle} />
-              <TextField id={f("ogDescription")} label="Open Graph description" value={form.ogDescription} onChange={(v) => set("ogDescription", v)} placeholder={effDescription} multiline />
+              <SameAsField
+                id={f("ogDescription")}
+                label="Open Graph description"
+                sameLabel="Same as meta description"
+                value={form.ogDescription}
+                onChange={(v) => set("ogDescription", v)}
+                inherited={effDescription}
+                multiline
+              />
               <TextField id={f("twitterDescription")} label="X (Twitter) description" value={form.twitterDescription} onChange={(v) => set("twitterDescription", v)} placeholder={effOgDescription} multiline />
               <div className="sm:col-span-2">
                 <ImageField
@@ -792,6 +886,39 @@ export function SeoPageEditor({ id, mode = "direct", canPublish = true }: { id: 
                 />
               </div>
               <TextField id={f("twitterImage")} label="X (Twitter) image" value={form.twitterImage} onChange={(v) => set("twitterImage", v)} placeholder={effOgImage} mono />
+            </div>
+          </Panel>
+
+          {/* Site search */}
+          <Panel id={f("site-search")} title="Site search" description="How this page appears in the site's own search results (like Webflow's site search settings). Empty fields use the SEO and Open Graph values.">
+            <div className="grid gap-5 px-6 py-6">
+              <Toggle
+                id={f("searchExclude")}
+                label="Exclude this page from site search"
+                checked={form.searchExclude}
+                onChange={(v) => set("searchExclude", v)}
+                hint="Noindex pages are always left out. The site search index is published at /api/seo/public/search-index; the tour search on /search is separate and unchanged."
+              />
+              <SameAsField id={f("searchTitle")} label="Search result title" sameLabel="Same as SEO title" value={form.searchTitle} onChange={(v) => set("searchTitle", v)} inherited={effTitle} disabled={form.searchExclude} />
+              <SameAsField
+                id={f("searchDescription")}
+                label="Search result description"
+                sameLabel="Same as meta description"
+                value={form.searchDescription}
+                onChange={(v) => set("searchDescription", v)}
+                inherited={effDescription}
+                multiline
+                disabled={form.searchExclude}
+              />
+              <ImageField
+                id={f("searchImage")}
+                label="Search result image"
+                value={form.searchImage}
+                onChange={(v) => set("searchImage", v)}
+                fallback={effOgImage}
+                fallbackLabel="Open Graph image"
+                hint="Shown next to the result in site search. Empty uses the Open Graph image."
+              />
             </div>
           </Panel>
 
@@ -926,8 +1053,8 @@ export function SeoPageEditor({ id, mode = "direct", canPublish = true }: { id: 
         </div>
 
         {/* Side column */}
-        <div className="min-w-0 space-y-6">
-          <div className="space-y-6 lg:sticky lg:top-[calc(var(--vc-header-h,0px)+1.5rem)]">
+        <div className={compact ? "order-first min-w-0 2xl:order-none" : "min-w-0 space-y-6"}>
+          <div className={compact ? "grid gap-6 md:grid-cols-2 2xl:sticky 2xl:top-6 2xl:block 2xl:space-y-6" : "space-y-6 lg:sticky lg:top-[calc(var(--vc-header-h,0px)+1.5rem)]"}>
             <section aria-labelledby={f("save-heading")} className="rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07]">
               <h2 id={f("save-heading")} className="text-xl text-obsidian-900">
                 {draftMode ? "Save draft" : "Save"}
@@ -1005,7 +1132,12 @@ export function SeoPageEditor({ id, mode = "direct", canPublish = true }: { id: 
               <div className="mt-4 overflow-hidden rounded-2xl border border-obsidian-900/10">
                 {effOgImage && /^\/media\//.test(effOgImage) ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={effOgImage} alt="" className="aspect-[1.91/1] w-full bg-obsidian-100 object-cover" />
+                  <img
+                    src={effOgImage}
+                    alt=""
+                    onLoad={(e) => setOgSize({ src: effOgImage, w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })}
+                    className="aspect-[1.91/1] w-full bg-obsidian-100 object-cover"
+                  />
                 ) : (
                   <p className="flex aspect-[1.91/1] items-center justify-center bg-obsidian-100 px-4 text-center text-sm text-slate-600">
                     {effOgImage ? "Image hosted elsewhere (not previewed here)." : "No image: platforms may pick one or show none."}
@@ -1017,6 +1149,11 @@ export function SeoPageEditor({ id, mode = "direct", canPublish = true }: { id: 
                   <p className="mt-1 text-sm text-slate-700">{clip(effOgDescription, 120)}</p>
                 </div>
               </div>
+              {ogSize && ogSize.src === effOgImage && (
+                <p className={`mt-3 text-sm ${ogSize.w < 1200 || ogSize.h < 630 ? "text-red-700" : "text-slate-600"}`}>
+                  Image is {ogSize.w} × {ogSize.h} px{ogSize.w < 1200 || ogSize.h < 630 ? ": smaller than the recommended 1200 × 630, so it may look blurry or show as a small thumbnail." : "."}
+                </p>
+              )}
             </section>
 
             <section aria-labelledby={f("checks-heading")} className="rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07]">
@@ -1034,6 +1171,9 @@ export function SeoPageEditor({ id, mode = "direct", canPublish = true }: { id: 
           </div>
         </div>
       </div>
+
+      <PageSchemaPanel pageId={page.id} idBase={f("page")} />
+      <PageCustomCodePanel pageId={page.id} idBase={f("page")} head={page.customHeadCode} body={page.customBodyCode} onSaved={() => void load(false)} />
 
       {/* Publishing */}
       <Panel id={f("publishing")} title="Publishing" description="Overrides apply on the live site only while the page is published.">

@@ -39,6 +39,8 @@ import { getSettings, saveSettings } from "@/modules/seo/seo.settings";
 import { integrationStatus } from "@/modules/seo/search-console";
 import { activeRedirectMap, llmsTxt, publicBlogPosts, publicGuide, publicGuides, publicMeta, publicSiteConfig, sitemapEntries } from "@/modules/seo/seo.public";
 import { BLOG_PREFIX } from "@/modules/seo/static-routes";
+import { publicPageExtras, siteSearchIndex } from "@/modules/seo/portal/custom-code";
+import { normalizePath } from "@/modules/seo/paths";
 import {
   clusterSchema,
   createGuideSchema,
@@ -122,6 +124,17 @@ router.get("/public/blog/:slug", publicLimit, wrap(async (req, res) => {
   if (!post) return res.status(404).json({ success: false, error: "Not found." });
   publicCache(res);
   return res.json({ success: true, post });
+}));
+
+router.get("/public/page-extras", publicLimit, wrap(async (req, res) => {
+  const path = normalizePath(z.string().max(300).parse(req.query.path ?? ""));
+  publicCache(res);
+  return res.json({ success: true, extras: path ? await publicPageExtras(path) : null });
+}));
+
+router.get("/public/search-index", publicLimit, wrap(async (_req, res) => {
+  publicCache(res);
+  return res.json({ success: true, pages: await siteSearchIndex() });
 }));
 
 router.get("/public/site-config", publicLimit, wrap(async (_req, res) => {

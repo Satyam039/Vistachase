@@ -15,6 +15,7 @@ import { Rail } from "@/components/motion/Rail";
 import { getDestinationBySlug, getDestinations, getTours } from "@/lib/api/catalog";
 import { siteOrigin, withSeo } from "@/lib/seo/server";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
+import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 type Highlight = { name: string; body: string; image: string };
 
@@ -92,6 +93,8 @@ export default async function DestinationDetailPage({ params }: { params: Promis
   const others = destinations.filter((d) => d.slug !== dest.slug);
 
   return (
+    <>
+      <PageSeoExtras path={`/destinations/${slug}`} />
     <div className="bg-obsidian-50 text-obsidian-900">
       <BreadcrumbJsonLd
         origin={siteOrigin()}
@@ -233,5 +236,6 @@ export default async function DestinationDetailPage({ params }: { params: Promis
         </div>
       </section>
     </div>
+    </>
   );
 }

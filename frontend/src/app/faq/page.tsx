@@ -7,6 +7,7 @@ import type { Metadata } from "next";
 import { ChevronRight, MessageCircle, Phone, Sparkles } from "lucide-react";
 import { FaqBrowser, type FaqItem } from "@/components/faq/FaqBrowser";
 import { withSeo } from "@/lib/seo/server";
+import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 const baseMetadata: Metadata = {
   title: "FAQ | Vista Chase Tours & Shuttles",
@@ -45,6 +46,8 @@ const jsonLd = {
 
 export default function FAQPage() {
   return (
+    <>
+      <PageSeoExtras path="/faq" />
     <div className="bg-obsidian-50 text-obsidian-900">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
@@ -103,6 +106,7 @@ export default function FAQPage() {
         </section>
       </div>
     </div>
+    </>
   );
 }
 

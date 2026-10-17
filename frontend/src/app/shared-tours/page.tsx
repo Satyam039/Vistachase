@@ -4,6 +4,7 @@ import { SignatureDays } from "@/components/tours/SignatureDays";
 import { serviceById } from "@/lib/services";
 import type { Metadata } from "next";
 import { withSeo } from "@/lib/seo/server";
+import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 const baseMetadata: Metadata = {
   title: "Shared Tours in Banff & Lake Louise | Vista Chase (Max 12 Guests)",
@@ -26,6 +27,8 @@ export default async function SharedToursPage() {
   const { reviews, faqs } = await getCategoryExtras(tours);
 
   return (
+    <>
+      <PageSeoExtras path="/shared-tours" />
     <TourGallery
       heading="Shared small-group tours"
       intro="See the Canadian Rockies in groups capped at 12 guests: more time with your guide, better photo stops and no crowded tour buses. Hotel pickup in Banff, Canmore and Lake Louise is included."
@@ -47,6 +50,7 @@ export default async function SharedToursPage() {
       }
       service={serviceById("shared")}
     />
+    </>
   );
 }
 

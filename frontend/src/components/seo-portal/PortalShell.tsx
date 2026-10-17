@@ -24,6 +24,7 @@ import {
   LogOut,
   Menu,
   Newspaper,
+  PanelsTopLeft,
   Settings,
   Shuffle,
   X,
@@ -57,6 +58,7 @@ export function usePortal(): PortalState {
 export const NAV = [
   { href: "/seo", label: "Overview", icon: LayoutDashboard },
   { href: "/seo/audit", label: "Website audit", icon: FileSearch },
+  { href: "/seo/page-settings", label: "Page settings", icon: PanelsTopLeft },
   { href: "/seo/pages", label: "Pages & metadata", icon: FileText },
   { href: "/seo/blog", label: "Blog SEO", icon: Newspaper },
   { href: "/seo/keywords", label: "Keywords", icon: KeyRound },

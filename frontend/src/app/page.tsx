@@ -17,6 +17,7 @@ import { LiveTrackingTeaser } from "@/components/cinematic/LiveTrackingTeaser";
 import { TrustBar } from "@/components/cinematic/TrustBar";
 import type { Metadata } from "next";
 import { getSiteConfig, withSeo } from "@/lib/seo/server";
+import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 const baseMetadata: Metadata = {
   title: "Vista Chase | Luxury Private Tours & Shuttles • Banff & Lake Louise",
@@ -71,6 +72,8 @@ export default async function HomePage() {
   }));
 
   return (
+    <>
+      <PageSeoExtras path="/" />
     <div className="flex w-full flex-col bg-white selection:bg-summit-500 selection:text-obsidian-900">
       <ServicesHero slides={slides} />
       <TrustRow />
@@ -85,6 +88,7 @@ export default async function HomePage() {
       <LiveTrackingTeaser />
       <TrustBar />
     </div>
+    </>
   );
 }
 

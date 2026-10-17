@@ -13,6 +13,7 @@ import { TourCard } from "@/components/tours/TourCard";
 import { TrustRow } from "@/components/home/TrustRow";
 import { getShuttleRoutes, getTours } from "@/lib/api/catalog";
 import { withSeo } from "@/lib/seo/server";
+import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 const baseMetadata: Metadata = {
   title: "Moraine Lake & Lake Louise Shuttles | Vista Chase (Guaranteed Access)",
@@ -46,6 +47,8 @@ export default async function ShuttlesPage() {
   const [routes, shuttles] = await Promise.all([getShuttleRoutes(), getTours({ category: "SHUTTLE" })]);
 
   return (
+    <>
+      <PageSeoExtras path="/shuttles" />
     <div className="bg-obsidian-50 text-obsidian-900">
       {/* Hero */}
       <section className="relative isolate flex min-h-[78vh] items-end overflow-hidden bg-obsidian-950 text-white">
@@ -224,6 +227,7 @@ export default async function ShuttlesPage() {
 
       <TrustRow />
     </div>
+    </>
   );
 }
 

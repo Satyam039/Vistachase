@@ -1,7 +1,7 @@
 "use client";
 
 // Schema markup: what the live pages carry (from the last audit), and JSON-LD blocks managed here.
-// Page blocks go on guides and blog posts and are published by an SEO manager; site-wide blocks
+// Page blocks go on one page (any page on the site) and are published by an SEO manager; site-wide blocks
 // (which replace the coded organisation block when they share its @id) are published by an admin,
 // so an SEO manager sends them for approval. Every block is validated before it is saved.
 
@@ -97,7 +97,7 @@ function Editor({ pages, block, onDone }: { pages: LivePage[]; block: Block | nu
           id={`${uid}-scope`}
           label="Where"
           options={[
-            { value: "PAGE", label: "One guide or blog post" },
+            { value: "PAGE", label: "One page" },
             { value: "SITE", label: "Every page (site-wide, admin approval)" },
           ]}
           value={scope}
@@ -175,7 +175,7 @@ export function SchemaView() {
 
   return (
     <div className="space-y-6">
-      <PortalHeading title="Schema markup" intro="Structured data (JSON-LD) on the site. Pages built in code keep their coded schema; blocks managed here go on guides, blog posts or, with an admin's approval, every page." />
+      <PortalHeading title="Schema markup" intro="Structured data (JSON-LD) on the site. Pages built in code keep their coded schema; blocks managed here go on one page or, with an admin's approval, every page. A page block is added alongside the page's coded schema." />
       {data && (
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="rounded-2xl bg-white p-5 ring-1 ring-obsidian-900/[0.07]">

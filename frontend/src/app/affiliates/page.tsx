@@ -8,6 +8,7 @@ import Link from "next/link";
 import { ArrowRight, Briefcase, Building, CheckCircle2, ExternalLink, Phone, Route } from "lucide-react";
 import { SectionHeading } from "@/components/home/SectionHeading";
 import { withSeo } from "@/lib/seo/server";
+import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 const baseMetadata: Metadata = {
   title: "Travel Trade & Agents | Vista Chase",
@@ -41,6 +42,8 @@ export default function AffiliatesPage() {
   const agentPortalUrl = process.env.NEXT_PUBLIC_BOKUN_AGENT_PORTAL_URL || "https://vistachase.bokun.io/agent";
 
   return (
+    <>
+      <PageSeoExtras path="/affiliates" />
     <div className="bg-obsidian-50 text-obsidian-900">
       <section className="bg-obsidian-950 text-white">
         <div className="mx-auto flex max-w-4xl flex-col items-center px-page pb-16 pt-24 text-center sm:pb-20 sm:pt-28">
@@ -117,6 +120,7 @@ export default function AffiliatesPage() {
         </div>
       </section>
     </div>
+    </>
   );
 }
 

@@ -27,7 +27,28 @@ export function bodyLinks(body: string | null): string[] {
   return [...body.matchAll(/(?<!!)\[[^\]]+\]\(([^)\s]+)\)/g)].map((m) => m[1]);
 }
 
-export async function blogOverview(filter: { q?: string; status?: string; problem?: string } = {}) {
+export type Window = "24h" | "7d" | "30d";
+export interface BlogFilter {
+  q?: string;
+  status?: string;
+  problem?: string;
+  /** Webflow-style list controls (all optional; without them the full list comes back as before). */
+  featured?: "yes" | "no";
+  indexing?: "yes" | "no";
+  changes?: "draft";
+  published?: Window;
+  created?: Window;
+  modified?: Window;
+  sort?: "name" | "published" | "created" | "modified" | "status";
+  dir?: "asc" | "desc";
+  page?: number;
+  pageSize?: number;
+}
+
+const WINDOW_MS: Record<Window, number> = { "24h": 86_400_000, "7d": 7 * 86_400_000, "30d": 30 * 86_400_000 };
+const within = (iso: Date | string | null | undefined, w: Window | undefined, now: number) => !w || (!!iso && now - new Date(iso).getTime() <= WINDOW_MS[w]);
+
+export async function blogOverview(filter: BlogFilter = {}) {
   const [posts, redirects, knownPages, tours, destinations] = await Promise.all([
     prisma.seoPage.findMany({ where: { source: "CMS", path: { startsWith: BLOG_PREFIX } }, orderBy: [{ datePublished: "desc" }, { createdAt: "desc" }], include: { _count: { select: { issues: { where: { status: "OPEN" } }, mappings: true } } } }),
     activeRedirectMap(),
@@ -75,6 +96,8 @@ export async function blogOverview(filter: { q?: string; status?: string; proble
       metaDescription: p.metaDescription,
       datePublished: p.datePublished ?? p.publishedAt,
       dateModified: p.dateModified ?? p.updatedAt,
+      createdAt: p.createdAt,
+      indexed: p.robotsIndex && p.sitemapInclude,
       words,
       headings: outline,
       images: images.length,
@@ -100,10 +123,29 @@ export async function blogOverview(filter: { q?: string; status?: string; proble
   }
   if (filter.status) list = list.filter((r) => r.status === filter.status);
   if (filter.problem) list = list.filter((r) => r.problems.includes(filter.problem!));
+  if (filter.featured) list = list.filter((r) => r.featured === (filter.featured === "yes"));
+  if (filter.indexing) list = list.filter((r) => r.indexed === (filter.indexing === "yes"));
+  if (filter.changes === "draft") list = list.filter((r) => r.hasDraft);
+  const now = Date.now();
+  if (filter.published) list = list.filter((r) => r.status === "PUBLISHED" && within(r.datePublished, filter.published, now));
+  if (filter.created) list = list.filter((r) => within(r.createdAt, filter.created, now));
+  if (filter.modified) list = list.filter((r) => within(r.dateModified, filter.modified, now));
+  if (filter.sort) {
+    const key = (r: (typeof rows)[number]): string | number =>
+      filter.sort === "name" ? r.label.toLowerCase() : filter.sort === "status" ? r.status : new Date((filter.sort === "published" ? r.datePublished : filter.sort === "created" ? r.createdAt : r.dateModified) ?? 0).getTime();
+    const sign = filter.dir === "asc" ? 1 : -1;
+    list = [...list].sort((a, b) => (key(a) < key(b) ? -sign : key(a) > key(b) ? sign : 0));
+  }
+  const matching = list.length;
+  if (filter.page) {
+    const size = filter.pageSize ?? 25;
+    list = list.slice((filter.page - 1) * size, filter.page * size);
+  }
 
   const count = (k: string) => rows.filter((r) => r.problems.includes(k)).length;
   return {
     posts: list,
+    matching,
     summary: {
       total: rows.length,
       expected: HANDOFF_BLOG_POSTS,
@@ -122,4 +164,19 @@ export async function blogOverview(filter: { q?: string; status?: string; proble
       withDraftChanges: count("draft-changes"),
     },
   };
+}
+
+const csvCell = (v: unknown) => {
+  const t = v === null || v === undefined ? "" : v instanceof Date ? v.toISOString() : String(v);
+  // Leading = + - @ would run as a formula in a spreadsheet.
+  const safe = /^[=+\-@]/.test(t) ? `'${t}` : t;
+  return /[",\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
+};
+
+/** The blog list as CSV (the filtered rows, every page), for the Export button. */
+export async function blogCsv(filter: BlogFilter = {}) {
+  const { posts } = await blogOverview({ ...filter, page: undefined });
+  const head = ["Name", "Slug", "URL", "Status", "Featured", "Indexed", "SEO title", "Meta description", "Featured image", "Thumbnail image", "Open Graph image", "Keywords", "Words", "Published", "Created", "Modified"];
+  const lines = posts.map((p) => [p.label, p.slug, p.path, p.status, p.featured ? "yes" : "no", p.indexed ? "yes" : "no", p.seoTitle, p.metaDescription, p.featuredImage, p.thumbnailImage, p.ogImage, p.keywords, p.words, p.datePublished, p.createdAt, p.dateModified].map(csvCell).join(","));
+  return [head.join(","), ...lines].join("\n") + "\n";
 }

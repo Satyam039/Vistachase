@@ -5,7 +5,9 @@
 // search preview, keywords, author and date, then Save draft or Publish. It uses the same page
 // APIs as the full page editor: unpublished posts are saved directly; a published post's edits are
 // kept as a draft until "Publish changes", so the live post never shows half-finished work.
-// Social image, FAQs, schema and sitemap settings stay on the full page editor ("More settings").
+// Also on this screen, like a Webflow CMS item: Featured switch, thumbnail, Open Graph title /
+// description / image (each can stay "same as SEO"), sitemap indexing and the created / modified
+// dates. FAQs, schema markup, site search and custom code stay on the full page editor ("More settings").
 
 import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import Link from "next/link";
@@ -40,6 +42,18 @@ interface PostPage {
   authorName: string | null;
   datePublished: string | null;
   h1: string | null;
+  featured: boolean;
+  thumbnailImage: string | null;
+  thumbnailAlt: string | null;
+  ogTitle: string | null;
+  ogDescription: string | null;
+  ogImage: string | null;
+  robotsIndex: boolean;
+  sitemapInclude: boolean;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string | null;
+  dateModified: string | null;
   mappings: Mapping[];
 }
 
@@ -54,16 +68,46 @@ interface Form {
   featuredImageAlt: string;
   authorName: string;
   datePublished: string;
+  thumbnailImage: string;
+  thumbnailAlt: string;
+  ogTitle: string;
+  ogDescription: string;
+  ogImage: string;
+  featured: boolean;
+  robotsIndex: boolean;
+  sitemapInclude: boolean;
 }
 
-const EMPTY: Form = { label: "", slug: "", excerpt: "", body: "", seoTitle: "", metaDescription: "", featuredImage: "", featuredImageAlt: "", authorName: "", datePublished: "" };
-const MANAGER_ONLY: (keyof Form)[] = ["label", "slug", "seoTitle", "metaDescription", "datePublished"];
+const EMPTY: Form = {
+  label: "",
+  slug: "",
+  excerpt: "",
+  body: "",
+  seoTitle: "",
+  metaDescription: "",
+  featuredImage: "",
+  featuredImageAlt: "",
+  authorName: "",
+  datePublished: "",
+  thumbnailImage: "",
+  thumbnailAlt: "",
+  ogTitle: "",
+  ogDescription: "",
+  ogImage: "",
+  featured: false,
+  robotsIndex: true,
+  sitemapInclude: true,
+};
+const MANAGER_ONLY: (keyof Form)[] = ["label", "slug", "seoTitle", "metaDescription", "datePublished", "ogTitle", "ogDescription", "ogImage", "featured", "robotsIndex", "sitemapInclude"];
+type TextKey = { [K in keyof Form]: Form[K] extends string ? K : never }[keyof Form];
+type BoolKey = Exclude<keyof Form, TextKey>;
 
 const str = (v: unknown) => (typeof v === "string" ? v : "");
 const slugOf = (p: { slug: string | null; path: string }) => p.slug ?? p.path.replace(BLOG_PREFIX, "");
 
 function formOf(p: PostPage, draft: Record<string, unknown> | null): Form {
-  const v = (k: keyof PostPage & keyof Form) => (draft && k in draft ? str(draft[k]) : str(p[k]));
+  const v = (k: keyof PostPage & TextKey) => (draft && k in draft ? str(draft[k]) : str(p[k]));
+  const b = (k: BoolKey, fallback: boolean) => (draft && k in draft ? Boolean(draft[k]) : typeof p[k] === "boolean" ? p[k] : fallback);
   return {
     label: v("label"),
     slug: draft && "slug" in draft ? str(draft.slug) : slugOf(p),
@@ -75,14 +119,24 @@ function formOf(p: PostPage, draft: Record<string, unknown> | null): Form {
     featuredImageAlt: v("featuredImageAlt"),
     authorName: v("authorName"),
     datePublished: v("datePublished").slice(0, 10),
+    thumbnailImage: v("thumbnailImage"),
+    thumbnailAlt: v("thumbnailAlt"),
+    ogTitle: v("ogTitle"),
+    ogDescription: v("ogDescription"),
+    ogImage: v("ogImage"),
+    featured: b("featured", false),
+    robotsIndex: b("robotsIndex", true),
+    sitemapInclude: b("sitemapInclude", true),
   };
 }
 
 /** A form value in the API's shape: empty text is null; the body keeps its own spacing. */
-function apiValue(form: Form, key: keyof Form): string | null {
-  if (key === "label" || key === "slug") return form[key].trim();
+function apiValue(form: Form, key: keyof Form): string | boolean | null {
+  const value = form[key];
+  if (typeof value === "boolean") return value;
+  if (key === "label" || key === "slug") return value.trim();
   if (key === "body") return form.body || null;
-  return form[key].trim() || null;
+  return value.trim() || null;
 }
 
 /** The fields of `form` that differ from `base`, in the API's shape. */
@@ -110,6 +164,36 @@ function Counter({ value, min, max }: { value: string; min: number; max: number 
     <span className={`text-sm ${tone}`}>
       {n} characters{n > 0 && (n < min ? `: aim for ${min}–${max}` : n > max ? `: Google may cut it after about ${max}` : "")}
     </span>
+  );
+}
+
+const shortDate = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleDateString("en-CA", { year: "numeric", month: "short", day: "numeric" }) : "–");
+
+/** A field that can reuse the SEO value (Webflow's "Same as SEO" box); ticked, the field stays empty. */
+function SameAsInput({ id, label, sameLabel, value, inherited, onChange, disabled, multiline }: { id: string; label: string; sameLabel: string; value: string; inherited: string; onChange: (v: string) => void; disabled: boolean; multiline?: boolean }) {
+  const [custom, setCustom] = useState(Boolean(value.trim()));
+  const same = !custom && !value.trim();
+  const props = { id, value: same ? "" : value, placeholder: inherited, disabled: disabled || same, onChange: (e: { target: { value: string } }) => onChange(e.target.value), maxLength: multiline ? 320 : 120 };
+  return (
+    <div>
+      <label htmlFor={id} className={labelCls}>
+        {label}
+      </label>
+      {multiline ? <textarea rows={3} {...props} className={`${field} h-auto py-2.5 disabled:bg-obsidian-50`} /> : <input {...props} className={`${field} disabled:bg-obsidian-50`} />}
+      <label className="mt-2 inline-flex items-center gap-2 text-sm text-slate-700">
+        <input
+          type="checkbox"
+          checked={same}
+          disabled={disabled}
+          onChange={(e) => {
+            setCustom(!e.target.checked);
+            onChange(e.target.checked ? "" : inherited);
+          }}
+          className="h-4 w-4 accent-ocean-600"
+        />
+        {sameLabel}
+      </label>
+    </div>
   );
 }
 
@@ -461,6 +545,10 @@ export function BlogPostEditor({ id }: { id: string | null }) {
         .map((m) => ({ key: m.id, keyword: m.keyword.keyword, role: m.role }));
   const previewTitle = form.seoTitle.trim() || (form.label.trim() ? `${form.label.trim()} | Vista Chase` : "Post title | Vista Chase");
   const previewDescription = form.metaDescription.trim() || form.excerpt.trim() || "Add a meta description: the sentence or two Google shows under the title.";
+  const seoDescription = form.metaDescription.trim() || form.excerpt.trim();
+  const ogPreviewTitle = form.ogTitle.trim() || previewTitle;
+  const ogPreviewDescription = form.ogDescription.trim() || seoDescription || "Add a meta description to show text here.";
+  const ogPreviewImage = [form.ogImage, form.featuredImage].map((v) => v.trim()).find((v) => v.startsWith("/media/") || v.startsWith("https://")) ?? null;
   const wordCount = form.body.replace(/!\[[^\]]*\]\([^)]*\)|\]\([^)]*\)|[#>*|[\]-]/g, " ").split(/\s+/).filter(Boolean).length;
   const missing = [!form.metaDescription.trim() && "meta description", !form.featuredImage.trim() && "featured image", form.featuredImage.trim() && !form.featuredImageAlt.trim() && "featured image alt text", keywordRows.length === 0 && "keywords", !form.body.trim() ? "content" : wordCount < MIN_WORDS && `content (${MIN_WORDS - wordCount} more words)`].filter(Boolean) as string[];
   const status: PublishStatus = page?.status ?? "DRAFT";
@@ -577,6 +665,38 @@ export function BlogPostEditor({ id }: { id: string | null }) {
         </div>
 
         <div className="min-w-0 space-y-6">
+          <Section title="Post settings">
+            <label className="flex items-start gap-3">
+              <input type="checkbox" checked={form.featured} disabled={readOnly || managerField} onChange={(e) => set("featured", e.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-ocean-600" aria-describedby={f("featured-switch-hint")} />
+              <span>
+                <span className="block text-base text-obsidian-900">Featured</span>
+                <span id={f("featured-switch-hint")} className="block text-sm text-slate-600">
+                  Marks the post as featured (Webflow&apos;s Featured switch), for highlighting on the blog.
+                </span>
+              </span>
+            </label>
+            {page && (
+              <dl className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <dt className="text-slate-600">Created</dt>
+                  <dd className="text-obsidian-900">{shortDate(page.createdAt)}</dd>
+                </div>
+                <div>
+                  <dt className="text-slate-600">Modified</dt>
+                  <dd className="text-obsidian-900">{shortDate(page.dateModified ?? page.updatedAt)}</dd>
+                </div>
+                <div>
+                  <dt className="text-slate-600">Published</dt>
+                  <dd className="text-obsidian-900">{published ? shortDate(page.datePublished ?? page.publishedAt) : "Not published"}</dd>
+                </div>
+                <div>
+                  <dt className="text-slate-600">Status</dt>
+                  <dd className="text-obsidian-900">{words(page.status)}{hasDraft ? ", changes in draft" : ""}</dd>
+                </div>
+              </dl>
+            )}
+          </Section>
+
           <Section title="Search engine listing" description="What Google shows for this post.">
             <div className="rounded-xl bg-obsidian-50 p-4" aria-label="Search result preview">
               <p className="truncate text-sm text-slate-600">www.vistachase.com › blog-post › {form.slug || "…"}</p>
@@ -597,6 +717,54 @@ export function BlogPostEditor({ id }: { id: string | null }) {
               <textarea id={f("metaDescription")} rows={3} maxLength={320} value={form.metaDescription} disabled={readOnly || managerField} onChange={(e) => set("metaDescription", e.target.value)} className={`${field} h-auto py-2.5`} />
               <Counter value={form.metaDescription} min={120} max={160} />
             </div>
+            <label className="flex items-start gap-3">
+              <input
+                type="checkbox"
+                checked={form.robotsIndex && form.sitemapInclude}
+                disabled={readOnly || managerField}
+                onChange={(e) => {
+                  set("robotsIndex", e.target.checked);
+                  set("sitemapInclude", e.target.checked);
+                }}
+                className="mt-1 h-5 w-5 shrink-0 accent-ocean-600"
+                aria-describedby={f("indexing-hint")}
+              />
+              <span>
+                <span className="block text-base text-obsidian-900">Sitemap indexing</span>
+                <span id={f("indexing-hint")} className="block text-sm text-slate-600">
+                  {form.robotsIndex && form.sitemapInclude ? "Listed in sitemap.xml and open to search engines." : "Hidden from search engines (noindex) and left out of sitemap.xml."}
+                </span>
+              </span>
+            </label>
+          </Section>
+
+          <Section title="Open Graph" description="How the post looks when it's shared on Facebook, LinkedIn, WhatsApp and similar.">
+            <div className="overflow-hidden rounded-xl ring-1 ring-obsidian-900/10" aria-label="Share preview">
+              {ogPreviewImage ? (
+                // eslint-disable-next-line @next/next/no-img-element -- preview of the share image
+                <img src={ogPreviewImage} alt="" className="aspect-[1.91/1] w-full bg-obsidian-100 object-cover" />
+              ) : (
+                <p className="flex aspect-[1.91/1] items-center justify-center bg-obsidian-100 text-sm text-slate-600">No image yet</p>
+              )}
+              <div className="p-3">
+                <p className="text-xs uppercase text-slate-600">vistachase.com</p>
+                <p className="mt-1 line-clamp-2 text-base text-obsidian-900">{ogPreviewTitle}</p>
+                <p className="mt-1 line-clamp-2 text-sm text-slate-700">{ogPreviewDescription}</p>
+              </div>
+            </div>
+            <SameAsInput id={f("ogTitle")} label="Open Graph title" sameLabel="Same as meta title" value={form.ogTitle} inherited={previewTitle} onChange={(v) => set("ogTitle", v)} disabled={readOnly || managerField} />
+            <SameAsInput id={f("ogDescription")} label="Open Graph description" sameLabel="Same as meta description" value={form.ogDescription} inherited={seoDescription} onChange={(v) => set("ogDescription", v)} disabled={readOnly || managerField} multiline />
+            <ImageField
+              id={f("ogImage")}
+              label="Open Graph image"
+              value={form.ogImage}
+              onChange={(v) => set("ogImage", v)}
+              fallback={form.featuredImage || null}
+              fallbackLabel="Featured image"
+              stacked
+              disabled={readOnly || managerField}
+              hint="Best at 1200 × 630 px. Empty uses the featured image."
+            />
           </Section>
 
           <Section title="Keywords" description="The main (primary) keyword and any secondary ones this post targets. They also appear in Keywords by page.">
@@ -631,6 +799,16 @@ export function BlogPostEditor({ id }: { id: string | null }) {
                 Alt text
               </label>
               <input id={f("featuredAlt")} maxLength={200} value={form.featuredImageAlt} disabled={readOnly} onChange={(e) => set("featuredImageAlt", e.target.value)} placeholder="Describe the image" className={field} />
+            </div>
+          </Section>
+
+          <Section title="Thumbnail image" description="The smaller picture on the post's card in lists. Empty uses the featured image.">
+            <ImageField id={f("thumb")} label="Thumbnail" value={form.thumbnailImage} onChange={(v) => set("thumbnailImage", v)} fallback={form.featuredImage || null} fallbackLabel="Featured image" stacked disabled={readOnly} />
+            <div>
+              <label htmlFor={f("thumbAlt")} className={labelCls}>
+                Thumbnail alt text
+              </label>
+              <input id={f("thumbAlt")} maxLength={200} value={form.thumbnailAlt} disabled={readOnly} onChange={(e) => set("thumbnailAlt", e.target.value)} placeholder="Describe the thumbnail" className={field} />
             </div>
           </Section>
 

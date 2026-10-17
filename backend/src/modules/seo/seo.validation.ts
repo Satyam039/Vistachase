@@ -117,6 +117,10 @@ export const pageUpdateSchema = z
     featured: z.boolean(),
     thumbnailImage: refined(checkImageRef),
     thumbnailAlt: text(200),
+    searchTitle: text(120),
+    searchDescription: text(320),
+    searchImage: refined(checkImageRef),
+    searchExclude: z.boolean(),
     /** Required to switch an important page to noindex. */
     confirmNoindex: z.boolean(),
   })
