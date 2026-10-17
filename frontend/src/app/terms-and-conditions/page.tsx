@@ -3,6 +3,7 @@
 import type { Metadata } from "next";
 import { LegalDocument, type LegalSection } from "@/components/legal/LegalDocument";
 import { withSeo } from "@/lib/seo/server";
+import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 const baseMetadata: Metadata = {
   title: "Terms & Conditions | Vista Chase",
@@ -199,12 +200,15 @@ const SECTIONS: LegalSection[] = [
 
 export default function TermsPage() {
   return (
+    <>
+      <PageSeoExtras path="/terms-and-conditions" />
     <LegalDocument
       title="Terms & conditions"
       intro="These General Terms & Conditions (“Terms”) govern the use of the Vista Chase website, bookings, and participation in our tours and services. By accessing our website or booking a Vista Chase experience, you agree to these Terms. If you do not agree, please discontinue use of our website and services."
       sections={SECTIONS}
       current="/terms-and-conditions"
     />
+    </>
   );
 }
 

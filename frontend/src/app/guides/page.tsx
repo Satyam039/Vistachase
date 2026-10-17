@@ -7,6 +7,7 @@ import { CalendarDays, ChevronRight } from "lucide-react";
 import { MediaCard } from "@/components/cards/MediaCard";
 import { seoFetch, siteOrigin, withSeo } from "@/lib/seo/server";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
+import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 interface GuideSummary {
   path: string;
@@ -37,6 +38,8 @@ export default async function GuidesPage() {
   const guides = body?.guides ?? [];
 
   return (
+    <>
+      <PageSeoExtras path="/guides" />
     <div className="bg-obsidian-50 text-obsidian-900">
       <BreadcrumbJsonLd origin={siteOrigin()} items={[{ name: "Home", path: "/" }, { name: "Travel guides", path: "/guides" }]} />
       <section aria-label="Introduction" className="border-b border-obsidian-900/[0.06] bg-white">
@@ -90,5 +93,6 @@ export default async function GuidesPage() {
         )}
       </div>
     </div>
+    </>
   );
 }

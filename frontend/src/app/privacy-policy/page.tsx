@@ -3,6 +3,7 @@
 import type { Metadata } from "next";
 import { LegalDocument, type LegalSection } from "@/components/legal/LegalDocument";
 import { withSeo } from "@/lib/seo/server";
+import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 const baseMetadata: Metadata = {
   title: "Privacy Policy | Vista Chase",
@@ -151,12 +152,15 @@ const SECTIONS: LegalSection[] = [
 
 export default function PrivacyPolicyPage() {
   return (
+    <>
+      <PageSeoExtras path="/privacy-policy" />
     <LegalDocument
       title="Privacy policy"
       intro="At Vista Chase, your privacy matters. We are committed to protecting any personal information you share with us and using it only to deliver safe, reliable, and personalized travel experiences. We never sell your information, and we strive to keep our practices transparent, secure, and easy to understand."
       sections={SECTIONS}
       current="/privacy-policy"
     />
+    </>
   );
 }
 

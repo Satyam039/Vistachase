@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { withSeo } from "@/lib/seo/server";
+import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 // The page is a client component, so its title and description are set here (WCAG 2.4.2).
 const baseMetadata: Metadata = {
@@ -10,7 +11,12 @@ const baseMetadata: Metadata = {
 };
 
 export default function PickupFinderLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  return (
+    <>
+      <PageSeoExtras path="/pickup-finder" />
+      {children}
+    </>
+  );
 }
 
 export function generateMetadata(): Promise<Metadata> {

@@ -7,6 +7,7 @@ import type { Metadata } from "next";
 import { ChevronRight } from "lucide-react";
 import { GalleryBrowser, type GalleryPhoto } from "@/components/gallery/GalleryBrowser";
 import { withSeo } from "@/lib/seo/server";
+import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 const baseMetadata: Metadata = {
   title: "Rockies Photo Gallery | Vista Chase Banff",
@@ -47,6 +48,8 @@ const PHOTOS: GalleryPhoto[] = [
 
 export default function GalleryPage() {
   return (
+    <>
+      <PageSeoExtras path="/gallery" />
     <div className="bg-obsidian-50 text-obsidian-900">
       <section className="relative isolate flex min-h-[52vh] items-end overflow-hidden bg-obsidian-950 text-white">
         <Image src="/media/photos/lake-louise-from-big-beehive.webp" alt="" fill priority sizes="100vw" className="-z-10 object-cover" data-parallax="10" />
@@ -80,6 +83,7 @@ export default function GalleryPage() {
         <GalleryBrowser photos={PHOTOS} areas={AREAS} />
       </section>
     </div>
+    </>
   );
 }
 

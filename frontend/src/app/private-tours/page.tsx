@@ -4,6 +4,7 @@ import { SignatureDays } from "@/components/tours/SignatureDays";
 import { serviceById } from "@/lib/services";
 import type { Metadata } from "next";
 import { withSeo } from "@/lib/seo/server";
+import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 const baseMetadata: Metadata = {
   title: "Luxury Private SUV Tours in Banff & Canadian Rockies | Vista Chase",
@@ -26,6 +27,8 @@ export default async function PrivateToursPage() {
   const { reviews, faqs } = await getCategoryExtras(tours);
 
   return (
+    <>
+      <PageSeoExtras path="/private-tours" />
     <TourGallery
       heading="Luxury private SUV tours"
       intro="Your day, your way. A private guide and vehicle for your group only, from a luxury SUV to an executive van: set your own pace, stop wherever you like and build the route around what you want to see."
@@ -47,6 +50,7 @@ export default async function PrivateToursPage() {
       }
       service={serviceById("private")}
     />
+    </>
   );
 }
 

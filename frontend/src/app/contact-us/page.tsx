@@ -9,6 +9,7 @@ import { ArrowUpRight, ChevronRight, HelpCircle, Mail, MapPin, Phone, Sparkles, 
 import { ContactForm } from "@/components/forms/ContactForm";
 import { getTours } from "@/lib/api/catalog";
 import { withSeo } from "@/lib/seo/server";
+import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 const baseMetadata: Metadata = {
   title: "Contact Us | Vista Chase Banff & Canmore",
@@ -35,6 +36,8 @@ export default async function ContactUsPage({ searchParams }: { searchParams: Pr
   const guests = Number(params.guests);
 
   return (
+    <>
+      <PageSeoExtras path="/contact-us" />
     <div className="bg-obsidian-50 text-obsidian-900">
       {/* Hero */}
       <section className="relative isolate flex min-h-[52vh] items-end overflow-hidden bg-obsidian-950 text-white">
@@ -141,6 +144,7 @@ export default async function ContactUsPage({ searchParams }: { searchParams: Pr
         </ul>
       </section>
     </div>
+    </>
   );
 }
 

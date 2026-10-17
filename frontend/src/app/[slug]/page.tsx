@@ -7,6 +7,7 @@ import type { Metadata } from "next";
 import { getTourBySlug, getTours } from "@/lib/api/catalog";
 import { TourDetailView } from "@/components/tours/TourDetailView";
 import { siteOrigin, withSeo } from "@/lib/seo/server";
+import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -36,5 +37,10 @@ export default async function TourPage({ params }: Props) {
   const bySlug = new Map(related.map((t) => [t.slug, t]));
   const crossSells = tour.crossSells.flatMap((s) => bySlug.get(s) ?? []);
 
-  return <TourDetailView tour={tour} related={crossSells} siteOrigin={siteOrigin()} />;
+  return (
+    <>
+      <PageSeoExtras path={`/${tour.slug}`} />
+      <TourDetailView tour={tour} related={crossSells} siteOrigin={siteOrigin()} />
+    </>
+  );
 }

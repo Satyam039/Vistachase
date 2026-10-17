@@ -3,6 +3,7 @@ import { getCategoryExtras, getTours } from "@/lib/api/catalog";
 import { TourGallery } from "@/components/tours/TourGallery";
 import { serviceById } from "@/lib/services";
 import { withSeo } from "@/lib/seo/server";
+import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 const baseMetadata: Metadata = {
   title: "Banff & Jasper Activity Tickets | Gondola, Icefield, Lake Cruises | Vista Chase",
@@ -15,6 +16,8 @@ export default async function BanffActivityTicketsPage() {
   const tours = await getTours({ category: "TICKET" });
   const { reviews, faqs } = await getCategoryExtras(tours);
   return (
+    <>
+      <PageSeoExtras path="/banff-activity-tickets" />
     <TourGallery
       heading="Banff activity tickets"
       intro="The Rockies' classic experiences, timed around your day. Tell us your date and party size and we request your preferred time slot, then confirm tickets and price, on their own or alongside any Vista Chase tour."
@@ -25,6 +28,7 @@ export default async function BanffActivityTicketsPage() {
       faqs={faqs}
       service={serviceById("tickets")}
     />
+    </>
   );
 }
 

@@ -8,6 +8,7 @@ import Link from "next/link";
 import { BadgePercent, Briefcase, ChevronRight, Hotel, Link2, LineChart, Megaphone } from "lucide-react";
 import { PartnerApplyForm } from "@/components/partners/PartnerApplyForm";
 import { withSeo } from "@/lib/seo/server";
+import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 const baseMetadata: Metadata = {
   title: "Partner Program | Earn on Banff Tours & Shuttles | Vista Chase",
@@ -31,6 +32,8 @@ const STEPS = ["Apply below and get your referral code.", "Once approved, copy l
 
 export default function PartnersPage() {
   return (
+    <>
+      <PageSeoExtras path="/partners" />
     <div className="bg-obsidian-50 text-obsidian-900">
       <section className="relative isolate flex min-h-[64vh] items-end overflow-hidden bg-obsidian-950 text-white">
         <Image src="/media/photos/lake-louise-from-chateau.webp" alt="" fill priority sizes="100vw" className="-z-10 object-cover" data-parallax="10" />
@@ -141,6 +144,7 @@ export default function PartnersPage() {
         </div>
       </section>
     </div>
+    </>
   );
 }
 

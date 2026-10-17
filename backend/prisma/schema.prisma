@@ -899,6 +899,13 @@ model SeoPage {
   featured           Boolean             @default(false) // pinned on the blog landing page
   thumbnailImage     String?
   thumbnailAlt       String?
+  // Page settings (migration 9, Webflow-style): site search listing and page-level custom code
+  searchTitle        String? // on-site search result title; null = same as the SEO title
+  searchDescription  String? // null = same as the meta description
+  searchImage        String? // null = same as the Open Graph image
+  searchExclude      Boolean             @default(false) // left out of the site search index
+  customHeadCode     String? // admin only: allowed tags rendered in <head> (validated on save)
+  customBodyCode     String? // admin only: allowed tags rendered before </body>
   draft              Json? // unpublished changes to a live page: {field: value}; applied by "Publish changes"
   draftUpdatedAt     DateTime?
   draftUpdatedById   String?

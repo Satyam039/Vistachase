@@ -132,7 +132,8 @@ export async function schemaInventory() {
       pageId: p.id,
       path: p.path,
       label: p.label,
-      editable: p.source === "CMS",
+      // Every published page renders its page blocks (frontend PageSeoExtras), not only guides and posts.
+      editable: true,
       crawledAt: p.lastCrawledAt,
       blocks: (blocksOnPage ?? []).map((b: CrawledJsonLd) => ({ ok: b.ok, error: b.error ?? null, types: b.types, ids: b.ids, data: b.data ?? null })),
       crawled: blocksOnPage !== null,
@@ -163,9 +164,9 @@ async function otherPublishedIds(excludeId: string | null, scope: "SITE" | "PAGE
 export async function saveSchemaDraft(id: string | null, input: { scope: "SITE" | "PAGE"; pageId?: string | null; name: string; json: string }, userId: string) {
   if (input.scope === "PAGE") {
     if (!input.pageId) throw new SeoError(400, "Choose the page this block belongs to.");
-    const page = await prisma.seoPage.findUnique({ where: { id: input.pageId }, select: { source: true } });
+    const page = await prisma.seoPage.findUnique({ where: { id: input.pageId }, select: { status: true } });
     if (!page) throw new SeoError(404, "Page not found.");
-    if (page.source !== "CMS") throw new SeoError(400, "Page blocks can be published on guides and blog posts. For other pages, the template's structured data lives in code; describe the change in an SEO task.");
+    if (page.status === "ARCHIVED") throw new SeoError(400, "This page is archived. Restore it before adding structured data.");
   }
   const existing = id ? await prisma.seoSchemaBlock.findUnique({ where: { id } }) : null;
   if (id && !existing) throw new SeoError(404, "Block not found.");
@@ -213,7 +214,7 @@ export async function unpublishSchema(id: string, userId: string, archive = fals
   });
 }
 
-/** Published page blocks for one CMS page (rendered by /guides and /blog-post). */
+/** Published page blocks for one page (rendered by /guides, /blog-post and PageSeoExtras on every other page). */
 export async function publishedPageSchema(pageId: string) {
   const blocks = await prisma.seoSchemaBlock.findMany({ where: { scope: "PAGE", pageId, status: "PUBLISHED" }, select: { json: true }, orderBy: { createdAt: "asc" } });
   return blocks.map((b) => b.json).filter(Boolean);

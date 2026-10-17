@@ -9,6 +9,7 @@ import { ChevronRight, MapPin } from "lucide-react";
 import { MediaCard } from "@/components/cards/MediaCard";
 import { getDestinations } from "@/lib/api/catalog";
 import { withSeo } from "@/lib/seo/server";
+import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 const baseMetadata: Metadata = {
   title: "Canadian Rockies Destinations | Banff, Lake Louise, Moraine Lake & Jasper | Vista Chase",
@@ -25,6 +26,8 @@ export default async function DestinationsPage() {
   const destinations = await getDestinations();
 
   return (
+    <>
+      <PageSeoExtras path="/destinations" />
     <div className="bg-obsidian-50 text-obsidian-900">
       <section className="relative isolate flex min-h-[56vh] items-end overflow-hidden bg-obsidian-950 text-white">
         <Image src="/media/photos/peyto-lake.webp" alt="" fill priority sizes="100vw" className="-z-10 object-cover" data-parallax="10" />
@@ -79,6 +82,7 @@ export default async function DestinationsPage() {
         </ul>
       </section>
     </div>
+    </>
   );
 }
 

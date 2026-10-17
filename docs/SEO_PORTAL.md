@@ -13,13 +13,14 @@ Sign in at `/seo/login` (staff accounts only, no self-registration). The sidebar
 | --- | --- |
 | Overview | Migration progress (blog posts here vs. the 84 in the handoff, pending approvals, last import, baseline, Webflow connection, technical checks, images) plus the SEO dashboard overview. |
 | Website audit | Run the crawl-and-check audit, compare two runs (new / fixed / unchanged issues), confirm an issue as fixed with a note. **Baseline**: crawl the live Webflow site's sitemap (or upload a CSV of URLs) and compare it with the new site: missing pages, changed titles/descriptions/canonicals. |
+| Page settings | Webflow-style Pages panel (`/seo/page-settings?page=<id>`): a searchable list of every page (static pages, tours, destinations, guides, blog posts; the home page marked) beside the chosen page's settings. The settings are the same page editor as Pages & metadata, plus: Open Graph title/description with **Same as SEO** boxes and an image-size warning under 1200×630; **Site search** (exclude, search title/description/image, each falling back to the SEO and Open Graph values); **Schema markup** for that page (validate, save draft, publish; SEO manager); **Custom code** inside `<head>` and before `</body>` (check: anyone; save: admin only). Addresses of static pages, tours and the home page are fixed in code and explained as such; guides and blog posts change their address with a 301 from the old one. |
 | Pages & metadata | Every page's title, description, canonical, robots, Open Graph, dates, sitemap flag. Changes to a published page are saved as a **draft** and go live only when an SEO manager presses Publish. |
-| Blog SEO | Posts at `/blog-post/<slug>` with checks (title, description, headings, alt text, featured image, images still on Webflow's CDN, links through redirects or to unknown pages, dates, sitemap, BlogPosting). **New blog post** and **Edit post** open the post editor (`/seo/blog/new`, `/seo/blog/<id>`): title, address (from the title, editable), summary, content in a rich text editor (headings, bold, italic, lists, quotes, links to site pages, images by upload or library, tables), meta title and description with a search preview, keywords, featured image, author and date, then Save draft / Publish. A published post's edits stay a draft until Publish changes. Content is stored in the blog's Markdown subset (tables as pipe tables), so no HTML reaches the site. Webflow import. |
+| Blog SEO | Posts at `/blog-post/<slug>` with checks (title, description, headings, alt text, featured image, images still on Webflow's CDN, links through redirects or to unknown pages, dates, sitemap, BlogPosting). **New blog post** and **Edit post** open the post editor (`/seo/blog/new`, `/seo/blog/<id>`): title, address (from the title, editable), summary, content in a rich text editor (headings, bold, italic, lists, quotes, links to site pages, images by upload or library, tables), meta title and description with a search preview, keywords, featured image, author and date, then Save draft / Publish. Also Featured, sitemap indexing, Open Graph (same-as-SEO boxes, image, share preview), thumbnail and the created / modified / published dates. The list filters by status, changes in draft, sitemap indexing, featured and published / created / modified in the last 24 h, 7 or 30 days, sorts by any date, name or status, pages 25 at a time and exports the filtered list as CSV (`GET /api/seo/portal/blog/export.csv`, cells starting with `= + - @` are prefixed with `'`). A published post's edits stay a draft until Publish changes. Content is stored in the blog's Markdown subset (tables as pipe tables), so no HTML reaches the site. Webflow import. |
 | Keywords | The existing keyword sheet. |
 | Keywords by page | Every page and blog post (tabs: pages, tours, destinations, blog, guides) with the keywords it targets. Add as many as needed per page, primary or secondary; a keyword not in the sheet yet is added to it (unverified, no volume) and mapped in one step. Change role or remove per page; the keyword stays in the sheet. SEO manager/admin only; others read. |
 | Social images | The Open Graph image of every page (what shows when the page is shared). Upload or pick from the library; saving goes live for SEO managers (a page with no SEO row yet can be made live with only the image). Pages without one use the featured image, then the site default (Moraine Lake). |
 | Technical SEO | Live checks of robots.txt, sitemap, crawler access, llms.txt, canonical, verification tag, Google tag, viewport, response time, real 404s and the http/www redirects. Per-crawler access for AI crawlers (search engines always allowed) with a robots.txt preview. |
-| Schema markup | Inventory of JSON-LD per page, validation, managed blocks (page blocks: SEO manager; site-wide blocks: admin approval). |
+| Schema markup | Inventory of JSON-LD per page, validation, managed blocks (page blocks on any page: SEO manager; site-wide blocks: admin approval). A page block is added next to the schema the page's code renders. |
 | Redirects | Existing redirects screen plus Webflow redirect import (saved switched off, switched on after review), CSV export and history. |
 | Images & alt text | Every image the audit found: alt text, Webflow CDN, broken, large; read-only. |
 | Analytics & Search Console | Connection status only. No figures are shown until a provider is connected and tested. |
@@ -43,6 +44,8 @@ Enforced on the server for every request (role read from the database each time)
 | Create and update SEO tasks | ✓ | ✓ | ✓ | – |
 | Request tracking / verification / site-wide schema | ✓ | ✓ | – | – |
 | Approve those requests, apply them directly | ✓ | – | – | – |
+| Site search fields, Featured, Open Graph, sitemap indexing | ✓ | ✓ | – | – |
+| Save page custom code (head / before `</body>`) | ✓ | – | – | – |
 
 No SEO role can reach bookings, payments, refunds, prices or inventory, customer payment details,
 partner payouts, staff accounts, server secrets or deploy settings (tests check 403s on those APIs).
@@ -84,6 +87,17 @@ All of it is off until staff act:
   until Nishika confirms the full script and which buttons trigger conversions.
 - Site-wide JSON-LD: a published SITE block with the same `@id` replaces the coded Organization block.
 - Crawler rules in robots.txt: only for AI crawlers an SEO manager blocked.
+- Page JSON-LD blocks and page custom code: `PageSeoExtras` (frontend/src/components/seo/PageSeoExtras.tsx)
+  on every public page reads `GET /api/seo/public/page-extras?path=` (published pages only, 60 s cache)
+  and renders the blocks plus the custom code. Custom code is stored as text but served only as parsed,
+  allowed elements (backend/src/modules/seo/portal/custom-code.ts: `<script>` inline or https src,
+  `<noscript>`, `<style>`, `<meta>` name/property + content, `<link>` with a safe rel and https href; no
+  `on*` attributes, no `http-equiv`, no other tags). `<meta>`/`<link>` are hoisted into `<head>`;
+  scripts load after the page is interactive. Nothing is set on any page until an admin saves code.
+- Site search: `GET /api/seo/public/search-index` lists published, indexable pages not excluded from
+  site search, with their search title/description/image (falling back to SEO, Open Graph, then the last
+  audit). The site has no page-wide search box yet (`/search` is the tour search and is unchanged), so
+  this index is ready for one but nothing on the site reads it today.
 
 The public layout reads this config with a 1.5 s timeout and a 60 s cache; if the API is down the
 site renders exactly as before.
@@ -153,6 +167,16 @@ ALTER TABLE "SeoSiteSettings" DROP COLUMN IF EXISTS "conversionScript", DROP COL
 DELETE FROM "_prisma_migrations" WHERE migration_name = '8_seo_portal';
 ```
 
+  Migration `9_seo_page_settings` only adds nullable/defaulted columns to `SeoPage`; the code before
+  it ignores them. To remove them too (after a revert, with a backup):
+
+```sql
+ALTER TABLE "SeoPage" DROP COLUMN IF EXISTS "searchTitle", DROP COLUMN IF EXISTS "searchDescription",
+  DROP COLUMN IF EXISTS "searchImage", DROP COLUMN IF EXISTS "searchExclude",
+  DROP COLUMN IF EXISTS "customHeadCode", DROP COLUMN IF EXISTS "customBodyCode";
+DELETE FROM "_prisma_migrations" WHERE migration_name = '9_seo_page_settings';
+```
+
   Imported blog posts are ordinary `SeoPage` rows (`importSource` set) and go with the revert only
   if you delete them.
 
@@ -168,6 +192,13 @@ log) and the site's photo library. Other endpoints: `GET /page-keywords`, `POST 
 `PATCH|DELETE /pages/:id/keywords/:mappingId`, `PUT /pages/:id/social-image`.
 
 ## Tests
+
+- `backend/tests/seo-page-settings.test.ts` (10 tests): custom code parser (allowed tags; iframes,
+  `on*` handlers, http scripts, `http-equiv`, unknown script types, unclosed tags, stray text refused),
+  only an admin saves custom code (SEO manager and editor 403) with an audit log entry, page-extras serves
+  parsed code of published pages only, a JSON-LD block published on a page built in code, editors can't
+  set site search fields, search index fallbacks and exclusion, blog filters / sort / paging and the CSV
+  export's formula guard.
 
 - `backend/tests/seo-portal-media-keywords.test.ts` (8 tests): upload permissions, WebP re-encode and
   resize, rejected files (text, SVG, tiny), five keywords on one page and a case-insensitive duplicate,

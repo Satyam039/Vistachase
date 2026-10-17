@@ -9,6 +9,7 @@ import { MediaCard } from "@/components/cards/MediaCard";
 import type { Metadata } from "next";
 import { ArrowUpRight, ChevronRight, HeartHandshake, MountainSnow, ShieldCheck, Users } from "lucide-react";
 import { withSeo } from "@/lib/seo/server";
+import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 const baseMetadata: Metadata = {
   title: "About Vista Chase | Banff's Top-Rated Tour & Shuttle Operator",
@@ -47,6 +48,8 @@ const TRIPADVISOR_URL =
 
 export default function AboutUsPage() {
   return (
+    <>
+      <PageSeoExtras path="/about-us" />
     <div className="bg-obsidian-50 text-obsidian-900">
       {/* Hero */}
       <section className="relative isolate flex min-h-[70vh] items-end overflow-hidden bg-obsidian-950 text-white">
@@ -254,6 +257,7 @@ export default function AboutUsPage() {
         </ul>
       </section>
     </div>
+    </>
   );
 }
 

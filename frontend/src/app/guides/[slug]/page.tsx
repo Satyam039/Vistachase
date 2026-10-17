@@ -11,6 +11,7 @@ import { ChevronRight } from "lucide-react";
 import { mergeSeo, seoFetch, siteOrigin, type SeoMeta } from "@/lib/seo/server";
 import { BreadcrumbJsonLd, JsonLd } from "@/components/seo/JsonLd";
 import { GuideMarkdown, inline, safeHref } from "@/components/seo/GuideMarkdown";
+import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 interface Guide extends SeoMeta {
   label: string;
@@ -86,6 +87,8 @@ export default async function GuidePage({ params }: Props) {
   const abs = (p: string) => (p.startsWith("/") ? `${origin}${p}` : p);
 
   return (
+    <>
+      <PageSeoExtras path={`/guides/${slug}`} schema={false} />
     <div className="bg-obsidian-50 text-obsidian-900">
       <JsonLd
         data={{
@@ -214,5 +217,6 @@ export default async function GuidePage({ params }: Props) {
         )}
       </article>
     </div>
+    </>
   );
 }

@@ -24,7 +24,8 @@ import { createGuideSchema, pageUpdateSchema } from "@/modules/seo/seo.validatio
 import { integrationStatus } from "@/modules/seo/search-console";
 import { BLOG_PREFIX } from "@/modules/seo/static-routes";
 import { portalOverview } from "@/modules/seo/portal/overview";
-import { blogOverview } from "@/modules/seo/portal/blog";
+import { blogCsv, blogOverview } from "@/modules/seo/portal/blog";
+import { CUSTOM_CODE_MAX, parseCustomCode, saveCustomCode } from "@/modules/seo/portal/custom-code";
 import { discardDraft, getDraft, publishDraft, saveDraft } from "@/modules/seo/portal/drafts";
 import { getCrawlerRules, getLatestTechnical, runTechnicalChecks, saveCrawlerRules } from "@/modules/seo/portal/technical";
 import { publishSchema, saveSchemaDraft, schemaInventory, unpublishSchema, validateSchema } from "@/modules/seo/portal/schema";
@@ -126,13 +127,49 @@ router.delete("/pages/:id/draft", need(SEO_CONTENT), wrap(async (req, res) => {
 // ---------------------------------------------------------------------------------------------
 // Blog SEO
 
-const blogQuery = z.object({ q: z.string().trim().max(100).optional(), status: z.enum(["DRAFT", "SCHEDULED", "PUBLISHED", "ARCHIVED"]).optional(), problem: z.string().max(40).optional() });
+const windowSchema = z.enum(["24h", "7d", "30d"]).optional();
+const blogQuery = z.object({
+  q: z.string().trim().max(100).optional(),
+  status: z.enum(["DRAFT", "SCHEDULED", "PUBLISHED", "ARCHIVED"]).optional(),
+  problem: z.string().max(40).optional(),
+  featured: z.enum(["yes", "no"]).optional(),
+  indexing: z.enum(["yes", "no"]).optional(),
+  changes: z.enum(["draft"]).optional(),
+  published: windowSchema,
+  created: windowSchema,
+  modified: windowSchema,
+  sort: z.enum(["name", "published", "created", "modified", "status"]).optional(),
+  dir: z.enum(["asc", "desc"]).optional(),
+  page: z.coerce.number().int().min(1).max(1000).optional(),
+  pageSize: z.coerce.number().int().min(5).max(100).optional(),
+});
 
 router.get("/blog", wrap(async (req, res) => res.json({ success: true, ...(await blogOverview(blogQuery.parse(req.query))) })));
+
+router.get("/blog/export.csv", wrap(async (req, res) => {
+  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  res.setHeader("Content-Disposition", `attachment; filename="vista-chase-blog-posts-${new Date().toISOString().slice(0, 10)}.csv"`);
+  return res.send(await blogCsv(blogQuery.parse(req.query)));
+}));
 
 router.post("/blog", need(SEO_MANAGE), wrap(async (req, res) => {
   const input = createGuideSchema.parse(req.body ?? {});
   return res.status(201).json({ success: true, page: await createGuide(input, userId(res), BLOG_PREFIX) });
+}));
+
+// ---------------------------------------------------------------------------------------------
+// Page custom code (admin only; validated tag list, see portal/custom-code.ts)
+
+router.post("/custom-code/check", rateLimitMiddleware("seo_custom_code_check", { maxRequests: 120, windowSeconds: 3600 }), wrap(async (req, res) => {
+  const input = z.object({ head: z.string().max(CUSTOM_CODE_MAX * 2).default(""), body: z.string().max(CUSTOM_CODE_MAX * 2).default("") }).strict().parse(req.body ?? {});
+  const head = parseCustomCode(input.head.trim(), "head");
+  const body = parseCustomCode(input.body.trim(), "body");
+  return res.json({ success: true, head: { tags: head.elements.map((e) => e.tag), errors: head.errors }, body: { tags: body.elements.map((e) => e.tag), errors: body.errors } });
+}));
+
+router.put("/pages/:id/custom-code", need(ADMIN_ONLY), wrap(async (req, res) => {
+  const input = z.object({ head: z.string().max(CUSTOM_CODE_MAX * 2), body: z.string().max(CUSTOM_CODE_MAX * 2) }).strict().parse(req.body ?? {});
+  return res.json({ success: true, ...(await saveCustomCode(id(req), input, userId(res))) });
 }));
 
 // ---------------------------------------------------------------------------------------------
