@@ -140,21 +140,38 @@ export function inline(text: string, keyPrefix = "i"): ReactNode[] {
   return out;
 }
 
-export function GuideMarkdown({ body }: { body: string }) {
+// "article" is the blog's magazine reading layout (larger type, more air); guides keep "guide".
+const STYLES = {
+  guide: {
+    root: "space-y-4 text-base leading-relaxed text-slate-700",
+    h2: "scroll-mt-28 pt-4 text-2xl font-light text-obsidian-900",
+    h3: "pt-2 text-lg text-obsidian-900",
+    quote: "border-l-2 border-ocean-600 pl-4 text-slate-700",
+  },
+  article: {
+    root: "space-y-6 text-lg font-light leading-[1.8] text-slate-700",
+    h2: "scroll-mt-28 pt-8 text-balance text-3xl font-light tracking-tight text-obsidian-900",
+    h3: "pt-3 text-xl font-normal text-obsidian-900",
+    quote: "border-l-2 border-summit-500 py-1 pl-6 text-2xl font-light leading-snug text-obsidian-900",
+  },
+} as const;
+
+export function GuideMarkdown({ body, variant = "guide" }: { body: string; variant?: keyof typeof STYLES }) {
   const blocks = parseGuide(body);
+  const css = STYLES[variant];
   return (
-    <div className="space-y-4 text-base leading-relaxed text-slate-700">
+    <div className={css.root}>
       {blocks.map((b, i) => {
         switch (b.kind) {
           case "h2":
             return (
-              <h2 key={i} id={headingId(b.text)} className="scroll-mt-28 pt-4 text-2xl font-light text-obsidian-900">
+              <h2 key={i} id={headingId(b.text)} className={css.h2}>
                 {b.text}
               </h2>
             );
           case "h3":
             return (
-              <h3 key={i} className="pt-2 text-lg text-obsidian-900">
+              <h3 key={i} className={css.h3}>
                 {b.text}
               </h3>
             );
@@ -199,7 +216,7 @@ export function GuideMarkdown({ body }: { body: string }) {
             );
           case "quote":
             return (
-              <blockquote key={i} className="border-l-2 border-ocean-600 pl-4 text-slate-700">
+              <blockquote key={i} className={css.quote}>
                 {inline(b.text, `q${i}`)}
               </blockquote>
             );

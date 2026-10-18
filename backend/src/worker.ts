@@ -13,7 +13,8 @@ import "dotenv/config";
 import { Queue, Worker } from "bullmq";
 import IORedis from "ioredis";
 import prisma from "@/lib/db/prisma";
-import { expireHoldsAndUnpaidBookings, maturePartnerCommissions, publishScheduledSeoPages, reconcileBookings, runNightlySeoAudit, sendReviewRequests } from "@/jobs/tasks";
+import { expireHoldsAndUnpaidBookings, maturePartnerCommissions, publishScheduledSeoPages, reconcileBookings, runNightlySeoAudit, sendReviewRequests, syncWebflowBlogPosts } from "@/jobs/tasks";
+import { isWebflowSyncEnabled, webflowSyncMinutes } from "@/modules/seo/portal/webflow-sync";
 
 const QUEUE = "vista-chase-jobs";
 const TZ = "America/Edmonton";
@@ -25,6 +26,7 @@ const JOBS: Record<string, () => Promise<unknown>> = {
   "partner-commissions": () => maturePartnerCommissions(),
   "seo-scheduled-publish": () => publishScheduledSeoPages(),
   "seo-audit": () => runNightlySeoAudit(),
+  "webflow-blog-sync": () => syncWebflowBlogPosts(),
 };
 
 async function main() {
@@ -39,6 +41,8 @@ async function main() {
   await queue.upsertJobScheduler("partner-commissions", { pattern: "0 3 * * *", tz: TZ }, { name: "partner-commissions" });
   await queue.upsertJobScheduler("seo-scheduled-publish", { every: 5 * 60 * 1000 }, { name: "seo-scheduled-publish" });
   await queue.upsertJobScheduler("seo-audit", { pattern: "0 4 * * *", tz: TZ }, { name: "seo-audit" });
+  if (isWebflowSyncEnabled()) await queue.upsertJobScheduler("webflow-blog-sync", { every: webflowSyncMinutes() * 60 * 1000 }, { name: "webflow-blog-sync" });
+  else await queue.removeJobScheduler("webflow-blog-sync");
 
   const worker = new Worker(
     QUEUE,

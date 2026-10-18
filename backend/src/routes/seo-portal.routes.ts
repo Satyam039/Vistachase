@@ -34,6 +34,7 @@ import { publishSchema, saveSchemaDraft, schemaInventory, unpublishSchema, valid
 import { imageInventory } from "@/modules/seo/portal/images";
 import { applyBatch, createPreview, discardBatch, getBatch, listBatches } from "@/modules/seo/portal/imports";
 import { webflowStatus } from "@/modules/seo/portal/webflow";
+import { syncWebflowBlog, webflowSyncStatus } from "@/modules/seo/portal/webflow-sync";
 import { baselineRuns, compareBaseline, startBaselineCrawl, uploadBaseline } from "@/modules/seo/portal/baseline";
 import { activateRedirects, redirectHistory, redirectsCsv } from "@/modules/seo/portal/redirect-tools";
 import { createTask, deleteTask, listTasks, seoTeam, updateTask } from "@/modules/seo/portal/tasks";
@@ -343,6 +344,11 @@ const previewBody = z
   .strict();
 
 router.get("/webflow", (_req, res) => res.json({ success: true, webflow: webflowStatus() }));
+// Webflow blog sync (docs/SEO_PORTAL.md, "Webflow sync"): status for everyone, "Sync now" for SEO managers.
+router.get("/webflow/sync", wrap(async (_req, res) => res.json({ success: true, sync: await webflowSyncStatus() })));
+router.post("/webflow/sync", need(SEO_MANAGE), rateLimitMiddleware("seo_portal_webflow_sync", { maxRequests: 20, windowSeconds: 3600 }), wrap(async (_req, res) => {
+  return res.json({ success: true, result: await syncWebflowBlog({ trigger: "MANUAL", userId: userId(res) }) });
+}));
 router.get("/imports", wrap(async (_req, res) => res.json({ success: true, imports: await listBatches() })));
 router.get("/imports/:id", wrap(async (req, res) => res.json({ success: true, batch: await getBatch(id(req)) })));
 

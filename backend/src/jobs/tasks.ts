@@ -114,3 +114,9 @@ export async function runNightlySeoAudit() {
   const { run } = await runAudit({ trigger: "SCHEDULED" });
   return { status: run.status, summary: run.summary };
 }
+
+/** SEO: pull posts published in Webflow's blog CMS (off unless WEBFLOW_SYNC_ENABLED=true and a token is set). */
+export async function syncWebflowBlogPosts() {
+  const { scheduledWebflowSync } = await import("@/modules/seo/portal/webflow-sync");
+  return scheduledWebflowSync();
+}

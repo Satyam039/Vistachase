@@ -911,6 +911,10 @@ model SeoPage {
   draftUpdatedById   String?
   importSource       String? // WEBFLOW_API | WEBFLOW_CSV | JSON | MANUAL
   originalUrl        String? // the URL on the old (Webflow) site
+  webflowItemId      String?             @unique // Webflow CMS item this blog post is synced from (docs/SEO_PORTAL.md, "Webflow sync")
+  webflowSyncedAt    DateTime? // last time the sync wrote this post from Webflow
+  webflowHash        String? // fingerprint of the Webflow values last seen, to spot changes
+  webflowOfflineAt   DateTime? // set when the sync took the post offline because Webflow unpublished it
   createdById        String?
   updatedById        String?
   createdAt          DateTime            @default(now())
