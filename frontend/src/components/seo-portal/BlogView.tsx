@@ -15,6 +15,7 @@ import { Chip, Empty, Loading, dangerBtn, Panel, STATUS_STYLE, Stat, day, errorO
 import { Dropdown } from "@/components/forms/Dropdown";
 import { PortalHeading, usePortal } from "@/components/seo-portal/PortalShell";
 import { ImportPanel } from "@/components/seo-portal/ImportPanel";
+import { WebflowSyncPanel } from "@/components/seo-portal/WebflowSyncPanel";
 
 interface Post {
   id: string;
@@ -439,6 +440,7 @@ export function BlogView() {
           </nav>
         )}
       </Panel>
+      <WebflowSyncPanel />
       <ImportPanel kind="BLOG_POSTS" />
     </div>
   );

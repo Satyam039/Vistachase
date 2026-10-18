@@ -145,7 +145,7 @@ function jsonRecords(text: string): Record<string, unknown>[] {
 }
 
 /** A Webflow API item (or a JSON item shaped like one) → NormalizedPost. */
-function postFromItem(item: Record<string, unknown>, index: number, changesInDraft?: Set<string>): NormalizedPost {
+export function postFromItem(item: Record<string, unknown>, index: number, changesInDraft?: Set<string>): NormalizedPost {
   const fieldData = (item.fieldData && typeof item.fieldData === "object" ? item.fieldData : item) as Record<string, unknown>;
   const w = item as unknown as WebflowItem;
   const state: NormalizedPost["state"] = w.isArchived ? "archived" : w.isDraft ? "draft" : changesInDraft?.has(w.id) ? "changes-in-draft" : w.lastPublished || w.isDraft === false ? "published" : "unknown";
@@ -501,6 +501,30 @@ type PostRow = Awaited<ReturnType<typeof previewPosts>>["rows"][number];
 type MetaRow = Awaited<ReturnType<typeof previewMeta>>["rows"][number];
 type RedirectRow = Awaited<ReturnType<typeof previewRedirects>>["rows"][number];
 
+type PostFields = PostRow["fields"];
+
+/** Imported post values, trimmed to the editor's limits and validated like a portal save. */
+export function postData(f: PostFields) {
+  return pageUpdateSchema.safeParse({
+    label: (f.label ?? "").slice(0, 120),
+    h1: f.h1?.slice(0, 150) ?? null,
+    body: f.body,
+    excerpt: f.excerpt?.slice(0, 500) ?? null,
+    seoTitle: f.seoTitle?.slice(0, 120) ?? null,
+    metaDescription: f.metaDescription?.slice(0, 320) ?? null,
+    ogTitle: f.ogTitle?.slice(0, 120) ?? null,
+    ogDescription: f.ogDescription?.slice(0, 320) ?? null,
+    ogImage: f.ogImage,
+    featuredImage: f.featuredImage,
+    featuredImageAlt: f.featuredImageAlt?.slice(0, 200) ?? null,
+    thumbnailImage: f.thumbnailImage,
+    thumbnailAlt: f.thumbnailAlt?.slice(0, 200) ?? null,
+    featured: f.featured,
+    datePublished: f.datePublished,
+    dateModified: f.dateModified,
+  });
+}
+
 export async function applyBatch(id: string, opts: ApplyOptions, userId: string) {
   if (!opts.confirm) throw new SeoError(400, "Confirm the import first.");
   const batch = await prisma.seoImportBatch.findUnique({ where: { id } });
@@ -531,25 +555,7 @@ async function applyClaimed(batch: NonNullable<Awaited<ReturnType<typeof prisma.
         result.skipped++;
         continue;
       }
-      const f = row.fields;
-      const parsed = pageUpdateSchema.safeParse({
-        label: (f.label ?? "").slice(0, 120),
-        h1: f.h1?.slice(0, 150) ?? null,
-        body: f.body,
-        excerpt: f.excerpt?.slice(0, 500) ?? null,
-        seoTitle: f.seoTitle?.slice(0, 120) ?? null,
-        metaDescription: f.metaDescription?.slice(0, 320) ?? null,
-        ogTitle: f.ogTitle?.slice(0, 120) ?? null,
-        ogDescription: f.ogDescription?.slice(0, 320) ?? null,
-        ogImage: f.ogImage,
-        featuredImage: f.featuredImage,
-        featuredImageAlt: f.featuredImageAlt?.slice(0, 200) ?? null,
-        thumbnailImage: f.thumbnailImage,
-        thumbnailAlt: f.thumbnailAlt?.slice(0, 200) ?? null,
-        featured: f.featured,
-        datePublished: f.datePublished,
-        dateModified: f.dateModified,
-      });
+      const parsed = postData(row.fields);
       if (!parsed.success) {
         result.failed.push({ ref: row.ref, error: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ") });
         continue;

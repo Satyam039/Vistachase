@@ -58,6 +58,7 @@ const GROUPS: { heading: string; links: FooterLink[] }[] = [
     heading: "Company",
     links: [
       { label: "About Vista Chase", href: "/about-us" },
+      { label: "Blogs", href: "/blog" },
       { label: "Partner program", href: "/partners" },
       { label: "Partner login", href: "/partners/login" },
       { label: "Contact us", href: "/contact-us" },

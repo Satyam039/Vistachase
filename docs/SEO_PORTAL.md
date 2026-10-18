@@ -70,6 +70,8 @@ They sign in at `/seo/login`. Removing the role ends access on the next request.
 | `WEBFLOW_API_TOKEN` | – | Webflow Data API v2 site token (read pages + CMS). Server only; never sent to the browser. Without it, imports use CSV/JSON upload. |
 | `WEBFLOW_SITE_ID` | first site the token sees | Which Webflow site to read. |
 | `WEBFLOW_BLOG_COLLECTION_ID` | collection named like "Blog Posts" | Which CMS collection holds the blog. |
+| `WEBFLOW_SYNC_ENABLED` | `false` | `true` (with the token) turns on the automatic Webflow blog sync (below). "Sync now" works with the token alone. |
+| `WEBFLOW_SYNC_MINUTES` | `15` (minimum 5) | How often the automatic sync checks Webflow. |
 | `SEO_CANONICAL_ORIGIN` | `https://www.vistachase.com` | The domain canonicals, sitemap and checks expect. |
 | `SEO_BASELINE_HOSTS` | `www.vistachase.com,vistachase.com` | Hosts the baseline crawler may read (allow-list). |
 | `SEO_CHECK_DOMAIN` | on | `false` skips the http/www redirect checks (e.g. before DNS moves). |
@@ -124,6 +126,38 @@ site renders exactly as before.
 Imported posts are stored as-is. Publishing a post later by hand applies the normal page checks
 (for example the 150-word minimum for guides), so a very short Webflow post has to be published
 through the import or lengthened first.
+
+## Webflow sync
+
+Keeps the public blog (`/blog`, `/blog-post/<slug>`) in step with the posts the SEO team publishes
+in Webflow's Blog Posts collection (`backend/src/modules/seo/portal/webflow-sync.ts`). It only reads
+Webflow. It runs every `WEBFLOW_SYNC_MINUTES` when `WEBFLOW_SYNC_ENABLED=true` (in the API process
+with `RUN_JOBS_IN_API=true`, or in the worker), and from **Blog posts → Webflow sync → Sync now**
+(SEO managers and admins). Each run is in the audit log (`SEO_WEBFLOW_SYNC`) and on that panel.
+
+| Webflow (Blog Posts) | Here (`SeoPage`) |
+| --- | --- |
+| Item ID | `webflowItemId` (the link; one post per item) |
+| Name | `label` and `h1` |
+| Slug | address `/blog-post/<slug>` (set when the post is first added; never changed by the sync) |
+| Post Body (rich text) | `body` (headings, paragraphs, lists, links, images, tables; H1 in the body becomes H2; links to vistachase.com become site-relative) |
+| Post Summary | `excerpt` (card text and standfirst; meta description fallback) |
+| Thumbnail Image (+ alt) | `thumbnailImage`, `thumbnailAlt` (cards) |
+| Main / featured image, if the collection has one | `featuredImage`, `featuredImageAlt` (lead image) |
+| Featured? | `featured` (lead story and Editor's picks) |
+| SEO / Open Graph fields, if the collection has them | `seoTitle`, `metaDescription`, `ogTitle`, `ogDescription`, `ogImage` (only filled when Webflow has a value) |
+| Created On / Last Updated | `datePublished` (kept after the first sync) / `dateModified` |
+| Published / Draft / Archived | only published items are added; drafts and archived items never are |
+
+Rules: a new published item is added published, at its Webflow address. A linked post nobody changed
+here gets Webflow's edits; a post changed here (or with unsaved draft changes) gets them as a draft to
+review instead. A post already at the same address is linked and Webflow's differences become a
+draft. A linked post Webflow stops publishing goes back to draft (never deleted) and returns when
+Webflow publishes it again; more than 5 at once is refused as a likely bad answer. A Webflow slug
+change is reported, not applied (rename in the post editor, which adds the 301). Images stay on
+Webflow's CDN unless the media library has a copy; the blog shows CDN images from Webflow's hosts
+only. Webflow's per-item "Sitemap indexing" switch is not read through the API: the sitemap and
+noindex switches are set per post here (new posts start included and indexable).
 
 ## Deploying (needs approval; not done by this change)
 
