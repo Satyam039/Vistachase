@@ -42,6 +42,8 @@ const config: Config = {
           200: "#ffecb3",
           100: "#fff7db",
         },
+        // Warm paper background of the blog's magazine article layout.
+        paper: { DEFAULT: "#f5f0e6" },
         obsidian: {
           950: "#0e1012",
           900: "#1c1f23", // Obsidian Black
@@ -116,6 +118,9 @@ const config: Config = {
         serif: ["var(--font-plex-sans)", "IBM Plex Sans", "system-ui", "sans-serif"],
         display: ["var(--font-plex-sans)", "IBM Plex Sans", "system-ui", "sans-serif"],
         editorial: ["var(--font-plex-sans)", "IBM Plex Sans", "system-ui", "sans-serif"],
+        // Blog articles' magazine layout only (frontend/src/app/blog-post): serif text and a hand-written pull quote.
+        magazine: ["var(--font-plex-serif)", "IBM Plex Serif", "Georgia", "serif"],
+        script: ["var(--font-caveat)", "Caveat", "cursive"],
         mono: ["var(--font-plex-mono)", "IBM Plex Mono", "ui-monospace", "monospace"],
       },
       boxShadow: {
