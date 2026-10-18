@@ -4,8 +4,10 @@
 // post shows FAQs, plus any JSON-LD published for this post in the SEO portal. When a published
 // block already describes the post (BlogPosting or Article), the generated one is left out.
 //
-// Magazine layout: headline, standfirst and byline, a large lead image, the body in a reading column,
-// then "More stories" from the blog. Webflow posts often open their body with the post's own title
+// Magazine layout (the print-magazine page the team supplied): a kicker line and a large upper-case
+// serif headline between rules, the date line, the opening text beside a large lead image, then the
+// post's sections (one per "## " heading) set in ruled newspaper columns, quotes as hand-written pull
+// quotes, then FAQ, links and "More stories" from the blog. Webflow posts often open their body with the post's own title
 // and hero image; when they do, those are shown once (as the headline and the lead image) instead of
 // twice. That happens only on the page: the stored post is never changed.
 
@@ -39,6 +41,7 @@ interface Post extends SeoMeta {
   ctaUrl: string | null;
   schema: Record<string, unknown>[];
   related: { path: string; label: string }[];
+  tags?: string[] | null;
 }
 
 type Props = { params: Promise<{ slug: string }> };
@@ -101,6 +104,15 @@ function openingOf(body: string, headline: string, mainImage: string | null) {
 
 const readingMinutes = (body: string) => Math.max(1, Math.round(body.replace(/!\[[^\]]*\]\([^)]*\)/g, "").split(/\s+/).filter(Boolean).length / 220));
 
+const wordsIn = (md: string) => md.split(/\s+/).filter(Boolean).length;
+
+/** The body split at each "## " heading: the opening text, then one block per section. */
+function sectionsOf(body: string) {
+  const parts = body.replace(/\r/g, "").split(/\n(?=##\s)/);
+  const intro = /^##\s/.test(parts[0].trim()) ? "" : parts.shift() ?? "";
+  return { intro: intro.trim(), sections: parts.map((p) => p.trim()).filter(Boolean) };
+}
+
 const date = (iso: string) => new Date(iso).toLocaleDateString("en-CA", { year: "numeric", month: "long", day: "numeric", timeZone: "America/Edmonton" });
 const typesOf = (block: Record<string, unknown>): string[] => {
   const graph = Array.isArray(block["@graph"]) ? (block["@graph"] as Record<string, unknown>[]) : [block];
@@ -126,6 +138,11 @@ export default async function BlogPostPage({ params }: Props) {
   const cta = post.ctaText && post.ctaUrl ? safeHref(post.ctaUrl) : null;
   const socialImage = post.ogImage ?? post.featuredImage ?? hero?.src ?? null;
   const minutes = post.body ? readingMinutes(post.body) : null;
+  const parts = sectionsOf(opening.body);
+  // Very long posts get two columns at most, so a column never runs for pages.
+  const long = wordsIn(opening.body) > 2500;
+  const tags = (post.tags ?? []).filter(Boolean).slice(0, 3);
+  const kicker = tags.length ? tags.join("  •  ") : "The Vista Chase journal  •  Banff & the Canadian Rockies";
 
   // More stories: featured posts first, then the newest, never this one.
   const list = await seoFetch<{ posts: PostSummary[] }>("/blog", 5000);
@@ -173,123 +190,143 @@ export default async function BlogPostPage({ params }: Props) {
           />
         )}
 
-        <article>
-          <header className="bg-white">
-            <div className="mx-auto max-w-4xl px-page pb-10 pt-10 text-center sm:pb-14 sm:pt-14">
-              <nav aria-label="Breadcrumb" className="mb-8">
-                <ol className="flex flex-wrap items-center justify-center gap-1.5 text-sm text-slate-600">
-                  <li>
-                    <Link href="/" className="hover:text-obsidian-900 hover:underline">
-                      Home
-                    </Link>
-                  </li>
-                  <li aria-hidden="true">
-                    <ChevronRight className="h-3.5 w-3.5" />
-                  </li>
-                  <li>
-                    <Link href="/blog" className="hover:text-obsidian-900 hover:underline">
-                      Blog
-                    </Link>
-                  </li>
-                  <li aria-hidden="true">
-                    <ChevronRight className="h-3.5 w-3.5" />
-                  </li>
-                  <li aria-current="page" className="text-obsidian-900">
-                    {post.breadcrumbLabel ?? post.label}
-                  </li>
-                </ol>
-              </nav>
-              <p className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs uppercase tracking-[0.2em] text-slate-600">
-                {published ? <time dateTime={published}>{date(published)}</time> : <span>Blog</span>}
-                {minutes && (
-                  <>
-                    <span aria-hidden="true">·</span>
-                    <span>{minutes} min read</span>
-                  </>
-                )}
-              </p>
-              <h1 className="mt-5 text-balance text-4xl font-light leading-[1.1] tracking-tight text-obsidian-900 sm:text-5xl lg:text-6xl">{heading}</h1>
-              {post.excerpt && <p className="mx-auto mt-6 max-w-2xl text-balance text-xl font-light leading-relaxed text-slate-700">{post.excerpt}</p>}
-              {(post.authorName || (published && post.dateModified && post.dateModified.slice(0, 10) !== published.slice(0, 10))) && (
-                <p className="mt-6 text-sm text-slate-600">
-                  {post.authorName && <>By {post.authorName}</>}
-                  {post.authorName && published && post.dateModified && post.dateModified.slice(0, 10) !== published.slice(0, 10) && " · "}
-                  {published && post.dateModified && post.dateModified.slice(0, 10) !== published.slice(0, 10) && (
+        <article className="bg-paper">
+          <header className="mx-auto max-w-6xl px-page pb-8 pt-8 sm:pt-10">
+            <nav aria-label="Breadcrumb" className="mb-6">
+              <ol className="flex flex-wrap items-center justify-center gap-1.5 text-sm text-slate-600">
+                <li>
+                  <Link href="/" className="hover:text-obsidian-900 hover:underline">
+                    Home
+                  </Link>
+                </li>
+                <li aria-hidden="true">
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </li>
+                <li>
+                  <Link href="/blog" className="hover:text-obsidian-900 hover:underline">
+                    Blog
+                  </Link>
+                </li>
+                <li aria-hidden="true">
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </li>
+                <li aria-current="page" className="text-obsidian-900">
+                  {post.breadcrumbLabel ?? post.label}
+                </li>
+              </ol>
+            </nav>
+            <Ruled>
+              <p className="text-center font-magazine text-xs uppercase tracking-[0.28em] text-obsidian-900">{kicker}</p>
+            </Ruled>
+            <h1 className="mx-auto mt-4 max-w-5xl text-balance text-center font-magazine text-4xl font-medium uppercase leading-[1.02] tracking-tight text-obsidian-900 sm:text-6xl lg:text-7xl">{heading}</h1>
+            <div className="mt-5">
+              <Ruled>
+                <p className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-center font-magazine text-xs uppercase tracking-[0.24em] text-obsidian-900 sm:text-sm">
+                  {published ? <time dateTime={published}>{date(published)}</time> : <span>Vista Chase</span>}
+                  {minutes && (
                     <>
-                      Updated <time dateTime={post.dateModified}>{date(post.dateModified)}</time>
+                      <span aria-hidden="true">•</span>
+                      <span>{minutes} min read</span>
+                    </>
+                  )}
+                  {post.authorName && (
+                    <>
+                      <span aria-hidden="true">•</span>
+                      <span>By {post.authorName}</span>
                     </>
                   )}
                 </p>
-              )}
+              </Ruled>
             </div>
-            {hero && (
-              <figure className="mx-auto max-w-6xl px-page pb-2">
-                <div className="relative aspect-[16/9] overflow-hidden bg-obsidian-100">
-                  <PostImage src={hero.src} alt={hero.alt} sizes="(min-width: 1152px) 72rem, 100vw" priority />
-                </div>
-                {post.imageCaption && <figcaption className="mt-3 text-center text-sm text-slate-600">{post.imageCaption}</figcaption>}
-              </figure>
+            {published && post.dateModified && post.dateModified.slice(0, 10) !== published.slice(0, 10) && (
+              <p className="mt-3 text-center text-sm text-slate-600">
+                Updated <time dateTime={post.dateModified}>{date(post.dateModified)}</time>
+              </p>
             )}
           </header>
 
-          <div className="bg-white">
-            <div className="mx-auto max-w-[44rem] space-y-10 px-page pb-16 pt-12 sm:pb-20">
-              {post.answerSnippet && (
-                <section aria-label="In short" className="border-y border-obsidian-900/[0.08] py-6">
-                  <p className="mb-2 text-xs uppercase tracking-[0.2em] text-ocean-600">In short</p>
-                  <p className="text-xl font-light leading-relaxed text-obsidian-900">{inline(post.answerSnippet, "a")}</p>
-                </section>
-              )}
-
-              {opening.body && <GuideMarkdown body={opening.body} variant="article" />}
-
-              {faqs.length > 0 && (
-                <section aria-labelledby="post-faq" className="space-y-4">
-                  <h2 id="post-faq" className="text-3xl font-light tracking-tight text-obsidian-900">
-                    Frequently asked questions
-                  </h2>
-                  {faqs.map((f, i) => (
-                    <details key={i} className="rounded-xl border border-obsidian-900/[0.08] bg-obsidian-50 p-4">
-                      <summary className="cursor-pointer text-obsidian-900">{f.question}</summary>
-                      <p className="mt-2 leading-relaxed text-slate-700">{f.answer}</p>
-                    </details>
-                  ))}
-                </section>
-              )}
-
-              {cta && post.ctaText && (
-                <p>
-                  <Link href={cta} className="inline-flex items-center gap-2 rounded-full bg-obsidian-950 px-6 py-3 text-white hover:bg-obsidian-900">
-                    {post.ctaText}
-                    <ChevronRight className="h-4 w-4" aria-hidden="true" />
-                  </Link>
-                </p>
-              )}
-
-              {post.authorName && post.authorBio && (
-                <section aria-label="About the author" className="border-t border-obsidian-900/[0.08] pt-6 text-sm text-slate-700">
-                  <p className="text-obsidian-900">{post.authorName}</p>
-                  <p className="mt-1">{post.authorBio}</p>
-                </section>
-              )}
-
-              {post.related.length > 0 && (
-                <nav aria-labelledby="post-related">
-                  <h2 id="post-related" className="mb-3 text-lg text-obsidian-900">
-                    Related
-                  </h2>
-                  <ul className="list-disc space-y-1.5 pl-6 marker:text-ocean-600">
-                    {post.related.map((r) => (
-                      <li key={r.path}>
-                        <Link href={r.path} className="text-ocean-600 underline underline-offset-2 hover:text-obsidian-900">
-                          {r.label}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </nav>
+          <div className="mx-auto max-w-6xl px-page pb-14">
+            {/* Opening: the summary and the text before the first section, beside the lead image. */}
+            <div className={`grid gap-8 ${hero ? "lg:grid-cols-3" : ""}`}>
+              <div className={`space-y-5 ${hero ? "lg:order-1" : "mx-auto max-w-3xl"}`}>
+                {post.excerpt && <p className="font-magazine text-lg italic leading-relaxed text-obsidian-900">{post.excerpt}</p>}
+                {post.answerSnippet && (
+                  <section aria-label="In short" className="border-t border-obsidian-900/60 pt-4">
+                    <p className="mb-2 font-magazine text-sm font-medium uppercase tracking-wide text-obsidian-900">In short</p>
+                    <p className="font-magazine leading-[1.7] text-obsidian-800">{inline(post.answerSnippet, "a")}</p>
+                  </section>
+                )}
+                {parts.intro && <GuideMarkdown body={parts.intro} variant="magazine" />}
+              </div>
+              {hero && (
+                <figure className="order-first lg:order-2 lg:col-span-2">
+                  <div className="relative aspect-[4/3] overflow-hidden bg-obsidian-200">
+                    <PostImage src={hero.src} alt={hero.alt} sizes="(min-width: 1152px) 46rem, 100vw" priority />
+                  </div>
+                  {post.imageCaption && <figcaption className="mt-2 font-magazine text-sm italic text-slate-700">{post.imageCaption}</figcaption>}
+                </figure>
               )}
             </div>
+
+            {/* Sections in ruled columns, each starting with its heading under a rule. */}
+            {parts.sections.length > 0 && (
+              <div className={`mt-10 gap-10 [column-rule:1px_solid_theme(colors.obsidian.300)] md:columns-2 ${long ? "" : "lg:columns-3"}`}>
+                {parts.sections.map((section, i) => (
+                  <section key={i} className={`mb-8 border-t border-obsidian-900/60 pt-4 ${wordsIn(section) < 400 ? "break-inside-avoid" : ""}`}>
+                    <GuideMarkdown body={section} variant="magazine" />
+                  </section>
+                ))}
+              </div>
+            )}
+
+            {faqs.length > 0 && (
+              <section aria-labelledby="post-faq" className="mx-auto mt-6 max-w-3xl space-y-4 border-t border-obsidian-900/60 pt-6">
+                <h2 id="post-faq" className="font-magazine text-2xl font-medium uppercase tracking-wide text-obsidian-900">
+                  Frequently asked questions
+                </h2>
+                {faqs.map((f, i) => (
+                  <details key={i} className="border-b border-obsidian-900/20 pb-3">
+                    <summary className="cursor-pointer font-magazine text-obsidian-900">{f.question}</summary>
+                    <p className="mt-2 font-magazine leading-relaxed text-obsidian-800">{f.answer}</p>
+                  </details>
+                ))}
+              </section>
+            )}
+
+            {(cta || (post.authorName && post.authorBio) || post.related.length > 0) && (
+              <div className="mx-auto mt-10 max-w-3xl space-y-8 border-t border-obsidian-900/60 pt-6">
+                {cta && post.ctaText && (
+                  <p>
+                    <Link href={cta} className="inline-flex items-center gap-2 rounded-full bg-obsidian-950 px-6 py-3 text-white hover:bg-obsidian-900">
+                      {post.ctaText}
+                      <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                    </Link>
+                  </p>
+                )}
+                {post.authorName && post.authorBio && (
+                  <section aria-label="About the author" className="font-magazine text-sm text-obsidian-800">
+                    <p className="text-obsidian-900">{post.authorName}</p>
+                    <p className="mt-1">{post.authorBio}</p>
+                  </section>
+                )}
+                {post.related.length > 0 && (
+                  <nav aria-labelledby="post-related">
+                    <h2 id="post-related" className="mb-3 font-magazine text-lg font-medium uppercase tracking-wide text-obsidian-900">
+                      Related
+                    </h2>
+                    <ul className="list-disc space-y-1.5 pl-6 font-magazine marker:text-ocean-600">
+                      {post.related.map((r) => (
+                        <li key={r.path}>
+                          <Link href={r.path} className="text-ocean-600 underline underline-offset-2 hover:text-obsidian-900">
+                            {r.label}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </nav>
+                )}
+              </div>
+            )}
           </div>
         </article>
 
@@ -317,5 +354,16 @@ export default async function BlogPostPage({ params }: Props) {
         </section>
       </div>
     </>
+  );
+}
+
+/** A line of text between two horizontal rules, like a magazine's masthead lines. */
+function Ruled({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-4">
+      <span aria-hidden="true" className="h-px min-w-6 flex-1 bg-obsidian-900/70" />
+      <div className="max-w-[80%]">{children}</div>
+      <span aria-hidden="true" className="h-px min-w-6 flex-1 bg-obsidian-900/70" />
+    </div>
   );
 }

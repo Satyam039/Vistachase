@@ -154,6 +154,14 @@ const STYLES = {
     h3: "pt-3 text-xl font-normal text-obsidian-900",
     quote: "border-l-2 border-summit-500 py-1 pl-6 text-2xl font-light leading-snug text-obsidian-900",
   },
+  // Blog articles (magazine layout): serif text set in columns, upper-case section heads, quotes as
+  // hand-written pull quotes.
+  magazine: {
+    root: "space-y-4 font-magazine text-base leading-[1.7] text-obsidian-800 [&_p]:font-magazine",
+    h2: "scroll-mt-28 font-magazine text-xl font-medium uppercase leading-tight tracking-wide text-obsidian-900",
+    h3: "pt-2 font-magazine text-base font-medium uppercase tracking-wide text-obsidian-900",
+    quote: "py-2 font-script text-4xl leading-tight text-obsidian-900",
+  },
 } as const;
 
 export function GuideMarkdown({ body, variant = "guide" }: { body: string; variant?: keyof typeof STYLES }) {
