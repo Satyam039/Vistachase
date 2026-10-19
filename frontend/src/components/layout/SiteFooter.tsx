@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { AwardMark } from "@/components/brand/AwardSeal";
+import { BrandLogo } from "@/components/brand/BrandMark";
 import Link from "next/link";
 import { ArrowRight, ArrowUp, ArrowUpRight, CalendarCheck, ChevronDown, Clock, Mail, MapPin, Phone, Search, ShieldCheck, Sparkles, Star } from "lucide-react";
 
@@ -28,7 +29,7 @@ const GROUPS: { heading: string; links: FooterLink[] }[] = [
       { label: "Shared tours", href: "/shared-tours" },
       { label: "Private tours", href: "/private-tours" },
       { label: "Moraine Lake shuttles", href: "/shuttles" },
-      { label: "Multi-day packages", href: "/multi-day-tour-package-for-banff" },
+      { label: "Multi-Day Journeys", href: "/multi-day-tour-package-for-banff" },
       { label: "Banff activity tickets", href: "/banff-activity-tickets" },
       { label: "All experiences", href: "/search" },
     ],
@@ -243,7 +244,7 @@ export function SiteFooter() {
       <div className="mx-auto grid max-w-7xl gap-10 px-page py-14 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,3fr)] lg:gap-14">
         <div className="max-w-md space-y-6">
           <Link href="/" aria-label="Vista Chase home" className="inline-block rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-summit-500">
-            <Image src="/media/brand/logo-white.png" alt="Vista Chase" width={160} height={72} className="h-16 w-auto" />
+            <BrandLogo variant="white" height={84} alt="Vista Chase" />
           </Link>
           <p className="text-base font-light leading-relaxed text-white/75">
             Small-group, private and shuttle tours of Banff and the Canadian Rockies, run from Canmore by local guides since 2018.

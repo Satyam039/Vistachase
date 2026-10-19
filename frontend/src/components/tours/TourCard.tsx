@@ -88,7 +88,8 @@ export function TourCard({
   const price = fromPrice(tour);
   const award = AWARD_BADGE[tour.slug];
   // Short visible form of the policy; screen readers get the full wording.
-  const cancelLabel = tour.category === "TICKET" ? "Operator's cancellation rules" : "Free cancellation · 72 h";
+  const cancelLabel =
+    tour.category === "TICKET" ? "Operator's cancellation rules" : tour.category === "MULTIDAY" ? "Refundable · 72 h, less deposit" : "Free cancellation · 72 h";
 
   return (
     <article className="group relative flex h-full flex-col text-white transition-transform duration-500 ease-out hover:-translate-y-1">

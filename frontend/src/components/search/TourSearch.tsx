@@ -29,7 +29,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   SHARED: "Shared tours",
   PRIVATE: "Private tours",
   SHUTTLE: "Lake shuttles",
-  MULTIDAY: "Multi-day packages",
+  MULTIDAY: "Multi-Day Journeys",
   TICKET: "Activity tickets",
 };
 

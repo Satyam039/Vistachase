@@ -16,7 +16,9 @@ Astryx setup (already done, don't redo):
   `vistachase.js` (never edit generated files). The extended theme is flat: Stone's CSS isn't loaded.
   `npm run theme:check` fails if the generated files are stale.
 - Logo: `src/components/brand/BrandMark.tsx` — `BrandMark` (horse-and-rider mark in the nav; `white` and
-  `emblem` variants) and `BrandLogo` (full lockup, footer). Files are in `backend/media/brand`.
+  `emblem` variants), `BrandWordmark` (the official "VISTA CHASE" lettering beside it in the nav, never typeset
+  text) and `BrandLogo` (full vector lockup: footer, sign-in panel). Files are in `backend/media/brand`
+  (`wordmark-*.svg`, `lockup-*.svg` are cut unchanged from the official vector master).
 - Images: every image is served by the backend from `backend/media` at `/media/...` (`next.config.mjs`
   rewrites `/media/*` to the backend like `/api/*`; `next/image` takes the `/media/...` path as a local src).
   There are no remote image hosts: don't add Webflow/Unsplash URLs, add the file to backend/media instead

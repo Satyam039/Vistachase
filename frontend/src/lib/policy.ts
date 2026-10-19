@@ -4,7 +4,11 @@
 export const CANCELLATION_SHORT = "Free cancellation up to 72 hours before";
 export const TICKET_CANCELLATION_SHORT = "Cancellation follows the operator's rules";
 
-export const cancellationShort = (category?: string) => (category === "TICKET" ? TICKET_CANCELLATION_SHORT : CANCELLATION_SHORT);
+/** Multi-day trips keep the 20% deposit (full terms on the tour page and /cancellation-policy). */
+export const MULTIDAY_CANCELLATION_SHORT = "Refundable up to 72 hours before, less the 20% deposit";
+
+export const cancellationShort = (category?: string) =>
+  category === "TICKET" ? TICKET_CANCELLATION_SHORT : category === "MULTIDAY" ? MULTIDAY_CANCELLATION_SHORT : CANCELLATION_SHORT;
 
 export const CANCEL_WINDOW_HOURS = 72;
 const ROCKIES_TZ = "America/Edmonton";

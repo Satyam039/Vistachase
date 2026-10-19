@@ -4,6 +4,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
+import { BrandLogo } from "@/components/brand/BrandMark";
 
 const PERKS = ["All your bookings and vouchers in one place", "Pickup times as soon as they're set", "Free cancellation up to 72 hours before", "Review your guide after the tour"];
 
@@ -30,7 +31,9 @@ export function AuthShell({
       <aside className="relative isolate flex min-h-[14rem] flex-col justify-end overflow-hidden bg-obsidian-950 p-8 text-white sm:p-12">
         <Image src="/media/photos/moraine-lake-rockpile-couple.webp" alt="" fill priority sizes="(max-width: 1024px) 100vw, 50vw" className="-z-10 object-cover" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/40 to-ocean-950/70" />
-        <Image src="/media/brand/logo-white.png" alt="" width={140} height={63} className="mb-auto h-14 w-auto" />
+        <span className="mb-auto">
+          <BrandLogo variant="white" height={64} alt="" />
+        </span>
         <div className="hidden lg:block">
           <p className="text-3xl font-light leading-tight text-white">{panelTitle}</p>
           <ul className="mt-6 space-y-3">
