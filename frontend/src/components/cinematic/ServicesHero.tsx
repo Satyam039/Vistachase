@@ -2,9 +2,10 @@
 
 // Home hero, built on the pattern every booking site studied uses (GetYourGuide, Viator,
 // Expedia, Project Expedition, Civitatis): full-bleed imagery and one centred column in three
-// groups: the message, an experience switcher (each with its "from" price) whose selected item
-// shows its line and link, and a compact search (with the booking promises as its footer) right
-// under that line. Background, Rolls-Royce style: a full-screen clip plays automatically in a
+// groups: the message (headline, intro and the trust lines the owner supplied), the experience
+// switcher as plain text tabs (the selected one underlined) directly above the search, and under
+// the search the selected experience's "from" offer, worked out from its tours' data
+// (categoryOffer), with its link. Background, Rolls-Royce style: a full-screen clip plays automatically in a
 // seamless loop under light, transparent overlays (the selected service's clip, else the house
 // clip). The services' photos sit underneath as the fallback: they show on phones on data saver,
 // with reduced motion, and whenever a clip fails to load.
@@ -17,14 +18,15 @@
 // tablist; the caption above it is the tabpanel, and changes are announced only when the visitor
 // makes them.
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Pause, Play, Star } from "lucide-react";
 import { AmbientVideo } from "@/components/cinematic/AmbientVideo";
 import { HeroSearch } from "@/components/home/HeroSearch";
-import { hasPrice, money } from "@/lib/pricing";
+import { money } from "@/lib/pricing";
 import { SERVICES, type Service } from "@/lib/services";
+import type { CategoryOffer } from "@/lib/tours";
 
 export interface HeroTour {
   slug: string;
@@ -37,6 +39,8 @@ export interface HeroTour {
 
 export interface HeroSlide extends Service {
   tours: HeroTour[];
+  /** The category's "from" offer (null when none of its tours has a price yet). */
+  offer: CategoryOffer | null;
 }
 
 const ROTATE_MS = 8000;
@@ -49,12 +53,16 @@ const TAB_LABEL: Record<string, string> = {
   shared: "Shared tours",
   private: "Private tours",
   shuttles: "Lake shuttles",
-  multiday: "Multi-day trips",
+  multiday: "Multi-Day Journeys",
   tickets: "Activity tickets",
 };
 
-/** "Why choose a shared tour? Small groups, big days out." → "Small groups, big days out." */
-const shortTagline = (tagline: string) => tagline.split("? ").pop() ?? tagline;
+/** Trust lines under the intro, as supplied by Vista Chase (owner's copy, 2026-10-19). */
+const TRUST_LINES = [
+  { text: "1,700+ reviews across Tripadvisor, Google & GetYourGuide", stars: true },
+  { text: "Featured in National Geographic Traveller", stars: false },
+  { text: "TripAdvisor Best of the Best award-winning tour", stars: false },
+];
 
 export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
   const items = useMemo(
@@ -68,6 +76,8 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
   const [reducedMotion, setReducedMotion] = useState(true);
   const [announce, setAnnounce] = useState(false);
   const [videoPaused, setVideoPaused] = useState(false);
+  // The search's Experience field follows the tab the visitor picks (never the automatic rotation).
+  const [pickedCategory, setPickedCategory] = useState<string | null>(null);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   useEffect(() => {
@@ -99,9 +109,10 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
       setAnnounce(true);
       setStopped(true);
       setIndex(i);
+      setPickedCategory(items[i]?.category ?? null);
       if (focus) tabRefs.current[i]?.focus();
     },
-    [items.length],
+    [items],
   );
 
   const onTabKey = (e: React.KeyboardEvent, i: number) => {
@@ -110,16 +121,6 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
     if (e.key === "Home") { e.preventDefault(); go(0, true); }
     if (e.key === "End") { e.preventDefault(); go(items.length - 1, true); }
   };
-
-  // Lowest real price per service for the switcher ("From $99").
-  const fromPrices = useMemo(
-    () =>
-      items.map((s) => {
-        const priced = s.tours.filter((t) => hasPrice(t.price));
-        return priced.length ? Math.min(...priced.map((t) => t.price)) : null;
-      }),
-    [items],
-  );
 
   const slide = items[index] ?? items[0];
   const clip = slide?.video ?? HOUSE_CLIP;
@@ -176,38 +177,42 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
         </button>
       )}
 
-      {/* Clutter-free luxury hero: clear message, clean search, minimal experience switcher */}
-      <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col items-center justify-center px-page pb-10 pt-20 text-center sm:pt-24 sm:pb-14 lg:pt-28 lg:pb-16" data-scroll-fade>
+      {/* Message, then the switcher sitting on the search, then the selected experience's offer. */}
+      <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col items-center justify-center px-page pb-10 pt-16 text-center sm:pt-20 sm:pb-12 lg:pt-24 lg:pb-14" data-scroll-fade>
         {/* 1 · Message */}
-        <a
-          href="#reviews-heading"
-          className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs text-white sm:text-sm backdrop-blur-md hover:bg-white/15 motion-safe:animate-[fadeUp_700ms_ease-out]"
-        >
-          <Star className="h-3.5 w-3.5 fill-summit-500 text-summit-500 sm:h-4 sm:w-4" aria-hidden="true" />
-          5.0<span className="sr-only"> out of 5</span> · 1,000+ reviews
-          <span className="text-white/50 sm:inline" aria-hidden="true">
-            |
+        <h1 className="max-w-5xl text-balance font-light text-white [text-shadow:0_2px_18px_rgba(0,0,0,0.35)] motion-safe:animate-[fadeUp_900ms_ease-out]">
+          <span className="block text-[clamp(2.375rem,7.5vw,4.25rem)] leading-[1.04] tracking-[-0.01em]">The Canadian Rockies.</span>
+          <span className="mt-2 block text-[clamp(1.375rem,3.4vw,2.25rem)] leading-[1.15] text-white/90 sm:mt-3">
+            Extraordinary Places. Exceptional Guides.
           </span>
-          <span>#6 experience in Canada</span>
-        </a>
-        <h1 className="mt-5 max-w-5xl text-balance text-[clamp(2.25rem,8vw,3.5rem)] font-light leading-[1.08] tracking-wider uppercase text-white sm:text-6xl lg:text-7xl motion-safe:animate-[fadeUp_900ms_ease-out]">
-          THE CANADIAN ROCKIES, YOUR WAY
         </h1>
-        <p className="mt-5 max-w-2xl text-pretty text-base font-light leading-relaxed text-white/90 sm:text-lg lg:text-xl [text-shadow:0_1px_12px_rgba(0,0,0,0.45)] motion-safe:animate-[fadeUp_1100ms_ease-out]">
-          Small-group tours, private journeys and guaranteed lake shuttles from Banff and Canmore.
+        <p className="mt-5 max-w-3xl text-pretty text-base font-light leading-relaxed text-white/90 sm:mt-6 sm:text-lg [text-shadow:0_1px_12px_rgba(0,0,0,0.45)] motion-safe:animate-[fadeUp_1100ms_ease-out]">
+          Discover Banff, Lake Louise, Moraine Lake and beyond with passionate local guides. Join a small-group tour with no
+          more than 12 guests, enjoy a private journey, or explore the lakes with our convenient shuttles.
         </p>
+        <ul
+          aria-label="Reviews and recognition"
+          className="mt-5 flex flex-col items-center gap-1 text-sm text-white sm:mt-6 sm:text-base [text-shadow:0_1px_10px_rgba(0,0,0,0.5)] motion-safe:animate-[fadeUp_1200ms_ease-out]"
+        >
+          {TRUST_LINES.map(({ text, stars }) => (
+            <li key={text} className="text-balance">
+              {stars && (
+                <span className="mr-2 inline-flex gap-0.5 align-[-0.125em]" role="img" aria-label="Five stars">
+                  {Array.from({ length: 5 }).map((_, n) => (
+                    <Star key={n} className="h-3.5 w-3.5 fill-summit-500 text-summit-500 sm:h-4 sm:w-4" aria-hidden="true" />
+                  ))}
+                </span>
+              )}
+              {text}
+            </li>
+          ))}
+        </ul>
 
-        {/* Search and switcher share one width: the chip row sets it (w-fit), the search fills it without
-            widening it (w-0 min-w-full), so the bar runs from the first chip to the last. */}
-        <div className="w-full sm:w-fit sm:max-w-4xl">
-          {/* 2 · Action: clean, sleek frosted search with generous luxury breathing room */}
-          <div className="mt-12 sm:mt-16 lg:mt-20 w-0 min-w-full rounded-[2rem] bg-white/10 p-1.5 ring-1 ring-white/20 backdrop-blur-md motion-safe:animate-[fadeUp_1300ms_ease-out] shadow-2xl">
-            <HeroSearch className="w-full" />
-          </div>
-
-          {/* 3 · Clutter-free Experience Switcher */}
+        {/* Switcher and search share one width; the tabs sit on the search's top edge. */}
+        <div className="mt-8 w-full sm:mt-9 sm:max-w-4xl lg:mt-10">
+          {/* 2 · Experience switcher: plain text tabs, the selected one underlined */}
           <div
-            className="mt-10 sm:mt-12 w-full"
+            className="w-full"
             onMouseEnter={() => setHovering(true)}
             onMouseLeave={() => setHovering(false)}
             onFocusCapture={() => setHovering(true)}
@@ -218,7 +223,7 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
             <div
               role="tablist"
               aria-label="Tour categories"
-              className="vc-rail -mx-page flex gap-2 overflow-x-auto px-page pb-1 sm:mx-0 sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-0"
+              className="vc-rail -mx-page flex gap-6 overflow-x-auto px-page sm:mx-0 sm:gap-8 sm:overflow-visible sm:px-0 [&>*:first-child]:ml-auto [&>*:last-child]:mr-auto"
             >
               {items.map((s, i) => {
                 const on = i === index;
@@ -235,23 +240,16 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
                     tabIndex={on ? 0 : -1}
                     onClick={() => go(i)}
                     onKeyDown={(e) => onTabKey(e, i)}
-                    className={`relative flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-left ring-1 transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-summit-500 ${
-                      on ? "bg-white text-obsidian-900 ring-white shadow-lg" : "bg-white/10 text-white ring-white/15 backdrop-blur-md hover:bg-white/20"
+                    className={`relative shrink-0 whitespace-nowrap pb-2.5 pt-1 text-sm transition-colors [text-shadow:0_1px_10px_rgba(0,0,0,0.5)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-summit-500 sm:text-base ${
+                      on ? "text-white" : "text-white/70 hover:text-white"
                     }`}
                   >
-                    <span className="text-xs sm:text-sm font-medium whitespace-nowrap">
-                      {TAB_LABEL[s.id] ?? s.title}
-                    </span>
-                    {fromPrices[i] !== null && (
-                      <span className={`text-[11px] sm:text-xs whitespace-nowrap ${on ? "text-slate-600" : "text-white/70"}`}>
-                        · From {money(fromPrices[i] as number)}
-                      </span>
-                    )}
+                    {TAB_LABEL[s.id] ?? s.title}
                     {on && (
-                      <span className="absolute inset-x-3 bottom-0 h-0.5 bg-obsidian-900/10" aria-hidden="true">
+                      <span className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-white/45" aria-hidden="true">
                         <span
                           key={`${index}-${rotating}`}
-                          className={`block h-full bg-summit-500 ${rotating ? "animate-[heroProgress_8000ms_linear_forwards]" : "w-full"}`}
+                          className={`block h-full rounded-full bg-summit-500 ${rotating ? "animate-[heroProgress_8000ms_linear_forwards]" : "w-full"}`}
                         />
                       </span>
                     )}
@@ -259,25 +257,56 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
                 );
               })}
             </div>
+          </div>
 
-            {/* The selected experience (tabpanel): its line and link, right under the switcher. */}
-            <div
-              id="services-hero-panel"
-              role="tabpanel"
-              aria-label={`${index + 1} of ${items.length}: ${slide.title}`}
-              aria-live={announce ? "polite" : "off"}
-              className="mt-4 flex w-0 min-w-full flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm text-white/90 sm:text-base"
-            >
-              <span key={slide.id} className="[text-shadow:0_1px_10px_rgba(0,0,0,0.5)] motion-safe:animate-[fadeUp_600ms_ease-out]">
-                {shortTagline(slide.tagline)}
-              </span>
-              <Link href={slide.href} className="group inline-flex items-center gap-1.5 text-summit-300 underline decoration-summit-300/50 underline-offset-4 hover:decoration-summit-300">
-                Explore {(TAB_LABEL[slide.id] ?? slide.title).toLowerCase()}
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-              </Link>
+          {/* 3 · Search */}
+          <div className="mt-4 w-full rounded-[2rem] bg-white/10 p-1.5 shadow-2xl ring-1 ring-white/20 backdrop-blur-md motion-safe:animate-[fadeUp_1300ms_ease-out]">
+            <HeroSearch className="w-full" category={pickedCategory} />
+          </div>
+
+          {/* The selected experience (tabpanel): its "from" offer and link, right under the search. */}
+          <div
+            id="services-hero-panel"
+            role="tabpanel"
+            aria-label={`${index + 1} of ${items.length}: ${TAB_LABEL[slide.id] ?? slide.title}`}
+            aria-live={announce ? "polite" : "off"}
+            className="mt-4 flex w-full flex-col items-center gap-1 text-sm text-white/90 [text-shadow:0_1px_10px_rgba(0,0,0,0.5)] sm:text-base"
+          >
+            <div key={slide.id} className="flex flex-col items-center gap-1 motion-safe:animate-[fadeUp_600ms_ease-out]">
+              {slide.offer ? (
+                <>
+                  <p className="text-white">
+                    From <span className="text-lg sm:text-xl">CAD {money(slide.offer.from)}</span> {slide.offer.unit}
+                    <span className="mx-2 text-white/50" aria-hidden="true">·</span>
+                    <em className="not-italic text-white/80">Taxes included</em>
+                  </p>
+                  {slide.offer.inclusions.length > 0 && (
+                    <p className="max-w-3xl text-balance text-white/80">
+                      {/* Each item keeps its separator, so a wrapped line never starts with a dot. */}
+                      {slide.offer.inclusions.map((item, n, all) => (
+                        <Fragment key={item}>
+                          <span className="whitespace-nowrap">{n < all.length - 1 ? `${item} ·` : item}</span>
+                          {n < all.length - 1 && " "}
+                        </Fragment>
+                      ))}
+                    </p>
+                  )}
+                  {slide.offer.maxGuests && <p className="text-white/80">Maximum {slide.offer.maxGuests} guests</p>}
+                </>
+              ) : (
+                <p>Prices on request</p>
+              )}
             </div>
+            <Link href={slide.href} className="group inline-flex min-h-11 items-center gap-1.5 text-summit-300 underline decoration-summit-300/50 underline-offset-4 hover:decoration-summit-300">
+              Explore {(TAB_LABEL[slide.id] ?? slide.title).toLowerCase()}
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+            </Link>
           </div>
         </div>
+
+        <p className="mt-5 text-base font-light text-white [text-shadow:0_1px_10px_rgba(0,0,0,0.5)] sm:mt-6 sm:text-lg">
+          Explore more. We&rsquo;ll handle the details.
+        </p>
       </div>
     </section>
   );

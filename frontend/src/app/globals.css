@@ -274,9 +274,9 @@ html[data-hero-page]:not([data-scrolled]) .vc-brandmark-dark {
 html[data-hero-page]:not([data-scrolled]) .vc-brandmark-white {
   display: inline-flex !important;
 }
+/* The wordmark is an image (BrandWordmark), so it takes a drop shadow instead of a text shadow. */
 html[data-hero-page]:not([data-scrolled]) .vc-nav-brand-text {
-  color: #ffffff !important;
-  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.55);
+  filter: drop-shadow(0 1px 8px rgba(0, 0, 0, 0.45));
 }
 html[data-hero-page]:not([data-scrolled]) .vc-menu-btn {
   color: #ffffff !important;
@@ -330,7 +330,8 @@ html[data-hero-page]:not([data-scrolled]) .vc-book-desktop:hover {
    page scrolls (SiteFrame sets data-nav-compact), leaving only the emblem, still centred. Width,
    spacing and opacity animate together, so the emblem glides to the centre without a jump. */
 .vc-nav-brand-text {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   overflow: hidden;
   max-width: 12rem;
   margin-left: 0.625rem;

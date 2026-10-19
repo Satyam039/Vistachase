@@ -14,7 +14,7 @@ const FILTERS = [
   { id: "SHARED", label: "Shared tours" },
   { id: "PRIVATE", label: "Private tours" },
   { id: "SHUTTLE", label: "Lake shuttles" },
-  { id: "MULTIDAY", label: "Multi-day" },
+  { id: "MULTIDAY", label: "Multi-Day Journeys" },
   { id: "TICKET", label: "Activity tickets" },
 ] as const;
 

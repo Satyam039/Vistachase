@@ -80,7 +80,7 @@ export const SERVICES: Service[] = [
   {
     id: "multiday",
     category: "MULTIDAY",
-    title: "Multi-day packages",
+    title: "Multi-Day Journeys",
     tagline: "Why a multi-day package? The Rockies in 2–7 days, planned for you.",
     reasons: [
       "Banff, Yoho, Jasper, Kootenay and Waterton",

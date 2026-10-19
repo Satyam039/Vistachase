@@ -1,6 +1,6 @@
 import React from "react";
 import { ServicesHero, type HeroSlide } from "@/components/cinematic/ServicesHero";
-import { fromPrice, priceUnitLabel } from "@/lib/tours";
+import { categoryOffer, fromPrice, priceUnitLabel } from "@/lib/tours";
 import { getCategoryExtras, getTours } from "@/lib/api/catalog";
 import type { TourWithAvailability } from "@/lib/api/types";
 import { SERVICES } from "@/lib/services";
@@ -10,7 +10,7 @@ import { ExperienceCategories } from "@/components/cinematic/ExperienceCategorie
 import { DestinationStoryStream } from "@/components/cinematic/DestinationStoryStream";
 import { PlanAheadGuaranteedAccess } from "@/components/cinematic/PlanAheadGuaranteedAccess";
 import { WhyTravelersLove } from "@/components/cinematic/WhyTravelersLove";
-import { NatGeoCertificateSection } from "@/components/brand/NatGeoCertificateSection";
+import { NatGeoFeatureSection } from "@/components/brand/NatGeoFeatureSection";
 import { VerifiedAwardSection } from "@/components/cinematic/VerifiedAwardSection";
 import { GuestTestimonials } from "@/components/cinematic/GuestTestimonials";
 import { LiveTrackingTeaser } from "@/components/cinematic/LiveTrackingTeaser";
@@ -58,6 +58,7 @@ export default async function HomePage() {
     (service) => service.id !== "tickets" && service.category !== "TICKET",
   ).map((service) => ({
     ...service,
+    offer: categoryOffer(tours || [], service.category),
     tours: (tours || [])
       .filter((t) => t.category === service.category)
       .slice(0, 3)
@@ -77,7 +78,7 @@ export default async function HomePage() {
     <div className="flex w-full flex-col bg-white selection:bg-summit-500 selection:text-obsidian-900">
       <ServicesHero slides={slides} />
       <TrustRow />
-      <NatGeoCertificateSection />
+      <NatGeoFeatureSection />
       <VerifiedAwardSection />
       <TopExperiences tours={tours} />
       <ExperienceCategories />

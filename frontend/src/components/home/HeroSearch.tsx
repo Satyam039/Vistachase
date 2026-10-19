@@ -4,6 +4,7 @@
 // guests in one bar, submitted as a plain GET form to /search so it works before hydration.
 // Desktop: one compact white pill with labelled segments. Phones: a stacked card. The date
 // field opens its calendar on click or focus (no need to hit the small calendar icon).
+// `category` (the home hero's picked tab) preselects the Experience field; the visitor can still change it.
 
 import { CalendarDays, Compass, Search, Users } from "lucide-react";
 import { Dropdown } from "@/components/forms/Dropdown";
@@ -16,7 +17,7 @@ const TRIGGER = "!mt-0 !text-sm";
 const CONTROL =
   "w-full min-w-0 cursor-pointer appearance-none bg-transparent text-sm text-obsidian-900 focus:outline-none";
 
-export function HeroSearch({ className = "" }: { className?: string }) {
+export function HeroSearch({ className = "", category }: { className?: string; category?: string | null }) {
   return (
     <form
       action="/search"
@@ -27,9 +28,10 @@ export function HeroSearch({ className = "" }: { className?: string }) {
     >
       <div className={`${SEGMENT} lg:rounded-full`}>
         <Dropdown
+          key={category ?? ""}
           variant="bare"
           name="category"
-          defaultValue=""
+          defaultValue={category ?? ""}
           labelClassName={LABEL}
           triggerClassName={TRIGGER}
           label={
@@ -43,7 +45,7 @@ export function HeroSearch({ className = "" }: { className?: string }) {
             { value: "SHARED", label: "Shared tours" },
             { value: "PRIVATE", label: "Private tours" },
             { value: "SHUTTLE", label: "Lake shuttles" },
-            { value: "MULTIDAY", label: "Multi-day trips" },
+            { value: "MULTIDAY", label: "Multi-Day Journeys" },
             { value: "TICKET", label: "Activity tickets" },
           ]}
         />

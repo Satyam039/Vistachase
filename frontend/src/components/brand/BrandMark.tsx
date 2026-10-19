@@ -37,14 +37,42 @@ export function BrandMark({ size = 36, variant = "default" }: { size?: number; v
   );
 }
 
-/** Full lockup: mark, "VISTA CHASE" wordmark and the "Chasing Canadian Vistas" tagline. */
-export function BrandLogo({ height = 64 }: { height?: number }) {
+/**
+ * "VISTA CHASE" wordmark, the lettering of the official lockup cut unchanged from the vector master
+ * (wordmark-*.svg), so the header shows the brand's own letterforms instead of typeset text.
+ * `size` is the cap height; the wordmark is 967:112.
+ */
+const WORDMARK_RATIO = 967 / 112;
+
+export function BrandWordmark({ size = 14, variant = "ink" }: { size?: number; variant?: "ink" | "white" }) {
   return (
     <Image
-      src="/media/brand/logo-dark.png"
-      alt="Vista Chase, chasing Canadian vistas"
-      width={Math.round((height * 213) / 118)}
+      src={`/media/brand/wordmark-${variant}.svg`}
+      alt=""
+      width={Math.round(size * WORDMARK_RATIO)}
+      height={size}
+      className="shrink-0 object-contain"
+      priority
+      unoptimized
+    />
+  );
+}
+
+/**
+ * Full lockup: mark, "VISTA CHASE" wordmark and the "Chasing Canadian Vistas" tagline, as a vector
+ * (lockup-*.svg, cropped from the official master) so it stays sharp on high-density screens.
+ */
+const LOCKUP_RATIO = 994 / 860;
+
+export function BrandLogo({ height = 64, variant = "ink", alt = "Vista Chase, chasing Canadian vistas" }: { height?: number; variant?: "ink" | "white"; alt?: string }) {
+  return (
+    <Image
+      src={`/media/brand/lockup-${variant}.svg`}
+      alt={alt}
+      width={Math.round(height * LOCKUP_RATIO)}
       height={height}
+      className="shrink-0 object-contain"
+      unoptimized
     />
   );
 }

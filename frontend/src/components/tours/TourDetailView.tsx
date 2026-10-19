@@ -46,7 +46,7 @@ import type { DepartureAvailability, TourSection, TourWithAvailability } from "@
 const CATEGORY = {
   SHARED: { label: "Shared tours", href: "/shared-tours", sub: "Small group · max 12 guests" },
   PRIVATE: { label: "Private tours", href: "/private-tours", sub: "Private vehicle · up to 6 or 13 guests" },
-  MULTIDAY: { label: "Multi-day trips", href: "/search?category=MULTIDAY", sub: "2 to 7 days" },
+  MULTIDAY: { label: "Multi-Day Journeys", href: "/search?category=MULTIDAY", sub: "2 to 7 days" },
   SHUTTLE: { label: "Lake shuttles", href: "/shuttles", sub: "Guaranteed lake access · hotel pickup" },
   TICKET: { label: "Activity tickets", href: "/banff-activity-tickets", sub: "Timed around your tour" },
 } as const;
@@ -480,6 +480,12 @@ export function TourDetailView({
                   unit={tour.category === "TICKET" ? "per ticket" : unitLabel}
                   lead={isEnquiry ? "Tailored quote from" : "From"}
                 />
+                {/* No sales tax is added at checkout (backend booking-pricing.ts), so prices are tax-inclusive. */}
+                {price > 0 && (
+                  <p className="mt-1.5 text-sm text-slate-600">
+                    Taxes included. {isEnquiry ? "We confirm your total with your quote." : "Your total is shown before you pay."}
+                  </p>
+                )}
               </div>
 
               {/* Enquiry products / departure selector */}

@@ -15,7 +15,7 @@ import Link from "next/link";
 import * as stylex from "@stylexjs/stylex";
 import { TopNav } from "@astryxdesign/core/TopNav";
 import { Calendar, User } from "lucide-react";
-import { BrandMark } from "@/components/brand/BrandMark";
+import { BrandMark, BrandWordmark } from "@/components/brand/BrandMark";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { SiteMenu } from "@/components/layout/SiteMenu";
@@ -137,8 +137,13 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
                   </span>
                   {/* Folds away once the page scrolls (globals.css: [data-nav-compact]); the link
                     keeps its "Vista Chase home" name either way. */}
-                  <span className="vc-nav-brand-text whitespace-nowrap text-lg tracking-[0.02em] text-obsidian-900 sm:text-xl">
-                    Vista Chase
+                  <span className="vc-nav-brand-text">
+                    <span className="vc-brandmark-dark inline-flex items-center">
+                      <BrandWordmark size={15} variant="ink" />
+                    </span>
+                    <span className="vc-brandmark-white hidden items-center">
+                      <BrandWordmark size={15} variant="white" />
+                    </span>
                   </span>
                 </Link>
               </>

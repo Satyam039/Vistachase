@@ -52,7 +52,7 @@ const CATEGORIES: CategoryCard[] = [
   {
     id: "multiday",
     eyebrow: "AIRPORT TO PEAKS",
-    title: "Multi-day trips",
+    title: "Multi-Day Journeys",
     tagline: "No rental car needed",
     description: "2 to 7 days across Banff, Yoho and Jasper with one dedicated guide and airport transfers.",
     image: "/media/videos/athabasca-falls-poster.webp",
