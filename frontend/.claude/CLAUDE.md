@@ -25,6 +25,8 @@ Astryx setup (already done, don't redo):
   There are no remote image hosts: don't add Webflow/Unsplash URLs, add the file to backend/media instead
   (`backend/scripts/media/build-media.mjs`, catalogued in `backend/media/manifest.json`, queryable at
   `/api/media?collection=&place=&tag=`).
+  `frontend/public/media` is a copy that Next serves before the rewrite, so a file changed in backend/media must
+  be copied there too (the three-legged horse came from a stale `public/media/brand/emblem-*.svg`).
 - Brand colours (live vistachase.com names): Ocean Teal `ocean-500` #3A9CA6, Golden Summit `summit-500`
   #F5BF03, Golden Tint `summit-300` #FFE085, Obsidian Black `obsidian-900` #1C1F23, Frost White
   `obsidian-50` #F9F9F7 (tailwind.config.ts). Use these tokens, never raw hex (`bg-[#3A9CA6]`); the legacy
