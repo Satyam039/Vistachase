@@ -82,8 +82,10 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
       frame = 0;
       const y = window.scrollY;
       root.toggleAttribute("data-scrolled", y > 8);
-      if (y > 96) root.setAttribute("data-nav-compact", "");
-      else if (y < 48) root.removeAttribute("data-nav-compact");
+      // The gap between the thresholds is wider than the bar shrinks by (globals.css
+      // .vc-nav-spacer), so the page moving up as the bar folds can't unfold it again.
+      if (y > 160) root.setAttribute("data-nav-compact", "");
+      else if (y < 40) root.removeAttribute("data-nav-compact");
     };
     const onScroll = () => {
       if (!frame) frame = window.requestAnimationFrame(sync);
@@ -120,6 +122,9 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
             heading={
               <>
                 <SiteMenu />
+                {/* Holds the bar open to the full logo's height at the top of the page; collapses
+                  with it on scroll (globals.css: .vc-nav-spacer). */}
+                <span className="vc-nav-spacer" aria-hidden="true" />
                 {/* Centred brand: the official stacked lockup (emblem, VISTA CHASE, tagline). Not in
                   TopNav's centerContent: Astryx hides that slot on narrow screens. Once the page
                   scrolls it folds to the emblem alone (globals.css: [data-nav-compact]) so the bar
@@ -131,10 +136,10 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
                 >
                   <span className="vc-nav-lockup">
                     <span className="vc-brandmark-dark inline-flex items-center">
-                      <BrandLogo height={52} variant="ink" alt="" priority />
+                      <BrandLogo height={100} variant="ink" alt="" priority />
                     </span>
                     <span className="vc-brandmark-white hidden items-center">
-                      <BrandLogo height={52} variant="white" alt="" priority />
+                      <BrandLogo height={100} variant="white" alt="" priority />
                     </span>
                   </span>
                   <span className="vc-nav-emblem">

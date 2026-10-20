@@ -162,7 +162,7 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
         <div className="pointer-events-none absolute inset-0 shadow-[inset_0_0_180px_rgba(0,0,0,0.4)]" />
       </div>
 
-      <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col items-center justify-center px-page pb-4 pt-20 text-center sm:pt-16 lg:pt-14" data-scroll-fade>
+      <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col items-center justify-center px-page pb-4 pt-[calc(var(--vc-header-h,62px)+1rem)] text-center lg:pt-14" data-scroll-fade>
         {/* 1 · Message */}
         <p className="inline-flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-summit-300 sm:tracking-[0.32em] motion-safe:animate-[fadeUp_700ms_ease-out]">
           <span className="hidden h-px w-8 bg-summit-300/70 sm:block" aria-hidden="true" />
