@@ -21,6 +21,7 @@ import {
   Coffee,
   CheckCircle2,
   Send,
+  ArrowUpRight,
 } from "lucide-react";
 import { Dropdown } from "@/components/forms/Dropdown";
 import { DepartureCalendar } from "@/components/booking/DepartureCalendar";
@@ -46,7 +47,7 @@ import type { DepartureAvailability, TourSection, TourWithAvailability } from "@
 const CATEGORY = {
   SHARED: { label: "Shared tours", href: "/shared-tours", sub: "Small group · max 12 guests" },
   PRIVATE: { label: "Private tours", href: "/private-tours", sub: "Private vehicle · up to 6 or 13 guests" },
-  MULTIDAY: { label: "Multi-Day Journeys", href: "/search?category=MULTIDAY", sub: "2 to 7 days" },
+  MULTIDAY: { label: "Multi-Day Journeys", href: "/search?category=MULTIDAY" },
   SHUTTLE: { label: "Lake shuttles", href: "/shuttles", sub: "Guaranteed lake access · hotel pickup" },
   TICKET: { label: "Activity tickets", href: "/banff-activity-tickets", sub: "Timed around your tour" },
 } as const;
@@ -63,6 +64,9 @@ function formatDeparture(departure: DepartureAvailability) {
 }
 
 const FACT_ICONS = [Clock, Users, MapPin, Coffee];
+
+/** Banff Elite (sister company) plans fully tailored multi-day itineraries; the button shows once its URL is set. */
+const BANFF_ELITE_URL = process.env.NEXT_PUBLIC_BANFF_ELITE_URL ?? "";
 
 /** Enquiry-only products: choose a vehicle and party size, then request a tailored quote. */
 function EnquiryPanel({ tour }: { tour: TourWithAvailability }) {
@@ -128,6 +132,18 @@ function EnquiryPanel({ tour }: { tour: TourWithAvailability }) {
           <Sparkles className="w-4 h-4 text-ocean-600" />
           <span>Plan with the AI Concierge</span>
         </Link>
+        {tour.category === "MULTIDAY" && BANFF_ELITE_URL && (
+          <a
+            href={BANFF_ELITE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full py-3 rounded-xl font-medium text-xs text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 flex items-center justify-center gap-2 transition-colors"
+          >
+            <span>Plan Your Journey with Banff Elite</span>
+            <ArrowUpRight className="w-4 h-4 text-ocean-600" aria-hidden="true" />
+            <span className="sr-only">(opens in a new tab)</span>
+          </a>
+        )}
       </div>
     </div>
   );
@@ -407,7 +423,7 @@ export function TourDetailView({
                 <MapPin className="h-4 w-4 text-ocean-600" aria-hidden="true" />
                 {tour.destination.name}
               </span>
-              <span>{categoryInfo.sub}</span>
+              {"sub" in categoryInfo && <span>{categoryInfo.sub}</span>}
             </div>
           </div>
           <a

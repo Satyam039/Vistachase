@@ -274,8 +274,9 @@ html[data-hero-page]:not([data-scrolled]) .vc-brandmark-dark {
 html[data-hero-page]:not([data-scrolled]) .vc-brandmark-white {
   display: inline-flex !important;
 }
-/* The wordmark is an image (BrandWordmark), so it takes a drop shadow instead of a text shadow. */
-html[data-hero-page]:not([data-scrolled]) .vc-nav-brand-text {
+/* The logo is an image (BrandLogo / BrandMark), so it takes a drop shadow instead of a text shadow. */
+html[data-hero-page]:not([data-scrolled]) .vc-nav-lockup,
+html[data-hero-page]:not([data-scrolled]) .vc-nav-emblem {
   filter: drop-shadow(0 1px 8px rgba(0, 0, 0, 0.45));
 }
 html[data-hero-page]:not([data-scrolled]) .vc-menu-btn {
@@ -326,27 +327,41 @@ html[data-hero-page]:not([data-scrolled]) .vc-book-desktop:hover {
   display: none !important;
 }
 
-/* Centred brand: the name sits beside the emblem at the top of the page and folds away once the
-   page scrolls (SiteFrame sets data-nav-compact), leaving only the emblem, still centred. Width,
-   spacing and opacity animate together, so the emblem glides to the centre without a jump. */
-.vc-nav-brand-text {
+/* Centred brand: the stacked lockup (emblem, VISTA CHASE, tagline) at the top of the page, 44px
+   tall on phones and 54px from 1024px, kept proportional (width follows the height). Once the
+   page scrolls (SiteFrame sets data-nav-compact) it cross-fades to the emblem alone, still
+   centred, so the frosted bar stays slim. */
+.vc-nav-lockup,
+.vc-nav-emblem {
   display: inline-flex;
   align-items: center;
-  overflow: hidden;
-  max-width: 12rem;
-  margin-left: 0.625rem;
-  opacity: 1;
-  transition: max-width 450ms var(--ease-out-expo), margin-left 450ms var(--ease-out-expo), opacity 250ms ease;
+  transition: opacity 300ms ease;
 }
-[data-nav-compact] .vc-nav-brand-text {
-  max-width: 0;
-  margin-left: 0;
+.vc-nav-lockup img {
+  height: 44px;
+  width: auto;
+}
+@media (min-width: 1024px) {
+  .vc-nav-lockup img {
+    height: 54px;
+  }
+}
+.vc-nav-emblem {
+  position: absolute;
+  inset: 0;
+  justify-content: center;
   opacity: 0;
-  transition: max-width 450ms var(--ease-out-expo), margin-left 450ms var(--ease-out-expo), opacity 200ms ease;
+  pointer-events: none;
+}
+[data-nav-compact] .vc-nav-lockup {
+  opacity: 0;
+}
+[data-nav-compact] .vc-nav-emblem {
+  opacity: 1;
 }
 @media (prefers-reduced-motion: reduce) {
-  .vc-nav-brand-text,
-  [data-nav-compact] .vc-nav-brand-text {
+  .vc-nav-lockup,
+  .vc-nav-emblem {
     transition: none;
   }
 }

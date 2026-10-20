@@ -1,6 +1,6 @@
 {
  "generatedBy": "scripts/media/build-media.mjs",
- "count": 390,
+ "count": 391,
  "assets": [
   {
    "id": "badges/civitatis-logo",
@@ -164,6 +164,25 @@
     "pages": [
      "banff-highlights-tour",
      "css",
+     "home"
+    ]
+   }
+  },
+  {
+   "id": "badges/tripadvisor-best-of-the-best-2026",
+   "src": "/media/badges/tripadvisor-best-of-the-best-2026.png",
+   "width": 1000,
+   "height": 392,
+   "title": "Tripadvisor BOTB Badge + Travelers’ Choice Left Aligned Black L (2026)",
+   "alt": "Tripadvisor Travelers' Choice Best of the Best 2026 award badge",
+   "collection": "badges",
+   "kind": "badges",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase-drive",
+    "url": "",
+    "pages": [
      "home"
     ]
    }

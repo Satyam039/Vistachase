@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight, Award, Compass, ShieldCheck, Sparkles, Star, Trophy, Users } from "lucide-react";
-import { AwardSeal } from "@/components/brand/AwardSeal";
+import { ArrowUpRight, BadgeCheck, Compass, MessageSquareQuote, Sparkles, Star, Trophy, Users } from "lucide-react";
 
 /** Ornate vector corner flourish for classical certificate / award showcase framing */
 function AwardCorner({ className }: { className?: string }) {
@@ -70,41 +69,25 @@ function AwardRosette({ className }: { className?: string }) {
   );
 }
 
+// Company-wide figures (supplied by Vista Chase), not counts for the award-winning tour alone.
 const STATS = [
-  {
-    to: 10000,
-    suffix: "+",
-    label: "travellers guided through the Rockies",
-    icon: Compass,
-    badge: "10k+ Guests",
-  },
-  {
-    to: 6,
-    prefix: "#",
-    label: "experience in Canada, TripAdvisor 2026",
-    icon: Trophy,
-    badge: "Top 10 Canada",
-  },
-  {
-    to: 5,
-    decimals: 1,
-    label: "average rating from our guests",
-    icon: Star,
-    badge: "Flawless 5.0",
-  },
-  {
-    to: 1000,
-    suffix: "+",
-    label: "verified 5-star reviews",
-    icon: ShieldCheck,
-    badge: "1,000+ Reviews",
-  },
+  { value: "15,000+", to: 15000, suffix: "+", label: "Guests guided through the Canadian Rockies", icon: Compass },
+  { value: "1,700+", to: 1700, suffix: "+", label: "Reviews across Tripadvisor, Google & GetYourGuide", icon: MessageSquareQuote },
+  { value: "5-Star", label: "Overall guest rating", icon: Star },
+  { value: "Maximum 12", label: "Guests on shared tours", icon: Users },
 ];
+
+/** A real guest review of the award-winning tour (from /api/reviews); nothing renders without one. */
+export interface AwardQuote {
+  authorName: string;
+  body: string;
+  rating: number;
+}
 
 const TRIPADVISOR_URL =
   "https://www.tripadvisor.ca/Attraction_Review-g154911-d26518659-Reviews-Vista_Chase-Banff_Banff_National_Park_Alberta.html";
 
-export function VerifiedAwardSection() {
+export function VerifiedAwardSection({ quote }: { quote?: AwardQuote | null }) {
   return (
     <section
       aria-labelledby="award-heading"
@@ -176,20 +159,31 @@ export function VerifiedAwardSection() {
                 unfiltered traveller reviews, fewer than 1% of the 8 million listings worldwide earn this top-tier honour.
               </p>
 
-              {/* Trust proof callout card */}
-              <div className="mt-6 rounded-2xl bg-white/90 p-4 border border-[#d4af37]/25 shadow-sm flex items-start gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-summit-500/15 text-summit-600">
-                  <Award className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-[#825e11]">
-                    Unmatched Rockies Hospitality
-                  </p>
-                  <p className="text-xs text-slate-600 mt-0.5 leading-snug">
-                    Over 1,000 verified 5-star ratings with guaranteed Moraine Lake access, luxury Mercedes fleet, and premier local guides.
-                  </p>
-                </div>
-              </div>
+              {/* A real guest's words about this tour, with their name and where they wrote it */}
+              {quote && (
+                <figure className="mt-6 rounded-2xl border border-summit-500/25 bg-white/90 p-5 shadow-sm">
+                  <div className="mb-2 flex gap-0.5" aria-label={`${quote.rating} out of 5 stars`} role="img">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`h-4 w-4 ${i < Math.round(quote.rating) ? "fill-summit-500 text-summit-500" : "text-slate-300"}`}
+                        aria-hidden="true"
+                      />
+                    ))}
+                  </div>
+                  <blockquote className="text-base font-light leading-relaxed text-obsidian-900">
+                    &ldquo;{quote.body.length > 280 ? `${quote.body.slice(0, 277).trimEnd()}…` : quote.body}&rdquo;
+                  </blockquote>
+                  <figcaption className="mt-3 flex flex-wrap items-center gap-x-2 text-sm text-slate-600">
+                    <span className="text-obsidian-900">{quote.authorName}</span>
+                    <span aria-hidden="true">·</span>
+                    <span className="inline-flex items-center gap-1">
+                      <BadgeCheck className="h-4 w-4 text-ocean-600" aria-hidden="true" />
+                      Verified Vista Chase booking
+                    </span>
+                  </figcaption>
+                </figure>
+              )}
 
               {/* Action buttons */}
               <div className="mt-8 flex flex-wrap items-center gap-4" data-reveal>
@@ -213,30 +207,22 @@ export function VerifiedAwardSection() {
               </div>
             </div>
 
-            {/* Right Column: 3D Trophy Medallion Showcase */}
+            {/* Right Column: the official 2026 award badge, large and readable */}
             <div className="flex justify-center lg:col-span-5" data-reveal="scale">
-              <div className="relative group w-full max-w-sm">
-                
-                {/* Ribbon tails hanging under medallion */}
-                <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 flex gap-2 z-0">
-                  <div className="w-4 sm:w-5 h-10 sm:h-12 bg-gradient-to-b from-[#c59a35] to-[#78540a] shadow-md [clip-path:polygon(0_0,100%_0,100%_100%,50%_75%,0_100%)]" />
-                  <div className="w-4 sm:w-5 h-10 sm:h-12 bg-gradient-to-b from-[#d4af37] to-[#8d6512] shadow-md [clip-path:polygon(0_0,100%_0,100%_100%,50%_75%,0_100%)]" />
-                </div>
-
-                {/* 3D Gold-Beveled Medallion Disc */}
-                <div className="relative aspect-square w-full rounded-full bg-gradient-to-br from-[#ffffff] via-[#fcfbf7] to-[#f4eee0] p-8 sm:p-12 shadow-[0_30px_70px_-20px_rgba(180,130,20,0.35),0_0_0_2px_rgba(212,175,55,0.4),inset_0_0_0_4px_rgba(255,255,255,0.9),inset_0_0_30px_rgba(212,175,55,0.15)] ring-4 ring-[#fcf5d6] transition-transform duration-500 group-hover:scale-[1.02]">
-                  {/* Inset dashed ring */}
-                  <div className="pointer-events-none absolute inset-4 sm:inset-5 rounded-full border-2 border-dashed border-[#c59a35]/40" />
-                  <AwardSeal className="relative z-10 h-full w-full" />
-                </div>
-
-                {/* Ribbon pill badge across the bottom of the medal */}
-                <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 whitespace-nowrap rounded-full bg-gradient-to-r from-summit-500 via-[#d4af37] to-summit-500 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-obsidian-950 shadow-lg ring-2 ring-white">
-                  <Award className="h-3.5 w-3.5" />
-                  <span>Top 1% Worldwide</span>
-                </div>
-
-              </div>
+              <Link
+                href="/banff-highlights-tour"
+                className="block w-full max-w-md rounded-2xl bg-white p-6 shadow-[0_30px_70px_-25px_rgba(15,23,42,0.25)] ring-1 ring-summit-500/30 transition-transform duration-500 hover:scale-[1.02] sm:p-10"
+              >
+                <Image
+                  src="/media/badges/tripadvisor-best-of-the-best-2026.png"
+                  alt="Tripadvisor Travelers' Choice Best of the Best 2026 award for our shared Banff tour"
+                  width={1000}
+                  height={392}
+                  sizes="(max-width: 640px) 90vw, 400px"
+                  className="h-auto w-full"
+                />
+                <p className="mt-4 text-center text-sm uppercase tracking-[0.18em] text-obsidian-900">Best of the Best 2026</p>
+              </Link>
             </div>
 
           </div>
@@ -245,12 +231,11 @@ export function VerifiedAwardSection() {
           <div className="relative mt-12 sm:mt-16 pt-10 sm:pt-12 border-t border-[#d4af37]/25">
             <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" data-stagger>
               {STATS.map((s) => {
-                const final = `${s.prefix ?? ""}${s.to.toLocaleString("en-CA", { minimumFractionDigits: s.decimals ?? 0 })}${s.suffix ?? ""}`;
                 const StatIcon = s.icon;
                 return (
                   <div
                     key={s.label}
-                    className="group relative flex flex-col items-center text-center rounded-2xl bg-white/95 p-6 sm:p-7 border border-[#d4af37]/25 shadow-sm transition-all duration-300 hover:shadow-md hover:border-[#d4af37]/50 hover:-translate-y-0.5"
+                    className="group relative flex flex-col items-center text-center rounded-2xl bg-white/95 p-6 sm:p-7 border border-summit-500/25 shadow-sm transition-all duration-300 hover:shadow-md hover:border-summit-500/50 hover:-translate-y-0.5"
                   >
                     {/* Top gold accent line on pedestal */}
                     <div className="absolute top-0 left-6 right-6 h-0.5 bg-gradient-to-r from-transparent via-summit-500 to-transparent opacity-40 group-hover:opacity-100 transition-opacity" />
@@ -260,39 +245,19 @@ export function VerifiedAwardSection() {
                     </div>
 
                     <dd
-                      className="text-4xl font-light tabular-nums tracking-tight text-obsidian-900 sm:text-5xl"
-                      data-count-to={s.to}
-                      data-count-prefix={s.prefix}
-                      data-count-suffix={s.suffix}
-                      data-count-decimals={s.decimals}
+                      className="whitespace-nowrap text-3xl font-light tabular-nums tracking-tight text-obsidian-900 sm:text-4xl"
+                      {...(s.to ? { "data-count-to": s.to, "data-count-suffix": s.suffix } : {})}
                     >
-                      {final}
+                      {s.value}
                     </dd>
 
                     <dt className="mt-2 text-xs sm:text-sm leading-snug text-slate-600 font-light">
                       {s.label}
                     </dt>
-
-                    <span className="mt-3 inline-block rounded-full bg-obsidian-50 px-2.5 py-0.5 text-[10px] font-medium text-[#7a5710] border border-obsidian-900/[0.04]">
-                      {s.badge}
-                    </span>
                   </div>
                 );
               })}
             </dl>
-          </div>
-
-          {/* Certificate Verification Footer Strip */}
-          <div className="relative mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-[#d4af37]/25 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-            <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-summit-500 ring-4 ring-summit-500/20" />
-              <span className="font-mono text-[10px] sm:text-[11px] uppercase tracking-wider text-[#825e11] font-medium">
-                Accreditation Record No: TA-BEST-2026-BANFF
-              </span>
-            </div>
-            <p className="text-[10px] sm:text-[11px] text-slate-500 text-center sm:text-right">
-              Conferred by TripAdvisor • Ranked #6 Experience in Canada • 1,000+ Verified 5-Star Reviews
-            </p>
           </div>
 
         </div>

@@ -11,11 +11,11 @@ import type { TourWithAvailability } from "@/lib/api/types";
 
 const FILTERS = [
   { id: "ALL", label: "All experiences" },
-  { id: "SHARED", label: "Shared tours" },
-  { id: "PRIVATE", label: "Private tours" },
-  { id: "SHUTTLE", label: "Lake shuttles" },
+  { id: "SHARED", label: "Small-Group Tours" },
+  { id: "PRIVATE", label: "Private Tours" },
+  { id: "SHUTTLE", label: "Lake Shuttles" },
   { id: "MULTIDAY", label: "Multi-Day Journeys" },
-  { id: "TICKET", label: "Activity tickets" },
+  { id: "TICKET", label: "Attraction Tickets" },
 ] as const;
 
 export function TopExperiences({ tours }: { tours: TourWithAvailability[] }) {
@@ -50,10 +50,10 @@ export function TopExperiences({ tours }: { tours: TourWithAvailability[] }) {
       <div className="mx-auto max-w-7xl px-page">
         <SectionHeading
           id="top-experiences"
-          eyebrow="Top-rated in the Rockies"
-          title="Experiences travellers love"
-          intro="Rated 5.0 by more than a thousand guests. Free cancellation up to 72 hours before every tour."
-          link={{ label: "See all experiences", href: "/search" }}
+          eyebrow="Find your Rockies experience"
+          title="Experiences Travellers Love"
+          intro="Explore with a small group, plan a private tour or book your ride to Moraine Lake and Lake Louise. Find the experience that fits your journey."
+          link={{ label: "View All Experiences", href: "/search" }}
           tone="dark"
         />
 

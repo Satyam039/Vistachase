@@ -28,7 +28,7 @@ const AUDIENCES = [
     icon: Briefcase,
     title: "Travel advisors",
     text: "Private tours for your clients only: a luxury SUV for up to 6 guests or an executive van for up to 13, on a route they choose.",
-    points: ["Customizable private itineraries", "Multi-day packages of 2–7 days", "Quotes from our team, usually within a day"],
+    points: ["Customizable private itineraries", "Multi-day packages across the Rockies", "Quotes from our team, usually within a day"],
   },
   {
     icon: Route,

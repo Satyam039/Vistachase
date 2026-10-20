@@ -81,7 +81,7 @@ export const SERVICES: Service[] = [
     id: "multiday",
     category: "MULTIDAY",
     title: "Multi-Day Journeys",
-    tagline: "Why a multi-day package? The Rockies in 2–7 days, planned for you.",
+    tagline: "Why a multi-day package? More of the Rockies, planned for you.",
     reasons: [
       "Banff, Yoho, Jasper, Kootenay and Waterton",
       "Airport transfers, no rental car needed",
