@@ -109,7 +109,7 @@ export default async function RootLayout({
         {/* Before paint: mark hero pages so transparent header renders without flash. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var p=window.location.pathname;if(p==='/'||p==='/shared-tours'||p==='/private-tours'||p==='/shuttles'||p==='/multi-day-tour-package-for-banff'){document.documentElement.setAttribute('data-hero-page','true');}}catch(e){}})();`,
+            __html: `(function(){try{var p=window.location.pathname;if(p==='/'||p==='/shared-tours'||p==='/private-tours'||p==='/shuttles'){document.documentElement.setAttribute('data-hero-page','true');}}catch(e){}})();`,
           }}
         />
         {siteSchema(config?.siteSchema ?? []).map((block, i) => (

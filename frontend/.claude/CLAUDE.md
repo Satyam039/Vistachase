@@ -15,9 +15,10 @@ Astryx setup (already done, don't redo):
   family (body, headings; IBM Plex Mono for code). Edit either source file, then `npm run theme:build` regenerates `vistachase.css` /
   `vistachase.js` (never edit generated files). The extended theme is flat: Stone's CSS isn't loaded.
   `npm run theme:check` fails if the generated files are stale.
-- Logo: `src/components/brand/BrandMark.tsx` — `BrandMark` (horse-and-rider mark in the nav; `white` and
-  `emblem` variants), `BrandWordmark` (the official "VISTA CHASE" lettering beside it in the nav, never typeset
-  text) and `BrandLogo` (full vector lockup: footer, sign-in panel). Files are in `backend/media/brand`
+- Logo: `src/components/brand/BrandMark.tsx` — `BrandLogo` (full stacked vector lockup: the centred nav brand at
+  the top of the page (44px phones / 54px desktop, `.vc-nav-lockup` in globals.css), footer, sign-in panel),
+  `BrandMark` (horse-and-rider mark; the nav folds to it once the page scrolls; `white` and `emblem` variants)
+  and `BrandWordmark` (the official "VISTA CHASE" lettering, never typeset text). Files are in `backend/media/brand`
   (`wordmark-*.svg`, `lockup-*.svg` are cut unchanged from the official vector master).
 - Images: every image is served by the backend from `backend/media` at `/media/...` (`next.config.mjs`
   rewrites `/media/*` to the backend like `/api/*`; `next/image` takes the `/media/...` path as a local src).

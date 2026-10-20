@@ -54,6 +54,15 @@ export default async function HomePage() {
     console.warn("[HomePage] getCategoryExtras failed:", err);
   }
 
+  // A real review of the award-winning tour for the award section (none yet: the quote is left out).
+  let awardQuote = null;
+  try {
+    const award = await getCategoryExtras(tours.filter((t) => t.slug === "banff-highlights-tour"));
+    awardQuote = award.reviews[0] ?? null;
+  } catch (err) {
+    console.warn("[HomePage] award review lookup failed:", err);
+  }
+
   const slides: HeroSlide[] = SERVICES.filter(
     (service) => service.id !== "tickets" && service.category !== "TICKET",
   ).map((service) => ({
@@ -79,7 +88,7 @@ export default async function HomePage() {
       <ServicesHero slides={slides} />
       <TrustRow />
       <NatGeoFeatureSection />
-      <VerifiedAwardSection />
+      <VerifiedAwardSection quote={awardQuote} />
       <TopExperiences tours={tours} />
       <ExperienceCategories />
       <DestinationStoryStream />

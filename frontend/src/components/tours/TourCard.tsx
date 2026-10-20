@@ -89,7 +89,9 @@ export function TourCard({
   const award = AWARD_BADGE[tour.slug];
   // Short visible form of the policy; screen readers get the full wording.
   const cancelLabel =
-    tour.category === "TICKET" ? "Operator's cancellation rules" : tour.category === "MULTIDAY" ? "Refundable · 72 h, less deposit" : "Free cancellation · 72 h";
+    tour.category === "TICKET" ? "Operator's cancellation rules" : tour.category === "MULTIDAY" ? "Flexible Cancellation" : "Free Cancellation Policy 72h";
+  // Every tour and shuttle in the catalog picks up in Banff and Canmore; tickets have no pickup.
+  const pickup = tour.category !== "TICKET";
 
   return (
     <article className="group relative flex h-full flex-col text-white transition-transform duration-500 ease-out hover:-translate-y-1">
@@ -129,29 +131,37 @@ export function TourCard({
           </Link>
         </TitleTag>
 
-        <ul className="mt-3 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-white/75" aria-label="Key details">
-          <li className="flex items-center gap-1">
+        <ul className="mt-3 flex gap-x-3 text-xs text-white/75" aria-label="Key details">
+          <li className="flex shrink-0 items-center gap-1 whitespace-nowrap">
             <Clock className="h-3 w-3 shrink-0 text-summit-300" aria-hidden="true" />
             {durationLabel(tour)}
           </li>
-          <li className="flex min-w-0 items-center gap-1">
-            <Users className="h-3 w-3 shrink-0 text-summit-300" aria-hidden="true" />
-            <span className="truncate">{groupLabel(tour)}</span>
-          </li>
-          <li className="flex items-center gap-1 whitespace-nowrap">
+          {/* Capacity and rating stay together on one line (rating right after capacity, no review count). */}
+          <li className="flex min-w-0 items-center gap-3">
+            <span className="flex min-w-0 items-center gap-1">
+              <Users className="h-3 w-3 shrink-0 text-summit-300" aria-hidden="true" />
+              <span className="truncate">{groupLabel(tour)}</span>
+            </span>
             {tour.reviewCount > 0 ? (
-              <>
+              <span className="flex shrink-0 items-center gap-1 whitespace-nowrap">
                 <Star className="h-3 w-3 shrink-0 fill-summit-300 text-summit-300" aria-hidden="true" />
                 <span>
                   {tour.rating.toFixed(1)}
-                  <span className="sr-only"> out of 5,</span> <span className="text-white/50">({reviewsLabel(tour)})</span>
+                  <span className="sr-only"> out of 5</span>
                 </span>
-              </>
+              </span>
             ) : (
-              <span className="text-white/60">New on Vista Chase</span>
+              <span className="shrink-0 whitespace-nowrap text-white/60">New on Vista Chase</span>
             )}
           </li>
         </ul>
+
+        {pickup && (
+          <p className="mt-1.5 flex items-center gap-1 text-xs text-white/55">
+            <MapPin className="h-3 w-3 shrink-0 text-summit-300" aria-hidden="true" />
+            Pickup in Banff &amp; Canmore
+          </p>
+        )}
 
         <p className="mb-4 mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-white/55">
           <span className="inline-flex items-center gap-1">
@@ -166,9 +176,12 @@ export function TourCard({
         </p>
 
         <div className="mt-auto flex items-end justify-between gap-3 border-t border-white/[0.1] pt-3">
-          <div className="flex min-w-0 items-baseline gap-1.5 whitespace-nowrap">
-            {hasPrice(price) && <span className="text-xs text-white/55">From</span>}
-            <PriceTag price={price} currency={tour.currency} unit={`${tour.currency}/${unitLabel}`} size="sm" tone="dark" layout="inline" />
+          <div className="min-w-0">
+            <div className="flex min-w-0 items-baseline gap-1.5 whitespace-nowrap">
+              {hasPrice(price) && <span className="text-xs text-white/55">From</span>}
+              <PriceTag price={price} currency={tour.currency} unit={`${tour.currency}/${unitLabel}`} size="sm" tone="dark" layout="inline" />
+            </div>
+            {hasPrice(price) && <p className="mt-0.5 text-xs text-white/55">Taxes and required fees included</p>}
           </div>
           <span className="mb-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center ring-1 ring-summit-200/40 text-summit-200 transition-colors duration-300 group-hover:bg-summit-200 group-hover:text-obsidian-900" aria-hidden="true">
             <ArrowRight className="h-3.5 w-3.5" />

@@ -15,7 +15,7 @@ import Link from "next/link";
 import * as stylex from "@stylexjs/stylex";
 import { TopNav } from "@astryxdesign/core/TopNav";
 import { Calendar, User } from "lucide-react";
-import { BrandMark, BrandWordmark } from "@/components/brand/BrandMark";
+import { BrandLogo, BrandMark } from "@/components/brand/BrandMark";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { SiteMenu } from "@/components/layout/SiteMenu";
@@ -47,8 +47,7 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
     pathname === "/" ||
     pathname === "/shared-tours" ||
     pathname === "/private-tours" ||
-    pathname === "/shuttles" ||
-    pathname === "/multi-day-tour-package-for-banff";
+    pathname === "/shuttles";
 
   useEffect(() => {
     const root = document.documentElement;
@@ -121,28 +120,29 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
             heading={
               <>
                 <SiteMenu />
-                {/* Centred brand: emblem + name only. Not in TopNav's centerContent: Astryx hides
-                  that slot on narrow screens. Phones fit the name because the Menu button is
-                  icon-only there (SiteMenu). */}
+                {/* Centred brand: the official stacked lockup (emblem, VISTA CHASE, tagline). Not in
+                  TopNav's centerContent: Astryx hides that slot on narrow screens. Once the page
+                  scrolls it folds to the emblem alone (globals.css: [data-nav-compact]) so the bar
+                  stays slim; the link keeps its "Vista Chase home" name either way. */}
                 <Link
                   href="/"
                   aria-label="Vista Chase home"
                   className="absolute left-1/2 top-1/2 inline-flex -translate-x-1/2 -translate-y-1/2 items-center rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ocean-600"
                 >
-                  <span className="vc-brandmark-dark inline-flex items-center">
-                    <BrandMark size={30} variant="dark" />
-                  </span>
-                  <span className="vc-brandmark-white hidden items-center">
-                    <BrandMark size={30} variant="white" />
-                  </span>
-                  {/* Folds away once the page scrolls (globals.css: [data-nav-compact]); the link
-                    keeps its "Vista Chase home" name either way. */}
-                  <span className="vc-nav-brand-text">
+                  <span className="vc-nav-lockup">
                     <span className="vc-brandmark-dark inline-flex items-center">
-                      <BrandWordmark size={15} variant="ink" />
+                      <BrandLogo height={52} variant="ink" alt="" priority />
                     </span>
                     <span className="vc-brandmark-white hidden items-center">
-                      <BrandWordmark size={15} variant="white" />
+                      <BrandLogo height={52} variant="white" alt="" priority />
+                    </span>
+                  </span>
+                  <span className="vc-nav-emblem">
+                    <span className="vc-brandmark-dark inline-flex items-center">
+                      <BrandMark size={30} variant="dark" />
+                    </span>
+                    <span className="vc-brandmark-white hidden items-center">
+                      <BrandMark size={30} variant="white" />
                     </span>
                   </span>
                 </Link>

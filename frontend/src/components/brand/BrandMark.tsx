@@ -64,7 +64,18 @@ export function BrandWordmark({ size = 14, variant = "ink" }: { size?: number; v
  */
 const LOCKUP_RATIO = 994 / 860;
 
-export function BrandLogo({ height = 64, variant = "ink", alt = "Vista Chase, chasing Canadian vistas" }: { height?: number; variant?: "ink" | "white"; alt?: string }) {
+export function BrandLogo({
+  height = 64,
+  variant = "ink",
+  alt = "Vista Chase, chasing Canadian vistas",
+  priority = false,
+}: {
+  height?: number;
+  variant?: "ink" | "white";
+  alt?: string;
+  /** Header use: load with the page instead of lazily. */
+  priority?: boolean;
+}) {
   return (
     <Image
       src={`/media/brand/lockup-${variant}.svg`}
@@ -72,6 +83,7 @@ export function BrandLogo({ height = 64, variant = "ink", alt = "Vista Chase, ch
       width={Math.round(height * LOCKUP_RATIO)}
       height={height}
       className="shrink-0 object-contain"
+      priority={priority}
       unoptimized
     />
   );
