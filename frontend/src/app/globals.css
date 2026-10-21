@@ -327,30 +327,30 @@ html[data-hero-page]:not([data-scrolled]) .vc-book-desktop:hover {
   display: none !important;
 }
 
-/* Centred brand: the logo (emblem and VISTA CHASE) at the top of the page: 72px tall on phones,
-   84px from 768px, 100px from 1024px, width following the height. The bar opens to fit it
-   (.vc-nav-spacer). Once the page scrolls (SiteFrame sets data-nav-compact) the bar folds a little
-   and the logo cross-fades to the horse alone, about as large as it is in the full logo, still
-   centred. --vc-nav-open-h is the open bar's height (spacer + the bar's 16px padding): heroes
-   start their content below it so the logo never covers the headline. */
+/* Centred brand: the "VISTA CHASE" lettering alone at the top of the page (18px tall on phones,
+   22px from 768px, 26px from 1024px, width following the height). Once the page scrolls
+   (SiteFrame sets data-nav-compact) it cross-fades to the horse alone (44 / 50 / 56px), still
+   centred. The bar is the same height in both states (.vc-nav-spacer), so nothing jumps.
+   --vc-nav-open-h is the bar's height (spacer + its 16px padding): heroes start their content
+   below it so the brand never covers the headline. */
 :root {
-  --vc-nav-spacer-h: 84px;
-  --vc-nav-compact-h: 58px;
-  --vc-nav-emblem-h: 50px;
+  --vc-nav-spacer-h: 52px;
+  --vc-nav-wordmark-h: 18px;
+  --vc-nav-emblem-h: 44px;
   --vc-nav-open-h: calc(var(--vc-nav-spacer-h) + 16px);
 }
 @media (min-width: 768px) {
   :root {
-    --vc-nav-spacer-h: 96px;
-    --vc-nav-compact-h: 66px;
-    --vc-nav-emblem-h: 58px;
+    --vc-nav-spacer-h: 58px;
+    --vc-nav-wordmark-h: 22px;
+    --vc-nav-emblem-h: 50px;
   }
 }
 @media (min-width: 1024px) {
   :root {
-    --vc-nav-spacer-h: 112px;
-    --vc-nav-compact-h: 80px;
-    --vc-nav-emblem-h: 70px;
+    --vc-nav-spacer-h: 64px;
+    --vc-nav-wordmark-h: 26px;
+    --vc-nav-emblem-h: 56px;
   }
 }
 .vc-nav-spacer {
@@ -366,18 +366,8 @@ html[data-hero-page]:not([data-scrolled]) .vc-book-desktop:hover {
   transition: opacity 300ms ease;
 }
 .vc-nav-lockup img {
-  height: 72px;
+  height: var(--vc-nav-wordmark-h);
   width: auto;
-}
-@media (min-width: 768px) {
-  .vc-nav-lockup img {
-    height: 84px;
-  }
-}
-@media (min-width: 1024px) {
-  .vc-nav-lockup img {
-    height: 100px;
-  }
 }
 .vc-nav-emblem {
   position: absolute;
@@ -389,9 +379,6 @@ html[data-hero-page]:not([data-scrolled]) .vc-book-desktop:hover {
 .vc-nav-emblem img {
   height: var(--vc-nav-emblem-h);
   width: auto;
-}
-[data-nav-compact] .vc-nav-spacer {
-  height: var(--vc-nav-compact-h);
 }
 [data-nav-compact] .vc-nav-lockup {
   opacity: 0;
