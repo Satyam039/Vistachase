@@ -15,7 +15,7 @@ import Link from "next/link";
 import * as stylex from "@stylexjs/stylex";
 import { TopNav } from "@astryxdesign/core/TopNav";
 import { Calendar, User } from "lucide-react";
-import { BrandLogo, BrandMark } from "@/components/brand/BrandMark";
+import { BrandMark, BrandWordmark } from "@/components/brand/BrandMark";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { SiteMenu } from "@/components/layout/SiteMenu";
@@ -82,8 +82,8 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
       frame = 0;
       const y = window.scrollY;
       root.toggleAttribute("data-scrolled", y > 8);
-      // The gap between the thresholds is wider than the bar shrinks by (globals.css
-      // .vc-nav-spacer), so the page moving up as the bar folds can't unfold it again.
+      // The bar keeps its height as it folds (globals.css .vc-nav-spacer), so the page can't
+      // move under the thresholds and unfold it again.
       if (y > 160) root.setAttribute("data-nav-compact", "");
       else if (y < 40) root.removeAttribute("data-nav-compact");
     };
@@ -125,10 +125,10 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
                 {/* Holds the bar open to the full logo's height at the top of the page; collapses
                   with it on scroll (globals.css: .vc-nav-spacer). */}
                 <span className="vc-nav-spacer" aria-hidden="true" />
-                {/* Centred brand: the official stacked lockup, emblem and VISTA CHASE only (no tagline). Not in
+                {/* Centred brand: the official "VISTA CHASE" lettering alone at the top of the page. Not in
                   TopNav's centerContent: Astryx hides that slot on narrow screens. Once the page
-                  scrolls it folds to the emblem alone (globals.css: [data-nav-compact]) so the bar
-                  stays slim; the link keeps its "Vista Chase home" name either way. */}
+                  scrolls it cross-fades to the horse alone (globals.css: [data-nav-compact]); the
+                  link keeps its "Vista Chase home" name either way. */}
                 <Link
                   href="/"
                   aria-label="Vista Chase home"
@@ -136,18 +136,18 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
                 >
                   <span className="vc-nav-lockup">
                     <span className="vc-brandmark-dark inline-flex items-center">
-                      <BrandLogo height={100} variant="ink" alt="" priority tagline={false} />
+                      <BrandWordmark size={26} variant="ink" />
                     </span>
                     <span className="vc-brandmark-white hidden items-center">
-                      <BrandLogo height={100} variant="white" alt="" priority tagline={false} />
+                      <BrandWordmark size={26} variant="white" />
                     </span>
                   </span>
                   <span className="vc-nav-emblem">
                     <span className="vc-brandmark-dark inline-flex items-center">
-                      <BrandMark size={30} variant="dark" />
+                      <BrandMark size={56} variant="dark" />
                     </span>
                     <span className="vc-brandmark-white hidden items-center">
-                      <BrandMark size={30} variant="white" />
+                      <BrandMark size={56} variant="white" />
                     </span>
                   </span>
                 </Link>

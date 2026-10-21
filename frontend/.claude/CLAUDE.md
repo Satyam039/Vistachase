@@ -15,10 +15,10 @@ Astryx setup (already done, don't redo):
   family (body, headings; IBM Plex Mono for code). Edit either source file, then `npm run theme:build` regenerates `vistachase.css` /
   `vistachase.js` (never edit generated files). The extended theme is flat: Stone's CSS isn't loaded.
   `npm run theme:check` fails if the generated files are stale.
-- Logo: `src/components/brand/BrandMark.tsx` — `BrandLogo` (full stacked vector lockup: the centred nav brand at
-  the top of the page (72px phones / 84px tablets / 100px desktop; the bar opens to fit it via `.vc-nav-spacer`, `.vc-nav-lockup` in globals.css), footer, sign-in panel),
-  `BrandMark` (horse-and-rider mark; the nav folds to it once the page scrolls; `white` and `emblem` variants)
-  and `BrandWordmark` (the official "VISTA CHASE" lettering, never typeset text). Files are in `backend/media/brand`
+- Logo: `src/components/brand/BrandMark.tsx` — `BrandLogo` (full stacked vector lockup: footer, sign-in panel),
+  `BrandMark` (horse-and-rider mark; the nav cross-fades to it once the page scrolls, 44/50/56px via `--vc-nav-emblem-h`; `white` and `emblem` variants)
+  and `BrandWordmark` (the official "VISTA CHASE" lettering, never typeset text; the centred nav brand at the top of the page,
+  18/22/26px via `--vc-nav-wordmark-h`). The nav bar keeps one height (`--vc-nav-open-h`, globals.css); heroes pad their top by it. Files are in `backend/media/brand`
   (`wordmark-*.svg`, `lockup-*.svg` are cut unchanged from the official vector master; `lockup-name-*.svg` is the
   same lockup without the tagline, used by the header via `tagline={false}`).
 - Images: every image is served by the backend from `backend/media` at `/media/...` (`next.config.mjs`

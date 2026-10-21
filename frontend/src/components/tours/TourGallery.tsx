@@ -144,7 +144,7 @@ export function TourGallery({
           </div>
         )}
 
-        <div className="mx-auto flex w-full max-w-7xl flex-col items-center px-page pt-20 text-center" data-scroll-fade>
+        <div className="mx-auto flex w-full max-w-7xl flex-col items-center px-page pt-[calc(var(--vc-nav-open-h,100px)+1.5rem)] text-center" data-scroll-fade>
           <nav aria-label="Breadcrumb" className="mb-5">
             <ol className="flex items-center justify-center gap-1.5 text-sm text-slate-200">
               <li>
