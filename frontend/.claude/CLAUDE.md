@@ -17,7 +17,7 @@ Astryx setup (already done, don't redo):
   `npm run theme:check` fails if the generated files are stale.
 - Logo: `src/components/brand/BrandMark.tsx` — `BrandLogo` (full stacked vector lockup: the centred nav brand at
   the top of the page (72px phones / 84px tablets / 100px desktop; the bar opens to fit it via `.vc-nav-spacer`, `.vc-nav-lockup` in globals.css), footer, sign-in panel),
-  `BrandMark` (horse-and-rider mark; the nav folds to it once the page scrolls; `white` and `emblem` variants)
+  `BrandMark` (horse-and-rider mark; the nav folds to it once the page scrolls, 50/58/70px via `--vc-nav-emblem-h`; heroes pad their top by `--vc-nav-open-h` so the open logo never covers them; `white` and `emblem` variants)
   and `BrandWordmark` (the official "VISTA CHASE" lettering, never typeset text). Files are in `backend/media/brand`
   (`wordmark-*.svg`, `lockup-*.svg` are cut unchanged from the official vector master; `lockup-name-*.svg` is the
   same lockup without the tagline, used by the header via `tagline={false}`).

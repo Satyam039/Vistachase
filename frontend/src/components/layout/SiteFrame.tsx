@@ -83,7 +83,7 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
       const y = window.scrollY;
       root.toggleAttribute("data-scrolled", y > 8);
       // The gap between the thresholds is wider than the bar shrinks by (globals.css
-      // .vc-nav-spacer), so the page moving up as the bar folds can't unfold it again.
+      // .vc-nav-spacer, at most 32px), so the page moving up as the bar folds can't unfold it again.
       if (y > 160) root.setAttribute("data-nav-compact", "");
       else if (y < 40) root.removeAttribute("data-nav-compact");
     };
@@ -144,10 +144,10 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
                   </span>
                   <span className="vc-nav-emblem">
                     <span className="vc-brandmark-dark inline-flex items-center">
-                      <BrandMark size={30} variant="dark" />
+                      <BrandMark size={70} variant="dark" />
                     </span>
                     <span className="vc-brandmark-white hidden items-center">
-                      <BrandMark size={30} variant="white" />
+                      <BrandMark size={70} variant="white" />
                     </span>
                   </span>
                 </Link>

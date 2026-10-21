@@ -62,7 +62,7 @@ export default async function ShuttlesPage() {
         />
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/45 to-ocean-950/10" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-r from-ocean-950/70 to-transparent" />
-        <div className="mx-auto flex w-full flex-col items-center text-center max-w-7xl px-page pb-14 pt-24" data-scroll-fade>
+        <div className="mx-auto flex w-full flex-col items-center text-center max-w-7xl px-page pb-14 pt-[calc(var(--vc-nav-open-h,100px)+1.5rem)]" data-scroll-fade>
           <nav aria-label="Breadcrumb" className="mb-6">
             <ol className="flex items-center justify-center gap-1.5 text-sm text-slate-200">
               <li>
