@@ -204,10 +204,14 @@ export function SiteFooter() {
           />
           <div className="absolute inset-0 -z-10 bg-gradient-to-r from-ocean-950/80 via-ocean-950/65 to-ocean-950/20" />
           <div className="max-w-xl">
-            <p className="text-sm uppercase tracking-[0.22em] text-summit-300">Plan your Rockies day</p>
+            <p className="text-sm uppercase tracking-[0.22em] text-summit-300">Your Rockies experience starts here</p>
             <h2 id="footer-plan-heading" className="mt-3 text-balance text-3xl font-light leading-tight tracking-tight text-white sm:text-5xl">
-              Lakes, glaciers and a local guide. Where shall we start?
+              Where Will Your Journey Take You?
             </h2>
+            <p className="mt-4 text-lg font-light leading-relaxed text-white/85">
+              Spectacular lakes, mountain roads and guides who make the day memorable. Find your Vista Chase experience or let us help
+              you choose.
+            </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/search" className="golden-summit-btn inline-flex h-12 items-center gap-2 rounded-full px-6 text-base">
                 <Search className="h-4 w-4" aria-hidden="true" />

@@ -125,7 +125,7 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
                 {/* Holds the bar open to the full logo's height at the top of the page; collapses
                   with it on scroll (globals.css: .vc-nav-spacer). */}
                 <span className="vc-nav-spacer" aria-hidden="true" />
-                {/* Centred brand: the official stacked lockup (emblem, VISTA CHASE, tagline). Not in
+                {/* Centred brand: the official stacked lockup, emblem and VISTA CHASE only (no tagline). Not in
                   TopNav's centerContent: Astryx hides that slot on narrow screens. Once the page
                   scrolls it folds to the emblem alone (globals.css: [data-nav-compact]) so the bar
                   stays slim; the link keeps its "Vista Chase home" name either way. */}
@@ -136,10 +136,10 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
                 >
                   <span className="vc-nav-lockup">
                     <span className="vc-brandmark-dark inline-flex items-center">
-                      <BrandLogo height={100} variant="ink" alt="" priority />
+                      <BrandLogo height={100} variant="ink" alt="" priority tagline={false} />
                     </span>
                     <span className="vc-brandmark-white hidden items-center">
-                      <BrandLogo height={100} variant="white" alt="" priority />
+                      <BrandLogo height={100} variant="white" alt="" priority tagline={false} />
                     </span>
                   </span>
                   <span className="vc-nav-emblem">
