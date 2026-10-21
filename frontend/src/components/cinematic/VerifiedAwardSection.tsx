@@ -84,6 +84,9 @@ export interface AwardQuote {
   rating: number;
 }
 
+/** Tripadvisor's own 2026 Travelers' Choice list (Top Experiences, Canada): our tour is #6, so guests can verify the award. */
+const AWARD_URL = "https://www.tripadvisor.ca/TravelersChoice-ThingsToDo-cTopExperiences-g153339#6";
+
 const TRIPADVISOR_URL =
   "https://www.tripadvisor.ca/Attraction_Review-g154911-d26518659-Reviews-Vista_Chase-Banff_Banff_National_Park_Alberta.html";
 
@@ -209,8 +212,10 @@ export function VerifiedAwardSection({ quote }: { quote?: AwardQuote | null }) {
 
             {/* Right Column: the official 2026 award badge, large and readable */}
             <div className="flex justify-center lg:col-span-5" data-reveal="scale">
-              <Link
-                href="/banff-highlights-tour"
+              <a
+                href={AWARD_URL}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="block w-full max-w-md rounded-2xl bg-white p-6 shadow-[0_30px_70px_-25px_rgba(15,23,42,0.25)] ring-1 ring-summit-500/30 transition-transform duration-500 hover:scale-[1.02] sm:p-10"
               >
                 <Image
@@ -222,7 +227,12 @@ export function VerifiedAwardSection({ quote }: { quote?: AwardQuote | null }) {
                   className="h-auto w-full"
                 />
                 <p className="mt-4 text-center text-sm uppercase tracking-[0.18em] text-obsidian-900">Best of the Best 2026</p>
-              </Link>
+                <p className="mt-2 flex items-center justify-center gap-1 text-sm text-ocean-600 underline underline-offset-4">
+                  Verify on Tripadvisor
+                  <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+                  <span className="sr-only">(opens in a new tab)</span>
+                </p>
+              </a>
             </div>
 
           </div>
