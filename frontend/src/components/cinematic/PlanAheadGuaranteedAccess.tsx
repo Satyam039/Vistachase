@@ -1,15 +1,27 @@
-// "Moraine Lake access" explainer (GetYourGuide / Viator "good to know" pattern): the problem in
-// one line, how the shuttle solves it in three facts, then the CTA. Every fact is from the FAQ:
-// the road closure, sunrise pickup window and season. Rating is the real catalog value.
+// "Plan ahead" explainer for the two lakes (GetYourGuide / Viator "good to know" pattern): the
+// problem in one line, three facts, then the CTAs. Copy from the owner's "Update Vista Chase web"
+// doc: Moraine Lake Road is closed to personal vehicles and Lake Louise parking is limited.
 
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Ban, CalendarRange, ShieldCheck, Star, Sunrise } from "lucide-react";
+import { ArrowRight, Ban, BusFront, CircleParking, ShieldCheck } from "lucide-react";
 
 const FACTS = [
-  { icon: Ban, title: "No private cars", body: "Parks Canada has closed Moraine Lake Road to personal and rental vehicles." },
-  { icon: Sunrise, title: "Sunrise at the lake", body: "Hotel pickups from about 4:45 a.m., so you're at the shore before first light." },
-  { icon: CalendarRange, title: "While the lake is open", body: "Shuttles run from Banff and Canmore, roughly June to early October." },
+  {
+    icon: Ban,
+    title: "Moraine Lake Requires Advance Planning",
+    body: "Leave your personal or rental vehicle behind and visit with an authorised shuttle or tour operator.",
+  },
+  {
+    icon: CircleParking,
+    title: "Lake Louise Parking Is Limited",
+    body: "Driving to the lake does not guarantee a parking space. A shuttle or guided tour takes the parking search out of your day.",
+  },
+  {
+    icon: BusFront,
+    title: "Let Vista Chase Handle the Journey",
+    body: "Choose a lake shuttle or guided experience from Banff or Canmore, with transportation to the lakes arranged for you.",
+  },
 ];
 
 export function PlanAheadGuaranteedAccess() {
@@ -34,18 +46,19 @@ export function PlanAheadGuaranteedAccess() {
             </span>
             <span>
               <span className="block text-sm text-slate-600">Licensed commercial operator</span>
-              <span className="block text-base text-obsidian-900">Guaranteed Moraine Lake access</span>
+              <span className="block text-base text-obsidian-900">Lake transportation arranged for you</span>
             </span>
           </div>
         </div>
 
         <div className="lg:col-span-6" data-reveal>
-          <p className="mb-3 text-sm uppercase tracking-[0.22em] text-ocean-600">Plan ahead</p>
+          <p className="mb-3 text-sm uppercase tracking-[0.22em] text-ocean-600">Plan ahead. Enjoy the lakes.</p>
           <h2 id="access-heading" className="text-balance text-3xl font-light leading-[1.1] tracking-tight text-obsidian-900 sm:text-4xl lg:text-5xl">
-            You can&apos;t drive to Moraine Lake. We can.
+            Two Iconic Lakes. A Little Planning Makes All the Difference.
           </h2>
           <p className="mt-5 text-lg font-light leading-relaxed text-slate-600">
-            Skip the parking and the shuttle lottery: we pick you up at your hotel in Banff or Canmore and drive you straight to the shoreline.
+            Moraine Lake Road is closed to personal vehicles, and parking at Lake Louise is limited during the busy season. Arrange your
+            transportation well ahead of your visit so you can focus on the experience.
           </p>
 
           <ul className="mt-8 space-y-4" data-stagger>
@@ -64,17 +77,14 @@ export function PlanAheadGuaranteedAccess() {
 
           <div className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-4">
             <Link href="/shuttles" className="golden-summit-btn group inline-flex h-12 items-center gap-2 rounded-full px-7 text-base">
-              See shuttle times
+              Explore Lake Shuttles
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
             </Link>
-            <Link href="/private-tours" className="text-base text-obsidian-900 underline decoration-summit-500 decoration-2 underline-offset-[6px] hover:text-ocean-700">
-              Or go private
+            <Link href="/shared-tours" className="text-base text-obsidian-900 underline decoration-summit-500 decoration-2 underline-offset-[6px] hover:text-ocean-700">
+              Explore Guided Tours →
             </Link>
-            <span className="flex items-center gap-1.5 text-sm text-slate-600">
-              <Star className="h-4 w-4 fill-summit-500 text-summit-500" aria-hidden="true" />
-              <span className="text-obsidian-900">5.0</span> from 1,000+ reviews
-            </span>
           </div>
+          <p className="mt-6 text-sm text-slate-600">Access arrangements may change. Check current requirements before travelling.</p>
         </div>
       </div>
     </section>

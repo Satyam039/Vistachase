@@ -13,7 +13,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { CardMedia } from "@/components/cards/MediaCard";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { AmbientVideo } from "@/components/cinematic/AmbientVideo";
 
 export interface StoryChapter {
@@ -23,6 +23,8 @@ export interface StoryChapter {
   body: string;
   facts?: string[];
   cta?: { label: string; href: string };
+  /** A quieter second link beside the CTA, to another site (opens in a new tab). */
+  secondaryLink?: { label: string; href: string };
   image: string;
   imageAlt: string;
   video?: { src: string; poster: string };
@@ -119,16 +121,32 @@ export function StickyStory({ chapters, tone = "dark" }: { chapters: StoryChapte
                   ))}
                 </ul>
               )}
-              {c.cta && (
-                <Link
-                  href={c.cta.href}
-                  className={`group mt-8 inline-flex items-center gap-2 border-b pb-1 text-base ${
-                    dark ? "border-summit-500 text-white" : "border-ocean-600 text-obsidian-900"
-                  }`}
-                >
-                  {c.cta.label}
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
-                </Link>
+              {(c.cta || c.secondaryLink) && (
+                <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4">
+                  {c.cta && (
+                    <Link
+                      href={c.cta.href}
+                      className={`group inline-flex items-center gap-2 border-b pb-1 text-base ${
+                        dark ? "border-summit-500 text-white" : "border-ocean-600 text-obsidian-900"
+                      }`}
+                    >
+                      {c.cta.label}
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
+                    </Link>
+                  )}
+                  {c.secondaryLink && (
+                    <a
+                      href={c.secondaryLink.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`inline-flex items-center gap-1.5 text-base underline-offset-4 hover:underline ${dark ? "text-slate-300 hover:text-white" : "text-slate-600 hover:text-obsidian-900"}`}
+                    >
+                      {c.secondaryLink.label}
+                      <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+                      <span className="sr-only">(opens in a new tab)</span>
+                    </a>
+                  )}
+                </div>
               )}
             </div>
           </li>

@@ -19,7 +19,8 @@ Astryx setup (already done, don't redo):
   the top of the page (72px phones / 84px tablets / 100px desktop; the bar opens to fit it via `.vc-nav-spacer`, `.vc-nav-lockup` in globals.css), footer, sign-in panel),
   `BrandMark` (horse-and-rider mark; the nav folds to it once the page scrolls; `white` and `emblem` variants)
   and `BrandWordmark` (the official "VISTA CHASE" lettering, never typeset text). Files are in `backend/media/brand`
-  (`wordmark-*.svg`, `lockup-*.svg` are cut unchanged from the official vector master).
+  (`wordmark-*.svg`, `lockup-*.svg` are cut unchanged from the official vector master; `lockup-name-*.svg` is the
+  same lockup without the tagline, used by the header via `tagline={false}`).
 - Images: every image is served by the backend from `backend/media` at `/media/...` (`next.config.mjs`
   rewrites `/media/*` to the backend like `/api/*`; `next/image` takes the `/media/...` path as a local src).
   There are no remote image hosts: don't add Webflow/Unsplash URLs, add the file to backend/media instead

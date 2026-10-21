@@ -1,17 +1,16 @@
 // "Why travellers choose us" (Viator / GetYourGuide reassurance grid on a dark band): a photo
-// with one plain fact, six reasons beside it. Every reason is a catalog fact, an FAQ answer or the
-// legal cancellation policy; nothing here is marketing that isn't backed elsewhere on the site.
+// with one plain fact, six reasons beside it. Copy from the owner's "Update Vista Chase web" doc.
 
 import Image from "next/image";
-import { BadgeCheck, CalendarCheck, CarFront, MapPin, MountainSnow, Users } from "lucide-react";
+import { CarFront, ClipboardCheck, HandHeart, MapPin, Receipt, Users } from "lucide-react";
 
 const REASONS = [
-  { icon: MountainSnow, title: "Guaranteed lake access", body: "Private cars can't drive to Moraine Lake. As a commercial operator, we still can." },
-  { icon: Users, title: "Small groups", body: "Never more than 12 guests on a shared tour, so there's time for every photo stop." },
-  { icon: CarFront, title: "Your own vehicle", body: "Private tours in a luxury SUV for up to 6 or an executive van for up to 13." },
-  { icon: MapPin, title: "Hotel pickup", body: "Doorstep pickup from more than 25 hotels and lodges in Banff, Canmore and Lake Louise." },
-  { icon: BadgeCheck, title: "Rated 5.0", body: "Ranked the #6 experience in Canada on Tripadvisor, from more than 1,000 reviews." },
-  { icon: CalendarCheck, title: "Free cancellation", body: "A full refund when you cancel at least 72 hours before your tour." },
+  { icon: HandHeart, title: "Passionate Local Guides", body: "Enjoy local stories, insights and a welcoming guide who makes your day memorable." },
+  { icon: Users, title: "Small Groups, Personal Attention", body: "No more than 12 guests on shared tours for a friendly, more personal experience." },
+  { icon: CarFront, title: "Your Own Private Tour", body: "Enjoy a dedicated guide and vehicle, with flexibility to shape the day around your interests." },
+  { icon: MapPin, title: "Convenient Pickup Options", body: "Depart from Banff or Canmore, with hotel pickup available on selected experiences." },
+  { icon: ClipboardCheck, title: "We Handle the Details", body: "Enjoy thoughtfully planned routes and included Moraine Lake transportation on applicable tours." },
+  { icon: Receipt, title: "Clear, Upfront Pricing", body: "Understand what's included, optional extras and cancellation terms before you book." },
 ];
 
 export function WhyTravelersLove() {
@@ -27,7 +26,7 @@ export function WhyTravelersLove() {
           <h2 id="why-heading" className="text-balance text-3xl font-light leading-[1.1] tracking-tight text-white sm:text-4xl lg:text-5xl">
             Why travellers choose us
           </h2>
-          <p className="mt-4 text-lg font-light leading-relaxed text-slate-300">Local guides, small groups and the lakes you can no longer drive to yourself.</p>
+          <p className="mt-4 text-lg font-light leading-relaxed text-slate-300">Local guides, small groups and the details taken care of.</p>
         </div>
 
         <div className="grid items-center gap-12 lg:grid-cols-12">
