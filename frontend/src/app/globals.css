@@ -387,27 +387,20 @@ html[data-hero-page]:not([data-scrolled]) .vc-book-desktop:hover {
   color: #1c1f23;
   transition: color 300ms ease;
 }
-/* My trips / Book tours match the centred name: the same light, widely spaced capitals, at the same
-   size from 1280px (smaller below that, where the buttons would run into the name). The
-   tracking after the last letter is taken back so the button stays balanced. */
+/* My trips / Book tours look like the Menu button: 14px capitals with the same 0.18em tracking
+   (owner's doc, 2026-10-22: "keep MY TRIPS & BOOK TOURS size small like MENU"). The tracking after
+   the last letter is taken back so the button stays balanced. */
 .vc-trips-desktop span,
 .vc-book-desktop span {
-  font-size: 14px !important;
-  font-weight: 300 !important;
-  letter-spacing: 0.3em !important;
+  font-size: 0.875rem !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.18em !important;
   line-height: 1 !important;
   text-transform: uppercase;
 }
 .vc-trips-desktop span:last-child,
 .vc-book-desktop span:last-child {
-  margin-left: 0.3em;
-  margin-right: -0.3em;
-}
-@media (min-width: 1280px) {
-  .vc-trips-desktop span,
-  .vc-book-desktop span {
-    font-size: var(--vc-nav-wordmark-h) !important;
-  }
+  margin-right: -0.18em;
 }
 .vc-nav-emblem {
   position: absolute;

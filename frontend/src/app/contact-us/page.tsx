@@ -7,19 +7,20 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { ArrowUpRight, ChevronRight, HelpCircle, Mail, MapPin, Phone, Sparkles, Ticket } from "lucide-react";
 import { ContactForm } from "@/components/forms/ContactForm";
+import { TWO_DAY_PACKAGE } from "@/lib/sharedTours";
 import { getTours } from "@/lib/api/catalog";
 import { withSeo } from "@/lib/seo/server";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 const baseMetadata: Metadata = {
   title: "Contact Us | Vista Chase Banff & Canmore",
-  description: "Call +1 (825) 734-9456, email info@vistachase.com or send us a message. Vista Chase is based in Canmore, Alberta.",
+  description: "Call +1 (825) 734-9456, email support@vistachase.com or send us a message. Vista Chase is based in Canmore, Alberta.",
   alternates: { canonical: "/contact-us" },
 };
 
 const CHANNELS = [
   { icon: Phone, title: "Call us", value: "+1 (825) 734-9456", note: "Lines open 6 a.m. – 9 p.m. Mountain Time", href: "tel:+18257349456" },
-  { icon: Mail, title: "Email", value: "info@vistachase.com", note: "We usually reply within a day", href: "mailto:info@vistachase.com" },
+  { icon: Mail, title: "Email", value: "support@vistachase.com", note: "We usually reply within a day", href: "mailto:support@vistachase.com" },
   { icon: Sparkles, title: "AI concierge", value: "Ask anything, any time", note: "Tours, pickups and bookings", href: "/concierge" },
 ];
 
@@ -29,8 +30,10 @@ const SELF_SERVE = [
   { icon: HelpCircle, label: "FAQ & cancellation", href: "/faq" },
 ];
 
-export default async function ContactUsPage({ searchParams }: { searchParams: Promise<{ tour?: string; guests?: string }> }) {
+export default async function ContactUsPage({ searchParams }: { searchParams: Promise<{ tour?: string; guests?: string; package?: string }> }) {
   const params = await searchParams;
+  // The Two-Day Rockies Explorer is requested here until it has its own checkout.
+  const twoDay = params.package === TWO_DAY_PACKAGE.slug;
   const tours = (await getTours()).map((t) => ({ slug: t.slug, title: t.title }));
   const requested = tours.find((t) => t.slug === params.tour);
   const guests = Number(params.guests);
@@ -60,10 +63,12 @@ export default async function ContactUsPage({ searchParams }: { searchParams: Pr
             </ol>
           </nav>
           <h1 className="mx-auto max-w-3xl text-balance text-4xl font-light leading-[1.05] tracking-tight text-white sm:text-6xl motion-safe:animate-[fadeUp_900ms_ease-out]">
-            {requested ? "Request this tour" : "Talk to a local"}
+            {twoDay ? `Request the ${TWO_DAY_PACKAGE.title}` : requested ? "Request this tour" : "Talk to a local"}
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-lg font-light leading-relaxed text-white/85 motion-safe:animate-[fadeUp_1100ms_ease-out]">
-            {requested
+            {twoDay
+              ? "Tell us your two dates and how many guests. Our team confirms both days and sends one booking with 10% off."
+              : requested
               ? `Tell us your dates for ${requested.title} and we'll reply with availability and a price.`
               : "Questions about Moraine Lake access, pickups or a custom private day? Our Canmore team is here to help."}
           </p>
@@ -120,7 +125,9 @@ export default async function ContactUsPage({ searchParams }: { searchParams: Pr
             Send us a message
           </h2>
           <p className="mb-8 mt-2 text-base text-slate-600">Group trips, custom private days, accessibility needs or anything else.</p>
-          <ContactForm tours={tours} defaultTour={requested?.slug} defaultGuests={Number.isFinite(guests) && guests > 0 ? guests : undefined} />
+          <ContactForm tours={tours} defaultTour={requested?.slug} defaultGuests={Number.isFinite(guests) && guests > 0 ? guests : undefined}
+            defaultMessage={twoDay ? TWO_DAY_PACKAGE.requestMessage : undefined}
+          />
         </section>
       </div>
 

@@ -5,7 +5,7 @@
  * Kept as a pattern string so the before-paint script in layout.tsx can use the same list.
  */
 export const HERO_PATH_PATTERN =
-  "^/(shared-tours|private-tours|shuttles|banff-activity-tickets|about-us|contact-us|faq|gallery|partners|pickup-finder|destinations(/[^/]+)?)?/?$";
+  "^/(shared-tours|two-day-rockies-explorer|private-tours|shuttles|banff-activity-tickets|about-us|contact-us|faq|gallery|partners|pickup-finder|destinations(/[^/]+)?)?/?$";
 
 export function isHeroPath(pathname: string | null | undefined) {
   return !!pathname && new RegExp(HERO_PATH_PATTERN).test(pathname);
