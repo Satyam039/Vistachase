@@ -262,6 +262,12 @@ html[data-hero-page]:not([data-scrolled]) .astryx-app-shell-header {
   backdrop-filter: none !important;
 }
 
+/* Still over the photo after scrolling a little: stay transparent (the photo runs on under the
+   bar instead of being cut by a white band) with a soft scrim so the menu stays legible. */
+html[data-hero-page][data-over-hero]:not([data-scrolled]) .astryx-app-shell-header {
+  background-image: linear-gradient(to bottom, rgba(10, 18, 20, 0.5), rgba(10, 18, 20, 0)) !important;
+}
+
 html[data-hero-page]:not([data-scrolled]) .astryx-layout-header {
   border: none !important;
   border-bottom: none !important;
@@ -278,6 +284,9 @@ html[data-hero-page]:not([data-scrolled]) .vc-brandmark-white {
 html[data-hero-page]:not([data-scrolled]) .vc-nav-lockup,
 html[data-hero-page]:not([data-scrolled]) .vc-nav-emblem {
   filter: drop-shadow(0 1px 8px rgba(0, 0, 0, 0.45));
+}
+html[data-hero-page]:not([data-scrolled]) .vc-nav-wordmark {
+  color: #ffffff;
 }
 html[data-hero-page]:not([data-scrolled]) .vc-menu-btn {
   color: #ffffff !important;
@@ -327,29 +336,29 @@ html[data-hero-page]:not([data-scrolled]) .vc-book-desktop:hover {
   display: none !important;
 }
 
-/* Centred brand: the "VISTA CHASE" lettering alone at the top of the page (18px tall on phones,
-   22px from 768px, 26px from 1024px, width following the height). Once the page scrolls
+/* Centred brand: "VISTA CHASE" alone at the top of the page, set in light spaced capitals like the
+   hero's "Extraordinary places" line (17px on phones, 20px from 768px, 24px from 1024px). Once the page scrolls
    (SiteFrame sets data-nav-compact) it cross-fades to the horse alone (44 / 50 / 56px), still
    centred. The bar is the same height in both states (.vc-nav-spacer), so nothing jumps.
    --vc-nav-open-h is the bar's height (spacer + its 16px padding): heroes start their content
    below it so the brand never covers the headline. */
 :root {
   --vc-nav-spacer-h: 52px;
-  --vc-nav-wordmark-h: 18px;
+  --vc-nav-wordmark-h: 17px;
   --vc-nav-emblem-h: 44px;
   --vc-nav-open-h: calc(var(--vc-nav-spacer-h) + 16px);
 }
 @media (min-width: 768px) {
   :root {
     --vc-nav-spacer-h: 58px;
-    --vc-nav-wordmark-h: 22px;
+    --vc-nav-wordmark-h: 20px;
     --vc-nav-emblem-h: 50px;
   }
 }
 @media (min-width: 1024px) {
   :root {
     --vc-nav-spacer-h: 64px;
-    --vc-nav-wordmark-h: 26px;
+    --vc-nav-wordmark-h: 24px;
     --vc-nav-emblem-h: 56px;
   }
 }
@@ -365,9 +374,18 @@ html[data-hero-page]:not([data-scrolled]) .vc-book-desktop:hover {
   align-items: center;
   transition: opacity 300ms ease;
 }
-.vc-nav-lockup img {
-  height: var(--vc-nav-wordmark-h);
-  width: auto;
+/* Same face, weight and spacing as the hero's "Extraordinary places" line. The negative margin
+   takes back the tracking after the last letter so the name sits optically centred. */
+.vc-nav-wordmark {
+  font-size: var(--vc-nav-wordmark-h);
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: 0.3em;
+  margin-right: -0.3em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #1c1f23;
+  transition: color 300ms ease;
 }
 .vc-nav-emblem {
   position: absolute;

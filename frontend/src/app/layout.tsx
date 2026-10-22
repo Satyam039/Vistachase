@@ -12,6 +12,7 @@ import { AstryxThemeProvider } from "@/components/providers/AstryxThemeProvider"
 import { SiteFrame } from "@/components/layout/SiteFrame";
 import { TrackingTags } from "@/components/seo/TrackingTags";
 import { getSiteConfig } from "@/lib/seo/server";
+import { HERO_PATH_PATTERN } from "@/lib/heroPages";
 
 export const metadata: Metadata = {
   title: "Vista Chase | Luxury Private Tours & Shuttles in Banff & Rockies",
@@ -109,7 +110,7 @@ export default async function RootLayout({
         {/* Before paint: mark hero pages so transparent header renders without flash. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var p=window.location.pathname;if(p==='/'||p==='/shared-tours'||p==='/private-tours'||p==='/shuttles'){document.documentElement.setAttribute('data-hero-page','true');}}catch(e){}})();`,
+            __html: `(function(){try{if(new RegExp(${JSON.stringify(HERO_PATH_PATTERN)}).test(window.location.pathname)){document.documentElement.setAttribute('data-hero-page','true');}}catch(e){}})();`,
           }}
         />
         {siteSchema(config?.siteSchema ?? []).map((block, i) => (

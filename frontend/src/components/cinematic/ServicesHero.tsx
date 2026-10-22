@@ -128,6 +128,7 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
 
   return (
     <section
+      data-nav-hero
       aria-label="Vista Chase: tours in the Canadian Rockies"
       className="relative isolate flex min-h-[100vh] min-h-[100dvh] flex-col overflow-hidden bg-obsidian-950 text-white"
     >
