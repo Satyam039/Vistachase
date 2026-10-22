@@ -581,6 +581,8 @@ export async function cancelBooking(reference: string, customerEmail?: string) {
 
   // Outside the transaction: the payment provider is a network call.
   let refundedCents = 0;
+  let failedCents = 0;
+  const failures: string[] = [];
   // DEPOSIT plan: everything paid except the deposit, taken from the balance payment first.
   let depositPlanBudget = booking.paymentPlan === "DEPOSIT" ? depositPlanRefundCents(booking, booking.payments) : 0;
   const succeeded = booking.payments.filter((p) => p.status === "SUCCEEDED").sort((a, b) => (a.kind === "BALANCE" ? -1 : 0) - (b.kind === "BALANCE" ? -1 : 0));
@@ -601,10 +603,27 @@ export async function cancelBooking(reference: string, customerEmail?: string) {
         await reverseCommissionForRefund(booking.id, refund.refundId, amount, "guest cancelled").catch((e) =>
           console.error(`Commission reversal failed for ${booking.bookingReference}:`, (e as Error).message),
         );
+      } else {
+        failedCents += amount;
+        failures.push("declined by the payment provider");
       }
     } catch (error) {
+      failedCents += amount;
+      failures.push((error as Error).message);
       console.error(`Refund failed for ${booking.bookingReference}:`, (error as Error).message);
     }
+  }
+  // A refund that didn't go through is owed by hand: staff see it under Flags ("Refund owed") and
+  // close it with Mark refunded once the money is sent.
+  if (failedCents > 0) {
+    await prisma.bookingFlag.create({
+      data: {
+        bookingId: booking.id,
+        type: "REFUND_DUE",
+        amountCents: failedCents,
+        note: `Refund $${(failedCents / 100).toFixed(2)} ${booking.currency} owed: the guest cancelled online and the automatic refund failed (${failures.join("; ").slice(0, 300)}).`,
+      },
+    });
   }
   if (refundedCents > 0) {
     await prisma.$transaction((tx) => transitionBooking(tx, booking.id, ["CANCELLED"], "REFUNDED", { refundedCents }));
@@ -620,6 +639,7 @@ export async function cancelBooking(reference: string, customerEmail?: string) {
           <h2>Booking cancelled</h2>
           <p>Your booking <strong>${booking.bookingReference}</strong> for <strong>${escapeHtml(booking.tourDeparture.tour?.title || booking.tourDeparture.shuttleRoute?.name || "Vista Chase experience")}</strong> on ${formatDateOnly(booking.tourDeparture.date)} has been cancelled.</p>
           ${refundedCents > 0 ? `<p>We have refunded <strong>$${(refundedCents / 100).toFixed(2)} ${booking.currency}</strong> to your original payment method; it usually arrives within 5–10 business days.</p>` : ""}
+          ${failedCents > 0 ? `<p>Your refund of <strong>$${(failedCents / 100).toFixed(2)} ${booking.currency}</strong> couldn't be sent automatically. Our team has been notified and will send it to your original payment method.</p>` : ""}
           <p>${booking.paymentPlan === "DEPOSIT" ? `You paid with a ${DEPOSIT_PERCENT}% deposit, which is non-refundable; everything else you paid is refunded.` : "Bookings of 1–6 guests are refunded in full. For groups of 7 or more and multi-day trips, the 20% deposit is non-refundable."}</p>
           <p>Questions? Reply to this email or call +1 (825) 734-9456.</p>
         </div>`,
@@ -627,17 +647,52 @@ export async function cancelBooking(reference: string, customerEmail?: string) {
     })
     .catch((e) => console.error("Cancellation email failed:", (e as Error).message));
 
-  return { success: true, booking: final, refundedAmount: refundedCents / 100, message: "Reservation cancelled and capacity released." };
+  return { success: true, booking: final, refundedAmount: refundedCents / 100, refundOwedAmount: failedCents / 100, message: "Reservation cancelled and capacity released." };
 }
 
-export async function getCustomerBookings(customerEmail: string) {
+/**
+ * My trips: bookings the account made while signed in, plus those made with its email once the
+ * email is verified (same rule as ownsBooking). Only the fields the trips page shows: never staff
+ * notes, tracking tokens, payment rows or price snapshots.
+ */
+export async function getCustomerBookings(account: { userId: string; email: string; emailVerified: boolean }) {
   return await prisma.booking.findMany({
     // Expired checkouts were never paid for, so they aren't the guest's trips.
-    where: { customerEmail: { equals: customerEmail, mode: "insensitive" }, status: { not: "EXPIRED" } },
-    include: {
-      tourDeparture: { include: { tour: true, shuttleRoute: true } },
-      pickupStop: true,
-      review: true,
+    where: {
+      status: { not: "EXPIRED" },
+      OR: [{ customerId: account.userId }, ...(account.emailVerified ? [{ customerEmail: { equals: account.email, mode: "insensitive" as const } }] : [])],
+    },
+    select: {
+      id: true,
+      bookingReference: true,
+      voucherCode: true,
+      customerName: true,
+      customerEmail: true,
+      totalSeats: true,
+      adultsCount: true,
+      childrenCount: true,
+      infantsCount: true,
+      totalAmount: true,
+      currency: true,
+      status: true,
+      createdAt: true,
+      pickupTime: true,
+      pickupCustomText: true,
+      tourDeparture: {
+        select: {
+          id: true,
+          date: true,
+          departureTime: true,
+          tour: { select: { id: true, title: true, slug: true, featuredImage: true, category: true } },
+          shuttleRoute: { select: { id: true, name: true, origin: true, destination: true } },
+        },
+      },
+      pickupStop: { select: { id: true, name: true, address: true, town: true } },
+      review: { select: { id: true, rating: true, title: true, body: true } },
+      paymentPlan: true,
+      depositAmount: true,
+      balanceDueAt: true,
+      balancePaidAt: true,
       payments: { select: { status: true, amount: true } },
     },
     orderBy: { createdAt: "desc" },

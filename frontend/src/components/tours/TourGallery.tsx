@@ -132,7 +132,7 @@ export function TourGallery({
       {/* Hero (GetYourGuide / Viator category pattern): breadcrumb, rating, title, one-line lede and
           the CTA; the "why choose" reasons sit in a frosted chip row along the bottom (a swipeable
           rail on phones). The longer intro lives in the strip below, not over the photo. */}
-      <section className="relative isolate flex min-h-[34rem] flex-col justify-end overflow-hidden bg-obsidian-950 text-white sm:min-h-[40rem] lg:min-h-[78vh]">
+      <section data-nav-hero className="relative isolate flex min-h-[34rem] flex-col justify-end overflow-hidden bg-obsidian-950 text-white sm:min-h-[40rem] lg:min-h-[78vh]">
         {service && (
           <div className="absolute inset-0 -z-10">
             <Image src={service.image} alt="" fill priority sizes="100vw" className="object-cover" data-parallax="10" />

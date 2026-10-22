@@ -117,9 +117,14 @@ describe("Phase 5: Customer Portal, My Trips & Reviews", () => {
 
     expect(token).toBeDefined();
 
-    const trips = await getCustomerBookings(testCustomerEmail);
+    // A verified email sees the bookings made with it; an unverified one sees none of them.
+    const trips = await getCustomerBookings({ userId: "test-user-id", email: testCustomerEmail, emailVerified: true });
     expect(trips.length).toBeGreaterThanOrEqual(2);
     expect(trips.some((t) => t.bookingReference === validBookingRef)).toBe(true);
+    expect(trips[0]).not.toHaveProperty("adminNotes");
+    expect(trips[0]).not.toHaveProperty("trackingToken");
+    const unverified = await getCustomerBookings({ userId: "test-user-id", email: testCustomerEmail, emailVerified: false });
+    expect(unverified).toHaveLength(0);
   });
 
   it("enforces the 72-hour cancellation policy: rejects cancellation within 72 hours", async () => {

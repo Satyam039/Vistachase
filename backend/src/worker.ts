@@ -9,12 +9,14 @@
 //   every 5 minutes   SEO pages scheduled to publish go live
 //   04:00 Mountain    SEO audit of the live pages (docs/SEO.md)
 //   hourly (:20)      deposit bookings: balance reminders, staff flag 72h before (docs/DEPOSITS.md)
+//   every 5 minutes   T-60 WhatsApp tracking link to guests picked up within the hour (only with
+//                     WHATSAPP_PROVIDER=twilio or meta)
 
 import "dotenv/config";
 import { Queue, Worker } from "bullmq";
 import IORedis from "ioredis";
 import prisma from "@/lib/db/prisma";
-import { expireHoldsAndUnpaidBookings, maturePartnerCommissions, publishScheduledSeoPages, reconcileBookings, remindUnpaidBalances, runNightlySeoAudit, sendReviewRequests, syncWebflowBlogPosts } from "@/jobs/tasks";
+import { expireHoldsAndUnpaidBookings, maturePartnerCommissions, publishScheduledSeoPages, reconcileBookings, remindUnpaidBalances, runNightlySeoAudit, sendReviewRequests, sendT60WhatsApp, syncWebflowBlogPosts, whatsAppDeliveryConfigured } from "@/jobs/tasks";
 import { isWebflowSyncEnabled, webflowSyncMinutes } from "@/modules/seo/portal/webflow-sync";
 
 const QUEUE = "vista-chase-jobs";
@@ -29,6 +31,7 @@ const JOBS: Record<string, () => Promise<unknown>> = {
   "seo-audit": () => runNightlySeoAudit(),
   "webflow-blog-sync": () => syncWebflowBlogPosts(),
   "balance-reminders": () => remindUnpaidBalances(),
+  "whatsapp-t60": () => sendT60WhatsApp(),
 };
 
 async function main() {
@@ -46,6 +49,8 @@ async function main() {
   await queue.upsertJobScheduler("balance-reminders", { pattern: "20 * * * *", tz: TZ }, { name: "balance-reminders" });
   if (isWebflowSyncEnabled()) await queue.upsertJobScheduler("webflow-blog-sync", { every: webflowSyncMinutes() * 60 * 1000 }, { name: "webflow-blog-sync" });
   else await queue.removeJobScheduler("webflow-blog-sync");
+  if (whatsAppDeliveryConfigured()) await queue.upsertJobScheduler("whatsapp-t60", { every: 5 * 60 * 1000 }, { name: "whatsapp-t60" });
+  else await queue.removeJobScheduler("whatsapp-t60");
 
   const worker = new Worker(
     QUEUE,

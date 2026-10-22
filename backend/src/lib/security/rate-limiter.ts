@@ -11,34 +11,17 @@ export interface RateLimitResult {
   resetSeconds: number;
 }
 
+/**
+ * Fixed-window limit. The count is incremented in one atomic step (a Redis script, or in-process
+ * counters when Redis is down), so simultaneous requests can't slip past the limit, and limits stay
+ * on without Redis.
+ */
 export async function checkRateLimit(
   key: string,
   config: RateLimitConfig = { maxRequests: 20, windowSeconds: 60 }
 ): Promise<RateLimitResult> {
-  const cache = getCacheProvider();
-  const cacheKey = `rate_limit:${key}`;
-
-  const currentCountStr = await cache.get<string>(cacheKey);
-  const currentCount = currentCountStr ? parseInt(String(currentCountStr), 10) : 0;
-
-  if (currentCount >= config.maxRequests) {
-    const ttl = await cache.ttl(cacheKey);
-    return {
-      allowed: false,
-      remaining: 0,
-      resetSeconds: ttl > 0 ? ttl : config.windowSeconds,
-    };
-  }
-
-  const nextCount = currentCount + 1;
-  const ttl = await cache.ttl(cacheKey);
-  const expiry = ttl > 0 ? ttl : config.windowSeconds;
-
-  await cache.set(cacheKey, nextCount.toString(), expiry);
-
-  return {
-    allowed: true,
-    remaining: config.maxRequests - nextCount,
-    resetSeconds: expiry,
-  };
+  const { count, ttl } = await getCacheProvider().incrWindow(`rate_limit:${key}`, config.windowSeconds);
+  const resetSeconds = ttl > 0 ? ttl : config.windowSeconds;
+  if (count > config.maxRequests) return { allowed: false, remaining: 0, resetSeconds };
+  return { allowed: true, remaining: config.maxRequests - count, resetSeconds };
 }

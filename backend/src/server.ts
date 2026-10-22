@@ -11,6 +11,7 @@ if (process.env.SENTRY_DSN) {
 
 import { createApp } from "./app";
 import { startInProcessJobs } from "./jobs/in-process";
+import { logConfigWarnings } from "./lib/config/startup-checks";
 
 // Task F4: Validate configuration at boot
 const requiredEnv = [
@@ -35,6 +36,8 @@ if (!dbUrl.startsWith('postgres://') && !dbUrl.startsWith('postgresql://')) {
   console.error('[FATAL] DATABASE_URL must be a PostgreSQL connection string.');
   process.exit(1);
 }
+
+logConfigWarnings();
 
 const port = parseInt(process.env.PORT || "4000", 10);
 

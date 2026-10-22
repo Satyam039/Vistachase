@@ -15,7 +15,8 @@ import Link from "next/link";
 import * as stylex from "@stylexjs/stylex";
 import { TopNav } from "@astryxdesign/core/TopNav";
 import { Calendar, User } from "lucide-react";
-import { BrandMark, BrandWordmark } from "@/components/brand/BrandMark";
+import { BrandMark } from "@/components/brand/BrandMark";
+import { isHeroPath } from "@/lib/heroPages";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { SiteMenu } from "@/components/layout/SiteMenu";
@@ -43,20 +44,17 @@ const styles = stylex.create({
 
 export function SiteFrame({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isHeroPage =
-    pathname === "/" ||
-    pathname === "/shared-tours" ||
-    pathname === "/private-tours" ||
-    pathname === "/shuttles";
+  const isHeroPage = isHeroPath(pathname);
 
+  // A hero page whose hero didn't render (a 404 under /destinations/…) keeps the solid header.
   useEffect(() => {
     const root = document.documentElement;
-    if (isHeroPage) {
+    if (isHeroPage && document.querySelector("[data-nav-hero]")) {
       root.setAttribute("data-hero-page", "true");
     } else {
       root.removeAttribute("data-hero-page");
     }
-  }, [isHeroPage]);
+  }, [isHeroPage, pathname]);
 
   // The header is sticky, so anything scrolled into view under it would be hidden. Reserve its
   // height as scroll padding: focused elements and #anchors then land below the header
@@ -73,7 +71,9 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
       root.style.setProperty("--vc-header-h", `${height}px`); // offset for sticky in-page bars
     };
     update();
-    // Lift the header with a shadow once the page has scrolled (globals.css: [data-scrolled]), and
+    // Frost the header once the page has scrolled (globals.css: [data-scrolled]). Over a photo hero
+    // it stays transparent until the hero has scrolled out from under it, so the photo is never
+    // cut by a white band ([data-over-hero] adds a soft scrim for the menu while it is). Then
     // fold the "Vista Chase" name away further down so only the emblem stays centred
     // ([data-nav-compact]). The fold uses two thresholds so it can't flicker at one scroll position,
     // and reads scrollY at most once per frame.
@@ -81,7 +81,14 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
     const sync = () => {
       frame = 0;
       const y = window.scrollY;
-      root.toggleAttribute("data-scrolled", y > 8);
+      const hero = root.hasAttribute("data-hero-page")
+        ? document.querySelector<HTMLElement>("[data-nav-hero]")
+        : null;
+      const heroEnd = hero
+        ? hero.getBoundingClientRect().bottom + y - header.getBoundingClientRect().height
+        : 8;
+      root.toggleAttribute("data-scrolled", y > heroEnd);
+      root.toggleAttribute("data-over-hero", !!hero && y > 8 && y <= heroEnd);
       // The bar keeps its height as it folds (globals.css .vc-nav-spacer), so the page can't
       // move under the thresholds and unfold it again.
       if (y > 160) root.setAttribute("data-nav-compact", "");
@@ -99,9 +106,10 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
       window.removeEventListener("scroll", onScroll);
       if (frame) window.cancelAnimationFrame(frame);
       root.removeAttribute("data-nav-compact");
+      root.removeAttribute("data-over-hero");
       root.style.scrollPaddingTop = "";
     };
-  }, []);
+  }, [pathname]);
 
   // The SEO portal (/seo, /seo/*) is a staff workspace with its own frame: no public header,
   // footer, announcement or concierge there. Every other route renders exactly as before.
@@ -125,7 +133,8 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
                 {/* Holds the bar open to the full logo's height at the top of the page; collapses
                   with it on scroll (globals.css: .vc-nav-spacer). */}
                 <span className="vc-nav-spacer" aria-hidden="true" />
-                {/* Centred brand: the official "VISTA CHASE" lettering alone at the top of the page. Not in
+                {/* Centred brand: "VISTA CHASE" set in the hero's light, widely spaced capitals, alone at
+                  the top of the page. Not in
                   TopNav's centerContent: Astryx hides that slot on narrow screens. Once the page
                   scrolls it cross-fades to the horse alone (globals.css: [data-nav-compact]); the
                   link keeps its "Vista Chase home" name either way. */}
@@ -135,12 +144,7 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
                   className="absolute left-1/2 top-1/2 inline-flex -translate-x-1/2 -translate-y-1/2 items-center rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ocean-600"
                 >
                   <span className="vc-nav-lockup">
-                    <span className="vc-brandmark-dark inline-flex items-center">
-                      <BrandWordmark size={26} variant="ink" />
-                    </span>
-                    <span className="vc-brandmark-white hidden items-center">
-                      <BrandWordmark size={26} variant="white" />
-                    </span>
+                    <span className="vc-nav-wordmark" aria-hidden="true">Vista Chase</span>
                   </span>
                   <span className="vc-nav-emblem">
                     <span className="vc-brandmark-dark inline-flex items-center">

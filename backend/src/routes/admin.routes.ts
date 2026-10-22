@@ -676,6 +676,25 @@ async function issueSetupLink(user: { id: string; email: string; name: string },
   return { link, emailed, expires };
 }
 
+/**
+ * Making an existing account staff: if the account isn't staff yet and its email was never
+ * verified, whoever registered it may not own the address (anyone can sign up with a future staff
+ * member's email). So its password is replaced, every sign-in on it ends, and the real owner gets a
+ * one-time link by email to choose a password, exactly like a new invite. Returns the link, or
+ * null when nothing needed securing.
+ */
+async function secureNewStaffAccount(req: Request, userId: string, previousRole: string) {
+  if ((STAFF_LIST_ROLES as string[]).includes(previousRole)) return null;
+  const account = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, email: true, name: true, emailVerified: true } });
+  if (!account || account.emailVerified) return null;
+  await prisma.user.update({
+    where: { id: userId },
+    data: { passwordHash: await hashPassword(crypto.randomBytes(32).toString("hex")), sessionsValidAfter: new Date() },
+  });
+  await audit(req, "STAFF_INVITED", "User", userId, { email: account.email, reason: "unverified account made staff" });
+  return issueSetupLink(account, "invite");
+}
+
 // Gives an account a staff role. With a name and no existing account, it creates the account
 // (no password yet) and returns a one-time link for the person to choose their own password.
 // Access follows the role from the next request; role CUSTOMER ends staff access at once.
@@ -704,7 +723,8 @@ router.post("/staff", requireStaff(["ADMIN"]), rateLimitMiddleware("staff_invite
     if (existing.role === "AFFILIATE") return res.status(400).json({ success: false, error: "This is a partner account. Use a separate account for staff work." });
     const user = await prisma.user.update({ where: { id: existing.id }, data: { role: body.role }, select: { id: true, email: true, name: true, role: true } });
     await audit(req, "CHANGE_ROLE", "User", user.id, { role: body.role, previous: existing.role });
-    res.json({ success: true, user, invited: false });
+    const setup = await secureNewStaffAccount(req, existing.id, existing.role);
+    res.json({ success: true, user, invited: !!setup, ...(setup ? { setupLink: setup.link, emailed: setup.emailed, linkExpires: setup.expires } : {}) });
   } catch (e) {
     next(e);
   }
@@ -733,7 +753,8 @@ router.patch("/staff/:id", requireStaff(["ADMIN"]), async (req, res, next) => {
     if (previous.role === "AFFILIATE") return res.status(400).json({ success: false, error: "This is a partner account; change it on the Partners page." });
     const user = await prisma.user.update({ where: { id: String(req.params.id) }, data: { role: body.role }, select: { id: true, email: true, role: true } });
     await audit(req, "CHANGE_ROLE", "User", user.id, { ...body, previous: previous.role });
-    res.json({ success: true, user });
+    const setup = body.role === "CUSTOMER" ? null : await secureNewStaffAccount(req, user.id, previous.role);
+    res.json({ success: true, user, ...(setup ? { invited: true, setupLink: setup.link, emailed: setup.emailed, linkExpires: setup.expires } : {}) });
   } catch (e) {
     next(e);
   }

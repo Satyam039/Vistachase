@@ -2,13 +2,15 @@ import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
 import { Router, type Request, type Response } from "express";
 import prisma from "@/lib/db/prisma";
 import { hashPassword, verifyPassword, signToken, UserRole } from "@/lib/auth/auth";
-import { AUTH_COOKIE_NAME, getAuthenticatedUser } from "@/lib/auth/admin-guard";
+import { AUTH_COOKIE_NAME, getSessionUser } from "@/lib/auth/admin-guard";
 import crypto from "node:crypto";
 import { getEmailProvider } from "@/lib/email/email.provider";
 import { siteUrl } from "@/lib/security/signed-links";
 import { emailSchema, parseOr400, z } from "@/lib/security/validate";
 
 const router = Router();
+
+const sha256 = (value: string) => crypto.createHash("sha256").update(value).digest("hex");
 
 // Secure cookies are only stored by browsers on HTTPS. Until the site has HTTPS (it is served on
 // plain http://<ip> today), a Secure cookie is silently dropped and nobody can stay signed in.
@@ -69,11 +71,8 @@ const user = await prisma.user.findUnique({
       await prisma.user.update({ where: { id: user.id }, data: { failedLoginAttempts: 0, lockedUntil: null } });
     }
     
-    // Link previous bookings to this user by email!
-    await prisma.booking.updateMany({
-      where: { customerEmail: normalizedEmail, customerId: null },
-      data: { customerId: user.id }
-    });
+    // Guest bookings made with this email join the account only once the email is verified.
+    if (user.emailVerified) await linkGuestBookings(user.id, user.email);
 
     const token = signToken({
       userId: user.id,
@@ -140,6 +139,7 @@ router.post("/register", rateLimitMiddleware("register", { maxRequests: 3, windo
     });
 
     setAuthCookie(req, res, token);
+    await sendVerificationEmail(user);
     return res.json({
       success: true,
       user: {
@@ -147,6 +147,7 @@ router.post("/register", rateLimitMiddleware("register", { maxRequests: 3, windo
         name: user.name,
         email: user.email,
         role: user.role,
+        emailVerified: false,
       },
     });
   } catch (error: unknown) {
@@ -162,15 +163,14 @@ router.post("/logout", (_req, res) => {
 // The role comes from the database, so the site stops showing staff pages as soon as a role changes.
 router.get("/me", async (req, res, next) => {
   try {
-    const payload = getAuthenticatedUser(req);
-    const user = payload ? await prisma.user.findUnique({ where: { id: payload.userId }, select: { id: true, email: true, name: true, role: true } }) : null;
+    const user = await getSessionUser(req);
     if (!user) {
       return res.json({ authenticated: false, user: null });
     }
 
     return res.json({
       authenticated: true,
-      user: { id: user.id, email: user.email, name: user.name, role: user.role },
+      user: { id: user.userId, email: user.email, name: user.name, role: user.role, emailVerified: user.emailVerified },
     });
   } catch (e) {
     next(e);
@@ -178,10 +178,60 @@ router.get("/me", async (req, res, next) => {
 });
 
 
+// Email verification: the link in the welcome email carries a random token; only its SHA-256 hash is
+// stored (User.verificationToken) and it works once. A verified email lets the account see and
+// manage bookings made with that address before it signed up (ownsBooking in admin-guard.ts).
+async function sendVerificationEmail(user: { id: string; email: string; name: string }) {
+  const token = crypto.randomBytes(32).toString("hex");
+  await prisma.user.update({ where: { id: user.id }, data: { verificationToken: sha256(token) } });
+  const link = `${siteUrl()}/verify-email?token=${token}`;
+  await getEmailProvider()
+    .sendEmail({
+      to: user.email,
+      subject: "Confirm your Vista Chase email",
+      html: `<p>Hi ${user.name.replace(/[<>&]/g, "")},</p><p><a href="${link}">Confirm your email address</a> to see every booking made with it under My trips.</p><p>If you didn't create a Vista Chase account, you can ignore this email.</p>`,
+      text: `Confirm your Vista Chase email: ${link}\nIf you didn't create a Vista Chase account, ignore this email.`,
+    })
+    .catch((e) => console.error("Verification email failed:", (e as Error).message));
+}
+
+/** Bookings made with this (verified) email before the account existed join the account. */
+async function linkGuestBookings(userId: string, email: string) {
+  await prisma.booking.updateMany({
+    where: { customerEmail: { equals: email, mode: "insensitive" }, customerId: null },
+    data: { customerId: userId },
+  });
+}
+
+router.post("/verify-email", rateLimitMiddleware("verify_email", { maxRequests: 10, windowSeconds: 900 }), async (req, res, next) => {
+  try {
+    const body = parseOr400(z.object({ token: z.string().regex(/^[a-f0-9]{64}$/) }), req.body, res);
+    if (!body) return;
+    const user = await prisma.user.findFirst({ where: { verificationToken: sha256(body.token) }, select: { id: true, email: true } });
+    if (!user) return res.status(400).json({ success: false, error: "This confirmation link is invalid or has already been used." });
+    await prisma.user.update({ where: { id: user.id }, data: { emailVerified: true, verificationToken: null } });
+    await linkGuestBookings(user.id, user.email);
+    return res.json({ success: true, message: "Email confirmed." });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// A fresh confirmation link for the signed-in account (the old one stops working).
+router.post("/resend-verification", rateLimitMiddleware("resend_verification", { maxRequests: 3, windowSeconds: 900 }), async (req, res, next) => {
+  try {
+    const user = await getSessionUser(req);
+    if (!user) return res.status(401).json({ success: false, error: "Sign in first." });
+    if (user.emailVerified) return res.json({ success: true, alreadyVerified: true });
+    await sendVerificationEmail({ id: user.userId, email: user.email, name: user.name });
+    return res.json({ success: true, message: `We've sent a confirmation link to ${user.email}.` });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Password reset: the emailed link carries a random token; only its SHA-256 hash is stored, it
 // expires in an hour and works once. Responses never reveal whether an account exists.
-const sha256 = (value: string) => crypto.createHash("sha256").update(value).digest("hex");
-
 router.post("/forgot-password", rateLimitMiddleware("forgot_password", { maxRequests: 3, windowSeconds: 900 }), async (req, res, next) => {
   try {
     const body = parseOr400(z.object({ email: emailSchema }), req.body, res);
@@ -220,8 +270,19 @@ router.post("/reset-password", rateLimitMiddleware("reset_password", { maxReques
 
     await prisma.user.update({
       where: { id: user.id },
-      data: { passwordHash: await hashPassword(body.newPassword), resetToken: null, resetTokenExpiry: null, lockedUntil: null, failedLoginAttempts: 0 },
+      // The link reached the inbox, so the email is verified. Every earlier sign-in ends.
+      data: {
+        passwordHash: await hashPassword(body.newPassword),
+        resetToken: null,
+        resetTokenExpiry: null,
+        lockedUntil: null,
+        failedLoginAttempts: 0,
+        emailVerified: true,
+        verificationToken: null,
+        sessionsValidAfter: new Date(),
+      },
     });
+    await linkGuestBookings(user.id, user.email);
     // Staff accounts: record it (completes an invite on the Staff screen). Never the password or token.
     if (!["CUSTOMER", "AFFILIATE"].includes(user.role)) {
       await prisma.auditLog.create({ data: { userId: user.id, action: "STAFF_PASSWORD_SET", entityType: "User", entityId: user.id, details: {} } });

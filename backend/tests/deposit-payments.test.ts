@@ -123,9 +123,10 @@ describe("checkout with a deposit", () => {
   });
 
   it("My trips shows dollars and what is still owed", async () => {
-    const { reference, created } = await depositBooking();
-    const email = created.booking!.customerEmail;
-    const cookie = `vc_token=${signToken({ userId: "guest", email, role: "CUSTOMER", name: "Deposit Guest" })}`;
+    const { reference } = await depositBooking();
+    const { customerEmail: email } = await load(reference);
+    const user = await prisma.user.create({ data: { email, name: "Deposit Guest", passwordHash: "x", role: "CUSTOMER", emailVerified: true } });
+    const cookie = `vc_token=${signToken({ userId: user.id, email, role: "CUSTOMER", name: user.name })}`;
     const res = await request(app).get("/api/account/trips").set("Cookie", cookie);
     expect(res.status).toBe(200);
     const trip = res.body.bookings.find((b: { bookingReference: string }) => b.bookingReference === reference);
