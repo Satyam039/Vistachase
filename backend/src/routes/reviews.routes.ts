@@ -1,6 +1,6 @@
 import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
 import { Router } from "express";
-import { getAuthenticatedUser } from "@/lib/auth/admin-guard";
+import { getSessionUser, ownsBooking } from "@/lib/auth/admin-guard";
 import { createReview, getTourReviews } from "@/modules/reviews/review.repository";
 import prisma from "@/lib/db/prisma";
 import { verifyBookingLink } from "@/lib/security/signed-links";
@@ -42,13 +42,11 @@ router.post("/", rateLimitMiddleware("review_create", { maxRequests: 3, windowSe
     if (!input) return;
     const { bookingReference, rating, title, body: reviewBody, authorName } = input;
 
-    // Only the guest who booked: signed in, the booking's email, or the signed review link.
-    const payload = getAuthenticatedUser(req);
-    const booking = await prisma.booking.findUnique({ where: { bookingReference }, select: { customerEmail: true } });
-    const ownerEmail = booking?.customerEmail.toLowerCase();
-    const isOwner =
-      !!ownerEmail &&
-      (payload?.email.toLowerCase() === ownerEmail || input.email === ownerEmail || verifyBookingLink(bookingReference, "review", input.t));
+    // Only the guest who booked: the signed-in owner (ownsBooking) or the signed review link. The
+    // booking's email alone is not proof (`email` is accepted from older pages and ignored).
+    const payload = await getSessionUser(req);
+    const booking = await prisma.booking.findUnique({ where: { bookingReference }, select: { customerEmail: true, customerId: true } });
+    const isOwner = !!booking && (ownsBooking(payload, booking) || verifyBookingLink(bookingReference, "review", input.t));
     if (!isOwner) return res.status(403).json({ error: "Only the guest who made this booking can review it." });
     const author = payload?.name || authorName;
 

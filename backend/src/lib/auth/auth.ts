@@ -8,6 +8,8 @@ export interface TokenPayload {
   email: string;
   role: UserRole;
   name: string;
+  /** Issued-at, seconds (set by jsonwebtoken). */
+  iat?: number;
 }
 
 const JWT_SECRET = process.env.JWT_SECRET!;

@@ -10,6 +10,11 @@ export interface IEmailProvider {
   sendEmail(payload: EmailPayload): Promise<{ success: boolean; messageId?: string; error?: string }>;
 }
 
+/** Hides link tokens: query values named t, token or sig, and any hex run of 32+ characters. */
+export function redactTokens(text: string): string {
+  return text.replace(/([?&](?:t|token|sig)=)[^&\s"'<>]+/gi, "$1[redacted]").replace(/[a-f0-9]{32,}/gi, "[redacted]");
+}
+
 class ConsoleEmailProvider implements IEmailProvider {
   async sendEmail(payload: EmailPayload): Promise<{ success: boolean; messageId: string }> {
     const messageId = `mock_msg_${Date.now()}`;
@@ -18,9 +23,10 @@ class ConsoleEmailProvider implements IEmailProvider {
     console.log(`From: ${payload.from || process.env.EMAIL_FROM || "bookings@vistachase.com"}`);
     console.log(`Subject: ${payload.subject}`);
     console.log("----------------------- [EMAIL CONTENT PREVIEW] -----------------------");
-    // One-time tokens (password reset, staff invites) never go to the logs.
+    // Link tokens (password reset, staff invites, email confirmation, voucher, check-in, review,
+    // tracking) never go to the logs.
     const preview = payload.text || payload.html.replace(/<[^>]*>?/gm, "").substring(0, 300) + "...";
-    console.log(preview.replace(/[a-f0-9]{64}/gi, "[redacted]"));
+    console.log(redactTokens(preview));
     console.log("===================================================================\n");
     return { success: true, messageId };
   }
@@ -61,10 +67,12 @@ class ResendEmailProvider implements IEmailProvider {
   }
 }
 
+// Not built yet. It says so instead of reporting a send that never happened (EMAIL_PROVIDER=ses
+// used to look configured while every email was dropped). Use EMAIL_PROVIDER=resend.
 class SESEmailProvider implements IEmailProvider {
   async sendEmail(payload: EmailPayload): Promise<{ success: boolean; messageId?: string; error?: string }> {
-    console.log(`[SESEmailProvider] AWS SES ready send to ${payload.to}`);
-    return { success: true, messageId: `ses_${Date.now()}` };
+    console.error(`[SESEmailProvider] not implemented: email to ${Array.isArray(payload.to) ? payload.to.length + " recipients" : "1 recipient"} was NOT sent. Set EMAIL_PROVIDER=resend.`);
+    return { success: false, error: "The SES email provider is not implemented; use EMAIL_PROVIDER=resend." };
   }
 }
 
@@ -73,7 +81,7 @@ let emailInstance: IEmailProvider | null = null;
 /** True when emails really leave the server (not the console provider used in development). */
 export function emailDeliveryConfigured(): boolean {
   const providerType = process.env.EMAIL_PROVIDER || "console";
-  return (providerType === "resend" && !!process.env.RESEND_API_KEY) || (providerType === "ses" && !!process.env.AWS_ACCESS_KEY_ID);
+  return providerType === "resend" && !!process.env.RESEND_API_KEY;
 }
 
 export function getEmailProvider(): IEmailProvider {

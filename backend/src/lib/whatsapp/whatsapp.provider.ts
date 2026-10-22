@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import prisma from "@/lib/db/prisma";
-import { dateOnly, formatTimeOfDay, todayInMountainTime } from "@/lib/utils/time";
+import { dateOnly, formatTimeOfDay, getMountainTimeInstant, timeOfDay, todayInMountainTime } from "@/lib/utils/time";
 
 export interface WhatsAppMessagePayload {
   toPhoneNumber: string;
@@ -296,7 +296,7 @@ export async function dispatchShuttleTrackingAlert(
 
     const departure = booking.tourDeparture;
     const tourTitle = departure?.tour?.title || departure?.shuttleRoute?.name || "Canadian Rockies Tour";
-    const stopName = booking.pickupStop?.name || booking.pickupCustomText || "Fairmont Banff Springs Hotel";
+    const stopName = booking.pickupStop?.name || booking.pickupCustomText || "your pickup point";
     const activeRun = departure?.operationRuns?.[0];
 
     const provider = getWhatsAppProvider();
@@ -306,9 +306,10 @@ export async function dispatchShuttleTrackingAlert(
       tourName: tourTitle,
       pickupLocation: stopName,
       pickupTime: booking.pickupTime || formatTimeOfDay(departure.departureTime),
-      vehicleName: activeRun?.vehicle?.name || "Mercedes-Benz Sprinter Executive #4",
-      licensePlate: activeRun?.vehicle?.licensePlate || "ALBERTA • 7VC-894",
-      driverName: activeRun?.driver?.publicName || activeRun?.driver?.name || "Marc Tremblay",
+      // Before dispatch assigns a vehicle and driver, say so plainly instead of naming made-up ones.
+      vehicleName: activeRun?.vehicle?.name || "your Vista Chase vehicle",
+      licensePlate: activeRun?.vehicle?.licensePlate || "shown on the tracking page",
+      driverName: activeRun?.driver?.publicName || activeRun?.driver?.name || "your Vista Chase guide",
       trackingUrl,
       bookingReference: booking.bookingReference,
     });
@@ -340,22 +341,47 @@ export async function dispatchShuttleTrackingAlert(
 // ---------------------------------------------------------------------------
 // Automated T-60 Batch Scheduler
 // ---------------------------------------------------------------------------
-export async function dispatchT60ScheduledBatch(): Promise<{
+
+/** True when WhatsApp messages really leave the server (Twilio or Meta), not the console logger. */
+export function whatsAppDeliveryConfigured(): boolean {
+  const type = (process.env.WHATSAPP_PROVIDER || "console").toLowerCase();
+  return type === "twilio" || type === "meta";
+}
+
+/** How far ahead the T-60 job looks: an hour, plus the job's 5-minute interval so nobody is missed. */
+export const T60_LEAD_MINUTES = 65;
+
+/** The guest's pickup instant: their own pickup time ("HH:MM") on the departure date, else the departure time. */
+function pickupInstant(date: Date, departureTime: Date, pickupTime: string | null) {
+  const own = pickupTime && /^\d{2}:\d{2}$/.test(pickupTime) ? timeOfDay(pickupTime) : null;
+  return getMountainTimeInstant(date, own ?? departureTime);
+}
+
+/**
+ * Sends the "your vehicle is on the way" WhatsApp with the live tracking link to every confirmed
+ * guest whose pickup is within the next hour (T-60). Run every 5 minutes by the worker (or the API
+ * with RUN_JOBS_IN_API=true). Each booking gets it once (WhatsAppNotification is unique per booking
+ * and type), so overlapping runs never send twice.
+ */
+export async function dispatchT60ScheduledBatch(now: Date = new Date()): Promise<{
   processed: number;
   dispatched: number;
   skipped: number;
 }> {
+  const horizon = new Date(now.getTime() + T60_LEAD_MINUTES * 60_000);
+  // Departures on today's or tomorrow's Banff date (a pickup just after midnight is within the hour).
   const today = todayInMountainTime();
+  const tomorrow = new Date(dateOnly(today).getTime() + 86_400_000);
 
-  // Find all confirmed departures for today (Banff's operating day)
   const departures = await prisma.tourDeparture.findMany({
     where: {
-      date: dateOnly(today),
+      date: { in: [dateOnly(today), tomorrow] },
       status: { not: "CANCELLED" },
     },
     include: {
       bookings: {
-        where: { status: "CONFIRMED" },
+        where: { status: "CONFIRMED", whatsappNotifications: { none: { type: "T_60_TRACKING" } } },
+        select: { id: true, pickupTime: true },
       },
     },
   });
@@ -366,6 +392,8 @@ export async function dispatchT60ScheduledBatch(): Promise<{
 
   for (const dep of departures) {
     for (const b of dep.bookings) {
+      const at = pickupInstant(dep.date, dep.departureTime, b.pickupTime);
+      if (at <= now || at > horizon) continue;
       processed++;
       const res = await dispatchShuttleTrackingAlert(b.id);
       if (res.alreadySent) {

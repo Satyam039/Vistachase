@@ -5,7 +5,7 @@
 import { Router } from "express";
 import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
 import { cancelBooking, createBooking, getBookingByReference, paymentState } from "@/modules/bookings/booking.repository";
-import { getAuthenticatedStaff, getAuthenticatedUser } from "@/lib/auth/admin-guard";
+import { getAuthenticatedStaff, getAuthenticatedUser, getSessionUser, ownsBooking } from "@/lib/auth/admin-guard";
 import { verifyBookingLink } from "@/lib/security/signed-links";
 import { emailSchema, parseOr400, referenceSchema, z } from "@/lib/security/validate";
 
@@ -63,11 +63,10 @@ router.get("/", rateLimitMiddleware("booking_read", { maxRequests: 30, windowSec
     const query = parseOr400(readSchema, req.query, res);
     if (!query) return;
     const booking = await getBookingByReference(query.ref);
-    const user = getAuthenticatedUser(req);
     const allowed =
       booking &&
       (verifyBookingLink(booking.bookingReference, "voucher", query.t) ||
-        (user && user.email.toLowerCase() === booking.customerEmail.toLowerCase()) ||
+        ownsBooking(await getSessionUser(req), booking) ||
         (await getAuthenticatedStaff(req)));
     if (!booking || !allowed) return res.status(404).json({ success: false, error: "Booking not found" });
 
@@ -110,22 +109,21 @@ router.get("/", rateLimitMiddleware("booking_read", { maxRequests: 30, windowSec
   }
 });
 
+// `email` is still accepted from older pages but proves nothing on its own, so it is ignored.
 const cancelSchema = z.object({ bookingReference: referenceSchema, email: emailSchema.optional(), t: z.string().max(64).optional() });
 
-// Cancel: the signed-in owner, the booking's email, or the voucher link's token.
+// Cancel: the signed-in owner (ownsBooking) or the voucher link's signed token. An email address
+// alone is not enough: anyone who knows a guest's email and reference could cancel their trip.
 router.post("/cancel", rateLimitMiddleware("booking_cancel", { maxRequests: 5, windowSeconds: 60 }), async (req, res, next) => {
   try {
     const body = parseOr400(cancelSchema, req.body, res);
     if (!body) return;
-    const user = getAuthenticatedUser(req);
-    let customerEmail = user?.email ?? body.email;
-    if (!customerEmail && verifyBookingLink(body.bookingReference, "voucher", body.t)) {
-      customerEmail = (await getBookingByReference(body.bookingReference))?.customerEmail;
+    const booking = await getBookingByReference(body.bookingReference);
+    const allowed = booking && (verifyBookingLink(booking.bookingReference, "voucher", body.t) || ownsBooking(await getSessionUser(req), booking));
+    if (!booking || !allowed) {
+      return res.status(403).json({ success: false, error: "Open the cancel link in your confirmation email, or sign in to the account that made the booking." });
     }
-    if (!customerEmail) {
-      return res.status(400).json({ success: false, error: "Enter the email address used for the booking." });
-    }
-    const result = await cancelBooking(body.bookingReference, customerEmail);
+    const result = await cancelBooking(body.bookingReference, booking.customerEmail);
     if (!result.success) return res.status(400).json({ success: false, error: result.error });
     return res.json({ success: true, message: result.message, refundedAmount: result.refundedAmount, booking: { bookingReference: result.booking!.bookingReference, status: result.booking!.status } });
   } catch (error) {

@@ -3,7 +3,7 @@
 // jobs don't run twice. Nightly emails stay with the worker. A run is skipped while the previous one
 // of the same job is still going.
 
-import { expireHoldsAndUnpaidBookings, maturePartnerCommissions, publishScheduledSeoPages, runNightlySeoAudit, syncWebflowBlogPosts } from "@/jobs/tasks";
+import { expireHoldsAndUnpaidBookings, maturePartnerCommissions, publishScheduledSeoPages, runNightlySeoAudit, sendT60WhatsApp, syncWebflowBlogPosts, whatsAppDeliveryConfigured } from "@/jobs/tasks";
 import { isWebflowSyncEnabled, webflowSyncMinutes } from "@/modules/seo/portal/webflow-sync";
 
 const JOBS: { name: string; everyMs: number; run: () => Promise<unknown> }[] = [
@@ -15,6 +15,8 @@ const JOBS: { name: string; everyMs: number; run: () => Promise<unknown> }[] = [
   { name: "seo-audit", everyMs: 24 * 60 * 60 * 1000, run: () => runNightlySeoAudit() },
   // Only when switched on (WEBFLOW_SYNC_ENABLED=true and WEBFLOW_API_TOKEN), every WEBFLOW_SYNC_MINUTES.
   ...(isWebflowSyncEnabled() ? [{ name: "webflow-blog-sync", everyMs: webflowSyncMinutes() * 60 * 1000, run: () => syncWebflowBlogPosts() }] : []),
+  // Only with a real WhatsApp provider (tasks.ts sendT60WhatsApp).
+  ...(whatsAppDeliveryConfigured() ? [{ name: "whatsapp-t60", everyMs: 5 * 60 * 1000, run: () => sendT60WhatsApp() }] : []),
 ];
 
 export function startInProcessJobs() {

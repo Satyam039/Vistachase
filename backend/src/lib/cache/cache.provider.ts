@@ -6,6 +6,8 @@ export interface ICacheProvider {
   del(key: string): Promise<void>;
   exists(key: string): Promise<boolean>;
   ttl(key: string): Promise<number>;
+  /** Adds one to a counter in a single step; the window starts with the first hit. */
+  incrWindow(key: string, windowSeconds: number): Promise<{ count: number; ttl: number }>;
 }
 
 class MemoryCacheProvider implements ICacheProvider {
@@ -46,7 +48,28 @@ class MemoryCacheProvider implements ICacheProvider {
     const remaining = Math.max(0, Math.floor((item.expiresAt - Date.now()) / 1000));
     return remaining;
   }
+
+  // Synchronous between reads and writes, so it is atomic within this process.
+  async incrWindow(key: string, windowSeconds: number) {
+    const now = Date.now();
+    const item = this.store.get(key);
+    const live = item && (!item.expiresAt || item.expiresAt > now) ? item : null;
+    const count = (live ? parseInt(live.val, 10) || 0 : 0) + 1;
+    const expiresAt = live?.expiresAt ?? now + windowSeconds * 1000;
+    this.store.set(key, { val: String(count), expiresAt });
+    return { count, ttl: Math.max(1, Math.ceil((expiresAt - now) / 1000)) };
+  }
 }
+
+/** Counters for when Redis can't be reached: per process, but limits stay on. */
+const fallbackCounters = new MemoryCacheProvider();
+
+// INCR and the first EXPIRE in one script, so concurrent requests can't both read the old count.
+const INCR_WINDOW = `local c = redis.call('INCR', KEYS[1])
+if c == 1 then redis.call('EXPIRE', KEYS[1], ARGV[1]) end
+local t = redis.call('TTL', KEYS[1])
+if t < 0 then redis.call('EXPIRE', KEYS[1], ARGV[1]); t = tonumber(ARGV[1]) end
+return {c, t}`;
 
 class RedisCacheProvider implements ICacheProvider {
   private client: Redis;
@@ -110,6 +133,15 @@ class RedisCacheProvider implements ICacheProvider {
       return await this.client.ttl(key);
     } catch {
       return -1;
+    }
+  }
+
+  async incrWindow(key: string, windowSeconds: number) {
+    try {
+      const [count, ttl] = (await this.client.eval(INCR_WINDOW, 1, key, String(windowSeconds))) as [number, number];
+      return { count: Number(count), ttl: Number(ttl) };
+    } catch {
+      return fallbackCounters.incrWindow(key, windowSeconds);
     }
   }
 }
