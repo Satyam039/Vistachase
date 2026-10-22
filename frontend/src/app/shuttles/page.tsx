@@ -51,7 +51,7 @@ export default async function ShuttlesPage() {
       <PageSeoExtras path="/shuttles" />
     <div className="bg-obsidian-50 text-obsidian-900">
       {/* Hero */}
-      <section className="relative isolate flex min-h-[78vh] items-end overflow-hidden bg-obsidian-950 text-white">
+      <section data-nav-hero className="relative isolate flex min-h-[78vh] items-end overflow-hidden bg-obsidian-950 text-white">
         <Image src="/media/photos/moraine-lake-perfect-reflection.webp" alt="" fill priority sizes="100vw" className="-z-10 object-cover" />
         <AmbientVideo
           src="/media/videos/lake-louise-summer.mp4"

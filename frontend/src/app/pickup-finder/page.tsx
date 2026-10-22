@@ -62,7 +62,7 @@ export default function PickupFinderPage() {
   return (
     <div className="bg-obsidian-50 text-obsidian-900">
       {/* Hero */}
-      <section className="relative isolate flex min-h-[46vh] items-end overflow-hidden bg-obsidian-950 text-white">
+      <section data-nav-hero className="relative isolate flex min-h-[46vh] items-end overflow-hidden bg-obsidian-950 text-white">
         <Image
           src="/media/photos/fairmont-banff-springs.webp"
           alt=""
@@ -73,7 +73,7 @@ export default function PickupFinderPage() {
           data-parallax="10"
         />
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/45 to-ocean-950/20" />
-        <div className="mx-auto flex w-full max-w-6xl flex-col items-center px-page pb-24 pt-20 text-center">
+        <div className="mx-auto flex w-full max-w-6xl flex-col items-center px-page pb-24 pt-[calc(var(--vc-nav-open-h,100px)+1rem)] text-center">
           <nav aria-label="Breadcrumb" className="mb-6">
             <ol className="flex items-center justify-center gap-1.5 text-sm text-slate-200">
               <li>

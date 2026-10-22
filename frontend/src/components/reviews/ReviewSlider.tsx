@@ -3,22 +3,25 @@
 // Guest reviews as a slider: moves on by itself every few seconds, with previous/next buttons and
 // native swipe (a scroll-snap track). It pauses while you hover or focus it and has a visible
 // pause button (WCAG 2.2.2); with reduced motion it doesn't move on its own. Only real reviews go
-// in: ones guests wrote against a Vista Chase booking (backend /api/reviews filters the rest), and
-// each card says so.
+// in: ones guests wrote against a Vista Chase booking (backend /api/reviews filters the rest), or
+// reviews the owner picked from Tripadvisor (lib/reviews), and each card says which.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { BadgeCheck, ChevronLeft, ChevronRight, Pause, Play, Star } from "lucide-react";
+import { ArrowUpRight, BadgeCheck, ChevronLeft, ChevronRight, Pause, Play, Star } from "lucide-react";
 
 export interface SliderReview {
   id: string;
   authorName: string;
-  rating: number;
+  /** Left out when the source gives none: then no stars are shown. */
+  rating?: number;
   title: string;
   body: string;
   date: string;
   tourTitle?: string;
   tourSlug?: string;
+  /** Where a review was published, when not against a Vista Chase booking, with a link to it. */
+  source?: { label: string; url: string };
 }
 
 const INTERVAL_MS = 6000;
@@ -116,14 +119,16 @@ export function ReviewSlider({ reviews, tone = "light", label = "Guest reviews" 
                   : "bg-white ring-1 ring-obsidian-900/[0.08] shadow-[0_12px_36px_-16px_rgba(12,31,33,0.08)] hover:shadow-[0_20px_48px_-16px_rgba(12,31,33,0.14)]"
               }`}
             >
-              <p className="flex items-center gap-1" role="img" aria-label={`${r.rating} out of 5`}>
-                {Array.from({ length: 5 }, (_, s) => (
-                  <Star key={s} className={`h-4 w-4 ${s < r.rating ? "fill-summit-500 text-summit-500" : dark ? "text-white/25" : "text-slate-300"}`} aria-hidden="true" />
-                ))}
-              </p>
-              <blockquote className="mt-4 flex-1">
+              {r.rating != null && (
+                <p className="mb-4 flex items-center gap-1" role="img" aria-label={`${r.rating} out of 5`}>
+                  {Array.from({ length: 5 }, (_, s) => (
+                    <Star key={s} className={`h-4 w-4 ${s < r.rating! ? "fill-summit-500 text-summit-500" : dark ? "text-white/25" : "text-slate-300"}`} aria-hidden="true" />
+                  ))}
+                </p>
+              )}
+              <blockquote className="flex-1">
                 <p className={`text-lg font-light ${dark ? "text-white" : "text-obsidian-900"}`}>{r.title}</p>
-                <p className={`mt-2 line-clamp-6 text-base leading-relaxed ${dark ? "text-slate-200" : "text-slate-700"}`}>{r.body}</p>
+                <p className={`mt-2 line-clamp-6 whitespace-pre-line text-base leading-relaxed ${dark ? "text-slate-200" : "text-slate-700"}`}>{r.body}</p>
               </blockquote>
               <figcaption className={`mt-5 border-t pt-4 text-sm ${dark ? "border-white/10 text-slate-300" : "border-obsidian-900/[0.06] text-slate-600"}`}>
                 <span className={dark ? "text-white" : "text-obsidian-900"}>{r.authorName}</span> · {r.date}
@@ -132,10 +137,23 @@ export function ReviewSlider({ reviews, tone = "light", label = "Guest reviews" 
                     {r.tourTitle}
                   </Link>
                 )}
-                <span className="mt-2 flex items-center gap-1.5">
-                  <BadgeCheck className={`h-4 w-4 ${dark ? "text-summit-300" : "text-emerald-700"}`} aria-hidden="true" />
-                  {REVIEW_SOURCE}
-                </span>
+                {r.source ? (
+                  <a
+                    href={r.source.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`mt-2 inline-flex items-center gap-1.5 underline-offset-4 hover:underline ${dark ? "text-summit-200" : "text-ocean-600"}`}
+                  >
+                    Read on {r.source.label}
+                    <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+                    <span className="sr-only">(opens in a new tab)</span>
+                  </a>
+                ) : (
+                  <span className="mt-2 flex items-center gap-1.5">
+                    <BadgeCheck className={`h-4 w-4 ${dark ? "text-summit-300" : "text-emerald-700"}`} aria-hidden="true" />
+                    {REVIEW_SOURCE}
+                  </span>
+                )}
               </figcaption>
             </figure>
           </li>
