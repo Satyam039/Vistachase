@@ -12,6 +12,8 @@ export interface PaymentIntentRequest {
   bookingReference: string;
   customerEmail: string;
   metadata?: Record<string, string>;
+  /** Stripe idempotency key; default one per booking (`booking-<reference>`). */
+  idempotencyKey?: string;
 }
 
 export interface PaymentIntentResponse {
@@ -71,7 +73,7 @@ class StripePaymentProvider implements IPaymentProvider {
         metadata: { bookingReference: req.bookingReference, ...req.metadata },
       },
       // One intent per booking even if the request is retried.
-      { idempotencyKey: `booking-${req.bookingReference}` },
+      { idempotencyKey: req.idempotencyKey ?? `booking-${req.bookingReference}` },
     );
     return {
       clientSecret: intent.client_secret || "",

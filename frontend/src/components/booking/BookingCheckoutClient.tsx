@@ -50,7 +50,7 @@ import { QuantityInput } from "@/components/forms/QuantityInput";
 import { Dropdown } from "@/components/forms/Dropdown";
 import { PhoneField } from "@/components/forms/PhoneField";
 import { dialCode } from "@/lib/countries";
-import { SEATS_MESSAGE } from "@/lib/policy";
+import { balanceDueDate, DEPOSIT_PERCENT, DEPOSIT_POLICY, depositAvailable, depositFor, formatRockiesDate, SEATS_MESSAGE } from "@/lib/policy";
 import { StripeCheckoutForm, stripeConfigured } from "@/components/booking/StripeCheckoutForm";
 import {
   CreditCard,
@@ -116,6 +116,10 @@ interface ConfirmedBooking {
   /** Signed voucher link and its token (the booking API needs the token to read the booking). */
   voucherUrl: string;
   voucherToken: string;
+  paymentPlan?: "FULL" | "DEPOSIT";
+  depositAmount?: number;
+  balanceDue?: number;
+  balanceDueAt?: string | null;
 }
 
 // ── Data ──────────────────────────────────────────────────────────────────────
@@ -362,7 +366,9 @@ export function BookingCheckoutClient({
   };
 
   const [confirmed, setConfirmed] = useState<ConfirmedBooking | null>(null);
-  const [awaitingPayment, setAwaitingPayment] = useState<{ booking: ConfirmedBooking; clientSecret: string } | null>(null);
+  const [awaitingPayment, setAwaitingPayment] = useState<{ booking: ConfirmedBooking; clientSecret: string; amount: number } | null>(null);
+  // Pay everything now, or the deposit now and the balance 14 days before departure.
+  const [paymentPlan, setPaymentPlan] = useState<"FULL" | "DEPOSIT">("FULL");
   const [paymentState, setPaymentState] = useState<"pay" | "confirming" | "slow">("pay");
 
   // After Stripe accepts the card, wait for the server's confirmation (sent by Stripe's webhook).
@@ -375,7 +381,7 @@ export function BookingCheckoutClient({
       const status = data?.booking?.status as string | undefined;
       if (status === "CONFIRMED" || status === "PAID_UNSYNCED") {
         setAwaitingPayment(null);
-        setConfirmed({ ...booking, status, qrCodeUrl: data.booking.qrCodeUrl ?? booking.qrCodeUrl });
+        setConfirmed({ ...booking, ...data.booking, status, voucherUrl: booking.voucherUrl, voucherToken: booking.voucherToken, qrCodeUrl: data.booking.qrCodeUrl ?? booking.qrCodeUrl });
         return;
       }
       if (status === "CANCELLED" || status === "EXPIRED") {
@@ -576,6 +582,11 @@ export function BookingCheckoutClient({
   // Same rounding as the server (whole cents). No sales tax is added.
   const discount = appliedPromo ? round2(fareSubtotal * (appliedPromo.percent / 100)) : 0;
   const total = round2(fareSubtotal - discount + addOnsTotal);
+  const canDeposit = total > 0 && depositAvailable(departure.date, departure.departureTime);
+  const plan = canDeposit ? paymentPlan : "FULL";
+  const depositNow = depositFor(total);
+  const dueNow = plan === "DEPOSIT" ? depositNow : total;
+  const balanceDueLabel = formatRockiesDate(balanceDueDate(departure.date, departure.departureTime));
 
   const selectedStop = stops.find((stop) => stop.id === pickupStopId);
   const experienceTitle =
@@ -680,6 +691,7 @@ export function BookingCheckoutClient({
           // The server prices add-ons itself; only the choice is sent.
           addOns: selectedAddOns.map((addOn) => ({ id: addOn.id })),
           promoCode: appliedPromo?.code,
+          paymentPlan: plan,
         }),
       });
       const data = await res.json();
@@ -692,7 +704,7 @@ export function BookingCheckoutClient({
       clearHold();
       if (data.payment?.clientSecret) {
         // The guest pays in Stripe's form; the booking is confirmed when Stripe tells our server.
-        setAwaitingPayment({ booking: data.booking, clientSecret: data.payment.clientSecret });
+        setAwaitingPayment({ booking: data.booking, clientSecret: data.payment.clientSecret, amount: data.payment.amount });
       } else if (data.booking?.status === "CONFIRMED" || data.booking?.status === "PAID_UNSYNCED") {
         setConfirmed(data.booking);
       } else {
@@ -876,6 +888,12 @@ export function BookingCheckoutClient({
             {money(total)} {departure.currency}
           </Text>
         </HStack>
+        {plan === "DEPOSIT" && (
+          <>
+            <SummaryRow label={`Due today (${DEPOSIT_PERCENT}% deposit)`} value={money(depositNow)} />
+            <SummaryRow label={`Balance, due by ${balanceDueLabel}`} value={money(round2(total - depositNow))} />
+          </>
+        )}
       </VStack>
       {!confirmed && holdStatus}
     </VStack>
@@ -936,8 +954,8 @@ export function BookingCheckoutClient({
 
   const continueLabel = isLastStep
     ? stripeConfigured
-      ? `Continue to payment · ${money(total)}`
-      : `Complete booking · ${money(total)}`
+      ? `Continue to payment · ${money(dueNow)}`
+      : `Complete booking · ${money(dueNow)}`
     : step === 1 && !holdToken
       ? "Hold my seats & continue"
       : "Continue";
@@ -1020,10 +1038,20 @@ export function BookingCheckoutClient({
                 value={`${selectedStop.name} (${selectedStop.town})`}
               />
             )}
-            <SummaryRow
-              label="Total paid"
-              value={`${money(confirmed.totalAmount)} ${confirmed.currency}`}
-            />
+            {confirmed.paymentPlan === "DEPOSIT" ? (
+              <>
+                <SummaryRow label="Deposit paid" value={`${money(confirmed.depositAmount ?? 0)} ${confirmed.currency}`} />
+                <SummaryRow
+                  label={`Balance, due by ${confirmed.balanceDueAt ? formatRockiesDate(confirmed.balanceDueAt) : balanceDueLabel}`}
+                  value={`${money(confirmed.balanceDue ?? round2(confirmed.totalAmount - (confirmed.depositAmount ?? 0)))} ${confirmed.currency}`}
+                />
+              </>
+            ) : (
+              <SummaryRow
+                label="Total paid"
+                value={`${money(confirmed.totalAmount)} ${confirmed.currency}`}
+              />
+            )}
           </VStack>
           {selectedStop && (
             <Text type="supporting" color="secondary">
@@ -1370,6 +1398,45 @@ export function BookingCheckoutClient({
                             </VStack>
                           </Card>
 
+                          {canDeposit && !awaitingPayment && (
+                            <fieldset className="rounded-2xl bg-white p-4 ring-1 ring-obsidian-900/[0.07]">
+                              <legend className="px-1 text-sm font-semibold text-obsidian-900">How would you like to pay?</legend>
+                              <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                                {(
+                                  [
+                                    { value: "FULL", title: `Pay in full · ${money(total)}`, detail: "Nothing more to pay before your trip." },
+                                    {
+                                      value: "DEPOSIT",
+                                      title: `Pay ${DEPOSIT_PERCENT}% now · ${money(depositNow)}`,
+                                      detail: `The rest, ${money(round2(total - depositNow))}, is due by ${balanceDueLabel}. We'll email you a reminder and you pay it from your voucher.`,
+                                    },
+                                  ] as const
+                                ).map((option) => (
+                                  <label
+                                    key={option.value}
+                                    className={`flex cursor-pointer gap-3 rounded-xl p-3 ring-1 transition-colors ${
+                                      plan === option.value ? "bg-ocean-50 ring-ocean-600" : "ring-obsidian-900/[0.12] hover:bg-obsidian-50"
+                                    }`}
+                                  >
+                                    <input
+                                      type="radio"
+                                      name="payment-plan"
+                                      value={option.value}
+                                      checked={plan === option.value}
+                                      onChange={() => setPaymentPlan(option.value)}
+                                      className="mt-1 h-4 w-4 accent-ocean-700"
+                                    />
+                                    <span className="flex flex-col gap-1">
+                                      <span className="text-sm font-semibold text-obsidian-900">{option.title}</span>
+                                      <span className="text-sm text-slate-600">{option.detail}</span>
+                                    </span>
+                                  </label>
+                                ))}
+                              </div>
+                              {plan === "DEPOSIT" && <p className="mt-3 text-sm text-slate-600">{DEPOSIT_POLICY}</p>}
+                            </fieldset>
+                          )}
+
                           {awaitingPayment ? (
                             <Card padding={4}>
                               {paymentState === "pay" ? (
@@ -1377,7 +1444,7 @@ export function BookingCheckoutClient({
                                   <Text weight="bold">Pay by card</Text>
                                   <StripeCheckoutForm
                                     clientSecret={awaitingPayment.clientSecret}
-                                    amountLabel={`${money(awaitingPayment.booking.totalAmount)} ${awaitingPayment.booking.currency}`}
+                                    amountLabel={`${money(awaitingPayment.amount)} ${awaitingPayment.booking.currency}`}
                                     onPaid={() => waitForConfirmation(awaitingPayment.booking)}
                                   />
                                 </VStack>

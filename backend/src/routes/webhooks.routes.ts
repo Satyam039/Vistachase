@@ -4,6 +4,8 @@
 //   payment_intent.succeeded            → confirm the booking (voucher email) if the amount matches
 //   payment_intent.payment_failed       → cancel the pending booking and release its seats
 //   payment_intent.canceled             → same
+//   (metadata.kind BALANCE)             → a deposit booking's balance: record it, or mark the
+//                                         payment failed (the booking stays confirmed)
 //   charge.refunded                     → reverse partner commission for each refund (also refunds
 //                                         made in the Stripe dashboard); a fully refunded payment is
 //                                         marked REFUNDED (a partial refund leaves it SUCCEEDED); a
@@ -15,6 +17,7 @@
 import { Router, type Request, type Response } from "express";
 import Stripe from "stripe";
 import { confirmPaidBooking, failPendingBooking } from "@/modules/bookings/booking.repository";
+import { failBalancePayment, recordBalancePayment } from "@/modules/bookings/deposit-payments";
 import { transitionBooking } from "@/modules/bookings/booking-status";
 import { reverseCommissionForRefund } from "@/modules/affiliates/commission";
 import prisma from "@/lib/db/prisma";
@@ -52,7 +55,14 @@ router.post("/stripe", async (req: Request, res: Response) => {
     }
     const intent = event.data.object as Stripe.PaymentIntent;
     const reference = intent?.metadata?.bookingReference;
-    if (reference) {
+    if (reference && intent.metadata?.kind === "BALANCE") {
+      // A deposit booking's balance: the booking is already confirmed, so a failure leaves it alone.
+      if (event.type === "payment_intent.succeeded") {
+        await recordBalancePayment(reference, { amount: intent.amount_received || intent.amount || 0, currency: intent.currency ?? "", transactionId: intent.id });
+      } else if (event.type === "payment_intent.payment_failed" || event.type === "payment_intent.canceled") {
+        await failBalancePayment(intent.id);
+      }
+    } else if (reference) {
       if (event.type === "payment_intent.succeeded") {
         // Confirms only if Stripe's amount and currency match the booking's server-computed total.
         await confirmPaidBooking(reference, { amount: intent.amount_received || intent.amount || 0, currency: intent.currency ?? "", transactionId: intent.id });
