@@ -73,6 +73,9 @@ export default function MyTripsPage() {
   const [user, setUser] = useState<{ id: string; email: string; name: string } | null>(null);
   const [bookings, setBookings] = useState<TripBooking[]>([]);
   const [activeTab, setActiveTab] = useState<"upcoming" | "past" | "cancelled">("upcoming");
+  // false: bookings made with this email before the account existed stay hidden until it's confirmed.
+  const [emailVerified, setEmailVerified] = useState(true);
+  const [verifyNote, setVerifyNote] = useState("");
 
   // Lookup by Reference fallback state (for guests not logged in)
   const [searchRef, setSearchRef] = useState("");
@@ -109,11 +112,23 @@ export default function MyTripsPage() {
         if (tripsData.bookings) {
           setBookings(tripsData.bookings);
         }
+        setEmailVerified(tripsData.emailVerified !== false);
       }
     } catch (e) {
       console.error("Failed to load customer trips", e);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function sendConfirmation() {
+    setVerifyNote("");
+    try {
+      const res = await fetch("/api/auth/resend-verification", { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      setVerifyNote(res.ok && data.success ? data.message || "Confirmation link sent. Check your inbox." : data.error || "We couldn't send the link. Please try again later.");
+    } catch {
+      setVerifyNote("We couldn't reach the server. Please try again.");
     }
   }
 
@@ -319,6 +334,19 @@ export default function MyTripsPage() {
       </section>
 
       <div className="mx-auto max-w-7xl px-page py-10 sm:py-14">
+        {user && !emailVerified && (
+          <div role="status" className="mb-8 flex flex-col gap-3 rounded-2xl bg-summit-50 px-5 py-4 text-sm text-obsidian-900 ring-1 ring-summit-200 sm:flex-row sm:items-center sm:justify-between">
+            <p className="flex items-start gap-2">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-summit-700" aria-hidden="true" />
+              <span>
+                Confirm your email to see bookings made with <strong>{user.email}</strong> before you signed up. {verifyNote}
+              </span>
+            </p>
+            <button type="button" onClick={sendConfirmation} className="inline-flex h-10 shrink-0 items-center justify-center rounded-full border border-obsidian-900/15 px-5 text-sm hover:bg-white">
+              Send confirmation link
+            </button>
+          </div>
+        )}
         {/* Signed out: find a booking, or sign in */}
         {!user && !loading && bookings.length === 0 && (
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">

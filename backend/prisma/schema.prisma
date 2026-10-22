@@ -133,6 +133,7 @@ model User {
   verificationToken   String?
   resetToken          String?
   resetTokenExpiry    DateTime?
+  sessionsValidAfter  DateTime? // sign-ins issued before this are refused (password reset, made staff)
   createdAt           DateTime   @default(now())
   updatedAt           DateTime   @updatedAt
   bookings            Booking[]
@@ -341,6 +342,9 @@ model Booking {
   @@index([trackingToken])
   @@index([customerEmail])
   @@index([voucherCode])
+  @@index([customerId])
+  @@index([tourDepartureId, status])
+  @@index([status, paymentExpiresAt])
 }
 
 model BookingAddOn {

@@ -26,14 +26,15 @@ describe("F15: Route-level tests (Auth, Ownership, Rate Limits)", () => {
   });
 
   describe("Ownership on Booking Cancel", () => {
-    it("should require email to match if not logged in", async () => {
+    it("should refuse an anonymous caller, even one who sends the booking email", async () => {
       (getAuthenticatedUser as any).mockReturnValue(null);
-      
-      const res = await request(app).post("/api/bookings/cancel").send({ bookingReference: "VC-2026-UNKNOWN" });
 
-      // F5 ownership check: an anonymous caller must prove ownership with the booking email.
-      expect(res.status).toBe(400);
-      expect(res.body.error).toBeTruthy();
+      // Ownership is the signed-in owner or the voucher link's token; an email proves nothing.
+      for (const body of [{ bookingReference: "VC-2026-UNKNOWN" }, { bookingReference: "VC-2026-UNKNOWN", email: "guest@example.com" }]) {
+        const res = await request(app).post("/api/bookings/cancel").send(body);
+        expect(res.status).toBe(403);
+        expect(res.body.error).toBeTruthy();
+      }
     });
   });
 
