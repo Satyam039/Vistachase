@@ -7,6 +7,8 @@ import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
 import { cancelBooking, createBooking, getBookingByReference, paymentState } from "@/modules/bookings/booking.repository";
 import { getAuthenticatedStaff, getAuthenticatedUser } from "@/lib/auth/admin-guard";
 import { verifyBookingLink } from "@/lib/security/signed-links";
+import { paymentSummary } from "@/modules/bookings/deposit";
+import { startBalancePayment } from "@/modules/bookings/deposit-payments";
 import { emailSchema, parseOr400, referenceSchema, z } from "@/lib/security/validate";
 
 const router = Router();
@@ -28,6 +30,7 @@ const createSchema = z.object({
   specialRequests: z.string().trim().max(1000).optional(),
   addOns: z.array(z.object({ id: z.string().max(40).optional(), name: z.string().max(120).optional() })).max(10).default([]),
   promoCode: z.string().trim().max(40).optional(),
+  paymentPlan: z.enum(["FULL", "DEPOSIT"]).default("FULL"),
 });
 
 router.post("/", rateLimitMiddleware("booking_create", { maxRequests: 5, windowSeconds: 60 }), async (req, res, next) => {
@@ -91,6 +94,7 @@ router.get("/", rateLimitMiddleware("booking_read", { maxRequests: 30, windowSec
         addOnsTotal: booking.addOnsTotal / 100,
         totalAmount: booking.totalAmount / 100,
         currency: booking.currency,
+        ...paymentSummary(booking, booking.payments),
         items: booking.items.map((i) => ({ id: i.id, name: i.name, quantity: i.quantity, price: i.price / 100 })),
         tourDeparture: {
           date: booking.tourDeparture.date,
@@ -128,6 +132,30 @@ router.post("/cancel", rateLimitMiddleware("booking_cancel", { maxRequests: 5, w
     const result = await cancelBooking(body.bookingReference, customerEmail);
     if (!result.success) return res.status(400).json({ success: false, error: result.error });
     return res.json({ success: true, message: result.message, refundedAmount: result.refundedAmount, booking: { bookingReference: result.booking!.bookingReference, status: result.booking!.status } });
+  } catch (error) {
+    next(error);
+  }
+});
+
+const payBalanceSchema = z.object({ bookingReference: referenceSchema, t: z.string().max(64).optional() });
+
+// Deposit bookings: pay what is still owed, from the voucher page (its signed token) or as the
+// signed-in owner or staff. Returns the card form's client secret, or paid: true when nothing is due.
+router.post("/pay-balance", rateLimitMiddleware("booking_pay_balance", { maxRequests: 10, windowSeconds: 60 }), async (req, res, next) => {
+  try {
+    const body = parseOr400(payBalanceSchema, req.body, res);
+    if (!body) return;
+    const booking = await getBookingByReference(body.bookingReference);
+    const user = getAuthenticatedUser(req);
+    const allowed =
+      booking &&
+      (verifyBookingLink(booking.bookingReference, "voucher", body.t) ||
+        (user && user.email.toLowerCase() === booking.customerEmail.toLowerCase()) ||
+        (await getAuthenticatedStaff(req)));
+    if (!booking || !allowed) return res.status(404).json({ success: false, error: "Booking not found" });
+    const result = await startBalancePayment(booking.bookingReference);
+    if (!result.ok) return res.status(result.status).json({ success: false, error: result.error });
+    return res.json({ success: true, ...result });
   } catch (error) {
     next(error);
   }

@@ -206,6 +206,13 @@ export interface BookingDetail {
   infantsCount?: number;
   subtotal?: number;
   addOnsTotal?: number;
+  /** DEPOSIT bookings: 20% paid at checkout, the balance due 7 days before departure. */
+  paymentPlan?: "FULL" | "DEPOSIT";
+  depositAmount?: number;
+  amountPaid?: number;
+  balanceDue?: number;
+  balanceDueAt?: string | null;
+  balancePaidAt?: string | null;
   pickupStop: {
     name: string;
     town: string;

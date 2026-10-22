@@ -28,6 +28,7 @@ import { referringAffiliateId } from "@/modules/affiliates/affiliate.repository"
 import { earnCommission, reverseCommissionForRefund } from "@/modules/affiliates/commission";
 import { sendCommissionEarnedEmail } from "@/modules/affiliates/partner-emails";
 import { checkinLink, signBookingLink, voucherLink } from "@/lib/security/signed-links";
+import { DEPOSIT_PERCENT, DEPOSIT_MIN_DAYS_BEFORE, depositPlanRefundCents, depositTerms, firstChargeCents, paymentSummary } from "@/modules/bookings/deposit";
 
 export interface CreateBookingInput {
   holdToken?: string;
@@ -50,6 +51,8 @@ export interface CreateBookingInput {
   affiliateCode?: string;
   /** Client-generated key for this checkout attempt; a retry with it returns the same booking. */
   idempotencyKey?: string;
+  /** Pay everything now (default), or the deposit now and the balance later (modules/bookings/deposit.ts). */
+  paymentPlan?: "FULL" | "DEPOSIT";
 }
 
 /** What the checkout should do next. */
@@ -72,6 +75,13 @@ export interface BookingResult {
     /** Signed link to the voucher page (also emailed), and its token for API calls. */
     voucherUrl: string;
     voucherToken: string;
+    paymentPlan: "FULL" | "DEPOSIT";
+    /** DEPOSIT plan only (dollars). */
+    depositAmount?: number;
+    amountPaid?: number;
+    balanceDue?: number;
+    balanceDueAt?: Date | null;
+    balancePaidAt?: Date | null;
   };
   /** Present when the guest still has to pay in the browser (Stripe Payment Element). */
   payment?: { provider: string; clientSecret: string; amount: number; currency: string };
@@ -106,7 +116,7 @@ function nextStepFor(status: string): NextStep {
   return "START_AGAIN";
 }
 
-function bookingDto(booking: Booking, payments: Pick<Payment, "status">[]) {
+function bookingDto(booking: Booking, payments: Pick<Payment, "status" | "amount">[]) {
   return {
     id: booking.id,
     bookingReference: booking.bookingReference,
@@ -118,6 +128,7 @@ function bookingDto(booking: Booking, payments: Pick<Payment, "status">[]) {
     qrCodeUrl: booking.qrCodeUrl,
     voucherUrl: voucherLink(booking.bookingReference),
     voucherToken: signBookingLink(booking.bookingReference, "voucher"),
+    ...paymentSummary(booking, payments),
   };
 }
 
@@ -152,7 +163,7 @@ async function replayBooking(key: string, input: CreateBookingInput): Promise<Bo
         }
         return { success: false, error: "Your booking is still being set up. Please wait a moment and try again." };
       }
-      payment = { provider: provider.name, clientSecret: intent.clientSecret, amount: existing.totalAmount / 100, currency: existing.currency };
+      payment = { provider: provider.name, clientSecret: intent.clientSecret, amount: firstChargeCents(existing) / 100, currency: existing.currency };
     }
     return { success: true, booking: bookingDto(existing, existing.payments), payment, nextStep: nextStepFor(existing.status), replayed: true };
   }
@@ -242,6 +253,16 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
       }
 
       const totals = priceBooking(departure, { adults: input.adultsCount, children: input.childrenCount }, input.addOns, input.promoCode);
+      // Deposit: online checkout only (staff bookings record their own payment), far enough ahead.
+      const deposit =
+        input.paymentPlan === "DEPOSIT" && !options.offlinePayment
+          ? depositTerms(totals.totalCents, getMountainTimeInstant(departure.date, departure.departureTime), now)
+          : null;
+      if (input.paymentPlan === "DEPOSIT" && !options.offlinePayment && !deposit) {
+        throw new BookingRefused(
+          `A ${DEPOSIT_PERCENT}% deposit is available for departures at least ${DEPOSIT_MIN_DAYS_BEFORE} days away. Please choose to pay in full.`,
+        );
+      }
       const bookingReference = newReference();
       // Exactly what the booking was priced with, so later price changes never alter it.
       const priceSnapshot = {
@@ -286,6 +307,9 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
           currency: departure.currency,
           status: "PENDING_PAYMENT",
           priceSnapshot,
+          paymentPlan: deposit ? "DEPOSIT" : "FULL",
+          depositAmount: deposit?.depositCents ?? null,
+          balanceDueAt: deposit?.balanceDueAt ?? null,
           paymentExpiresAt: new Date(now.getTime() + PENDING_PAYMENT_MINUTES * 60_000),
           specialRequests: input.specialRequests,
           voucherCode: newVoucherCode(),
@@ -301,7 +325,7 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
           action: "BOOKING_CREATED",
           entityType: "Booking",
           entityId: created.id,
-          details: { status: "PENDING_PAYMENT", totalCents: totals.totalCents, seats: reservedSeats, viaHold: Boolean(holdRecord) },
+          details: { status: "PENDING_PAYMENT", totalCents: totals.totalCents, seats: reservedSeats, viaHold: Boolean(holdRecord), ...(deposit ? { depositCents: deposit.depositCents } : {}) },
         },
       });
       return created;
@@ -319,15 +343,19 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
   if (options.offlinePayment) return { success: true, booking: bookingDto(booking, []), nextStep: "PAY" };
 
   // Start the payment outside the transaction (network call). Free bookings (100% promo) skip it.
+  // A DEPOSIT booking is charged only its deposit now.
   const provider = getPaymentProvider();
+  const charge = firstChargeCents(booking);
+  const kind = booking.paymentPlan === "DEPOSIT" ? "DEPOSIT" : "FULL";
   let intent: Awaited<ReturnType<typeof provider.createPaymentIntent>> | null = null;
-  if (booking.totalAmount > 0) {
+  if (charge > 0) {
     try {
       intent = await provider.createPaymentIntent({
-        amount: booking.totalAmount,
+        amount: charge,
         currency: booking.currency,
         bookingReference: booking.bookingReference,
         customerEmail: booking.customerEmail,
+        metadata: { kind },
       });
     } catch (error) {
       console.error("Payment could not be started:", (error as Error).message);
@@ -337,10 +365,11 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
     await prisma.payment.create({
       data: {
         bookingId: booking.id,
-        amount: booking.totalAmount,
+        amount: charge,
         currency: booking.currency,
         provider: provider.name,
         transactionId: intent.intentId,
+        kind,
         status: "PENDING",
       },
     });
@@ -349,14 +378,14 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
   // Only a completed payment (instant mock, or nothing to pay) confirms here; Stripe confirms via its webhook.
   const paidNow = !intent || intent.paid;
   const finalBooking = paidNow ? (await confirmPaidBooking(booking.bookingReference)) ?? booking : booking;
-  const payments = await prisma.payment.findMany({ where: { bookingId: booking.id }, select: { status: true } });
+  const payments = await prisma.payment.findMany({ where: { bookingId: booking.id }, select: { status: true, amount: true } });
 
   return {
     success: true,
     booking: bookingDto(finalBooking, payments),
     payment:
       intent && !paidNow
-        ? { provider: provider.name, clientSecret: intent.clientSecret, amount: booking.totalAmount / 100, currency: booking.currency }
+        ? { provider: provider.name, clientSecret: intent.clientSecret, amount: charge / 100, currency: booking.currency }
         : undefined,
     nextStep: nextStepFor(finalBooking.status),
   };
@@ -385,8 +414,10 @@ export async function confirmPaidBooking(reference: string, verified?: VerifiedP
   const transactionId = verified?.transactionId;
   if (!["PENDING_PAYMENT", "EXPIRED", "CANCELLED"].includes(booking.status)) return booking; // already handled (webhook retries)
 
-  if (verified && (verified.amount !== booking.totalAmount || verified.currency.toUpperCase() !== booking.currency.toUpperCase())) {
-    await flagBooking(booking.id, "PAYMENT_AMOUNT_MISMATCH", `Payment ${transactionId ?? ""} of ${verified.amount} ${verified.currency.toUpperCase()} doesn't match the total ${booking.totalAmount} ${booking.currency}; not confirmed.`, booking.adminNotes);
+  // A DEPOSIT booking is confirmed by its deposit; anything else by its total.
+  const expected = firstChargeCents(booking);
+  if (verified && (verified.amount !== expected || verified.currency.toUpperCase() !== booking.currency.toUpperCase())) {
+    await flagBooking(booking.id, "PAYMENT_AMOUNT_MISMATCH", `Payment ${transactionId ?? ""} of ${verified.amount} ${verified.currency.toUpperCase()} doesn't match the amount due ${expected} ${booking.currency}; not confirmed.`, booking.adminNotes);
     return booking;
   }
 
@@ -411,7 +442,9 @@ export async function confirmPaidBooking(reference: string, verified?: VerifiedP
       where: { bookingId: booking.id, status: "PENDING" },
       data: { status: "SUCCEEDED", ...(transactionId ? { transactionId } : {}) },
     });
-    // Partner commission is earned only here, on a verified payment, in the same transaction.
+    // Partner commission is earned only here, on a verified payment, in the same transaction. A
+    // DEPOSIT booking earns it when the balance is paid (deposit-payments.ts), on the full total.
+    if (booking.paymentPlan === "DEPOSIT") return { commission: null };
     return { commission: await earnCommission(tx, booking.id, verified?.amount ?? booking.totalAmount) };
   });
   const updated = await prisma.booking.findUniqueOrThrow({ where: { id: booking.id } });
@@ -424,6 +457,17 @@ export async function confirmPaidBooking(reference: string, verified?: VerifiedP
   const when = `${formatDateOnly(booking.tourDeparture.date)} at ${formatTimeOfDay(booking.tourDeparture.departureTime)}`;
   const total = `$${(booking.totalAmount / 100).toFixed(2)} ${booking.currency}`;
   const link = voucherLink(booking.bookingReference);
+  const deposit = booking.paymentPlan === "DEPOSIT" && booking.depositAmount ? booking.depositAmount : 0;
+  const amountLines = deposit
+    ? {
+        html: `<p><strong>Deposit paid:</strong> $${(deposit / 100).toFixed(2)} ${booking.currency} (of ${total})</p>
+            <p><strong>Balance:</strong> $${((booking.totalAmount - deposit) / 100).toFixed(2)} ${booking.currency}, due by ${balanceDueLabel(booking.balanceDueAt)}</p>`,
+        text: `Deposit paid: $${(deposit / 100).toFixed(2)} ${booking.currency} of ${total}. Balance $${((booking.totalAmount - deposit) / 100).toFixed(2)} ${booking.currency} due by ${balanceDueLabel(booking.balanceDueAt)}; pay it from your voucher.`,
+      }
+    : { html: `<p><strong>Total paid:</strong> ${total}</p>`, text: `Total paid: ${total}.` };
+  const policyLine = deposit
+    ? `The ${DEPOSIT_PERCENT}% deposit is non-refundable. Cancel up to 72 hours before departure and everything else you've paid is refunded.`
+    : "Free cancellation up to 72 hours before departure.";
   getEmailProvider()
     .sendEmail({
       to: booking.customerEmail,
@@ -436,20 +480,26 @@ export async function confirmPaidBooking(reference: string, verified?: VerifiedP
             <p><strong>Booking reference:</strong> ${booking.bookingReference}</p>
             <p><strong>Experience:</strong> ${escapeHtml(title)}</p>
             <p><strong>Date and time:</strong> ${when} (Mountain Time)</p>
-            <p><strong>Total paid:</strong> ${total}</p>
+            ${amountLines.html}
           </div>
-          <p><a href="${link}" style="color: #257780; font-weight: bold;">Open your voucher</a> and show it to your guide at pickup.</p>
-          <p style="color: #5d6168; font-size: 13px;">Free cancellation up to 72 hours before departure. Questions? Reply to this email or call +1 (825) 734-9456.</p>
+          <p><a href="${link}" style="color: #257780; font-weight: bold;">Open your voucher</a>${deposit ? " to pay the balance, and" : " and"} show it to your guide at pickup.</p>
+          <p style="color: #5d6168; font-size: 13px;">${policyLine} Questions? Reply to this email or call +1 (825) 734-9456.</p>
         </div>`,
-      text: `Your Vista Chase booking ${booking.bookingReference} is confirmed.\n${title}, ${when} (Mountain Time).\nTotal paid: ${total}.\nVoucher: ${link}\nFree cancellation up to 72 hours before departure.`,
+      text: `Your Vista Chase booking ${booking.bookingReference} is confirmed.\n${title}, ${when} (Mountain Time).\n${amountLines.text}\nVoucher: ${link}\n${policyLine}`,
     })
     .catch((e) => console.error("Confirmation email failed:", (e as Error).message));
 
   return updated;
 }
 
+/** "Friday, 13 March 2026" in Banff time. */
+export function balanceDueLabel(at: Date | null) {
+  if (!at) return "14 days before departure";
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Edmonton", weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(at);
+}
+
 /** Notes a problem on the booking for staff, in the audit log and as an open flag (Admin → Bookings → Flags). */
-async function flagBooking(bookingId: string, action: "PAYMENT_AMOUNT_MISMATCH" | "LATE_PAYMENT", note: string, existingNotes: string | null) {
+export async function flagBooking(bookingId: string, action: "PAYMENT_AMOUNT_MISMATCH" | "LATE_PAYMENT", note: string, existingNotes: string | null) {
   console.warn(`Booking ${bookingId} flagged: ${action}`);
   await prisma.$transaction([
     prisma.booking.update({ where: { id: bookingId }, data: { adminNotes: [existingNotes, note].filter(Boolean).join("\n") } }),
@@ -531,13 +581,22 @@ export async function cancelBooking(reference: string, customerEmail?: string) {
 
   // Outside the transaction: the payment provider is a network call.
   let refundedCents = 0;
-  for (const payment of booking.payments.filter((p) => p.status === "SUCCEEDED")) {
-    const amount = refundableAmount(payment.amount, booking.totalSeats, booking.tourDeparture.tour?.category);
+  // DEPOSIT plan: everything paid except the deposit, taken from the balance payment first.
+  let depositPlanBudget = booking.paymentPlan === "DEPOSIT" ? depositPlanRefundCents(booking, booking.payments) : 0;
+  const succeeded = booking.payments.filter((p) => p.status === "SUCCEEDED").sort((a, b) => (a.kind === "BALANCE" ? -1 : 0) - (b.kind === "BALANCE" ? -1 : 0));
+  for (const payment of succeeded) {
+    let amount = refundableAmount(payment.amount, booking.totalSeats, booking.tourDeparture.tour?.category);
+    if (booking.paymentPlan === "DEPOSIT") {
+      amount = Math.min(payment.amount, depositPlanBudget);
+      depositPlanBudget -= amount;
+    }
+    if (amount <= 0) continue;
     try {
       const refund = await getPaymentProvider().refundPayment(payment.transactionId, amount);
       if (refund.success) {
         refundedCents += amount;
-        await prisma.payment.update({ where: { id: payment.id }, data: { status: "REFUNDED" } });
+        // A payment only partly refunded (the deposit kept) stays SUCCEEDED for what was kept.
+        if (amount >= payment.amount) await prisma.payment.update({ where: { id: payment.id }, data: { status: "REFUNDED" } });
         // Keyed by the provider's refund id, so the Stripe webhook for this refund is a no-op.
         await reverseCommissionForRefund(booking.id, refund.refundId, amount, "guest cancelled").catch((e) =>
           console.error(`Commission reversal failed for ${booking.bookingReference}:`, (e as Error).message),
@@ -561,7 +620,7 @@ export async function cancelBooking(reference: string, customerEmail?: string) {
           <h2>Booking cancelled</h2>
           <p>Your booking <strong>${booking.bookingReference}</strong> for <strong>${escapeHtml(booking.tourDeparture.tour?.title || booking.tourDeparture.shuttleRoute?.name || "Vista Chase experience")}</strong> on ${formatDateOnly(booking.tourDeparture.date)} has been cancelled.</p>
           ${refundedCents > 0 ? `<p>We have refunded <strong>$${(refundedCents / 100).toFixed(2)} ${booking.currency}</strong> to your original payment method; it usually arrives within 5–10 business days.</p>` : ""}
-          <p>Bookings of 1–6 guests are refunded in full. For groups of 7 or more and multi-day trips, the 20% deposit is non-refundable.</p>
+          <p>${booking.paymentPlan === "DEPOSIT" ? `You paid with a ${DEPOSIT_PERCENT}% deposit, which is non-refundable; everything else you paid is refunded.` : "Bookings of 1–6 guests are refunded in full. For groups of 7 or more and multi-day trips, the 20% deposit is non-refundable."}</p>
           <p>Questions? Reply to this email or call +1 (825) 734-9456.</p>
         </div>`,
       text: `Your Vista Chase booking ${booking.bookingReference} is cancelled.${refundedCents > 0 ? ` Refund: $${(refundedCents / 100).toFixed(2)} ${booking.currency}.` : ""}`,
@@ -575,7 +634,12 @@ export async function getCustomerBookings(customerEmail: string) {
   return await prisma.booking.findMany({
     // Expired checkouts were never paid for, so they aren't the guest's trips.
     where: { customerEmail: { equals: customerEmail, mode: "insensitive" }, status: { not: "EXPIRED" } },
-    include: { tourDeparture: { include: { tour: true, shuttleRoute: true } }, pickupStop: true, review: true },
+    include: {
+      tourDeparture: { include: { tour: true, shuttleRoute: true } },
+      pickupStop: true,
+      review: true,
+      payments: { select: { status: true, amount: true } },
+    },
     orderBy: { createdAt: "desc" },
   });
 }

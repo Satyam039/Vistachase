@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { canCancelFree, departureInstant } from "@/lib/policy";
+import { DEPOSIT_POLICY, canCancelFree, departureInstant, formatRockiesDate } from "@/lib/policy";
 import { useRouter } from "next/navigation";
 import {
   Calendar,
@@ -33,6 +33,11 @@ interface TripBooking {
   currency: string;
   status: string;
   createdAt: string;
+  paymentPlan?: "FULL" | "DEPOSIT";
+  depositAmount?: number;
+  amountPaid?: number;
+  balanceDue?: number;
+  balanceDueAt?: string | null;
   pickupTime?: string;
   pickupCustomText?: string;
   tourDeparture: {
@@ -559,10 +564,22 @@ export default function MyTripsPage() {
                           {/* Total + actions */}
                           <div className="flex flex-col gap-3 border-t border-obsidian-900/[0.07] p-6 lg:border-l lg:border-t-0">
                             <div>
-                              <p className="text-sm text-slate-600">Total paid</p>
+                              <p className="text-sm text-slate-600">{b.paymentPlan === "DEPOSIT" ? "Total" : "Total paid"}</p>
                               <p className="text-2xl font-light text-obsidian-900">
                                 ${b.totalAmount.toFixed(2)} <span className="text-sm text-slate-600">{b.currency}</span>
                               </p>
+                              {b.paymentPlan === "DEPOSIT" && b.status !== "CANCELLED" && (b.balanceDue ?? 0) > 0 && (
+                                <p className="mt-2 rounded-2xl bg-summit-100 px-3 py-2 text-sm text-obsidian-900">
+                                  Balance ${(b.balanceDue ?? 0).toFixed(2)} due
+                                  {b.balanceDueAt ? ` by ${formatRockiesDate(b.balanceDueAt)}` : ""}.{" "}
+                                  <Link href={`/booking/${b.bookingReference}/voucher`} className="underline underline-offset-2">
+                                    Pay now
+                                  </Link>
+                                </p>
+                              )}
+                              {b.paymentPlan === "DEPOSIT" && (b.balanceDue ?? 0) <= 0 && b.status !== "CANCELLED" && (
+                                <p className="mt-1 text-sm text-emerald-700">Paid in full</p>
+                              )}
                             </div>
                             <div className="mt-auto grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
                               <Link
@@ -630,11 +647,21 @@ export default function MyTripsPage() {
                 {cancellingBooking.tourDeparture.tour?.title || "Vista Chase tour"} on {cancellingBooking.tourDeparture.date}
               </p>
               <div className="rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-900">
-                <p className="text-base">Free cancellation up to 72 hours before</p>
-                <p className="mt-1">
-                  Groups of 1–6 get a full refund. For groups of 7 or more and multi-day trips, the 20% deposit is non-refundable. Within 72 hours the
-                  booking can&rsquo;t be refunded. Refunds take 5–10 business days.
+                <p className="text-base">
+                  {cancellingBooking.paymentPlan === "DEPOSIT" ? "Refund up to 72 hours before, minus the deposit" : "Free cancellation up to 72 hours before"}
                 </p>
+                {cancellingBooking.paymentPlan === "DEPOSIT" && (
+                  <p className="mt-1">
+                    {DEPOSIT_POLICY} You&rsquo;ll get back ${Math.max(0, (cancellingBooking.amountPaid ?? 0) - (cancellingBooking.depositAmount ?? 0)).toFixed(2)}.
+                    Refunds take 5–10 business days.
+                  </p>
+                )}
+                {cancellingBooking.paymentPlan !== "DEPOSIT" && (
+                  <p className="mt-1">
+                    Groups of 1–6 get a full refund. For groups of 7 or more and multi-day trips, the 20% deposit is non-refundable. Within 72 hours the
+                    booking can&rsquo;t be refunded. Refunds take 5–10 business days.
+                  </p>
+                )}
               </div>
               {cancelMessage && (
                 <p

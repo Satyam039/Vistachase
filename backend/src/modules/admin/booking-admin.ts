@@ -17,6 +17,7 @@ import { voucherLink } from "@/lib/security/signed-links";
 import { formatDateOnly, formatTimeOfDay } from "@/lib/utils/time";
 import { transitionBooking } from "@/modules/bookings/booking-status";
 import { confirmPaidBooking, createBooking, refundableAmount, type CreateBookingInput } from "@/modules/bookings/booking.repository";
+import { depositPlanRefundCents } from "@/modules/bookings/deposit";
 import { earnCommission, reverseCommissionForRefund } from "@/modules/affiliates/commission";
 import { endBooking } from "@/modules/departures/inventory";
 
@@ -67,8 +68,10 @@ export async function staffCancelBooking(bookingId: string, input: StaffCancelIn
 
   const paid = booking.payments.filter((p) => p.status === "SUCCEEDED");
   const paidCents = paid.reduce((sum, p) => sum + p.amount, 0);
-  const owed =
-    input.refund === "NONE" ? 0 : input.refund === "FULL" ? paidCents : refundableAmount(paidCents, booking.totalSeats, booking.tourDeparture.tour?.category);
+  // Policy refund: a DEPOSIT booking keeps its deposit; otherwise the group / multi-day rule.
+  const policyRefund =
+    booking.paymentPlan === "DEPOSIT" ? depositPlanRefundCents(booking, booking.payments) : refundableAmount(paidCents, booking.totalSeats, booking.tourDeparture.tour?.category);
+  const owed = input.refund === "NONE" ? 0 : input.refund === "FULL" ? paidCents : policyRefund;
 
   // The status move is the claim: a double-submitted cancel releases the seats once.
   const cancelled = await prisma.$transaction(async (tx) => {
@@ -253,9 +256,25 @@ export async function recordPayment(flagId: string, input: { method: OfflineMeth
     const claimed = await claimFlag(tx, flagId, staffId, resolution);
     if (!claimed) return null;
     await tx.payment.create({
-      data: { bookingId: booking.id, amount, currency: booking.currency, provider: OFFLINE_PROVIDER, transactionId: offlineTransactionId(input.method), status: "SUCCEEDED" },
+      data: {
+        bookingId: booking.id,
+        amount,
+        currency: booking.currency,
+        provider: OFFLINE_PROVIDER,
+        transactionId: offlineTransactionId(input.method),
+        kind: booking.paymentPlan === "DEPOSIT" ? "BALANCE" : "FULL",
+        status: "SUCCEEDED",
+      },
     });
-    if (booking.status === "CONFIRMED") await earnCommission(tx, booking.id, amount);
+    if (booking.paymentPlan === "DEPOSIT") {
+      // A deposit booking's balance collected by staff: paid in full now, commission on the total.
+      const paid = await tx.payment.aggregate({ where: { bookingId: booking.id, status: "SUCCEEDED" }, _sum: { amount: true } });
+      const total = paid._sum.amount ?? 0;
+      if (total >= booking.totalAmount) {
+        await tx.booking.update({ where: { id: booking.id }, data: { balancePaidAt: new Date() } });
+        if (booking.status === "CONFIRMED") await earnCommission(tx, booking.id, total);
+      }
+    } else if (booking.status === "CONFIRMED") await earnCommission(tx, booking.id, amount);
     await appendNote(tx, booking.id, `${resolution}: ${(amount / 100).toFixed(2)} ${booking.currency}.`);
     await staffAudit(tx, staffId, "RECORD_PAYMENT", "Booking", booking.id, { flagId, amountCents: amount, method: input.method, reference: input.reference ?? null });
     return claimed;

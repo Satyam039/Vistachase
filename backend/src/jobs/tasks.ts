@@ -8,6 +8,7 @@ import { reviewLink } from "@/lib/security/signed-links";
 import { dateOnly, todayInMountainTime } from "@/lib/utils/time";
 import { approveMaturedCommissions } from "@/modules/affiliates/commission";
 import { pruneOldClicks } from "@/modules/affiliates/affiliate.repository";
+import { sendBalanceReminders } from "@/modules/bookings/deposit-payments";
 
 /** Every few minutes: free seats held by expired holds and by bookings never paid for. */
 export async function expireHoldsAndUnpaidBookings(now = new Date()) {
@@ -119,4 +120,9 @@ export async function runNightlySeoAudit() {
 export async function syncWebflowBlogPosts() {
   const { scheduledWebflowSync } = await import("@/modules/seo/portal/webflow-sync");
   return scheduledWebflowSync();
+}
+
+/** Hourly: deposit bookings with an unpaid balance get their reminders; staff are flagged 72h before. */
+export async function remindUnpaidBalances(now = new Date()) {
+  return sendBalanceReminders(now);
 }

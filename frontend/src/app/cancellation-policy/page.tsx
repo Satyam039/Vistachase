@@ -27,9 +27,10 @@ const SECTIONS: LegalSection[] = [
   {
     title: "Payment terms",
     blocks: [
-      "A 20% deposit is required at the time of booking to secure your date. This deposit is refundable if the booking is cancelled 72 hours before the tour.",
-      "The remaining balance is due 14 days before the tour.",
+      "At checkout you can pay in full, or pay a 20% deposit to secure your date when the tour is more than 14 days away.",
+      "The remaining balance is due 14 days before the tour. Pay it any time from your voucher or My trips; we'll email you a reminder before it's due.",
       "If you book within 14 days of the tour date, full payment is required.",
+      "If you pay with a deposit, the 20% deposit is non-refundable. Cancel 72 hours or more before the tour and everything else you've paid is refunded (80% of the total once it's paid in full).",
       "We accept all major Credit card, Debit Card, Bank Transfer, and PayPal.",
       "If your payment becomes overdue, we'll send reminders. If we don't hear from you, the reservation may be cancelled.",
     ],

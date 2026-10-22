@@ -65,6 +65,20 @@ enum EnquiryStatus {
   CLOSED
 }
 
+// How the guest chose to pay (docs/DEPOSITS.md): everything at checkout, or a 20% deposit with the
+// balance due 7 days before departure.
+enum PaymentPlan {
+  FULL
+  DEPOSIT
+}
+
+// What a payment row pays for.
+enum PaymentKind {
+  FULL
+  DEPOSIT
+  BALANCE
+}
+
 enum PaymentStatus {
   SUCCEEDED
   PENDING
@@ -315,6 +329,11 @@ model Booking {
   idempotencyKey         String?                @unique // client key: a retried submission returns this booking
   priceSnapshot          Json? // what the server priced it with (unit prices, promo, add-ons, totals)
   paymentExpiresAt       DateTime? // unpaid after this: EXPIRED and seats released
+  paymentPlan            PaymentPlan            @default(FULL)
+  depositAmount          Int? // DEPOSIT plan: cents paid at checkout (non-refundable)
+  balanceDueAt           DateTime? // DEPOSIT plan: the rest is due by this instant
+  balancePaidAt          DateTime? // DEPOSIT plan: when the rest was paid
+  balanceReminderStage   Int                    @default(0) // 1 reminder sent, 2 due-day notice, 3 overdue (staff flagged)
   externalSyncStatus     ExternalSyncStatus     @default(NOT_REQUIRED)
   lastSyncAttemptAt      DateTime?
   specialRequests        String?
@@ -341,6 +360,7 @@ model Booking {
   @@index([trackingToken])
   @@index([customerEmail])
   @@index([voucherCode])
+  @@index([paymentPlan, status])
 }
 
 model BookingAddOn {
@@ -360,6 +380,7 @@ model Payment {
   currency      String        @default("CAD")
   provider      String // mock, stripe
   transactionId String        @unique
+  kind          PaymentKind   @default(FULL)
   status        PaymentStatus
   createdAt     DateTime      @default(now())
 

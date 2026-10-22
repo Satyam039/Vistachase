@@ -3,7 +3,7 @@
 // jobs don't run twice. Nightly emails stay with the worker. A run is skipped while the previous one
 // of the same job is still going.
 
-import { expireHoldsAndUnpaidBookings, maturePartnerCommissions, publishScheduledSeoPages, runNightlySeoAudit, syncWebflowBlogPosts } from "@/jobs/tasks";
+import { expireHoldsAndUnpaidBookings, maturePartnerCommissions, publishScheduledSeoPages, remindUnpaidBalances, runNightlySeoAudit, syncWebflowBlogPosts } from "@/jobs/tasks";
 import { isWebflowSyncEnabled, webflowSyncMinutes } from "@/modules/seo/portal/webflow-sync";
 
 const JOBS: { name: string; everyMs: number; run: () => Promise<unknown> }[] = [
@@ -11,6 +11,7 @@ const JOBS: { name: string; everyMs: number; run: () => Promise<unknown> }[] = [
   // Idempotent and cheap, so hourly is fine where there is no worker for the 03:00 run.
   { name: "partner-commissions", everyMs: 60 * 60 * 1000, run: () => maturePartnerCommissions() },
   { name: "seo-scheduled-publish", everyMs: 5 * 60 * 1000, run: () => publishScheduledSeoPages() },
+  { name: "balance-reminders", everyMs: 60 * 60 * 1000, run: () => remindUnpaidBalances() },
   // Reads every public page once a day; the audit itself skips a run while one is in progress.
   { name: "seo-audit", everyMs: 24 * 60 * 60 * 1000, run: () => runNightlySeoAudit() },
   // Only when switched on (WEBFLOW_SYNC_ENABLED=true and WEBFLOW_API_TOKEN), every WEBFLOW_SYNC_MINUTES.

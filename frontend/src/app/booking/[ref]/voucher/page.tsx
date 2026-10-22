@@ -22,7 +22,8 @@ import {
 } from "lucide-react";
 import { getBookingByReference } from "@/lib/api/catalog";
 import { PrintButton } from "@/components/booking/PrintButton";
-import { canCancelFree } from "@/lib/policy";
+import { BalancePayment } from "@/components/booking/BalancePayment";
+import { DEPOSIT_POLICY, canCancelFree, formatRockiesDate } from "@/lib/policy";
 import { headers } from "next/headers";
 
 export async function generateMetadata({ params }: { params: Promise<{ ref: string }> }): Promise<Metadata> {
@@ -109,6 +110,10 @@ export default async function VoucherPage({
   const ics = cancelled
     ? null
     : calendarHref(title, departure.date, booking.pickupTime || departure.departureTime, departure.tour?.durationHours ?? 8, `${pickupName}${pickupAddress ? `, ${pickupAddress}` : ""}`, booking.bookingReference);
+
+  const deposit = booking.paymentPlan === "DEPOSIT";
+  const balanceDue = deposit ? booking.balanceDue ?? 0 : 0;
+  const balanceDueLabel = booking.balanceDueAt ? formatRockiesDate(booking.balanceDueAt) : null;
 
   const facts = [
     { icon: CalendarCheck, label: "Date", value: dateLabel },
@@ -301,13 +306,44 @@ export default async function VoucherPage({
                   <dd className="shrink-0">{money(item.price * item.quantity)}</dd>
                 </div>
               ))}
-              <div className="flex justify-between gap-4 border-t border-obsidian-900/[0.08] pt-3 text-base text-obsidian-900">
-                <dt>Total paid</dt>
-                <dd className="shrink-0">
-                  {money(booking.totalAmount)} {booking.currency}
-                </dd>
-              </div>
+              {deposit ? (
+                <>
+                  <div className="flex justify-between gap-4 border-t border-obsidian-900/[0.08] pt-3 text-obsidian-900">
+                    <dt>Total</dt>
+                    <dd className="shrink-0">
+                      {money(booking.totalAmount)} {booking.currency}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-4 text-slate-700">
+                    <dt>Paid so far (incl. {money(booking.depositAmount ?? 0)} deposit)</dt>
+                    <dd className="shrink-0">{money(booking.amountPaid ?? 0)}</dd>
+                  </div>
+                  <div className="flex justify-between gap-4 text-base text-obsidian-900">
+                    <dt>{balanceDue > 0 ? "Balance due" : "Balance"}</dt>
+                    <dd className="shrink-0">{balanceDue > 0 ? `${money(balanceDue)} ${booking.currency}` : "Paid in full"}</dd>
+                  </div>
+                </>
+              ) : (
+                <div className="flex justify-between gap-4 border-t border-obsidian-900/[0.08] pt-3 text-base text-obsidian-900">
+                  <dt>Total paid</dt>
+                  <dd className="shrink-0">
+                    {money(booking.totalAmount)} {booking.currency}
+                  </dd>
+                </div>
+              )}
             </dl>
+            {deposit && !cancelled && balanceDue > 0 && (
+              <div className="mt-5">
+                <BalancePayment
+                  bookingReference={booking.bookingReference}
+                  token={typeof t === "string" ? t : undefined}
+                  balanceDue={balanceDue}
+                  currency={booking.currency}
+                  dueLabel={balanceDueLabel}
+                />
+              </div>
+            )}
+            {deposit && <p className="mt-4 text-xs leading-relaxed text-slate-600">{DEPOSIT_POLICY}</p>}
           </section>
 
           {!cancelled &&
@@ -315,7 +351,9 @@ export default async function VoucherPage({
               <p className="flex items-start gap-2.5 rounded-[1.75rem] bg-emerald-50 p-5 text-sm text-emerald-900 ring-1 ring-emerald-200 print:hidden">
                 <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" aria-hidden="true" />
                 <span>
-                  <span className="block text-base">Free cancellation up to 72 hours before</span>
+                  <span className="block text-base">
+                    {deposit ? "Cancel up to 72 hours before for a refund of everything but the deposit" : "Free cancellation up to 72 hours before"}
+                  </span>
                   Plans changed? Cancel from{" "}
                   <Link href="/account/trips" className="underline underline-offset-2">
                     My trips
@@ -330,7 +368,7 @@ export default async function VoucherPage({
             ) : (
               <p className="rounded-[1.75rem] bg-obsidian-50 p-5 text-sm text-slate-700 ring-1 ring-obsidian-900/[0.07] print:hidden">
                 <span className="block text-base text-obsidian-900">Departing within 72 hours</span>
-                Free cancellation has ended for this trip. Need to change something? Call us and we&apos;ll do what we can.
+                {deposit ? "The cancellation window has ended for this trip." : "Free cancellation has ended for this trip."} Need to change something? Call us and we&apos;ll do what we can.
               </p>
             ))}
 
