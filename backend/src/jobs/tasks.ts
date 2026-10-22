@@ -8,6 +8,7 @@ import { reviewLink } from "@/lib/security/signed-links";
 import { dateOnly, todayInMountainTime } from "@/lib/utils/time";
 import { approveMaturedCommissions } from "@/modules/affiliates/commission";
 import { pruneOldClicks } from "@/modules/affiliates/affiliate.repository";
+import { dispatchT60ScheduledBatch, whatsAppDeliveryConfigured } from "@/lib/whatsapp/whatsapp.provider";
 
 /** Every few minutes: free seats held by expired holds and by bookings never paid for. */
 export async function expireHoldsAndUnpaidBookings(now = new Date()) {
@@ -120,3 +121,14 @@ export async function syncWebflowBlogPosts() {
   const { scheduledWebflowSync } = await import("@/modules/seo/portal/webflow-sync");
   return scheduledWebflowSync();
 }
+
+/**
+ * T-60 WhatsApp: guests whose pickup is within the hour get the live tracking link (once each).
+ * Scheduled only when a real WhatsApp provider is set (WHATSAPP_PROVIDER=twilio or meta): with the
+ * console logger nothing would reach guests, yet each booking would be recorded as sent.
+ */
+export async function sendT60WhatsApp(now = new Date()) {
+  return dispatchT60ScheduledBatch(now);
+}
+export { whatsAppDeliveryConfigured };
+
