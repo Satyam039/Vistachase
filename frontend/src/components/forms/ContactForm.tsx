@@ -17,10 +17,13 @@ export function ContactForm({
   tours,
   defaultTour = "",
   defaultGuests,
+  defaultMessage,
 }: {
   tours: { slug: string; title: string }[];
   defaultTour?: string;
   defaultGuests?: number;
+  /** Prefilled message, e.g. for a package request. */
+  defaultMessage?: string;
 }) {
   const [state, setState] = useState<"idle" | "sending" | "sent">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -54,7 +57,7 @@ export function ContactForm({
       }
       setState("sent");
     } catch {
-      setError("We couldn't send that just now. Please try again, or email info@vistachase.com.");
+      setError("We couldn't send that just now. Please try again, or email support@vistachase.com.");
       setState("idle");
     }
   }
@@ -127,6 +130,7 @@ export function ContactForm({
           name="message"
           required
           rows={5}
+          defaultValue={defaultMessage}
           placeholder="Tell us your dates, where you're staying and what you'd love to see."
           className={`${FIELD} h-auto py-3 leading-relaxed`}
           {...aria("message")}
