@@ -66,7 +66,7 @@ function formatDeparture(departure: DepartureAvailability) {
 const FACT_ICONS = [Clock, Users, MapPin, Coffee];
 
 /** Banff Elite (sister company) plans fully tailored multi-day itineraries; the button shows once its URL is set. */
-const BANFF_ELITE_URL = process.env.NEXT_PUBLIC_BANFF_ELITE_URL ?? "";
+const BANFF_ELITE_URL = process.env.NEXT_PUBLIC_BANFF_ELITE_URL || "https://banffelite.com";
 
 /** Enquiry-only products: choose a vehicle and party size, then request a tailored quote. */
 function EnquiryPanel({ tour }: { tour: TourWithAvailability }) {

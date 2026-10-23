@@ -119,7 +119,7 @@ export default function CancellationPolicyPage() {
       <PageSeoExtras path="/cancellation-policy" />
     <LegalDocument
       title="Cancellation policy"
-      intro="Cancel at least 72 hours before your tour for a refund. Here's exactly how deposits, groups, multi-day trips and third-party activities work."
+      intro="Cancel at least 72 hours before your tour for a refund. Here's exactly how deposits, groups, multi-day journeys and third-party activities work."
       sections={SECTIONS}
       current="/cancellation-policy"
     />

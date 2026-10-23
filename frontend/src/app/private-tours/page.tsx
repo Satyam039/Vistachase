@@ -1,55 +1,41 @@
 import { getCategoryExtras, getTours } from "@/lib/api/catalog";
-import { TourGallery } from "@/components/tours/TourGallery";
-import { SignatureDays } from "@/components/tours/SignatureDays";
-import { serviceById } from "@/lib/services";
+import { FALLBACK_TOURS } from "@/lib/api/fallback-data";
+import { PrivateToursLanding } from "@/components/tours/PrivateToursLanding";
+import type { TourWithAvailability } from "@/lib/api/types";
 import type { Metadata } from "next";
 import { withSeo } from "@/lib/seo/server";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 const baseMetadata: Metadata = {
-  title: "Luxury Private SUV Tours in Banff & Canadian Rockies | Vista Chase",
+  title: "Private Tours of the Canadian Rockies | Banff, Lake Louise & Jasper | Vista Chase",
   description:
-    "Private tours with your own guide: a luxury SUV for up to 6 guests or an executive van for up to 13. Customizable itineraries, hotel pickup and guaranteed Moraine Lake access.",
+    "Explore the Canadian Rockies with your own guide, private vehicle and doorstep pickup. Explore for 1 to 5 days, doorstep pickup, optional activities and airport transfers.",
   alternates: {
     canonical: "/private-tours",
   },
 };
 
-// Three genuinely different days from this category, compared side by side above the full list.
-const SIGNATURE = [
-  { slug: "banff-private-tour", theme: "Banff’s best-selling lakes, privately" },
-  { slug: "icefields-jasper-private-tour", theme: "The Icefields Parkway to Jasper" },
-  { slug: "jasper-custom-private-tour", theme: "Jasper, on a route you choose" },
-];
-
 export default async function PrivateToursPage() {
-  const tours = await getTours({ category: "PRIVATE" });
-  const { reviews, faqs } = await getCategoryExtras(tours);
+  let tours: TourWithAvailability[] = [];
+  try {
+    tours = await getTours({ category: "PRIVATE" });
+  } catch (err) {
+    console.warn("[PrivateToursPage] getTours failed, fallback to FALLBACK_TOURS:", err);
+    tours = FALLBACK_TOURS.filter((t) => t.category === "PRIVATE");
+  }
+
+  let reviews: any[] = [];
+  try {
+    const extras = await getCategoryExtras(tours);
+    reviews = extras?.reviews || [];
+  } catch (err) {
+    console.warn("[PrivateToursPage] getCategoryExtras failed:", err);
+  }
 
   return (
     <>
       <PageSeoExtras path="/private-tours" />
-    <TourGallery
-      heading="Luxury private SUV tours"
-      intro="Your day, your way. A private guide and vehicle for your group only, from a luxury SUV to an executive van: set your own pace, stop wherever you like and build the route around what you want to see."
-      ctaLabel="Plan with the concierge"
-      ctaHref="/concierge"
-      tours={tours}
-      reviews={reviews}
-      faqs={faqs}
-      signature={
-        <SignatureDays
-          eyebrow="Three signature days"
-          title="Which private tour is right for you?"
-          intro="Three different private days, each with your own vehicle and guide. Compare them here, or see every private tour below."
-          picks={SIGNATURE}
-          tours={tours}
-          ctaLabel="Explore all private tours"
-          ctaHref="#all-tours"
-        />
-      }
-      service={serviceById("private")}
-    />
+      <PrivateToursLanding tours={tours} reviews={reviews} />
     </>
   );
 }

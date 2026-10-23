@@ -8,6 +8,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { ArrowRight, BedDouble, Check, ChevronRight, Clock, Info, MapPin, Users } from "lucide-react";
 import { getTours } from "@/lib/api/catalog";
+import { FALLBACK_TOURS } from "@/lib/api/fallback-data";
+import type { TourWithAvailability } from "@/lib/api/types";
 import { PackagePrice } from "@/components/tours/SharedToursLanding";
 import { fromPrice } from "@/lib/tours";
 import { PICKUP_TIMES, TWO_DAY_PACKAGE, packagePrice } from "@/lib/sharedTours";
@@ -20,7 +22,12 @@ export const metadata: Metadata = {
 };
 
 export default async function TwoDayRockiesExplorerPage() {
-  const tours = await getTours({ category: "SHARED" });
+  let tours: TourWithAvailability[] = [];
+  try {
+    tours = await getTours({ category: "SHARED" });
+  } catch (err) {
+    tours = FALLBACK_TOURS.filter((t) => t.category === "SHARED");
+  }
   const [day1, day2] = TWO_DAY_PACKAGE.days.map((d) => {
     const tour = tours.find((t) => t.slug === d.slug);
     return tour ? fromPrice(tour) : 0;
