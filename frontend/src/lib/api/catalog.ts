@@ -13,6 +13,7 @@ import type {
   ShuttleWithDepartures,
   TourWithAvailability,
 } from "@/lib/api/types";
+import { withDocContent } from "@/lib/tourContent";
 
 /**
  * The hard-coded catalog (fallback-data.ts) is for local development and CI builds without a
@@ -34,7 +35,7 @@ export async function getTours(options?: {
       destination: options?.destinationSlug,
       featured: options?.isFeatured === undefined ? undefined : String(options.isFeatured),
     });
-    if (data?.tours && (data.tours.length > 0 || !fallbackAllowed())) return data.tours;
+    if (data?.tours && (data.tours.length > 0 || !fallbackAllowed())) return data.tours.map(withDocContent);
   } catch (err) {
     unstable_rethrow(err); // Next.js "render per request" signal, not an outage
     console.warn("[Catalog] Backend unavailable, serving authoritative fallback catalog");
@@ -53,7 +54,7 @@ export async function getTours(options?: {
 export async function getTourBySlug(slug: string): Promise<TourWithAvailability | null> {
   try {
     const data = await apiGet<{ tour: TourWithAvailability }>(`/api/tours/${encodeURIComponent(slug)}`);
-    if (data?.tour) return data.tour;
+    if (data?.tour) return withDocContent(data.tour);
   } catch (err) {
     unstable_rethrow(err); // Next.js "render per request" signal, not an outage
     if (err instanceof ApiError && err.status === 404) return null; // no such tour: the page 404s
