@@ -67,7 +67,7 @@ export const PRIVATE_OPTIONS: PrivateTourOption[] = [
     pickup: "Doorstep Pickup Included",
     activities: "Optional Activities at Checkout",
     airportTransfers: "Available with 2+ Tour Days",
-    priceFrom: 1250,
+    priceFrom: 0,
     priceUnit: "per vehicle",
     buttonLabel: "View Itinerary",
     buttonHref: "/banff-private-tour",
@@ -85,7 +85,7 @@ export const PRIVATE_OPTIONS: PrivateTourOption[] = [
     pickup: "Doorstep Pickup Included",
     activities: "Optional Activities at Checkout",
     airportTransfers: "Available with 2+ Tour Days",
-    priceFrom: 1450,
+    priceFrom: 0,
     priceUnit: "per vehicle",
     buttonLabel: "View Itinerary",
     buttonHref: "/icefields-jasper-private-tour",
@@ -103,7 +103,7 @@ export const PRIVATE_OPTIONS: PrivateTourOption[] = [
     activities: "Optional Activities at Checkout",
     airportTransfers: "Available with 2+ Tour Days",
     accommodation: "Booked Separately by customers on multi-day cards",
-    priceFrom: 2430, // (1250 + 1450) * 0.9 = 2430 (10% package saving)
+    priceFrom: 0, // worked out from both private day tours' live prices, less 10% (PrivateToursLanding)
     priceUnit: "per vehicle",
     priceNote: "Save 10% when booking both days together",
     buttonLabel: "View Itinerary",
@@ -123,7 +123,7 @@ export const PRIVATE_OPTIONS: PrivateTourOption[] = [
     activities: "Optional Activities at Checkout",
     airportTransfers: "Available with 2+ Tour Days",
     accommodation: "Booked Separately by customers on multi-day cards",
-    priceFrom: 3645,
+    priceFrom: 0, // no confirmed price yet: shown as "Price on request"
     priceUnit: "per vehicle",
     buttonLabel: "View Itinerary",
     buttonHref: "/three-day-rockies-discovery",
@@ -142,7 +142,7 @@ export const PRIVATE_OPTIONS: PrivateTourOption[] = [
     activities: "Optional Activities at Checkout",
     airportTransfers: "Available with 2+ Tour Days",
     accommodation: "Booked Separately by customers on multi-day cards",
-    priceFrom: 4860,
+    priceFrom: 0, // no confirmed price yet: shown as "Price on request"
     priceUnit: "per vehicle",
     buttonLabel: "View Itinerary",
     buttonHref: "/four-day-rockies-and-jasper",

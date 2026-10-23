@@ -67,12 +67,20 @@ export function PrivateToursLanding({
     ...TRIPADVISOR_REVIEWS.filter((r) => r.tourSlug === "private-tours"),
   ];
 
+  // Prices are only what checkout charges: each day tour's live price, and for the two-day
+  // package both of them less 10%. Options without a confirmed price show "Price on request".
+  const livePrice = (slug: string) => {
+    const match = tours.find((t) => t.slug === slug);
+    return match ? fromPrice(match) : 0;
+  };
   const getPrice = (opt: PrivateTourOption) => {
     if (opt.isCustomPartner) return 0;
-    if (opt.slug) {
-      const match = tours.find((t) => t.slug === opt.slug);
-      if (match && fromPrice(match) > 0) return fromPrice(match);
+    if (opt.id === "two-day-rockies-private") {
+      const day1 = livePrice("banff-private-tour");
+      const day2 = livePrice("icefields-jasper-private-tour");
+      return day1 > 0 && day2 > 0 ? Math.floor((day1 + day2) * 0.9) : 0;
     }
+    if (opt.slug && livePrice(opt.slug) > 0) return livePrice(opt.slug);
     return opt.priceFrom;
   };
 
@@ -459,11 +467,16 @@ function PrivateTourCard({
                 <p className="text-lg font-light text-white">Personalised quote</p>
                 <p className="text-xs text-white/55">Tailored to your itinerary &amp; group size</p>
               </div>
+            ) : calculatedPrice <= 0 ? (
+              <div>
+                <p className="text-lg font-light text-white">Price on request</p>
+                <p className="text-xs text-white/55">Per vehicle, confirmed with your dates and group size</p>
+              </div>
             ) : (
               <div>
                 <div className="flex items-baseline gap-1.5">
                   <span className="text-xs text-white/55">From</span>
-                  <span className="text-2xl font-light tabular-nums text-white">CAD ${money(calculatedPrice)}</span>
+                  <span className="text-2xl font-light tabular-nums text-white">CAD {money(calculatedPrice)}</span>
                   <span className="text-xs text-white/70">per vehicle</span>
                 </div>
                 <p className="mt-0.5 text-xs text-white/55">Taxes and required fees included</p>
