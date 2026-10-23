@@ -468,12 +468,9 @@ export default function ThreeDayRockiesDiscoveryPage() {
             <div className="border-b border-white/10 pb-5">
               <span className="text-xs uppercase tracking-[0.2em] text-summit-300">Private Journey</span>
               <h3 className="mt-1 text-2xl font-light text-white">Three-Day Rockies Discovery</h3>
-              <div className="mt-4 flex items-baseline gap-2">
-                <span className="text-xs text-white/55">From</span>
-                <span className="text-4xl font-light tabular-nums text-white">CAD $3,645</span>
-                <span className="text-xs text-white/70">per vehicle</span>
-              </div>
-              <p className="mt-1 text-xs text-white/60">Taxes and required fees included</p>
+              {/* No confirmed package price yet: the team quotes per vehicle with the dates. */}
+              <p className="mt-4 text-3xl font-light text-white">Price on request</p>
+              <p className="mt-1 text-xs text-white/60">Per vehicle, confirmed with your dates and group size. Taxes and required fees included.</p>
             </div>
 
             <ul className="mt-6 space-y-3.5 text-sm text-white/85">
