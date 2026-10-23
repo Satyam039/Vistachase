@@ -32,9 +32,41 @@ const SELF_SERVE = [
 
 export default async function ContactUsPage({ searchParams }: { searchParams: Promise<{ tour?: string; guests?: string; package?: string }> }) {
   const params = await searchParams;
-  // The Two-Day Rockies Explorer is requested here until it has its own checkout.
-  const twoDay = params.package === TWO_DAY_PACKAGE.slug;
-  const tours = (await getTours()).map((t) => ({ slug: t.slug, title: t.title }));
+  const pkg = params.package;
+  const isTwoDayShared = pkg === TWO_DAY_PACKAGE.slug;
+  const isTwoDayPrivate = pkg === "two-day-rockies-explorer-private";
+  const isThreeDay = pkg === "three-day-rockies-discovery";
+  const isFourDay = pkg === "four-day-rockies-and-jasper";
+
+  let packageTitle = "";
+  let packageSubtitle = "";
+  let packageMessage = "";
+
+  if (isTwoDayShared) {
+    packageTitle = `Request the ${TWO_DAY_PACKAGE.title}`;
+    packageSubtitle = "Tell us your two dates and how many guests. Our team confirms both days and sends one booking with 10% off.";
+    packageMessage = TWO_DAY_PACKAGE.requestMessage;
+  } else if (isTwoDayPrivate) {
+    packageTitle = "Request the Private Two-Day Rockies Explorer";
+    packageSubtitle = "Tell us your preferred dates and party size. Our team confirms your private vehicle and driver-guide for both days with 10% off.";
+    packageMessage = "I'd like to book the Private Two-Day Rockies Explorer (Private Banff & Yoho + Columbia Icefield Adventure, 10% off).\nPreferred Day 1 date:\nPreferred Day 2 date:\nGroup size:\nWhere we're staying:";
+  } else if (isThreeDay) {
+    packageTitle = "Request the Three-Day Rockies Discovery";
+    packageSubtitle = "Tell us your preferred dates and group size. Our team will coordinate your 3-day private itinerary, driver-guide, and vehicle.";
+    packageMessage = "I'd like to book the Three-Day Rockies Discovery (Private Banff, Yoho & Columbia Icefield Tour).\nPreferred start date:\nGroup size:\nWhere we're staying (Banff, Canmore, or Lake Louise):\nOptional activities of interest (Banff Gondola, Ice Explorer, Skywalk):";
+  } else if (isFourDay) {
+    packageTitle = "Request the Four-Day Rockies & Jasper";
+    packageSubtitle = "Tell us your preferred dates, group size, and final drop-off location. Our team will tailor your 4-day journey across Banff, Yoho, and Jasper.";
+    packageMessage = "I'd like to book the Four-Day Rockies & Jasper Private Tour.\nPreferred start date:\nGroup size:\nLuggage count:\nFinal drop-off destination (Banff, Lake Louise, Canmore, or Calgary):\nOptional activities of interest:";
+  }
+
+  let tours: { slug: string; title: string }[] = [];
+  try {
+    const rawTours = await getTours();
+    tours = rawTours.map((t) => ({ slug: t.slug, title: t.title }));
+  } catch {
+    tours = [];
+  }
   const requested = tours.find((t) => t.slug === params.tour);
   const guests = Number(params.guests);
 
@@ -63,14 +95,12 @@ export default async function ContactUsPage({ searchParams }: { searchParams: Pr
             </ol>
           </nav>
           <h1 className="mx-auto max-w-3xl text-balance text-4xl font-light leading-[1.05] tracking-tight text-white sm:text-6xl motion-safe:animate-[fadeUp_900ms_ease-out]">
-            {twoDay ? `Request the ${TWO_DAY_PACKAGE.title}` : requested ? "Request this tour" : "Talk to a local"}
+            {packageTitle || (requested ? "Request this tour" : "Talk to a local")}
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-lg font-light leading-relaxed text-white/85 motion-safe:animate-[fadeUp_1100ms_ease-out]">
-            {twoDay
-              ? "Tell us your two dates and how many guests. Our team confirms both days and sends one booking with 10% off."
-              : requested
+            {packageSubtitle || (requested
               ? `Tell us your dates for ${requested.title} and we'll reply with availability and a price.`
-              : "Questions about Moraine Lake access, pickups or a custom private day? Our Canmore team is here to help."}
+              : "Questions about Moraine Lake access, pickups or a custom private day? Our Canmore team is here to help.")}
           </p>
         </div>
       </section>
@@ -125,8 +155,11 @@ export default async function ContactUsPage({ searchParams }: { searchParams: Pr
             Send us a message
           </h2>
           <p className="mb-8 mt-2 text-base text-slate-600">Group trips, custom private days, accessibility needs or anything else.</p>
-          <ContactForm tours={tours} defaultTour={requested?.slug} defaultGuests={Number.isFinite(guests) && guests > 0 ? guests : undefined}
-            defaultMessage={twoDay ? TWO_DAY_PACKAGE.requestMessage : undefined}
+          <ContactForm
+            tours={tours}
+            defaultTour={requested?.slug}
+            defaultGuests={Number.isFinite(guests) && guests > 0 ? guests : undefined}
+            defaultMessage={packageMessage || undefined}
           />
         </section>
       </div>

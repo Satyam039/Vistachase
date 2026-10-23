@@ -49,7 +49,7 @@ import {
   type DayTour,
 } from "@/lib/sharedTours";
 
-const BANFF_ELITE_URL = process.env.NEXT_PUBLIC_BANFF_ELITE_URL ?? "";
+const BANFF_ELITE_URL = process.env.NEXT_PUBLIC_BANFF_ELITE_URL || "https://banffelite.com";
 const CHIP_ICONS: LucideIcon[] = [Users, MapPin, BadgeCheck, Compass];
 const BENEFIT_ICONS: LucideIcon[] = [Users, Compass, BadgeCheck, Tag];
 
@@ -426,6 +426,7 @@ function DayCard({ tour, price, award = false }: { tour: DayTour; price: number;
       <div className={CARD_PANEL}>
         <p className={CARD_EYEBROW}>{tour.label}</p>
         <h3 className="text-lg font-normal uppercase leading-snug tracking-[0.14em] text-white">{tour.title}</h3>
+        <p className="mt-1 text-xs text-summit-300 tracking-wide font-light">{tour.highlight}</p>
         <p className="mt-2 text-sm leading-relaxed text-white/75">{tour.description}</p>
         <Facts duration={tour.duration} />
         <p className="mt-2 flex gap-1.5 text-sm text-summit-200">
@@ -456,6 +457,7 @@ function PackageCard({ price, separate }: { price: number; separate: number }) {
       <div className={CARD_PANEL}>
         <p className={CARD_EYEBROW}>{TWO_DAY_PACKAGE.label}</p>
         <h3 className="text-lg font-normal uppercase leading-snug tracking-[0.14em] text-white">{TWO_DAY_PACKAGE.title}</h3>
+        <p className="mt-1 text-xs text-summit-300 tracking-wide font-light">{TWO_DAY_PACKAGE.highlight}</p>
         <p className="mt-2 text-sm leading-relaxed text-white/75">{TWO_DAY_PACKAGE.description}</p>
         <Facts duration={TWO_DAY_PACKAGE.duration} />
         <p className="mt-2 flex gap-1.5 text-sm text-summit-200">

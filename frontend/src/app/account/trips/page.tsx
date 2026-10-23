@@ -686,7 +686,7 @@ export default function MyTripsPage() {
                 )}
                 {cancellingBooking.paymentPlan !== "DEPOSIT" && (
                   <p className="mt-1">
-                    Groups of 1–6 get a full refund. For groups of 7 or more and multi-day trips, the 20% deposit is non-refundable. Within 72 hours the
+                    Groups of 1–6 get a full refund. For groups of 7 or more and multi-day journeys, the 20% deposit is non-refundable. Within 72 hours the
                     booking can&rsquo;t be refunded. Refunds take 5–10 business days.
                   </p>
                 )}

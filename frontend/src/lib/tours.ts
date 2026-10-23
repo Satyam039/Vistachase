@@ -110,7 +110,7 @@ export function categoryOffer(tours: TourWithAvailability[], category: string): 
   const inclusions = OFFER_INCLUSIONS.flatMap(({ label, test }) => {
     const count = priced.filter(test).length;
     if (count === priced.length) return [label];
-    return count > 0 && label === "Moraine Lake shuttle" ? [`${label} on select tours`] : [];
+    return count > 0 && label === "Moraine Lake shuttle" ? ["Moraine Lake shuttle"] : [];
   });
   const limits = priced.map(factMaxGuests);
   return {

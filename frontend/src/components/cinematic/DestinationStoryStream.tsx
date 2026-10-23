@@ -4,8 +4,8 @@
 import { SectionHeading } from "@/components/home/SectionHeading";
 import { StickyStory, type StoryChapter } from "@/components/motion/StickyStory";
 
-// Sister company for tailored multi-day trips; the Jasper link shows once its address is set.
-const BANFF_ELITE_URL = process.env.NEXT_PUBLIC_BANFF_ELITE_URL ?? "";
+// Sister company for tailored multi-day trips; falls back to banffelite.com.
+const BANFF_ELITE_URL = process.env.NEXT_PUBLIC_BANFF_ELITE_URL || "https://banffelite.com";
 
 const CHAPTERS: StoryChapter[] = [
   {
@@ -56,8 +56,8 @@ const CHAPTERS: StoryChapter[] = [
     title: "Make Room for More Adventure",
     body: "Discover Jasper's expansive mountain landscapes, striking lakes and deep sense of wilderness. Explore on a private tour or include Jasper in a custom multi-day journey.",
     facts: ["Mountain Scenery", "Lakeside Views", "Private Experiences"],
-    cta: { label: "Explore Jasper Tours", href: "/destinations/jasper-national-park" },
-    ...(BANFF_ELITE_URL ? { secondaryLink: { label: "Plan a Custom Journey with Banff Elite", href: BANFF_ELITE_URL } } : {}),
+    cta: { label: "Explore Jasper Tours", href: "/private-tours" },
+    secondaryLink: { label: "Plan a Custom Journey with Banff Elite ↗", href: BANFF_ELITE_URL },
     image: "/media/photos/spirit-island.webp",
     imageAlt: "Spirit Island on Maligne Lake in Jasper National Park",
   },

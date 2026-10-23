@@ -141,7 +141,7 @@ export function StickyStory({ chapters, tone = "dark" }: { chapters: StoryChapte
                       rel="noopener noreferrer"
                       className={`inline-flex items-center gap-1.5 text-base underline-offset-4 hover:underline ${dark ? "text-slate-300 hover:text-white" : "text-slate-600 hover:text-obsidian-900"}`}
                     >
-                      {c.secondaryLink.label}
+                      {c.secondaryLink.label.replace(/\s*↗$/, "")}
                       <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
                       <span className="sr-only">(opens in a new tab)</span>
                     </a>

@@ -19,7 +19,7 @@ const baseMetadata: Metadata = {
 const TOPICS = ["Booking", "Pickup & access", "On the day", "Parks & seasons"];
 
 const FAQS: FaqItem[] = [
-  { topic: "Booking", q: "What is your cancellation policy?", a: "Cancel at least 72 hours before your tour for a full refund (groups of 1–6). For groups of 7 or more and multi-day trips, the 20% deposit is non-refundable and the rest is refunded. Cancellations within 72 hours, late arrivals and no-shows aren't refunded. Refunds take 5–10 business days; see our full cancellation policy." },
+  { topic: "Booking", q: "What is your cancellation policy?", a: "Cancel at least 72 hours before your tour for a full refund (groups of 1–6). For groups of 7 or more and multi-day journeys, the 20% deposit is non-refundable and the rest is refunded. Cancellations within 72 hours, late arrivals and no-shows aren't refunded. Refunds take 5–10 business days; see our full cancellation policy." },
   { topic: "Booking", q: "How do I book and pay?", a: "Choose a date on the tour page and check out securely online; you'll get a confirmation email with your voucher. Your guide contacts you the day before with final pickup details." },
   { topic: "Booking", q: "Can a tour be customised?", a: "Shared tours follow a set route, so changes are limited. For your own stops and pace, request a private tour and we'll build the day around you." },
   { topic: "Booking", q: "How many people are in each group?", a: "Shared tours are capped at 12 guests per vehicle, so there's more time with your guide and more flexible photo stops." },
