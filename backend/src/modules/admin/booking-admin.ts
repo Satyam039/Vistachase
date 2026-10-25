@@ -96,7 +96,7 @@ export async function staffCancelBooking(bookingId: string, input: StaffCancelIn
       const amount = Math.min(left, payment.amount);
       if (amount <= 0) break;
       try {
-        const refund = await getPaymentProvider().refundPayment(payment.transactionId, amount);
+        const refund = await getPaymentProvider().refundPayment(payment.transactionId, amount, { bookingReference: booking.bookingReference });
         if (!refund.success) continue;
         refundedCents += amount;
         left -= amount;

@@ -5,7 +5,7 @@
 // share one label; the parent gets the country code and the local number separately and joins
 // them as "+44 7700 900123". Sized and laid out like the Astryx TextInput beside it.
 
-import { useId, useMemo } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { dialCode, phoneCountries } from "@/lib/countries";
 
@@ -27,6 +27,10 @@ export function PhoneField({
   error?: string;
 }) {
   const id = useId();
+  // Country names come from Intl, which words them differently in Node and in each browser, so the
+  // full list is drawn only once the page runs in the browser (a server-rendered form would not hydrate).
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const { top, rest } = useMemo(() => phoneCountries(), []);
   const flag = [...top, ...rest].find((c) => c.code === country)?.flag ?? "";
   const describedBy = [description && `${id}-desc`, error && `${id}-err`].filter(Boolean).join(" ") || undefined;
@@ -59,17 +63,23 @@ export function PhoneField({
             autoComplete="tel-country-code"
             className="absolute inset-0 cursor-pointer opacity-0"
           >
-            {top.map((c) => (
-              <option key={c.code} value={c.code}>
-                {c.flag} {c.name} (+{c.dial})
-              </option>
-            ))}
-            <option disabled>──────────</option>
-            {rest.map((c) => (
-              <option key={c.code} value={c.code}>
-                {c.flag} {c.name} (+{c.dial})
-              </option>
-            ))}
+            {mounted ? (
+              <>
+                {top.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.flag} {c.name} (+{c.dial})
+                  </option>
+                ))}
+                <option disabled>──────────</option>
+                {rest.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.flag} {c.name} (+{c.dial})
+                  </option>
+                ))}
+              </>
+            ) : (
+              <option value={country}>+{dialCode(country)}</option>
+            )}
           </select>
         </div>
         <input

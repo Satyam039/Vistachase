@@ -1,6 +1,6 @@
 import { ArrowUpRight, Award, Star } from "lucide-react";
 import { ReviewSlider, type SliderReview } from "@/components/reviews/ReviewSlider";
-import { TRIPADVISOR_REVIEWS } from "@/lib/reviews/tripadvisorReviews";
+import { REVIEW_EXCERPTS, TRIPADVISOR_REVIEWS } from "@/lib/reviews/tripadvisorReviews";
 
 const TRIPADVISOR_URL =
   "https://www.tripadvisor.ca/Attraction_Review-g154911-d26518659-Reviews-Vista_Chase-Banff_Banff_National_Park_Alberta.html";
@@ -13,9 +13,10 @@ const REVIEW_PLATFORMS = [
 ].filter((p) => p.href);
 
 // Review wall (TripAdvisor / Civitatis pattern): the summary on the left (review and guest
-// counts from the owner's "Update Vista Chase web" doc, links to each review platform), and
-// beside it a slider of real reviews: any guests left against a Vista Chase booking, then the
-// Tripadvisor reviews the owner picked (lib/reviews, word for word, each linked to its source).
+// counts from the owner's "Update Vista Chase web" doc, links to each review platform), beside it
+// four short excerpts (guides, small groups, easy travel, pace) with the reviewer's name, platform,
+// date and tour, and below a slider of full reviews: any guests left against a Vista Chase booking,
+// then the Tripadvisor reviews the owner picked (lib/reviews, word for word, each linked to its source).
 export function GuestTestimonials({ reviews }: { reviews: SliderReview[] }) {
   return (
     <section aria-labelledby="reviews-heading" className="overflow-hidden bg-obsidian-950 py-20 text-white sm:py-28">
@@ -56,9 +57,34 @@ export function GuestTestimonials({ reviews }: { reviews: SliderReview[] }) {
           </ul>
         </div>
 
-        <div className="min-w-0 self-center">
-          <ReviewSlider reviews={[...reviews, ...TRIPADVISOR_REVIEWS]} tone="dark" />
-        </div>
+        <ul className="grid min-w-0 gap-4 self-center sm:grid-cols-2" aria-label="What guests say">
+          {REVIEW_EXCERPTS.map((x) => {
+            const review = TRIPADVISOR_REVIEWS.find((r) => r.id === x.reviewId);
+            if (!review) return null;
+            return (
+              <li key={x.reviewId} data-reveal className="flex flex-col rounded-[1.25rem] bg-white/[0.04] p-6 ring-1 ring-white/10">
+                <p className="text-xs uppercase tracking-[0.22em] text-summit-300">{x.theme}</p>
+                <blockquote className="mt-3 flex-1 text-lg font-light leading-relaxed text-white">&ldquo;{x.excerpt}&rdquo;</blockquote>
+                <p className="mt-5 text-sm text-slate-300">
+                  <span className="text-white">{review.authorName}</span> · {review.source?.label} · {review.date}
+                </p>
+                <p className="text-sm text-slate-400">{review.tourTitle}</p>
+                {review.source?.url && (
+                  <a href={review.source.url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1 self-start text-sm text-summit-200 underline underline-offset-4">
+                    Read the full review
+                    <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+                    <span className="sr-only">(opens in a new tab)</span>
+                  </a>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+
+      <div className="mx-auto mt-16 max-w-7xl px-page">
+        <h3 className="mb-6 text-sm uppercase tracking-[0.22em] text-summit-300">More guest stories</h3>
+        <ReviewSlider reviews={[...reviews, ...TRIPADVISOR_REVIEWS]} tone="dark" />
       </div>
     </section>
   );

@@ -9,6 +9,7 @@ import { getAuthenticatedStaff, getAuthenticatedUser, getSessionUser, ownsBookin
 import { verifyBookingLink } from "@/lib/security/signed-links";
 import { paymentSummary } from "@/modules/bookings/deposit";
 import { startBalancePayment } from "@/modules/bookings/deposit-payments";
+import { createPackageBooking, PACKAGES } from "@/modules/bookings/package-booking";
 import { emailSchema, parseOr400, referenceSchema, z } from "@/lib/security/validate";
 
 const router = Router();
@@ -52,6 +53,43 @@ router.post("/", rateLimitMiddleware("booking_create", { maxRequests: 5, windowS
     });
     if (!result.success) return res.status(409).json({ success: false, error: result.error });
     return res.json({ success: true, booking: result.booking, payment: result.payment ?? null, nextStep: result.nextStep, replayed: result.replayed ?? false });
+  } catch (error) {
+    next(error);
+  }
+});
+
+const packageSchema = z.object({
+  packageSlug: z.enum(PACKAGES.map((p) => p.slug) as [string, ...string[]]),
+  departureIds: z.array(z.string().min(1).max(64)).min(2).max(5),
+  customerName: z.string().trim().min(2).max(120),
+  customerEmail: emailSchema,
+  customerPhone: z.string().trim().min(7).max(32),
+  pickupStopId: z.string().max(64).optional(),
+  pickupCustomText: z.string().trim().max(200).optional(),
+  adultsCount: count(30).refine((n) => n >= 1, "At least one adult is required"),
+  childrenCount: count(30).default(0),
+  infantsCount: count(10).default(0),
+  specialRequests: z.string().trim().max(1000).optional(),
+});
+
+// A package (modules/bookings/package-booking.ts): one booking per day, one payment for all of them.
+router.post("/package", rateLimitMiddleware("booking_create", { maxRequests: 5, windowSeconds: 60 }), async (req, res, next) => {
+  try {
+    const body = parseOr400(packageSchema, req.body, res);
+    if (!body) return;
+    const rawKey = req.get("Idempotency-Key");
+    if (rawKey !== undefined && !IDEMPOTENCY_KEY.test(rawKey)) {
+      return res.status(400).json({ success: false, error: "Invalid Idempotency-Key header." });
+    }
+    const user = getAuthenticatedUser(req);
+    const result = await createPackageBooking({
+      ...body,
+      idempotencyKey: rawKey,
+      customerId: user && user.email.toLowerCase() === body.customerEmail ? user.userId : undefined,
+      affiliateCode: typeof req.cookies?.vc_ref === "string" ? req.cookies.vc_ref : undefined,
+    });
+    if (!result.success) return res.status(409).json({ success: false, error: result.error });
+    return res.json({ success: true, bookings: result.bookings, totalAmount: result.totalAmount, currency: result.currency, payment: result.payment ?? null, nextStep: result.nextStep, replayed: result.replayed ?? false });
   } catch (error) {
     next(error);
   }

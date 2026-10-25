@@ -56,11 +56,13 @@ export function priceBooking(
   party: number | { adults: number; children: number },
   addOnChoices: AddOnChoice[] = [],
   promoCode?: string | null,
+  /** A discount the server applies itself (package deals) when no promo code is given. */
+  fixedPercent?: number,
 ): BookingTotals {
   const { adults, children } = typeof party === "number" ? { adults: party, children: 0 } : party;
   const guests = adults + children;
   const fareCents = fareSubtotal(departure, adults, children);
-  const discountPercent = promoPercent(promoCode) ?? 0;
+  const discountPercent = promoPercent(promoCode) ?? fixedPercent ?? 0;
   const discountCents = Math.round((fareCents * discountPercent) / 100);
 
   // Each add-on once, matched by id (or by its stored name, for older clients); prices are ours.
