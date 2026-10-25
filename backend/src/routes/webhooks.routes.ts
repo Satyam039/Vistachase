@@ -18,6 +18,7 @@ import { Router, type Request, type Response } from "express";
 import Stripe from "stripe";
 import { confirmPaidBooking, failPendingBooking } from "@/modules/bookings/booking.repository";
 import { failBalancePayment, recordBalancePayment } from "@/modules/bookings/deposit-payments";
+import { confirmPackagePayment, failPackagePayment, packageReferences } from "@/modules/bookings/package-booking";
 import { transitionBooking } from "@/modules/bookings/booking-status";
 import { reverseCommissionForRefund } from "@/modules/affiliates/commission";
 import prisma from "@/lib/db/prisma";
@@ -62,6 +63,14 @@ router.post("/stripe", async (req: Request, res: Response) => {
       } else if (event.type === "payment_intent.payment_failed" || event.type === "payment_intent.canceled") {
         await failBalancePayment(intent.id);
       }
+    } else if (reference && intent.metadata?.kind === "PACKAGE") {
+      // A package: one payment for several bookings (modules/bookings/package-booking.ts).
+      const references = packageReferences(intent.metadata.packageRefs);
+      if (event.type === "payment_intent.succeeded") {
+        await confirmPackagePayment(references, { amount: intent.amount_received || intent.amount || 0, currency: intent.currency ?? "", transactionId: intent.id });
+      } else if (event.type === "payment_intent.payment_failed" || event.type === "payment_intent.canceled") {
+        await failPackagePayment(references, event.type === "payment_intent.canceled" ? "payment cancelled" : "payment failed");
+      }
     } else if (reference) {
       if (event.type === "payment_intent.succeeded") {
         // Confirms only if Stripe's amount and currency match the booking's server-computed total.
@@ -80,12 +89,31 @@ router.post("/stripe", async (req: Request, res: Response) => {
 
 const intentIdOf = (value: string | { id: string } | null | undefined) => (typeof value === "string" ? value : value?.id);
 
+const PAYMENT_FIELDS = { id: true, amount: true, status: true, transactionId: true, bookingId: true, booking: { select: { status: true, bookingReference: true, currency: true } } } as const;
+
 async function paymentFor(intentId: string | undefined) {
   if (!intentId) return null;
-  return prisma.payment.findUnique({
-    where: { transactionId: intentId },
-    select: { id: true, amount: true, status: true, bookingId: true, booking: { select: { status: true, bookingReference: true, currency: true } } },
-  });
+  return prisma.payment.findUnique({ where: { transactionId: intentId }, select: PAYMENT_FIELDS });
+}
+
+/** Every payment row paid by this intent: one, or one per booking of a package ("pi_…", "pi_…:2"…). */
+async function paymentsFor(intentId: string) {
+  return prisma.payment.findMany({ where: { OR: [{ transactionId: intentId }, { transactionId: { startsWith: `${intentId}:` } }] }, select: PAYMENT_FIELDS });
+}
+
+/**
+ * The payment a refund belongs to. Refunds Vista Chase makes carry metadata.bookingReference, which
+ * picks the right booking of a package; otherwise the intent's own (first) payment.
+ */
+async function paymentForRefund(refund: Pick<Stripe.Refund, "payment_intent" | "metadata">) {
+  const intentId = intentIdOf(refund.payment_intent);
+  if (!intentId) return null;
+  const payments = await paymentsFor(intentId);
+  const ref = refund.metadata?.bookingReference;
+  const named = ref ? payments.find((p) => p.booking.bookingReference === ref) : null;
+  if (named) return named;
+  // A package refund made in the Stripe dashboard can't be pinned to a day: charge.refunded flags it.
+  return payments.length > 1 ? null : (payments[0] ?? null);
 }
 
 /** Reverse commission for one refund. Keyed by refund id, so retries and refunds the cancel flow already handled are no-ops. */
@@ -100,7 +128,7 @@ async function reverseFor(bookingId: string, refund: Pick<Stripe.Refund, "id" | 
 }
 
 async function handleRefund(refund: Stripe.Refund) {
-  const payment = await paymentFor(intentIdOf(refund.payment_intent));
+  const payment = await paymentForRefund(refund);
   if (payment) await reverseFor(payment.bookingId, refund);
 }
 
@@ -113,8 +141,11 @@ async function refundsOf(charge: Stripe.Charge, intentId: string): Promise<Strip
 
 async function handleChargeRefunded(charge: Stripe.Charge) {
   const intentId = intentIdOf(charge.payment_intent);
+  if (!intentId) return;
+  const shared = await paymentsFor(intentId);
+  if (shared.length > 1) return handlePackageChargeRefunded(charge, intentId, shared);
   const payment = await paymentFor(intentId);
-  if (!payment || !intentId) return;
+  if (!payment) return;
   for (const refund of await refundsOf(charge, intentId)) await reverseFor(payment.bookingId, refund);
 
   // amount_refunded is the charge's running total, so this is right however many refunds there were.
@@ -143,6 +174,34 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
       });
     }
   }
+}
+
+/**
+ * A refund on a package payment (one charge for several bookings). Refunds Vista Chase made (guest or
+ * staff cancellation) name their booking and have already updated it; anything refunded in the
+ * Stripe dashboard can't be pinned to one day, so staff get one flag on the first booking to sort out.
+ */
+async function handlePackageChargeRefunded(charge: Stripe.Charge, intentId: string, payments: Awaited<ReturnType<typeof paymentsFor>>) {
+  let unattributedCents = 0;
+  for (const refund of await refundsOf(charge, intentId)) {
+    const ref = refund.metadata?.bookingReference;
+    const target = ref ? payments.find((p) => p.booking.bookingReference === ref) : null;
+    if (target) await reverseFor(target.bookingId, refund);
+    else if (refund.status === "succeeded" || refund.status === "pending") unattributedCents += refund.amount;
+  }
+  if (unattributedCents <= 0) return;
+  const first = payments.find((p) => p.transactionId === intentId) ?? payments[0];
+  const references = payments.map((p) => p.booking.bookingReference).join(", ");
+  const key = `[stripe ${charge.id} package refunded ${unattributedCents}]`;
+  const exists = await prisma.bookingFlag.findFirst({ where: { bookingId: first.bookingId, note: { contains: key } }, select: { id: true } });
+  if (exists) return;
+  await prisma.bookingFlag.create({
+    data: {
+      bookingId: first.bookingId,
+      type: "OTHER",
+      note: `Package payment for ${references}: $${(unattributedCents / 100).toFixed(2)} ${first.booking.currency.toUpperCase()} was refunded in Stripe, not through Vista Chase. Check which day the guest isn't taking and cancel that booking. ${key}`,
+    },
+  });
 }
 
 export default router;

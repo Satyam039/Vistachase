@@ -110,13 +110,13 @@ export function paymentState(booking: { totalAmount: number }, payments: Pick<Pa
   return booking.totalAmount === 0 ? "NOT_REQUIRED" : "PENDING";
 }
 
-function nextStepFor(status: string): NextStep {
+export function nextStepFor(status: string): NextStep {
   if (status === "CONFIRMED" || status === "PAID_UNSYNCED" || status === "COMPLETED") return "CONFIRMED";
   if (status === "PENDING_PAYMENT") return "PAY";
   return "START_AGAIN";
 }
 
-function bookingDto(booking: Booking, payments: Pick<Payment, "status" | "amount">[]) {
+export function bookingDto(booking: Booking, payments: Pick<Payment, "status" | "amount">[]) {
   return {
     id: booking.id,
     bookingReference: booking.bookingReference,
@@ -183,6 +183,10 @@ export interface CreateBookingOptions {
   offlinePayment?: boolean;
   /** Staff may still book after online booking closes, up to the departure time. */
   allowAfterCutoff?: boolean;
+  /** Don't start a payment here: the caller pays several bookings together (package-booking.ts). */
+  deferPayment?: boolean;
+  /** Server-side discount (package deals), used only when the guest gave no promo code. */
+  discount?: { percent: number; label: string };
 }
 
 export async function createBooking(input: CreateBookingInput, options: CreateBookingOptions = {}): Promise<BookingResult> {
@@ -252,10 +256,10 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
         );
       }
 
-      const totals = priceBooking(departure, { adults: input.adultsCount, children: input.childrenCount }, input.addOns, input.promoCode);
+      const totals = priceBooking(departure, { adults: input.adultsCount, children: input.childrenCount }, input.addOns, input.promoCode, options.discount?.percent);
       // Deposit: online checkout only (staff bookings record their own payment), far enough ahead.
       const deposit =
-        input.paymentPlan === "DEPOSIT" && !options.offlinePayment
+        input.paymentPlan === "DEPOSIT" && !options.offlinePayment && !options.deferPayment
           ? depositTerms(totals.totalCents, getMountainTimeInstant(departure.date, departure.departureTime), now)
           : null;
       if (input.paymentPlan === "DEPOSIT" && !options.offlinePayment && !deposit) {
@@ -274,7 +278,7 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
         childUnitCents: isVehicle ? null : (departure.childPrice ?? departure.price),
         party: { adults: input.adultsCount, children: input.childrenCount, infants: input.infantsCount },
         fareCents: totals.fareCents,
-        promo: totals.discountPercent > 0 ? { code: input.promoCode?.trim().toUpperCase(), percent: totals.discountPercent } : null,
+        promo: totals.discountPercent > 0 ? { code: input.promoCode?.trim().toUpperCase() || options.discount?.label, percent: totals.discountPercent } : null,
         discountCents: totals.discountCents,
         addOns: totals.addOns,
         addOnsCents: totals.addOnsCents,
@@ -340,7 +344,7 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
     throw error;
   }
 
-  if (options.offlinePayment) return { success: true, booking: bookingDto(booking, []), nextStep: "PAY" };
+  if (options.offlinePayment || options.deferPayment) return { success: true, booking: bookingDto(booking, []), nextStep: "PAY" };
 
   // Start the payment outside the transaction (network call). Free bookings (100% promo) skip it.
   // A DEPOSIT booking is charged only its deposit now.
@@ -594,7 +598,7 @@ export async function cancelBooking(reference: string, customerEmail?: string) {
     }
     if (amount <= 0) continue;
     try {
-      const refund = await getPaymentProvider().refundPayment(payment.transactionId, amount);
+      const refund = await getPaymentProvider().refundPayment(payment.transactionId, amount, { bookingReference: booking.bookingReference });
       if (refund.success) {
         refundedCents += amount;
         // A payment only partly refunded (the deposit kept) stays SUCCEEDED for what was kept.

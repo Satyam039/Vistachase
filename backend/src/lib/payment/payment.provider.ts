@@ -28,8 +28,12 @@ export interface PaymentIntentResponse {
 export interface IPaymentProvider {
   readonly name: "mock" | "stripe";
   createPaymentIntent(req: PaymentIntentRequest): Promise<PaymentIntentResponse>;
-  /** Refunds `amount` cents (all of it when omitted) of the payment with this intent or charge ID. */
-  refundPayment(transactionId: string, amount?: number): Promise<{ success: boolean; refundId: string }>;
+  /**
+   * Refunds `amount` cents (all of it when omitted) of the payment with this intent or charge ID.
+   * `metadata.bookingReference` names the booking the refund is for, so the Stripe webhook can tell
+   * which booking of a package (one payment for two bookings) it belongs to.
+   */
+  refundPayment(transactionId: string, amount?: number, metadata?: Record<string, string>): Promise<{ success: boolean; refundId: string }>;
   /** Looks up an intent this provider created, so a retried checkout can resume the same payment. */
   retrievePaymentIntent?(intentId: string): Promise<PaymentIntentResponse | null>;
 }
@@ -54,6 +58,12 @@ class MockPaymentProvider implements IPaymentProvider {
     return { success: true, refundId: `re_mock_${Date.now()}` };
   }
 }
+
+/**
+ * A package pays two bookings with one PaymentIntent; the second booking's payment row stores the
+ * intent id with a ":2" suffix (Payment.transactionId is unique). Stripe only knows the bare id.
+ */
+export const stripeId = (transactionId: string) => transactionId.split(":")[0];
 
 class StripePaymentProvider implements IPaymentProvider {
   readonly name = "stripe" as const;
@@ -85,7 +95,7 @@ class StripePaymentProvider implements IPaymentProvider {
   }
 
   async retrievePaymentIntent(intentId: string): Promise<PaymentIntentResponse | null> {
-    const intent = await this.stripe.paymentIntents.retrieve(intentId);
+    const intent = await this.stripe.paymentIntents.retrieve(stripeId(intentId));
     return {
       clientSecret: intent.client_secret || "",
       intentId: intent.id,
@@ -95,9 +105,10 @@ class StripePaymentProvider implements IPaymentProvider {
     };
   }
 
-  async refundPayment(transactionId: string, amount?: number): Promise<{ success: boolean; refundId: string }> {
-    const target = transactionId.startsWith("pi_") ? { payment_intent: transactionId } : { charge: transactionId };
-    const refund = await this.stripe.refunds.create({ ...target, ...(amount ? { amount } : {}) });
+  async refundPayment(transactionId: string, amount?: number, metadata?: Record<string, string>): Promise<{ success: boolean; refundId: string }> {
+    const id = stripeId(transactionId);
+    const target = id.startsWith("pi_") ? { payment_intent: id } : { charge: id };
+    const refund = await this.stripe.refunds.create({ ...target, ...(amount ? { amount } : {}), ...(metadata ? { metadata } : {}) });
     return { success: refund.status === "succeeded" || refund.status === "pending", refundId: refund.id };
   }
 }

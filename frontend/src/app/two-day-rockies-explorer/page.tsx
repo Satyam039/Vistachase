@@ -1,7 +1,7 @@
 // Two-Day Rockies Explorer: both shared day tours (Banff & Yoho Discovery, then Columbia Icefield
 // Adventure) with 10% off, from the owner's "Update Vista Chase web" doc. The price is the two
-// tours' live "from" prices less 10%. Until the package has its own checkout, guests send their two
-// dates through the contact form (prefilled) and the team confirms both days as one booking.
+// tours' live "from" prices less 10%. "Book Both Days" opens the package checkout (one payment for
+// both days); guests who want dates that aren't listed can still ask through the contact form.
 
 import Image from "next/image";
 import Link from "next/link";
@@ -135,11 +135,15 @@ export default async function TwoDayRockiesExplorerPage() {
               Accommodation not included. Guests arrange their own overnight stay.
             </li>
           </ul>
-          <Link href={requestHref} className="golden-summit-btn mt-7 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full px-6 text-base">
-            Request Your Dates <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          <Link href={`${TWO_DAY_PACKAGE.href}/book`} className="golden-summit-btn mt-7 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full px-6 text-base">
+            Book Both Days <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
           <p className="mt-3 text-sm text-white/60">
-            Tell us your two dates. Our team checks seats on both days and confirms them together as one booking with 10% off.
+            Choose a date for each tour and pay once, with 10% off.{" "}
+            <Link href={requestHref} className="text-white underline underline-offset-2">
+              Need other dates? Ask us
+            </Link>
+            .
           </p>
         </aside>
       </div>

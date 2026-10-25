@@ -74,3 +74,15 @@ export const TRIPADVISOR_REVIEWS: SliderReview[] = [
     source: TA("https://www.tripadvisor.ca/ShowUserReviews-g154911-d26518659-r1077864518-Vista_Chase-Banff_Banff_National_Park_Alberta.html"),
   },
 ];
+
+/**
+ * The four short excerpts the home page shows beside the review summary (doc: "four real review
+ * excerpts, covering your guides, small-group experience and ease of travel"). Each excerpt is cut
+ * word for word from one of the owner's reviews above and links to the full review.
+ */
+export const REVIEW_EXCERPTS: { theme: string; reviewId: string; excerpt: string }[] = [
+  { theme: "Our guides", reviewId: "ta-r1081727262", excerpt: "Liam was a delight! He is very knowledgeable about the region and freely shared about his own off duty experiences in the park and beyond." },
+  { theme: "Small groups", reviewId: "ta-r1081322481", excerpt: "12 people max made for a nice small group as opposed to those huge bus loads of people getting off to visit a site" },
+  { theme: "Easy travel", reviewId: "ta-r1073305922", excerpt: "We probably could have visited a lot of the tour stops on our own, but it would have taken us much longer, we would have struggled with parking and not gotten as much information." },
+  { theme: "Never rushed", reviewId: "ta-r1077864518", excerpt: "He made sure everyone was well taken care of and took us to great photo spots (taking wonderful pictures as well). Small group of people and never felt rushed." },
+];
