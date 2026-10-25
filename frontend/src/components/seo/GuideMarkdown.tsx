@@ -7,7 +7,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-type Block =
+export type Block =
   | { kind: "h2" | "h3" | "h4" | "p" | "quote"; text: string }
   | { kind: "img"; src: string; alt: string }
   | { kind: "ul" | "ol"; items: string[] }
@@ -146,12 +146,14 @@ const STYLES = {
     root: "space-y-4 text-base leading-relaxed text-slate-700",
     h2: "scroll-mt-28 pt-4 text-2xl font-light text-obsidian-900",
     h3: "pt-2 text-lg text-obsidian-900",
+    h4: "pt-1 text-base text-obsidian-900",
     quote: "border-l-2 border-ocean-600 pl-4 text-slate-700",
   },
   article: {
     root: "space-y-6 text-lg font-light leading-[1.8] text-slate-700",
     h2: "scroll-mt-28 pt-8 text-balance text-3xl font-light tracking-tight text-obsidian-900",
     h3: "pt-3 text-xl font-normal text-obsidian-900",
+    h4: "pt-1 text-base text-obsidian-900",
     quote: "border-l-2 border-summit-500 py-1 pl-6 text-2xl font-light leading-snug text-obsidian-900",
   },
   // Blog articles (magazine layout): serif text set in columns, upper-case section heads, quotes as
@@ -160,89 +162,91 @@ const STYLES = {
     root: "space-y-4 font-magazine text-base leading-[1.7] text-obsidian-800 [&_p]:font-magazine",
     h2: "scroll-mt-28 font-magazine text-xl font-medium uppercase leading-tight tracking-wide text-obsidian-900",
     h3: "pt-2 font-magazine text-base font-medium uppercase tracking-wide text-obsidian-900",
+    h4: "pt-1 font-magazine text-base font-medium text-obsidian-900",
     quote: "py-2 font-script text-4xl leading-tight text-obsidian-900",
   },
 } as const;
 
-export function GuideMarkdown({ body, variant = "guide" }: { body: string; variant?: keyof typeof STYLES }) {
+export type GuideVariant = keyof typeof STYLES;
+
+export const guideRootClass = (variant: GuideVariant) => STYLES[variant].root;
+
+/** Heading text without its emphasis markers (Webflow headings often arrive wrapped in **…**). */
+export const plainText = (text: string) => text.replace(/\[([^\]]+)\]\([^)]*\)/g, "$1").replace(/\*+/g, "").trim();
+
+export function GuideMarkdown({ body, variant = "guide" }: { body: string; variant?: GuideVariant }) {
   const blocks = parseGuide(body);
-  const css = STYLES[variant];
   return (
-    <div className={css.root}>
-      {blocks.map((b, i) => {
-        switch (b.kind) {
-          case "h2":
-            return (
-              <h2 key={i} id={headingId(b.text)} className={css.h2}>
-                {b.text}
-              </h2>
-            );
-          case "h3":
-            return (
-              <h3 key={i} className={css.h3}>
-                {b.text}
-              </h3>
-            );
-          case "h4":
-            return (
-              <h4 key={i} className="pt-1 text-base text-obsidian-900">
-                {b.text}
-              </h4>
-            );
-          case "img":
-            return (
-              <figure key={i}>
-                <BodyImage src={b.src} alt={b.alt} />
-              </figure>
-            );
-          case "table":
-            return (
-              <div key={i} className="overflow-x-auto rounded-2xl border border-obsidian-900/[0.08] bg-white">
-                <table className="w-full min-w-[28rem] border-collapse text-left text-sm">
-                  <thead className="bg-obsidian-50 text-obsidian-900">
-                    <tr>
-                      {b.head.map((c, j) => (
-                        <th key={j} scope="col" className="border-b border-obsidian-900/[0.08] px-4 py-3 font-medium">
-                          {inline(c, `t${i}-h${j}`)}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {b.rows.map((row, r) => (
-                      <tr key={r} className="border-b border-obsidian-900/[0.06] last:border-0">
-                        {row.map((c, j) => (
-                          <td key={j} className="px-4 py-3 align-top">
-                            {inline(c, `t${i}-${r}-${j}`)}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            );
-          case "quote":
-            return (
-              <blockquote key={i} className={css.quote}>
-                {inline(b.text, `q${i}`)}
-              </blockquote>
-            );
-          case "ul":
-          case "ol": {
-            const Tag = b.kind;
-            return (
-              <Tag key={i} className={`${b.kind === "ul" ? "list-disc" : "list-decimal"} space-y-1.5 pl-6 marker:text-ocean-600`}>
-                {b.items.map((item, j) => (
-                  <li key={j}>{inline(item, `l${i}-${j}`)}</li>
-                ))}
-              </Tag>
-            );
-          }
-          default:
-            return <p key={i}>{inline(b.text, `p${i}`)}</p>;
-        }
-      })}
+    <div className={STYLES[variant].root}>
+      {blocks.map((b, i) => (
+        <GuideBlock key={i} block={b} index={i} variant={variant} />
+      ))}
     </div>
   );
+}
+
+/** One parsed block, styled for the variant. Headings keep links but drop bold markers. */
+export function GuideBlock({ block: b, index: i, variant = "guide", className = "" }: { block: Block; index: number; variant?: GuideVariant; className?: string }) {
+  const css = STYLES[variant];
+  const cx = (base: string) => (className ? `${base} ${className}` : base);
+  switch (b.kind) {
+    case "h2":
+      return (
+        <h2 id={headingId(plainText(b.text))} className={cx(css.h2)}>
+          {inline(b.text.replace(/\*\*/g, ""), `h${i}`)}
+        </h2>
+      );
+    case "h3":
+      return <h3 className={cx(css.h3)}>{inline(b.text.replace(/\*\*/g, ""), `h${i}`)}</h3>;
+    case "h4":
+      return <h4 className={cx(css.h4)}>{inline(b.text.replace(/\*\*/g, ""), `h${i}`)}</h4>;
+    case "img":
+      return (
+        <figure className={className || undefined}>
+          <BodyImage src={b.src} alt={b.alt} />
+        </figure>
+      );
+    case "table":
+      return (
+        <div className={cx("overflow-x-auto rounded-2xl border border-obsidian-900/[0.08] bg-white")}>
+          <table className="w-full min-w-[28rem] border-collapse text-left text-sm">
+            <thead className="bg-obsidian-50 text-obsidian-900">
+              <tr>
+                {b.head.map((c, j) => (
+                  <th key={j} scope="col" className="border-b border-obsidian-900/[0.08] px-4 py-3 font-medium">
+                    {inline(c, `t${i}-h${j}`)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {b.rows.map((row, r) => (
+                <tr key={r} className="border-b border-obsidian-900/[0.06] last:border-0">
+                  {row.map((c, j) => (
+                    <td key={j} className="px-4 py-3 align-top">
+                      {inline(c, `t${i}-${r}-${j}`)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    case "quote":
+      return <blockquote className={cx(css.quote)}>{inline(b.text, `q${i}`)}</blockquote>;
+    case "ul":
+    case "ol": {
+      const Tag = b.kind;
+      return (
+        <Tag className={cx(`${b.kind === "ul" ? "list-disc" : "list-decimal"} space-y-1.5 pl-6 marker:text-ocean-600`)}>
+          {b.items.map((item, j) => (
+            <li key={j}>{inline(item, `l${i}-${j}`)}</li>
+          ))}
+        </Tag>
+      );
+    }
+    default:
+      return <p className={className || undefined}>{inline(b.text, `p${i}`)}</p>;
+  }
 }
