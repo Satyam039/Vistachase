@@ -46,9 +46,14 @@ const shortDate = (d: string) => {
 
 export default async function ShuttlesPage() {
   const [routes, shuttles] = await Promise.all([getShuttleRoutes(), getTours({ category: "SHUTTLE" })]);
-  const live: LiveShuttleDeparture[] = routes.flatMap((r) =>
-    r.departures.map((d) => ({ id: d.id, date: d.date.slice(0, 10), time: d.departureTime.slice(0, 5), price: d.price, seatsAvailable: d.seatsAvailable })),
-  );
+  // Departures sold online: the two shuttle products' (seeded from the doc's timetable) and any routes'.
+  const live: LiveShuttleDeparture[] = [...shuttles.flatMap((t) => t.departures), ...routes.flatMap((r) => r.departures)].map((d) => ({
+    id: d.id,
+    date: d.date.slice(0, 10),
+    time: d.departureTime.slice(0, 5),
+    price: d.price,
+    seatsAvailable: d.seatsAvailable,
+  }));
   const prices = shuttles.map((t) => t.basePrice).filter((p): p is number => typeof p === "number" && p > 0);
   const fromPrice = prices.length ? Math.min(...prices) : null;
 
