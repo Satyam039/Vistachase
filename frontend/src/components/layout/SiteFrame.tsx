@@ -159,6 +159,12 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
             }
             endContent={
               <>
+                <Button
+                  label="CONTACT US"
+                  variant="ghost"
+                  href="/contact-us"
+                  className="vc-contact-desktop max-md:hidden"
+                />
                 {/* Phones and tablets: My trips as an icon on the right, where it is easy to reach. */}
               <Link
                 href="/account/trips"

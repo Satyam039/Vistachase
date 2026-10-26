@@ -7,19 +7,27 @@
 import { useState } from "react";
 import { CheckCircle2, Send } from "lucide-react";
 import { Dropdown } from "@/components/forms/Dropdown";
+import { PhoneField } from "@/components/forms/PhoneField";
+import { dialCode } from "@/lib/countries";
 import { openDatePicker } from "@/lib/utils/datePicker";
 
-type Fields = "name" | "email" | "phone" | "message" | "date" | "guests";
+type Fields = "name" | "email" | "phone" | "message" | "date" | "guests" | "tour";
 const FIELD =
   "h-12 w-full rounded-xl border border-obsidian-900/10 bg-white px-4 text-base text-obsidian-900 placeholder:text-slate-400 focus:border-ocean-600 focus:outline-none focus:ring-2 focus:ring-ocean-600/30 aria-[invalid=true]:border-red-600";
 
+const GENERAL_QUESTION_OPTIONS = [
+  { value: "private", label: "Private" },
+  { value: "shared", label: "Shared" },
+  { value: "shuttle", label: "Shuttle" },
+];
+
 export function ContactForm({
-  tours,
+  tours = [],
   defaultTour = "",
   defaultGuests,
   defaultMessage,
 }: {
-  tours: { slug: string; title: string }[];
+  tours?: { slug: string; title: string }[];
   defaultTour?: string;
   defaultGuests?: number;
   /** Prefilled message, e.g. for a package request. */
@@ -30,16 +38,74 @@ export function ContactForm({
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<Fields, string>>>({});
   const today = new Date().toISOString().slice(0, 10);
 
+  const initialCategory =
+    defaultTour.includes("private") || defaultTour.includes("three-day") || defaultTour.includes("four-day")
+      ? "private"
+      : defaultTour.includes("shuttle")
+      ? "shuttle"
+      : "shared";
+
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phoneCountry, setPhoneCountry] = useState("CA");
+  const [phoneLocal, setPhoneLocal] = useState("");
+  const [tourCategory, setTourCategory] = useState(initialCategory);
+  const [date, setDate] = useState("");
+  const [guests, setGuests] = useState(defaultGuests ? String(defaultGuests) : "");
+  const [message, setMessage] = useState(defaultMessage || "");
+
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     setFieldErrors({});
-    const form = new FormData(e.currentTarget);
-    const body = Object.fromEntries(form.entries());
-    if (!body.guests) delete body.guests;
+
+    const errs: Partial<Record<Fields, string>> = {};
+    if (!name.trim() || name.trim().length < 2) {
+      errs.name = "Enter your full name.";
+    }
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) {
+      errs.email = "Enter a valid email address.";
+    }
+    if (!phoneLocal.trim() || phoneLocal.replace(/\D/g, "").length < 6) {
+      errs.phone = "Enter a valid phone number with country code.";
+    }
+    if (!tourCategory) {
+      errs.tour = "Please select Private, Shared, or Shuttle.";
+    }
+    if (!date) {
+      errs.date = "Please select your preferred date.";
+    }
+    if (!guests || Number(guests) < 1) {
+      errs.guests = "Enter the number of guests.";
+    }
+    if (!message.trim() || message.trim().length < 5) {
+      errs.message = "Please write a message (at least 5 characters).";
+    }
+
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
+      setError("Please fill in all required fields.");
+      return;
+    }
+
     setState("sending");
+    const fullPhone = `+${dialCode(phoneCountry)} ${phoneLocal.trim()}`;
+    const payload = {
+      name: name.trim(),
+      email: email.trim(),
+      phone: fullPhone,
+      tourSlug: tourCategory,
+      date,
+      guests: Number(guests),
+      message: message.trim(),
+    };
+
     try {
-      const res = await fetch("/api/enquiries", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const res = await fetch("/api/enquiries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
       const json = await res.json().catch(() => ({}));
       if (!res.ok || !json.success) {
         const f = (json.fields ?? {}) as Record<string, string[]>;
@@ -47,7 +113,13 @@ export function ContactForm({
           Object.fromEntries(
             Object.entries(f).map(([k]) => [
               k,
-              k === "email" ? "Enter a valid email address." : k === "message" ? "Please write a short message." : k === "name" ? "Enter your name." : "Please check this field.",
+              k === "email"
+                ? "Enter a valid email address."
+                : k === "message"
+                ? "Please write a short message."
+                : k === "name"
+                ? "Enter your name."
+                : "Please check this field.",
             ]),
           ),
         );
@@ -80,63 +152,119 @@ export function ContactForm({
         {fieldErrors[k]}
       </span>
     ) : null;
-  const aria = (k: Fields) => ({ "aria-invalid": fieldErrors[k] ? true : undefined, "aria-describedby": fieldErrors[k] ? `contact-${k}-error` : undefined });
+  const aria = (k: Fields) => ({
+    "aria-invalid": fieldErrors[k] ? true : undefined,
+    "aria-describedby": fieldErrors[k] ? `contact-${k}-error` : undefined,
+  });
 
   return (
     <form onSubmit={submit} noValidate className="grid gap-5 sm:grid-cols-2">
       <label className="block">
-        <span className="mb-1.5 block text-sm text-slate-700">Full name</span>
-        <input name="name" required autoComplete="name" placeholder="Sarah Jenkins" className={FIELD} {...aria("name")} />
+        <span className="mb-1.5 block text-sm font-medium text-slate-700">Full name</span>
+        <input
+          name="name"
+          required
+          autoComplete="name"
+          placeholder="Sarah Jenkins"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className={FIELD}
+          {...aria("name")}
+        />
         {err("name")}
       </label>
+
       <label className="block">
-        <span className="mb-1.5 block text-sm text-slate-700">Email</span>
-        <input name="email" type="email" required autoComplete="email" placeholder="you@example.com" className={FIELD} {...aria("email")} />
+        <span className="mb-1.5 block text-sm font-medium text-slate-700">Email</span>
+        <input
+          name="email"
+          type="email"
+          required
+          autoComplete="email"
+          placeholder="you@example.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className={FIELD}
+          {...aria("email")}
+        />
         {err("email")}
       </label>
+
+      <div className="block">
+        <PhoneField
+          label="Phone number"
+          country={phoneCountry}
+          onCountryChange={setPhoneCountry}
+          value={phoneLocal}
+          onChange={setPhoneLocal}
+          heightClass="h-12"
+          roundedClass="rounded-xl"
+          error={fieldErrors.phone}
+        />
+      </div>
+
+      <div className="block">
+        <Dropdown
+          name="tourSlug"
+          label="General questions"
+          defaultValue={initialCategory}
+          value={tourCategory}
+          onChange={setTourCategory}
+          options={GENERAL_QUESTION_OPTIONS}
+        />
+        {err("tour")}
+      </div>
+
       <label className="block">
-        <span className="mb-1.5 block text-sm text-slate-700">
-          Phone <span className="text-slate-500">(optional)</span>
-        </span>
-        <input name="phone" type="tel" autoComplete="tel" placeholder="+1 403 555 0192" className={FIELD} {...aria("phone")} />
+        <span className="mb-1.5 block text-sm font-medium text-slate-700">Preferred date</span>
+        <input
+          name="date"
+          type="date"
+          required
+          min={today}
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          onClick={openDatePicker}
+          onFocus={openDatePicker}
+          className={FIELD}
+          {...aria("date")}
+        />
+        {err("date")}
       </label>
-      <Dropdown
-        name="tourSlug"
-        defaultValue={defaultTour}
-        label={
-          <>
-            Tour <span className="text-slate-500">(optional)</span>
-          </>
-        }
-        searchable={tours.length > 8}
-        searchPlaceholder="Search tours"
-        options={[{ value: "", label: "General question" }, ...tours.map((t) => ({ value: t.slug, label: t.title }))]}
-      />
+
       <label className="block">
-        <span className="mb-1.5 block text-sm text-slate-700">
-          Preferred date <span className="text-slate-500">(optional)</span>
-        </span>
-        <input name="date" type="date" min={today} onClick={openDatePicker} onFocus={openDatePicker} className={FIELD} {...aria("date")} />
+        <span className="mb-1.5 block text-sm font-medium text-slate-700">Guests</span>
+        <input
+          name="guests"
+          type="number"
+          required
+          min={1}
+          max={60}
+          inputMode="numeric"
+          value={guests}
+          onChange={(e) => setGuests(e.target.value)}
+          placeholder="2"
+          className={FIELD}
+          {...aria("guests")}
+        />
+        {err("guests")}
       </label>
-      <label className="block">
-        <span className="mb-1.5 block text-sm text-slate-700">
-          Guests <span className="text-slate-500">(optional)</span>
-        </span>
-        <input name="guests" type="number" min={1} max={60} inputMode="numeric" defaultValue={defaultGuests} placeholder="2" className={FIELD} {...aria("guests")} />
-      </label>
+
       <label className="block sm:col-span-2">
-        <span className="mb-1.5 block text-sm text-slate-700">Message</span>
+        <span className="mb-1.5 block text-sm font-medium text-slate-700">Message</span>
         <textarea
           name="message"
           required
           rows={5}
-          defaultValue={defaultMessage}
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
           placeholder="Tell us your dates, where you're staying and what you'd love to see."
           className={`${FIELD} h-auto py-3 leading-relaxed`}
           {...aria("message")}
         />
         {err("message")}
       </label>
+
       {/* Honeypot for bots: hidden from people and assistive technology. */}
       <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
         <label>
@@ -144,11 +272,13 @@ export function ContactForm({
           <input name="website" tabIndex={-1} autoComplete="off" />
         </label>
       </div>
+
       {error && (
         <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-800 sm:col-span-2">
           {error}
         </p>
       )}
+
       <div className="flex flex-wrap items-center gap-4 sm:col-span-2">
         <button
           type="submit"

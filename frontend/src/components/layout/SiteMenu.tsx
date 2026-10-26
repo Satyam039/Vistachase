@@ -24,7 +24,6 @@ export const MENU_SECTIONS: MenuSection[] = [
       { title: "Shared tours", description: "Small groups of up to 12, our best-sellers", href: "/shared-tours" },
       { title: "Private tours", description: "Your own vehicle and guide, your pace", href: "/private-tours" },
       { title: "Shuttles", description: "Guaranteed Moraine Lake & Lake Louise access", href: "/shuttles" },
-      { title: "Multi-Day Journeys", description: "Several days across the Rockies, airport transfers", href: "/multi-day-tour-package-for-banff" },
       { title: "Banff activity tickets", description: "Gondola, Icefield, lake cruises, hot springs", href: "/banff-activity-tickets" },
     ],
   },
@@ -41,23 +40,24 @@ export const MENU_SECTIONS: MenuSection[] = [
     ],
   },
   {
-    id: "plan",
-    title: "Plan your trip",
-    links: [
-      { title: "Search tours & dates", description: "Filter by date, guests and destination", href: "/search" },
-      { title: "Hotel pickup finder", description: "Your pickup point and time", href: "/pickup-finder" },
-      { title: "AI concierge", description: "Ask anything, plan your days", href: "/concierge" },
-      { title: "My trips", description: "Bookings and boarding passes", href: "/account/trips" },
-    ],
-  },
-  {
     id: "about",
     title: "About Vista Chase",
     links: [
       { title: "Our story", href: "/about-us" },
       { title: "Gallery", href: "/gallery" },
       { title: "FAQ & cancellation", href: "/faq" },
-      { title: "Contact us", href: "/contact-us" },
+      { title: "Search tours & dates", description: "Filter by date, guests and destination", href: "/search" },
+      { title: "Hotel pickup finder", description: "Your pickup point and time", href: "/pickup-finder" },
+    ],
+  },
+  {
+    id: "contact",
+    title: "Contact us",
+    links: [
+      { title: "Send a message", description: "Inquiries, private charters & custom quotes", href: "/contact-us" },
+      { title: "Call +1 (825) 734-9456", description: "Lines open 6 a.m. – 9 p.m. Mountain Time", href: "tel:+18257349456" },
+      { title: "Email bookings@vistachase.com", description: "Direct booking and reservation inquiries", href: "mailto:bookings@vistachase.com" },
+      { title: "Support: support@vistachase.com", description: "Existing bookings and general customer care", href: "mailto:support@vistachase.com" },
     ],
   },
   {

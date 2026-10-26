@@ -896,6 +896,15 @@ export function BookingCheckoutClient({
         )}
       </VStack>
       {!confirmed && holdStatus}
+      <div className="mt-4 rounded-2xl bg-obsidian-50 p-4 border border-obsidian-900/10 text-xs">
+        <p className="font-semibold uppercase tracking-wider text-slate-500">Booking inquiries & support</p>
+        <p className="mt-1 text-sm text-obsidian-900">
+          Email: <a href="mailto:bookings@vistachase.com" className="text-ocean-700 underline font-medium">bookings@vistachase.com</a>
+        </p>
+        <p className="mt-0.5 text-sm text-slate-600">
+          Phone: <a href="tel:+18257349456" className="text-slate-800 hover:underline">+1 (825) 734-9456</a>
+        </p>
+      </div>
     </VStack>
   );
 
