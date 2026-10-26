@@ -17,6 +17,8 @@ export function PhoneField({
   value,
   onChange,
   error,
+  heightClass = "h-8",
+  roundedClass = "rounded-lg",
 }: {
   label: string;
   description?: string;
@@ -25,6 +27,8 @@ export function PhoneField({
   value: string;
   onChange: (value: string) => void;
   error?: string;
+  heightClass?: string;
+  roundedClass?: string;
 }) {
   const id = useId();
   const { top, rest } = useMemo(() => phoneCountries(), []);
@@ -42,8 +46,8 @@ export function PhoneField({
         </p>
       )}
       <div
-        className={`flex h-8 items-stretch overflow-hidden rounded-lg border bg-white focus-within:outline focus-within:outline-2 focus-within:outline-offset-1 focus-within:outline-ocean-600 ${
-          error ? "border-red-600" : "border-[rgb(131_131_138)]"
+        className={`flex ${heightClass} items-stretch overflow-hidden ${roundedClass} border bg-white focus-within:outline focus-within:outline-2 focus-within:outline-offset-1 focus-within:outline-ocean-600 ${
+          error ? "border-red-600" : "border-obsidian-900/10"
         }`}
       >
         <div className="relative flex shrink-0 items-center border-r border-obsidian-900/10 bg-obsidian-50">

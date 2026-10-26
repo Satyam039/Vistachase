@@ -20,7 +20,8 @@ const baseMetadata: Metadata = {
 
 const CHANNELS = [
   { icon: Phone, title: "Call us", value: "+1 (825) 734-9456", note: "Lines open 6 a.m. – 9 p.m. Mountain Time", href: "tel:+18257349456" },
-  { icon: Mail, title: "Email", value: "support@vistachase.com", note: "We usually reply within a day", href: "mailto:support@vistachase.com" },
+  { icon: Mail, title: "Booking inquiries", value: "bookings@vistachase.com", note: "Tours, shuttles & reservations", href: "mailto:bookings@vistachase.com" },
+  { icon: Mail, title: "Support email", value: "support@vistachase.com", note: "General questions & customer care", href: "mailto:support@vistachase.com" },
   { icon: Sparkles, title: "AI concierge", value: "Ask anything, any time", note: "Tours, pickups and bookings", href: "/concierge" },
 ];
 
@@ -128,25 +129,6 @@ export default async function ContactUsPage({ searchParams }: { searchParams: Pr
               </li>
             ))}
           </ul>
-
-          <div className="rounded-[1.5rem] bg-obsidian-950 p-6 text-white" data-reveal>
-            <p className="flex items-center gap-2 text-sm text-summit-300">
-              <MapPin className="h-4 w-4" aria-hidden="true" />
-              Our office
-            </p>
-            <p className="mt-2 text-lg text-white">121 Bow Meadows Crescent #110</p>
-            <p className="text-base text-white/80">Canmore, AB T1W 2W8, Canada</p>
-            <a
-              href="https://www.google.com/maps/search/?api=1&query=121+Bow+Meadows+Crescent+%23110+Canmore+AB"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-4 inline-flex items-center gap-1.5 border-b border-summit-500 pb-0.5 text-sm text-white"
-            >
-              Open in Google Maps
-              <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
-              <span className="sr-only">(opens in a new tab)</span>
-            </a>
-          </div>
         </aside>
 
         {/* Form */}
