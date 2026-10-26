@@ -8,6 +8,7 @@ import type { Metadata } from "next";
 import { ArrowUpRight, ChevronRight, HelpCircle, Mail, MapPin, Phone, Sparkles, Ticket } from "lucide-react";
 import { ContactForm } from "@/components/forms/ContactForm";
 import { TWO_DAY_PACKAGE } from "@/lib/sharedTours";
+import { SHUTTLE_DEPARTURES, SHUTTLE_PICKUPS, clock } from "@/lib/shuttleSchedule";
 import { getTours } from "@/lib/api/catalog";
 import { withSeo } from "@/lib/seo/server";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
@@ -30,7 +31,7 @@ const SELF_SERVE = [
   { icon: HelpCircle, label: "FAQ & cancellation", href: "/faq" },
 ];
 
-export default async function ContactUsPage({ searchParams }: { searchParams: Promise<{ tour?: string; guests?: string; package?: string }> }) {
+export default async function ContactUsPage({ searchParams }: { searchParams: Promise<{ tour?: string; guests?: string; package?: string; shuttle?: string; date?: string; pickup?: string }> }) {
   const params = await searchParams;
   const pkg = params.package;
   const isTwoDayShared = pkg === TWO_DAY_PACKAGE.slug;
@@ -58,6 +59,17 @@ export default async function ContactUsPage({ searchParams }: { searchParams: Pr
     packageTitle = "Request the Four-Day Rockies & Jasper";
     packageSubtitle = "Tell us your preferred dates, group size, and final drop-off location. Our team will tailor your 4-day journey across Banff, Yoho, and Jasper.";
     packageMessage = "I'd like to book the Four-Day Rockies & Jasper Private Tour.\nPreferred start date:\nGroup size:\nLuggage count:\nFinal drop-off destination (Banff, Lake Louise, Canmore, or Calgary):\nOptional activities of interest:";
+  }
+
+  // "Book This Departure" on /shuttles when that departure isn't bookable online yet.
+  const shuttle = SHUTTLE_DEPARTURES.find((d) => String(d.number) === params.shuttle);
+  if (!packageTitle && shuttle) {
+    const pickup = SHUTTLE_PICKUPS.find((p) => p.id === params.pickup) ?? SHUTTLE_PICKUPS[1];
+    const time = shuttle.pickup[pickup.id];
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(params.date ?? "") ? params.date : "";
+    packageTitle = "Book your lake shuttle";
+    packageSubtitle = `Departure ${shuttle.number} · ${shuttle.name}. Tell us how many guests and we'll confirm your seats by email.`;
+    packageMessage = `I'd like to book the Moraine Lake & Lake Louise Shuttle.\nDeparture: ${shuttle.number} · ${shuttle.name}\nDate: ${date}\nPickup: ${pickup.label}${time ? ` (${clock(time)})` : ""}\nNumber of guests:`;
   }
 
   let tours: { slug: string; title: string }[] = [];
