@@ -31,15 +31,15 @@ export function AnnouncementBar() {
       <div className="mx-auto flex min-h-11 max-w-7xl items-center gap-3 py-0.5 pl-4 pr-1 text-sm lg:pl-9 lg:pr-5">
         <Info className="hidden h-4 w-4 shrink-0 text-summit-400 sm:block" aria-hidden="true" />
         <p className="min-w-0 flex-1 leading-snug text-white">
-          <span className="sm:hidden">No private cars to Moraine Lake.</span>
+          <span className="sm:hidden">Moraine Lake Road is closed to cars.</span>
           <span className="hidden sm:inline">
-            Moraine Lake Road is closed to private vehicles.{" "}
-            <span className="hidden text-white/75 xl:inline">Vista Chase shuttles and tours still have guaranteed access.</span>
-            <span className="text-white/75 xl:hidden">Our shuttles still go.</span>
+            <span className="hidden lg:inline">Planning to visit the lakes? </span>
+            Moraine Lake Road is closed to personal vehicles, and parking at Lake Louise is limited.{" "}
+            <span className="hidden text-white/75 xl:inline">Book your shuttle ahead and leave the driving to us.</span>
           </span>{" "}
-          <Link href="/pickup-finder" className="inline-flex items-center gap-1 whitespace-nowrap text-summit-300 underline decoration-summit-300/50 underline-offset-4 hover:decoration-summit-300">
-            <span className="sm:hidden">Pickups</span>
-            <span className="hidden sm:inline">Find your hotel pickup</span>
+          <Link href="/shuttles#departures" className="inline-flex items-center gap-1 whitespace-nowrap text-summit-300 underline decoration-summit-300/50 underline-offset-4 hover:decoration-summit-300">
+            <span className="sm:hidden">Pickups &amp; departures</span>
+            <span className="hidden sm:inline">View Pickups &amp; Departures</span>
             <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
           </Link>
         </p>

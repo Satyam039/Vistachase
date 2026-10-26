@@ -1,15 +1,16 @@
-// Moraine Lake & Lake Louise shuttles. Structured like Expedia / GetYourGuide activity listings:
-// hero, access notice, the two shuttles side by side, then a departure picker (date chips with
-// price and seats, Expedia-style) that goes straight to checkout, what's included and how the day
-// works. Inclusions and pickup points are the catalog's (live product pages).
+// Moraine Lake & Lake Louise shuttle, laid out per the owner's doc (Shuttles section): hero, then
+// "Choose your lake day" (booking bar + one card per departure from lib/shuttleSchedule.ts), the
+// live online date rail, what's included and how the day works. The road-closure notice lives in
+// the site announcement bar only. Inclusions and pickup points are the catalog's.
 
 import Image from "next/image";
 import Link from "next/link";
 import { SEATS_MESSAGE } from "@/lib/policy";
 import type { Metadata } from "next";
-import { AlertTriangle, CalendarCheck, CheckCircle2, ChevronRight, Clock, MapPin, Sunrise, TicketCheck } from "lucide-react";
+import { ArrowRight, CalendarCheck, CheckCircle2, ChevronRight, Clock, MapPin, Sunrise, TicketCheck } from "lucide-react";
 import { AmbientVideo } from "@/components/cinematic/AmbientVideo";
-import { TourCard } from "@/components/tours/TourCard";
+import { ShuttleDayPlanner, type LiveShuttleDeparture } from "@/components/shuttles/ShuttleDayPlanner";
+import { albertaToday } from "@/lib/shuttleSchedule";
 import { TrustRow } from "@/components/home/TrustRow";
 import { getShuttleRoutes, getTours } from "@/lib/api/catalog";
 import { withSeo } from "@/lib/seo/server";
@@ -45,6 +46,11 @@ const shortDate = (d: string) => {
 
 export default async function ShuttlesPage() {
   const [routes, shuttles] = await Promise.all([getShuttleRoutes(), getTours({ category: "SHUTTLE" })]);
+  const live: LiveShuttleDeparture[] = routes.flatMap((r) =>
+    r.departures.map((d) => ({ id: d.id, date: d.date.slice(0, 10), time: d.departureTime.slice(0, 5), price: d.price, seatsAvailable: d.seatsAvailable })),
+  );
+  const prices = shuttles.map((t) => t.basePrice).filter((p): p is number => typeof p === "number" && p > 0);
+  const fromPrice = prices.length ? Math.min(...prices) : null;
 
   return (
     <>
@@ -78,51 +84,45 @@ export default async function ShuttlesPage() {
               </li>
             </ol>
           </nav>
+          <p className="mb-4 text-sm uppercase tracking-[0.24em] text-summit-300 motion-safe:animate-[fadeUp_800ms_ease-out]">Two Iconic Lakes. One Easy Booking.</p>
           <h1 className="mx-auto max-w-4xl text-balance text-4xl font-light leading-[1.05] tracking-tight text-white sm:text-6xl lg:text-7xl motion-safe:animate-[fadeUp_900ms_ease-out]">
-            The shuttle to Moraine Lake and Lake Louise
+            Moraine Lake &amp; Lake Louise Shuttle
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg font-light leading-relaxed text-white/85 motion-safe:animate-[fadeUp_1100ms_ease-out]">
-            Moraine Lake Road is closed to private cars, but our shuttles still go. Sunrise and day departures from Canmore and Banff,
-            June to October.
+            Visit both lakes with convenient pickups in Banff, Canmore and Lake Louise Village. Choose your departure, enjoy time to explore
+            independently and leave the driving to us.
           </p>
           <a href="#departures" className="golden-summit-btn mt-7 inline-flex h-12 items-center gap-2 rounded-full px-6 text-base motion-safe:animate-[fadeUp_1300ms_ease-out]">
-            Choose a departure
+            Choose Your Departure
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </a>
+          <p className="mt-6 text-sm text-white/85">Both Lakes Included · Round-Trip Transportation · Small Groups</p>
+          <p className="mt-1 text-sm text-white/70">Operating June–September · Multiple Daily Departures</p>
         </div>
       </section>
 
-      {/* Access notice */}
-      <div className="mx-auto max-w-7xl px-page pt-8">
-        <p className="flex items-start gap-3 rounded-[1.5rem] bg-summit-100 px-5 py-4 text-base text-obsidian-900 ring-1 ring-summit-500/30" data-reveal>
-          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" aria-hidden="true" />
-          <span>
-            <span className="text-obsidian-900">Parks Canada rule:</span> personal and rental cars can&rsquo;t use Moraine Lake Road. Licensed operators like Vista Chase can
-            take you there directly.
-          </span>
-        </p>
-      </div>
-
-      {/* The two shuttles */}
-      {shuttles.length > 0 && (
-        <section aria-labelledby="shuttles-heading" className="mx-auto max-w-7xl px-page py-16 sm:py-20">
-          <div className="mx-auto mb-10 max-w-3xl text-center" data-reveal>
-            <p className="mb-3 text-sm uppercase tracking-[0.22em] text-ocean-600">Two ways to go</p>
-            <h2 id="shuttles-heading" className="text-balance text-3xl font-light leading-[1.1] tracking-tight text-obsidian-900 sm:text-4xl lg:text-5xl">
-              Sunrise or the day shuttle
-            </h2>
-          </div>
-          <ul className="mx-auto grid max-w-3xl gap-4 sm:grid-cols-2 lg:gap-5" data-stagger>
-            {shuttles.map((t) => (
-              <li key={t.id}>
-                <TourCard tour={t} />
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      {/* Choose your lake day */}
+      <section id="departures" aria-labelledby="lake-day-heading" className="scroll-mt-32 mx-auto max-w-7xl px-page py-16 sm:py-20">
+        <div className="mx-auto mb-10 max-w-3xl text-center" data-reveal>
+          <p className="mb-3 text-sm uppercase tracking-[0.22em] text-ocean-600">Choose your lake day</p>
+          <h2 id="lake-day-heading" className="text-balance text-3xl font-light leading-[1.1] tracking-tight text-obsidian-900 sm:text-4xl lg:text-5xl">
+            Two Lakes. A Departure That Fits.
+          </h2>
+          <p className="mt-4 text-base text-slate-600 sm:text-lg">
+            Start early or explore later in the day. Every departure visits Moraine Lake and Lake Louise, with round-trip transportation and time to
+            enjoy each lake independently.
+          </p>
+          <p className="mt-3 text-base text-slate-600">Choose your date and pickup location to see available departures.</p>
+          <p className="mt-4 flex flex-wrap justify-center gap-x-6 gap-y-1 text-sm text-obsidian-900">
+            <span>June–July: 7 Daily Departures</span>
+            <span>August–September: 5 Daily Departures</span>
+          </p>
+        </div>
+        <ShuttleDayPlanner today={albertaToday()} live={live} fromPrice={fromPrice} />
+      </section>
 
       {/* Departure picker */}
-      <section id="departures" aria-labelledby="departures-heading" className="scroll-mt-32 border-y border-obsidian-900/[0.06] bg-white py-16 sm:py-20">
+      <section id="book-online" aria-labelledby="departures-heading" className="scroll-mt-32 border-y border-obsidian-900/[0.06] bg-white py-16 sm:py-20">
         <div className="mx-auto max-w-7xl px-page">
           <div className="mx-auto mb-10 max-w-3xl text-center" data-reveal>
             <p className="mb-3 text-sm uppercase tracking-[0.22em] text-ocean-600">Upcoming departures</p>
