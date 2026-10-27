@@ -299,61 +299,63 @@ model ReservationHold {
 }
 
 model Booking {
-  id                     String                 @id @default(cuid())
-  bookingReference       String                 @unique // e.g. VC-2026-89412
-  affiliateId            String? // partner whose ?ref= link brought this booking
-  affiliate              Affiliate?             @relation(fields: [affiliateId], references: [id], onDelete: SetNull)
-  bokunBookingId         String?                @unique // Bókun external confirmation reference
-  adminNotes             String? // Staff-only notes (admin booking screen)
-  reviewRequestedAt      DateTime? // When the post-trip review email went out (sent once)
-  customerId             String?
-  customer               User?                  @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  customerName           String
-  customerEmail          String
-  customerPhone          String
-  tourDepartureId        String
-  tourDeparture          TourDeparture          @relation(fields: [tourDepartureId], references: [id], onDelete: Restrict)
-  pickupStopId           String?
-  pickupStop             ShuttleStop?           @relation(fields: [pickupStopId], references: [id], onDelete: SetNull)
-  pickupCustomText       String?
-  pickupTime             String?
-  adultsCount            Int                    @default(1)
-  childrenCount          Int                    @default(0)
-  infantsCount           Int                    @default(0)
-  totalSeats             Int
-  subtotal               Int
-  tax                    Int                    @default(0)
-  addOnsTotal            Int                    @default(0)
-  totalAmount            Int
-  currency               String                 @default("CAD")
-  status                 BookingStatus          @default(CONFIRMED) // CONFIRMED, PENDING_PAYMENT, CANCELLED, EXPIRED, REFUNDED, COMPLETED
-  idempotencyKey         String?                @unique // client key: a retried submission returns this booking
-  priceSnapshot          Json? // what the server priced it with (unit prices, promo, add-ons, totals)
-  paymentExpiresAt       DateTime? // unpaid after this: EXPIRED and seats released
-  paymentPlan            PaymentPlan            @default(FULL)
-  depositAmount          Int? // DEPOSIT plan: cents paid at checkout (non-refundable)
-  balanceDueAt           DateTime? // DEPOSIT plan: the rest is due by this instant
-  balancePaidAt          DateTime? // DEPOSIT plan: when the rest was paid
-  balanceReminderStage   Int                    @default(0) // 1 reminder sent, 2 due-day notice, 3 overdue (staff flagged)
-  externalSyncStatus     ExternalSyncStatus     @default(NOT_REQUIRED)
-  lastSyncAttemptAt      DateTime?
-  specialRequests        String?
-  voucherCode            String                 @unique
-  qrCodeUrl              String?
-  trackingToken          String?                @unique // 64-character unguessable crypto hex string
-  trackingTokenExpiresAt DateTime?
-  isBoarded              Boolean                @default(false)
-  boardedAt              DateTime?
-  createdAt              DateTime               @default(now())
-  updatedAt              DateTime               @updatedAt
-  items                  BookingAddOn[]
-  payments               Payment[]
-  review                 Review?
-  runBookings            RunBooking[]
-  whatsappNotifications  WhatsAppNotification[]
-  syncTasks              BookingSyncTask[]
-  commissions            CommissionLedger[]
-  flags                  BookingFlag[]
+  id                      String                 @id @default(cuid())
+  bookingReference        String                 @unique // e.g. VC-2026-89412
+  affiliateId             String? // partner whose ?ref= link brought this booking
+  affiliate               Affiliate?             @relation(fields: [affiliateId], references: [id], onDelete: SetNull)
+  bokunBookingId          String?                @unique // Bókun external confirmation reference
+  adminNotes              String? // Staff-only notes (admin booking screen)
+  reviewRequestedAt       DateTime? // When the post-trip review email went out (sent once)
+  confirmationEmailSentAt DateTime? // When the confirmation email + PDF itinerary went out (claimed once; cleared if the send failed)
+  confirmationEmailError  String? // Why the last confirmation email failed (retried by the jobs runner)
+  customerId              String?
+  customer                User?                  @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  customerName            String
+  customerEmail           String
+  customerPhone           String
+  tourDepartureId         String
+  tourDeparture           TourDeparture          @relation(fields: [tourDepartureId], references: [id], onDelete: Restrict)
+  pickupStopId            String?
+  pickupStop              ShuttleStop?           @relation(fields: [pickupStopId], references: [id], onDelete: SetNull)
+  pickupCustomText        String?
+  pickupTime              String?
+  adultsCount             Int                    @default(1)
+  childrenCount           Int                    @default(0)
+  infantsCount            Int                    @default(0)
+  totalSeats              Int
+  subtotal                Int
+  tax                     Int                    @default(0)
+  addOnsTotal             Int                    @default(0)
+  totalAmount             Int
+  currency                String                 @default("CAD")
+  status                  BookingStatus          @default(CONFIRMED) // CONFIRMED, PENDING_PAYMENT, CANCELLED, EXPIRED, REFUNDED, COMPLETED
+  idempotencyKey          String?                @unique // client key: a retried submission returns this booking
+  priceSnapshot           Json? // what the server priced it with (unit prices, promo, add-ons, totals)
+  paymentExpiresAt        DateTime? // unpaid after this: EXPIRED and seats released
+  paymentPlan             PaymentPlan            @default(FULL)
+  depositAmount           Int? // DEPOSIT plan: cents paid at checkout (non-refundable)
+  balanceDueAt            DateTime? // DEPOSIT plan: the rest is due by this instant
+  balancePaidAt           DateTime? // DEPOSIT plan: when the rest was paid
+  balanceReminderStage    Int                    @default(0) // 1 reminder sent, 2 due-day notice, 3 overdue (staff flagged)
+  externalSyncStatus      ExternalSyncStatus     @default(NOT_REQUIRED)
+  lastSyncAttemptAt       DateTime?
+  specialRequests         String?
+  voucherCode             String                 @unique
+  qrCodeUrl               String?
+  trackingToken           String?                @unique // 64-character unguessable crypto hex string
+  trackingTokenExpiresAt  DateTime?
+  isBoarded               Boolean                @default(false)
+  boardedAt               DateTime?
+  createdAt               DateTime               @default(now())
+  updatedAt               DateTime               @updatedAt
+  items                   BookingAddOn[]
+  payments                Payment[]
+  review                  Review?
+  runBookings             RunBooking[]
+  whatsappNotifications   WhatsAppNotification[]
+  syncTasks               BookingSyncTask[]
+  commissions             CommissionLedger[]
+  flags                   BookingFlag[]
 
   @@index([bookingReference])
   @@index([affiliateId])

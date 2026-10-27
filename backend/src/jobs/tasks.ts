@@ -123,6 +123,12 @@ export async function syncWebflowBlogPosts() {
   return scheduledWebflowSync();
 }
 
+/** Every 15 minutes: confirmation emails that failed are sent again (confirmation-email.ts). */
+export async function retryConfirmationEmails(now = new Date()) {
+  const { retryFailedConfirmationEmails } = await import("@/modules/bookings/confirmation-email");
+  return retryFailedConfirmationEmails(now);
+}
+
 /** Hourly: deposit bookings with an unpaid balance get their reminders; staff are flagged 72h before. */
 export async function remindUnpaidBalances(now = new Date()) {
   return sendBalanceReminders(now);

@@ -23,6 +23,7 @@ import { executeAiTool, type ToolExecutionContext } from "@/lib/ai/ai.tools";
 import { cancelBooking } from "@/modules/bookings/booking.repository";
 import type { ChatMessage, ConciergeResponse, SessionState } from "@/lib/ai/ai.provider";
 import { formatDateOnly, formatTimeOfDay } from "@/lib/utils/time";
+import { conciergeLanguage } from "@/lib/ai/languages";
 
 export const CARD_NUMBER = /\b(?:\d[ -]*?){13,19}\b/;
 const MAX_STEPS = 8;
@@ -59,7 +60,7 @@ async function catalogKnowledge(): Promise<string> {
   });
   const stops = await prisma.shuttleStop.findMany({ where: { isActive: true }, select: { name: true, town: true }, orderBy: { sortOrder: "asc" } });
   const lines = tours.map((t) => {
-    const price = t.basePrice > 0 ? `from $${t.basePrice} ${t.currency} ${t.priceUnit === "GROUP" ? "per vehicle" : "per guest"}` : "price on request";
+    const price = t.basePrice > 0 ? `from $${t.basePrice / 100} ${t.currency} ${t.priceUnit === "GROUP" ? "per vehicle" : "per guest"}` : "price on request";
     const mode = t.bookingMode === "ENQUIRY" ? "enquiry only (custom quote)" : "bookable departures";
     return `- ${t.title} [slug: ${t.slug}] · ${t.category} · ~${t.durationHours}h · ${price} · ${mode}. ${t.summary}`;
   });
@@ -97,7 +98,16 @@ HOW TO HELP
 - Never ask for or repeat card numbers, CVV or expiry. If someone shares payment details, tell them to use the secure checkout only.
 - Looking up, tracking or cancelling a booking needs the booking reference AND the email used to book. Cancel only after the guest clearly confirms, and remind them of the 72-hour policy first.
 - Enquiry-only products (custom private tours, multi-day, tickets): explain what's included and point them to the "Request" button on the product page or /contact-us.
-- If you can't help, offer the phone number and email above.`;
+- Answer the guest's latest question directly, using the whole conversation for context ("what about tomorrow?" means the tour already discussed). Don't repeat an earlier answer or fall back to a generic welcome.
+- Only state tour details, prices, times, availability and policies that come from this prompt or a tool result. If you don't have the information, say so plainly ("I don't have that information") instead of guessing.
+- If you can't help, or the guest asks for a person, tell them to tap "Chat with a live agent" under the chat (it sends this conversation to our support team), or to call or email us.`;
+}
+
+/** The guest picked a language in the chat, or left it on Auto (reply in theirs). */
+function languageInstruction(code?: string): string {
+  const lang = conciergeLanguage(code);
+  if (!lang) return "LANGUAGE: reply in the language of the guest's latest message.";
+  return `LANGUAGE: the guest chose ${lang.english}. Reply only in ${lang.english}, whatever language they write in. Keep tour names, prices, times, booking references and links exactly as given.`;
 }
 
 function memoryBlock(state: AgentState): string {
@@ -374,6 +384,7 @@ export async function runConciergeAgent(
   state: AgentState | undefined,
   ctx: ToolExecutionContext,
   onEvent?: (e: AgentEvent) => void,
+  opts: { language?: string } = {},
 ): Promise<ConciergeResponse> {
   const sessionState: AgentState = { ...(state ?? {}), memory: [...(state?.memory ?? [])] };
   const lastUser = [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
@@ -400,6 +411,7 @@ export async function runConciergeAgent(
     { type: "text", text: `${companyKnowledge()}\n\n${await catalogKnowledge()}`, cache_control: { type: "ephemeral" } },
     ...(ctx.isStaff ? [{ type: "text" as const, text: `The user is signed in as staff (${ctx.role}). Staff tools are available.` }] : []),
     ...(sessionState.memory?.length ? [{ type: "text" as const, text: memoryBlock(sessionState) }] : []),
+    { type: "text", text: languageInstruction(opts.language) },
   ];
 
   const tools: Anthropic.ToolUnion[] = [

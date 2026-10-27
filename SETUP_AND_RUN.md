@@ -106,13 +106,14 @@ Each app has its own `.env`: `backend/.env` (template: `backend/.env.example`) h
 | `EMAIL_PROVIDER` | Yes | Booking confirmation email driver | `console` | Yes (`resend` or `ses`) |
 | `EMAIL_FROM` | Yes | Default sender email header | `Vista Chase Bookings <bookings@vistachase.com>` | Yes |
 | `PAYMENT_PROVIDER` | Yes | Checkout payment gateway | `mock` | Yes (`stripe`) |
-| `AI_VOICE_PROVIDER`| Yes | Travel concierge AI driver | `mock` | Yes (`gemini` or `openai`) |
+| `ANTHROPIC_API_KEY`| No | AI concierge (Claude agent, all chat languages). Without it the concierge answers from booking data only, in English | (empty) | Yes, for the full concierge |
+| `SUPPORT_HANDOFF_TO`| No | Inbox for "Chat with a live agent" requests (falls back to `ENQUIRIES_TO`) | `info@vistachase.com` | Yes |
 | `MAPS_PROVIDER` | Yes | Hotel pickup coordinate locator | `mock` | Yes (`google` or `mapbox`) |
 | `ADMIN_EMAIL` | No | Initial admin email for seed | `admin@vistachase.com` | Optional |
 | `ADMIN_PASSWORD` | No | Initial admin password for seed | `VistaChaseAdmin2026!` | Optional |
 
 ### Current Provider Status Summary
-* **Mock**: Payments (`MockPaymentProvider`), AI Voice (`MockAIProvider`), Maps (`MockMapsProvider`).
+* **Mock**: Payments (`MockPaymentProvider`), Maps (`MockMapsProvider`). The concierge has no mock: without `ANTHROPIC_API_KEY` it answers only from booking data (`concierge.fallback.ts`).
 * **Local**: Database (SQLite `dev.db`), Cache (Node memory with TTL), Storage (`./public/uploads`).
 * **Console**: Email (prints formatted HTML/text email notifications to your terminal).
 * **Real API / Paid Accounts**: **ZERO required right now.** You do not need to spend any money or register credit cards to run the app.
@@ -147,7 +148,6 @@ CACHE_PROVIDER=memory
 STORAGE_PROVIDER=local
 EMAIL_PROVIDER=console
 PAYMENT_PROVIDER=mock
-AI_VOICE_PROVIDER=mock
 MAPS_PROVIDER=mock
 ```
 

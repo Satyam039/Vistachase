@@ -21,6 +21,7 @@ import { bookingClosedError } from "@/modules/departures/booking-window";
 import { endBooking, freeExpiredSeats, inventoryError, PENDING_PAYMENT_MINUTES, takeBookedSeats } from "@/modules/departures/inventory";
 import { transitionBooking } from "@/modules/bookings/booking-status";
 import { getPaymentProvider } from "@/lib/payment/payment.provider";
+import { sendConfirmationEmail } from "@/modules/bookings/confirmation-email";
 import { getEmailProvider } from "@/lib/email/email.provider";
 import { isVehicleDeparture, partySizeError, seatsToReserve } from "@/modules/pricing/departure-pricing";
 import { priceBooking, type AddOnChoice } from "@/modules/pricing/booking-pricing";
@@ -459,43 +460,9 @@ export async function confirmPaidBooking(reference: string, verified?: VerifiedP
   if (!confirmedNow) return updated; // a concurrent call confirmed (and emailed) it
   if (confirmedNow.commission) notifyCommissionEarned(confirmedNow.commission.affiliateId, booking.bookingReference, confirmedNow.commission.amountCents, booking.currency);
 
-  const tour = booking.tourDeparture.tour;
-
-  const title = tour?.title || booking.tourDeparture.shuttleRoute?.name || "Vista Chase experience";
-  const when = `${formatDateOnly(booking.tourDeparture.date)} at ${formatTimeOfDay(booking.tourDeparture.departureTime)}`;
-  const total = `$${(booking.totalAmount / 100).toFixed(2)} ${booking.currency}`;
-  const link = voucherLink(booking.bookingReference);
-  const deposit = booking.paymentPlan === "DEPOSIT" && booking.depositAmount ? booking.depositAmount : 0;
-  const amountLines = deposit
-    ? {
-        html: `<p><strong>Deposit paid:</strong> $${(deposit / 100).toFixed(2)} ${booking.currency} (of ${total})</p>
-            <p><strong>Balance:</strong> $${((booking.totalAmount - deposit) / 100).toFixed(2)} ${booking.currency}, due by ${balanceDueLabel(booking.balanceDueAt)}</p>`,
-        text: `Deposit paid: $${(deposit / 100).toFixed(2)} ${booking.currency} of ${total}. Balance $${((booking.totalAmount - deposit) / 100).toFixed(2)} ${booking.currency} due by ${balanceDueLabel(booking.balanceDueAt)}; pay it from your voucher.`,
-      }
-    : { html: `<p><strong>Total paid:</strong> ${total}</p>`, text: `Total paid: ${total}.` };
-  const policyLine = deposit
-    ? `The ${DEPOSIT_PERCENT}% deposit is non-refundable. Cancel up to 72 hours before departure and everything else you've paid is refunded.`
-    : "Free cancellation up to 72 hours before departure.";
-  getEmailProvider()
-    .sendEmail({
-      to: booking.customerEmail,
-      subject: `Your Vista Chase booking is confirmed: ${booking.bookingReference}`,
-      html: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #1c1f23;">
-          <h2>Your booking is confirmed</h2>
-          <p>Hi ${escapeHtml(booking.customerName)}, thank you for booking with Vista Chase.</p>
-          <div style="border: 1px solid #e1e1db; border-radius: 8px; padding: 16px; margin: 20px 0;">
-            <p><strong>Booking reference:</strong> ${booking.bookingReference}</p>
-            <p><strong>Experience:</strong> ${escapeHtml(title)}</p>
-            <p><strong>Date and time:</strong> ${when} (Mountain Time)</p>
-            ${amountLines.html}
-          </div>
-          <p><a href="${link}" style="color: #257780; font-weight: bold;">Open your voucher</a>${deposit ? " to pay the balance, and" : " and"} show it to your guide at pickup.</p>
-          <p style="color: #5d6168; font-size: 13px;">${policyLine} Questions? Reply to this email or call +1 (825) 734-9456.</p>
-        </div>`,
-      text: `Your Vista Chase booking ${booking.bookingReference} is confirmed.\n${title}, ${when} (Mountain Time).\n${amountLines.text}\nVoucher: ${link}\n${policyLine}`,
-    })
-    .catch((e) => console.error("Confirmation email failed:", (e as Error).message));
+  // One email with the PDF itinerary; a multi-day trip's goes out when its last day confirms.
+  // Awaited so the claim and any failure are recorded before this returns; it never throws here.
+  await sendConfirmationEmail(booking.bookingReference).catch((e) => console.error("Confirmation email failed:", (e as Error).message));
 
   return updated;
 }
@@ -701,7 +668,7 @@ export async function cancelBooking(reference: string, customerEmail?: string) {
 /**
  * My trips: bookings the account made while signed in, plus those made with its email once the
  * email is verified (same rule as ownsBooking). Only the fields the trips page shows: never staff
- * notes, tracking tokens, payment rows or price snapshots.
+ * notes or tracking tokens; payment rows and the price snapshot are reduced by the route.
  */
 export async function getCustomerBookings(account: { userId: string; email: string; emailVerified: boolean }) {
   return await prisma.booking.findMany({
@@ -742,6 +709,8 @@ export async function getCustomerBookings(account: { userId: string; email: stri
       balanceDueAt: true,
       balancePaidAt: true,
       payments: { select: { status: true, amount: true } },
+      // Read only for the multi-day trip link (routes/account.routes.ts strips it).
+      priceSnapshot: true,
       // The guest's latest cancellation request, shown on My trips (pending, or declined with why).
       flags: {
         where: { type: "CANCEL_REQUEST" },

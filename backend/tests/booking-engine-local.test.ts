@@ -109,7 +109,7 @@ describe("local booking creation", () => {
     await confirmPaidBooking(stored.bookingReference, { amount: stored.totalAmount, currency: "cad", transactionId: stored.payments[0].transactionId });
     expect((await prisma.booking.findUniqueOrThrow({ where: { id: stored.id } })).status).toBe("CONFIRMED");
     const actions = (await prisma.auditLog.findMany({ where: { entityId: stored.id }, orderBy: { createdAt: "asc" } })).map((a) => a.action);
-    expect(actions).toEqual(["BOOKING_CREATED", "BOOKING_CONFIRMED"]);
+    expect(actions).toEqual(["BOOKING_CREATED", "BOOKING_CONFIRMED", "CONFIRMATION_EMAIL_SENT"]);
   });
 
   it("refuses invalid guest input at the API", async () => {

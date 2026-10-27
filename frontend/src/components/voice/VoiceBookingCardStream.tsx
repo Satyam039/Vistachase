@@ -67,7 +67,7 @@ interface VoiceBookingCardStreamProps {
   onSelectPickup?: (stopName: string) => void;
 }
 
-const CARD = "rounded-2xl border border-obsidian-900/10 bg-white p-4";
+const CARD = "rounded-none border border-obsidian-900/10 bg-white p-4";
 const CARD_TITLE = "mb-3 flex items-center gap-2 text-sm text-slate-700";
 const CHOICE =
   "flex w-full items-center justify-between gap-3 rounded-xl border border-obsidian-900/10 px-3.5 py-3 text-left transition-colors hover:border-ocean-600/50 hover:bg-ocean-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ocean-600";
@@ -116,7 +116,7 @@ export function VoiceBookingCardStream({ data, checkoutUrl, hasSafetyRefusal, on
             <Calendar className="h-4 w-4 text-ocean-600" aria-hidden="true" />
             Available departures
           </p>
-          <ul className="grid gap-2">
+          <ul className="grid grid-cols-[minmax(0,1fr)] gap-2">
             {data.departures.map((dep) => (
               <li key={dep.id}>
                 <button type="button" onClick={() => onSelectDeparture?.(dep)} className={CHOICE}>
@@ -147,7 +147,7 @@ export function VoiceBookingCardStream({ data, checkoutUrl, hasSafetyRefusal, on
             <MapPin className="h-4 w-4 text-ocean-600" aria-hidden="true" />
             Pickup stops near you
           </p>
-          <ul className="grid gap-2">
+          <ul className="grid grid-cols-[minmax(0,1fr)] gap-2">
             {data.stops.map((stop) => (
               <li key={stop.id}>
                 <button type="button" onClick={() => onSelectPickup?.(stop.name)} className={CHOICE}>

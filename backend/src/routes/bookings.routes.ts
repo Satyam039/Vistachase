@@ -6,13 +6,14 @@ import { Router, type Request } from "express";
 import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
 import { cancelBooking, createBooking, getBookingByReference, paymentState } from "@/modules/bookings/booking.repository";
 import { getAuthenticatedStaff, getAuthenticatedUser, getSessionUser, ownsBooking } from "@/lib/auth/admin-guard";
-import { verifyBookingLink } from "@/lib/security/signed-links";
+import { signBookingLink, verifyBookingLink } from "@/lib/security/signed-links";
 import { paymentSummary } from "@/modules/bookings/deposit";
 import { startBalancePayment } from "@/modules/bookings/deposit-payments";
 import { requestCancellation } from "@/modules/admin/booking-requests";
 import { createPackageBooking, PACKAGES } from "@/modules/bookings/package-booking";
 import { syncPendingPayments } from "@/modules/bookings/payment-sync";
-import { voucherPdf } from "@/modules/bookings/voucher-pdf";
+import { itineraryPdf, voucherPdf } from "@/modules/bookings/voucher-pdf";
+import { tripBookings, tripOf, tripSummary } from "@/modules/bookings/trip";
 import { emailSchema, parseOr400, referenceSchema, z } from "@/lib/security/validate";
 
 const router = Router();
@@ -128,9 +129,11 @@ router.get("/voucher.pdf", rateLimitMiddleware("booking_read", { maxRequests: 30
     if (!query) return;
     const booking = await readableBooking(req, query.ref, query.t);
     if (!booking) return res.status(404).json({ success: false, error: "Booking not found" });
-    const file = await voucherPdf(booking);
+    // A day of a multi-day trip downloads the whole trip: the itinerary, then every day's voucher.
+    const trip = tripOf(booking.priceSnapshot, booking.bookingReference);
+    const file = trip ? await itineraryPdf(await tripBookings(booking.bookingReference), trip) : await voucherPdf(booking);
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename="vista-chase-voucher-${booking.bookingReference}.pdf"`);
+    res.setHeader("Content-Disposition", `attachment; filename="vista-chase-${trip ? `itinerary-${trip.reference}` : `voucher-${booking.bookingReference}`}.pdf"`);
     res.setHeader("Content-Length", String(file.byteLength));
     res.setHeader("Cache-Control", "private, no-store");
     return res.end(Buffer.from(file));
@@ -147,10 +150,14 @@ router.get("/", rateLimitMiddleware("booking_read", { maxRequests: 30, windowSec
     if (!query) return;
     const booking = await readableBooking(req, query.ref, query.t);
     if (!booking) return res.status(404).json({ success: false, error: "Booking not found" });
+    // The other days of a multi-day trip, each with its own voucher link (same guest, bought together).
+    const trip = tripOf(booking.priceSnapshot, booking.bookingReference);
+    const tripDays = trip ? await tripSummary(trip) : null;
 
     return res.json({
       success: true,
       booking: {
+        trip: tripDays ? { ...tripDays, days: tripDays.days.map((d) => ({ ...d, voucherPath: `/booking/${encodeURIComponent(d.bookingReference)}/voucher?t=${signBookingLink(d.bookingReference, "voucher")}` })) } : null,
         bookingReference: booking.bookingReference,
         status: booking.status,
         paymentStatus: paymentState(booking, booking.payments),

@@ -157,7 +157,7 @@ export default async function VoucherPage({
             {/* A real PDF from the server: in-app browsers (Gmail, WhatsApp) can't print this page. */}
             <a
               href={`/api/bookings/voucher.pdf?ref=${encodeURIComponent(booking.bookingReference)}${typeof t === "string" ? `&t=${encodeURIComponent(t)}` : ""}`}
-              download={`vista-chase-voucher-${booking.bookingReference}.pdf`}
+              download={booking.trip ? `vista-chase-itinerary-${booking.trip.reference}.pdf` : `vista-chase-voucher-${booking.bookingReference}.pdf`}
               className={`inline-flex h-11 items-center gap-2 rounded-full px-5 text-sm ${
                 cancelled ? "border border-red-900/20 text-red-950 hover:bg-red-100" : "border border-white/25 text-white hover:bg-white/10"
               }`}
@@ -183,6 +183,46 @@ export default async function VoucherPage({
           </div>
         </div>
       </section>
+
+      {/* A day of a multi-day trip: every day, under the trip's reference. */}
+      {booking.trip && (
+        <section aria-labelledby="trip-days" className="mx-auto max-w-6xl px-page pt-10 print:hidden">
+          <div className="bg-white p-5 ring-1 ring-obsidian-900/[0.07] sm:p-6">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+              <h2 id="trip-days" className="text-xl font-light text-obsidian-900">
+                {booking.trip.title} · {booking.trip.days.length} days
+              </h2>
+              <p className="text-sm text-slate-700">
+                Booking reference <span className="font-mono text-obsidian-900">{booking.trip.reference}</span>
+              </p>
+            </div>
+            <ol className="mt-4 divide-y divide-obsidian-900/[0.07]">
+              {booking.trip.days.map((d) => {
+                const current = d.bookingReference === booking.bookingReference;
+                const when = d.date ? new Date(`${d.date}T12:00:00`).toLocaleDateString("en-CA", { weekday: "short", month: "short", day: "numeric", year: "numeric" }) : "";
+                return (
+                  <li key={d.bookingReference} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-3 text-sm">
+                    <span className="min-w-0">
+                      <span className="block text-ocean-700">
+                        Day {d.day} · {when}
+                        {d.departureTime ? ` · ${clock(d.departureTime)}` : ""}
+                      </span>
+                      <span className="block text-base text-obsidian-900">{d.title}</span>
+                    </span>
+                    {current ? (
+                      <span className="text-slate-600">This voucher</span>
+                    ) : d.voucherPath ? (
+                      <Link href={d.voucherPath} className="text-ocean-700 underline underline-offset-4">
+                        Day {d.day} voucher
+                      </Link>
+                    ) : null}
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+        </section>
+      )}
 
       <div className="mx-auto grid max-w-6xl items-start gap-8 px-page py-10 sm:py-12 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] print:block print:p-0">
         {/* The ticket */}

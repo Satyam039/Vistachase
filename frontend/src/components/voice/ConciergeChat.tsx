@@ -7,20 +7,27 @@
 //                in soft right-aligned bubbles; booking cards attached under replies
 //   composer     one rounded box pinned at the bottom: auto-growing text field, mic (voice
 //                input) and send; Enter sends, Shift+Enter adds a line
+// Language: a selector beside the mic (Auto = reply in the guest's language); the choice is sent
+// with each message and remembered on this device. "Chat with a live agent" hands the
+// conversation to the support team (LiveAgentHandoff).
 // Voice: the mic uses the browser's speech recognition; replies can be read aloud (toggle in
 // the header), and speaking stops as soon as the visitor types, talks or taps Stop.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { ArrowUp, Maximize2, Mic, RotateCcw, Square, Volume2, VolumeX, X, Sparkles, MapPin, Sunrise, Ticket, Navigation } from "lucide-react";
+import { ArrowUp, Globe, Headset, Maximize2, Mic, RotateCcw, Square, Volume2, VolumeX, X, Sparkles, MapPin, Sunrise, Ticket, Navigation } from "lucide-react";
 import { VoiceBookingCardStream, type VoiceCardData } from "./VoiceBookingCardStream";
+import { LiveAgentHandoff } from "./LiveAgentHandoff";
+import { CONCIERGE_LANGUAGES, speechTag } from "@/lib/conciergeLanguages";
+
+const LANGUAGE_KEY = "vc-concierge-language";
 
 interface Message {
   id: string;
   role: "assistant" | "user";
   text: string;
-  data?: VoiceCardData;
+  data?: VoiceCardData | { type: "handoff" };
   checkoutUrl?: string;
   hasSafetyRefusal?: boolean;
 }
@@ -53,10 +60,33 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
   const [session, setSession] = useState<Record<string, unknown>>({});
   const [micSupported, setMicSupported] = useState(true);
   const [status, setStatus] = useState<string | null>(null);
+  const [language, setLanguage] = useState<string | null>(null);
+  const [handoff, setHandoff] = useState(false);
   const scroller = useRef<HTMLDivElement>(null);
   const field = useRef<HTMLTextAreaElement>(null);
   const recognition = useRef<SpeechRecognitionLike | null>(null);
   const sendRef = useRef<(text: string) => void>(() => {});
+
+  // The language picked last time on this device.
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(LANGUAGE_KEY);
+      if (saved && CONCIERGE_LANGUAGES.some((l) => l.code === saved)) setLanguage(saved);
+    } catch {
+      // storage blocked: stay on Auto
+    }
+  }, []);
+
+  const chooseLanguage = (code: string) => {
+    const next = code || null;
+    setLanguage(next);
+    try {
+      if (next) localStorage.setItem(LANGUAGE_KEY, next);
+      else localStorage.removeItem(LANGUAGE_KEY);
+    } catch {
+      // storage blocked: the choice lasts for this visit
+    }
+  };
 
   // Keep the newest message in view.
   useEffect(() => {
@@ -88,12 +118,13 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
       }
       window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text.replace(/[*#•_]/g, " ").replace(/\s+/g, " "));
+      if (language) u.lang = speechTag(language);
       u.onstart = () => setVoice("speaking");
       u.onend = () => setVoice("idle");
       u.onerror = () => setVoice("idle");
       window.speechSynthesis.speak(u);
     },
-    [speakReplies],
+    [speakReplies, language],
   );
 
   const send = useCallback(
@@ -114,7 +145,7 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
         const res = await fetch("/api/concierge/stream", {
           method: "POST",
           headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
-          body: JSON.stringify({ messages: next.map((m) => ({ role: m.role, content: m.text })), sessionState: session }),
+          body: JSON.stringify({ messages: next.map((m) => ({ role: m.role, content: m.text })), sessionState: session, language: language ?? undefined }),
         });
         if (res.status === 429) {
           const j = await res.json().catch(() => ({}));
@@ -168,7 +199,7 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
         setVoice("idle");
       }
     },
-    [messages, session, voice, speak, stopSpeaking],
+    [messages, session, voice, speak, stopSpeaking, language],
   );
   sendRef.current = send;
 
@@ -192,6 +223,10 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
     r.onend = () => setVoice((v) => (v === "listening" ? "idle" : v));
     recognition.current = r;
   }, []);
+
+  useEffect(() => {
+    if (recognition.current) recognition.current.lang = speechTag(language);
+  }, [language]);
 
   const toggleMic = () => {
     if (!recognition.current) return;
@@ -221,7 +256,14 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
   const page = variant === "page";
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-white text-obsidian-900">
+    <div className="relative flex h-full min-h-0 flex-col bg-white text-obsidian-900">
+      {handoff && (
+        <LiveAgentHandoff
+          transcript={messages.filter((m) => m.text.trim()).map((m) => ({ role: m.role, content: m.text }))}
+          language={language}
+          onClose={() => setHandoff(false)}
+        />
+      )}
       {/* Header */}
       <div className={`flex shrink-0 items-center justify-between gap-3 border-b border-obsidian-900/[0.07] ${page ? "px-page py-3" : "px-4 py-3"}`}>
         <div className="flex min-w-0 items-center gap-2.5">
@@ -281,7 +323,7 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
                 <Sparkles className="h-6 w-6" aria-hidden="true" />
               </span>
               <p className={`mt-5 font-light tracking-tight text-obsidian-900 ${page ? "text-4xl" : "text-2xl"}`}>Where to in the Rockies?</p>
-              <p className="mt-2 max-w-sm text-base text-slate-600">Ask about tours, hotel pickups and Moraine Lake access, or book seats right here.</p>
+              <p className="mt-2 max-w-sm text-base text-slate-600">Ask about tours, prices, hotel pickups and Moraine Lake access, or check dates to book.</p>
               <ul className={`mt-8 grid w-full gap-2.5 ${page ? "sm:grid-cols-2" : ""}`}>
                 {SUGGESTIONS.map(({ icon: Icon, text }) => (
                   <li key={text}>
@@ -317,8 +359,18 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
                         <span className="sr-only">Concierge: </span>
                         <Linkified text={m.text} />
                       </p>
+                      {m.data?.type === "handoff" && (
+                        <button
+                          type="button"
+                          onClick={() => setHandoff(true)}
+                          className="mt-3 inline-flex h-10 items-center gap-2 rounded-full border border-obsidian-900/15 px-4 text-sm text-obsidian-900 hover:bg-obsidian-50"
+                        >
+                          <Headset className="h-4 w-4 text-ocean-600" aria-hidden="true" />
+                          Chat with a live agent
+                        </button>
+                      )}
                       <VoiceBookingCardStream
-                        data={m.data}
+                        data={m.data?.type === "handoff" ? undefined : (m.data as VoiceCardData | undefined)}
                         checkoutUrl={m.checkoutUrl}
                         hasSafetyRefusal={m.hasSafetyRefusal}
                         onSelectDeparture={(dep) => send(`I choose the departure on ${dep.date} at ${dep.departureTime}`)}
@@ -405,6 +457,22 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
               ) : (
                 <span />
               )}
+              <label className="ml-auto flex min-w-0 items-center gap-1.5 rounded-full px-2 text-sm text-slate-700 focus-within:ring-2 focus-within:ring-ocean-600/25 hover:bg-obsidian-900/[0.06]">
+                <Globe className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <span className="sr-only">Reply language</span>
+                <select
+                  value={language ?? ""}
+                  onChange={(e) => chooseLanguage(e.target.value)}
+                  className="h-10 min-w-0 max-w-[9.5rem] cursor-pointer truncate bg-transparent text-sm text-obsidian-900 focus:outline-none"
+                >
+                  <option value="">Auto language</option>
+                  {CONCIERGE_LANGUAGES.map((l) => (
+                    <option key={l.code} value={l.code} lang={l.code}>
+                      {l.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <button
                 type="submit"
                 disabled={!input.trim() || voice === "thinking"}
@@ -415,9 +483,13 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
               </button>
             </div>
           </form>
-          <p className="mt-2 text-center text-xs text-slate-600">
-            The concierge can make mistakes, so check key details. It never asks for card numbers.
-          </p>
+          <div className="mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-center text-xs text-slate-600">
+            <button type="button" onClick={() => setHandoff(true)} className="inline-flex items-center gap-1.5 text-sm text-ocean-700 underline-offset-4 hover:underline">
+              <Headset className="h-4 w-4" aria-hidden="true" />
+              Chat with a live agent
+            </button>
+            <span>The concierge can make mistakes, so check key details. It never asks for card numbers.</span>
+          </div>
         </div>
       </div>
     </div>
