@@ -133,10 +133,16 @@ export async function freeExpiredSeats(options: { departureId?: string; now?: Da
       status: "PENDING_PAYMENT",
       OR: [{ paymentExpiresAt: { lt: now } }, { paymentExpiresAt: null, createdAt: { lt: legacyCutoff } }],
     },
-    select: { id: true, tourDepartureId: true, totalSeats: true },
+    select: { id: true, tourDepartureId: true, totalSeats: true, bookingReference: true, payments: { where: { status: "PENDING", provider: "stripe" }, select: { id: true } } },
   });
   let expiredBookings = 0;
   for (const booking of bookings) {
+    // Paid at Stripe but the webhook never came: confirm it instead of releasing the seats. Loaded
+    // lazily because payment-sync imports the booking code, which imports this file.
+    if (booking.payments.length > 0) {
+      const { syncPendingPayments } = await import("@/modules/bookings/payment-sync");
+      if (await syncPendingPayments(booking.bookingReference)) continue;
+    }
     if (await prisma.$transaction((tx) => endBooking(tx, booking, ["PENDING_PAYMENT"], "EXPIRED", "payment window expired"))) expiredBookings++;
   }
 

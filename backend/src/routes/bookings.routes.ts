@@ -2,7 +2,7 @@
 // page (signed link, owner or staff only) and cancel it (owner only). The client never chooses
 // the payment provider or sends prices.
 
-import { Router } from "express";
+import { Router, type Request } from "express";
 import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
 import { cancelBooking, createBooking, getBookingByReference, paymentState } from "@/modules/bookings/booking.repository";
 import { getAuthenticatedStaff, getAuthenticatedUser, getSessionUser, ownsBooking } from "@/lib/auth/admin-guard";
@@ -10,6 +10,8 @@ import { verifyBookingLink } from "@/lib/security/signed-links";
 import { paymentSummary } from "@/modules/bookings/deposit";
 import { startBalancePayment } from "@/modules/bookings/deposit-payments";
 import { createPackageBooking, PACKAGES } from "@/modules/bookings/package-booking";
+import { syncPendingPayments } from "@/modules/bookings/payment-sync";
+import { voucherPdf } from "@/modules/bookings/voucher-pdf";
 import { emailSchema, parseOr400, referenceSchema, z } from "@/lib/security/validate";
 
 const router = Router();
@@ -97,19 +99,50 @@ router.post("/package", rateLimitMiddleware("booking_create", { maxRequests: 5, 
 
 const readSchema = z.object({ ref: referenceSchema, t: z.string().max(64).optional() });
 
+/**
+ * The booking, if this request may read it (voucher link, owner or staff). A payment still waiting
+ * on Stripe's webhook is first checked with Stripe itself (modules/bookings/payment-sync.ts), so the
+ * checkout and the voucher show a paid booking as confirmed even if the webhook never arrives.
+ */
+async function readableBooking(req: Request, ref: string, token: string | undefined) {
+  let booking = await getBookingByReference(ref);
+  const allowed =
+    booking &&
+    (verifyBookingLink(booking.bookingReference, "voucher", token) || ownsBooking(await getSessionUser(req), booking) || (await getAuthenticatedStaff(req)));
+  if (!booking || !allowed) return null;
+  if (booking.payments.some((p) => p.status === "PENDING") && (await syncPendingPayments(booking.bookingReference))) {
+    booking = await getBookingByReference(ref);
+  }
+  return booking;
+}
+
+// The voucher as a PDF file, with the same access as the voucher itself. In-app browsers (Gmail,
+// WhatsApp) can't print the voucher page, but they can download and open this.
+router.get("/voucher.pdf", rateLimitMiddleware("booking_read", { maxRequests: 30, windowSeconds: 60 }), async (req, res, next) => {
+  try {
+    const query = parseOr400(readSchema, req.query, res);
+    if (!query) return;
+    const booking = await readableBooking(req, query.ref, query.t);
+    if (!booking) return res.status(404).json({ success: false, error: "Booking not found" });
+    const file = await voucherPdf(booking);
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="vista-chase-voucher-${booking.bookingReference}.pdf"`);
+    res.setHeader("Content-Length", String(file.byteLength));
+    res.setHeader("Cache-Control", "private, no-store");
+    return res.end(Buffer.from(file));
+  } catch (error) {
+    next(error);
+  }
+});
+
 // The voucher page: open with the signed link from the confirmation email, as the signed-in owner,
 // or as staff. The reference alone is not enough.
 router.get("/", rateLimitMiddleware("booking_read", { maxRequests: 30, windowSeconds: 60 }), async (req, res, next) => {
   try {
     const query = parseOr400(readSchema, req.query, res);
     if (!query) return;
-    const booking = await getBookingByReference(query.ref);
-    const allowed =
-      booking &&
-      (verifyBookingLink(booking.bookingReference, "voucher", query.t) ||
-        ownsBooking(await getSessionUser(req), booking) ||
-        (await getAuthenticatedStaff(req)));
-    if (!booking || !allowed) return res.status(404).json({ success: false, error: "Booking not found" });
+    const booking = await readableBooking(req, query.ref, query.t);
+    if (!booking) return res.status(404).json({ success: false, error: "Booking not found" });
 
     return res.json({
       success: true,
