@@ -1,16 +1,15 @@
 "use client";
 
-// Shared pieces of the admin SEO dashboard (/admin/seo): the API helper, panel and table frames,
+// Shared pieces of the SEO panels used by the SEO portal (/seo): the API helper, panel and table frames,
 // form styles and labels. Every call goes through /api/seo/admin/*, which is admin-only and
 // audited there. Figures shown are Vista Chase's own data; nothing here invents search metrics.
 
 import { createContext, useContext, type ReactNode } from "react";
 
 /**
- * Where the page editor lives: /admin/seo (admin dashboard) or /seo (SEO portal). The panels are
- * shared, so links to a page read the base from here.
+ * Where the page editor lives: the SEO portal (/seo). Links to a page read the base from here.
  */
-export const SeoBaseContext = createContext("/admin/seo");
+export const SeoBaseContext = createContext("/seo");
 export const useSeoBase = () => useContext(SeoBaseContext);
 
 /** In the SEO portal a lapsed session goes back to its sign-in page instead of showing errors. */

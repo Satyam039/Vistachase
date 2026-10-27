@@ -2,8 +2,9 @@
 
 A separate workspace for the SEO team, built for the Webflow → custom site migration (handoff:
 "Vista Chase Webflow to Custom Site Migration Handoff"). It sits on top of the SEO dashboard
-([SEO.md](SEO.md)) and the staff roles ([SEO_WORKSPACE.md](SEO_WORKSPACE.md)); `/admin/seo` keeps
-working as before. Nothing on the public site changes until someone publishes or an admin approves it.
+([SEO.md](SEO.md)) and the staff roles ([SEO_WORKSPACE.md](SEO_WORKSPACE.md)); it replaced the old
+`/admin/seo` and `/admin/content` screens, which now redirect here (see "Three separate areas" in
+[ADMIN.md](ADMIN.md)). Nothing on the public site changes until someone publishes or an admin approves it.
 
 ## Screens
 

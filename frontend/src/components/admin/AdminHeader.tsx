@@ -6,10 +6,11 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { CalendarDays, FileText, Handshake, LayoutDashboard, Lock, ArrowRight, MapPin, ScrollText, Search, Ticket, Truck, Users, Workflow } from "lucide-react";
+import { CalendarDays, Handshake, LayoutDashboard, Lock, ArrowRight, MapPin, ScrollText, Search, Ticket, Truck, Users, Workflow } from "lucide-react";
 
+// Admin pages are for admins, operators and dispatchers only (src/lib/portals.ts). SEO and page
+// copy live in the separate SEO portal at /seo, which admins open from here.
 const OPS = ["ADMIN", "OPERATOR", "DISPATCHER"];
-const CONTENT = ["ADMIN", "SEO_MANAGER", "EDITOR", "VIEWER"];
 
 export const ADMIN_TABS = [
   { label: "Overview", href: "/admin", icon: LayoutDashboard, roles: OPS },
@@ -19,20 +20,10 @@ export const ADMIN_TABS = [
   { label: "Operations", href: "/admin/operations", icon: Workflow, roles: OPS },
   { label: "Partners", href: "/admin/partners", icon: Handshake, roles: ["ADMIN"] },
   { label: "Pickup stops", href: "/admin/pickup-stops", icon: MapPin, roles: OPS },
-  { label: "Content", href: "/admin/content", icon: FileText, roles: CONTENT },
-  { label: "SEO", href: "/admin/seo", icon: Search, roles: CONTENT },
   { label: "Audit log", href: "/admin/audit", icon: ScrollText, roles: ["ADMIN"] },
   { label: "Staff", href: "/admin/staff", icon: Users, roles: ["ADMIN"] },
 ];
 
-/** Where each role lands after signing in. */
-export function homeForRole(role: string | undefined): string {
-  if (role && OPS.includes(role)) return "/admin";
-  if (role === "EDITOR") return "/admin/content";
-  if (role && CONTENT.includes(role)) return "/admin/seo";
-  if (role === "AFFILIATE") return "/partners/dashboard";
-  return "/account/trips";
-}
 
 /** The signed-in person's role, or null while loading / signed out. */
 export function useStaffRole() {
@@ -94,6 +85,15 @@ export function AdminHeader({
               </Link>
             );
           })}
+          {role === "ADMIN" && (
+            <Link
+              href="/seo"
+              className="inline-flex h-12 shrink-0 items-center gap-2 border-b-2 border-transparent px-4 text-sm text-slate-600 hover:border-obsidian-900/15 hover:text-obsidian-900"
+            >
+              <Search className="h-4 w-4" aria-hidden="true" />
+              SEO portal
+            </Link>
+          )}
         </nav>
       </div>
     </div>

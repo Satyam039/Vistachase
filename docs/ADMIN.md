@@ -16,9 +16,22 @@ bookings, guests, payments, partners or commissions.
 | Departures → Manifest | operations staff | Printable passenger list per departure, CSV download |
 | Pickup stops | operations staff (changes: Admin, Operator) | Add, edit, turn stops on and off |
 | Audit log | Admin | Every recorded action, filterable, paged |
-| Content | Admin, SEO manager, Editor (Viewer reads) | Tour and destination words and photos, with change history ([SEO_WORKSPACE.md](SEO_WORKSPACE.md)) |
-| SEO | Admin, SEO manager (Editor writes copy, Viewer reads) | See [SEO.md](SEO.md) |
 | Staff | Admin | Invite staff (one-time password link), give or remove staff roles |
+
+## Three separate areas
+
+| Area | Address | Who |
+| --- | --- | --- |
+| Admin | `/admin` | Admin, Operator, Dispatcher (Partners, Staff and Audit log: Admin only) |
+| SEO portal | `/seo` (sign in at `/seo/login`) | SEO manager, Editor, Viewer, and Admin. Includes **Tour & destination copy** (`/seo/content`), which used to be Admin → Content |
+| Partner dashboard | `/partners/dashboard` (sign in at `/partners/login`) | Partners (AFFILIATE) |
+
+The frontend middleware (`frontend/src/middleware.ts`, rules in `frontend/src/lib/portals.ts`) asks
+`/api/auth/me` for the role before drawing any page in these areas: signed-out visitors go to that
+area's sign-in page, and other roles go to their own area, so a partner or SEO account never sees
+the admin screens. The old `/admin/seo` and `/admin/content` addresses redirect to the SEO portal.
+The API refuses the same roles on every route; `backend/tests/portal-separation.test.ts` calls
+every staff route as every other role.
 
 ## Roles take effect at once
 

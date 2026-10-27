@@ -1,4 +1,4 @@
-// Travel guides written and published from the admin SEO dashboard (/admin/seo). Only published
+// Travel guides written and published from the SEO portal (/seo). Only published
 // guides render; drafts and unknown slugs 404. Structured data describes only what is shown here:
 // Article and BreadcrumbList always, FAQPage only when the guide shows FAQs.
 

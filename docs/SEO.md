@@ -1,6 +1,6 @@
 # SEO dashboard
 
-Admin → **SEO** (`/admin/seo`; admins and SEO managers change it, editors write page copy, viewers
+The SEO portal (`/seo`, formerly Admin → SEO at `/admin/seo`; admins and SEO managers change it, editors write page copy, viewers
 read; roles and the keyword sheet are in [SEO_WORKSPACE.md](SEO_WORKSPACE.md)) manages page metadata, the keyword map, redirects,
 audits and `llms.txt`. It extends the existing site: pages keep their coded titles, descriptions
 and JSON-LD, and a published override replaces only the fields it sets.

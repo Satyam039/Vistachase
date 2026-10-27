@@ -44,6 +44,19 @@ export const EDITOR_PAGE_FIELDS = new Set([
   "thumbnailAlt",
 ]);
 
+/**
+ * Which of the three staff areas an account belongs to, each with its own address on the site:
+ * admin (/admin: bookings, departures, dispatch, partners, staff), seo (/seo: SEO and page copy)
+ * and partner (/partners/dashboard). ADMIN may open all three; everyone else only their own.
+ */
+export type Portal = "admin" | "seo" | "partner" | "customer";
+export function portalFor(role: UserRole): Portal {
+  if (role === "ADMIN" || role === "OPERATOR" || role === "DISPATCHER") return "admin";
+  if (role === "SEO_MANAGER" || role === "EDITOR" || role === "VIEWER") return "seo";
+  if (role === "AFFILIATE") return "partner";
+  return "customer";
+}
+
 export const can = (role: UserRole, roles: UserRole[]) => role === "ADMIN" || roles.includes(role);
 
 /** What the signed-in person may do, for the dashboards to show or hide controls. */

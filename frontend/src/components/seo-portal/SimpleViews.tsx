@@ -1,6 +1,6 @@
 "use client";
 
-// Portal sections that are mostly the existing SEO panels (shared with /admin/seo) plus the
+// Portal sections that are mostly the existing SEO panels (also used by the page editor) plus the
 // portal's import tools.
 
 import { useEffect, useState } from "react";
