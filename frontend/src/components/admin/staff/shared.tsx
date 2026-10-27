@@ -51,5 +51,6 @@ export const FLAG_LABEL: Record<string, string> = {
   LATE_PAYMENT: "Paid after expiry",
   REFUND_DUE: "Refund owed",
   PAYMENT_DUE: "Payment due",
+  CANCEL_REQUEST: "Guest asked to cancel",
   OTHER: "Other",
 };

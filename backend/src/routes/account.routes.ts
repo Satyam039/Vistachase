@@ -16,8 +16,16 @@ router.get("/trips", async (req, res) => {
     // Amounts in dollars, like GET /api/bookings (the database keeps cents). emailVerified: false
     // tells the page to offer the confirmation link, which brings in bookings made with this email
     // before the account existed.
-    const bookings = rows.map(({ payments, ...b }) => ({
+    const bookings = rows.map(({ payments, flags, ...b }) => ({
       ...b,
+      cancelRequest: flags[0]
+        ? {
+            status: flags[0].status === "OPEN" ? ("PENDING" as const) : flags[0].resolution?.startsWith("Declined") ? ("DECLINED" as const) : ("CLOSED" as const),
+            reason: flags[0].resolution?.startsWith("Declined: ") ? flags[0].resolution.slice("Declined: ".length) : null,
+            requestedAt: flags[0].createdAt,
+            answeredAt: flags[0].resolvedAt,
+          }
+        : null,
       totalAmount: b.totalAmount / 100,
       ...paymentSummary(b, payments),
     }));

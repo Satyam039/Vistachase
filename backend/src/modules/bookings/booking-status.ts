@@ -3,7 +3,9 @@
 // move, and the winner is the one that releases seats or sends email), and writes an audit row.
 //
 //   PENDING_PAYMENT → CONFIRMED     verified payment (Stripe webhook, or an instant/free booking),
-//                                   or staff Quick Book (paid offline, or unpaid with a PAYMENT_DUE flag)
+//                                   or staff Quick Book (paid offline, or unpaid with a PAYMENT_DUE flag),
+//                                   or staff Approve (docs/ADMIN.md)
+//   PAID_UNSYNCED   → CONFIRMED     staff Approve (paid under the former Bókun integration)
 //   PENDING_PAYMENT → EXPIRED       payment window passed
 //   PENDING_PAYMENT → CANCELLED     payment failed, was cancelled or couldn't start
 //   CONFIRMED       → CANCELLED     guest cancelled within policy, or staff cancelled (docs/ADMIN.md)
@@ -15,7 +17,7 @@ import type { BookingStatus, Prisma } from "@prisma/client";
 
 const ALLOWED_FROM: Record<BookingStatus, BookingStatus[]> = {
   PENDING_PAYMENT: [],
-  CONFIRMED: ["PENDING_PAYMENT"],
+  CONFIRMED: ["PENDING_PAYMENT", "PAID_UNSYNCED"],
   EXPIRED: ["PENDING_PAYMENT"],
   CANCELLED: ["PENDING_PAYMENT", "CONFIRMED", "PAID_UNSYNCED"],
   REFUNDED: ["CANCELLED"],

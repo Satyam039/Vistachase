@@ -416,6 +416,10 @@ export async function confirmPaidBooking(reference: string, verified?: VerifiedP
   });
   if (!booking) return null;
   const transactionId = verified?.transactionId;
+  if ((booking.status === "CONFIRMED" || booking.status === "COMPLETED") && transactionId) {
+    await settleAfterStaffApproval(booking, transactionId);
+    return booking;
+  }
   if (!["PENDING_PAYMENT", "EXPIRED", "CANCELLED"].includes(booking.status)) return booking; // already handled (webhook retries)
 
   // A DEPOSIT booking is confirmed by its deposit; anything else by its total.
@@ -512,6 +516,41 @@ export async function flagBooking(bookingId: string, action: "PAYMENT_AMOUNT_MIS
   ]);
 }
 
+/**
+ * A card payment that finished after staff approved the booking by hand (admin "Approve", which
+ * marks the unfinished online payment FAILED). It pays a PAYMENT_DUE left open by the approval;
+ * otherwise the guest has paid twice and staff are flagged to refund one. Webhook retries find no
+ * FAILED row to move and do nothing.
+ */
+async function settleAfterStaffApproval(booking: { id: string; adminNotes: string | null; currency: string }, transactionId: string) {
+  const moved = await prisma.payment.updateMany({ where: { bookingId: booking.id, transactionId, status: "FAILED" }, data: { status: "SUCCEEDED" } });
+  if (moved.count === 0) return;
+  const due = await prisma.bookingFlag.findFirst({ where: { bookingId: booking.id, type: "PAYMENT_DUE", status: "OPEN" } });
+  const payment = await prisma.payment.findUnique({ where: { transactionId }, select: { amount: true } });
+  if (due && payment && payment.amount < (due.amountCents ?? 0)) {
+    // Part of what's due (a deposit-sized card payment): the flag keeps the rest.
+    await prisma.bookingFlag.update({
+      where: { id: due.id },
+      data: { amountCents: (due.amountCents ?? 0) - payment.amount, note: `${due.note} Paid ${(payment.amount / 100).toFixed(2)} ${booking.currency} online (${transactionId}).` },
+    });
+    return;
+  }
+  if (due) {
+    await prisma.$transaction(async (tx) => {
+      const claimed = await tx.bookingFlag.updateMany({
+        where: { id: due.id, status: "OPEN" },
+        data: { status: "RESOLVED", resolvedAt: new Date(), resolution: `Paid online (${transactionId}).` },
+      });
+      if (claimed.count === 1) {
+        const paid = await tx.payment.aggregate({ where: { bookingId: booking.id, status: "SUCCEEDED" }, _sum: { amount: true } });
+        await earnCommission(tx, booking.id, paid._sum.amount ?? 0);
+      }
+    });
+    return;
+  }
+  await flagBooking(booking.id, "LATE_PAYMENT", `Payment ${transactionId} succeeded after staff approved the booking and recorded another payment: the guest may have paid twice. Refund one by hand.`, booking.adminNotes);
+}
+
 /** Payment failed or was never completed: cancel the pending booking and release its seats (once). */
 export async function failPendingBooking(reference: string, reason: string) {
   const booking = await prisma.booking.findUnique({ where: { bookingReference: reference } });
@@ -581,6 +620,11 @@ export async function cancelBooking(reference: string, customerEmail?: string) {
     endBooking(tx, booking, ["PENDING_PAYMENT", "CONFIRMED", "PAID_UNSYNCED"], "CANCELLED", "cancelled by guest"),
   );
   if (!cancelledNow) return { success: false, error: "Booking is already cancelled" };
+  // The guest cancelled it themselves, so an open request to staff is answered.
+  await prisma.bookingFlag.updateMany({
+    where: { bookingId: booking.id, type: "CANCEL_REQUEST", status: "OPEN" },
+    data: { status: "RESOLVED", resolvedAt: new Date(), resolution: "Guest cancelled the booking themselves." },
+  });
   const updated = await prisma.booking.findUniqueOrThrow({ where: { id: booking.id } });
 
   // Outside the transaction: the payment provider is a network call.
@@ -698,6 +742,13 @@ export async function getCustomerBookings(account: { userId: string; email: stri
       balanceDueAt: true,
       balancePaidAt: true,
       payments: { select: { status: true, amount: true } },
+      // The guest's latest cancellation request, shown on My trips (pending, or declined with why).
+      flags: {
+        where: { type: "CANCEL_REQUEST" },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: { status: true, resolution: true, createdAt: true, resolvedAt: true },
+      },
     },
     orderBy: { createdAt: "desc" },
   });

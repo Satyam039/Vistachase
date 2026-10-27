@@ -70,7 +70,21 @@ interface TripBooking {
     title: string;
     body: string;
   };
+  /** The latest request to staff to cancel (pending, declined with why, or closed). */
+  cancelRequest?: {
+    status: "PENDING" | "DECLINED" | "CLOSED";
+    reason: string | null;
+    requestedAt: string;
+    answeredAt: string | null;
+  } | null;
 }
+
+// Guests ask staff to cancel ("Request cancellation"); staff approve or decline in admin
+// (Bookings → Requests) and the refund follows the policy as it stood when the guest asked.
+// true brings back the instant self-cancel 72+ hours before departure (requests stay for later).
+const INSTANT_SELF_CANCEL = false;
+
+const CANCELLABLE = ["CONFIRMED", "PAID_UNSYNCED"];
 
 export default function MyTripsPage() {
   const router = useRouter();
@@ -99,6 +113,10 @@ export default function MyTripsPage() {
   const [cancellingBooking, setCancellingBooking] = useState<TripBooking | null>(null);
   const [cancellingLoading, setCancellingLoading] = useState(false);
   const [cancelMessage, setCancelMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
+  // Instant cancel (INSTANT_SELF_CANCEL, 72+ hours out) or a request to staff.
+  const instantCancel =
+    !!cancellingBooking && INSTANT_SELF_CANCEL && canCancelFree(cancellingBooking.tourDeparture.date, cancellingBooking.tourDeparture.departureTime);
 
   useEffect(() => {
     checkAuthAndLoad();
@@ -173,6 +191,7 @@ export default function MyTripsPage() {
     setCancellingLoading(true);
     setCancelMessage(null);
 
+    if (!instantCancel) return handleCancelRequest();
     try {
       const res = await fetch("/api/bookings/cancel", {
         method: "POST",
@@ -212,6 +231,39 @@ export default function MyTripsPage() {
         type: "error",
         text: "Network error occurred while cancelling booking.",
       });
+    } finally {
+      setCancellingLoading(false);
+    }
+  }
+
+  async function handleCancelRequest() {
+    if (!cancellingBooking) return;
+    try {
+      const res = await fetch("/api/bookings/request-cancel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingReference: cancellingBooking.bookingReference, reason: cancelReason.trim() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        setCancelMessage({ type: "error", text: data.error || "We couldn't send your request. Please try again." });
+        return;
+      }
+      setCancelMessage({ type: "success", text: "Request sent. Your booking stays active until our team reviews it, and we'll email you the outcome." });
+      setBookings((prev) =>
+        prev.map((b) =>
+          b.bookingReference === cancellingBooking.bookingReference
+            ? { ...b, cancelRequest: { status: "PENDING", reason: null, requestedAt: new Date().toISOString(), answeredAt: null } }
+            : b,
+        ),
+      );
+      setTimeout(() => {
+        setCancellingBooking(null);
+        setCancelMessage(null);
+        setCancelReason("");
+      }, 2500);
+    } catch {
+      setCancelMessage({ type: "error", text: "Network error. Please try again." });
     } finally {
       setCancellingLoading(false);
     }
@@ -632,23 +684,28 @@ export default function MyTripsPage() {
                                   Write a review
                                 </button>
                               )}
-                              {b.status === "CONFIRMED" && activeTab === "upcoming" && !canCancelFree(b.tourDeparture.date, b.tourDeparture.departureTime) && (
-                                <p className="text-sm leading-snug text-slate-600">
-                                  Within 72 hours of departure: free cancellation has ended.{" "}
-                                  <Link href="/contact-us" className="text-ocean-600 underline underline-offset-4">
-                                    Contact us
-                                  </Link>{" "}
-                                  for changes.
+                              {CANCELLABLE.includes(b.status) && activeTab === "upcoming" && b.cancelRequest?.status === "PENDING" && (
+                                <p className="rounded-2xl bg-summit-100 px-3 py-2 text-sm leading-snug text-obsidian-900">
+                                  Cancellation requested {formatRockiesDate(b.cancelRequest.requestedAt)}. Your booking stays active until our team reviews
+                                  it; we&rsquo;ll email you.
                                 </p>
                               )}
-                              {b.status === "CONFIRMED" && activeTab === "upcoming" && canCancelFree(b.tourDeparture.date, b.tourDeparture.departureTime) && (
+                              {CANCELLABLE.includes(b.status) && activeTab === "upcoming" && b.cancelRequest?.status === "DECLINED" && (
+                                <p className="text-sm leading-snug text-slate-600">
+                                  Your cancellation request was declined{b.cancelRequest.reason ? `: ${b.cancelRequest.reason}` : "."}
+                                </p>
+                              )}
+                              {CANCELLABLE.includes(b.status) && activeTab === "upcoming" && b.cancelRequest?.status !== "PENDING" && (
                                 <button
                                   type="button"
-                                  onClick={() => setCancellingBooking(b)}
+                                  onClick={() => {
+                                    setCancelReason("");
+                                    setCancellingBooking(b);
+                                  }}
                                   className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-red-200 bg-white px-5 text-sm text-red-700 transition-colors hover:border-red-700 hover:bg-red-700 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700"
                                 >
                                   <XCircle className="h-4 w-4" aria-hidden="true" />
-                                  Cancel booking
+                                  {INSTANT_SELF_CANCEL && canCancelFree(b.tourDeparture.date, b.tourDeparture.departureTime) ? "Cancel booking" : "Request cancellation"}
                                 </button>
                               )}
                             </div>
@@ -668,12 +725,17 @@ export default function MyTripsPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-obsidian-950/70 p-4 backdrop-blur-sm">
             <div role="dialog" aria-modal="true" aria-labelledby="cancel-title" className="w-full max-w-md space-y-5 rounded-[1.75rem] bg-white p-6 shadow-2xl sm:p-8">
               <h2 id="cancel-title" className="text-2xl font-light text-obsidian-900">
-                Cancel this booking?
+                {instantCancel ? "Cancel this booking?" : "Request cancellation"}
               </h2>
               <p className="text-base text-slate-700">
                 <span className="font-mono">{cancellingBooking.bookingReference}</span> ·{" "}
                 {cancellingBooking.tourDeparture.tour?.title || "Vista Chase tour"} on {cancellingBooking.tourDeparture.date}
               </p>
+              {!canCancelFree(cancellingBooking.tourDeparture.date, cancellingBooking.tourDeparture.departureTime) && (
+                <p className="rounded-2xl bg-summit-100 p-4 text-sm text-obsidian-900">
+                  Your trip is less than 72 hours away, so the policy gives no refund. You can still ask: our team reviews every request.
+                </p>
+              )}
               <div className="rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-900">
                 <p className="text-base">
                   {cancellingBooking.paymentPlan === "DEPOSIT" ? "Refund up to 72 hours before, minus the deposit" : "Free cancellation up to 72 hours before"}
@@ -691,6 +753,26 @@ export default function MyTripsPage() {
                   </p>
                 )}
               </div>
+              {!instantCancel && (
+                <div>
+                  <label htmlFor="cancel-reason" className="mb-1.5 block text-sm text-slate-700">
+                    Reason (optional)
+                  </label>
+                  <textarea
+                    id="cancel-reason"
+                    rows={3}
+                    maxLength={500}
+                    value={cancelReason}
+                    disabled={cancellingLoading || cancelMessage?.type === "success"}
+                    onChange={(e) => setCancelReason(e.target.value)}
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-obsidian-900 focus:border-ocean-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-ocean-600"
+                  />
+                  <p className="mt-1.5 text-sm text-slate-600">
+                    Nothing changes until our team reviews your request. If it&rsquo;s approved, the booking is cancelled and any refund follows the policy above as
+                    it stood when you asked.
+                  </p>
+                </div>
+              )}
               {cancelMessage && (
                 <p
                   role="alert"
@@ -716,12 +798,12 @@ export default function MyTripsPage() {
                 </button>
                 <button
                   type="button"
-                  disabled={cancellingLoading}
+                  disabled={cancellingLoading || cancelMessage?.type === "success"}
                   onClick={handleCancelConfirm}
-                  className="inline-flex h-11 items-center gap-2 rounded-full bg-red-700 px-5 text-sm text-white hover:bg-red-800"
+                  className="inline-flex h-11 items-center gap-2 rounded-full bg-red-700 px-5 text-sm text-white hover:bg-red-800 disabled:opacity-60"
                 >
                   {cancellingLoading && <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" />}
-                  Cancel booking
+                  {instantCancel ? "Cancel booking" : "Send request"}
                 </button>
               </div>
             </div>

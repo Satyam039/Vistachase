@@ -14,7 +14,7 @@ import prisma from "@/lib/db/prisma";
 import { getEmailProvider } from "@/lib/email/email.provider";
 import { getPaymentProvider } from "@/lib/payment/payment.provider";
 import { voucherLink } from "@/lib/security/signed-links";
-import { formatDateOnly, formatTimeOfDay } from "@/lib/utils/time";
+import { formatDateOnly, formatTimeOfDay, getMountainTimeInstant } from "@/lib/utils/time";
 import { transitionBooking } from "@/modules/bookings/booking-status";
 import { confirmPaidBooking, createBooking, refundableAmount, type CreateBookingInput } from "@/modules/bookings/booking.repository";
 import { depositPlanRefundCents } from "@/modules/bookings/deposit";
@@ -32,18 +32,25 @@ export function staffRefundsViaProvider() {
   return process.env.STAFF_REFUNDS_VIA_PROVIDER === "true";
 }
 
+/** A guest may cancel for a refund up to this many hours before departure (cancelBooking). */
+export const GUEST_CANCEL_HOURS = 72;
+
+export function hoursBeforeDeparture(departure: { date: Date; departureTime: Date }, at = new Date()) {
+  return (getMountainTimeInstant(departure.date, departure.departureTime).getTime() - at.getTime()) / 3_600_000;
+}
+
 const money = (cents: number, currency: string) => `$${(cents / 100).toFixed(2)} ${currency}`;
 
-function escapeHtml(value: string) {
+export function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 }
 
-async function appendNote(tx: Prisma.TransactionClient, bookingId: string, note: string) {
+export async function appendNote(tx: Prisma.TransactionClient, bookingId: string, note: string) {
   const current = await tx.booking.findUniqueOrThrow({ where: { id: bookingId }, select: { adminNotes: true } });
   await tx.booking.update({ where: { id: bookingId }, data: { adminNotes: [current.adminNotes, note].filter(Boolean).join("\n") } });
 }
 
-function staffAudit(tx: Prisma.TransactionClient, staffId: string, action: string, entityType: string, entityId: string, details: Record<string, unknown>) {
+export function staffAudit(tx: Prisma.TransactionClient, staffId: string, action: string, entityType: string, entityId: string, details: Record<string, unknown>) {
   return tx.auditLog.create({ data: { userId: staffId, action, entityType, entityId, details: details as Prisma.InputJsonValue } });
 }
 
@@ -54,6 +61,11 @@ export interface StaffCancelInput {
   reason: string;
   refund: RefundChoice;
   notifyGuest: boolean;
+  /**
+   * Set when staff approve a guest's cancellation request: POLICY then follows the guest's own
+   * rules as they stood when the guest asked (nothing back inside 72 hours of departure).
+   */
+  requestedAt?: Date;
 }
 
 export async function staffCancelBooking(bookingId: string, input: StaffCancelInput, staffId: string) {
@@ -70,7 +82,11 @@ export async function staffCancelBooking(bookingId: string, input: StaffCancelIn
   const paidCents = paid.reduce((sum, p) => sum + p.amount, 0);
   // Policy refund: a DEPOSIT booking keeps its deposit; otherwise the group / multi-day rule.
   const policyRefund =
-    booking.paymentPlan === "DEPOSIT" ? depositPlanRefundCents(booking, booking.payments) : refundableAmount(paidCents, booking.totalSeats, booking.tourDeparture.tour?.category);
+    input.requestedAt && hoursBeforeDeparture(booking.tourDeparture, input.requestedAt) < GUEST_CANCEL_HOURS
+      ? 0
+      : booking.paymentPlan === "DEPOSIT"
+        ? depositPlanRefundCents(booking, booking.payments)
+        : refundableAmount(paidCents, booking.totalSeats, booking.tourDeparture.tour?.category);
   const owed = input.refund === "NONE" ? 0 : input.refund === "FULL" ? paidCents : policyRefund;
 
   // The status move is the claim: a double-submitted cancel releases the seats once.
@@ -82,6 +98,11 @@ export async function staffCancelBooking(bookingId: string, input: StaffCancelIn
     await tx.bookingFlag.updateMany({
       where: { bookingId: booking.id, type: "PAYMENT_DUE", status: "OPEN" },
       data: { status: "RESOLVED", resolvedById: staffId, resolvedAt: new Date(), resolution: "Booking cancelled; nothing to collect." },
+    });
+    // A guest's open cancellation request is answered by the cancellation itself.
+    await tx.bookingFlag.updateMany({
+      where: { bookingId: booking.id, type: "CANCEL_REQUEST", status: "OPEN" },
+      data: { status: "RESOLVED", resolvedById: staffId, resolvedAt: new Date(), resolution: `Approved: booking cancelled (refund ${input.refund.toLowerCase()}, ${money(owed, booking.currency)}).` },
     });
     await staffAudit(tx, staffId, "STAFF_CANCEL", "Booking", booking.id, { reason: input.reason, refund: input.refund, paidCents, refundOwedCents: owed });
     return true;
@@ -190,7 +211,7 @@ export async function listFlags(filter: { status?: "OPEN" | "RESOLVED"; type?: B
 }
 
 /** Claims an open flag for resolution, once. Null when it was already resolved. */
-async function claimFlag(tx: Prisma.TransactionClient, flagId: string, staffId: string, resolution: string) {
+export async function claimFlag(tx: Prisma.TransactionClient, flagId: string, staffId: string, resolution: string) {
   const claimed = await tx.bookingFlag.updateMany({
     where: { id: flagId, status: "OPEN" },
     data: { status: "RESOLVED", resolvedById: staffId, resolvedAt: new Date(), resolution },
@@ -204,6 +225,7 @@ export async function resolveFlag(flagId: string, resolution: string, staffId: s
   if (!flag) return { status: 404, error: "Flag not found" } as const;
   // A payment due on a booking that was cancelled since can simply be closed.
   const dueOnLiveBooking = flag.type === "PAYMENT_DUE" && ["CONFIRMED", "COMPLETED", "PAID_UNSYNCED"].includes(flag.booking.status);
+  if (flag.type === "CANCEL_REQUEST") return { status: 400, error: "Approve or decline a cancellation request from Requests." } as const;
   if (flag.type === "REFUND_DUE" || dueOnLiveBooking) {
     return { status: 400, error: flag.type === "REFUND_DUE" ? "Use Mark refunded for a refund that is owed." : "Use Record payment for a payment that is due." } as const;
   }
@@ -282,7 +304,7 @@ export async function recordPayment(flagId: string, input: { method: OfflineMeth
   return done ? ({ status: 200, flag: done } as const) : ({ status: 409, error: "This payment was already recorded." } as const);
 }
 
-function offlineTransactionId(method: OfflineMethod) {
+export function offlineTransactionId(method: OfflineMethod) {
   return `offline_${method.toLowerCase()}_${crypto.randomBytes(8).toString("hex")}`;
 }
 
@@ -350,8 +372,8 @@ async function confirmQuietly(bookingId: string, paidCents: number) {
   });
 }
 
-/** Confirmation with the voucher link but no amount paid (Quick Book, payment still due). */
-function sendVoucherEmail(bookingId: string) {
+/** Confirmation with the voucher link and what is still due (Quick Book or Approve, payment still due). */
+export function sendVoucherEmail(bookingId: string, paid = false) {
   prisma.booking
     .findUniqueOrThrow({ where: { id: bookingId }, include: { tourDeparture: { include: { tour: true, shuttleRoute: true } } } })
     .then((b) => {
@@ -369,12 +391,12 @@ function sendVoucherEmail(bookingId: string) {
             <p><strong>Booking reference:</strong> ${b.bookingReference}</p>
             <p><strong>Experience:</strong> ${escapeHtml(title)}</p>
             <p><strong>Date and time:</strong> ${when} (Mountain Time)</p>
-            <p><strong>Amount due:</strong> ${money(b.totalAmount, b.currency)}</p>
+            <p><strong>${paid ? "Total paid" : "Amount due"}:</strong> ${money(b.totalAmount, b.currency)}</p>
           </div>
           <p><a href="${link}" style="color: #257780; font-weight: bold;">Open your voucher</a> and show it to your guide at pickup.</p>
           <p style="color: #5d6168; font-size: 13px;">Questions? Reply to this email or call +1 (825) 734-9456.</p>
         </div>`,
-        text: `Your Vista Chase booking ${b.bookingReference} is confirmed.\n${title}, ${when} (Mountain Time).\nAmount due: ${money(b.totalAmount, b.currency)}.\nVoucher: ${link}`,
+        text: `Your Vista Chase booking ${b.bookingReference} is confirmed.\n${title}, ${when} (Mountain Time).\n${paid ? "Total paid" : "Amount due"}: ${money(b.totalAmount, b.currency)}.\nVoucher: ${link}`,
       });
     })
     .catch((e) => console.error("Voucher email failed:", (e as Error).message));

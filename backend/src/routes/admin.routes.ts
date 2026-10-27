@@ -17,6 +17,7 @@ import {
   updateDepartureCapacity,
 } from "@/modules/admin/admin.repository";
 import { listFlags, markRefunded, OFFLINE_METHODS, quickBook, recordPayment, resolveFlag, staffCancelBooking, staffRefundsViaProvider } from "@/modules/admin/booking-admin";
+import { approveBooking, approveCancellation, declineCancellation, listRequests } from "@/modules/admin/booking-requests";
 import { createDepartures, departureProducts, listDepartures, setDepartureStatus, updateDeparture } from "@/modules/admin/departure-admin";
 import { createStop, listStops, updateStop } from "@/modules/admin/pickup-admin";
 import { emailDeliveryConfigured, getEmailProvider } from "@/lib/email/email.provider";
@@ -343,6 +344,59 @@ router.post("/bookings/:id/cancel", requireStaff(MANAGERS), async (req, res, nex
   }
 });
 
+// Requests (docs/ADMIN.md): guests' cancellation requests, and bookings waiting for staff approval.
+router.get("/requests", async (_req, res, next) => {
+  try {
+    res.json({ success: true, ...(await listRequests()), refundsViaProvider: staffRefundsViaProvider() });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post("/requests/:id/approve", requireStaff(MANAGERS), async (req, res, next) => {
+  try {
+    const body = parseOr400(
+      z.object({ refund: z.enum(["POLICY", "FULL", "NONE"]), note: z.string().trim().max(500).optional(), notifyGuest: z.boolean().default(true) }),
+      req.body,
+      res,
+    );
+    if (!body) return;
+    const result = await approveCancellation(id(req), body, staffId(req));
+    if (result.status !== 200 || !("paidCents" in result)) return send(res, result);
+    send(res, { ...result, paid: result.paidCents / 100, refundOwed: result.refundOwedCents / 100, refunded: result.refundedCents / 100, refundDue: result.refundDueCents / 100 });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post("/requests/:id/decline", requireStaff(MANAGERS), async (req, res, next) => {
+  try {
+    const body = parseOr400(z.object({ reason: z.string().trim().min(3).max(500), notifyGuest: z.boolean().default(true) }), req.body, res);
+    if (!body) return;
+    send(res, await declineCancellation(id(req), body, staffId(req)));
+  } catch (e) {
+    next(e);
+  }
+});
+
+// Approve a booking left waiting for payment (card failed or unfinished) or paid but unsynced.
+router.post("/bookings/:id/approve", requireStaff(MANAGERS), async (req, res, next) => {
+  try {
+    const body = parseOr400(
+      z.object({
+        payment: z.object({ method: z.enum([...OFFLINE_METHODS, "UNPAID"]), reference: z.string().trim().max(120).optional() }),
+        notifyGuest: z.boolean().default(true),
+      }),
+      req.body,
+      res,
+    );
+    if (!body) return;
+    send(res, await approveBooking(id(req), body, staffId(req)));
+  } catch (e) {
+    next(e);
+  }
+});
+
 // Quick Book: staff book for a guest on the phone or at the desk, paid offline or still due.
 const quickBookSchema = z.object({
   departureId: z.string().min(1).max(64),
@@ -374,7 +428,7 @@ router.post("/quick-book", requireStaff(MANAGERS), async (req, res, next) => {
 });
 
 // Flags: payments that didn't match or came late, refunds owed, Quick Book payments due.
-const FLAG_TYPES = ["PAYMENT_AMOUNT_MISMATCH", "LATE_PAYMENT", "REFUND_DUE", "PAYMENT_DUE", "OTHER"] as const;
+const FLAG_TYPES = ["PAYMENT_AMOUNT_MISMATCH", "LATE_PAYMENT", "REFUND_DUE", "PAYMENT_DUE", "CANCEL_REQUEST", "OTHER"] as const;
 
 router.get("/flags", async (req, res, next) => {
   try {

@@ -53,6 +53,7 @@ type Action = "refunded" | "payment" | "resolve";
 const TYPES = [
   "REFUND_DUE",
   "PAYMENT_DUE",
+  "CANCEL_REQUEST",
   "PAYMENT_AMOUNT_MISMATCH",
   "LATE_PAYMENT",
   "OTHER",
@@ -206,7 +207,8 @@ export function FlagsPanel({
                 actions.push({ action: "payment", label: "Record payment" });
                 if (b && !LIVE.includes(b.status))
                   actions.push({ action: "resolve", label: "Resolve" });
-              } else actions.push({ action: "resolve", label: "Resolve" });
+              } else if (f.type !== "CANCEL_REQUEST")
+                actions.push({ action: "resolve", label: "Resolve" });
             }
             const isActive = active?.id === f.id;
             return (
@@ -266,6 +268,11 @@ export function FlagsPanel({
                       <p className="text-sm text-slate-600">
                         Resolved {when(f.resolvedAt)}
                         {f.resolution && `: ${f.resolution}`}
+                      </p>
+                    )}
+                    {f.status === "OPEN" && f.type === "CANCEL_REQUEST" && (
+                      <p className="text-sm text-slate-600">
+                        Approve or decline it on the Requests tab.
                       </p>
                     )}
                     {f.status === "OPEN" &&
