@@ -84,7 +84,7 @@ export default function FAQPage() {
         <FaqBrowser items={FAQS} topics={TOPICS} />
 
         {/* Still need help */}
-        <section aria-labelledby="help-heading" className="mt-14 rounded-[1.75rem] bg-obsidian-950 p-7 text-white sm:p-9" data-reveal>
+        <section aria-labelledby="help-heading" className="mt-14 rounded-none bg-obsidian-950 p-7 text-white sm:p-9" data-reveal>
           <h2 id="help-heading" className="text-2xl font-light text-white">
             Still need help?
           </h2>

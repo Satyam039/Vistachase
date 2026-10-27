@@ -366,7 +366,7 @@ function PrivateTourCard({
   const isCustom = option.isCustomPartner;
 
   return (
-    <article className="group flex w-full flex-col overflow-hidden rounded-[1.25rem] border border-white/[0.12] bg-[#12161a] transition-all duration-300 hover:-translate-y-1 hover:border-summit-500/40 hover:shadow-2xl">
+    <article className="group flex w-full flex-col overflow-hidden rounded-none border border-white/[0.12] bg-[#12161a] transition-all duration-300 hover:-translate-y-1 hover:border-summit-500/40 hover:shadow-2xl">
       {/* Photograph */}
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-obsidian-900">
         <Image

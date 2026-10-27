@@ -238,7 +238,7 @@ export function PackageCheckout({
 
   if (confirmed) {
     return (
-      <section className="mx-auto max-w-2xl rounded-[1.5rem] bg-white p-6 text-center ring-1 ring-obsidian-900/[0.07] sm:p-10" aria-live="polite">
+      <section className="mx-auto max-w-2xl rounded-none bg-white p-6 text-center ring-1 ring-obsidian-900/[0.07] sm:p-10" aria-live="polite">
         <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
           <Check className="h-7 w-7" aria-hidden="true" />
         </span>
@@ -369,7 +369,7 @@ export function PackageCheckout({
         </Section>
       </div>
 
-      <aside className="rounded-[1.5rem] bg-obsidian-950 p-6 text-white sm:p-8 lg:sticky lg:top-[calc(var(--vc-header-h,80px)+24px)]" aria-label="Your package">
+      <aside className="rounded-none bg-obsidian-950 p-6 text-white sm:p-8 lg:sticky lg:top-[calc(var(--vc-header-h,80px)+24px)]" aria-label="Your package">
         <p className="text-sm uppercase tracking-[0.22em] text-summit-300">{title}</p>
         <ul className="mt-5 space-y-4">
           {days.map((day, i) => (
@@ -439,7 +439,7 @@ export function PackageCheckout({
 
 function Section({ icon: Icon, title, children }: { icon: typeof Users; title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-[1.5rem] bg-white p-5 ring-1 ring-obsidian-900/[0.07] sm:p-7">
+    <section className="rounded-none bg-white p-5 ring-1 ring-obsidian-900/[0.07] sm:p-7">
       <h2 className="mb-4 flex items-center gap-2.5 text-xl font-light text-obsidian-900">
         <Icon className="h-5 w-5 text-ocean-600" aria-hidden="true" />
         {title}

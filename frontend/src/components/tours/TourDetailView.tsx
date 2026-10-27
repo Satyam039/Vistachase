@@ -445,7 +445,7 @@ export function TourDetailView({
             {/* The "On this page" bar spans this column only, so it never slides over the booking panel. */}
             <TourSectionNav />
             {/* Key facts as icon rows (Civitatis / Expedia "Features") */}
-            <ul aria-label="Key facts" className="grid grid-cols-1 gap-x-8 gap-y-5 rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:grid-cols-2 sm:p-8" data-stagger>
+            <ul aria-label="Key facts" className="grid grid-cols-1 gap-x-8 gap-y-5 rounded-none bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:grid-cols-2 sm:p-8" data-stagger>
               {facts.map((fact) => (
                 <li key={fact.label} className="flex items-start gap-3.5">
                   <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-ocean-50 text-ocean-700">
@@ -487,7 +487,7 @@ export function TourDetailView({
           >
             <div
               ref={panelRef}
-              className={`${panelScrolls ? "lg:max-h-[calc(100vh-var(--vc-header-h,96px)-2rem)] lg:overflow-y-auto lg:overscroll-contain" : ""} rounded-[1.75rem] bg-white ring-1 ring-obsidian-900/[0.07] shadow-[0_30px_60px_-35px_rgba(12,31,33,0.4)] p-6 space-y-3.5`}
+              className={`${panelScrolls ? "lg:max-h-[calc(100vh-var(--vc-header-h,96px)-2rem)] lg:overflow-y-auto lg:overscroll-contain" : ""} rounded-none bg-white ring-1 ring-obsidian-900/[0.07] shadow-[0_30px_60px_-35px_rgba(12,31,33,0.4)] p-6 space-y-3.5`}
             >
               <div className="border-b border-slate-100 pb-3">
                 <PriceTag

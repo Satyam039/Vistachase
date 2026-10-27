@@ -10,7 +10,7 @@ import { CalendarDays, Compass, Search, Users } from "lucide-react";
 import { Dropdown } from "@/components/forms/Dropdown";
 import { openDatePicker } from "@/lib/utils/datePicker";
 
-const SEGMENT = "group relative flex min-w-0 flex-col justify-center rounded-[1.25rem] px-4 py-1.5 transition-colors hover:bg-obsidian-50 focus-within:bg-obsidian-50";
+const SEGMENT = "group relative flex min-w-0 flex-col justify-center rounded-none px-4 py-1.5 transition-colors hover:bg-obsidian-50 focus-within:bg-obsidian-50";
 const LABEL = "flex items-center gap-1.5 text-xs uppercase tracking-[0.14em] text-slate-600";
 // Dropdown's bare trigger is text-base with a top margin; the compact bar wants text-sm.
 const TRIGGER = "!mt-0 !text-sm";
@@ -24,7 +24,7 @@ export function HeroSearch({ className = "", category }: { className?: string; c
       method="get"
       role="search"
       aria-label="Find a tour"
-      className={`grid gap-1 rounded-[1.5rem] bg-white p-1.5 text-left shadow-[0_24px_60px_-30px_rgba(0,0,0,0.6)] sm:grid-cols-2 lg:grid-cols-[1.35fr_1fr_0.85fr_auto] lg:items-stretch lg:rounded-full ${className}`}
+      className={`grid gap-1 rounded-none bg-white p-1.5 text-left shadow-[0_24px_60px_-30px_rgba(0,0,0,0.6)] sm:grid-cols-2 lg:grid-cols-[1.35fr_1fr_0.85fr_auto] lg:items-stretch lg:rounded-full ${className}`}
     >
       <div className={`${SEGMENT} lg:rounded-full`}>
         <Dropdown
@@ -75,7 +75,7 @@ export function HeroSearch({ className = "", category }: { className?: string; c
       </div>
       <button
         type="submit"
-        className="golden-summit-btn inline-flex min-h-11 items-center justify-center gap-2 rounded-[1.25rem] px-6 text-sm sm:col-span-2 lg:col-span-1 lg:rounded-full"
+        className="golden-summit-btn inline-flex min-h-11 items-center justify-center gap-2 rounded-none px-6 text-sm sm:col-span-2 lg:col-span-1 lg:rounded-full"
       >
         <Search className="h-4 w-4" aria-hidden="true" />
         Search

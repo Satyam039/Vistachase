@@ -800,11 +800,11 @@ export function SettingsView() {
       <PortalHeading title="Settings" intro="Site-wide settings that need an admin (Google tag, verification, site-wide schema), llms.txt and the business details structured data uses." />
       {state && (
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="rounded-2xl bg-white p-5 ring-1 ring-obsidian-900/[0.07]">
+          <div className="rounded-none bg-white p-5 ring-1 ring-obsidian-900/[0.07]">
             <p className="text-sm text-slate-600">Google tag</p>
             <p className="mt-1 text-xl">{t?.enabled ? `On: ${[t.ga4Id, t.adsId].filter(Boolean).join(", ")}` : "Off"}</p>
           </div>
-          <div className="rounded-2xl bg-white p-5 ring-1 ring-obsidian-900/[0.07]">
+          <div className="rounded-none bg-white p-5 ring-1 ring-obsidian-900/[0.07]">
             <p className="text-sm text-slate-600">Search Console verification tag</p>
             <p className="mt-1 text-xl">{state.verification ? (state.verificationMatchesHandoff ? "On (matches the handoff)" : "On (differs from the handoff)") : "Not added"}</p>
           </div>

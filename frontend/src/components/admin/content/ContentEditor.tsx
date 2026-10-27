@@ -292,7 +292,7 @@ function SaveBar({ dirty, busy, canWrite, onSave, notice, error }: { dirty: stri
     };
   }, []);
   return (
-    <div ref={ref} className="sticky bottom-0 z-10 -mx-page border-t border-obsidian-900/[0.07] bg-white/95 px-page py-3 backdrop-blur sm:mx-0 sm:rounded-2xl sm:border sm:px-5">
+    <div ref={ref} className="sticky bottom-0 z-10 -mx-page border-t border-obsidian-900/[0.07] bg-white/95 px-page py-3 backdrop-blur sm:mx-0 sm:rounded-none sm:border sm:px-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p aria-live="polite" className={`text-sm ${error ? "text-red-700" : "text-slate-700"}`}>
           {error || notice || (dirty.length ? `Unsaved: ${dirty.map((d) => FIELD_LABEL[d] ?? d).join(", ")}` : "No unsaved changes.")}

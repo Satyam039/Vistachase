@@ -407,7 +407,7 @@ export default function MyTripsPage() {
         {/* Signed out: find a booking, or sign in */}
         {!user && !loading && bookings.length === 0 && (
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-            <section aria-labelledby="find-heading" className="rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:p-8">
+            <section aria-labelledby="find-heading" className="rounded-none bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:p-8">
               <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-ocean-50 text-ocean-700">
                 <Ticket className="h-5 w-5" aria-hidden="true" />
               </span>
@@ -464,7 +464,7 @@ export default function MyTripsPage() {
               </p>
             </section>
 
-            <section aria-labelledby="signin-heading" className="flex flex-col rounded-[1.75rem] bg-obsidian-950 p-6 text-white sm:p-8">
+            <section aria-labelledby="signin-heading" className="flex flex-col rounded-none bg-obsidian-950 p-6 text-white sm:p-8">
               <h2 id="signin-heading" className="text-2xl font-light text-white sm:text-3xl">
                 See every trip in one place
               </h2>
@@ -530,7 +530,7 @@ export default function MyTripsPage() {
 
             <section aria-label={`${tabs.find((t) => t.id === activeTab)?.label} trips`} className="mt-8">
               {displayBookings.length === 0 ? (
-                <div className="flex flex-col items-center rounded-[1.75rem] bg-white px-6 py-16 text-center ring-1 ring-obsidian-900/[0.07]">
+                <div className="flex flex-col items-center rounded-none bg-white px-6 py-16 text-center ring-1 ring-obsidian-900/[0.07]">
                   <span className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-ocean-50 text-ocean-700">
                     <Calendar className="h-7 w-7" aria-hidden="true" />
                   </span>
@@ -564,7 +564,7 @@ export default function MyTripsPage() {
                         : "bg-slate-100 text-slate-700 ring-slate-200";
                     return (
                       <li key={b.id}>
-                        <article className="grid overflow-hidden rounded-[1.75rem] bg-white ring-1 ring-obsidian-900/[0.07] lg:grid-cols-[minmax(0,1fr)_16rem]">
+                        <article className="grid overflow-hidden rounded-none bg-white ring-1 ring-obsidian-900/[0.07] lg:grid-cols-[minmax(0,1fr)_16rem]">
                           {/* Photo with date badge */}
                           <div className="relative aspect-[16/9] sm:aspect-[21/9] lg:col-span-2 lg:aspect-[3/1]">
                             <Image src={image} alt="" fill sizes="(max-width: 1280px) 100vw, 80rem" className="object-cover" />
@@ -723,7 +723,7 @@ export default function MyTripsPage() {
         {/* Cancellation dialog */}
         {cancellingBooking && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-obsidian-950/70 p-4 backdrop-blur-sm">
-            <div role="dialog" aria-modal="true" aria-labelledby="cancel-title" className="w-full max-w-md space-y-5 rounded-[1.75rem] bg-white p-6 shadow-2xl sm:p-8">
+            <div role="dialog" aria-modal="true" aria-labelledby="cancel-title" className="w-full max-w-md space-y-5 rounded-none bg-white p-6 shadow-2xl sm:p-8">
               <h2 id="cancel-title" className="text-2xl font-light text-obsidian-900">
                 {instantCancel ? "Cancel this booking?" : "Request cancellation"}
               </h2>
@@ -813,7 +813,7 @@ export default function MyTripsPage() {
         {/* Review dialog */}
         {reviewModalBooking && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-obsidian-950/70 p-4 backdrop-blur-sm">
-            <div role="dialog" aria-modal="true" aria-labelledby="review-title" className="w-full max-w-lg space-y-5 rounded-[1.75rem] bg-white p-6 shadow-2xl sm:p-8">
+            <div role="dialog" aria-modal="true" aria-labelledby="review-title" className="w-full max-w-lg space-y-5 rounded-none bg-white p-6 shadow-2xl sm:p-8">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 id="review-title" className="text-2xl font-light text-obsidian-900">

@@ -224,7 +224,7 @@ export function Chip({ className = "", children }: { className?: string; childre
 
 export function Panel({ id, title, description, actions, children }: { id: string; title: string; description?: ReactNode; actions?: ReactNode; children: ReactNode }) {
   return (
-    <section aria-labelledby={`${id}-heading`} className="overflow-hidden rounded-[1.75rem] bg-white ring-1 ring-obsidian-900/[0.07]">
+    <section aria-labelledby={`${id}-heading`} className="overflow-hidden rounded-none bg-white ring-1 ring-obsidian-900/[0.07]">
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-obsidian-900/[0.06] px-6 py-5">
         <div>
           <h2 id={`${id}-heading`} className="text-xl text-obsidian-900">
@@ -277,7 +277,7 @@ export function Loading() {
 export function Stat({ label, value, hint, tone }: { label: string; value: ReactNode; hint?: ReactNode; tone?: "warn" | "bad" | "good" }) {
   const toneCls = tone === "bad" ? "text-red-700" : tone === "warn" ? "text-obsidian-900" : tone === "good" ? "text-ocean-700" : "text-obsidian-900";
   return (
-    <div className="rounded-2xl bg-white p-5 ring-1 ring-obsidian-900/[0.07]">
+    <div className="rounded-none bg-white p-5 ring-1 ring-obsidian-900/[0.07]">
       <p className="text-sm text-slate-600">{label}</p>
       <p className={`mt-1 text-3xl font-light tabular-nums ${toneCls}`}>{value}</p>
       {hint && <p className="mt-1 text-sm text-slate-600">{hint}</p>}

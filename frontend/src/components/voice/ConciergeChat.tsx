@@ -302,7 +302,7 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
               {messages.map((m) =>
                 m.role === "assistant" && !m.text ? null : m.role === "user" ? (
                   <li key={m.id} className="flex justify-end">
-                    <p className="max-w-[85%] whitespace-pre-wrap rounded-3xl bg-obsidian-100 px-4 py-2.5 text-[15px] leading-relaxed text-obsidian-900">
+                    <p className="max-w-[85%] whitespace-pre-wrap rounded-none bg-obsidian-100 px-4 py-2.5 text-[15px] leading-relaxed text-obsidian-900">
                       <span className="sr-only">You: </span>
                       {m.text}
                     </p>
@@ -366,7 +366,7 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
               e.preventDefault();
               send(input);
             }}
-            className="rounded-[1.75rem] border border-obsidian-900/10 bg-white p-2 shadow-[0_8px_30px_-12px_rgba(12,31,33,0.25)] focus-within:border-obsidian-900/30"
+            className="rounded-none border border-obsidian-900/10 bg-white p-2 shadow-[0_8px_30px_-12px_rgba(12,31,33,0.25)] focus-within:border-obsidian-900/30"
           >
             <label htmlFor={`concierge-input-${variant}`} className="sr-only">
               Message the concierge

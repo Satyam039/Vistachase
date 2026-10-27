@@ -144,12 +144,13 @@ describe("API protections", () => {
     expect(res.status).toBe(403);
   });
 
-  it("does not let the browser choose prices or the payment provider", async () => {
+  it("does not let the browser choose prices, add-ons or the payment provider", async () => {
     const res = await request(createApp())
       .post("/api/bookings")
       .send({ ...guest(5), addOns: [{ id: "lunch", price: 0 }], paymentProvider: "mock", totalAmount: 1 });
     expect(res.status).toBe(200);
     const stored = await prisma.booking.findUniqueOrThrow({ where: { bookingReference: res.body.booking.bookingReference } });
-    expect(stored.totalAmount).toBe(39800 + 2200 * 2);
+    // Checkout has no add-ons any more: the lunch the request asked for is not charged.
+    expect(stored.totalAmount).toBe(39800);
   });
 });

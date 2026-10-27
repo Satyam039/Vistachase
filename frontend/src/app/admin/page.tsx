@@ -240,7 +240,7 @@ export default function AdminDashboardPage() {
         {/* KPIs */}
         <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Key figures">
           {kpis.map(({ label, value, note, icon: Icon }) => (
-            <li key={label} className="rounded-[1.5rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07]">
+            <li key={label} className="rounded-none bg-white p-6 ring-1 ring-obsidian-900/[0.07]">
               <div className="flex items-center justify-between">
                 <p className="text-sm text-slate-600">{label}</p>
                 <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-ocean-50 text-ocean-700">
@@ -259,7 +259,7 @@ export default function AdminDashboardPage() {
 
         <div className="grid items-start gap-6 2xl:grid-cols-[minmax(0,1fr)_20rem]">
           {/* Reservations */}
-          <section aria-labelledby="reservations-heading" className="overflow-hidden rounded-[1.75rem] bg-white ring-1 ring-obsidian-900/[0.07]">
+          <section aria-labelledby="reservations-heading" className="overflow-hidden rounded-none bg-white ring-1 ring-obsidian-900/[0.07]">
             <div className="flex flex-col gap-4 border-b border-obsidian-900/[0.07] p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
               <div>
                 <h2 id="reservations-heading" className="text-xl text-obsidian-900">
@@ -371,7 +371,7 @@ export default function AdminDashboardPage() {
 
           {/* Side column */}
           <div className="grid items-start gap-6 lg:grid-cols-2 2xl:grid-cols-1">
-            <section aria-labelledby="health-heading" className="rounded-[1.75rem] bg-ocean-950 p-6 text-white">
+            <section aria-labelledby="health-heading" className="rounded-none bg-ocean-950 p-6 text-white">
               <h2 id="health-heading" className="text-base text-white">
                 Booking health
               </h2>
@@ -392,7 +392,7 @@ export default function AdminDashboardPage() {
               </dl>
             </section>
 
-            <section aria-labelledby="shortcuts-heading" className="rounded-[1.75rem] bg-white p-2 ring-1 ring-obsidian-900/[0.07]">
+            <section aria-labelledby="shortcuts-heading" className="rounded-none bg-white p-2 ring-1 ring-obsidian-900/[0.07]">
               <h2 id="shortcuts-heading" className="px-4 pb-1 pt-4 text-base text-obsidian-900">
                 Shortcuts
               </h2>
@@ -419,7 +419,7 @@ export default function AdminDashboardPage() {
 
       {action && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-obsidian-950/70 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="action-heading">
-          <div className="w-full max-w-md rounded-[1.75rem] bg-white p-6 shadow-xl">
+          <div className="w-full max-w-md rounded-none bg-white p-6 shadow-xl">
             <h2 id="action-heading" className="text-xl text-obsidian-900">
               {action.kind === "approve" ? "Approve booking" : "Cancel booking"}
             </h2>

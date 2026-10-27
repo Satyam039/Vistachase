@@ -120,20 +120,20 @@ export default async function ContactUsPage({ searchParams }: { searchParams: Pr
 
       <div className="mx-auto grid max-w-7xl items-start gap-8 px-page py-14 sm:py-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] lg:gap-12">
         {/* Ways to reach us */}
-        <aside className="space-y-4" aria-label="Ways to reach us">
+        <aside className="min-w-0 space-y-4" aria-label="Ways to reach us">
           <ul className="space-y-3" data-stagger>
             {CHANNELS.map(({ icon: Icon, title, value, note, href }) => (
               <li key={title}>
                 <Link
                   href={href}
-                  className="group flex items-center gap-4 rounded-[1.5rem] bg-white p-5 ring-1 ring-obsidian-900/[0.07] transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_40px_-28px_rgba(12,31,33,0.5)]"
+                  className="group flex items-center gap-4 rounded-none bg-white p-5 ring-1 ring-obsidian-900/[0.07] transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_40px_-28px_rgba(12,31,33,0.5)]"
                 >
                   <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-summit-200 text-obsidian-900">
                     <Icon className="h-5 w-5" aria-hidden="true" />
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm text-slate-600">{title}</span>
-                    <span className="block text-lg text-obsidian-900">{value}</span>
+                    <span className="block break-words text-lg text-obsidian-900">{value}</span>
                     <span className="block text-sm text-slate-600">{note}</span>
                   </span>
                   <ArrowUpRight className="h-5 w-5 shrink-0 text-slate-400 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-obsidian-900" aria-hidden="true" />
@@ -144,7 +144,7 @@ export default async function ContactUsPage({ searchParams }: { searchParams: Pr
         </aside>
 
         {/* Form */}
-        <section aria-labelledby="form-heading" className="rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:p-10" data-reveal>
+        <section aria-labelledby="form-heading" className="rounded-none bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:p-10" data-reveal>
           <h2 id="form-heading" className="text-2xl font-light text-obsidian-900 sm:text-3xl">
             Send us a message
           </h2>
@@ -166,7 +166,7 @@ export default async function ContactUsPage({ searchParams }: { searchParams: Pr
         <ul className="grid gap-3 sm:grid-cols-3" data-stagger>
           {SELF_SERVE.map(({ icon: Icon, label, href }) => (
             <li key={href}>
-              <Link href={href} className="group flex items-center justify-between rounded-2xl bg-white px-5 py-4 ring-1 ring-obsidian-900/[0.07] transition-colors hover:ring-ocean-600/40">
+              <Link href={href} className="group flex items-center justify-between rounded-none bg-white px-5 py-4 ring-1 ring-obsidian-900/[0.07] transition-colors hover:ring-ocean-600/40">
                 <span className="flex items-center gap-3 text-base text-obsidian-900">
                   <Icon className="h-5 w-5 text-ocean-600" aria-hidden="true" />
                   {label}

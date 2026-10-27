@@ -246,7 +246,7 @@ export function TourGallery({
         className="mx-auto max-w-7xl px-page py-14 sm:py-20 scroll-mt-28"
       >
         {tours.length === 0 ? (
-          <div className="mx-auto max-w-xl space-y-4 rounded-3xl bg-white p-12 text-center ring-1 ring-obsidian-900/[0.07]">
+          <div className="mx-auto max-w-xl space-y-4 rounded-none bg-white p-12 text-center ring-1 ring-obsidian-900/[0.07]">
             <Sparkles
               className="mx-auto h-8 w-8 text-summit-600"
               aria-hidden="true"

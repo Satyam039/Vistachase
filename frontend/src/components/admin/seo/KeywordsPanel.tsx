@@ -572,7 +572,7 @@ function ImportForm({ onImported, onSignedOut, notify }: { onImported: () => voi
           </p>
           {preview.unknownColumns.length > 0 && <p className="text-sm text-slate-700">Ignored columns: {preview.unknownColumns.join(", ")}</p>}
           {preview.columns && preview.fields && (
-            <details className="rounded-2xl bg-white p-4 ring-1 ring-obsidian-900/[0.07]" open={preview.unknownColumns.length > 0}>
+            <details className="rounded-none bg-white p-4 ring-1 ring-obsidian-900/[0.07]" open={preview.unknownColumns.length > 0}>
               <summary className="cursor-pointer text-base text-obsidian-900">Column mapping</summary>
               <p className="mt-2 text-sm text-slate-600">Each column of your file and the field it fills. Change one, then preview again; nothing is saved until you import.</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

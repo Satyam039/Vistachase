@@ -86,7 +86,7 @@ export function LegalDocument({ title, intro, sections, current }: { title: stri
             </section>
           ))}
 
-          <aside aria-label="Related policies" className="rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07]">
+          <aside aria-label="Related policies" className="rounded-none bg-white p-6 ring-1 ring-obsidian-900/[0.07]">
             <p className="text-base text-obsidian-900">Related policies</p>
             <ul className="mt-3 flex flex-wrap gap-2">
               {RELATED.filter((r) => r.href !== current).map((r) => (

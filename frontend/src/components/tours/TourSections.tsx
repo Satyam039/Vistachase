@@ -96,7 +96,7 @@ function SectionBlock({ section, level = 3 }: { section: TourSection; level?: 3 
       {section.stops.length > 0 && (
         <ol className="space-y-3">
           {section.stops.map((stop, i) => (
-            <li key={stop.name} className="flex gap-4 rounded-2xl border border-slate-200/80 bg-white p-5">
+            <li key={stop.name} className="flex gap-4 rounded-none border border-slate-200/80 bg-white p-5">
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ocean-600 text-sm text-white" aria-hidden="true">
                 {i + 1}
               </span>
@@ -176,7 +176,7 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
           </div>
         )}
         {tour.highlights.length > 0 && (
-          <ul className="grid gap-3 rounded-3xl border border-slate-200/80 bg-white p-6 sm:grid-cols-2" aria-label="Highlights">
+          <ul className="grid gap-3 rounded-none border border-slate-200/80 bg-white p-6 sm:grid-cols-2" aria-label="Highlights">
             {tour.highlights.map((h) => (
               <li key={h} className="flex items-start gap-3 text-base text-slate-800">
                 <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-ocean-600" aria-hidden="true" />
@@ -191,7 +191,7 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
         <div className="space-y-6">
           <h3 className="text-xl font-light text-obsidian-900">Good to know</h3>
           {tour.facts.length > 0 && (
-            <dl className="grid gap-4 rounded-3xl border border-slate-200/80 bg-white p-6 sm:grid-cols-2">
+            <dl className="grid gap-4 rounded-none border border-slate-200/80 bg-white p-6 sm:grid-cols-2">
               {tour.facts.map((f) => (
                 <div key={f.label}>
                   <dt className="text-sm uppercase tracking-widest text-slate-600">{f.label}</dt>
@@ -214,7 +214,7 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
       <section id="whats-included" aria-labelledby="whats-included-heading" className="space-y-6">
         <SectionHeading id="whats-included">What&apos;s Included</SectionHeading>
         <div className="grid gap-6 sm:grid-cols-2">
-          <ul className="space-y-3 rounded-3xl border border-slate-200/80 bg-white p-6" aria-label="Included">
+          <ul className="space-y-3 rounded-none border border-slate-200/80 bg-white p-6" aria-label="Included">
             {tour.inclusions.map((item) => (
               <li key={item} className="flex items-start gap-2.5 text-base text-slate-800">
                 <Check className="mt-1 h-4 w-4 shrink-0 text-emerald-700" aria-hidden="true" />
@@ -223,7 +223,7 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
             ))}
           </ul>
           {tour.exclusions.length > 0 && (
-            <ul className="space-y-3 rounded-3xl border border-slate-200/80 bg-white p-6" aria-label="Not included">
+            <ul className="space-y-3 rounded-none border border-slate-200/80 bg-white p-6" aria-label="Not included">
               {tour.exclusions.map((item) => (
                 <li key={item} className="flex items-start gap-2.5 text-base text-slate-600">
                   <X className="mt-1 h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
@@ -237,7 +237,7 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
 
       <section id="pickup" aria-labelledby="pickup-heading" className="space-y-4">
         <SectionHeading id="pickup">Pickup</SectionHeading>
-        <div className="space-y-3 rounded-3xl border border-slate-200/80 bg-white p-6 text-base text-slate-700">
+        <div className="space-y-3 rounded-none border border-slate-200/80 bg-white p-6 text-base text-slate-700">
           {isTicket ? (
             <p>
               Meet at the attraction on your date, or add transport by booking a Vista Chase tour on the same day. We send the
@@ -269,7 +269,7 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
             </h3>
             <ul className={`grid gap-5 ${vehicles.length > 1 ? "md:grid-cols-2" : ""}`}>
               {vehicles.map((v) => (
-                <li key={v.name} className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white">
+                <li key={v.name} className="overflow-hidden rounded-none border border-slate-200/80 bg-white">
                   <figure>
                     <div className={`flex gap-1 ${vehicles.length > 1 ? "h-48" : "h-56 sm:h-72"}`}>
                       {v.photos.map((photo, i) => (
@@ -307,14 +307,14 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
       <section id="cancellation" aria-labelledby="cancellation-heading" className="space-y-4">
         <SectionHeading id="cancellation">Cancellation</SectionHeading>
         {isTicket ? (
-          <div className="space-y-3 rounded-[1.75rem] bg-white p-6 text-base text-slate-700 ring-1 ring-obsidian-900/[0.07]">
+          <div className="space-y-3 rounded-none bg-white p-6 text-base text-slate-700 ring-1 ring-obsidian-900/[0.07]">
             <p>Tickets are run by the attraction operator and follow their own cancellation rules, which we confirm with your request.</p>
             <Link href="/cancellation-policy" className="inline-flex min-h-11 items-center text-ocean-700 underline underline-offset-4">
               Read our cancellation policy
             </Link>
           </div>
         ) : (
-          <div className="space-y-3 rounded-[1.75rem] bg-emerald-50 p-6 text-base text-emerald-950 ring-1 ring-emerald-200">
+          <div className="space-y-3 rounded-none bg-emerald-50 p-6 text-base text-emerald-950 ring-1 ring-emerald-200">
             <p className="flex items-start gap-2.5 text-lg">
               <CheckCircle2 className="mt-1 h-5 w-5 shrink-0 text-emerald-700" aria-hidden="true" />
               <span>

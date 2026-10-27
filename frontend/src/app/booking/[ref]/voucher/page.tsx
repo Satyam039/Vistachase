@@ -95,12 +95,10 @@ export default async function VoucherPage({
   const cancelled = booking.status === "CANCELLED" || booking.status === "EXPIRED";
   const pickupName = booking.pickupStop?.name || booking.pickupCustomText || "Pickup to be confirmed by email";
   const pickupAddress = booking.pickupStop?.address || (booking.pickupStop ? booking.pickupStop.town : null);
-  const directions =
-    booking.pickupStop?.latitude != null && booking.pickupStop?.longitude != null
-      ? `https://www.google.com/maps/dir/?api=1&destination=${booking.pickupStop.latitude},${booking.pickupStop.longitude}`
-      : pickupAddress
-      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${pickupName}, ${pickupAddress}`)}`
-      : null;
+  // Directions by name and address: some stops' coordinates are approximate.
+  const directions = pickupAddress
+    ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${pickupName}, ${pickupAddress}`)}`
+    : null;
   const guests = [
     booking.adultsCount ? `${booking.adultsCount} adult${booking.adultsCount === 1 ? "" : "s"}` : null,
     booking.childrenCount ? `${booking.childrenCount} child${booking.childrenCount === 1 ? "" : "ren"}` : null,
@@ -190,7 +188,7 @@ export default async function VoucherPage({
         {/* The ticket */}
         <article
           aria-label={`Voucher for ${title}`}
-          className={`overflow-hidden rounded-[2rem] bg-white shadow-[0_40px_80px_-50px_rgba(12,31,33,0.5)] ring-1 ring-obsidian-900/[0.07] print:shadow-none ${cancelled ? "opacity-60" : ""}`}
+          className={`overflow-hidden rounded-none bg-white shadow-[0_40px_80px_-50px_rgba(12,31,33,0.5)] ring-1 ring-obsidian-900/[0.07] print:shadow-none ${cancelled ? "opacity-60" : ""}`}
         >
           <div className="relative aspect-[16/7] bg-obsidian-200">
             <Image src={image} alt="" fill priority sizes="(max-width: 1024px) 100vw, 640px" className="object-cover" />
@@ -219,7 +217,7 @@ export default async function VoucherPage({
               </div>
             </div>
             {booking.qrCodeUrl && !cancelled && (
-              <figure className="justify-self-center rounded-2xl bg-white p-3 text-center ring-1 ring-obsidian-900/10 sm:justify-self-end">
+              <figure className="justify-self-center rounded-none bg-white p-3 text-center ring-1 ring-obsidian-900/10 sm:justify-self-end">
                 <Image
                   src={booking.qrCodeUrl}
                   alt={`QR code for booking ${booking.bookingReference}`}
@@ -260,7 +258,7 @@ export default async function VoucherPage({
 
         {/* What you need next */}
         <aside className="space-y-5 print:mt-6" aria-label="Trip details">
-          <section aria-labelledby="pickup-heading" className="rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:p-7">
+          <section aria-labelledby="pickup-heading" className="rounded-none bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:p-7">
             <h2 id="pickup-heading" className="flex items-center gap-2 text-lg text-obsidian-900">
               <MapPin className="h-5 w-5 text-ocean-600" aria-hidden="true" />
               Your pickup
@@ -286,7 +284,7 @@ export default async function VoucherPage({
           </section>
 
           {!cancelled && (
-            <section aria-labelledby="tracking-heading" className="rounded-[1.75rem] bg-obsidian-950 p-6 text-white sm:p-7 print:hidden">
+            <section aria-labelledby="tracking-heading" className="rounded-none bg-obsidian-950 p-6 text-white sm:p-7 print:hidden">
               <h2 id="tracking-heading" className="flex items-center gap-2 text-lg text-white">
                 <Navigation className="h-5 w-5 text-summit-400" aria-hidden="true" />
                 Track your vehicle on the day
@@ -299,7 +297,7 @@ export default async function VoucherPage({
             </section>
           )}
 
-          <section aria-labelledby="summary-heading" className="rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:p-7">
+          <section aria-labelledby="summary-heading" className="rounded-none bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:p-7">
             <h2 id="summary-heading" className="text-lg text-obsidian-900">
               Price summary
             </h2>
@@ -360,7 +358,7 @@ export default async function VoucherPage({
 
           {!cancelled &&
             (canCancelFree(departure.date, departure.departureTime) ? (
-              <p className="flex items-start gap-2.5 rounded-[1.75rem] bg-emerald-50 p-5 text-sm text-emerald-900 ring-1 ring-emerald-200 print:hidden">
+              <p className="flex items-start gap-2.5 rounded-none bg-emerald-50 p-5 text-sm text-emerald-900 ring-1 ring-emerald-200 print:hidden">
                 <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" aria-hidden="true" />
                 <span>
                   <span className="block text-base">
@@ -378,13 +376,13 @@ export default async function VoucherPage({
                 </span>
               </p>
             ) : (
-              <p className="rounded-[1.75rem] bg-obsidian-50 p-5 text-sm text-slate-700 ring-1 ring-obsidian-900/[0.07] print:hidden">
+              <p className="rounded-none bg-obsidian-50 p-5 text-sm text-slate-700 ring-1 ring-obsidian-900/[0.07] print:hidden">
                 <span className="block text-base text-obsidian-900">Departing within 72 hours</span>
                 {deposit ? "The cancellation window has ended for this trip." : "Free cancellation has ended for this trip."} Need to change something? Call us and we&apos;ll do what we can.
               </p>
             ))}
 
-          <section aria-labelledby="help-heading" className="rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:p-7">
+          <section aria-labelledby="help-heading" className="rounded-none bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:p-7">
             <h2 id="help-heading" className="text-lg text-obsidian-900">
               Need help?
             </h2>

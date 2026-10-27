@@ -103,7 +103,7 @@ function NoPages({ onDone }: { onDone: () => void }) {
     onDone();
   }
   return (
-    <div className="rounded-[1.75rem] bg-white px-6 py-8 text-center ring-1 ring-obsidian-900/10">
+    <div className="rounded-none bg-white px-6 py-8 text-center ring-1 ring-obsidian-900/10">
       <p className="text-base text-obsidian-900">No pages are listed yet.</p>
       <p className="mt-1 text-sm text-slate-600">Add every page the site has (home, tours, service pages, destinations). Nothing on the site changes.</p>
       {me.seo.manage && (

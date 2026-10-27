@@ -80,7 +80,7 @@ export default function PartnersPage() {
         </div>
         <ul className="grid gap-5 md:grid-cols-3" data-stagger>
           {BENEFITS.map(({ icon: Icon, title, text }) => (
-            <li key={title} className="rounded-[1.75rem] bg-white p-7 ring-1 ring-obsidian-900/[0.07]">
+            <li key={title} className="rounded-none bg-white p-7 ring-1 ring-obsidian-900/[0.07]">
               <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-obsidian-950 text-summit-400">
                 <Icon className="h-5 w-5" aria-hidden="true" />
               </span>
@@ -98,7 +98,7 @@ export default function PartnersPage() {
           </h2>
           <ul className="grid gap-5 md:grid-cols-3" data-stagger>
             {WHO.map(({ icon: Icon, title, text }) => (
-              <li key={title} className="rounded-[1.75rem] border border-white/10 bg-white/[0.04] p-7">
+              <li key={title} className="rounded-none border border-white/10 bg-white/[0.04] p-7">
                 <Icon className="h-6 w-6 text-summit-400" aria-hidden="true" />
                 <h3 className="mt-5 text-xl font-light text-white">{title}</h3>
                 <p className="mt-2 text-base text-white/75">{text}</p>
@@ -114,7 +114,7 @@ export default function PartnersPage() {
         </h2>
         <ol className="grid gap-5 md:grid-cols-3" data-stagger>
           {STEPS.map((step, i) => (
-            <li key={step} className="flex gap-4 rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07]">
+            <li key={step} className="flex gap-4 rounded-none bg-white p-6 ring-1 ring-obsidian-900/[0.07]">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-summit-200 text-obsidian-900" aria-hidden="true">
                 {i + 1}
               </span>

@@ -49,6 +49,9 @@ router.post("/", rateLimitMiddleware("booking_create", { maxRequests: 5, windowS
     const user = getAuthenticatedUser(req);
     const result = await createBooking({
       ...body,
+      // Checkout no longer offers add-ons (2026-10-27); any sent by an old page are ignored, so
+      // the total is the fare alone. Staff Quick Book still records add-ons.
+      addOns: [],
       idempotencyKey: rawKey,
       customerId: user && user.email.toLowerCase() === body.customerEmail ? user.userId : undefined,
       // Partner referral: the frontend stores ?ref=<code> in this cookie for 30 days.

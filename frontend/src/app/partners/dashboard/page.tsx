@@ -215,7 +215,7 @@ export default function PartnerDashboardPage() {
                     ["Link clicks (30 days)", String(totals.clicks30d)],
                     ["Conversion (30 days)", totals.conversion30d === null ? "–" : `${totals.conversion30d}%`],
                   ].map(([label, value]) => (
-                    <div key={label} className="rounded-[1.5rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07]">
+                    <div key={label} className="rounded-none bg-white p-6 ring-1 ring-obsidian-900/[0.07]">
                       <dt className="text-sm text-slate-600">{label}</dt>
                       <dd className="mt-1 text-3xl font-light">{value}</dd>
                     </div>
@@ -233,7 +233,7 @@ export default function PartnerDashboardPage() {
           )}
 
           {tab === "links" && (
-            <section aria-labelledby="links-heading" className="space-y-4 rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:p-8">
+            <section aria-labelledby="links-heading" className="space-y-4 rounded-none bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:p-8">
               <h2 id="links-heading" className="text-2xl font-light">Your referral link</h2>
               <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]">
                 <Dropdown
@@ -274,7 +274,7 @@ export default function PartnerDashboardPage() {
 
 function Table({ labelledBy, head, children }: { labelledBy: string; head: [string, boolean?][]; children: React.ReactNode }) {
   return (
-    <div className="overflow-x-auto rounded-[1.75rem] bg-white ring-1 ring-obsidian-900/[0.07] focus:outline-none focus-visible:ring-2 focus-visible:ring-ocean-600" tabIndex={0} role="region" aria-labelledby={labelledBy}>
+    <div className="overflow-x-auto rounded-none bg-white ring-1 ring-obsidian-900/[0.07] focus:outline-none focus-visible:ring-2 focus-visible:ring-ocean-600" tabIndex={0} role="region" aria-labelledby={labelledBy}>
       <table className="w-full text-left text-base">
         <thead className="border-b border-obsidian-900/[0.07] bg-obsidian-50 text-xs uppercase tracking-wider text-slate-600">
           <tr>
@@ -515,7 +515,7 @@ function ProfilePanel({ profile, onSaved }: { profile: Profile; onSaved: () => P
   ];
 
   return (
-    <section aria-labelledby="profile-heading" className="space-y-4 rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:p-8">
+    <section aria-labelledby="profile-heading" className="space-y-4 rounded-none bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:p-8">
       <h2 id="profile-heading" className="text-2xl font-light">Profile</h2>
       <p className="text-base text-slate-700">Sign-in email: {profile.email}. To change it, your referral code or your commission, contact Vista Chase.</p>
       <form onSubmit={save} className="grid gap-4 md:grid-cols-2">

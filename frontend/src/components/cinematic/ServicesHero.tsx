@@ -183,7 +183,7 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
         </p>
 
         {/* 2 · Booking panel: experience tabs on its top edge, the search below them */}
-        <div className="mt-9 w-full max-w-4xl rounded-[1.75rem] border border-white/15 bg-obsidian-950/35 p-2 shadow-[0_40px_80px_-30px_rgba(0,0,0,0.8)] backdrop-blur-xl sm:mt-8 motion-safe:animate-[fadeUp_1300ms_ease-out]">
+        <div className="mt-9 w-full max-w-4xl rounded-none border border-white/15 bg-obsidian-950/35 p-2 shadow-[0_40px_80px_-30px_rgba(0,0,0,0.8)] backdrop-blur-xl sm:mt-8 motion-safe:animate-[fadeUp_1300ms_ease-out]">
           <div
             onMouseEnter={() => setHovering(true)}
             onMouseLeave={() => setHovering(false)}

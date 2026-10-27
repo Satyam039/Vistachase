@@ -694,7 +694,7 @@ export function SeoPageEditor({ id, mode = "direct", canPublish = true, compact 
             </button>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-[1.75rem] bg-white ring-1 ring-obsidian-900/[0.07]">
+          <div className="overflow-hidden rounded-none bg-white ring-1 ring-obsidian-900/[0.07]">
             <p className="sr-only" role="status">
               {loading ? "Loading page…" : ""}
             </p>
@@ -728,7 +728,7 @@ export function SeoPageEditor({ id, mode = "direct", canPublish = true, compact 
   return (
     <div className="space-y-6">
       {/* Header block */}
-      <section aria-labelledby={f("summary")} className="rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:p-8">
+      <section aria-labelledby={f("summary")} className="rounded-none bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
             <h2 id={f("summary")} className="text-2xl font-light text-obsidian-900">
@@ -1066,7 +1066,7 @@ export function SeoPageEditor({ id, mode = "direct", canPublish = true, compact 
         {/* Side column */}
         <div className={compact ? "order-first min-w-0 2xl:order-none" : "min-w-0 space-y-6"}>
           <div className={compact ? "grid gap-6 md:grid-cols-2 2xl:sticky 2xl:top-6 2xl:block 2xl:space-y-6" : "space-y-6 lg:sticky lg:top-[calc(var(--vc-header-h,0px)+1.5rem)]"}>
-            <section aria-labelledby={f("save-heading")} className="rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07]">
+            <section aria-labelledby={f("save-heading")} className="rounded-none bg-white p-6 ring-1 ring-obsidian-900/[0.07]">
               <h2 id={f("save-heading")} className="text-xl text-obsidian-900">
                 {draftMode ? "Save draft" : "Save"}
               </h2>
@@ -1090,7 +1090,7 @@ export function SeoPageEditor({ id, mode = "direct", canPublish = true, compact 
             </section>
 
             {draftMode && pendingDraft && (
-              <section aria-labelledby={f("draft-heading")} className="rounded-[1.75rem] bg-summit-100 p-6 ring-1 ring-summit-300">
+              <section aria-labelledby={f("draft-heading")} className="rounded-none bg-summit-100 p-6 ring-1 ring-summit-300">
                 <h2 id={f("draft-heading")} className="text-xl text-obsidian-900">
                   Draft waiting to publish
                 </h2>
@@ -1120,7 +1120,7 @@ export function SeoPageEditor({ id, mode = "direct", canPublish = true, compact 
               </section>
             )}
 
-            <section aria-labelledby={f("preview-heading")} className="rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07]">
+            <section aria-labelledby={f("preview-heading")} className="rounded-none bg-white p-6 ring-1 ring-obsidian-900/[0.07]">
               <h2 id={f("preview-heading")} className="text-xl text-obsidian-900">
                 Search preview
               </h2>
@@ -1135,7 +1135,7 @@ export function SeoPageEditor({ id, mode = "direct", canPublish = true, compact 
               {!form.robotsIndex && <p className="mt-3 text-sm text-red-700">Set to noindex: this page won&apos;t appear in search results.</p>}
             </section>
 
-            <section aria-labelledby={f("social-preview-heading")} className="rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07]">
+            <section aria-labelledby={f("social-preview-heading")} className="rounded-none bg-white p-6 ring-1 ring-obsidian-900/[0.07]">
               <h2 id={f("social-preview-heading")} className="text-xl text-obsidian-900">
                 Social preview
               </h2>
@@ -1167,7 +1167,7 @@ export function SeoPageEditor({ id, mode = "direct", canPublish = true, compact 
               )}
             </section>
 
-            <section aria-labelledby={f("checks-heading")} className="rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07]">
+            <section aria-labelledby={f("checks-heading")} className="rounded-none bg-white p-6 ring-1 ring-obsidian-900/[0.07]">
               <div className="flex items-center justify-between gap-3">
                 <h2 id={f("checks-heading")} className="text-xl text-obsidian-900">
                   Checks
