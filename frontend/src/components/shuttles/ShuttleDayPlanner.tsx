@@ -51,10 +51,15 @@ export function ShuttleDayPlanner({ today, live, fromPrice }: { today: string; l
     return live.find((l) => l.date === date && times.includes(l.time) && l.seatsAvailable > 0);
   };
 
+  const bookHref = (d: ShuttleDeparture) => {
+    const match = liveFor(d);
+    return match ? `/book?departureId=${match.id}` : `/contact-us?shuttle=${d.number}&date=${date}&pickup=${pickup}`;
+  };
+  const chosenDeparture = departures.find((d) => d.number === chosen);
+
   const choose = (n: string) => {
     const num = Number(n) || null;
     setChosen(num);
-    if (num) document.getElementById(`shuttle-departure-${num}`)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   };
 
   return (
@@ -68,14 +73,14 @@ export function ShuttleDayPlanner({ today, live, fromPrice }: { today: string; l
         <label className="block">
           <span className="mb-1.5 flex items-center gap-1.5 text-sm text-slate-600">
             <CalendarDays className="h-4 w-4 text-ocean-600" aria-hidden="true" />
-            1. Date
+            Date
           </span>
           <input type="date" value={date} min={today} onChange={(e) => e.target.value && (setDate(e.target.value), setChosen(null))} className={fieldClass} />
         </label>
         <label className="block">
           <span className="mb-1.5 flex items-center gap-1.5 text-sm text-slate-600">
             <MapPin className="h-4 w-4 text-ocean-600" aria-hidden="true" />
-            2. Pickup location
+            Pickup location
           </span>
           <select value={pickup} onChange={(e) => setPickup(e.target.value as ShuttlePickup)} className={fieldClass}>
             {SHUTTLE_PICKUPS.map((p) => (
@@ -88,19 +93,34 @@ export function ShuttleDayPlanner({ today, live, fromPrice }: { today: string; l
         <label className="block">
           <span className="mb-1.5 flex items-center gap-1.5 text-sm text-slate-600">
             <Clock className="h-4 w-4 text-ocean-600" aria-hidden="true" />
-            3. Available departures
+            Available departures
           </span>
           <select value={chosen ?? ""} onChange={(e) => choose(e.target.value)} disabled={departures.length === 0} className={`${fieldClass} disabled:bg-obsidian-50 disabled:text-slate-500`}>
             <option value="">{departures.length ? `${departures.length} departures` : "No departures"}</option>
             {departures.map((d) => (
               <option key={d.number} value={d.number}>
-                {d.number} · {d.name}
+                {d.name}
                 {d.pickup[pickup] ? ` · ${clock(d.pickup[pickup]!)}` : ""}
               </option>
             ))}
           </select>
         </label>
       </form>
+      {chosenDeparture && (
+        <div className="mx-auto mt-3 flex max-w-5xl flex-col items-stretch gap-3 rounded-[1.5rem] bg-white p-4 ring-1 ring-ocean-600/40 sm:flex-row sm:items-center sm:justify-between sm:p-5" aria-live="polite">
+          <p className="text-base text-obsidian-900">
+            {chosenDeparture.name}
+            {chosenDeparture.pickup[pickup] ? ` · ${clock(chosenDeparture.pickup[pickup]!)} from ${pickupLabel}` : ` · ${pickupLabel}`}
+            <span className="block text-sm text-slate-600">
+              {longDate(date)} · Back in Banff around {clock(chosenDeparture.returnBanff)}
+            </span>
+          </p>
+          <Link href={bookHref(chosenDeparture)} className="golden-summit-btn inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-full px-6 text-base">
+            Book Now
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
+        </div>
+      )}
 
       <div className="mx-auto mt-14 max-w-3xl text-center">
         <h3 className="text-balance text-2xl font-light tracking-tight text-obsidian-900 sm:text-3xl">Find Your Ideal Departure</h3>
@@ -126,9 +146,7 @@ export function ShuttleDayPlanner({ today, live, fromPrice }: { today: string; l
           {departures.map((d) => {
             const match = liveFor(d);
             const price = match?.price ?? fromPrice;
-            const href = match
-              ? `/book?departureId=${match.id}`
-              : `/contact-us?shuttle=${d.number}&date=${date}&pickup=${pickup}`;
+            const href = bookHref(d);
             const rows: [string, string][] = [
               ["Canmore pickup", clock(d.pickup.canmore!)],
               ["Banff pickup", clock(d.pickup.banff!)],

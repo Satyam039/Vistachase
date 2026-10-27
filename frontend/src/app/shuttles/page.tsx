@@ -142,6 +142,9 @@ export default async function ShuttlesPage() {
         </div>
       </section>
 
+      {/* Why book with us, just under the hero (owner's notes, point 3) */}
+      <TrustRow />
+
       {/* Choose your lake day */}
       <section id="departures" aria-labelledby="lake-day-heading" className="scroll-mt-32 mx-auto max-w-7xl px-page py-16 sm:py-20">
         <div className="mx-auto mb-10 max-w-3xl text-center" data-reveal>
@@ -284,7 +287,6 @@ export default async function ShuttlesPage() {
         </div>
       </section>
 
-      <TrustRow />
     </div>
     </>
   );
