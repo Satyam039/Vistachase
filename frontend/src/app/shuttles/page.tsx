@@ -12,6 +12,7 @@ import { AmbientVideo } from "@/components/cinematic/AmbientVideo";
 import { ShuttleDayPlanner, type LiveShuttleDeparture } from "@/components/shuttles/ShuttleDayPlanner";
 import { albertaToday } from "@/lib/shuttleSchedule";
 import { TrustRow } from "@/components/home/TrustRow";
+import { FaqBrowser } from "@/components/faq/FaqBrowser";
 import { getShuttleRoutes, getTours } from "@/lib/api/catalog";
 import { withSeo } from "@/lib/seo/server";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
@@ -37,6 +38,41 @@ const STEPS = [
   { icon: Clock, title: "Get your pickup time", body: "We confirm your exact pickup time the day before." },
   { icon: Sunrise, title: "Ride to the lakes", body: "No driving, no parking: we take the road closed to cars." },
   { icon: CalendarCheck, title: "Free time, then home", body: "Time at Moraine Lake and Lake Louise, then back to Banff or Canmore." },
+];
+
+const SHUTTLE_FAQS = [
+  {
+    q: "Why can't I drive my personal car to Moraine Lake?",
+    a: "Parks Canada closed Moraine Lake Road to personal and rental vehicles to manage traffic and protect the alpine ecosystem. Only licensed commercial operators like Vista Chase, public Roam Transit, and Parks Canada shuttles are permitted on the road. Booking with Vista Chase guarantees your seat and direct access right to the lake shore.",
+  },
+  {
+    q: "Where do your shuttles pick up and drop off?",
+    a: "We provide convenient pickup and drop-off points across Canmore, Banff townsite, and Lake Louise Village (Samson Mall). You can select your preferred pickup point during checkout or look up your nearest hotel stop using our Hotel Pickup Finder.",
+  },
+  {
+    q: "Are Parks Canada entrance fees and road permits included?",
+    a: "Yes, all commercial road permits and Parks Canada entrance fees required for transportation to Moraine Lake and Lake Louise are included in your ticket price. There are no surprise fees or extra permit costs at boarding.",
+  },
+  {
+    q: "What time do sunrise shuttles depart?",
+    a: "Sunrise departures leave early in the morning (typically between 4:30 a.m. and 5:15 a.m., depending on the month and hotel location) so that you arrive at Moraine Lake's Rockpile well before first light strikes the Ten Peaks. Exact pickup times are re-confirmed the day before your trip.",
+  },
+  {
+    q: "How much time do we spend at Moraine Lake and Lake Louise?",
+    a: "Our shuttles allow generous, unhurried time at each lake—typically 1.5 to 2 hours at Moraine Lake and 1.5 to 2 hours at Lake Louise. You will have plenty of time to hike the Rockpile trail, stroll the lakeshore paths, visit the gift shops/cafés, and take stunning photos.",
+  },
+  {
+    q: "Can I bring luggage, strollers, or outdoor gear?",
+    a: "Small daypacks, camera bags, hiking poles (with rubber tips), and compact foldable strollers are welcome on board. If you have larger luggage or special mobility equipment, please contact us in advance at bookings@vistachase.com so we can ensure suitable vehicle accommodation.",
+  },
+  {
+    q: "What is your cancellation policy for lake shuttles?",
+    a: "Shuttle reservations can be canceled for a 100% full refund up to 72 hours before your scheduled departure time. Bookings canceled within 72 hours are non-refundable as vehicle seating is reserved exclusively for your party.",
+  },
+  {
+    q: "What should I wear and bring on the shuttle?",
+    a: "Mountain mornings in the Canadian Rockies can be brisk—especially for sunrise shuttles. We recommend dressing in warm layers (fleece or light down jacket), comfortable sturdy walking shoes, sunglasses, a reusable water bottle, and your camera or phone for photos.",
+  },
 ];
 
 const shortDate = (d: string) => {
@@ -227,6 +263,24 @@ export default async function ShuttlesPage() {
               </li>
             ))}
           </ol>
+        </div>
+      </section>
+
+      {/* Frequently Asked Questions */}
+      <section aria-labelledby="shuttles-faq-heading" className="border-t border-obsidian-900/[0.08] bg-obsidian-100/50 py-16 sm:py-24">
+        <div className="mx-auto max-w-4xl px-page">
+          <div className="mb-10 text-center" data-reveal>
+            <p className="mb-3 text-xs uppercase tracking-[0.24em] text-ocean-700">Need to know</p>
+            <h2 id="shuttles-faq-heading" className="text-balance text-3xl font-light tracking-tight text-obsidian-900 sm:text-4xl">
+              Frequently Asked Questions
+            </h2>
+            <p className="mx-auto mt-3 max-w-2xl text-base text-slate-600">
+              Everything you need to know about access, pickups, schedules, and riding the Vista Chase lake shuttles.
+            </p>
+          </div>
+          <div data-reveal>
+            <FaqBrowser compact topics={[]} items={SHUTTLE_FAQS.map((f) => ({ ...f, topic: "" }))} />
+          </div>
         </div>
       </section>
 
