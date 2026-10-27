@@ -2,7 +2,7 @@ import "server-only";
 import type { Metadata } from "next";
 import { BACKEND_URL } from "@/lib/api/server";
 
-// Published SEO overrides from the admin SEO dashboard (/admin/seo). Each public page keeps its
+// Published SEO overrides from the SEO portal (/seo). Each public page keeps its
 // metadata in code as the default; a published override replaces only the fields it sets. When
 // the backend is slow or down, pages render with their code defaults.
 

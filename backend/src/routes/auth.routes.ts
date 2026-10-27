@@ -3,6 +3,7 @@ import { Router, type Request, type Response } from "express";
 import prisma from "@/lib/db/prisma";
 import { hashPassword, verifyPassword, signToken, UserRole } from "@/lib/auth/auth";
 import { AUTH_COOKIE_NAME, getSessionUser } from "@/lib/auth/admin-guard";
+import { portalFor } from "@/lib/auth/permissions";
 import crypto from "node:crypto";
 import { getEmailProvider } from "@/lib/email/email.provider";
 import { siteUrl } from "@/lib/security/signed-links";
@@ -170,7 +171,7 @@ router.get("/me", async (req, res, next) => {
 
     return res.json({
       authenticated: true,
-      user: { id: user.userId, email: user.email, name: user.name, role: user.role, emailVerified: user.emailVerified },
+      user: { id: user.userId, email: user.email, name: user.name, role: user.role, emailVerified: user.emailVerified, portal: portalFor(user.role) },
     });
   } catch (e) {
     next(e);

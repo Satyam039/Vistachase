@@ -1,4 +1,5 @@
 import { NextResponse, type NextFetchEvent, type NextRequest } from "next/server";
+import { areaOf, homeForRole, mayOpen, signInFor } from "@/lib/portals";
 
 // Partner referrals: any page opened with ?ref=<code> stores the code for 30 days. Bookings
 // made in that time are credited to the partner (the backend reads the vc_ref cookie and only
@@ -53,7 +54,51 @@ async function findRedirect(pathname: string, event: NextFetchEvent) {
   return redirectCache?.map[path] ?? null;
 }
 
+// Admin (/admin), SEO (/seo) and partner (/partners/dashboard) pages are only drawn for their own
+// roles (src/lib/portals.ts). The role is asked of the API, which reads it from the database, so a
+// role change applies on the next page. Signed-out visitors go to that area's sign-in page and
+// other roles to their own area. If the API can't be reached the page loads and its own API calls
+// are refused, as before.
+async function sessionRole(request: NextRequest): Promise<string | null | undefined> {
+  const token = request.cookies.get("vc_token")?.value;
+  if (!token) return null;
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/auth/me`, {
+      headers: { Cookie: `vc_token=${token}` },
+      cache: "no-store",
+      signal: AbortSignal.timeout(2500),
+    });
+    if (!res.ok) return undefined;
+    const body = (await res.json()) as { user?: { role?: string } | null };
+    return body.user?.role ?? null;
+  } catch {
+    return undefined;
+  }
+}
+
+async function portalGate(request: NextRequest) {
+  const path = request.nextUrl.pathname;
+  const area = areaOf(path);
+  if (!area) return null;
+  const role = await sessionRole(request);
+  if (role === undefined || mayOpen(role, path)) return null;
+  const target = request.nextUrl.clone();
+  target.search = "";
+  if (role === null) {
+    target.pathname = signInFor(area);
+    target.searchParams.set("next", path);
+  } else {
+    target.pathname = homeForRole(role);
+  }
+  const response = NextResponse.redirect(target, 307);
+  response.headers.set("Cache-Control", "no-store");
+  return response;
+}
+
 export async function middleware(request: NextRequest, event: NextFetchEvent) {
+  const gate = await portalGate(request);
+  if (gate) return gate;
+
   const redirect = await findRedirect(request.nextUrl.pathname, event);
   if (redirect && redirect[0].startsWith("/") && !redirect[0].startsWith("//")) {
     const target = request.nextUrl.clone();
