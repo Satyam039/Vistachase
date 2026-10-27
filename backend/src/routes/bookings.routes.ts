@@ -9,6 +9,7 @@ import { getAuthenticatedStaff, getAuthenticatedUser, getSessionUser, ownsBookin
 import { verifyBookingLink } from "@/lib/security/signed-links";
 import { paymentSummary } from "@/modules/bookings/deposit";
 import { startBalancePayment } from "@/modules/bookings/deposit-payments";
+import { requestCancellation } from "@/modules/admin/booking-requests";
 import { createPackageBooking, PACKAGES } from "@/modules/bookings/package-booking";
 import { emailSchema, parseOr400, referenceSchema, z } from "@/lib/security/validate";
 
@@ -168,6 +169,28 @@ router.post("/cancel", rateLimitMiddleware("booking_cancel", { maxRequests: 5, w
     const result = await cancelBooking(body.bookingReference, booking.customerEmail);
     if (!result.success) return res.status(400).json({ success: false, error: result.error });
     return res.json({ success: true, message: result.message, refundedAmount: result.refundedAmount, booking: { bookingReference: result.booking!.bookingReference, status: result.booking!.status } });
+  } catch (error) {
+    next(error);
+  }
+});
+
+const requestCancelSchema = z.object({ bookingReference: referenceSchema, reason: z.string().trim().max(500).default(""), t: z.string().max(64).optional() });
+
+// Ask staff to cancel (My trips): the signed-in owner or the voucher link's signed token, as for
+// /cancel. Nothing changes until staff approve or decline it in admin (docs/ADMIN.md "Requests").
+router.post("/request-cancel", rateLimitMiddleware("booking_request_cancel", { maxRequests: 5, windowSeconds: 60 }), async (req, res, next) => {
+  try {
+    const body = parseOr400(requestCancelSchema, req.body, res);
+    if (!body) return;
+    const booking = await getBookingByReference(body.bookingReference);
+    const user = await getSessionUser(req);
+    const allowed = booking && (verifyBookingLink(booking.bookingReference, "voucher", body.t) || ownsBooking(user, booking));
+    if (!booking || !allowed) {
+      return res.status(403).json({ success: false, error: "Open the link in your confirmation email, or sign in to the account that made the booking." });
+    }
+    const result = await requestCancellation(booking.bookingReference, body.reason, user?.userId ?? null);
+    if (result.status !== 201) return res.status(result.status).json({ success: false, error: result.error });
+    return res.status(201).json({ success: true, request: result.request });
   } catch (error) {
     next(error);
   }

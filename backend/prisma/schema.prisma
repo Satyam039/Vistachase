@@ -1163,6 +1163,7 @@ enum BookingFlagType {
   LATE_PAYMENT
   REFUND_DUE
   PAYMENT_DUE
+  CANCEL_REQUEST // guest asked to cancel from My trips; staff approve or decline
   OTHER
 }
 

@@ -1,7 +1,8 @@
 "use client";
 
-// Staff bookings: find a booking and open its detail (payments, flags, history, cancel), work the
-// flags queue (refunds owed, payments due, mismatches) and book for a guest with Quick Book.
+// Staff bookings: find a booking and open its detail (payments, flags, history, approve, cancel),
+// answer requests (guests' cancellation requests, bookings waiting for approval), work the flags
+// queue (refunds owed, payments due, mismatches) and book for a guest with Quick Book.
 // Panels live in components/admin/staff; every call goes through /api/admin/* (role-checked, audited).
 
 import { useCallback, useEffect, useState } from "react";
@@ -9,8 +10,9 @@ import { AdminHeader, StaffSignIn } from "@/components/admin/AdminHeader";
 import { BookingsPanel } from "@/components/admin/staff/BookingsPanel";
 import { FlagsPanel } from "@/components/admin/staff/FlagsPanel";
 import { QuickBookForm } from "@/components/admin/staff/QuickBookForm";
+import { RequestsPanel } from "@/components/admin/staff/RequestsPanel";
 
-type SectionId = "bookings" | "flags" | "quick-book";
+type SectionId = "bookings" | "requests" | "flags" | "quick-book";
 const STAFF_ROLES = ["ADMIN", "OPERATOR", "DISPATCHER"];
 const MANAGERS = ["ADMIN", "OPERATOR"];
 
@@ -21,10 +23,12 @@ export default function AdminBookingsPage() {
   );
   const [role, setRole] = useState("");
   const [message, setMessage] = useState("");
+  const [requestCount, setRequestCount] = useState<number | null>(null);
 
   const isManager = MANAGERS.includes(role);
   const sections: [SectionId, string][] = [
     ["bookings", "Bookings"],
+    ["requests", requestCount ? `Requests (${requestCount})` : "Requests"],
     ["flags", "Flags"],
     ...(isManager
       ? ([["quick-book", "Quick Book"]] as [SectionId, string][])
@@ -35,7 +39,12 @@ export default function AdminBookingsPage() {
   useEffect(() => {
     const read = () => {
       const hash = window.location.hash.slice(1);
-      if (hash === "bookings" || hash === "flags" || hash === "quick-book")
+      if (
+        hash === "bookings" ||
+        hash === "requests" ||
+        hash === "flags" ||
+        hash === "quick-book"
+      )
         setSection(hash);
     };
     read();
@@ -68,6 +77,25 @@ export default function AdminBookingsPage() {
       .catch(() => setAccess("error"));
   }, []);
 
+  // How many requests are waiting, for the tab label (the Requests tab refreshes it).
+  useEffect(() => {
+    if (access !== "ok") return;
+    fetch("/api/admin/requests")
+      .then((res) => (res.ok ? res.json() : null))
+      .then(
+        (
+          d: { cancellations?: unknown[]; awaitingApproval?: unknown[] } | null,
+        ) => {
+          if (d)
+            setRequestCount(
+              (d.cancellations?.length ?? 0) +
+                (d.awaitingApproval?.length ?? 0),
+            );
+        },
+      )
+      .catch(() => {});
+  }, [access]);
+
   const shown: SectionId =
     section === "quick-book" && !isManager ? "bookings" : section;
 
@@ -77,7 +105,7 @@ export default function AdminBookingsPage() {
         current="/admin/bookings"
         eyebrow="Staff · Bookings"
         title="Bookings"
-        subtitle="Find a booking, cancel it with a recorded refund decision, work open flags and book for a guest at the desk or on the phone."
+        subtitle="Find a booking, approve or cancel it, answer guests' cancellation requests, work open flags and book for a guest at the desk or on the phone."
       />
 
       <div className="mx-auto max-w-7xl space-y-6 px-page py-8 sm:py-10">
@@ -137,6 +165,13 @@ export default function AdminBookingsPage() {
             >
               {shown === "bookings" && (
                 <BookingsPanel notify={setMessage} role={role} />
+              )}
+              {shown === "requests" && (
+                <RequestsPanel
+                  notify={setMessage}
+                  role={role}
+                  onCounts={setRequestCount}
+                />
               )}
               {shown === "flags" && (
                 <FlagsPanel notify={setMessage} role={role} />

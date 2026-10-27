@@ -1,7 +1,8 @@
 "use client";
 
 // One booking: guest and party, pickup, add-ons, payments, flags and its audit trail, plus admin
-// notes, Resend voucher and (managers only) the staff cancellation with a recorded refund choice.
+// notes, Resend voucher and (managers only) Approve for a booking waiting for payment and the staff
+// cancellation with a recorded refund choice.
 
 import {
   useCallback,
@@ -31,6 +32,7 @@ import {
   experienceOf,
   type BookingRow,
 } from "@/components/admin/staff/BookingsPanel";
+import { ApproveBookingForm } from "@/components/admin/staff/RequestsPanel";
 
 interface Flag {
   id: string;
@@ -77,6 +79,7 @@ interface CancelResult {
 }
 
 const CANCELLABLE = ["PENDING_PAYMENT", "CONFIRMED", "PAID_UNSYNCED"];
+const APPROVABLE = ["PENDING_PAYMENT", "PAID_UNSYNCED"];
 const MANAGERS = ["ADMIN", "OPERATOR"];
 
 const REFUNDS: {
@@ -124,6 +127,7 @@ export function BookingDetail({
   const [busy, setBusy] = useState(false);
   const [notes, setNotes] = useState("");
   const [cancelled, setCancelled] = useState<CancelResult | null>(null);
+  const [approving, setApproving] = useState(false);
 
   const load = useCallback(async () => {
     const res = await adminApi<{
@@ -185,6 +189,9 @@ export function BookingDetail({
     if (res.ok) await load();
   }
 
+  const canApprove = Boolean(
+    booking && MANAGERS.includes(role) && APPROVABLE.includes(booking.status),
+  );
   const canCancel = Boolean(
     booking && MANAGERS.includes(role) && CANCELLABLE.includes(booking.status),
   );
@@ -452,6 +459,36 @@ export function BookingDetail({
                 </button>
               </form>
             </Section>
+
+            {canApprove && !cancelled && (
+              <Section title="Approve booking">
+                {!approving ? (
+                  <button
+                    type="button"
+                    className={quietBtn}
+                    onClick={() => setApproving(true)}
+                  >
+                    Approve booking
+                  </button>
+                ) : (
+                  <ApproveBookingForm
+                    booking={{
+                      ...booking,
+                      paid: booking.payments
+                        .filter((p) => p.status === "SUCCEEDED")
+                        .reduce((sum, p) => sum + p.amount, 0),
+                    }}
+                    onCancel={() => setApproving(false)}
+                    onDone={async (m) => {
+                      notify(m);
+                      setApproving(false);
+                      await load();
+                      onChanged();
+                    }}
+                  />
+                )}
+              </Section>
+            )}
 
             {cancelled ? (
               <Section title="Cancelled">
