@@ -4,7 +4,8 @@
 // light IBM Plex type) with the structure of modern ops dashboards: greeting header with the
 // date in Canmore, section tabs, KPI cards, a searchable reservations table, and a side column
 // with booking health and shortcuts. Signed-out visitors get a staff sign-in prompt (no staff
-// account details are shown on the page).
+// account details are shown on the page). Managers can approve a booking waiting for payment or
+// cancel one straight from the reservations table (same endpoints as Admin → Bookings).
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -12,6 +13,7 @@ import { AdminHeader, StaffSignIn } from "@/components/admin/AdminHeader";
 import {
   ArrowRight,
   ArrowUpRight,
+  CheckCircle2,
   Clock,
   Handshake,
   LayoutDashboard,
@@ -24,6 +26,7 @@ import {
   Truck,
   Users,
   Workflow,
+  XCircle,
 } from "lucide-react";
 
 interface AdminMetrics {
@@ -63,6 +66,23 @@ const SHORTCUTS = [
 
 const money = (n: number) => `$${n.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+const APPROVABLE = ["PENDING_PAYMENT", "PAID_UNSYNCED"];
+const CANCELLABLE = ["PENDING_PAYMENT", "PAID_UNSYNCED", "CONFIRMED"];
+const PAYMENT_METHODS = [
+  { value: "UNPAID", label: "Not paid yet (mark payment due)" },
+  { value: "CASH", label: "Cash" },
+  { value: "ETRANSFER", label: "E-transfer" },
+  { value: "CARD_TERMINAL", label: "Card terminal" },
+  { value: "OTHER", label: "Other" },
+];
+const REFUNDS = [
+  { value: "POLICY", label: "Per cancellation policy" },
+  { value: "FULL", label: "Full refund" },
+  { value: "NONE", label: "No refund" },
+];
+
+type Action = { kind: "approve" | "cancel"; booking: AdminMetrics["recentBookings"][number] };
+
 function statusTone(status: string) {
   if (status === "CONFIRMED") return "bg-emerald-50 text-emerald-800 ring-emerald-200";
   if (status === "CANCELLED" || status === "EXPIRED") return "bg-red-50 text-red-800 ring-red-200";
@@ -77,6 +97,59 @@ export default function AdminDashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [greeting, setGreeting] = useState<{ hello: string; date: string } | null>(null);
+  const [action, setAction] = useState<Action | null>(null);
+  const [method, setMethod] = useState("UNPAID");
+  const [reference, setReference] = useState("");
+  const [reason, setReason] = useState("");
+  const [refund, setRefund] = useState("POLICY");
+  const [notifyGuest, setNotifyGuest] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const openAction = (kind: Action["kind"], booking: Action["booking"]) => {
+    setAction({ kind, booking });
+    setMethod("UNPAID");
+    setReference("");
+    setReason("");
+    setRefund("POLICY");
+    setNotifyGuest(true);
+    setActionError(null);
+  };
+
+  async function submitAction() {
+    if (!action) return;
+    const { kind, booking } = action;
+    if (kind === "cancel" && reason.trim().length < 3) {
+      setActionError("Add a short reason (at least 3 characters).");
+      return;
+    }
+    setBusy(true);
+    setActionError(null);
+    try {
+      const body =
+        kind === "approve"
+          ? { payment: { method, reference: reference.trim() || undefined }, notifyGuest }
+          : { reason: reason.trim(), refund, notifyGuest };
+      const res = await fetch(`/api/admin/bookings/${booking.id}/${kind}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.success === false) {
+        setActionError(res.status === 403 ? "Only managers and admins can do this." : data.error || "That didn't work. Try again.");
+        return;
+      }
+      setNotice(`${booking.bookingReference} ${kind === "approve" ? "approved" : "cancelled"}.`);
+      setAction(null);
+      fetchMetrics();
+    } catch {
+      setActionError("Couldn't reach the admin API.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   useEffect(() => {
     fetchMetrics();
@@ -184,7 +257,7 @@ export default function AdminDashboardPage() {
           ))}
         </ul>
 
-        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="grid items-start gap-6 2xl:grid-cols-[minmax(0,1fr)_20rem]">
           {/* Reservations */}
           <section aria-labelledby="reservations-heading" className="overflow-hidden rounded-[1.75rem] bg-white ring-1 ring-obsidian-900/[0.07]">
             <div className="flex flex-col gap-4 border-b border-obsidian-900/[0.07] p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
@@ -193,6 +266,7 @@ export default function AdminDashboardPage() {
                   Recent reservations
                 </h2>
                 <p className="text-sm text-slate-600">The latest bookings across all tours and shuttles</p>
+                {notice && <p className="mt-1 text-sm text-emerald-700" role="status">{notice}</p>}
               </div>
               <label className="relative block sm:w-72">
                 <span className="sr-only">Search reservations</span>
@@ -208,7 +282,7 @@ export default function AdminDashboardPage() {
             </div>
 
             <div className="overflow-x-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ocean-600" tabIndex={0} role="region" aria-label="Reservations table">
-              <table className="w-full min-w-[58rem] text-left text-sm">
+              <table className="w-full min-w-[62rem] text-left text-sm">
                 <thead className="bg-obsidian-50 text-xs uppercase tracking-wider text-slate-600">
                   <tr>
                     <th scope="col" className="px-5 py-3 font-normal">Reference</th>
@@ -217,6 +291,7 @@ export default function AdminDashboardPage() {
                     <th scope="col" className="px-5 py-3 font-normal">Departs</th>
                     <th scope="col" className="px-5 py-3 text-right font-normal">Seats</th>
                     <th scope="col" className="px-5 py-3 text-right font-normal">Total</th>
+                    <th scope="col" className="px-5 py-3 font-normal">Actions</th>
                     <th scope="col" className="px-5 py-3 font-normal">Status</th>
                   </tr>
                 </thead>
@@ -224,7 +299,7 @@ export default function AdminDashboardPage() {
                   {loading ? (
                     Array.from({ length: 4 }).map((_, i) => (
                       <tr key={i}>
-                        <td colSpan={7} className="px-5 py-4">
+                        <td colSpan={8} className="px-5 py-4">
                           <span className="block h-5 rounded bg-obsidian-100 motion-safe:animate-pulse" aria-hidden="true" />
                         </td>
                       </tr>
@@ -241,7 +316,7 @@ export default function AdminDashboardPage() {
                           <span className="block text-obsidian-900">{b.customerName}</span>
                           <span className="block text-xs text-slate-600">{b.customerEmail}</span>
                         </td>
-                        <td className="w-[16rem] min-w-[13rem] px-5 py-4 text-obsidian-900">
+                        <td className="w-[13rem] min-w-[11rem] px-5 py-4 text-obsidian-900">
                           <span className="line-clamp-2">{b.tourDeparture?.tour?.title || b.tourDeparture?.shuttleRoute?.name || "Tour"}</span>
                         </td>
                         <td className="whitespace-nowrap px-5 py-4">
@@ -251,15 +326,40 @@ export default function AdminDashboardPage() {
                         <td className="px-5 py-4 text-right tabular-nums">{b.totalSeats}</td>
                         <td className="whitespace-nowrap px-5 py-4 text-right tabular-nums text-obsidian-900">{money(b.totalAmount)}</td>
                         <td className="px-5 py-4">
+                          <div className="flex gap-2">
+                            {APPROVABLE.includes(b.status) && (
+                              <button
+                                type="button"
+                                onClick={() => openAction("approve", b)}
+                                className="inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full bg-emerald-700 px-3 text-xs text-white hover:bg-emerald-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
+                              >
+                                <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+                                Approve
+                              </button>
+                            )}
+                            {CANCELLABLE.includes(b.status) && (
+                              <button
+                                type="button"
+                                onClick={() => openAction("cancel", b)}
+                                className="inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full border border-red-200 px-3 text-xs text-red-700 hover:border-red-700 hover:bg-red-700 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700"
+                              >
+                                <XCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                                Cancel
+                              </button>
+                            )}
+                            {!APPROVABLE.includes(b.status) && !CANCELLABLE.includes(b.status) && <span className="text-xs text-slate-500">—</span>}
+                          </div>
+                        </td>
+                        <td className="px-5 py-4">
                           <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs ring-1 ${statusTone(b.status)}`}>
-                            {b.status.charAt(0) + b.status.slice(1).toLowerCase()}
+                            {(b.status.charAt(0) + b.status.slice(1).toLowerCase()).replace(/_/g, " ")}
                           </span>
                         </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={7} className="px-5 py-12 text-center text-sm text-slate-600">
+                      <td colSpan={8} className="px-5 py-12 text-center text-sm text-slate-600">
                         {query ? `No reservations match “${query}”.` : unauthorized ? "Sign in to see reservations." : "No bookings yet."}
                       </td>
                     </tr>
@@ -270,7 +370,7 @@ export default function AdminDashboardPage() {
           </section>
 
           {/* Side column */}
-          <div className="space-y-6">
+          <div className="grid items-start gap-6 lg:grid-cols-2 2xl:grid-cols-1">
             <section aria-labelledby="health-heading" className="rounded-[1.75rem] bg-ocean-950 p-6 text-white">
               <h2 id="health-heading" className="text-base text-white">
                 Booking health
@@ -316,6 +416,74 @@ export default function AdminDashboardPage() {
           </div>
         </div>
       </div>
+
+      {action && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-obsidian-950/70 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="action-heading">
+          <div className="w-full max-w-md rounded-[1.75rem] bg-white p-6 shadow-xl">
+            <h2 id="action-heading" className="text-xl text-obsidian-900">
+              {action.kind === "approve" ? "Approve booking" : "Cancel booking"}
+            </h2>
+            <p className="mt-1 text-sm text-slate-600">
+              {action.booking.bookingReference} · {action.booking.customerName} · {money(action.booking.totalAmount)}
+            </p>
+            {action.kind === "approve" ? (
+              <div className="mt-5 space-y-4">
+                <label className="block text-sm text-obsidian-900">
+                  Payment
+                  <select value={method} onChange={(e) => setMethod(e.target.value)} className="mt-1.5 h-11 w-full rounded-xl border border-obsidian-900/15 bg-white px-3 text-sm">
+                    {PAYMENT_METHODS.map((m) => (
+                      <option key={m.value} value={m.value}>
+                        {m.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {method !== "UNPAID" && (
+                  <label className="block text-sm text-obsidian-900">
+                    Reference (optional)
+                    <input value={reference} onChange={(e) => setReference(e.target.value)} maxLength={120} className="mt-1.5 h-11 w-full rounded-xl border border-obsidian-900/15 px-3 text-sm" />
+                  </label>
+                )}
+              </div>
+            ) : (
+              <div className="mt-5 space-y-4">
+                <label className="block text-sm text-obsidian-900">
+                  Reason
+                  <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={3} maxLength={500} className="mt-1.5 w-full rounded-xl border border-obsidian-900/15 px-3 py-2 text-sm" />
+                </label>
+                <label className="block text-sm text-obsidian-900">
+                  Refund
+                  <select value={refund} onChange={(e) => setRefund(e.target.value)} className="mt-1.5 h-11 w-full rounded-xl border border-obsidian-900/15 bg-white px-3 text-sm">
+                    {REFUNDS.map((r) => (
+                      <option key={r.value} value={r.value}>
+                        {r.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            )}
+            <label className="mt-4 flex items-center gap-2 text-sm text-obsidian-900">
+              <input type="checkbox" checked={notifyGuest} onChange={(e) => setNotifyGuest(e.target.checked)} className="h-4 w-4" />
+              Email the guest
+            </label>
+            {actionError && <p className="mt-3 text-sm text-red-700" role="alert">{actionError}</p>}
+            <div className="mt-6 flex justify-end gap-2">
+              <button type="button" onClick={() => setAction(null)} disabled={busy} className="h-11 rounded-full border border-obsidian-900/10 px-5 text-sm text-obsidian-900 hover:bg-obsidian-50">
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={submitAction}
+                disabled={busy}
+                className={`h-11 rounded-full px-5 text-sm text-white disabled:opacity-60 ${action.kind === "approve" ? "bg-emerald-700 hover:bg-emerald-800" : "bg-red-700 hover:bg-red-800"}`}
+              >
+                {busy ? "Saving…" : action.kind === "approve" ? "Approve booking" : "Cancel booking"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
