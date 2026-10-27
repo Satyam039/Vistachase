@@ -14,6 +14,7 @@ import {
   CalendarPlus,
   CheckCircle2,
   Clock,
+  Download,
   Mail,
   MapPin,
   Navigation,
@@ -155,6 +156,17 @@ export default async function VoucherPage({
             )}
           </div>
           <div className="flex flex-wrap gap-3">
+            {/* A real PDF from the server: in-app browsers (Gmail, WhatsApp) can't print this page. */}
+            <a
+              href={`/api/bookings/voucher.pdf?ref=${encodeURIComponent(booking.bookingReference)}${typeof t === "string" ? `&t=${encodeURIComponent(t)}` : ""}`}
+              download={`vista-chase-voucher-${booking.bookingReference}.pdf`}
+              className={`inline-flex h-11 items-center gap-2 rounded-full px-5 text-sm ${
+                cancelled ? "border border-red-900/20 text-red-950 hover:bg-red-100" : "border border-white/25 text-white hover:bg-white/10"
+              }`}
+            >
+              <Download className="h-4 w-4" aria-hidden="true" />
+              Download PDF
+            </a>
             <PrintButton
               className={`inline-flex h-11 items-center gap-2 rounded-full px-5 text-sm ${
                 cancelled ? "border border-red-900/20 text-red-950 hover:bg-red-100" : "border border-white/25 text-white hover:bg-white/10"
