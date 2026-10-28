@@ -24,6 +24,7 @@ import { cancelBooking } from "@/modules/bookings/booking.repository";
 import type { ChatMessage, ConciergeResponse, SessionState } from "@/lib/ai/ai.provider";
 import { formatDateOnly, formatTimeOfDay } from "@/lib/utils/time";
 import { conciergeLanguage } from "@/lib/ai/languages";
+import { ON_SALE } from "@/modules/tours/product-map";
 
 export const CARD_NUMBER = /\b(?:\d[ -]*?){13,19}\b/;
 const MAX_STEPS = 8;
@@ -55,6 +56,7 @@ let catalogCache: { at: number; text: string } | null = null;
 async function catalogKnowledge(): Promise<string> {
   if (catalogCache && Date.now() - catalogCache.at < 5 * 60_000) return catalogCache.text;
   const tours = await prisma.tour.findMany({
+    where: ON_SALE,
     select: { slug: true, title: true, category: true, durationHours: true, basePrice: true, currency: true, priceUnit: true, summary: true, bookingMode: true },
     orderBy: [{ category: "asc" }, { basePrice: "asc" }],
   });
@@ -80,8 +82,8 @@ Today is ${today} (Mountain Time, Canmore/Banff).
 
 ABOUT VISTA CHASE
 - Canmore-based tour operator for Banff and the Canadian Rockies since 2018. Office: 121 Bow Meadows Crescent #110, Canmore, AB. Phone +1 (825) 734-9456 (lines open 6 a.m. – 9 p.m. Mountain Time), support@vistachase.com.
-- TripAdvisor Travellers' Choice Best of the Best 2026: the shared Banff tour ranked #6 experience in Canada. Rated 5.0 from 1,000+ reviews.
-- Services: shared small-group tours (max 12 guests), private tours (per vehicle: SUV up to 6, executive van up to 13), Moraine Lake & Lake Louise shuttles, multi-day packages (enquiry), Banff activity tickets (Banff Gondola, Lake Minnewanka cruise, Columbia Icefield Skywalk, Banff Upper Hot Springs; on request).
+- TripAdvisor Travellers' Choice Best of the Best 2026: the shared Banff tour ranked #6 experience in Canada. Rated 5.0 from 1,700+ reviews.
+- Services: shared small-group tours (max 12 guests), private tours (per vehicle: SUV up to 6, executive van up to 13), Moraine Lake & Lake Louise shuttles, multi-day packages (enquiry), Banff activity tickets (Banff Gondola, Lake Minnewanka cruise, Columbia Icefield Skywalk, Maligne Lake cruise; on request).
 - Moraine Lake Road is closed to private vehicles; Vista Chase shuttles and tours have guaranteed access. Parks Canada licensed commercial operator.
 - Hotel pickup in Banff, Canmore and Lake Louise.
 

@@ -271,7 +271,7 @@ export function SiteFooter() {
                     <Star key={i} className="h-3.5 w-3.5 fill-summit-500 text-summit-500" />
                   ))}
                 </span>
-                5.0<span className="sr-only"> out of 5</span> · 1,000+ reviews
+                5.0<span className="sr-only"> out of 5</span> · 1,700+ reviews
                 <ArrowUpRight className="absolute right-3.5 top-3.5 h-4 w-4 text-white/60 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true" />
                 <span className="sr-only">(opens TripAdvisor in a new tab)</span>
               </span>

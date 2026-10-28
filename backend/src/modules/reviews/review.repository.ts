@@ -72,7 +72,7 @@ if (!booking) {
       },
     });
 
-    // Tours imported from the live site carry the published rating and count (e.g. 5.0 from 1,000+
+    // Tours imported from the live site carry the published rating and count (e.g. 5.0 from 1,700+
     // reviews across TripAdvisor and Google). Those stay until the reviews left here outnumber
     // them; only then do the tour's figures come from these reviews. Seeded samples never count.
     const agg = await tx.review.aggregate({

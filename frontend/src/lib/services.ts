@@ -103,7 +103,7 @@ export const SERVICES: Service[] = [
     title: "Banff activity tickets",
     tagline: "Why add tickets? The Rockies' classic experiences, timed around your day.",
     reasons: [
-      "Banff Gondola and Upper Hot Springs",
+      "Banff Gondola",
       "Lake Minnewanka cruise",
       "Columbia Icefield Skywalk",
       "One request, timed around your tour",

@@ -305,36 +305,6 @@
    "season": "all"
   },
   {
-   "slug": "banff-upper-hot-springs-tickets",
-   "url": null,
-   "category": "TICKET",
-   "bookingMode": "ENQUIRY",
-   "bokunId": null,
-   "destination": "banff-national-park",
-   "mornbyTour": null,
-   "mornbyMatch": "none",
-   "places": [
-    "banff",
-    "vermilion-lakes"
-   ],
-   "season": "all"
-  },
-  {
-   "slug": "open-top-touring-tickets",
-   "url": null,
-   "category": "TICKET",
-   "bookingMode": "ENQUIRY",
-   "bokunId": null,
-   "destination": "banff-national-park",
-   "mornbyTour": null,
-   "mornbyMatch": "none",
-   "places": [
-    "banff",
-    "vermilion-lakes"
-   ],
-   "season": "all"
-  },
-  {
    "slug": "columbia-icefield-adventure-tickets",
    "url": null,
    "category": "TICKET",

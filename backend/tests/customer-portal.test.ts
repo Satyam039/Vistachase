@@ -199,7 +199,7 @@ describe("Phase 5: Customer Portal, My Trips & Reviews", () => {
     // Only reviews left against a booking are public; seeded samples are not.
     expect(tourReviews.every((r) => r.bookingId !== null)).toBe(true);
 
-    // A tour with a published count (e.g. 1,000+ from TripAdvisor and Google) keeps it.
+    // A tour with a published count (e.g. 1,700+ from Tripadvisor, Google and GetYourGuide) keeps it.
     const after = await prisma.tour.findUnique({ where: { id: testTourId } });
     if (before!.reviewCount > 1) {
       expect(after!.reviewCount).toBe(before!.reviewCount);

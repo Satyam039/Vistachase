@@ -76,11 +76,16 @@ export function TourCard({
   seats = 1,
   date,
   headingLevel = 3,
+  title,
+  image,
 }: {
   tour: TourWithAvailability;
   seats?: number;
   date?: string;
   headingLevel?: 2 | 3;
+  /** Name and photo to show instead of the catalog's (home rail cards use the landing pages'). */
+  title?: string;
+  image?: string;
 }) {
   const TitleTag = headingLevel === 2 ? "h2" : "h3";
   const unitLabel = tour.priceUnit === "GROUP" ? "group" : tour.category === "TICKET" ? "ticket" : "guest";
@@ -98,7 +103,7 @@ export function TourCard({
       {/* Image block: square corners, nothing over the photo but the badges */}
       <div className="relative aspect-[5/4] w-full overflow-hidden bg-obsidian-900">
         <Image
-          src={tour.featuredImage}
+          src={image ?? tour.featuredImage}
           alt=""
           fill
           sizes="(max-width: 640px) 90vw, (max-width: 1024px) 46vw, (max-width: 1280px) 31vw, 400px"
@@ -127,7 +132,7 @@ export function TourCard({
         <TitleTag className={CARD_TITLE}>
           <Link href={`/${tour.slug}`} className="focus-visible:outline-none">
             <span className="absolute inset-0 z-10 group-has-[:focus-visible]:outline group-has-[:focus-visible]:outline-2 group-has-[:focus-visible]:outline-offset-2 group-has-[:focus-visible]:outline-summit-300" />
-            {tour.title}
+            {title ?? tour.title}
           </Link>
         </TitleTag>
 

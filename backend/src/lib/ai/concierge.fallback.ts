@@ -15,6 +15,7 @@ import { conciergeLanguage } from "@/lib/ai/languages";
 import type { ChatMessage, ConciergeResponse, SessionState } from "@/lib/ai/ai.provider";
 import type { ToolExecutionContext } from "@/lib/ai/ai.tools";
 import { todayInMountainTime } from "@/lib/utils/time";
+import { ON_SALE } from "@/modules/tours/product-map";
 
 type Topic = "price" | "dates" | "details" | "pickup" | "lookup" | "track";
 type State = SessionState & { topic?: Topic; englishNotice?: boolean };
@@ -94,6 +95,7 @@ function matchTour(text: string, tours: CatalogTour[]): CatalogTour | null {
 
 async function catalog(): Promise<CatalogTour[]> {
   return prisma.tour.findMany({
+    where: ON_SALE,
     select: { slug: true, title: true, category: true, basePrice: true, currency: true, priceUnit: true, durationHours: true, summary: true, bookingMode: true },
     orderBy: [{ sortOrder: "asc" }, { basePrice: "asc" }],
   });

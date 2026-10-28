@@ -1,6 +1,6 @@
 // About Vista Chase, structured like the "About" pages of the booking sites studied (photo hero,
 // numbers, story, values, fleet, recognition) in the brand system. Figures are the ones used across
-// the live site: since 2018, 10,000+ guests, 5.0 from 1,000+ reviews, #6 in Canada (2026).
+// the live site: since 2018, 10,000+ guests, 5.0 from 1,700+ reviews, #6 in Canada (2026).
 
 import Image from "next/image";
 import { AwardSeal } from "@/components/brand/AwardSeal";
@@ -21,7 +21,7 @@ const baseMetadata: Metadata = {
 const STATS = [
   { to: 2018, label: "guiding the Rockies since", plain: true },
   { to: 10000, suffix: "+", label: "guests guided" },
-  { to: 5, decimals: 1, label: "average rating, 1,000+ reviews" },
+  { to: 5, decimals: 1, label: "average rating, 1,700+ reviews" },
   { to: 6, prefix: "#", label: "experience in Canada, TripAdvisor 2026" },
 ];
 
