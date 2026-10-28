@@ -233,12 +233,6 @@ export function SiteFooter() {
                 </a>
               </li>
               <li>
-                <a href="mailto:bookings@vistachase.com" className="inline-flex h-10 items-center gap-2 rounded-full bg-white/10 px-4 text-sm text-white backdrop-blur-md hover:bg-white/20">
-                  <Mail className="h-4 w-4 text-summit-300" aria-hidden="true" />
-                  bookings@vistachase.com
-                </a>
-              </li>
-              <li>
                 <a href="mailto:support@vistachase.com" className="inline-flex h-10 items-center gap-2 rounded-full bg-white/10 px-4 text-sm text-white backdrop-blur-md hover:bg-white/20">
                   <Mail className="h-4 w-4 text-summit-300" aria-hidden="true" />
                   support@vistachase.com

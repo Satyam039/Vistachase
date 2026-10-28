@@ -21,8 +21,7 @@ const baseMetadata: Metadata = {
 
 const CHANNELS = [
   { icon: Phone, title: "Call us", value: "+1 (825) 734-9456", note: "Lines open 6 a.m. – 9 p.m. Mountain Time", href: "tel:+18257349456" },
-  { icon: Mail, title: "Booking inquiries", value: "bookings@vistachase.com", note: "Tours, shuttles & reservations", href: "mailto:bookings@vistachase.com" },
-  { icon: Mail, title: "Support email", value: "support@vistachase.com", note: "General questions & customer care", href: "mailto:support@vistachase.com" },
+  { icon: Mail, title: "Email us", value: "support@vistachase.com", note: "Bookings, questions & customer care", href: "mailto:support@vistachase.com" },
   { icon: Sparkles, title: "AI concierge", value: "Ask anything, any time", note: "Tours, pickups and bookings", href: "/concierge" },
 ];
 

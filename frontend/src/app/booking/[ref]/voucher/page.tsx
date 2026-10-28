@@ -434,12 +434,6 @@ export default async function VoucherPage({
                 </a>
               </li>
               <li>
-                <a href="mailto:bookings@vistachase.com" className="inline-flex items-center gap-2 text-obsidian-900 hover:text-ocean-700">
-                  <Mail className="h-4 w-4 text-ocean-600" aria-hidden="true" />
-                  bookings@vistachase.com
-                </a>
-              </li>
-              <li>
                 <a href="mailto:support@vistachase.com" className="inline-flex items-center gap-2 text-obsidian-900 hover:text-ocean-700">
                   <Mail className="h-4 w-4 text-ocean-600" aria-hidden="true" />
                   support@vistachase.com
