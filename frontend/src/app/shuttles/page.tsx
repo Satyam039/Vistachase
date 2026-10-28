@@ -63,7 +63,7 @@ const SHUTTLE_FAQS = [
   },
   {
     q: "Can I bring luggage, strollers, or outdoor gear?",
-    a: "Small daypacks, camera bags, hiking poles (with rubber tips), and compact foldable strollers are welcome on board. If you have larger luggage or special mobility equipment, please contact us in advance at bookings@vistachase.com so we can ensure suitable vehicle accommodation.",
+    a: "Small daypacks, camera bags, hiking poles (with rubber tips), and compact foldable strollers are welcome on board. If you have larger luggage or special mobility equipment, please contact us in advance at support@vistachase.com so we can ensure suitable vehicle accommodation.",
   },
   {
     q: "What is your cancellation policy for lake shuttles?",

@@ -107,7 +107,7 @@ const SECTIONS: LegalSection[] = [
     title: "Communication requirements",
     blocks: [
       "To ensure your request is received on time, please send all cancellations or changes through:",
-      { list: ["bookings@vistachase.com", "support@vistachase.com", "+1 825-734-9456 (call or WhatsApp)"] },
+      { list: ["support@vistachase.com", "+1 825-734-9456 (call or WhatsApp)"] },
       "This helps us respond quickly and avoid miscommunication.",
     ],
   },

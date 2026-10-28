@@ -210,7 +210,7 @@ export async function addVoucherPage(pdf: PDFDocument, booking: VoucherBooking, 
   y -= 10;
   text("Need help?", margin, y, 11, bold);
   y -= 16;
-  text("+1 (825) 734-9456 (6 a.m. - 9 p.m. MT)   bookings@vistachase.com   support@vistachase.com", margin, y, 10, regular, MUTED);
+  text("+1 (825) 734-9456 (6 a.m. - 9 p.m. MT)   support@vistachase.com", margin, y, 10, regular, MUTED);
 
   text(`Issued ${new Date().toISOString().slice(0, 10)} - vistachase.com`, margin, 32, 8, regular, MUTED);
 }
@@ -357,7 +357,7 @@ export async function itineraryPdf(bookings: VoucherBooking[], trip: { title: st
   }
   y -= 10;
   heading("Need help?");
-  text("+1 (825) 734-9456 (6 a.m. - 9 p.m. MT)   bookings@vistachase.com   support@vistachase.com", margin, y, 10, regular, MUTED);
+  text("+1 (825) 734-9456 (6 a.m. - 9 p.m. MT)   support@vistachase.com", margin, y, 10, regular, MUTED);
   for (const p of pdf.getPages()) p.drawText(safe(`Issued ${new Date().toISOString().slice(0, 10)} - vistachase.com`), { x: margin, y: 32, size: 8, font: regular, color: MUTED });
 
   for (const [i, b] of bookings.entries()) {
