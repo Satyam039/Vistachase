@@ -409,7 +409,7 @@ export default async function VoucherPage({
                     My trips
                   </Link>
                   . See the{" "}
-                  <Link href="/cancellation-policy" className="underline underline-offset-2">
+                  <Link href="/privacy-policy-vista-chase" className="underline underline-offset-2">
                     cancellation policy
                   </Link>{" "}
                   for groups of 7 or more.

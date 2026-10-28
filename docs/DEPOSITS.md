@@ -1,7 +1,7 @@
 # Deposit payments
 
 Guests can pay a 20% deposit at checkout instead of the full price, and pay the rest later. The
-rules follow the published payment terms on `/cancellation-policy`.
+rules follow the published payment terms on `/privacy-policy-vista-chase`.
 
 ## Rules
 

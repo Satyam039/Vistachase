@@ -496,7 +496,7 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
   );
 }
 
-/** Turns bare URLs and site paths in a reply (web sources, checkout links, /cancellation-policy)
+/** Turns bare URLs and site paths in a reply (web sources, checkout links, /privacy-policy-vista-chase)
  * into links. Site paths must start a word ("/faq", not "and/or"); trailing punctuation stays text. */
 const LINK = /(https?:\/\/[^\s)]+|(?<=^|[\s(])\/[a-z][a-z0-9-]*(?:\/[A-Za-z0-9._~%-]+)*\/?(?:\?[^\s)]*)?)/g;
 function Linkified({ text }: { text: string }) {

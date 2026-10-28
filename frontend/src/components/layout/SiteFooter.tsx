@@ -85,7 +85,7 @@ const LISTED_ON = [
 const LEGAL: FooterLink[] = [
   { label: "Terms", href: "/terms-and-conditions" },
   { label: "Privacy", href: "/privacy-policy" },
-  { label: "Cancellation policy", href: "/cancellation-policy" },
+  { label: "Cancellation policy", href: "/privacy-policy-vista-chase" },
   { label: "Travel trade & agents", href: "/affiliates" },
   { label: "Staff portal", href: "/admin" },
 ];

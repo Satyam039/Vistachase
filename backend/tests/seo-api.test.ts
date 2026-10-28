@@ -288,7 +288,7 @@ describe("sitemap and llms.txt", () => {
     const paths = entries.map((e) => e.path);
     expect(paths).toContain("/");
     expect(paths).toContain("/destinations/moraine-lake");
-    for (const p of ["/login", "/register", "/book", "/search", "/partners/dashboard", "/privacy-policy-vista-chase"]) expect(paths).not.toContain(p);
+    for (const p of ["/login", "/register", "/book", "/search", "/partners/dashboard", "/cancellation-policy"]) expect(paths).not.toContain(p);
     expect(entries.every((e) => !Number.isNaN(Date.parse(e.lastModified)))).toBe(true);
   });
 

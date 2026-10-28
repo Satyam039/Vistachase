@@ -309,7 +309,7 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
         {isTicket ? (
           <div className="space-y-3 rounded-none bg-white p-6 text-base text-slate-700 ring-1 ring-obsidian-900/[0.07]">
             <p>Tickets are run by the attraction operator and follow their own cancellation rules, which we confirm with your request.</p>
-            <Link href="/cancellation-policy" className="inline-flex min-h-11 items-center text-ocean-700 underline underline-offset-4">
+            <Link href="/privacy-policy-vista-chase" className="inline-flex min-h-11 items-center text-ocean-700 underline underline-offset-4">
               Read our cancellation policy
             </Link>
           </div>
@@ -329,7 +329,7 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
               <li>Arriving 10 or more minutes late, or not showing up, is fully charged.</li>
               <li>Approved refunds reach your original payment method within 5–10 business days.</li>
             </ul>
-            <Link href="/cancellation-policy" className="inline-flex min-h-11 items-center underline underline-offset-4">
+            <Link href="/privacy-policy-vista-chase" className="inline-flex min-h-11 items-center underline underline-offset-4">
               Read the full cancellation policy
             </Link>
           </div>
