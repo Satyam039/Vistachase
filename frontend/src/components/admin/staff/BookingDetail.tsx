@@ -64,6 +64,7 @@ interface Detail extends Omit<BookingRow, "flags" | "trip"> {
   trip: AdminTrip | null;
   confirmationEmailSentAt: string | null;
   confirmationEmailError: string | null;
+  emailDelivery?: boolean;
 }
 
 interface HistoryRow {
@@ -323,6 +324,7 @@ export function BookingDetail({
               trip={booking.trip}
               emailSentAt={booking.confirmationEmailSentAt}
               emailError={booking.confirmationEmailError}
+              emailDelivery={booking.emailDelivery !== false}
               canLink={MANAGERS.includes(role)}
               notify={notify}
               onChanged={() => {

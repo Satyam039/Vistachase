@@ -20,6 +20,7 @@ export function TripSection({
   trip,
   emailSentAt,
   emailError,
+  emailDelivery,
   canLink,
   notify,
   onChanged,
@@ -28,6 +29,8 @@ export function TripSection({
   trip: AdminTrip | null;
   emailSentAt: string | null;
   emailError: string | null;
+  /** False when the server has no email service set up, so "sent" only means written to its log. */
+  emailDelivery: boolean;
   canLink: boolean;
   notify: (m: string) => void;
   onChanged: () => void;
@@ -75,7 +78,9 @@ export function TripSection({
         </>
       )}
       <p className="text-sm text-slate-700">
-        {emailSentAt
+        {!emailDelivery
+          ? "Email isn't set up on the server (EMAIL_PROVIDER=resend and RESEND_API_KEY), so the confirmation email was only written to the server log, not sent to the guest. Once email is set up, \"Resend voucher\" sends it."
+          : emailSentAt
           ? `Confirmation email with the PDF itinerary sent ${when(emailSentAt)}`
           : emailError
             ? `Confirmation email failed: ${emailError}. It is retried automatically; "Resend voucher" sends it now.`

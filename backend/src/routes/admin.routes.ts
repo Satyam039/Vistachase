@@ -348,6 +348,8 @@ router.get("/bookings/:id", async (req, res, next) => {
         ...booking,
         priceSnapshot: undefined,
         trip: trip ? await tripSummary(trip) : null,
+        // False while EMAIL_PROVIDER/RESEND_API_KEY aren't set: emails are only written to the server log.
+        emailDelivery: emailDeliveryConfigured(),
         totalAmount: booking.totalAmount / 100,
         items: booking.items.map((i) => ({ ...i, price: i.price / 100 })),
         payments: booking.payments.map((p) => ({ ...p, amount: p.amount / 100 })),
