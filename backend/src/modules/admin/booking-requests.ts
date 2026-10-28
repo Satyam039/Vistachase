@@ -264,6 +264,6 @@ export async function approveBooking(bookingId: string, input: ApproveInput, sta
   });
   if (!approved) return { status: 409, error: "This booking changed while you were approving it. Reload and try again." } as const;
 
-  if (input.notifyGuest) sendVoucherEmail(booking.id, method !== "UNPAID" || owed === 0);
+  if (input.notifyGuest) await sendVoucherEmail(booking.id);
   return { status: 200, booking: { id: booking.id, bookingReference: booking.bookingReference, status: "CONFIRMED" as const }, owed: method === "UNPAID" ? owed : 0 } as const;
 }

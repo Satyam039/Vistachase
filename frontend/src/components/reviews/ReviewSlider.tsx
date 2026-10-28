@@ -113,7 +113,7 @@ export function ReviewSlider({ reviews, tone = "light", label = "Guest reviews" 
             className="w-[85%] shrink-0 snap-start sm:w-[calc((100%-1.25rem)/2)] lg:w-[calc((100%-2.5rem)/3)]"
           >
             <figure
-              className={`flex h-full flex-col rounded-[2rem] p-6 sm:p-7 transition-[transform,box-shadow,border-color] duration-500 hover:-translate-y-1 ${
+              className={`flex h-full flex-col rounded-none p-6 sm:p-7 transition-[transform,box-shadow,border-color] duration-500 hover:-translate-y-1 ${
                 dark
                   ? "bg-gradient-to-b from-[#181d21] via-[#121619] to-[#0a0d0f] ring-1 ring-white/[0.12] hover:ring-summit-400/40 hover:shadow-[0_24px_50px_-20px_rgba(0,0,0,0.6)]"
                   : "bg-white ring-1 ring-obsidian-900/[0.08] shadow-[0_12px_36px_-16px_rgba(12,31,33,0.08)] hover:shadow-[0_20px_48px_-16px_rgba(12,31,33,0.14)]"

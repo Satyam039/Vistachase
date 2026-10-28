@@ -341,7 +341,7 @@ function EditDepartureForm({ departure: d, onSaved }: { departure: Departure; on
   }
 
   return (
-    <form onSubmit={submit} className="grid gap-4 rounded-2xl bg-white p-5 ring-1 ring-obsidian-900/[0.07] sm:grid-cols-2 lg:grid-cols-4">
+    <form onSubmit={submit} className="grid gap-4 rounded-none bg-white p-5 ring-1 ring-obsidian-900/[0.07] sm:grid-cols-2 lg:grid-cols-4">
       <div>
         <label htmlFor={`${p}-seats`} className={labelCls}>
           Seats

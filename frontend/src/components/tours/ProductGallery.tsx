@@ -31,7 +31,7 @@ export function ProductGallery({ slides, title }: { slides: GallerySlide[]; titl
   return (
     <div className="grid gap-2 lg:h-[32rem] lg:grid-cols-4 lg:grid-rows-2 lg:gap-3" data-reveal="clip">
       {/* Large frame */}
-      <div className="relative aspect-[4/3] overflow-hidden rounded-[1.75rem] bg-obsidian-900 sm:aspect-[16/9] lg:col-span-2 lg:row-span-2 lg:aspect-auto">
+      <div className="relative aspect-[4/3] overflow-hidden rounded-none bg-obsidian-900 sm:aspect-[16/9] lg:col-span-2 lg:row-span-2 lg:aspect-auto">
         {main?.kind === "video" ? (
           <>
             <Image src={main.video.poster} alt={main.video.alt} fill priority sizes="(max-width: 640px) 100vw, 60vw" className="object-cover" />
@@ -81,7 +81,7 @@ export function ProductGallery({ slides, title }: { slides: GallerySlide[]; titl
       <dialog
         ref={dialog}
         aria-label={`${title}: all photos and videos`}
-        className="m-auto max-h-[90vh] w-[min(1100px,94vw)] overflow-y-auto rounded-[1.75rem] bg-white p-5 backdrop:bg-obsidian-950/80 backdrop:backdrop-blur-sm sm:p-8"
+        className="m-auto max-h-[90vh] w-[min(1100px,94vw)] overflow-y-auto rounded-none bg-white p-5 backdrop:bg-obsidian-950/80 backdrop:backdrop-blur-sm sm:p-8"
         onClick={(e) => e.target === dialog.current && dialog.current?.close()}
       >
         <div className="mb-5 flex items-center justify-between gap-4">

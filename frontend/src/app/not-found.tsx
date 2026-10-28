@@ -49,7 +49,7 @@ export default function NotFound() {
         <ul className="mt-6 grid gap-4 sm:grid-cols-2" data-stagger>
           {LINKS.map(({ icon: Icon, label, body, href }) => (
             <li key={href}>
-              <Link href={href} className="group flex h-full items-center gap-4 rounded-[1.5rem] bg-white p-5 ring-1 ring-obsidian-900/[0.07] transition-shadow hover:shadow-md">
+              <Link href={href} className="group flex h-full items-center gap-4 rounded-none bg-white p-5 ring-1 ring-obsidian-900/[0.07] transition-shadow hover:shadow-md">
                 <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-ocean-50 text-ocean-700">
                   <Icon className="h-5 w-5" aria-hidden="true" />
                 </span>

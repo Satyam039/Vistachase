@@ -73,7 +73,7 @@ export function SharedVsPrivateSlider() {
         {/* Dynamic Interactive Card Display */}
         <div className="relative">
           {selectedMode === "shared" ? (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center p-8 sm:p-12 rounded-3xl bg-white/5 backdrop-blur-2xl border border-white/15 shadow-2xl transition-all duration-500 animate-fadeIn">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center p-8 sm:p-12 rounded-none bg-white/5 backdrop-blur-2xl border border-white/15 shadow-2xl transition-all duration-500 animate-fadeIn">
               <div className="lg:col-span-5 relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-900">
                 <Image
                   src="/media/photos/moraine-lake-red-canoes.webp"
@@ -138,7 +138,7 @@ export function SharedVsPrivateSlider() {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center p-8 sm:p-12 rounded-3xl bg-white/5 backdrop-blur-2xl border border-summit-500/30 shadow-2xl transition-all duration-500 animate-fadeIn">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center p-8 sm:p-12 rounded-none bg-white/5 backdrop-blur-2xl border border-summit-500/30 shadow-2xl transition-all duration-500 animate-fadeIn">
               <div className="lg:col-span-5 relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-900">
                 <Image
                   src="/media/photos/cadillac-escalade-iql-side.webp"

@@ -4,6 +4,15 @@ export interface EmailPayload {
   html: string;
   text?: string;
   from?: string;
+  /** Where replies go, e.g. the guest who asked for a live agent. */
+  replyTo?: string;
+  attachments?: EmailAttachment[];
+}
+
+export interface EmailAttachment {
+  filename: string;
+  content: Buffer;
+  contentType?: string;
 }
 
 export interface IEmailProvider {
@@ -22,6 +31,8 @@ class ConsoleEmailProvider implements IEmailProvider {
     console.log(`To: ${Array.isArray(payload.to) ? payload.to.join(", ") : payload.to}`);
     console.log(`From: ${payload.from || process.env.EMAIL_FROM || "bookings@vistachase.com"}`);
     console.log(`Subject: ${payload.subject}`);
+    if (payload.replyTo) console.log(`Reply-To: ${payload.replyTo}`);
+    for (const a of payload.attachments ?? []) console.log(`Attachment: ${a.filename} (${a.content.length} bytes)`);
     console.log("----------------------- [EMAIL CONTENT PREVIEW] -----------------------");
     // Link tokens (password reset, staff invites, email confirmation, voucher, check-in, review,
     // tracking) never go to the logs.
@@ -53,6 +64,10 @@ class ResendEmailProvider implements IEmailProvider {
           subject: payload.subject,
           html: payload.html,
           text: payload.text,
+          ...(payload.replyTo ? { reply_to: payload.replyTo } : {}),
+          ...(payload.attachments?.length
+            ? { attachments: payload.attachments.map((a) => ({ filename: a.filename, content: a.content.toString("base64"), content_type: a.contentType })) }
+            : {}),
         }),
       });
 

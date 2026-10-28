@@ -13,7 +13,7 @@ import type { BookingFlagType, Prisma } from "@prisma/client";
 import prisma from "@/lib/db/prisma";
 import { getEmailProvider } from "@/lib/email/email.provider";
 import { getPaymentProvider } from "@/lib/payment/payment.provider";
-import { voucherLink } from "@/lib/security/signed-links";
+import { sendConfirmationEmail } from "@/modules/bookings/confirmation-email";
 import { formatDateOnly, formatTimeOfDay, getMountainTimeInstant } from "@/lib/utils/time";
 import { transitionBooking } from "@/modules/bookings/booking-status";
 import { confirmPaidBooking, createBooking, refundableAmount, type CreateBookingInput } from "@/modules/bookings/booking.repository";
@@ -355,7 +355,7 @@ export async function quickBook(input: QuickBookInput, staffId: string) {
         data: { bookingId: id, type: "PAYMENT_DUE", amountCents: record.totalAmount, createdById: staffId, note: `Quick Book: ${money(record.totalAmount, record.currency)} still to collect.` },
       });
     });
-    if (notifyGuest) sendVoucherEmail(id);
+    if (notifyGuest) await sendVoucherEmail(id);
   }
 
   const final = await prisma.booking.findUniqueOrThrow({ where: { id }, include: { payments: { select: { status: true } } } });
@@ -372,32 +372,13 @@ async function confirmQuietly(bookingId: string, paidCents: number) {
   });
 }
 
-/** Confirmation with the voucher link and what is still due (Quick Book or Approve, payment still due). */
-export function sendVoucherEmail(bookingId: string, paid = false) {
-  prisma.booking
-    .findUniqueOrThrow({ where: { id: bookingId }, include: { tourDeparture: { include: { tour: true, shuttleRoute: true } } } })
-    .then((b) => {
-      const title = b.tourDeparture.tour?.title || b.tourDeparture.shuttleRoute?.name || "Vista Chase experience";
-      const when = `${formatDateOnly(b.tourDeparture.date)} at ${formatTimeOfDay(b.tourDeparture.departureTime)}`;
-      const link = voucherLink(b.bookingReference);
-      return getEmailProvider().sendEmail({
-        to: b.customerEmail,
-        subject: `Your Vista Chase booking is confirmed: ${b.bookingReference}`,
-        html: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #1c1f23;">
-          <h2>Your booking is confirmed</h2>
-          <p>Hi ${escapeHtml(b.customerName)}, thank you for booking with Vista Chase.</p>
-          <div style="border: 1px solid #e1e1db; border-radius: 8px; padding: 16px; margin: 20px 0;">
-            <p><strong>Booking reference:</strong> ${b.bookingReference}</p>
-            <p><strong>Experience:</strong> ${escapeHtml(title)}</p>
-            <p><strong>Date and time:</strong> ${when} (Mountain Time)</p>
-            <p><strong>${paid ? "Total paid" : "Amount due"}:</strong> ${money(b.totalAmount, b.currency)}</p>
-          </div>
-          <p><a href="${link}" style="color: #257780; font-weight: bold;">Open your voucher</a> and show it to your guide at pickup.</p>
-          <p style="color: #5d6168; font-size: 13px;">Questions? Reply to this email or call +1 (825) 734-9456.</p>
-        </div>`,
-        text: `Your Vista Chase booking ${b.bookingReference} is confirmed.\n${title}, ${when} (Mountain Time).\n${paid ? "Total paid" : "Amount due"}: ${money(b.totalAmount, b.currency)}.\nVoucher: ${link}`,
-      });
-    })
+/**
+ * Staff chose to notify the guest (Quick Book or Approve): the confirmation email with the PDF
+ * itinerary, which shows what is paid and what is still due. Sent even if one went out before.
+ */
+export async function sendVoucherEmail(bookingId: string) {
+  await prisma.booking
+    .findUniqueOrThrow({ where: { id: bookingId }, select: { bookingReference: true } })
+    .then((b) => sendConfirmationEmail(b.bookingReference, { force: true }))
     .catch((e) => console.error("Voucher email failed:", (e as Error).message));
 }

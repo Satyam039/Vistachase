@@ -16,7 +16,7 @@ import "dotenv/config";
 import { Queue, Worker } from "bullmq";
 import IORedis from "ioredis";
 import prisma from "@/lib/db/prisma";
-import { expireHoldsAndUnpaidBookings, maturePartnerCommissions, publishScheduledSeoPages, reconcileBookings, remindUnpaidBalances, runNightlySeoAudit, sendReviewRequests, sendT60WhatsApp, syncWebflowBlogPosts, whatsAppDeliveryConfigured } from "@/jobs/tasks";
+import { expireHoldsAndUnpaidBookings, maturePartnerCommissions, publishScheduledSeoPages, reconcileBookings, remindUnpaidBalances, retryConfirmationEmails, runNightlySeoAudit, sendReviewRequests, sendT60WhatsApp, syncWebflowBlogPosts, whatsAppDeliveryConfigured } from "@/jobs/tasks";
 import { isWebflowSyncEnabled, webflowSyncMinutes } from "@/modules/seo/portal/webflow-sync";
 
 const QUEUE = "vista-chase-jobs";
@@ -31,6 +31,7 @@ const JOBS: Record<string, () => Promise<unknown>> = {
   "seo-audit": () => runNightlySeoAudit(),
   "webflow-blog-sync": () => syncWebflowBlogPosts(),
   "balance-reminders": () => remindUnpaidBalances(),
+  "confirmation-email-retry": () => retryConfirmationEmails(),
   "whatsapp-t60": () => sendT60WhatsApp(),
 };
 
@@ -47,6 +48,7 @@ async function main() {
   await queue.upsertJobScheduler("seo-scheduled-publish", { every: 5 * 60 * 1000 }, { name: "seo-scheduled-publish" });
   await queue.upsertJobScheduler("seo-audit", { pattern: "0 4 * * *", tz: TZ }, { name: "seo-audit" });
   await queue.upsertJobScheduler("balance-reminders", { pattern: "20 * * * *", tz: TZ }, { name: "balance-reminders" });
+  await queue.upsertJobScheduler("confirmation-email-retry", { pattern: "*/15 * * * *", tz: TZ }, { name: "confirmation-email-retry" });
   if (isWebflowSyncEnabled()) await queue.upsertJobScheduler("webflow-blog-sync", { every: webflowSyncMinutes() * 60 * 1000 }, { name: "webflow-blog-sync" });
   else await queue.removeJobScheduler("webflow-blog-sync");
   if (whatsAppDeliveryConfigured()) await queue.upsertJobScheduler("whatsapp-t60", { every: 5 * 60 * 1000 }, { name: "whatsapp-t60" });

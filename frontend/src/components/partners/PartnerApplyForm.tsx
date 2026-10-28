@@ -50,7 +50,7 @@ export function PartnerApplyForm() {
 
   if (status === "done") {
     return (
-      <div role="status" className="space-y-3 rounded-[1.75rem] bg-emerald-50 p-8 text-emerald-900 ring-1 ring-emerald-200">
+      <div role="status" className="space-y-3 rounded-none bg-emerald-50 p-8 text-emerald-900 ring-1 ring-emerald-200">
         <p className="flex items-center gap-2 text-2xl font-light">
           <CheckCircle2 className="h-6 w-6" aria-hidden="true" /> Application received
         </p>
@@ -74,7 +74,7 @@ export function PartnerApplyForm() {
   const described = (name: string) => (fields[name]?.length ? `partner-${name}-error` : undefined);
 
   return (
-    <form onSubmit={submit} className="space-y-5 rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:p-8" noValidate>
+    <form onSubmit={submit} className="space-y-5 rounded-none bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:p-8" noValidate>
       {error && (
         <p role="alert" className="flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
           <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />

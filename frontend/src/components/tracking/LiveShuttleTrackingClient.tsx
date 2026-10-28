@@ -55,7 +55,7 @@ export interface TrackingTelemetry {
 }
 
 const OFFICE_PHONE = "+18257349456";
-const CARD = "rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:p-7";
+const CARD = "rounded-none bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:p-7";
 
 // Progress steps shown under the ETA; each status maps to how far along the pickup is.
 const STEPS = ["Preparing", "On the way", "Arriving", "Picked up"];
@@ -171,7 +171,7 @@ export default function LiveShuttleTrackingClient({ initialTelemetry, token }: {
         <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_24rem]">
           {/* Status + map */}
           <div className="space-y-6">
-            <section aria-labelledby="status-h" className="rounded-[1.75rem] bg-obsidian-950 p-6 text-white sm:p-8">
+            <section aria-labelledby="status-h" className="rounded-none bg-obsidian-950 p-6 text-white sm:p-8">
               <div className="flex flex-wrap items-start justify-between gap-6">
                 <div className="min-w-0 flex-1" role="status" aria-live="polite" aria-atomic="true">
                   <h2 id="status-h" className="text-2xl font-light text-white sm:text-3xl">
@@ -197,7 +197,7 @@ export default function LiveShuttleTrackingClient({ initialTelemetry, token }: {
               </ol>
             </section>
 
-            <section aria-labelledby="map-h" className="overflow-hidden rounded-[1.75rem] bg-white ring-1 ring-obsidian-900/[0.07]">
+            <section aria-labelledby="map-h" className="overflow-hidden rounded-none bg-white ring-1 ring-obsidian-900/[0.07]">
               <div className="flex flex-wrap items-center justify-between gap-3 px-6 pt-5 sm:px-7">
                 <h2 id="map-h" className="text-lg text-obsidian-900">
                   Where your shuttle is

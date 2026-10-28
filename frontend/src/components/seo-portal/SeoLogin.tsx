@@ -54,7 +54,7 @@ export function SeoLogin() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-obsidian-950 px-page py-12">
-      <div className="w-full max-w-md rounded-[1.75rem] bg-white p-8 sm:p-10">
+      <div className="w-full max-w-md rounded-none bg-white p-8 sm:p-10">
         <div className="flex items-center gap-2.5">
           <BrandMark size={28} />
           <span className="text-base text-obsidian-900">Vista Chase</span>

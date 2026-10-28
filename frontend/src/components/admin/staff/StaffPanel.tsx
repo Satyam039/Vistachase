@@ -178,7 +178,7 @@ export function StaffPanel({ notify, onDenied }: { notify: (m: string) => void; 
 function SetupLinkNotice({ setup, onClose }: { setup: SetupLink; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
   return (
-    <section role="status" className="space-y-3 rounded-[1.75rem] bg-white p-6 ring-1 ring-ocean-200">
+    <section role="status" className="space-y-3 rounded-none bg-white p-6 ring-1 ring-ocean-200">
       <h2 className="text-xl text-obsidian-900">Password link for {setup.name}</h2>
       <p className="text-base text-slate-700">
         {setup.emailed ? "We emailed this link to them. " : "Email isn't set up yet, so send them this link yourself (a direct message, not a public channel). "}

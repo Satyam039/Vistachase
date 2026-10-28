@@ -12,12 +12,12 @@
  *   1. Party           adults / children / infants, capped by live seat availability
  *   2. Contact         lead guest; continuing places the 10-minute seat hold, because
  *                      the hold API needs a name and email
- *   3. Pickup & extras hotel pickup, custom address, add-ons, special requests
+ *   3. Pickup & extras hotel pickup, custom address, special requests
  *   4. Review & pay    the booking request; the server prices it and, with Stripe, the guest
  *                      pays in Stripe's Payment Element (card details never touch this page)
  *
  * Every figure in the summary is derived from the same state the form writes, so the
- * total updates as the guest changes the party or add-ons.
+ * total updates as the guest changes the party or promo code.
  */
 
 import {
@@ -33,7 +33,6 @@ import { Badge } from "@astryxdesign/core/Badge";
 import { Banner } from "@astryxdesign/core/Banner";
 import { Button } from "@astryxdesign/core/Button";
 import { Card } from "@astryxdesign/core/Card";
-import { CheckboxInput } from "@astryxdesign/core/CheckboxInput";
 import { Collapsible } from "@astryxdesign/core/Collapsible";
 import { Divider } from "@astryxdesign/core/Divider";
 import { FieldStatus } from "@astryxdesign/core/FieldStatus";
@@ -130,39 +129,6 @@ const STEPS = [
   { label: "Pickup", icon: MapPin },
   { label: "Payment", icon: CreditCard },
 ];
-
-// `name` is what the booking API stores, so it stays identical to the previous checkout.
-const ADD_ONS = [
-  {
-    id: "parkPass",
-    name: "Parks Canada Discovery Pass Assistance",
-    label: "Parks Canada pass assistance",
-    description:
-      "We prepare your park entry pass in advance so you skip the entrance lines.",
-    price: 25,
-    perGuest: false,
-  },
-  {
-    id: "hotDrinks",
-    name: "Hot Drink & Morning Pastry Package",
-    label: "Hot drink & morning pastry",
-    description:
-      "Artisan croissants and French roast coffee at the Rockpile viewpoint.",
-    price: 15,
-    perGuest: true,
-  },
-  {
-    id: "lunch",
-    name: "Gourmet Rockies Packed Lunch",
-    label: "Gourmet packed lunch",
-    description:
-      "Alpine deli baguette, local fruit, cookies and trail mix for your hike.",
-    price: 22,
-    perGuest: true,
-  },
-] as const;
-
-type AddOnId = (typeof ADD_ONS)[number]["id"];
 
 const HOLD_SECONDS = 600;
 // Warn this long before a hold ends and offer to renew it (WCAG 2.2.1 asks for at least 20s).
@@ -296,11 +262,6 @@ export function BookingCheckoutClient({
   // Pickup & extras
   const [pickupStopId, setPickupStopId] = useState(stops[0]?.id ?? "");
   const [customPickup, setCustomPickup] = useState("");
-  const [addOns, setAddOns] = useState<Record<AddOnId, boolean>>({
-    parkPass: false,
-    hotDrinks: false,
-    lunch: false,
-  });
   const [specialRequests, setSpecialRequests] = useState("");
 
   // 10-minute seat hold
@@ -563,25 +524,15 @@ export function BookingCheckoutClient({
 
   // ── Derived totals ─────────────────────────────────────────────────────────
 
-  const selectedAddOns = ADD_ONS.filter((addOn) => addOns[addOn.id]).map(
-    (addOn) => {
-      const quantity = addOn.perGuest ? totalSeats : 1;
-      return { ...addOn, quantity, total: addOn.price * quantity };
-    },
-  );
   // Same rule as the server: children pay the child price when the departure has one.
   const childPrice = departure.childPrice ?? departure.price;
   const hasChildPrice = !isVehicle && children > 0 && childPrice !== departure.price;
   const fareSubtotal = isVehicle
     ? departure.price
     : departure.price * adults + childPrice * children;
-  const addOnsTotal = selectedAddOns.reduce(
-    (sum, addOn) => sum + addOn.total,
-    0,
-  );
   // Same rounding as the server (whole cents). No sales tax is added.
   const discount = appliedPromo ? round2(fareSubtotal * (appliedPromo.percent / 100)) : 0;
-  const total = round2(fareSubtotal - discount + addOnsTotal);
+  const total = round2(fareSubtotal - discount);
   const canDeposit = total > 0 && depositAvailable(departure.date, departure.departureTime);
   const plan = canDeposit ? paymentPlan : "FULL";
   const depositNow = depositFor(total);
@@ -688,8 +639,6 @@ export function BookingCheckoutClient({
           childrenCount: children,
           infantsCount: infants,
           specialRequests: specialRequests.trim() || undefined,
-          // The server prices add-ons itself; only the choice is sent.
-          addOns: selectedAddOns.map((addOn) => ({ id: addOn.id })),
           promoCode: appliedPromo?.code,
           paymentPlan: plan,
         }),
@@ -865,17 +814,6 @@ export function BookingCheckoutClient({
           }
           value={money(fareSubtotal)}
         />
-        {selectedAddOns.map((addOn) => (
-          <SummaryRow
-            key={addOn.id}
-            label={
-              addOn.perGuest
-                ? `${addOn.label} × ${addOn.quantity}`
-                : addOn.label
-            }
-            value={money(addOn.total)}
-          />
-        ))}
         {appliedPromo && discount > 0 && (
           <SummaryRow label={`Promo ${appliedPromo.code} (−${appliedPromo.percent}%)`} value={`−${money(discount)}`} />
         )}
@@ -912,7 +850,7 @@ export function BookingCheckoutClient({
   // the Collapsible trigger and carries the total.
   const summaryCard = (
     <div
-      className={`rounded-[1.75rem] bg-white p-5 ring-1 ring-obsidian-900/[0.07] sm:p-6`}
+      className={`rounded-none bg-white p-5 ring-1 ring-obsidian-900/[0.07] sm:p-6`}
     >
       {isNarrow ? (
         <Collapsible
@@ -1135,7 +1073,7 @@ export function BookingCheckoutClient({
                 {isNarrow && <StackItem>{summaryCard}</StackItem>}
 
                 <StackItem size="fill">
-                  <div className="rounded-[1.75rem] bg-white p-5 ring-1 ring-obsidian-900/[0.07] sm:p-7">
+                  <div className="rounded-none bg-white p-5 ring-1 ring-obsidian-900/[0.07] sm:p-7">
                     <VStack gap={6}>
                       {confirmed ? confirmation : progress}
 
@@ -1311,24 +1249,6 @@ export function BookingCheckoutClient({
                               onChange={setCustomPickup}
                               placeholder="Airbnb address or room number"
                             />
-                            <Divider />
-                            <VStack gap={3}>
-                              <Text type="label">Add-ons</Text>
-                              {ADD_ONS.map((addOn) => (
-                                <CheckboxInput
-                                  key={addOn.id}
-                                  label={`${addOn.label} · ${money(addOn.price)}${addOn.perGuest ? " per guest" : ""}`}
-                                  description={addOn.description}
-                                  value={addOns[addOn.id]}
-                                  onChange={(checked) =>
-                                    setAddOns((current) => ({
-                                      ...current,
-                                      [addOn.id]: checked,
-                                    }))
-                                  }
-                                />
-                              ))}
-                            </VStack>
                             <TextArea
                               label="Special requests"
                               isOptional
@@ -1408,7 +1328,7 @@ export function BookingCheckoutClient({
                           </Card>
 
                           {canDeposit && !awaitingPayment && (
-                            <fieldset className="rounded-2xl bg-white p-4 ring-1 ring-obsidian-900/[0.07]">
+                            <fieldset className="rounded-none bg-white p-4 ring-1 ring-obsidian-900/[0.07]">
                               <legend className="px-1 text-sm font-semibold text-obsidian-900">How would you like to pay?</legend>
                               <div className="mt-2 grid gap-3 sm:grid-cols-2">
                                 {(

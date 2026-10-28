@@ -76,7 +76,7 @@ export default function AffiliatesPage() {
         <SectionHeading id="who-heading" eyebrow="Who we work with" title="Built around your guests" />
         <ul className="grid gap-6 md:grid-cols-3" data-stagger>
           {AUDIENCES.map(({ icon: Icon, title, text, points }) => (
-            <li key={title} className="flex flex-col rounded-[1.75rem] bg-white p-7 ring-1 ring-obsidian-900/[0.07]">
+            <li key={title} className="flex flex-col rounded-none bg-white p-7 ring-1 ring-obsidian-900/[0.07]">
               <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-summit-200 text-obsidian-900">
                 <Icon className="h-5 w-5" aria-hidden="true" />
               </span>

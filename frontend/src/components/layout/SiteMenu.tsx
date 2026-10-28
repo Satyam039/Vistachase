@@ -41,7 +41,7 @@ export const MENU_SECTIONS: MenuSection[] = [
   },
   {
     id: "about",
-    title: "About Vista Chase",
+    title: "About Us",
     links: [
       { title: "Our story", href: "/about-us" },
       { title: "Gallery", href: "/gallery" },

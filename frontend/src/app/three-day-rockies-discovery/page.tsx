@@ -325,7 +325,7 @@ export default function ThreeDayRockiesDiscoveryPage() {
                 {ITINERARY_DAYS.map((day) => (
                   <article
                     key={day.dayNumber}
-                    className="overflow-hidden rounded-[1.5rem] border border-obsidian-900/[0.08] bg-white p-6 sm:p-8 shadow-sm"
+                    className="overflow-hidden rounded-none border border-obsidian-900/[0.08] bg-white p-6 sm:p-8 shadow-sm"
                   >
                     <div className="border-b border-obsidian-900/[0.08] pb-4">
                       <span className="text-xs uppercase tracking-[0.24em] font-semibold text-ocean-600">
@@ -377,7 +377,7 @@ export default function ThreeDayRockiesDiscoveryPage() {
 
             {/* Inclusions and Exclusions */}
             <section aria-labelledby="inclusions-heading" className="grid gap-6 sm:grid-cols-2">
-              <div className="rounded-[1.5rem] bg-white p-6 sm:p-8 border border-obsidian-900/[0.08] shadow-sm">
+              <div className="rounded-none bg-white p-6 sm:p-8 border border-obsidian-900/[0.08] shadow-sm">
                 <h3 id="inclusions-heading" className="text-xl font-normal text-obsidian-900 flex items-center gap-2">
                   <Check className="h-5 w-5 text-green-600" />
                   <span>What’s Included</span>
@@ -392,7 +392,7 @@ export default function ThreeDayRockiesDiscoveryPage() {
                 </ul>
               </div>
 
-              <div className="rounded-[1.5rem] bg-white p-6 sm:p-8 border border-obsidian-900/[0.08] shadow-sm">
+              <div className="rounded-none bg-white p-6 sm:p-8 border border-obsidian-900/[0.08] shadow-sm">
                 <h3 className="text-xl font-normal text-obsidian-900 flex items-center gap-2">
                   <X className="h-5 w-5 text-slate-400" />
                   <span>What’s Not Included</span>
@@ -410,7 +410,7 @@ export default function ThreeDayRockiesDiscoveryPage() {
 
             {/* Pickup & Accommodation info */}
             <section className="space-y-6">
-              <div className="rounded-[1.5rem] bg-white p-6 sm:p-8 border border-obsidian-900/[0.08]">
+              <div className="rounded-none bg-white p-6 sm:p-8 border border-obsidian-900/[0.08]">
                 <h3 className="text-xl font-normal text-obsidian-900 flex items-center gap-2">
                   <MapPin className="h-5 w-5 text-ocean-600" />
                   <span>Pickup &amp; Drop-Off</span>
@@ -429,7 +429,7 @@ export default function ThreeDayRockiesDiscoveryPage() {
                 </p>
               </div>
 
-              <div className="rounded-[1.5rem] bg-white p-6 sm:p-8 border border-obsidian-900/[0.08]">
+              <div className="rounded-none bg-white p-6 sm:p-8 border border-obsidian-900/[0.08]">
                 <h3 className="text-xl font-normal text-obsidian-900 flex items-center gap-2">
                   <BedDouble className="h-5 w-5 text-ocean-600" />
                   <span>Accommodation</span>
@@ -444,7 +444,7 @@ export default function ThreeDayRockiesDiscoveryPage() {
             </section>
 
             {/* Important Guest Information */}
-            <section aria-labelledby="important-info-heading" className="rounded-[1.5rem] bg-white p-6 sm:p-8 border border-obsidian-900/[0.08]">
+            <section aria-labelledby="important-info-heading" className="rounded-none bg-white p-6 sm:p-8 border border-obsidian-900/[0.08]">
               <h3 id="important-info-heading" className="text-xl font-normal text-obsidian-900 flex items-center gap-2">
                 <Shield className="h-5 w-5 text-ocean-600" />
                 <span>Important Guest Information</span>
@@ -462,7 +462,7 @@ export default function ThreeDayRockiesDiscoveryPage() {
 
           {/* Sticky Booking / Request Sidebar */}
           <aside
-            className="rounded-[1.75rem] bg-obsidian-950 p-6 text-white sm:p-8 lg:sticky lg:top-[calc(var(--vc-header-h,80px)+24px)] shadow-xl border border-white/10"
+            className="rounded-none bg-obsidian-950 p-6 text-white sm:p-8 lg:sticky lg:top-[calc(var(--vc-header-h,80px)+24px)] shadow-xl border border-white/10"
             aria-label="Price and booking request"
           >
             <div className="border-b border-white/10 pb-5">

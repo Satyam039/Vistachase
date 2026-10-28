@@ -186,7 +186,16 @@ export interface CheckoutData {
   }[];
 }
 
+/** The days of a multi-day trip, known by its Day 1 reference (backend modules/bookings/trip.ts). */
+export interface BookingTrip {
+  title: string;
+  reference: string;
+  day: number;
+  days: { day: number; bookingReference: string; status: string | null; date: string | null; departureTime: string | null; title: string | null; voucherPath?: string }[];
+}
+
 export interface BookingDetail {
+  trip?: BookingTrip | null;
   id: string;
   bookingReference: string;
   voucherCode: string;

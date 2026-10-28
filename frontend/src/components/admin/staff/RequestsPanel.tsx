@@ -406,7 +406,7 @@ function ApproveCancelForm({
             <label
               key={o.value}
               htmlFor={`${pre}-${o.value}`}
-              className="flex cursor-pointer items-start gap-3 rounded-2xl border border-obsidian-900/10 bg-white px-4 py-3"
+              className="flex cursor-pointer items-start gap-3 rounded-none border border-obsidian-900/10 bg-white px-4 py-3"
             >
               <input
                 id={`${pre}-${o.value}`}

@@ -4,6 +4,7 @@
 // notes, Resend voucher and (managers only) Approve for a booking waiting for payment and the staff
 // cancellation with a recorded refund choice.
 
+import { TripSection, type AdminTrip } from "@/components/admin/staff/TripSection";
 import {
   useCallback,
   useEffect,
@@ -45,7 +46,7 @@ interface Flag {
   createdAt: string;
 }
 
-interface Detail extends Omit<BookingRow, "flags"> {
+interface Detail extends Omit<BookingRow, "flags" | "trip"> {
   adultsCount: number;
   childrenCount: number;
   infantsCount: number;
@@ -60,6 +61,9 @@ interface Detail extends Omit<BookingRow, "flags"> {
     createdAt: string;
   }[];
   flags: Flag[];
+  trip: AdminTrip | null;
+  confirmationEmailSentAt: string | null;
+  confirmationEmailError: string | null;
 }
 
 interface HistoryRow {
@@ -183,7 +187,7 @@ export function BookingDetail({
     setBusy(false);
     notify(
       res.ok
-        ? `Voucher sent to ${booking?.customerEmail ?? "the guest"}.`
+        ? `Voucher${booking && ["CONFIRMED", "COMPLETED"].includes(booking.status) ? " and PDF itinerary" : ""} sent to ${booking?.customerEmail ?? "the guest"}.`
         : errorOf(res.data, "Couldn't send the voucher."),
     );
     if (res.ok) await load();
@@ -313,6 +317,19 @@ export function BookingDetail({
                 <span className="block text-sm">{when(booking.createdAt)}</span>
               </Fact>
             </div>
+
+            <TripSection
+              reference={booking.bookingReference}
+              trip={booking.trip}
+              emailSentAt={booking.confirmationEmailSentAt}
+              emailError={booking.confirmationEmailError}
+              canLink={MANAGERS.includes(role)}
+              notify={notify}
+              onChanged={() => {
+                void load();
+                onChanged();
+              }}
+            />
 
             <Section title="Add-ons">
               {booking.items.length === 0 ? (

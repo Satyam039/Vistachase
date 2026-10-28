@@ -6,7 +6,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { CalendarDays, Handshake, LayoutDashboard, Lock, ArrowRight, MapPin, ScrollText, Search, Ticket, Truck, Users, Workflow } from "lucide-react";
+import { CalendarDays, Handshake, LayoutDashboard, Lock, ArrowRight, MapPin, MessageSquare, ScrollText, Search, Ticket, Truck, Users, Workflow } from "lucide-react";
 
 // Admin pages are for admins, operators and dispatchers only (src/lib/portals.ts). SEO and page
 // copy live in the separate SEO portal at /seo, which admins open from here.
@@ -20,6 +20,7 @@ export const ADMIN_TABS = [
   { label: "Operations", href: "/admin/operations", icon: Workflow, roles: OPS },
   { label: "Partners", href: "/admin/partners", icon: Handshake, roles: ["ADMIN"] },
   { label: "Pickup stops", href: "/admin/pickup-stops", icon: MapPin, roles: OPS },
+  { label: "Messages", href: "/admin/messages", icon: MessageSquare, roles: OPS },
   { label: "Audit log", href: "/admin/audit", icon: ScrollText, roles: ["ADMIN"] },
   { label: "Staff", href: "/admin/staff", icon: Users, roles: ["ADMIN"] },
 ];
@@ -103,7 +104,7 @@ export function AdminHeader({
 /** Signed-out / wrong-role prompt shared by the staff pages. */
 export function StaffSignIn({ body = "Sign in with your admin or dispatch account to continue." }: { body?: string }) {
   return (
-    <section className="flex flex-col items-start gap-5 rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:flex-row sm:items-center sm:justify-between sm:p-8">
+    <section className="flex flex-col items-start gap-5 rounded-none bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:flex-row sm:items-center sm:justify-between sm:p-8">
       <div className="flex items-start gap-4">
         <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-ocean-50 text-ocean-700">
           <Lock className="h-5 w-5" aria-hidden="true" />

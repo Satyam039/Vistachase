@@ -20,6 +20,8 @@ import { listFlags, markRefunded, OFFLINE_METHODS, quickBook, recordPayment, res
 import { approveBooking, approveCancellation, declineCancellation, listRequests } from "@/modules/admin/booking-requests";
 import { createDepartures, departureProducts, listDepartures, setDepartureStatus, updateDeparture } from "@/modules/admin/departure-admin";
 import { createStop, listStops, updateStop } from "@/modules/admin/pickup-admin";
+import { sendConfirmationEmail } from "@/modules/bookings/confirmation-email";
+import { linkTripBookings, tripOf, tripSummary } from "@/modules/bookings/trip";
 import { emailDeliveryConfigured, getEmailProvider } from "@/lib/email/email.provider";
 import { hashPassword } from "@/lib/auth/auth";
 import { ASSIGNABLE_ROLES, STAFF_LIST_ROLES } from "@/lib/auth/permissions";
@@ -213,7 +215,7 @@ router.patch("/enquiries/:id", async (req, res, next) => {
 const bookingSelect = {
   id: true, bookingReference: true, status: true, customerName: true, customerEmail: true, customerPhone: true,
   totalSeats: true, totalAmount: true, currency: true, pickupTime: true, pickupCustomText: true, specialRequests: true,
-  adminNotes: true, isBoarded: true, createdAt: true, bokunBookingId: true, tourDepartureId: true,
+  adminNotes: true, isBoarded: true, createdAt: true, bokunBookingId: true, tourDepartureId: true, priceSnapshot: true,
   flags: { where: { status: "OPEN" }, select: { id: true, type: true } },
   tourDeparture: { select: { date: true, departureTime: true, tour: { select: { title: true } }, shuttleRoute: { select: { name: true } } } },
 } as const;
@@ -240,7 +242,8 @@ router.get("/bookings", async (req, res, next) => {
       take: 100,
       select: bookingSelect,
     });
-    res.json({ success: true, bookings: bookings.map((b) => ({ ...b, totalAmount: b.totalAmount / 100 })) });
+    // trip: "Day 2 of 3" of a multi-day trip, known by its Day 1 reference (modules/bookings/trip.ts).
+    res.json({ success: true, bookings: bookings.map(({ priceSnapshot, ...b }) => ({ ...b, totalAmount: b.totalAmount / 100, trip: tripOf(priceSnapshot, b.bookingReference) })) });
   } catch (e) {
     next(e);
   }
@@ -272,6 +275,13 @@ router.post("/bookings/:id/resend-voucher", async (req, res, next) => {
   try {
     const booking = await prisma.booking.findUnique({ where: { id: String(req.params.id) } });
     if (!booking) return res.status(404).json({ success: false, error: "Booking not found" });
+    // A confirmed booking gets the full confirmation again, with the PDF itinerary of its trip.
+    if (booking.status === "CONFIRMED" || booking.status === "COMPLETED") {
+      const sent = await sendConfirmationEmail(booking.bookingReference, { force: true });
+      if (sent !== "sent") return res.status(502).json({ success: false, error: "The email couldn't be sent. The error is on the booking; try again shortly." });
+      await audit(req, "RESEND_VOUCHER", "Booking", booking.id, { withItinerary: true });
+      return res.json({ success: true });
+    }
     const link = voucherLink(booking.bookingReference);
     await getEmailProvider().sendEmail({
       to: booking.customerEmail,
@@ -281,6 +291,28 @@ router.post("/bookings/:id/resend-voucher", async (req, res, next) => {
     });
     await audit(req, "RESEND_VOUCHER", "Booking", booking.id, {});
     res.json({ success: true });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// Link bookings into one multi-day trip (a private multi-day tour booked day by day with Quick
+// Book): one reference, one confirmation email and one PDF itinerary for all days (trip.ts).
+const tripSchema = z.object({
+  references: z.array(referenceSchema).min(2).max(14),
+  title: z.string().trim().min(3).max(120),
+  notifyGuest: z.boolean().default(false),
+});
+
+router.post("/trips", requireStaff(MANAGERS), async (req, res, next) => {
+  try {
+    const body = parseOr400(tripSchema, req.body, res);
+    if (!body) return;
+    const linked = await linkTripBookings(body.references, body.title);
+    if ("error" in linked) return res.status(400).json({ success: false, error: linked.error });
+    for (const bookingId of linked.ids) await audit(req, "LINK_TRIP", "Booking", bookingId, { title: body.title, references: linked.references });
+    const email = body.notifyGuest ? await sendConfirmationEmail(linked.references[0], { force: true }) : null;
+    res.json({ success: true, reference: linked.references[0], references: linked.references, email });
   } catch (e) {
     next(e);
   }
@@ -298,9 +330,12 @@ router.get("/bookings/:id", async (req, res, next) => {
         items: { select: { name: true, price: true, quantity: true } },
         payments: { select: { id: true, amount: true, currency: true, provider: true, status: true, createdAt: true } },
         flags: { orderBy: { createdAt: "desc" } },
+        confirmationEmailSentAt: true,
+        confirmationEmailError: true,
       },
     });
     if (!booking) return res.status(404).json({ success: false, error: "Booking not found" });
+    const trip = tripOf(booking.priceSnapshot, booking.bookingReference);
     const history = await prisma.auditLog.findMany({
       where: { entityType: "Booking", entityId: booking.id },
       orderBy: { createdAt: "asc" },
@@ -311,6 +346,8 @@ router.get("/bookings/:id", async (req, res, next) => {
       success: true,
       booking: {
         ...booking,
+        priceSnapshot: undefined,
+        trip: trip ? await tripSummary(trip) : null,
         totalAmount: booking.totalAmount / 100,
         items: booking.items.map((i) => ({ ...i, price: i.price / 100 })),
         payments: booking.payments.map((p) => ({ ...p, amount: p.amount / 100 })),

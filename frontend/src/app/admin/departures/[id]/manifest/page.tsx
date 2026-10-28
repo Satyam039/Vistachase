@@ -108,13 +108,13 @@ export default function DepartureManifestPage() {
           </p>
         )}
         {state === "loading" && (
-          <div className="overflow-hidden rounded-[1.75rem] bg-white ring-1 ring-obsidian-900/[0.07]">
+          <div className="overflow-hidden rounded-none bg-white ring-1 ring-obsidian-900/[0.07]">
             <Loading />
           </div>
         )}
 
         {m && totals && (
-          <section aria-labelledby="manifest-heading" className="overflow-hidden rounded-[1.75rem] bg-white ring-1 ring-obsidian-900/[0.07] print:overflow-visible print:rounded-none print:ring-0">
+          <section aria-labelledby="manifest-heading" className="overflow-hidden rounded-none bg-white ring-1 ring-obsidian-900/[0.07] print:overflow-visible print:rounded-none print:ring-0">
             <div className="flex flex-wrap items-start justify-between gap-4 border-b border-obsidian-900/[0.06] px-6 py-5 print:px-0 print:py-2">
               <div>
                 <p className="hidden text-xs uppercase tracking-[0.2em] text-slate-700 print:block">Vista Chase · Passenger manifest</p>

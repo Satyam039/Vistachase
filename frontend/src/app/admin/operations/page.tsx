@@ -215,7 +215,7 @@ export default function OperationsPage() {
           <>
             <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Key figures">
               {(kpis.length ? kpis : [0, 1, 2, 3].map((i) => ({ label: String(i), value: "" }))).map((k, i) => (
-                <li key={k.label + i} className="rounded-[1.5rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07]">
+                <li key={k.label + i} className="rounded-none bg-white p-6 ring-1 ring-obsidian-900/[0.07]">
                   {kpis.length ? (
                     <>
                       <p className="text-sm text-slate-600">{k.label}</p>
@@ -228,7 +228,7 @@ export default function OperationsPage() {
               ))}
             </ul>
 
-            <section aria-labelledby="runs-heading" className="overflow-hidden rounded-[1.75rem] bg-white ring-1 ring-obsidian-900/[0.07]">
+            <section aria-labelledby="runs-heading" className="overflow-hidden rounded-none bg-white ring-1 ring-obsidian-900/[0.07]">
               <div className="flex items-center justify-between gap-3 border-b border-obsidian-900/[0.06] px-6 py-5">
                 <h2 id="runs-heading" className="text-xl text-obsidian-900">
                   Vehicle runs
@@ -360,7 +360,7 @@ export default function OperationsPage() {
         ref={dialog}
         onClose={() => setSelectedRunId(null)}
         aria-labelledby="manifest-title"
-        className="m-auto w-[calc(100%-2rem)] max-w-3xl overflow-hidden rounded-[1.75rem] bg-white p-0 text-obsidian-900 shadow-2xl backdrop:bg-obsidian-950/60 backdrop:backdrop-blur-sm"
+        className="m-auto w-[calc(100%-2rem)] max-w-3xl overflow-hidden rounded-none bg-white p-0 text-obsidian-900 shadow-2xl backdrop:bg-obsidian-950/60 backdrop:backdrop-blur-sm"
       >
         {selected && (
           <div className="flex max-h-[85vh] flex-col">

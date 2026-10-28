@@ -42,7 +42,7 @@ export function SharedTourStory() {
           {/* Left Column: Visual Storytelling Media */}
           <div className="lg:col-span-6 relative">
             <ScrollReveal delay={150} yOffset={24}>
-              <div className="relative aspect-[4/5] sm:aspect-[16/11] lg:aspect-[4/5] w-full rounded-3xl overflow-hidden shadow-2xl bg-slate-900 border border-black/10 group">
+              <div className="relative aspect-[4/5] sm:aspect-[16/11] lg:aspect-[4/5] w-full rounded-none overflow-hidden shadow-2xl bg-slate-900 border border-black/10 group">
                 <Image
                   src="/media/photos/moraine-lake-red-canoes.webp"
                   alt="Shared small group tour at Moraine Lake with red canoes"
@@ -59,7 +59,7 @@ export function SharedTourStory() {
                 </div>
 
                 {/* Bottom Overlay Summary */}
-                <div className="absolute bottom-6 left-6 right-6 p-6 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 text-white">
+                <div className="absolute bottom-6 left-6 right-6 p-6 rounded-none bg-white/10 backdrop-blur-md border border-white/15 text-white">
                   <span className="text-xs uppercase tracking-widest text-summit-300 font-semibold block mb-1">
                     Value &amp; Intimacy
                   </span>

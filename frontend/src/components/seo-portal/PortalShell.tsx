@@ -134,7 +134,7 @@ export function PortalShell({ children }: { children: ReactNode }) {
   if (state === "denied" || state === "error") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-obsidian-50 px-page">
-        <div className="w-full max-w-md rounded-[1.75rem] bg-white p-8 ring-1 ring-obsidian-900/[0.07]">
+        <div className="w-full max-w-md rounded-none bg-white p-8 ring-1 ring-obsidian-900/[0.07]">
           <h1 className="text-2xl font-light text-obsidian-900">{state === "denied" ? "No access to the SEO portal" : "Couldn't reach the SEO service"}</h1>
           <p className="mt-2 text-base text-slate-600">
             {state === "denied"
@@ -236,7 +236,7 @@ export function PortalShell({ children }: { children: ReactNode }) {
           <main id="seo-main" className="min-w-0 px-page py-8">
             <div className="mx-auto max-w-7xl space-y-6">
               {!me.seo.manage && (
-                <p className="rounded-2xl bg-white px-5 py-3 text-sm text-obsidian-700 ring-1 ring-obsidian-900/10">
+                <p className="rounded-none bg-white px-5 py-3 text-sm text-obsidian-700 ring-1 ring-obsidian-900/10">
                   {me.seo.editContent
                     ? "You're signed in as an editor: you can draft page and blog copy and work on tasks. Publishing, titles, URLs, redirects and settings stay with the SEO manager."
                     : "You're signed in as a viewer: you can see everything here but not change it."}
