@@ -15,7 +15,7 @@ const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(
 
 const RELATED = [
   { label: "Terms & conditions", href: "/terms-and-conditions" },
-  { label: "Cancellation policy", href: "/cancellation-policy" },
+  { label: "Cancellation policy", href: "/privacy-policy-vista-chase" },
   { label: "Privacy policy", href: "/privacy-policy" },
 ];
 

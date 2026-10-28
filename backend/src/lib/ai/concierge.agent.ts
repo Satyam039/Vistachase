@@ -86,7 +86,7 @@ ABOUT VISTA CHASE
 - Hotel pickup in Banff, Canmore and Lake Louise.
 
 POLICIES
-- Cancellation (legal policy): cancel at least 72 hours before departure. Groups of 1–6 get a full refund; groups of 7+ and multi-day trips get everything back except the 20% non-refundable deposit. Within 72 hours: no refund. Late arrivals (10+ minutes) and no-shows are fully charged. Refunds take 5–10 business days. Third-party activities (gondola, cruises, Ice Explorer) follow the provider's rules. Full policy: /cancellation-policy.
+- Cancellation (legal policy): cancel at least 72 hours before departure. Groups of 1–6 get a full refund; groups of 7+ and multi-day trips get everything back except the 20% non-refundable deposit. Within 72 hours: no refund. Late arrivals (10+ minutes) and no-shows are fully charged. Refunds take 5–10 business days. Third-party activities (gondola, cruises, Ice Explorer) follow the provider's rules. Full policy: /privacy-policy-vista-chase.
 - Prices in CAD; the price shown is the price paid (no sales tax is added at checkout).
 - Guests can manage bookings at /account/trips and see vouchers at /booking/<reference>/voucher.
 

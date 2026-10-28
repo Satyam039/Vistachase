@@ -158,7 +158,7 @@ behind the sticky header, traps). Report in `a11y-report/summary.md`. Keep it at
   HeroSearch → TrustRow → TopExperiences rail → categories bento → destinations StickyStory → proof →
   CTA; category = breadcrumb hero → stats strip → sticky sort bar → grid → TrustRow → other ways rail;
   product = breadcrumb/title/rating → ProductGallery mosaic → key facts → TourSections + sticky booking →
-  "You might also like" rail. Ratings and counts are always real catalog values. Cancellation is the legal 72-hour policy (`src/lib/policy.ts`; full text at `/cancellation-policy`, groups of 7+ and multi-day keep the 20% deposit, tickets follow the operator).
+  "You might also like" rail. Ratings and counts are always real catalog values. Cancellation is the legal 72-hour policy (`src/lib/policy.ts`; full text at `/privacy-policy-vista-chase`, groups of 7+ and multi-day keep the 20% deposit, tickets follow the operator).
 - Video: clips live in `backend/media/videos` (MP4 + `-poster.webp`, `-1080.mp4` for hero clips) and come
   from the API: `tour.videos` (clips of the places a tour visits) and `destination.heroVideo`. Play them only
   through `cinematic/AmbientVideo` (`src`, `srcHd`, `poster`): it loads when on screen, pauses off screen and
