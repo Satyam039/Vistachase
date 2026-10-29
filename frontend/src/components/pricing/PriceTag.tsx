@@ -11,6 +11,7 @@ export function PriceTag({
   tone = "light",
   size = "md",
   layout = "stacked",
+  noPriceLabel = "Price on request",
 }: {
   price: number | null | undefined;
   currency?: string;
@@ -22,6 +23,8 @@ export function PriceTag({
   size?: "sm" | "md" | "lg";
   /** inline: one line (struck price, offer price, unit), for compact bars. */
   layout?: "stacked" | "inline";
+  /** Shown when there is no price. */
+  noPriceLabel?: string;
 }) {
   const muted = tone === "dark" ? "text-slate-300" : "text-slate-600";
   const strong = tone === "dark" ? "text-white" : "text-obsidian-900";
@@ -30,7 +33,7 @@ export function PriceTag({
   if (!hasPrice(price)) {
     return (
       <p className={`${strong} ${size === "lg" ? "text-2xl" : "text-lg"} font-light`}>
-        Price on request
+        {noPriceLabel}
       </p>
     );
   }
