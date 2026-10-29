@@ -28,28 +28,24 @@ export function AnnouncementBar() {
 
   return (
     <aside aria-label="Announcement" className="vc-announce relative bg-obsidian-950 text-white">
-      <div className="mx-auto flex min-h-11 max-w-7xl items-center gap-3 py-0.5 pl-4 pr-1 text-sm lg:pl-9 lg:pr-5">
-        <Info className="hidden h-4 w-4 shrink-0 text-summit-400 sm:block" aria-hidden="true" />
-        <p className="min-w-0 flex-1 leading-snug text-white">
-          <span className="sm:hidden">Moraine Lake Road is closed to cars.</span>
-          <span className="hidden sm:inline">
-            <span className="hidden lg:inline">Planning to visit the lakes? </span>
-            Moraine Lake Road is closed to personal vehicles, and parking at Lake Louise is limited.{" "}
-            <span className="hidden text-white/75 xl:inline">Book your shuttle ahead and leave the driving to us.</span>
-          </span>{" "}
-          <Link href="/shuttles#departures" className="inline-flex items-center gap-1 whitespace-nowrap text-summit-300 underline decoration-summit-300/50 underline-offset-4 hover:decoration-summit-300">
-            <span className="sm:hidden">Pickups &amp; departures</span>
-            <span className="hidden sm:inline">View Pickups &amp; Departures</span>
-            <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+      {/* Owner's wording (doc, 2026-10-28): one short line in small type. */}
+      <div className="mx-auto flex min-h-9 max-w-7xl items-center gap-2.5 pl-4 pr-1 text-xs sm:text-[0.8125rem] lg:pl-9 lg:pr-5">
+        <Info className="hidden h-3.5 w-3.5 shrink-0 text-summit-400 sm:block" aria-hidden="true" />
+        <p className="min-w-0 flex-1 py-1 leading-snug text-white/90">
+          Moraine Lake Road is closed to private cars<span className="hidden sm:inline">; Lake Louise parking is limited. Book ahead.</span>
+          <span className="sm:hidden">.</span>{" "}
+          <Link href="/shuttles#departures" className="inline-flex items-center gap-1 whitespace-nowrap font-medium text-summit-300 underline decoration-summit-300/50 underline-offset-4 hover:decoration-summit-300">
+            View Departures
+            <ArrowRight className="h-3 w-3" aria-hidden="true" />
           </Link>
         </p>
         <button
           type="button"
           onClick={close}
           aria-label="Close announcement"
-          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white/80 hover:bg-white/10 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-summit-400"
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white/80 hover:bg-white/10 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-summit-400"
         >
-          <X className="h-4 w-4" aria-hidden="true" />
+          <X className="h-3.5 w-3.5" aria-hidden="true" />
         </button>
       </div>
     </aside>

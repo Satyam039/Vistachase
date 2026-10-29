@@ -345,7 +345,7 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
             {tour.rating.toFixed(1)}
             <span className="sr-only"> out of 5</span>
             <span className="text-slate-600">
-              · {tour.reviewCount >= 1000 ? `${tour.reviewCount.toLocaleString("en-CA")}+ reviews across TripAdvisor and Google` : `${tour.reviewCount} ${tour.reviewCount === 1 ? "review" : "reviews"}`}
+              · {tour.reviewCount >= 1000 ? `${tour.reviewCount.toLocaleString("en-CA")}+ reviews across Tripadvisor, Google & GetYourGuide` : `${tour.reviewCount} ${tour.reviewCount === 1 ? "review" : "reviews"}`}
             </span>
           </p>
         )}

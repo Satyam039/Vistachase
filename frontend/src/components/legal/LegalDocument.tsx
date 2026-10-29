@@ -5,7 +5,7 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
-export type LegalBlock = string | { list: string[] } | { sub: string };
+export type LegalBlock = string | { list: string[] } | { sub: string } | { table: { head: string[]; rows: string[][] } };
 export interface LegalSection {
   title: string;
   blocks: LegalBlock[];
@@ -19,7 +19,7 @@ const RELATED = [
   { label: "Privacy policy", href: "/privacy-policy" },
 ];
 
-export function LegalDocument({ title, intro, sections, current }: { title: string; intro?: string; sections: LegalSection[]; current: string }) {
+export function LegalDocument({ title, intro, updated, sections, current }: { title: string; intro?: string; updated?: string; sections: LegalSection[]; current: string }) {
   return (
     <div className="bg-obsidian-50 text-obsidian-900">
       <section aria-label="Introduction" className="border-b border-obsidian-900/[0.06] bg-white">
@@ -40,6 +40,7 @@ export function LegalDocument({ title, intro, sections, current }: { title: stri
             </ol>
           </nav>
           <h1 className="text-4xl font-light tracking-tight text-obsidian-900 sm:text-5xl">{title}</h1>
+          {updated && <p className="mt-3 text-sm text-slate-600">Last updated: {updated}</p>}
           {intro && <p className="mx-auto mt-4 max-w-3xl text-lg font-light leading-relaxed text-slate-700">{intro}</p>}
         </div>
       </section>
@@ -70,6 +71,37 @@ export function LegalDocument({ title, intro, sections, current }: { title: stri
                 {s.blocks.map((b, i) =>
                   typeof b === "string" ? (
                     <p key={i}>{b}</p>
+                  ) : "table" in b ? (
+                    <div key={i} className="overflow-x-auto">
+                      <table className="w-full border-collapse bg-white text-left text-sm ring-1 ring-obsidian-900/[0.07]">
+                        <thead>
+                          <tr className="border-b border-obsidian-900/10">
+                            {b.table.head.map((h) => (
+                              <th key={h} scope="col" className="px-3 py-3 font-medium text-obsidian-900 sm:px-4">
+                                {h}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {b.table.rows.map((row) => (
+                            <tr key={row[0]} className="border-b border-obsidian-900/[0.06] last:border-0">
+                              {row.map((cell, j) =>
+                                j === 0 ? (
+                                  <th key={j} scope="row" className="px-3 py-3 font-normal text-obsidian-900 sm:px-4">
+                                    {cell}
+                                  </th>
+                                ) : (
+                                  <td key={j} className="px-3 py-3 sm:px-4">
+                                    {cell}
+                                  </td>
+                                ),
+                              )}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   ) : "list" in b ? (
                     <ul key={i} className="list-disc space-y-1.5 pl-6 marker:text-ocean-600">
                       {b.list.map((li) => (

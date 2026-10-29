@@ -8,7 +8,7 @@ import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 const baseMetadata: Metadata = {
   title: "Banff & Jasper Activity Tickets | Gondola, Icefield, Lake Cruises | Vista Chase",
   description:
-    "Add the Banff Gondola, Open Top Touring, a Lake Minnewanka or Maligne Lake cruise, the Columbia Icefield Adventure or the Banff Upper Hot Springs to your Rockies trip. One request, timed around your Vista Chase tour.",
+    "Add the Banff Gondola, a Lake Minnewanka or Maligne Lake cruise, the Columbia Icefield Adventure or the Skywalk to your Rockies trip. One request, timed around your Vista Chase tour.",
   alternates: { canonical: "/banff-activity-tickets" },
 };
 

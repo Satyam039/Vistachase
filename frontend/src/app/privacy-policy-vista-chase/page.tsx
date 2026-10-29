@@ -1,6 +1,7 @@
-// Cancellation policy: the wording of the live vistachase.com cancellation policy page, at the same
-// URL it has on the Webflow site (/privacy-policy-vista-chase), so the indexed address keeps working
-// unchanged. /cancellation-policy, the easier address used in links and emails, redirects here.
+// Booking & Cancellation Policy: the owner's "Vista Chase General Terms Conditions and Privacy
+// Policy" document (October 28, 2026), word for word. It sits at the URL the policy has on the
+// Webflow site (/privacy-policy-vista-chase), so the indexed address keeps working unchanged.
+// /cancellation-policy, the easier address used in links and emails, redirects here.
 
 import type { Metadata } from "next";
 import { LegalDocument, type LegalSection } from "@/components/legal/LegalDocument";
@@ -8,109 +9,139 @@ import { withSeo } from "@/lib/seo/server";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 const baseMetadata: Metadata = {
-  title: "Cancellation Policy | Vista Chase",
-  description: "Vista Chase booking, payment and 72-hour cancellation policy, including group, multi-day and third-party terms.",
+  title: "Booking & Cancellation Policy | Vista Chase",
+  description:
+    "Vista Chase cancellation deadlines and refunds: shared tours and shuttles, private single-day tours and private multi-day packages, changes, no-shows and refund processing.",
   alternates: { canonical: "/privacy-policy-vista-chase" },
 };
 
 const SECTIONS: LegalSection[] = [
   {
-    title: "Booking process",
+    title: "1. Cancellation Summary",
     blocks: [
-      "We offer two simple ways to book your experience:",
-      { sub: "Instant Booking (Recommended)" },
-      "You can book directly through our website for fast, automatic confirmation. Just choose your tour, complete payment, and you'll receive your confirmation email instantly.",
-      { sub: "Custom Inquiry" },
-      "If you need a personalized plan, you can submit an inquiry or contact us directly. We'll prepare a detailed quote based on your preferred tour type, group size, and travel dates. Once you approve the quote and complete payment, we'll send your confirmed itinerary with all necessary details.",
-      "All prices are listed in Canadian Dollars (CAD) and include taxes unless specified otherwise.",
+      {
+        table: {
+          head: ["Booking type", "Cancellation deadline", "Refund"],
+          rows: [
+            ["Shared tours and shuttles", "At least 24 hours before departure", "Full refund"],
+            ["Private single-day tours", "At least 72 hours before departure", "Full refund"],
+            ["Private packages of two or more days", "At least 72 hours before the first tour starts", "80% refund; 20% non-refundable"],
+            ["Any booking cancelled after its deadline, or a no-show", "—", "No refund"],
+          ],
+        },
+      },
+      "For private multi-day packages, the non-refundable portion is 20% of the total package price, not 20% of an instalment.",
+      "If only the 20% deposit has been paid when an eligible multi-day cancellation is received, that deposit is retained and there is no payment to refund.",
+      "Separately identified optional activities may have their own cancellation conditions, as disclosed before purchase. The same amount will not be deducted twice.",
     ],
   },
   {
-    title: "Payment terms",
+    title: "2. How the Cutoff Is Calculated",
     blocks: [
-      "At checkout you can pay in full, or pay a 20% deposit to secure your date when the tour is more than 14 days away.",
-      "The remaining balance is due 14 days before the tour. Pay it any time from your voucher or My trips; we'll email you a reminder before it's due.",
-      "If you book within 14 days of the tour date, full payment is required.",
-      "If you pay with a deposit, the 20% deposit is non-refundable. Cancel 72 hours or more before the tour and everything else you've paid is refunded (80% of the total once it's paid in full).",
-      "We accept all major Credit card, Debit Card, Bank Transfer, and PayPal.",
-      "If your payment becomes overdue, we'll send reminders. If we don't hear from you, the reservation may be cancelled.",
-    ],
-  },
-  {
-    title: "Cancellation policy (applies to all bookings)",
-    blocks: [
-      "Vista Chase follows a simple, traveler-friendly 72-hour cancellation policy for most tours, with specific conditions for large groups:",
-      { sub: "For groups of 1–6 pax" },
-      { list: ["Full refund (including your deposit) for cancellations made 72 hours or more before the tour start time.", "No refund for cancellations made within 72 hours of the tour."] },
-      { sub: "For groups of 7+ pax" },
-      { list: ["Partial refund (total amount paid minus the 20% non-refundable deposit) for cancellations made 72 hours or more before the tour.", "No refund for cancellations made within 72 hours of the tour."] },
-      { sub: "Multi-day experience cancellation policy" },
+      "All deadlines use local Alberta time at the departure location.",
+      "The deadline is calculated from the scheduled start shown in your confirmation, not the calendar day alone.",
+      "For example:",
       {
         list: [
-          "A 20% deposit is required to confirm all multi-day experiences and is non-refundable under all circumstances.",
-          "For cancellations made 72 hours or more before the experience start time, guests will receive a refund of all amounts paid, excluding the 20% non-refundable deposit.",
-          "For cancellations made within 72 hours of the experience start time, no refund will be provided.",
+          "A shared tour starting at 8:00 AM on Friday must be cancelled by 8:00 AM on Thursday for a full refund.",
+          "A private tour starting at 8:00 AM on Friday must be cancelled by 8:00 AM on Tuesday to meet the 72-hour cutoff.",
         ],
       },
-      "This policy ensures we can manage our fleet and staffing commitments, as late cancellations for large groups prevent us from re-allocating our biggest vehicles to other travellers.",
+      "For private multi-day packages, the cutoff applies to the first tour day. It does not restart for each day of the package.",
     ],
   },
   {
-    title: "Late arrivals & no-shows",
+    title: "3. How to Cancel",
     blocks: [
-      "We do our best to accommodate all travelers, but we must also keep tours on schedule for the comfort of the entire group.",
-      { sub: "Pickup delays" },
-      "If you arrive 10 minutes or more late to your scheduled pickup point, it may be considered a No-Show, and no refund will be issued.",
-      { sub: "Shared tour stop delays" },
-      "During shared tours, timing is very important. If you return 15 minutes or more late at any tour stop:",
-      { list: ["The tour will continue for other guests.", "You will need to arrange your own transportation back to your accommodation."] },
-      "Weather and parking challenges are exempt from this rule; we understand these are beyond your control.",
+      "Online: Open “Manage Your Booking” using the link in your confirmation email. If a cancellation option is available, you can cancel directly online. The system will automatically apply the cancellation terms and refund eligibility for your booked product. Complete the cancellation process and retain the confirmation.",
+      "By email: Send your booking reference, lead guest’s name and a clear cancellation request to support@vistachase.com. The time your request reaches our inbox determines whether the deadline has been met, regardless of when our team replies.",
+      "The time your request reaches our designated inbox determines whether the deadline has been met. Eligibility does not depend on when our team replies.",
+      "You may call or message +1 (825) 734-9456 for assistance. If cancelling by phone, request written confirmation.",
+      "For reservations made through a travel platform or agent, submit your request through that provider using the terms accepted when booking.",
     ],
   },
   {
-    title: "Third-party activity policy",
+    title: "4. Changes to a Reservation",
     blocks: [
-      "Some experiences—such as gondolas, lake cruises, and Ice Explorer tours—are operated by third-party providers.",
-      "These activities follow their own cancellation rules, which may differ from ours. Availability and weather may affect your booking. We will always notify you as early as possible about any changes, and refunds for these items will follow the provider's policy.",
+      "Date, time, pickup, passenger and activity changes are subject to availability and any price difference.",
+      "Contact us as early as possible. A requested change is not confirmed until accepted by Vista Chase in writing.",
+      "A change request does not automatically extend a cancellation deadline or make a non-refundable amount refundable. Any additional conditions will be explained before you accept the change.",
     ],
   },
   {
-    title: "Changes to your booking",
+    title: "5. Late Arrivals, Missed Pickups and No-Shows",
     blocks: [
-      "We understand travel plans can shift. You may request changes up to 72 hours before the tour, and we will do our best to accommodate them. Changes include:",
-      { list: ["Adjusting tour dates", "Modifying activities", "Customizing the itinerary"] },
-      "Certain activities depend on availability and may have additional costs.",
-      "If weather affects road access or safety, we may adjust your itinerary or reschedule the experience.",
+      "Guests must be ready at their confirmed pickup point and time. Shared services may leave without late passengers, and seats on another departure are not guaranteed.",
+      "Failure to attend or complete the booked experience because of guest lateness or a no-show does not qualify for a refund.",
+      "The same requirement applies to scheduled meeting times during a tour. Contact us promptly if you are delayed.",
     ],
   },
   {
-    title: "Force majeure (events beyond our control)",
+    title: "6. Private Multi-Day Packages",
     blocks: [
-      "Sometimes unexpected events can impact travel. Vista Chase is not responsible for cancellations or changes caused by circumstances outside our control, such as:",
-      { list: ["Road or park closures", "Wildfires or flooding", "Extreme weather", "Government restrictions", "Natural disasters", "Airline or transportation disruptions"] },
-      "In these cases, we will work with you to reschedule your tour or offer partial refunds where possible, depending on provider policies.",
+      "The 20% non-refundable portion applies from booking confirmation, subject to applicable law and the operator-cancellation provisions below.",
+      "Once the package begins, unused days, early departures or activities voluntarily skipped by guests are not refundable.",
+      "Accommodation is arranged directly by guests. Hotel cancellation charges are governed by the accommodation provider’s terms.",
     ],
   },
-  { title: "Refund processing", blocks: ["All approved refunds are processed within 5–10 business days and returned to the original payment method."] },
   {
-    title: "Waivers & safety",
-    blocks: ["Some activities, such as hiking or adventure experiences, require signing a waiver. If a waiver is required and not signed, the activity will be cancelled without refund."],
-  },
-  {
-    title: "Travel insurance",
+    title: "7. Third-Party Activities",
     blocks: [
-      "We strongly recommend purchasing travel insurance that covers:",
-      { list: ["Trip cancellations", "Medical emergencies", "Weather disruptions", "Lost or delayed baggage"] },
-      "This provides extra peace of mind for your trip.",
+      "Optional attractions may include gondolas, cruises, canoe rentals, Ice Explorer and Skywalk experiences.",
+      "Any activity-specific cancellation deadline or non-refundable charge must be disclosed before purchase. Refunds for those separately identified items follow the applicable disclosed conditions and law.",
+      "Where a provider cancels an activity, we will explain the available alternatives and pass on any refund due to you.",
     ],
   },
   {
-    title: "Communication requirements",
+    title: "8. If Vista Chase Cancels",
     blocks: [
-      "To ensure your request is received on time, please send all cancellations or changes through:",
-      { list: ["support@vistachase.com", "+1 825-734-9456 (call or WhatsApp)"] },
-      "This helps us respond quickly and avoid miscommunication.",
+      "If Vista Chase cancels an entire experience before it starts, we will offer an alternative where available or a refund of amounts paid to us for that cancelled experience.",
+      "A guest-cancellation penalty, including a private package’s 20% non-refundable portion, will not be retained merely because Vista Chase cancels the entire service.",
+      "For a partially delivered package or materially disrupted itinerary, we will explain the alternatives and any refund for services not provided, taking account of applicable law and separately disclosed activity terms.",
     ],
+  },
+  {
+    title: "9. Weather, Closures and Delays",
+    blocks: [
+      "Rain, cloud, cold temperatures or disappointing visibility do not automatically qualify a guest for a refund when the service can operate safely.",
+      "We may adjust routes or stops for safety, weather, traffic, park restrictions or road closures. If we cancel the service, Section 8 applies.",
+      "If the tour operates but you cannot attend because of a flight cancellation or another personal travel disruption, the normal guest-cancellation rules apply, subject to applicable law.",
+    ],
+  },
+  {
+    title: "10. Refund Processing",
+    blocks: [
+      "Approved refunds are normally initiated within 5–10 business days to the original payment method. Your bank or payment provider may require additional time to display the credit.",
+      "Currency conversion and exchange-rate differences are controlled by the relevant payment provider.",
+    ],
+  },
+  {
+    title: "11. Payment Schedule",
+    blocks: [
+      "The required deposit, balance and payment deadlines are stated at checkout or in your written quotation.",
+      "A deposit payment does not change the cancellation deadline or the non-refundable portion stated for your booking.",
+    ],
+  },
+  {
+    title: "12. Travel Insurance and Statutory Rights",
+    blocks: [
+      "Consider travel insurance covering cancellation, medical needs and unexpected travel disruption.",
+      "Nothing in this policy limits rights or remedies that cannot legally be excluded.",
+    ],
+  },
+  {
+    // The document numbers this section 12 as well; numbered 13 here so the contents list reads in order.
+    title: "13. Agent-Made Reservations",
+    blocks: [
+      "For bookings made through an agent, contact the agent promptly to request cancellation or changes. The agent must submit the request to Vista Chase through the authorised booking system or designated contact channel.",
+      "Unless different terms were expressly agreed in writing, Vista Chase’s product-specific cancellation deadlines apply when the request reaches Vista Chase.",
+      "Refunds are returned through the original payment channel. Where an agent collected payment, the agent is responsible for communicating and processing any onward refund due to the guest.",
+      "Agent commissions and settlement arrangements are governed separately by the applicable partner agreement.",
+    ],
+  },
+  {
+    title: "Contact",
+    blocks: [{ list: ["Vista Chase — D Tourist Inc.", "support@vistachase.com", "+1 (825) 734-9456"] }],
   },
 ];
 
@@ -118,12 +149,13 @@ export default function CancellationPolicyPage() {
   return (
     <>
       <PageSeoExtras path="/privacy-policy-vista-chase" />
-    <LegalDocument
-      title="Cancellation policy"
-      intro="Cancel at least 72 hours before your tour for a refund. Here's exactly how deposits, groups, multi-day journeys and third-party activities work."
-      sections={SECTIONS}
-      current="/privacy-policy-vista-chase"
-    />
+      <LegalDocument
+        title="Booking & Cancellation Policy"
+        updated="October 28, 2026"
+        intro="This policy applies to reservations made directly with Vista Chase. Review the terms shown for your selected service before completing payment."
+        sections={SECTIONS}
+        current="/privacy-policy-vista-chase"
+      />
     </>
   );
 }
