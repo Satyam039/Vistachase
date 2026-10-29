@@ -195,6 +195,7 @@ CONTENT[PRIVATE_BANFF_YOHO.slug!] = {
     { label: "Entry fees", value: "Park admission included" },
     { label: "Pickup", value: "Doorstep pickup included" },
     { label: "Operation", value: "Year round · route varies by season" },
+    { label: "Group", value: "Up to 14 guests" },
   ],
   highlights: BANFF_YOHO.stops,
   inclusions: [...PRIVATE_INCLUSIONS, "Moraine Lake access arrangements during its operating season"],
@@ -211,6 +212,7 @@ CONTENT[PRIVATE_BANFF_YOHO.slug!] = {
     { time: "Evening", text: "Drop-off at your accommodation. The day runs about 10 to 12 hours, depending on your pace." },
   ],
   seasonal: [
+    "Price per vehicle, up to 14 guests: CAD $1,799 from June 1 to October 10, all-inclusive (tax, park entry and Moraine Lake entry fees); CAD $1,299 from October 11 to May 31.",
     "Moraine Lake: during its operating season (usually June to early October); access arrangements depend on your vehicle and are explained before booking.",
     "The route varies by season: your guide adjusts stops to road and weather conditions.",
     "Weather: mountain conditions change quickly, so dress in layers and wear comfortable shoes.",
@@ -233,6 +235,7 @@ CONTENT[PRIVATE_ICEFIELD.slug!] = {
   facts: [
     { label: "Entry fees", value: "Park admission included" },
     { label: "Pickup", value: "Doorstep pickup included" },
+    { label: "Group", value: "Up to 14 guests" },
   ],
   highlights: [...ICEFIELD.stops.filter((s) => !/ice explorer|skywalk/i.test(s)), "Columbia Icefield (Ice Explorer and Skywalk optional)"],
   inclusions: PRIVATE_INCLUSIONS,
@@ -249,8 +252,9 @@ CONTENT[PRIVATE_ICEFIELD.slug!] = {
     { time: "Evening", text: "Drop-off at your accommodation. Traffic, weather and road conditions can affect return times." },
   ],
   seasonal: [
-    "Ice Explorer and Skywalk: seasonal (summer), optional and at extra cost.",
-    "Outside that season the glacier activities don't run, and your guide adjusts the day's stops.",
+    "Price per vehicle, up to 14 guests: CAD $1,599 from June 1 to October 10; CAD $1,299 from October 11 to May 31.",
+    "Ice Explorer and Skywalk: June 1 to October 10, optional and at extra cost.",
+    "From October 11 to May 31 the glacier activities don't run, and the day visits Abraham Lake instead.",
     "Pack an extra warm layer for the Columbia Icefield.",
     "Wildlife sightings are possible but can't be guaranteed.",
   ],

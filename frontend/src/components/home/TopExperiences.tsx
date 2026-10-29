@@ -6,7 +6,8 @@
 // Each tab shows the same cards as its own page (owner's doc, 2026-10-28): Small-Group Tours =
 // the Shared Tours page's three options, Private Tours = the Private Tours page's first three,
 // Multi-Day Journeys = its last three, Lake Shuttles = the seven departures from the shuttle
-// timetable. Prices are live: each product's departures, the two-day packages both days less 10%.
+// timetable. Prices are live: each product's departures, the shared two-day package both days less
+// 10%. The private packages show the doc's per-day price (lib/privateTours.ts).
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
@@ -105,17 +106,13 @@ export function TopExperiences({ tours }: { tours: TourWithAvailability[] }) {
 
     const privateCard = (opt: PrivateTourOption): Card => {
       if (opt.slug && bySlug(opt.slug)) return tourCard(opt.slug, opt.title, opt.image)[0];
-      const twoDay =
-        opt.id === "two-day-rockies-private" && price("banff-private-tour") > 0 && price("icefields-jasper-private-tour") > 0
-          ? Math.floor((price("banff-private-tour") + price("icefields-jasper-private-tour")) * 0.9)
-          : 0;
       return {
         kind: "link",
         key: opt.id,
         href: opt.buttonHref,
         external: opt.isCustomPartner,
         image: opt.image,
-        badge: opt.isCustomPartner ? "By Banff Elite" : opt.priceNote ? "Private · Save 10%" : "Private tour",
+        badge: opt.isCustomPartner ? "By Banff Elite" : "Private tour",
         eyebrow: opt.suggestedStay,
         title: opt.title,
         facts: [
@@ -123,7 +120,7 @@ export function TopExperiences({ tours }: { tours: TourWithAvailability[] }) {
           { icon: Users, text: opt.transport },
         ],
         note: opt.isCustomPartner ? opt.activities : opt.pickup,
-        price: twoDay || opt.priceFrom,
+        price: opt.priceFrom,
         unit: "CAD/vehicle",
         noPrice: opt.isCustomPartner ? "Personalised quote" : "Price on request",
       };

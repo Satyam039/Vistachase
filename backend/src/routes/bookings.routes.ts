@@ -15,6 +15,7 @@ import { syncPendingPayments } from "@/modules/bookings/payment-sync";
 import { itineraryPdf, voucherPdf } from "@/modules/bookings/voucher-pdf";
 import { tripBookings, tripOf, tripSummary } from "@/modules/bookings/trip";
 import { emailSchema, parseOr400, referenceSchema, z } from "@/lib/security/validate";
+import { airportTransferSchema } from "@/modules/bookings/airport-transfer";
 
 const router = Router();
 
@@ -36,6 +37,7 @@ const createSchema = z.object({
   addOns: z.array(z.object({ id: z.string().max(40).optional(), name: z.string().max(120).optional() })).max(10).default([]),
   promoCode: z.string().trim().max(40).optional(),
   paymentPlan: z.enum(["FULL", "DEPOSIT"]).default("FULL"),
+  airportTransfer: airportTransferSchema.optional(),
 });
 
 router.post("/", rateLimitMiddleware("booking_create", { maxRequests: 5, windowSeconds: 60 }), async (req, res, next) => {

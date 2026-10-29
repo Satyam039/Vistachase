@@ -33,6 +33,13 @@ export const PRIVATE_INTRO = {
     "Paid activities are optional and selected at checkout, including the Banff Gondola, Ice Explorer, Columbia Icefield Skywalk and Spirit Island cruise.",
 };
 
+// Per-vehicle prices from the owner's doc (Pricing, 2026-10-29), CAD, up to 14 guests. Summer is
+// June 1 – October 10, winter October 11 – May 31. The day tours are charged from their departures
+// (backend scripts/seed-departures.ts and migration 9g_private_seasonal_prices); the packages are
+// booked on request, so their prices here are what the team quotes.
+export const PRIVATE_MAX_GUESTS = 14;
+export const PACKAGE_DAY_PRICE = { summer: 1599, winter: 1299 };
+
 export interface PrivateTourOption {
   id: string;
   slug?: string;
@@ -69,6 +76,7 @@ export const PRIVATE_OPTIONS: PrivateTourOption[] = [
     airportTransfers: "Available with 2+ Tour Days",
     priceFrom: 0,
     priceUnit: "per vehicle",
+    priceNote: "Jun 1–Oct 10: CAD $1,799, all-inclusive (tax, park and Moraine Lake entry). Oct 11–May 31: CAD $1,299. Up to 14 guests.",
     buttonLabel: "View Itinerary",
     buttonHref: "/banff-private-tour",
     image: "/media/photos/moraine-lake-reflection-morning.webp",
@@ -87,6 +95,7 @@ export const PRIVATE_OPTIONS: PrivateTourOption[] = [
     airportTransfers: "Available with 2+ Tour Days",
     priceFrom: 0,
     priceUnit: "per vehicle",
+    priceNote: "Jun 1–Oct 10: CAD $1,599. Oct 11–May 31: CAD $1,299, with Abraham Lake in place of the Icefield Adventure. Up to 14 guests.",
     buttonLabel: "View Itinerary",
     buttonHref: "/icefields-jasper-private-tour",
     image: "/media/photos/peyto-lake.webp",
@@ -103,9 +112,9 @@ export const PRIVATE_OPTIONS: PrivateTourOption[] = [
     activities: "Optional Activities at Checkout",
     airportTransfers: "Available with 2+ Tour Days",
     accommodation: "Booked Separately by customers on multi-day cards",
-    priceFrom: 0, // worked out from both private day tours' live prices, less 10% (PrivateToursLanding)
+    priceFrom: PACKAGE_DAY_PRICE.winter * 2,
     priceUnit: "per vehicle",
-    priceNote: "Save 10% when booking both days together",
+    priceNote: "CAD $1,599 per day Jun 1–Oct 10, $1,299 per day Oct 11–May 31. Up to 14 guests.",
     buttonLabel: "View Itinerary",
     buttonHref: "/contact-us?package=two-day-rockies-explorer-private",
     image: "/media/photos/moraine-lake-classic.webp",
@@ -123,8 +132,9 @@ export const PRIVATE_OPTIONS: PrivateTourOption[] = [
     activities: "Optional Activities at Checkout",
     airportTransfers: "Available with 2+ Tour Days",
     accommodation: "Booked Separately by customers on multi-day cards",
-    priceFrom: 0, // no confirmed price yet: shown as "Price on request"
+    priceFrom: PACKAGE_DAY_PRICE.summer * 3,
     priceUnit: "per vehicle",
+    priceNote: "CAD $1,599 per day. June 1 – October 10 only. Up to 14 guests.",
     buttonLabel: "View Itinerary",
     buttonHref: "/three-day-rockies-discovery",
     image: "/media/photos/bow-lake-dock-sunrise.webp",
@@ -142,8 +152,9 @@ export const PRIVATE_OPTIONS: PrivateTourOption[] = [
     activities: "Optional Activities at Checkout",
     airportTransfers: "Available with 2+ Tour Days",
     accommodation: "Booked Separately by customers on multi-day cards",
-    priceFrom: 0, // no confirmed price yet: shown as "Price on request"
+    priceFrom: PACKAGE_DAY_PRICE.summer * 4,
     priceUnit: "per vehicle",
+    priceNote: "CAD $1,599 per day. June 1 – October 10 only. Up to 14 guests.",
     buttonLabel: "View Itinerary",
     buttonHref: "/four-day-rockies-and-jasper",
     image: "/media/photos/spirit-island.webp",

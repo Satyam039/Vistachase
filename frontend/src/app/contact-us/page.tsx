@@ -49,16 +49,16 @@ export default async function ContactUsPage({ searchParams }: { searchParams: Pr
     packageMessage = TWO_DAY_PACKAGE.requestMessage;
   } else if (isTwoDayPrivate) {
     packageTitle = "Request the Private Two-Day Rockies Explorer";
-    packageSubtitle = "Tell us your preferred dates and party size. Our team confirms your private vehicle and driver-guide for both days with 10% off.";
-    packageMessage = "I'd like to book the Private Two-Day Rockies Explorer (Private Banff & Yoho + Columbia Icefield Adventure, 10% off).\nPreferred Day 1 date:\nPreferred Day 2 date:\nGroup size:\nWhere we're staying:";
+    packageSubtitle = "Tell us your preferred dates and party size. Our team confirms your private vehicle and driver-guide for both days, at CAD $1,599 per day (June 1 to October 10) or $1,299 per day (October 11 to May 31).";
+    packageMessage = "I'd like to book the Private Two-Day Rockies Explorer (Private Banff & Yoho + Columbia Icefield Adventure).\nPreferred Day 1 date:\nPreferred Day 2 date:\nGroup size:\nWhere we're staying:\nAirport transfer needed (yes/no):\nAirport arrival date and time:\nAirport departure date and time:";
   } else if (isThreeDay) {
     packageTitle = "Request the Three-Day Rockies Discovery";
     packageSubtitle = "Tell us your preferred dates and group size. Our team will coordinate your 3-day private itinerary, driver-guide, and vehicle.";
-    packageMessage = "I'd like to book the Three-Day Rockies Discovery (Private Banff, Yoho & Columbia Icefield Tour).\nPreferred start date:\nGroup size:\nWhere we're staying (Banff, Canmore, or Lake Louise):\nOptional activities of interest (Banff Gondola, Ice Explorer, Skywalk):";
+    packageMessage = "I'd like to book the Three-Day Rockies Discovery (Private Banff, Yoho & Columbia Icefield Tour).\nPreferred start date:\nGroup size:\nWhere we're staying (Banff, Canmore, or Lake Louise):\nOptional activities of interest (Banff Gondola, Ice Explorer, Skywalk):\nAirport transfer needed (yes/no):\nAirport arrival date and time:\nAirport departure date and time:";
   } else if (isFourDay) {
     packageTitle = "Request the Four-Day Rockies & Jasper";
     packageSubtitle = "Tell us your preferred dates, group size, and final drop-off location. Our team will tailor your 4-day journey across Banff, Yoho, and Jasper.";
-    packageMessage = "I'd like to book the Four-Day Rockies & Jasper Private Tour.\nPreferred start date:\nGroup size:\nLuggage count:\nFinal drop-off destination (Banff, Lake Louise, Canmore, or Calgary):\nOptional activities of interest:";
+    packageMessage = "I'd like to book the Four-Day Rockies & Jasper Private Tour.\nPreferred start date:\nGroup size:\nLuggage count:\nFinal drop-off destination (Banff, Lake Louise, Canmore, or Calgary):\nOptional activities of interest:\nAirport transfer needed (yes/no):\nAirport arrival date and time:\nAirport departure date and time:";
   }
 
   // "Book This Departure" on /shuttles when that departure isn't bookable online yet.

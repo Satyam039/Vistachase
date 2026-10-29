@@ -158,7 +158,10 @@ describe("paid booking flow", () => {
     await request(createApp()).post("/api/webhooks/stripe").set("Content-Type", "application/json").set("stripe-signature", header).send(payload);
     expect((await prisma.booking.findUniqueOrThrow({ where: { bookingReference: failed } })).status).toBe("CANCELLED");
 
-    expect(await expireUnpaidBookings(new Date(Date.now() + 31 * 60 * 1000))).toBeGreaterThanOrEqual(1);
+    // Back-date the payment window of this departure's unpaid bookings only: expiring "31 minutes
+    // from now" would also expire other test files' pending bookings running at the same time.
+    await prisma.booking.updateMany({ where: { tourDepartureId: departureId, status: "PENDING_PAYMENT" }, data: { paymentExpiresAt: new Date(Date.now() - 1000) } });
+    expect(await expireUnpaidBookings()).toBeGreaterThanOrEqual(1);
     expect((await prisma.booking.findUniqueOrThrow({ where: { bookingReference: abandoned } })).status).toBe("EXPIRED");
     // Seats still taken are exactly those of paid (confirmed) bookings.
     const paid = await prisma.booking.aggregate({ where: { tourDepartureId: departureId, status: "CONFIRMED" }, _sum: { totalSeats: true } });

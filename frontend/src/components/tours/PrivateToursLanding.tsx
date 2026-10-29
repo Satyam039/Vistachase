@@ -67,19 +67,14 @@ export function PrivateToursLanding({
     ...TRIPADVISOR_REVIEWS.filter((r) => r.tourSlug === "private-tours"),
   ];
 
-  // Prices are only what checkout charges: each day tour's live price, and for the two-day
-  // package both of them less 10%. Options without a confirmed price show "Price on request".
+  // Day tours show what checkout charges (their live departures); the packages, booked on request,
+  // show the doc's per-day price (lib/privateTours.ts).
   const livePrice = (slug: string) => {
     const match = tours.find((t) => t.slug === slug);
     return match ? fromPrice(match) : 0;
   };
   const getPrice = (opt: PrivateTourOption) => {
     if (opt.isCustomPartner) return 0;
-    if (opt.id === "two-day-rockies-private") {
-      const day1 = livePrice("banff-private-tour");
-      const day2 = livePrice("icefields-jasper-private-tour");
-      return day1 > 0 && day2 > 0 ? Math.floor((day1 + day2) * 0.9) : 0;
-    }
     if (opt.slug && livePrice(opt.slug) > 0) return livePrice(opt.slug);
     return opt.priceFrom;
   };
