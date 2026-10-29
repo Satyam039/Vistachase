@@ -111,7 +111,7 @@ enum InventorySource {
   UNVERIFIED // seeded or unknown: shown to no one and never sold until staff confirm it
 }
 
-// Future provider sync (outbox). Nothing writes these yet; see docs/BOOKING_ENGINE.md.
+// Provider sync state (Bókun, docs/BOKUN.md): written by src/modules/bokun/bokun-sync.ts.
 enum ExternalSyncStatus {
   NOT_REQUIRED
   PENDING
@@ -540,9 +540,9 @@ model BokunSyncLog {
   createdAt     DateTime @default(now())
 }
 
-// Outbox for a future provider sync (Bókun). One row per booking change to send; the unique
-// idempotencyKey (provider:booking:operation:version) stops duplicates. Nothing writes or sends
-// these until a separate, approved integration phase.
+// Outbox for the provider sync (Bókun, docs/BOKUN.md). One row per booking change to send; the
+// unique idempotencyKey (provider:booking:operation) stops duplicates. Written in the same
+// transaction as the booking's status change and sent by src/modules/bokun/bokun-sync.ts.
 model BookingSyncTask {
   id             String         @id @default(cuid())
   bookingId      String

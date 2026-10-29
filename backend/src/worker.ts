@@ -9,6 +9,8 @@
 //   every 5 minutes   SEO pages scheduled to publish go live
 //   04:00 Mountain    SEO audit of the live pages (docs/SEO.md)
 //   hourly (:20)      deposit bookings: balance reminders, staff flag 72h before (docs/DEPOSITS.md)
+//   every 2 minutes   website bookings and cancellations to Bókun (with BOKUN_* keys)
+//   every 15 minutes  Bókun's seats into our departures (with BOKUN_* keys; docs/BOKUN.md)
 //   every 5 minutes   T-60 WhatsApp tracking link to guests picked up within the hour (only with
 //                     WHATSAPP_PROVIDER=twilio or meta)
 
@@ -16,8 +18,9 @@ import "dotenv/config";
 import { Queue, Worker } from "bullmq";
 import IORedis from "ioredis";
 import prisma from "@/lib/db/prisma";
-import { expireHoldsAndUnpaidBookings, maturePartnerCommissions, publishScheduledSeoPages, reconcileBookings, remindUnpaidBalances, retryConfirmationEmails, runNightlySeoAudit, sendReviewRequests, sendT60WhatsApp, syncWebflowBlogPosts, whatsAppDeliveryConfigured } from "@/jobs/tasks";
+import { expireHoldsAndUnpaidBookings, maturePartnerCommissions, sendBookingsToBokun, syncSeatsFromBokun, publishScheduledSeoPages, reconcileBookings, remindUnpaidBalances, retryConfirmationEmails, runNightlySeoAudit, sendReviewRequests, sendT60WhatsApp, syncWebflowBlogPosts, whatsAppDeliveryConfigured } from "@/jobs/tasks";
 import { isWebflowSyncEnabled, webflowSyncMinutes } from "@/modules/seo/portal/webflow-sync";
+import { bokunConfigured } from "@/modules/bokun/config";
 
 const QUEUE = "vista-chase-jobs";
 const TZ = "America/Edmonton";
@@ -33,6 +36,8 @@ const JOBS: Record<string, () => Promise<unknown>> = {
   "balance-reminders": () => remindUnpaidBalances(),
   "confirmation-email-retry": () => retryConfirmationEmails(),
   "whatsapp-t60": () => sendT60WhatsApp(),
+  "bokun-bookings": () => sendBookingsToBokun(),
+  "bokun-seats": () => syncSeatsFromBokun(),
 };
 
 async function main() {
@@ -42,6 +47,13 @@ async function main() {
 
   await queue.upsertJobScheduler("expire-holds", { every: 5 * 60 * 1000 }, { name: "expire-holds" });
   await queue.removeJobScheduler("bokun-availability"); // retired Bókun sync, scheduled by older releases
+  if (bokunConfigured()) {
+    await queue.upsertJobScheduler("bokun-bookings", { every: 2 * 60 * 1000 }, { name: "bokun-bookings" });
+    await queue.upsertJobScheduler("bokun-seats", { every: 15 * 60 * 1000 }, { name: "bokun-seats" });
+  } else {
+    await queue.removeJobScheduler("bokun-bookings");
+    await queue.removeJobScheduler("bokun-seats");
+  }
   await queue.upsertJobScheduler("reconcile-bookings", { pattern: "0 2 * * *", tz: TZ }, { name: "reconcile-bookings" });
   await queue.upsertJobScheduler("review-requests", { pattern: "0 10 * * *", tz: TZ }, { name: "review-requests" });
   await queue.upsertJobScheduler("partner-commissions", { pattern: "0 3 * * *", tz: TZ }, { name: "partner-commissions" });

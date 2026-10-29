@@ -65,6 +65,16 @@ interface Detail extends Omit<BookingRow, "flags" | "trip"> {
   confirmationEmailSentAt: string | null;
   confirmationEmailError: string | null;
   emailDelivery?: boolean;
+  bokunBookingId?: string | null;
+  externalSyncStatus?: "NOT_REQUIRED" | "PENDING" | "SYNCED" | "FAILED";
+}
+
+/** Where the booking stands in Bókun (docs/BOKUN.md). */
+function bokunLabel(b: Pick<Detail, "bokunBookingId" | "externalSyncStatus">) {
+  if (b.bokunBookingId) return `In Bókun as ${b.bokunBookingId}`;
+  if (b.externalSyncStatus === "PENDING") return "On its way to Bókun";
+  if (b.externalSyncStatus === "FAILED") return "Not in Bókun: see its flag";
+  return null;
 }
 
 interface HistoryRow {
@@ -317,6 +327,11 @@ export function BookingDetail({
               <Fact label="Booked">
                 <span className="block text-sm">{when(booking.createdAt)}</span>
               </Fact>
+              {bokunLabel(booking) && (
+                <Fact label="Bókun">
+                  <span className="block text-sm">{bokunLabel(booking)}</span>
+                </Fact>
+              )}
             </div>
 
             <TripSection
