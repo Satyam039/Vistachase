@@ -1,8 +1,9 @@
 // Deposit payments (docs/DEPOSITS.md). At checkout the guest pays everything, or a 20% deposit
 // when the departure is at least 15 days away. The balance is due 14 days before departure (the published
 // payment terms) and is
-// paid from the voucher page. Cancelling at least 72 hours before departure refunds everything paid
-// except the deposit (80% of the total once it is paid in full). An unpaid balance never cancels a
+// paid from the voucher page. A deposit doesn't change the cancellation rules (cancellation-policy.ts):
+// an eligible cancellation refunds everything paid, less 20% of the total on a private multi-day
+// package (so a deposit alone is kept there). An unpaid balance never cancels a
 // booking by itself: guests get reminders, and staff get a PAYMENT_DUE flag 72 hours before.
 
 import type { Booking, Payment } from "@prisma/client";
@@ -42,10 +43,6 @@ export const paidCents = (payments: PaymentLike[]) => payments.filter((p) => p.s
 /** Balance still owed on a DEPOSIT booking (0 for FULL bookings and once paid). */
 export const balanceOwedCents = (booking: BookingLike, payments: PaymentLike[]) =>
   booking.paymentPlan === "DEPOSIT" ? Math.max(0, booking.totalAmount - paidCents(payments)) : 0;
-
-/** DEPOSIT plan refund on a cancellation inside the policy window: everything paid except the deposit. */
-export const depositPlanRefundCents = (booking: BookingLike, payments: PaymentLike[]) =>
-  Math.max(0, paidCents(payments) - (booking.depositAmount ?? 0));
 
 /** The payment summary the voucher page, My trips and the checkout show. Amounts in dollars. */
 export function paymentSummary(booking: BookingLike & Pick<Booking, "balanceDueAt" | "balancePaidAt">, payments: PaymentLike[]) {

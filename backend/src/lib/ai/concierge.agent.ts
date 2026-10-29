@@ -88,7 +88,7 @@ ABOUT VISTA CHASE
 - Hotel pickup in Banff, Canmore and Lake Louise.
 
 POLICIES
-- Cancellation (legal policy): cancel at least 72 hours before departure. Groups of 1–6 get a full refund; groups of 7+ and multi-day trips get everything back except the 20% non-refundable deposit. Within 72 hours: no refund. Late arrivals (10+ minutes) and no-shows are fully charged. Refunds take 5–10 business days. Third-party activities (gondola, cruises, Ice Explorer) follow the provider's rules. Full policy: /privacy-policy-vista-chase.
+- Cancellation (Booking & Cancellation Policy): shared tours and shuttles, full refund if cancelled at least 24 hours before departure; private single-day tours, full refund at least 72 hours before; private packages of two or more days, 80% refund at least 72 hours before the first tour day (20% of the total is non-refundable). After the deadline: no refund. Late arrivals (10+ minutes) and no-shows are fully charged. Refunds take 5–10 business days. Third-party activities (gondola, cruises, Ice Explorer) follow the provider's rules. Full policy: /privacy-policy-vista-chase.
 - Prices in CAD; the price shown is the price paid (no sales tax is added at checkout).
 - Guests can manage bookings at /account/trips and see vouchers at /booking/<reference>/voucher.
 
@@ -98,7 +98,7 @@ HOW TO HELP
 - Use web_search / web_fetch for live or general information (weather, road and trail conditions, Parks Canada passes and notices, wildlife, what to pack, things to do, travel logistics). Mention the source briefly.
 - Booking: find the tour and date (get_available_dates / check_availability), confirm guests and pickup, then collect the lead guest's name and email. Before calling hold_seats, restate tour, date, time, guests and price and get a clear yes. After the hold, tell them the seats are held for 10 minutes and to finish on the secure checkout link. You cannot take payment or confirm bookings yourself.
 - Never ask for or repeat card numbers, CVV or expiry. If someone shares payment details, tell them to use the secure checkout only.
-- Looking up, tracking or cancelling a booking needs the booking reference AND the email used to book. Cancel only after the guest clearly confirms, and remind them of the 72-hour policy first.
+- Looking up, tracking or cancelling a booking needs the booking reference AND the email used to book. Cancel only after the guest clearly confirms, and remind them of the cancellation deadline for their tour (24 hours for shared tours and shuttles, 72 hours for private tours) first.
 - Enquiry-only products (custom private tours, multi-day, tickets): explain what's included and point them to the "Request" button on the product page or /contact-us.
 - Answer the guest's latest question directly, using the whole conversation for context ("what about tomorrow?" means the tour already discussed). Don't repeat an earlier answer or fall back to a generic welcome.
 - Only state tour details, prices, times, availability and policies that come from this prompt or a tool result. If you don't have the information, say so plainly ("I don't have that information") instead of guessing.
@@ -198,7 +198,7 @@ const CUSTOMER_TOOLS: Anthropic.Tool[] = [
   {
     name: "cancel_booking",
     description:
-      "Cancel a booking (free up to 72h before departure). Only after the guest explicitly confirmed they want to cancel. Requires reference and booking email.",
+      "Cancel a booking (free up to 24h before departure for shared tours and shuttles, 72h for private tours; private packages refund 80%). Only after the guest explicitly confirmed they want to cancel. Requires reference and booking email.",
     input_schema: {
       type: "object",
       properties: {

@@ -429,7 +429,7 @@ export function PackageCheckout({
           )}
           <p className="mt-4 flex items-start gap-2 text-sm text-white/60">
             <Lock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-            One secure payment for both days. Each day can be cancelled for a full refund up to 72 hours before it starts.
+            One secure payment for both days. Each day can be cancelled for a full refund up to 24 hours before it starts.
           </p>
         </div>
       </aside>

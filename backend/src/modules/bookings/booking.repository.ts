@@ -29,7 +29,8 @@ import { referringAffiliateId } from "@/modules/affiliates/affiliate.repository"
 import { earnCommission, reverseCommissionForRefund } from "@/modules/affiliates/commission";
 import { sendCommissionEarnedEmail } from "@/modules/affiliates/partner-emails";
 import { checkinLink, signBookingLink, voucherLink } from "@/lib/security/signed-links";
-import { DEPOSIT_PERCENT, DEPOSIT_MIN_DAYS_BEFORE, depositPlanRefundCents, depositTerms, firstChargeCents, paymentSummary } from "@/modules/bookings/deposit";
+import { DEPOSIT_PERCENT, DEPOSIT_MIN_DAYS_BEFORE, depositTerms, firstChargeCents, paymentSummary } from "@/modules/bookings/deposit";
+import { policyDecision } from "@/modules/bookings/cancellation-policy";
 
 export interface CreateBookingInput {
   holdToken?: string;
@@ -549,15 +550,6 @@ export async function getBookingByReference(reference: string) {
   });
 }
 
-/**
- * Refund owed under the cancellation policy, in cents: full for 1–6 guests; for 7+ guests and
- * multi-day trips the 20% deposit is kept.
- */
-export function refundableAmount(paidCents: number, guests: number, category?: string | null) {
-  const keepsDeposit = guests >= 7 || category === "MULTIDAY";
-  return keepsDeposit ? Math.round(paidCents * 0.8) : paidCents;
-}
-
 /** Cancels a booking for its owner (the caller has already proved ownership). */
 export async function cancelBooking(reference: string, customerEmail?: string) {
   const booking = await prisma.booking.findUnique({
@@ -572,13 +564,13 @@ export async function cancelBooking(reference: string, customerEmail?: string) {
     return { success: false, error: "Booking is already cancelled" };
   }
 
-  // Policy (vistachase.com terms): cancel at least 72 hours before departure, in Mountain Time.
-  const departureAt = getMountainTimeInstant(booking.tourDeparture.date, booking.tourDeparture.departureTime);
-  const hoursLeft = (departureAt.getTime() - Date.now()) / 3_600_000;
-  if (hoursLeft < 72) {
+  // Booking & Cancellation Policy (cancellation-policy.ts): 24 hours for shared tours and shuttles,
+  // 72 for private tours (80% back on private packages), in Mountain Time.
+  const policy = await policyDecision(booking);
+  if (!policy.eligible) {
     return {
       success: false,
-      error: `Cancellation window closed. Bookings can be cancelled for a refund up to 72 hours before departure. This departure is in ${Math.max(0, Math.round(hoursLeft))} hours.`,
+      error: `Cancellation window closed. This booking can be cancelled for a refund up to ${policy.cutoffHours} hours before ${policy.keepPercent > 0 ? "the first tour day" : "departure"}; that is ${Math.max(0, Math.round(policy.hoursLeft))} hours away.`,
     };
   }
 
@@ -598,15 +590,12 @@ export async function cancelBooking(reference: string, customerEmail?: string) {
   let refundedCents = 0;
   let failedCents = 0;
   const failures: string[] = [];
-  // DEPOSIT plan: everything paid except the deposit, taken from the balance payment first.
-  let depositPlanBudget = booking.paymentPlan === "DEPOSIT" ? depositPlanRefundCents(booking, booking.payments) : 0;
+  // The policy refund, taken from the balance payment first (what is kept stays on the deposit).
+  let budget = policy.refundCents;
   const succeeded = booking.payments.filter((p) => p.status === "SUCCEEDED").sort((a, b) => (a.kind === "BALANCE" ? -1 : 0) - (b.kind === "BALANCE" ? -1 : 0));
   for (const payment of succeeded) {
-    let amount = refundableAmount(payment.amount, booking.totalSeats, booking.tourDeparture.tour?.category);
-    if (booking.paymentPlan === "DEPOSIT") {
-      amount = Math.min(payment.amount, depositPlanBudget);
-      depositPlanBudget -= amount;
-    }
+    const amount = Math.min(payment.amount, budget);
+    budget -= amount;
     if (amount <= 0) continue;
     try {
       const refund = await getPaymentProvider().refundPayment(payment.transactionId, amount, { bookingReference: booking.bookingReference });
@@ -655,7 +644,7 @@ export async function cancelBooking(reference: string, customerEmail?: string) {
           <p>Your booking <strong>${booking.bookingReference}</strong> for <strong>${escapeHtml(booking.tourDeparture.tour?.title || booking.tourDeparture.shuttleRoute?.name || "Vista Chase experience")}</strong> on ${formatDateOnly(booking.tourDeparture.date)} has been cancelled.</p>
           ${refundedCents > 0 ? `<p>We have refunded <strong>$${(refundedCents / 100).toFixed(2)} ${booking.currency}</strong> to your original payment method; it usually arrives within 5–10 business days.</p>` : ""}
           ${failedCents > 0 ? `<p>Your refund of <strong>$${(failedCents / 100).toFixed(2)} ${booking.currency}</strong> couldn't be sent automatically. Our team has been notified and will send it to your original payment method.</p>` : ""}
-          <p>${booking.paymentPlan === "DEPOSIT" ? `You paid with a ${DEPOSIT_PERCENT}% deposit, which is non-refundable; everything else you paid is refunded.` : "Bookings of 1–6 guests are refunded in full. For groups of 7 or more and multi-day trips, the 20% deposit is non-refundable."}</p>
+          <p>${policy.keepPercent > 0 ? `This is a private multi-day package: ${policy.keepPercent}% of the total price is non-refundable, and everything else you paid is refunded.` : "Cancelled within the policy deadline, so everything you paid is refunded."}</p>
           <p>Questions? Reply to this email or call +1 (825) 734-9456.</p>
         </div>`,
       text: `Your Vista Chase booking ${booking.bookingReference} is cancelled.${refundedCents > 0 ? ` Refund: $${(refundedCents / 100).toFixed(2)} ${booking.currency}.` : ""}`,

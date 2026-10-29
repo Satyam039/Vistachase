@@ -22,7 +22,7 @@ const AUDIENCES = [
     icon: Building,
     title: "Hotel concierge desks",
     text: "Moraine Lake is closed to private vehicles; our tours and shuttles have commercial access. Guests are picked up at their hotel.",
-    points: ["Pickup at more than 25 hotels in Banff, Canmore and Lake Louise", "Free cancellation up to 72 hours before", "Referral links with commission tracking"],
+    points: ["Pickup at more than 25 hotels in Banff, Canmore and Lake Louise", "Free cancellation up to 24 hours before on shared tours", "Referral links with commission tracking"],
   },
   {
     icon: Briefcase,

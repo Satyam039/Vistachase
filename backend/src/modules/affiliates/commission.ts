@@ -153,8 +153,8 @@ export async function reverseCommissionForRefund(bookingId: string, refundId: st
 }
 
 /**
- * Nightly: lines for tours whose date has passed become APPROVED (payable). The 72-hour
- * cancellation window has closed by then; any refund already reversed its share.
+ * Nightly: lines for tours whose date has passed become APPROVED (payable). The cancellation
+ * deadline has passed by then; any refund already reversed its share.
  */
 export async function approveMaturedCommissions(now = new Date()) {
   const today = dateOnly(todayInMountainTime(now));

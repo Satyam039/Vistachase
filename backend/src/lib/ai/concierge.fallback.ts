@@ -177,7 +177,7 @@ async function booking(name: "lookup_booking" | "track_vehicle", reference: stri
 }
 
 const POLICY =
-  "Cancel at least 72 hours before departure: groups of 1–6 get a full refund; groups of 7 or more and multi-day trips get everything back except the 20% non-refundable deposit. Within 72 hours, and for late arrivals or no-shows, there's no refund. Refunds take 5–10 business days, and activity tickets follow the provider's rules. You can request a cancellation from My trips (/account/trips). Full policy: /privacy-policy-vista-chase.";
+  "Shared tours and shuttles: full refund if you cancel at least 24 hours before departure. Private single-day tours: full refund at least 72 hours before. Private packages of two or more days: 80% refund at least 72 hours before the first tour day (20% of the total is non-refundable). After the deadline, and for late arrivals or no-shows, there's no refund. Refunds take 5–10 business days, and activity tickets follow the provider's rules. You can request a cancellation from My trips (/account/trips). Full policy: /privacy-policy-vista-chase.";
 
 const CAN_DO =
   "I can tell you about our tours and prices, check dates with free seats, find your hotel pickup, explain the cancellation policy, and look up a booking with its reference and email.";

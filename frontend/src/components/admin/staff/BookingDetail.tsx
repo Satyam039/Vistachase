@@ -95,7 +95,7 @@ const REFUNDS: {
   {
     value: "POLICY",
     label: "By the policy",
-    hint: "Full refund for 1–6 guests; groups of 7+ and multi-day tours keep the 20% deposit.",
+    hint: "Full refund, except private multi-day packages, which keep 20% of the total.",
   },
   {
     value: "FULL",

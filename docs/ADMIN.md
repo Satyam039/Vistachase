@@ -43,12 +43,13 @@ they don't need to be signed out. `/api/auth/me` also returns the database role.
 
 ## Cancelling and refunds
 
-Staff can cancel a pending, confirmed or unsynced booking at any time (the guest's own 72-hour limit
+Staff can cancel a pending, confirmed or unsynced booking at any time (the guest's own deadline
 doesn't apply). The seats go back on sale at once, exactly as for a guest cancellation.
 
 Refund choice:
 
-- **Policy**: full refund for 1–6 guests; the 20% deposit is kept for 7+ guests and multi-day trips.
+- **Policy**: the Booking & Cancellation Policy (`backend/src/modules/bookings/cancellation-policy.ts`): a full
+  refund, except private multi-day packages, which keep 20% of the total price.
 - **Full**: everything paid.
 - **None**: nothing (no-show, or money kept by agreement).
 
@@ -71,9 +72,10 @@ emailed too when `OPS_ALERT_EMAIL` or `ENQUIRIES_TO` is set). One open request p
 
 - **Approve cancellation** cancels the booking exactly like a staff cancellation (seats back on sale,
   refund recorded as owed or sent through the provider, guest emailed). **By the policy** follows the
-  guest's own rules as they stood when the guest asked: nothing back inside 72 hours of departure;
-  otherwise a full refund for 1–6 guests, the 20% deposit kept for groups of 7+ and multi-day trips,
-  and deposit bookings get back everything except the deposit ([DEPOSITS.md](DEPOSITS.md)).
+  guest's own rules as they stood when the guest asked: nothing back after the deadline (24 hours
+  before departure for shared tours and shuttles, 72 for private tours, 72 before Day 1 for private
+  packages); otherwise a full refund, or 80% of the total for a private multi-day package. A deposit
+  doesn't change this ([DEPOSITS.md](DEPOSITS.md)).
   **Full** and **None** are there for exceptions.
 - **Decline** keeps the booking; the reason is emailed to the guest and shown on My trips, and the
   guest may ask again.

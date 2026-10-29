@@ -6,7 +6,8 @@ import request from "supertest";
 import Stripe from "stripe";
 import prisma from "@/lib/db/prisma";
 import { createApp } from "@/app";
-import { createBooking, expireUnpaidBookings, refundableAmount } from "@/modules/bookings/booking.repository";
+import { createBooking, expireUnpaidBookings } from "@/modules/bookings/booking.repository";
+import { cancellationTerms, eligibleRefundCents, policyDecision } from "@/modules/bookings/cancellation-policy";
 import { setPaymentProviderForTests, type IPaymentProvider } from "@/lib/payment/payment.provider";
 import { priceBooking, promoPercent } from "@/modules/pricing/booking-pricing";
 import { dateOnly, timeOfDay } from "@/lib/utils/time";
@@ -78,10 +79,37 @@ describe("pricing", () => {
     process.env.NODE_ENV = env;
   });
 
-  it("keeps the 20% deposit for 7+ guests and multi-day trips", () => {
-    expect(refundableAmount(10000, 4, "SHARED")).toBe(10000);
-    expect(refundableAmount(10000, 7, "SHARED")).toBe(8000);
-    expect(refundableAmount(10000, 2, "MULTIDAY")).toBe(8000);
+  it("follows the Booking & Cancellation Policy per product type", () => {
+    expect(cancellationTerms("SHARED")).toEqual({ cutoffHours: 24, keepPercent: 0 });
+    expect(cancellationTerms("SHUTTLE")).toEqual({ cutoffHours: 24, keepPercent: 0 });
+    expect(cancellationTerms("PRIVATE")).toEqual({ cutoffHours: 72, keepPercent: 0 });
+    expect(cancellationTerms("PRIVATE", true)).toEqual({ cutoffHours: 72, keepPercent: 20 });
+    expect(cancellationTerms("MULTIDAY")).toEqual({ cutoffHours: 72, keepPercent: 20 });
+    // Group size no longer matters; a private package keeps 20% of the total, not of an instalment.
+    expect(eligibleRefundCents(10000, 10000, 0)).toBe(10000);
+    expect(eligibleRefundCents(10000, 10000, 20)).toBe(8000);
+    expect(eligibleRefundCents(2000, 10000, 20)).toBe(0);
+    expect(eligibleRefundCents(2000, 10000, 0)).toBe(2000);
+  });
+
+  it("measures the deadline from departure: 24 hours for shared tours, 72 for private, 80% back on packages", async () => {
+    const at = new Date("2028-06-10T12:00:00Z");
+    const booking = (category: string, hoursAhead: number) => {
+      const start = new Date(at.getTime() + hoursAhead * 3_600_000);
+      const mt = new Date(start.getTime() - 6 * 3_600_000); // MDT is UTC-6 in June
+      return {
+        bookingReference: "VC-POLICY",
+        totalAmount: 10000,
+        priceSnapshot: {},
+        payments: [{ status: "SUCCEEDED", amount: 10000 }],
+        tourDeparture: { date: dateOnly(mt.toISOString().slice(0, 10)), departureTime: timeOfDay(mt.toISOString().slice(11, 16)), tour: { category } },
+      };
+    };
+    expect((await policyDecision(booking("SHARED", 30), at)).refundCents).toBe(10000);
+    expect((await policyDecision(booking("SHUTTLE", 20), at)).refundCents).toBe(0);
+    expect((await policyDecision(booking("PRIVATE", 48), at)).refundCents).toBe(0);
+    expect((await policyDecision(booking("PRIVATE", 80), at)).refundCents).toBe(10000);
+    expect((await policyDecision(booking("MULTIDAY", 80), at)).refundCents).toBe(8000);
   });
 });
 

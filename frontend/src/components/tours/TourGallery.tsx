@@ -6,6 +6,7 @@
 //   → sticky sort bar with the result count → card grid → reassurance → guest reviews rail
 //   → FAQ (from the category's own tours) → other ways to explore
 
+import { cancellationTerms } from "@/lib/policy";
 import { useMemo, useState, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -114,15 +115,17 @@ export function TourGallery({
     return list;
   }, [sort, tours]);
 
-  // Tickets follow each operator's cancellation rules, so they don't get the 72-hour stat or the
-  // tour reassurance strip (small groups, lake access).
+  // Tickets follow each operator's cancellation rules, so they don't get the cancellation stat or
+  // the tour reassurance strip (small groups, lake access). Multi-day journeys refund 80%, so no
+  // "free cancellation" stat either.
   const isTickets = service?.id === "tickets";
+  const freeCancelHours = isTickets || service?.category === "MULTIDAY" ? null : cancellationTerms(service?.category).cutoffHours;
   const parks = new Set(tours.map((t) => t.destination.name)).size;
   const stats = [
     { value: String(tours.length), label: tours.length === 1 ? "experience" : "experiences" },
     ...(rating !== null ? [{ value: rating.toFixed(1), label: "average rating" }] : []),
     ...(reviewTotal > 0 ? [{ value: reviewTotal >= 1000 ? `${reviewTotal.toLocaleString("en-CA")}+` : String(reviewTotal), label: "guest reviews" }] : []),
-    ...(isTickets ? [] : [{ value: "72h", label: "free cancellation" }]),
+    ...(freeCancelHours ? [{ value: `${freeCancelHours}h`, label: "free cancellation" }] : []),
     ...(parks > 1 ? [{ value: String(parks), label: "national parks" }] : []),
   ].slice(0, 4);
   const others = SERVICES.filter((s) => s.id !== service?.id);

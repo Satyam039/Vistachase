@@ -145,11 +145,11 @@ describe("staff cancellation and refunds", () => {
     expect((await request(app).post(`/api/admin/flags/${flag.id}/mark-refunded`).set("Cookie", adminCookie).send({ reference: "ETR-5521" })).status).toBe(409);
   });
 
-  it("keeps the 20% deposit for groups of 7+ under the policy choice, and refunds nothing on NONE", async () => {
+  it("refunds a shared tour in full under the policy choice whatever the group size, and nothing on NONE", async () => {
     const { booking } = await paidBooking(2, 7);
     const res = await request(app).post(`/api/admin/bookings/${booking.id}/cancel`).set("Cookie", adminCookie).send({ reason: "Group changed plans", refund: "POLICY", notifyGuest: false });
     expect(res.body.paid).toBe(1050);
-    expect(res.body.refundOwed).toBe(840);
+    expect(res.body.refundOwed).toBe(1050);
 
     const { booking: other } = await paidBooking(3);
     const none = await request(app).post(`/api/admin/bookings/${other.id}/cancel`).set("Cookie", adminCookie).send({ reason: "No-show", refund: "NONE", notifyGuest: false });

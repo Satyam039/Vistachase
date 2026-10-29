@@ -16,8 +16,8 @@ import { getPaymentProvider } from "@/lib/payment/payment.provider";
 import { sendConfirmationEmail } from "@/modules/bookings/confirmation-email";
 import { formatDateOnly, formatTimeOfDay, getMountainTimeInstant } from "@/lib/utils/time";
 import { transitionBooking } from "@/modules/bookings/booking-status";
-import { confirmPaidBooking, createBooking, refundableAmount, type CreateBookingInput } from "@/modules/bookings/booking.repository";
-import { depositPlanRefundCents } from "@/modules/bookings/deposit";
+import { confirmPaidBooking, createBooking, type CreateBookingInput } from "@/modules/bookings/booking.repository";
+import { eligibleRefundCents, policyDecision } from "@/modules/bookings/cancellation-policy";
 import { earnCommission, reverseCommissionForRefund } from "@/modules/affiliates/commission";
 import { endBooking } from "@/modules/departures/inventory";
 
@@ -31,9 +31,6 @@ export const OFFLINE_PROVIDER = "offline";
 export function staffRefundsViaProvider() {
   return process.env.STAFF_REFUNDS_VIA_PROVIDER === "true";
 }
-
-/** A guest may cancel for a refund up to this many hours before departure (cancelBooking). */
-export const GUEST_CANCEL_HOURS = 72;
 
 export function hoursBeforeDeparture(departure: { date: Date; departureTime: Date }, at = new Date()) {
   return (getMountainTimeInstant(departure.date, departure.departureTime).getTime() - at.getTime()) / 3_600_000;
@@ -63,7 +60,7 @@ export interface StaffCancelInput {
   notifyGuest: boolean;
   /**
    * Set when staff approve a guest's cancellation request: POLICY then follows the guest's own
-   * rules as they stood when the guest asked (nothing back inside 72 hours of departure).
+   * rules as they stood when the guest asked (nothing back after the policy deadline).
    */
   requestedAt?: Date;
 }
@@ -80,13 +77,10 @@ export async function staffCancelBooking(bookingId: string, input: StaffCancelIn
 
   const paid = booking.payments.filter((p) => p.status === "SUCCEEDED");
   const paidCents = paid.reduce((sum, p) => sum + p.amount, 0);
-  // Policy refund: a DEPOSIT booking keeps its deposit; otherwise the group / multi-day rule.
-  const policyRefund =
-    input.requestedAt && hoursBeforeDeparture(booking.tourDeparture, input.requestedAt) < GUEST_CANCEL_HOURS
-      ? 0
-      : booking.paymentPlan === "DEPOSIT"
-        ? depositPlanRefundCents(booking, booking.payments)
-        : refundableAmount(paidCents, booking.totalSeats, booking.tourDeparture.tour?.category);
+  // Policy refund (cancellation-policy.ts): staff can cancel at any time, so only a guest's request
+  // is held to the deadline; otherwise the amount the rules keep (20% on private packages) stays.
+  const policy = await policyDecision(booking, input.requestedAt);
+  const policyRefund = input.requestedAt ? policy.refundCents : eligibleRefundCents(paidCents, booking.totalAmount, policy.keepPercent);
   const owed = input.refund === "NONE" ? 0 : input.refund === "FULL" ? paidCents : policyRefund;
 
   // The status move is the claim: a double-submitted cancel releases the seats once.

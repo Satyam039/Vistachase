@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Car, Check, CheckCircle2, Clock, MapPin, Plus, Star, X } from "lucide-react";
+import { cancellationSentence, cancellationShort } from "@/lib/policy";
 import type { TourSection, TourWithAvailability } from "@/lib/api/types";
 import { ReviewSlider } from "@/components/reviews/ReviewSlider";
 import { vehiclesFor } from "@/lib/vehicles";
@@ -317,17 +318,13 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
           <div className="space-y-3 rounded-none bg-emerald-50 p-6 text-base text-emerald-950 ring-1 ring-emerald-200">
             <p className="flex items-start gap-2.5 text-lg">
               <CheckCircle2 className="mt-1 h-5 w-5 shrink-0 text-emerald-700" aria-hidden="true" />
-              <span>
-                {tour.category === "MULTIDAY"
-                  ? "Cancel at least 72 hours before your trip for a refund of everything except the 20% non-refundable deposit."
-                  : "Cancel at least 72 hours before your tour for a full refund (groups of 1–6)."}
-              </span>
+              <span>{cancellationShort(tour.category)}.</span>
             </p>
             <ul className="list-disc space-y-1.5 pl-6">
-              {tour.category !== "MULTIDAY" && <li>Groups of 7 or more: the 20% deposit is non-refundable; the rest is refunded.</li>}
-              <li>Within 72 hours of the start time, cancellations aren&rsquo;t refunded.</li>
-              <li>Arriving 10 or more minutes late, or not showing up, is fully charged.</li>
-              <li>Approved refunds reach your original payment method within 5–10 business days.</li>
+              <li>{cancellationSentence(tour.category)}</li>
+              <li>The deadline is counted from the start time in your confirmation, in Alberta time.</li>
+              <li>Late arrivals, missed pickups and no-shows aren&rsquo;t refunded.</li>
+              <li>Approved refunds are normally sent to your original payment method within 5–10 business days.</li>
             </ul>
             <Link href="/privacy-policy-vista-chase" className="inline-flex min-h-11 items-center underline underline-offset-4">
               Read the full cancellation policy

@@ -6,7 +6,7 @@ import { CARD_BADGE, CARD_EYEBROW, CARD_PANEL, CARD_TITLE } from "@/components/c
 import { ArrowRight, CalendarDays, CheckCircle2, Clock, MapPin, Star, Users } from "lucide-react";
 import { PriceTag } from "@/components/pricing/PriceTag";
 import { hasPrice } from "@/lib/pricing";
-import { cancellationShort, SEATS_MESSAGE } from "@/lib/policy";
+import { cancellationBadge, cancellationShort, SEATS_MESSAGE } from "@/lib/policy";
 import type { TourWithAvailability } from "@/lib/api/types";
 import {
   CATEGORY_LABEL,
@@ -93,8 +93,7 @@ export function TourCard({
   const price = fromPrice(tour);
   const award = AWARD_BADGE[tour.slug];
   // Short visible form of the policy; screen readers get the full wording.
-  const cancelLabel =
-    tour.category === "TICKET" ? "Operator's cancellation rules" : tour.category === "MULTIDAY" ? "Flexible Cancellation" : "Free Cancellation Policy 72h";
+  const cancelLabel = cancellationBadge(tour.category);
   // Every tour and shuttle in the catalog picks up in Banff and Canmore; tickets have no pickup.
   const pickup = tour.category !== "TICKET";
 
