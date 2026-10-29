@@ -67,7 +67,7 @@ const SHUTTLE_FAQS = [
   },
   {
     q: "What is your cancellation policy for lake shuttles?",
-    a: "Shuttle reservations can be canceled for a 100% full refund up to 72 hours before your scheduled departure time. Bookings canceled within 72 hours are non-refundable as vehicle seating is reserved exclusively for your party.",
+    a: "Cancel at least 24 hours before your scheduled departure for a full refund. Cancellations after that, missed pickups and no-shows aren't refunded.",
   },
   {
     q: "What should I wear and bring on the shuttle?",

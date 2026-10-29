@@ -16,6 +16,7 @@
 import type { TourFaq, TourTab, TourWithAvailability } from "@/lib/api/types";
 import { BANFF_YOHO, ICEFIELD } from "@/lib/sharedTours";
 import { PRIVATE_FAQS, PRIVATE_OPTIONS } from "@/lib/privateTours";
+import { cancellationSentence } from "@/lib/policy";
 
 interface DocContent {
   title: string;
@@ -268,10 +269,22 @@ CONTENT[PRIVATE_ICEFIELD.slug!] = {
   ],
 };
 
+/**
+ * Any "cancellation policy" FAQ answers with the Booking & Cancellation Policy for the tour's
+ * category (lib/policy.ts), whatever older wording Admin → Content still holds.
+ */
+const POLICY_QUESTION = /cancell?ation (policy|terms)|refund policy/i;
+
+function withPolicyFaq(tour: TourWithAvailability): TourWithAvailability {
+  if (!tour.faqs.some((f) => POLICY_QUESTION.test(f.question))) return tour;
+  const answer = `${cancellationSentence(tour.category)} Refunds are normally sent within 5–10 business days.`;
+  return { ...tour, faqs: tour.faqs.map((f) => (POLICY_QUESTION.test(f.question) ? { ...f, answer } : f)) };
+}
+
 /** The tour with the owner's doc copy applied, when there is any for it. */
 export function withDocContent(tour: TourWithAvailability): TourWithAvailability {
   const c = CONTENT[tour.slug];
-  if (!c) return tour;
+  if (!c) return withPolicyFaq(tour);
 
   const factLabels = new Set(c.facts.map((f) => f.label.toLowerCase()));
   const facts = [
@@ -320,7 +333,7 @@ export function withDocContent(tour: TourWithAvailability): TourWithAvailability
     ...c.addFaqs,
   ];
 
-  return {
+  return withPolicyFaq({
     ...tour,
     title: c.title,
     summary: c.summary,
@@ -331,5 +344,5 @@ export function withDocContent(tour: TourWithAvailability): TourWithAvailability
     exclusions: c.exclusions,
     tabs,
     faqs,
-  };
+  });
 }

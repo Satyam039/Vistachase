@@ -49,7 +49,7 @@ import { QuantityInput } from "@/components/forms/QuantityInput";
 import { Dropdown } from "@/components/forms/Dropdown";
 import { PhoneField } from "@/components/forms/PhoneField";
 import { dialCode } from "@/lib/countries";
-import { balanceDueDate, DEPOSIT_PERCENT, DEPOSIT_POLICY, depositAvailable, depositFor, formatRockiesDate, SEATS_MESSAGE } from "@/lib/policy";
+import { balanceDueDate, cancellationShort, DEPOSIT_PERCENT, depositAvailable, depositFor, depositPolicy, formatRockiesDate, SEATS_MESSAGE } from "@/lib/policy";
 import { StripeCheckoutForm, stripeConfigured } from "@/components/booking/StripeCheckoutForm";
 import {
   CreditCard,
@@ -766,8 +766,7 @@ export function BookingCheckoutClient({
     />
   ) : (
     <Text type="supporting" color="secondary">
-      Free cancellation up to 72 hours before departure · Instant digital
-      boarding pass
+      {cancellationShort(departure.tour?.category ?? "SHUTTLE")} · Instant digital boarding pass
     </Text>
   );
 
@@ -1185,7 +1184,6 @@ export function BookingCheckoutClient({
                                 autoComplete="email"
                                 startIcon={Mail}
                                 placeholder="you@example.com"
-                                description="Your boarding pass and confirmation go here."
                                 status={fieldError(currentErrors.email)}
                               />
                               <PhoneField
@@ -1194,7 +1192,6 @@ export function BookingCheckoutClient({
                                 onCountryChange={setPhoneCountry}
                                 value={phoneLocal}
                                 onChange={setPhoneLocal}
-                                description="For pickup-day SMS updates."
                                 error={currentErrors.phone}
                               />
                             </FormLayout>
@@ -1362,7 +1359,7 @@ export function BookingCheckoutClient({
                                   </label>
                                 ))}
                               </div>
-                              {plan === "DEPOSIT" && <p className="mt-3 text-sm text-slate-600">{DEPOSIT_POLICY}</p>}
+                              {plan === "DEPOSIT" && <p className="mt-3 text-sm text-slate-600">{depositPolicy(departure.tour?.category ?? "SHUTTLE")}</p>}
                             </fieldset>
                           )}
 

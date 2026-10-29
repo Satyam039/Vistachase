@@ -1,16 +1,53 @@
-// Cancellation policy wording, from the vistachase.com legal terms (owner decision: the 72-hour
-// legal policy applies site-wide). Tickets follow the attraction operator's rules.
+// Booking & Cancellation Policy (owner's document, October 28, 2026; full text at
+// /privacy-policy-vista-chase). backend/src/modules/bookings/cancellation-policy.ts holds the same
+// rules and decides refunds:
+//   shared tours and shuttles: full refund up to 24 hours before departure
+//   private single-day tours: full refund up to 72 hours before departure
+//   private packages of two or more days: 80% refund up to 72 hours before the first day
+// Tickets follow the attraction operator's rules.
 
-export const CANCELLATION_SHORT = "Free cancellation up to 72 hours before";
+export const POLICY_URL = "/privacy-policy-vista-chase";
+
+export interface CancellationTerms {
+  cutoffHours: number;
+  /** Share of the total price kept on an eligible cancellation. */
+  keepPercent: number;
+}
+
+/** The rules for a product category; `multiDay` marks a private booking that is one day of a package. */
+export function cancellationTerms(category?: string | null, multiDay = false): CancellationTerms {
+  if (category === "SHARED" || category === "SHUTTLE") return { cutoffHours: 24, keepPercent: 0 };
+  if (category === "MULTIDAY" || (category === "PRIVATE" && multiDay)) return { cutoffHours: 72, keepPercent: 20 };
+  return { cutoffHours: 72, keepPercent: 0 };
+}
+
 export const TICKET_CANCELLATION_SHORT = "Cancellation follows the operator's rules";
 
-/** Multi-day journeys keep the 20% deposit (full terms on the tour page and /privacy-policy-vista-chase). */
-export const MULTIDAY_CANCELLATION_SHORT = "Refundable up to 72 hours before, less the 20% deposit";
+/** One short line, e.g. "Free cancellation up to 24 hours before". */
+export function cancellationShort(category?: string | null, multiDay = false) {
+  if (category === "TICKET") return TICKET_CANCELLATION_SHORT;
+  const t = cancellationTerms(category, multiDay);
+  return t.keepPercent > 0
+    ? `${100 - t.keepPercent}% refund up to ${t.cutoffHours} hours before the first day`
+    : `Free cancellation up to ${t.cutoffHours} hours before`;
+}
 
-export const cancellationShort = (category?: string) =>
-  category === "TICKET" ? TICKET_CANCELLATION_SHORT : category === "MULTIDAY" ? MULTIDAY_CANCELLATION_SHORT : CANCELLATION_SHORT;
+/** Compact card label, e.g. "Free cancellation 24h". */
+export function cancellationBadge(category?: string | null) {
+  if (category === "TICKET") return "Operator's cancellation rules";
+  const t = cancellationTerms(category);
+  return t.keepPercent > 0 ? `${100 - t.keepPercent}% refund up to ${t.cutoffHours}h` : `Free cancellation ${t.cutoffHours}h`;
+}
 
-export const CANCEL_WINDOW_HOURS = 72;
+/** The full rule as a sentence, for tour pages, vouchers and My trips. */
+export function cancellationSentence(category?: string | null, multiDay = false) {
+  if (category === "TICKET") return "Tickets follow the attraction operator's cancellation rules, shown before you book.";
+  const t = cancellationTerms(category, multiDay);
+  return t.keepPercent > 0
+    ? `Cancel at least ${t.cutoffHours} hours before the first tour day for an 80% refund; ${t.keepPercent}% of the total package price is non-refundable. No refund after that, or for a no-show.`
+    : `Cancel at least ${t.cutoffHours} hours before departure for a full refund. No refund after that, or for a no-show.`;
+}
+
 const ROCKIES_TZ = "America/Edmonton";
 
 /** A departure's real moment in time: dates and times are Mountain Time, whatever the device's zone. */
@@ -26,9 +63,9 @@ export function departureInstant(date: string, time = "08:00"): Date {
   return new Date(guess - (asMountain - guess));
 }
 
-/** Free cancellation is open until 72 hours before departure. */
-export const canCancelFree = (date: string, time?: string, now = new Date()) =>
-  departureInstant(date, time).getTime() - now.getTime() >= CANCEL_WINDOW_HOURS * 3600_000;
+/** Is the refund deadline for this booking still open? (Package days: pass Day 1's date and time.) */
+export const canCancelFree = (date: string, time?: string, category?: string | null, now = new Date()) =>
+  departureInstant(date, time).getTime() - now.getTime() >= cancellationTerms(category).cutoffHours * 3600_000;
 
 /** Customer-facing availability line for a bookable departure (premium brief, item 7). Shown only when
  * the backend reports seats open; never a count. Full departures keep their factual "Sold out". */
@@ -53,4 +90,6 @@ export const depositFor = (total: number) => Math.round((Math.round(total * 100)
 export const formatRockiesDate = (at: Date | string) =>
   new Date(at).toLocaleDateString("en-CA", { timeZone: ROCKIES_TZ, weekday: "short", month: "short", day: "numeric", year: "numeric" });
 
-export const DEPOSIT_POLICY = `The ${DEPOSIT_PERCENT}% deposit is non-refundable. Cancel up to 72 hours before departure and everything else you've paid is refunded.`;
+/** A deposit doesn't change the cancellation rules (policy section 11). */
+export const depositPolicy = (category?: string | null, multiDay = false) =>
+  `Paying a ${DEPOSIT_PERCENT}% deposit doesn't change the cancellation rules: ${cancellationSentence(category, multiDay).replace(/^C/, "c")}`;

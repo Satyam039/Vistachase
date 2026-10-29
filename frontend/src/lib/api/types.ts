@@ -235,7 +235,7 @@ export interface BookingDetail {
     date: string;
     departureTime: string;
     returnTime?: string | null;
-    tour: { title: string; slug?: string; featuredImage?: string; durationHours?: number } | null;
+    tour: { title: string; slug?: string; featuredImage?: string; durationHours?: number; category?: string } | null;
     shuttleRoute: { name: string } | null;
   };
 }

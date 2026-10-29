@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { DEPOSIT_POLICY, canCancelFree, departureInstant, formatRockiesDate } from "@/lib/policy";
+import { POLICY_URL, canCancelFree, cancellationSentence, cancellationShort, departureInstant, formatRockiesDate } from "@/lib/policy";
 import { useRouter } from "next/navigation";
 import {
   Calendar,
@@ -52,6 +52,7 @@ interface TripBooking {
       slug: string;
       image?: string;
       featuredImage?: string;
+      category?: string;
     };
     shuttleRoute?: {
       id: string;
@@ -137,9 +138,21 @@ export default function MyTripsPage() {
   const [cancellingLoading, setCancellingLoading] = useState(false);
   const [cancelMessage, setCancelMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [cancelReason, setCancelReason] = useState("");
-  // Instant cancel (INSTANT_SELF_CANCEL, 72+ hours out) or a request to staff.
-  const instantCancel =
-    !!cancellingBooking && INSTANT_SELF_CANCEL && canCancelFree(cancellingBooking.tourDeparture.date, cancellingBooking.tourDeparture.departureTime);
+  // Booking & Cancellation Policy for one booking: its category's deadline, measured from Day 1
+  // for a package, and whether it is a private package (80% back).
+  const policyOf = (b: TripBooking) => {
+    const category = b.tourDeparture.tour?.category ?? (b.tourDeparture.shuttleRoute ? "SHUTTLE" : undefined);
+    const first = (b.trip && bookings.find((x) => x.bookingReference === b.trip!.reference)) || b;
+    const multiDay = !!b.trip && category === "PRIVATE";
+    return {
+      category,
+      multiDay,
+      open: canCancelFree(first.tourDeparture.date, first.tourDeparture.departureTime, multiDay ? "MULTIDAY" : category),
+    };
+  };
+  const cancelPolicy = cancellingBooking ? policyOf(cancellingBooking) : null;
+  // Instant cancel (INSTANT_SELF_CANCEL, before the deadline) or a request to staff.
+  const instantCancel = !!cancelPolicy && INSTANT_SELF_CANCEL && cancelPolicy.open;
 
   useEffect(() => {
     checkAuthAndLoad();
@@ -522,7 +535,7 @@ export default function MyTripsPage() {
                               className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-red-200 bg-white px-5 text-sm text-red-700 transition-colors hover:border-red-700 hover:bg-red-700 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700"
                             >
                               <XCircle className="h-4 w-4" aria-hidden="true" />
-                              {INSTANT_SELF_CANCEL && canCancelFree(b.tourDeparture.date, b.tourDeparture.departureTime) ? "Cancel booking" : "Request cancellation"}
+                              {INSTANT_SELF_CANCEL && policyOf(b).open ? "Cancel booking" : "Request cancellation"}
                             </button>
                           )}
                         </div>
@@ -658,7 +671,7 @@ export default function MyTripsPage() {
                 See every trip in one place
               </h2>
               <ul className="mt-5 space-y-3 text-base text-white/85">
-                {["All your bookings and vouchers", "Pickup times as soon as they're set", "Cancel free up to 72 hours before", "Review your guide after the tour"].map(
+                {["All your bookings and vouchers", "Pickup times as soon as they're set", "Request cancellations online", "Review your guide after the tour"].map(
                   (t) => (
                     <li key={t} className="flex items-start gap-2.5">
                       <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-summit-400" aria-hidden="true" />
@@ -777,28 +790,22 @@ export default function MyTripsPage() {
                 <span className="font-mono">{cancellingBooking.bookingReference}</span> ·{" "}
                 {cancellingBooking.tourDeparture.tour?.title || "Vista Chase tour"} on {cancellingBooking.tourDeparture.date}
               </p>
-              {!canCancelFree(cancellingBooking.tourDeparture.date, cancellingBooking.tourDeparture.departureTime) && (
+              {cancelPolicy && !cancelPolicy.open && (
                 <p className="rounded-2xl bg-summit-100 p-4 text-sm text-obsidian-900">
-                  Your trip is less than 72 hours away, so the policy gives no refund. You can still ask: our team reviews every request.
+                  The cancellation deadline for this booking has passed, so the policy gives no refund. You can still ask: our team reviews every request.
                 </p>
               )}
-              <div className="rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-900">
-                <p className="text-base">
-                  {cancellingBooking.paymentPlan === "DEPOSIT" ? "Refund up to 72 hours before, minus the deposit" : "Free cancellation up to 72 hours before"}
-                </p>
-                {cancellingBooking.paymentPlan === "DEPOSIT" && (
+              {cancelPolicy && (
+                <div className="rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-900">
+                  <p className="text-base">{cancellationShort(cancelPolicy.category, cancelPolicy.multiDay)}</p>
                   <p className="mt-1">
-                    {DEPOSIT_POLICY} You&rsquo;ll get back ${Math.max(0, (cancellingBooking.amountPaid ?? 0) - (cancellingBooking.depositAmount ?? 0)).toFixed(2)}.
-                    Refunds take 5–10 business days.
+                    {cancellationSentence(cancelPolicy.category, cancelPolicy.multiDay)} Refunds take 5–10 business days.{" "}
+                    <a href={POLICY_URL} className="underline underline-offset-2">
+                      Full policy
+                    </a>
                   </p>
-                )}
-                {cancellingBooking.paymentPlan !== "DEPOSIT" && (
-                  <p className="mt-1">
-                    Groups of 1–6 get a full refund. For groups of 7 or more and multi-day journeys, the 20% deposit is non-refundable. Within 72 hours the
-                    booking can&rsquo;t be refunded. Refunds take 5–10 business days.
-                  </p>
-                )}
-              </div>
+                </div>
+              )}
               {!instantCancel && (
                 <div>
                   <label htmlFor="cancel-reason" className="mb-1.5 block text-sm text-slate-700">

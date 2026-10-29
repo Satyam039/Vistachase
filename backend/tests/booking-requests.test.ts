@@ -122,8 +122,10 @@ describe("guest cancellation requests", () => {
     expect((await request(app).post(`/api/admin/requests/${flag.id}/approve`).set("Cookie", adminCookie).send({ refund: "POLICY" })).status).toBe(409);
   });
 
-  it("a request inside 72 hours gets nothing back by the policy", async () => {
-    const { booking } = await book(1);
+  it("a private tour request inside its 72-hour deadline gets nothing back by the policy", async () => {
+    const { dep, booking } = await book(1);
+    const privateTour = await prisma.tour.findFirstOrThrow({ where: { category: "PRIVATE" } });
+    await prisma.tourDeparture.update({ where: { id: dep.id }, data: { tourId: privateTour.id } });
     expect((await requestCancellation(booking.bookingReference, "", customer.id)).status).toBe(201); // the route is rate limited
     const flag = await prisma.bookingFlag.findFirstOrThrow({ where: { bookingId: booking.id, type: "CANCEL_REQUEST" } });
     expect(flag.amountCents).toBe(0);

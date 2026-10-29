@@ -62,13 +62,16 @@ const GROUPS: { heading: string; links: FooterLink[] }[] = [
       { label: "Blogs", href: "/blog" },
       { label: "Partner program", href: "/partners" },
       { label: "Partner login", href: "/partners/login" },
+      { label: "Terms & Conditions", href: "/terms-and-conditions" },
+      { label: "Cancellation Policy", href: "/privacy-policy-vista-chase" },
       { label: "Contact us", href: "/contact-us" },
     ],
   },
 ];
 
 const PROMISES = [
-  { icon: CalendarCheck, text: "Free cancellation up to 72 hours before" },
+  // Booking & Cancellation Policy, per kind of booking (lib/policy.ts).
+  { icon: CalendarCheck, text: "Free cancellation: 24h shared tours & shuttles, 72h private tours" },
   { icon: ShieldCheck, text: "Parks Canada licensed commercial operator" },
   { icon: MapPin, text: "Hotel pickup in Banff, Canmore & Lake Louise" },
 ];

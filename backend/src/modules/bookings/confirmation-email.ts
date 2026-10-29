@@ -11,6 +11,7 @@
 // jobs runner retries it (retryFailedConfirmationEmails). Staff "Resend voucher" sends it again
 // on purpose (force).
 
+import { cancellationTerms, termsSentence } from "@/modules/bookings/cancellation-policy";
 import prisma from "@/lib/db/prisma";
 import { getEmailProvider } from "@/lib/email/email.provider";
 import { voucherLink } from "@/lib/security/signed-links";
@@ -89,10 +90,8 @@ export async function sendConfirmationEmail(reference: string, options: { force?
     const balance = total - paid;
     const deposit = live.find((b) => b.paymentPlan === "DEPOSIT");
     const dueBy = balance > 0 && deposit ? ` by ${balanceDueLabel(deposit.balanceDueAt)}` : "";
-    // The same policy lines as before this email carried the itinerary.
-    const policy = deposit
-      ? `The ${DEPOSIT_PERCENT}% deposit is non-refundable. Cancel up to 72 hours before departure and everything else you've paid is refunded.${balance > 0 ? " Pay the balance from your voucher." : ""}`
-      : "Free cancellation up to 72 hours before departure.";
+    // Booking & Cancellation Policy for this product (cancellation-policy.ts); a deposit doesn't change it.
+    const policy = `${termsSentence(cancellationTerms(lead.tourDeparture.tour?.category, multi))}${deposit && balance > 0 ? ` You paid a ${DEPOSIT_PERCENT}% deposit: pay the balance from your voucher.` : ""}`;
     const html = `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #1c1f23;">
         <h2 style="font-weight: normal;">Your booking is confirmed</h2>

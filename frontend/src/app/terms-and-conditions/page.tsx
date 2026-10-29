@@ -1,4 +1,7 @@
-// Terms & conditions: the wording of the live vistachase.com terms page.
+// General Terms & Conditions: the owner's "Vista Chase General Terms Conditions and Privacy Policy"
+// document (October 28, 2026), sections 1–22 and the contact block, word for word; section 10 also
+// shows the cancellation summary table from the policy, so the rules per tour type are here too. The Booking &
+// Cancellation Policy from the same document is at /privacy-policy-vista-chase.
 
 import type { Metadata } from "next";
 import { LegalDocument, type LegalSection } from "@/components/legal/LegalDocument";
@@ -7,207 +10,229 @@ import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 const baseMetadata: Metadata = {
   title: "Terms & Conditions | Vista Chase",
-  description: "The terms that govern the Vista Chase website, bookings and participation in our tours and services.",
+  description: "The terms that apply to bookings made directly with Vista Chase and to use of our website: bookings, payments, pickups, private and multi-day tours, cancellations and privacy.",
   alternates: { canonical: "/terms-and-conditions" },
 };
 
 const SECTIONS: LegalSection[] = [
   {
-    title: "1. Acceptance of terms",
+    title: "1. Bookings and Acceptance",
     blocks: [
-      "By using our website or booking a tour, you acknowledge that you have read, understood, and agree to these Terms, along with our Privacy Policy and Booking & Cancellation Policy.",
+      "The lead guest must be at least 18 and authorised to book for everyone in the reservation. They are responsible for providing accurate booking information and sharing the applicable terms, itinerary and pickup instructions with their group.",
+      "A booking is confirmed when we issue a confirmation. An enquiry or unaccepted quotation does not reserve a vehicle, guide or departure.",
+      "Any special arrangement must be confirmed by us in writing.",
     ],
   },
   {
-    title: "2. Eligibility",
-    blocks: ["To book with Vista Chase, you must be:", { list: ["At least 18 years old, or", "Under 18 with the consent of a legal guardian."] }, "By booking, you confirm you meet these requirements."],
+    title: "2. Prices and Payments",
+    blocks: [
+      "Prices are in Canadian dollars unless clearly stated otherwise.",
+      "Advertised tour and shuttle prices include applicable taxes and mandatory charges for the advertised service. Optional activities, upgrades and additional services are priced separately and shown before payment.",
+      "Private tours are priced per vehicle according to the selected vehicle capacity. Shared tours and shuttles are priced according to the passenger categories shown when booking.",
+      "Your checkout or written quotation states the payment required to confirm your booking and any balance due date. Failure to pay by the stated deadline may result in cancellation after notice.",
+    ],
   },
   {
-    title: "3. Use of website & services",
+    title: "3. Inclusions and Optional Activities",
     blocks: [
-      "Vista Chase grants you a non-exclusive, revocable license to use our website for personal, non-commercial purposes. You may not:",
+      "Your product page and booking confirmation identify what is included.",
+      "Unless expressly included, meals, accommodation, personal purchases and third-party activities are excluded.",
+      "Optional activities may include gondolas, lake cruises, canoe rentals, the Ice Explorer and Skywalk. Availability, admission requirements and operating conditions are determined by the activity provider. Selecting an activity does not make the rest of the experience private.",
+      "Accommodation is booked and paid for directly by guests unless we expressly agree otherwise in writing.",
+    ],
+  },
+  {
+    title: "4. Pickup, Timing and Return Arrangements",
+    blocks: [
+      "Guests must attend the pickup location at the confirmed time. Shared tours and shuttles operate to coordinated schedules and may depart without late passengers.",
+      "A booking does not provide an automatic grace period or guarantee a seat on a later departure.",
+      "Guests must also return to the designated meeting point at each stop by the time provided. Contact us promptly if you are delayed. Any assistance or alternative transportation is subject to availability and may involve additional cost.",
+      "Travel and return times are estimates. Allow flexibility for traffic, weather, road conditions and other delays. Discuss flights or other time-sensitive connections with us before booking.",
+      "Shuttle tickets do not include parking permission unless expressly stated. Samson Mall is a pickup point, not a park-and-ride facility for our guests.",
+    ],
+  },
+  {
+    title: "5. Private and Multi-Day Experiences",
+    blocks: [
+      "Private bookings provide a vehicle and driver-guide for your booked group during the agreed service periods.",
+      "We aim to accommodate reasonable preferences within the booked route, available time and operating conditions. A private booking does not provide unlimited vehicle use, unrestricted access or unlimited changes.",
+      "Guide assignments are normally made the day before departure. We aim to retain the same guide for multi-day bookings, but availability or operational circumstances may require a change. Requests for specific guides cannot be guaranteed.",
+      "Guests are responsible for booking suitable accommodation along their confirmed route. Airport transfers are included only when expressly shown in the booking confirmation; otherwise, they must be arranged and paid for separately.",
+    ],
+  },
+  {
+    title: "6. Seasonal Access and Itinerary Changes",
+    blocks: [
+      "Routes, stops and activities may change because of weather, road or park closures, safety concerns, wildlife restrictions, traffic or third-party availability.",
+      "Moraine Lake visits depend on seasonal access and operating conditions. Transportation arrangements may differ by vehicle option and may involve a shuttle transfer.",
+      "We may change the order of stops or provide reasonable alternatives. Wildlife sightings, sunrise visibility, clear mountain views and particular lake colours are not guaranteed.",
+      "Material changes or cancellations will be handled under our cancellation policy and applicable law.",
+    ],
+  },
+  {
+    title: "7. Guest Responsibilities and Safety",
+    blocks: [
+      "Guests must follow driver instructions, seatbelt requirements, park rules, wildlife guidance and activity-provider requirements.",
+      "Tell us before booking about mobility needs, required child restraints, significant luggage or equipment, and assistance needed to participate. We will discuss whether the selected service can accommodate those requirements.",
+      "Children must be accompanied and supervised by a responsible adult. Guests must use appropriate footwear and clothing for the conditions.",
+      "Unsafe, abusive, discriminatory or seriously disruptive behaviour may result in refusal or termination of service. Consumption of alcohol, smoking, vaping and recreational drug use are prohibited in our vehicles. Guests must not participate while impaired.",
+      "Any removal will be managed with reasonable attention to safety. Refund eligibility depends on the circumstances and applicable law.",
+    ],
+  },
+  {
+    title: "8. Outdoor Activities and Personal Belongings",
+    blocks: [
+      "Mountain travel can involve changing weather, uneven ground, slippery paths and other natural hazards. Participate within your abilities and follow safety instructions.",
+      "Some activities require a separate waiver. Any required waiver should be reviewed before purchasing the activity.",
+      "Keep valuables, medication and essential clothing with you. Vehicles may leave sightseeing locations between scheduled pickups. Our responsibility for lost or damaged property is determined by applicable law; nothing here excludes liability that cannot legally be excluded.",
+    ],
+  },
+  {
+    title: "9. Third-Party Providers",
+    blocks: [
+      "Independent providers operate certain attractions, payment services and booking platforms.",
+      "Activity-specific restrictions and cancellation conditions will be disclosed before purchase where they affect your booking. We will assist with relevant changes or refund requests, but cannot guarantee an independent provider’s availability or performance.",
+      "Nothing in these terms removes Vista Chase’s responsibility for its own services or your statutory rights.",
+    ],
+  },
+  {
+    title: "10. Cancellation and Refunds",
+    blocks: [
+      "Our Booking & Cancellation Policy forms part of these terms.",
+      {
+        table: {
+          head: ["Booking type", "Cancellation deadline", "Refund"],
+          rows: [
+            ["Shared tours and shuttles", "At least 24 hours before departure", "Full refund"],
+            ["Private single-day tours", "At least 72 hours before departure", "Full refund"],
+            ["Private packages of two or more days", "At least 72 hours before the first tour starts", "80% refund; 20% non-refundable"],
+            ["Any booking cancelled after its deadline, or a no-show", "—", "No refund"],
+          ],
+        },
+      },
+      "The policy displayed and accepted when booking applies to that reservation. A later website update does not retrospectively reduce an existing booking’s refund rights.",
+      "Reservations through another platform follow the terms disclosed and accepted on that platform.",
+    ],
+  },
+  {
+    title: "11. Website Content and Intellectual Property",
+    blocks: [
+      "Website text, photographs, branding and other materials are owned by or licensed to their respective rights holders.",
+      "You may use the website to research and book services. Unauthorised commercial reproduction, fraudulent use, interference with security or disruption of the website is prohibited.",
+    ],
+  },
+  {
+    title: "12. Bookings Through Agents and Affiliates",
+    blocks: [
+      "An agent making a reservation on behalf of guests must have authority to do so and must provide the guests with the applicable itinerary, inclusions, exclusions, pickup instructions and cancellation terms before confirming the booking.",
+      "Agents must accurately represent Vista Chase services. Changes to prices, inclusions, refund rights or other promises made by an agent do not bind Vista Chase unless we have expressly accepted them in writing.",
+      "The booking confirmation identifies the service purchased. Any separate agreement between Vista Chase and an authorised agent governs their commercial relationship.",
+      "Referral affiliates do not have authority to confirm reservations, collect payments on our behalf or change our terms unless expressly authorised in writing.",
+    ],
+  },
+  {
+    title: "13. Liability and Your Rights",
+    blocks: [
+      "We will provide our services with reasonable care and skill. Nothing in these terms excludes or limits rights, remedies or liability that cannot lawfully be excluded or limited. Guests remain responsible for following reasonable safety instructions and arranging suitable personal travel insurance.",
+    ],
+  },
+  {
+    title: "14. Events Outside Our Control",
+    blocks: [
+      "Severe weather, wildfires, road closures, government restrictions and other events outside our reasonable control may affect services.",
+      "We will communicate material disruptions as soon as reasonably possible. Cancellation, rescheduling and refund arrangements follow our cancellation policy and applicable law.",
+    ],
+  },
+  {
+    title: "15. Privacy: Information We Collect",
+    blocks: [
+      "We collect personal information reasonably needed to respond to enquiries, manage bookings and deliver services. Depending on your interaction, this may include:",
       {
         list: [
-          "Use the website for unlawful or fraudulent activities",
-          "Scrape, copy, or extract data",
-          "Use automated bots or harvesting tools",
-          "Attempt to disrupt website functionality",
-          "Reproduce or distribute any content without permission",
+          "Name, contact details and booking reference.",
+          "Passenger numbers, relevant ages and vehicle requirements.",
+          "Pickup addresses, accommodation details and flight information.",
+          "Travel preferences and requested activities.",
+          "Accessibility or health information you choose to provide for assistance or safety.",
+          "Payment status, transaction references and billing information.",
+          "Communications with our team.",
+          "Website device, cookie and usage information, which may constitute personal information.",
         ],
       },
-      "All website content is the property of Vista Chase.",
+      "Please provide information about other travellers only with appropriate authority.",
     ],
   },
   {
-    title: "4. Booking & payment process",
+    title: "16. Privacy: How Information Is Used and Shared",
     blocks: [
-      "Booking custom experiences follow these steps:",
-      {
-        list: [
-          "Inquiry: Submit a form or contact us directly.",
-          "Quote: We send a customized experience proposal.",
-          "Approval: You confirm the tour details and pricing.",
-          "Payment: Pay via credit card, e-transfer, or PayPal.",
-          "Confirmation: You receive a confirmed itinerary and instructions.",
-        ],
-      },
-      "For full details, refer to our Booking & Cancellation Policy.",
+      "We use information to administer reservations, coordinate guides and transportation, arrange requested activities, communicate service updates, process payments and refunds, and meet legal obligations.",
+      "Relevant information may be shared with assigned drivers, guides, activity providers and service providers supporting bookings, payments, communications and website operations. We limit sharing to what is reasonably needed.",
+      "We do not sell personal information or provide it to other organisations for their unrelated marketing.",
+      "We may disclose information where required or permitted by law, including in an emergency or to respond to lawful requests.",
     ],
   },
   {
-    title: "5. Cancellations & refunds",
+    title: "17. Payments, Messaging and AI Assistance",
     blocks: [
-      "All cancellations are governed by our 72-hour policy, with specific terms for large group bookings:",
-      { sub: "For groups of 1–6 pax" },
-      { list: ["Full refund if cancelled 72 hours or more before the tour start time.", "No refund if cancelled within 72 hours of the tour start time."] },
-      { sub: "For groups of 7+ pax (large groups)" },
-      {
-        list: [
-          "A 20% deposit (or 20% of the total payment) is strictly non-refundable upon booking.",
-          "The remaining balance is refundable if cancelled 72 hours or more before the tour start time.",
-          "No refund of any amount if cancelled within 72 hours of the tour.",
-        ],
-      },
-      "Late Arrivals & No-Shows: All tours are fully chargeable if you are late or do not show up at the scheduled pickup time.",
-      "Third-Party Activities: Experiences involving third-party providers (e.g., Gondolas, Lake Cruises, Ice Explorers) follow the specific cancellation rules of those providers.",
+      "Use the designated payment process for card payments. Do not send full card details through email, WhatsApp or website chat.",
+      "If you use WhatsApp or another communication platform, that provider also processes information under its own privacy terms.",
+      "AI-assisted chat or support tools, where used, may process the information you enter and may make mistakes. Do not submit unnecessary sensitive information. Ask our team to confirm information affecting your booking, payment or refund.",
     ],
   },
   {
-    title: "6. Customer responsibilities",
+    title: "18. Cookies, Marketing and Choices",
     blocks: [
-      { sub: "Punctuality" },
-      "Customers must be on time for pickup. Arriving 10+ minutes late may be marked as No-Show. On shared tours, returning 15+ minutes late at stops means the tour continues without you.",
-      { sub: "Conduct" },
-      "Customers must behave respectfully towards guides, other guests, wildlife, and the environment. Vista Chase may remove disruptive individuals without refund.",
-      { sub: "Belongings" },
-      "You are responsible for your personal items. Vista Chase is not liable for lost, stolen, or damaged belongings.",
-      { sub: "Health & fitness" },
-      "You must ensure you are physically able to participate in the activities included in your tour. Any medical, mobility, or health concerns must be disclosed during booking.",
-      { sub: "Alcohol & substance use" },
-      "Guests under the influence of drugs or alcohol may be refused service with no refund.",
+      "Cookies may support essential website functions, preferences and usage measurement. Any non-essential tracking should operate in accordance with the choices and notices presented on the website and applicable law.",
+      "Marketing communications are separate from necessary booking messages. You may unsubscribe from promotional emails without affecting essential communications about your reservation.",
     ],
   },
   {
-    title: "7. Changes to itineraries",
+    title: "19. Security, Retention and Access",
     blocks: [
-      "Travel in the Rockies can be unpredictable. Vista Chase may adjust itineraries due to: Weather, Road closures, Wildlife encounters, Safety concerns and Third-party availability.",
-      "When changes occur, we will provide reasonable alternatives.",
+      "We use reasonable administrative, technical and physical safeguards appropriate to the information involved. No transmission or storage system is completely risk-free.",
+      "Information is retained for as long as reasonably needed for the stated purposes, legal obligations and legitimate recordkeeping, then securely deleted or anonymised where appropriate.",
+      "You may request access to or correction of your personal information and ask about retention or withdrawal of consent. Requests are subject to identity verification and applicable legal exceptions. Withdrawal may affect services requiring that information.",
+      "Privacy enquiries should be addressed to the person responsible for privacy at support@vistachase.com. You may also contact the Office of the Information and Privacy Commissioner of Alberta.",
     ],
   },
   {
-    title: "8. Adventure activities & assumption of risks",
+    title: "20. Children’s Information",
     blocks: [
-      "Some tours include physical activity and natural hazards such as: Uneven terrain, Slippery surfaces, Wildlife, High altitudes, Changing weather, Snow, ice, or wind and Water-based activities.",
-      "Participation is at your own risk. A waiver may be required for certain experiences. Failure to sign will result in removal from the activity without refund.",
+      "Bookings involving children must be made by an authorised adult. We collect only the information reasonably needed to arrange their participation, such as age and child-restraint requirements.",
+      "Do not submit unnecessary sensitive information about a child.",
     ],
   },
   {
-    title: "9. Third-party providers",
+    title: "21. External Providers and International Processing",
     blocks: [
-      "Some experiences are operated by trusted partners. Vista Chase acts as a facilitator only and is not responsible for:",
-      { list: ["Third-party cancellations", "Delays", "Safety measures implemented by other operators", "Service quality or availability"] },
-      "You are subject to the third-party provider's terms.",
+      "External websites and services have their own privacy practices.",
+      "Where service providers process information outside Canada, additional disclosure about the countries involved, purposes and responsible privacy contact will be provided in our privacy information before the relevant collection or transfer, as required.",
     ],
   },
   {
-    title: "10. Intellectual property",
-    blocks: ["All logos, branding, images, videos, text, and content on the Vista Chase website are owned by Vista Chase. Any unauthorized use may result in legal action."],
-  },
-  {
-    title: "11. User-generated content",
+    title: "22. Updates and Governing Law",
     blocks: [
-      "If you submit reviews, photos, or feedback, you grant Vista Chase a non-exclusive, royalty-free, perpetual license to use that content for marketing or promotional purposes unless you request otherwise.",
+      "These terms are governed by applicable Alberta and Canadian law, subject to mandatory rights that may apply to a guest.",
+      "Updates will be posted with a revised date. Material changes affecting an existing booking require appropriate notice and, where necessary, agreement.",
     ],
   },
   {
-    title: "12. Photography & media",
-    blocks: ["By joining a Vista Chase tour, you consent to photography and video content taken during the experience being used for promotional purposes, unless you inform us in writing."],
+    title: "Contact",
+    blocks: [{ list: ["Vista Chase — D Tourist Inc.", "Email: support@vistachase.com", "Phone: +1 (825) 734-9456"] }],
   },
-  {
-    title: "13. Liability limitation",
-    blocks: [
-      "To the fullest extent permitted by law: Vista Chase is not liable for indirect, incidental, or consequential damages. You agree to participate at your own risk. Vista Chase is not responsible for injuries caused by failure to follow guide instructions, wildlife interactions, weather conditions, or natural terrain.",
-    ],
-  },
-  {
-    title: "14. Force majeure",
-    blocks: [
-      "We are not liable for cancellations or delays caused by events beyond our control, including: Extreme weather, Natural disasters, Road or park closures, Pandemics, Accidents, Government restrictions, Transportation disruptions.",
-      "Refunds or rescheduling will follow our Booking & Cancellation Policy.",
-    ],
-  },
-  {
-    title: "15. Environmental responsibility",
-    blocks: ["We follow “Leave No Trace” principles and expect customers to respect national park rules, wildlife guidelines, and natural spaces."],
-  },
-  { title: "16. Privacy", blocks: ["Your use of our website and services is also governed by our Privacy Policy, which outlines how we collect and protect personal information."] },
-  {
-    title: "17. Changes to terms",
-    blocks: ["Vista Chase may update these Terms at any time. Updated versions will be posted on our website. Continued use of our services means you accept the updated terms."],
-  },
-  { title: "18. Governing law", blocks: ["These Terms are governed by the laws of the Province of Alberta, Canada. Any disputes fall under Alberta jurisdiction."] },
-  {
-    title: "19. Alcohol, drugs & intoxication policy",
-    blocks: [
-      "To ensure the safety and comfort of all guests, Vista Chase enforces a strict zero-tolerance policy regarding drugs and alcohol on all tours.",
-      {
-        list: [
-          "No alcohol or drugs of any kind (including cannabis, edibles, vape pens, and any recreational substances) are permitted at any time during the tour.",
-          "This rule applies even if the substance is legal in Canada, such as cannabis.",
-          "Customers may not board the vehicle or participate in the tour if they show any signs of intoxication, including impairment from alcohol, cannabis, edibles, or other substances.",
-        ],
-      },
-      "If a guest becomes intoxicated at any point during the day, the guide reserves full discretion to:",
-      { list: ["Remove the guest from activities", "End the tour for that individual", "Or cancel participation immediately"] },
-      "No refunds will be issued for removals or tour cancellations resulting from intoxication, possession of prohibited substances, or refusal to comply with this policy. These rules exist to protect you, other travellers, wildlife, and public safety.",
-    ],
-  },
-  {
-    title: "20. Intellectual property, copyrights & trademarks",
-    blocks: [
-      "All content and branding associated with Vista Chase, including but not limited to: the Vista Chase name; the Vista Chase logo, icons, graphics, and design elements; website content (text, descriptions, itineraries, pricing structures); photos, videos, and digital media; marketing materials, guides, and brochure content; and website layout, visuals, and custom tour descriptions are the exclusive property of Vista Chase and are protected under Canadian and international copyright and trademark laws.",
-      { sub: "Trademarks" },
-      "The Vista Chase name and Vista Chase logo are trademarks (registered or unregistered) owned solely by Vista Chase.",
-      "No person or business may copy, reproduce, distribute, display, or use our name, logo, or brand elements without written permission from Vista Chase.",
-      "Use of our trademarks in a manner that creates confusion, competition, or misrepresentation is strictly prohibited and may result in legal action.",
-      { sub: "Copyright protection" },
-      "All original content published by Vista Chase — including tour descriptions, blog content, experience details, images, videos, and original media — is protected by copyright. You may not:",
-      {
-        list: [
-          "Copy or republish our content",
-          "Reproduce tour descriptions or itineraries",
-          "Use our photos or videos for commercial use",
-          "Create derivative works",
-          "Use our content for competitor websites or agencies",
-        ],
-      },
-      "without receiving prior written authorization from Vista Chase.",
-      { sub: "Prohibited use" },
-      "You expressly agree not to:",
-      {
-        list: [
-          "Use or imitate our branding for any commercial purpose",
-          "Register any domain name, business name, or social media handle containing “Vista Chase” or confusingly similar variations",
-          "Create misleading ads, posts, or listings using Vista Chase branding",
-          "Use our images, logo, or content to sell travel services elsewhere",
-        ],
-      },
-      "Violating these conditions may result in immediate legal action, including claims for damages and injunctive relief.",
-    ],
-  },
-  { title: "21. Contact us", blocks: ["For any questions about these Terms, please contact:", { list: ["support@vistachase.com", "+1 825-734-9456"] }] },
 ];
 
 export default function TermsPage() {
   return (
     <>
       <PageSeoExtras path="/terms-and-conditions" />
-    <LegalDocument
-      title="Terms & conditions"
-      intro="These General Terms & Conditions (“Terms”) govern the use of the Vista Chase website, bookings, and participation in our tours and services. By accessing our website or booking a Vista Chase experience, you agree to these Terms. If you do not agree, please discontinue use of our website and services."
-      sections={SECTIONS}
-      current="/terms-and-conditions"
-    />
+      <LegalDocument
+        title="General Terms & Conditions"
+        updated="October 28, 2026"
+        intro="These terms apply to bookings made directly with Vista Chase and to use of our website. Vista Chase is operated by D Tourist Inc. References to “we,” “us” and “our” mean D Tourist Inc. operating as Vista Chase. Please read these terms, the cancellation policy and the details of your selected experience before booking."
+        sections={SECTIONS}
+        current="/terms-and-conditions"
+      />
     </>
   );
 }

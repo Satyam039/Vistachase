@@ -6,7 +6,7 @@ import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import { BrandLogo } from "@/components/brand/BrandMark";
 
-const PERKS = ["All your bookings and vouchers in one place", "Pickup times as soon as they're set", "Free cancellation up to 72 hours before", "Review your guide after the tour"];
+const PERKS = ["All your bookings and vouchers in one place", "Pickup times as soon as they're set", "Request cancellations online", "Review your guide after the tour"];
 
 export function AuthShell({
   title,

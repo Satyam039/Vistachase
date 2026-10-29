@@ -363,7 +363,7 @@ router.get("/bookings/:id", async (req, res, next) => {
   }
 });
 
-// Staff cancellation: no 72-hour window; seats are released and the refund decision is recorded
+// Staff cancellation: no guest deadline; seats are released and the refund decision is recorded
 // (sent through the payment provider only when STAFF_REFUNDS_VIA_PROVIDER=true).
 const cancelSchema = z.object({
   reason: z.string().trim().min(3).max(500),

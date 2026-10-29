@@ -15,11 +15,9 @@ import prisma from "@/lib/db/prisma";
 import { getEmailProvider } from "@/lib/email/email.provider";
 import { formatDateOnly, formatTimeOfDay } from "@/lib/utils/time";
 import { transitionBooking } from "@/modules/bookings/booking-status";
-import { refundableAmount } from "@/modules/bookings/booking.repository";
-import { depositPlanRefundCents } from "@/modules/bookings/deposit";
+import { policyDecision, type PolicyBooking } from "@/modules/bookings/cancellation-policy";
 import { earnCommission } from "@/modules/affiliates/commission";
 import {
-  GUEST_CANCEL_HOURS,
   OFFLINE_PROVIDER,
   appendNote,
   claimFlag,
@@ -36,18 +34,9 @@ import {
 const LIVE: BookingStatus[] = ["PENDING_PAYMENT", "CONFIRMED", "PAID_UNSYNCED"];
 const money = (cents: number, currency: string) => `$${(cents / 100).toFixed(2)} ${currency}`;
 
-type BookingForRefund = Parameters<typeof depositPlanRefundCents>[0] & {
-  totalSeats: number;
-  payments: Parameters<typeof depositPlanRefundCents>[1];
-  tourDeparture: { date: Date; departureTime: Date; tour: { category: string } | null };
-};
-
 /** What the guest's own cancellation policy gives back if the booking is cancelled at `at`. */
-export function guestPolicyRefundCents(booking: BookingForRefund, at = new Date()) {
-  if (hoursBeforeDeparture(booking.tourDeparture, at) < GUEST_CANCEL_HOURS) return 0;
-  if (booking.paymentPlan === "DEPOSIT") return depositPlanRefundCents(booking, booking.payments);
-  const paid = booking.payments.filter((p) => p.status === "SUCCEEDED").reduce((sum, p) => sum + p.amount, 0);
-  return refundableAmount(paid, booking.totalSeats, booking.tourDeparture.tour?.category);
+export async function guestPolicyRefundCents(booking: PolicyBooking, at = new Date()) {
+  return (await policyDecision(booking, at)).refundCents;
 }
 
 function titleOf(b: { tourDeparture: { tour: { title: string } | null; shuttleRoute: { name: string } | null } }) {
@@ -91,7 +80,7 @@ export async function requestCancellation(reference: string, reason: string, use
   if (!LIVE.includes(booking.status)) return { status: 409, error: "This booking can't be cancelled any more." } as const;
   if (hoursBeforeDeparture(booking.tourDeparture) <= 0) return { status: 409, error: "This trip has already left." } as const;
 
-  const estimate = guestPolicyRefundCents(booking);
+  const estimate = await guestPolicyRefundCents(booking);
   const flag = await prisma.$transaction(async (tx) => {
     const open = await tx.bookingFlag.findFirst({ where: { bookingId: booking.id, type: "CANCEL_REQUEST", status: "OPEN" } });
     if (open) return null;

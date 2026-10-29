@@ -24,7 +24,7 @@ import {
 import { getBookingByReference } from "@/lib/api/catalog";
 import { PrintButton } from "@/components/booking/PrintButton";
 import { BalancePayment } from "@/components/booking/BalancePayment";
-import { DEPOSIT_POLICY, canCancelFree, formatRockiesDate } from "@/lib/policy";
+import { POLICY_URL, canCancelFree, cancellationSentence, cancellationShort, depositPolicy, formatRockiesDate } from "@/lib/policy";
 import { headers } from "next/headers";
 
 export async function generateMetadata({ params }: { params: Promise<{ ref: string }> }): Promise<Metadata> {
@@ -111,6 +111,15 @@ export default async function VoucherPage({
     : calendarHref(title, departure.date, booking.pickupTime || departure.departureTime, departure.tour?.durationHours ?? 8, `${pickupName}${pickupAddress ? `, ${pickupAddress}` : ""}`, booking.bookingReference);
 
   const deposit = booking.paymentPlan === "DEPOSIT";
+  // Booking & Cancellation Policy: the deadline is the category's, measured from Day 1 of a package.
+  const category = departure.tour?.category ?? (departure.shuttleRoute ? "SHUTTLE" : undefined);
+  const multiDay = !!booking.trip && category === "PRIVATE";
+  const firstDay = booking.trip?.days[0];
+  const policyOpen = canCancelFree(
+    firstDay?.date ?? departure.date,
+    firstDay?.departureTime ?? departure.departureTime,
+    multiDay ? "MULTIDAY" : category,
+  );
   const balanceDue = deposit ? booking.balanceDue ?? 0 : 0;
   const balanceDueLabel = booking.balanceDueAt ? formatRockiesDate(booking.balanceDueAt) : null;
 
@@ -393,32 +402,30 @@ export default async function VoucherPage({
                 />
               </div>
             )}
-            {deposit && <p className="mt-4 text-xs leading-relaxed text-slate-600">{DEPOSIT_POLICY}</p>}
+            {deposit && <p className="mt-4 text-xs leading-relaxed text-slate-600">{depositPolicy(category, multiDay)}</p>}
           </section>
 
           {!cancelled &&
-            (canCancelFree(departure.date, departure.departureTime) ? (
+            (policyOpen ? (
               <p className="flex items-start gap-2.5 rounded-none bg-emerald-50 p-5 text-sm text-emerald-900 ring-1 ring-emerald-200 print:hidden">
                 <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" aria-hidden="true" />
                 <span>
-                  <span className="block text-base">
-                    {deposit ? "Cancel up to 72 hours before for a refund of everything but the deposit" : "Free cancellation up to 72 hours before"}
-                  </span>
-                  Plans changed? Cancel from{" "}
+                  <span className="block text-base">{cancellationShort(category, multiDay)}</span>
+                  {cancellationSentence(category, multiDay)} Plans changed? Ask from{" "}
                   <Link href="/account/trips" className="underline underline-offset-2">
                     My trips
                   </Link>
-                  . See the{" "}
-                  <Link href="/privacy-policy-vista-chase" className="underline underline-offset-2">
+                  . See the full{" "}
+                  <Link href={POLICY_URL} className="underline underline-offset-2">
                     cancellation policy
-                  </Link>{" "}
-                  for groups of 7 or more.
+                  </Link>
+                  .
                 </span>
               </p>
             ) : (
               <p className="rounded-none bg-obsidian-50 p-5 text-sm text-slate-700 ring-1 ring-obsidian-900/[0.07] print:hidden">
-                <span className="block text-base text-obsidian-900">Departing within 72 hours</span>
-                {deposit ? "The cancellation window has ended for this trip." : "Free cancellation has ended for this trip."} Need to change something? Call us and we&apos;ll do what we can.
+                <span className="block text-base text-obsidian-900">Cancellation deadline passed</span>
+                The refund deadline for this trip has passed. Need to change something? Call us and we&apos;ll do what we can.
               </p>
             ))}
 

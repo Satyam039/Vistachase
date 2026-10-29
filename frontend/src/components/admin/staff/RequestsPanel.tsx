@@ -368,7 +368,7 @@ function ApproveCancelForm({
     {
       value: "POLICY" as const,
       label: `By the policy: ${money(request.policyRefund ?? 0, b.currency)}`,
-      hint: "What the cancellation policy gave back when the guest asked: nothing inside 72 hours of departure; otherwise a full refund for 1–6 guests, and groups of 7+, multi-day trips and deposit bookings keep the 20% deposit.",
+      hint: "What the cancellation policy gave back when the guest asked: nothing after the deadline (24 hours for shared tours and shuttles, 72 for private tours); otherwise a full refund, or 80% for a private multi-day package.",
     },
     {
       value: "FULL" as const,

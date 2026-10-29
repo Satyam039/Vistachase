@@ -44,6 +44,7 @@ describe("concierge without an AI model", () => {
     expect(pickup.message).toContain("Moxy Banff");
 
     const policy = await ask("Can I get a refund if I cancel?");
+    expect(policy.message).toContain("24 hours");
     expect(policy.message).toContain("72 hours");
 
     expect(new Set([price.message, pickup.message, policy.message]).size).toBe(3);
