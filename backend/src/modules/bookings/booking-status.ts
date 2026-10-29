@@ -12,8 +12,12 @@
 //   CANCELLED       → REFUNDED      refund issued (by the provider, or marked sent by staff)
 //   CONFIRMED       → COMPLETED     the day after the trip (review request job)
 // A submitted form never confirms a booking by itself.
+//
+// With Bókun connected, CONFIRMED and CANCELLED also queue the same change for Bókun in the same
+// transaction (modules/bokun/bokun-sync.ts), so every booking lands in both systems.
 
 import type { BookingStatus, Prisma } from "@prisma/client";
+import { queueBokunSync } from "@/modules/bokun/bokun-sync";
 
 const ALLOWED_FROM: Record<BookingStatus, BookingStatus[]> = {
   PENDING_PAYMENT: [],
@@ -49,5 +53,6 @@ export async function transitionBooking(
   await tx.auditLog.create({
     data: { action: `BOOKING_${to}`, entityType: "Booking", entityId: bookingId, details: { to, ...details } as Prisma.InputJsonValue },
   });
+  await queueBokunSync(tx, bookingId, to);
   return true;
 }

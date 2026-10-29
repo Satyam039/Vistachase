@@ -2,17 +2,19 @@
 
 // Staff bookings: find a booking and open its detail (payments, flags, history, approve, cancel),
 // answer requests (guests' cancellation requests, bookings waiting for approval), work the flags
-// queue (refunds owed, payments due, mismatches) and book for a guest with Quick Book.
+// queue (refunds owed, payments due, mismatches), see what reached Bókun and book for a guest
+// with Quick Book.
 // Panels live in components/admin/staff; every call goes through /api/admin/* (role-checked, audited).
 
 import { useCallback, useEffect, useState } from "react";
 import { AdminHeader, StaffSignIn } from "@/components/admin/AdminHeader";
+import { BokunPanel } from "@/components/admin/staff/BokunPanel";
 import { BookingsPanel } from "@/components/admin/staff/BookingsPanel";
 import { FlagsPanel } from "@/components/admin/staff/FlagsPanel";
 import { QuickBookForm } from "@/components/admin/staff/QuickBookForm";
 import { RequestsPanel } from "@/components/admin/staff/RequestsPanel";
 
-type SectionId = "bookings" | "requests" | "flags" | "quick-book";
+type SectionId = "bookings" | "requests" | "flags" | "bokun" | "quick-book";
 const STAFF_ROLES = ["ADMIN", "OPERATOR", "DISPATCHER"];
 const MANAGERS = ["ADMIN", "OPERATOR"];
 
@@ -30,6 +32,7 @@ export default function AdminBookingsPage() {
     ["bookings", "Bookings"],
     ["requests", requestCount ? `Requests (${requestCount})` : "Requests"],
     ["flags", "Flags"],
+    ["bokun", "Bókun"],
     ...(isManager
       ? ([["quick-book", "Quick Book"]] as [SectionId, string][])
       : []),
@@ -43,6 +46,7 @@ export default function AdminBookingsPage() {
         hash === "bookings" ||
         hash === "requests" ||
         hash === "flags" ||
+        hash === "bokun" ||
         hash === "quick-book"
       )
         setSection(hash);
@@ -175,6 +179,9 @@ export default function AdminBookingsPage() {
               )}
               {shown === "flags" && (
                 <FlagsPanel notify={setMessage} role={role} />
+              )}
+              {shown === "bokun" && (
+                <BokunPanel notify={setMessage} role={role} />
               )}
               {shown === "quick-book" && <QuickBookForm notify={setMessage} />}
             </div>

@@ -11,6 +11,22 @@ import { pruneOldClicks } from "@/modules/affiliates/affiliate.repository";
 import { sendBalanceReminders } from "@/modules/bookings/deposit-payments";
 import { dispatchT60ScheduledBatch, whatsAppDeliveryConfigured } from "@/lib/whatsapp/whatsapp.provider";
 
+/** Every 2 minutes: website bookings and cancellations waiting to reach Bókun (skipped without keys). */
+export async function sendBookingsToBokun() {
+  const { processBokunSyncTasks } = await import("@/modules/bokun/bokun-sync");
+  return processBokunSyncTasks();
+}
+
+/** Every 15 minutes: Bókun's seats into our departures (skipped without keys or when switched off). */
+export async function syncSeatsFromBokun() {
+  const { bokunAvailabilitySyncEnabled } = await import("@/modules/bokun/config");
+  if (!bokunAvailabilitySyncEnabled()) return { skipped: "Bókun seat sync is off" };
+  const { syncBokunSeats } = await import("@/modules/bokun/availability-sync");
+  const result = await syncBokunSeats();
+  // The full list is in the sync log (Admin → Bookings → Bókun); the job log gets the count.
+  return "notInBokun" in result ? { ...result, notInBokun: result.notInBokun.length } : result;
+}
+
 /** Every few minutes: free seats held by expired holds and by bookings never paid for. */
 export async function expireHoldsAndUnpaidBookings(now = new Date()) {
   return await freeExpiredSeats({ now });
@@ -31,6 +47,10 @@ export async function reconcileBookings() {
   const add = (rows: { bookingReference: string }[], problem: string) => rows.forEach((r) => issues.push({ bookingReference: r.bookingReference, problem }));
 
   add(await prisma.booking.findMany({ where: { status: "PAID_UNSYNCED" }, select: { bookingReference: true } }), "Paid, but marked unsynced by the former Bókun integration: confirm it by hand");
+  add(
+    await prisma.booking.findMany({ where: { status: { in: ["CONFIRMED", "COMPLETED"] }, externalSyncStatus: "FAILED" }, select: { bookingReference: true } }),
+    "Confirmed on the website but not in Bókun: see its Bókun flag (Admin → Bookings → Flags)",
+  );
   add(
     await prisma.booking.findMany({
       where: { status: "PENDING_PAYMENT", createdAt: { lt: new Date(Date.now() - 60 * 60 * 1000) } },

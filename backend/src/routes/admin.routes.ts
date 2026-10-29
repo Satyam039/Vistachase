@@ -23,6 +23,10 @@ import { createStop, listStops, updateStop } from "@/modules/admin/pickup-admin"
 import { sendConfirmationEmail } from "@/modules/bookings/confirmation-email";
 import { linkTripBookings, tripOf, tripSummary } from "@/modules/bookings/trip";
 import { emailDeliveryConfigured, getEmailProvider } from "@/lib/email/email.provider";
+import { bokunAvailabilitySyncEnabled, bokunConfig, bokunConnected } from "@/modules/bokun/config";
+import { bokunSyncStatus, processBokunSyncTasks, queueUpcomingBookings, retryBokunSync } from "@/modules/bokun/bokun-sync";
+import { syncBokunSeats } from "@/modules/bokun/availability-sync";
+import { PRODUCT_MAP } from "@/modules/tours/product-map";
 import { hashPassword } from "@/lib/auth/auth";
 import { ASSIGNABLE_ROLES, STAFF_LIST_ROLES } from "@/lib/auth/permissions";
 import crypto from "node:crypto";
@@ -332,6 +336,7 @@ router.get("/bookings/:id", async (req, res, next) => {
         flags: { orderBy: { createdAt: "desc" } },
         confirmationEmailSentAt: true,
         confirmationEmailError: true,
+        externalSyncStatus: true,
       },
     });
     if (!booking) return res.status(404).json({ success: false, error: "Booking not found" });
@@ -848,6 +853,57 @@ router.patch("/staff/:id", requireStaff(["ADMIN"]), async (req, res, next) => {
     await audit(req, "CHANGE_ROLE", "User", user.id, { ...body, previous: previous.role });
     const setup = body.role === "CUSTOMER" ? null : await secureNewStaffAccount(req, user.id, previous.role);
     res.json({ success: true, user, ...(setup ? { invited: true, setupLink: setup.link, emailed: setup.emailed, linkExpires: setup.expires } : {}) });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// Bókun (docs/BOKUN.md): connection, bookings waiting for or stuck on their way to Bókun, and the
+// latest seat sync. Sync, send-upcoming and retry are for managers.
+router.get("/bokun", async (_req, res, next) => {
+  try {
+    const connected = bokunConnected();
+    res.json({
+      success: true,
+      connected,
+      apiUrl: bokunConfig().apiUrl,
+      seatSync: bokunAvailabilitySyncEnabled(),
+      products: PRODUCT_MAP.filter((p) => p.bookingMode === "BOKUN").map((p) => ({ slug: p.slug, bokunId: p.bokunId })),
+      ...(await bokunSyncStatus()),
+    });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post("/bokun/sync", requireStaff(MANAGERS), async (req, res, next) => {
+  try {
+    if (!bokunConnected()) return res.status(409).json({ success: false, error: "Bókun isn't connected yet: add BOKUN_ACCESS_KEY and BOKUN_SECRET_KEY to the server's .env and restart." });
+    const bookings = await processBokunSyncTasks();
+    const seats = bokunAvailabilitySyncEnabled() ? await syncBokunSeats() : { skipped: "Seat sync is off (BOKUN_AVAILABILITY_SYNC=false)." };
+    await audit(req, "BOKUN_SYNC", "Bokun", "manual", { bookings, seats });
+    res.json({ success: true, bookings, seats });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post("/bokun/queue-upcoming", requireStaff(MANAGERS), async (req, res, next) => {
+  try {
+    const result = await queueUpcomingBookings();
+    if (result.status === 200) await audit(req, "BOKUN_QUEUE_UPCOMING", "Bokun", "manual", { queued: result.queued });
+    send(res, result);
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post("/bokun/retry/:id", requireStaff(MANAGERS), async (req, res, next) => {
+  try {
+    if (!bokunConnected()) return res.status(409).json({ success: false, error: "Bókun isn't connected yet." });
+    const result = await retryBokunSync(id(req));
+    if (result.status === 200) await audit(req, "BOKUN_RETRY", "Booking", id(req), {});
+    send(res, result);
   } catch (e) {
     next(e);
   }

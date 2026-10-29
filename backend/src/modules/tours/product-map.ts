@@ -3,9 +3,9 @@ import catalog from "../../../prisma/catalog/products.json";
 import extraCatalog from "../../../prisma/catalog/extra-products.json";
 
 /**
- * The product mapping table (prisma/catalog/product-map.json): website page ↔ Mornby tour, with
- * each product's booking mode. `bokunId` is kept as historical data from the retired Bókun
- * integration; nothing calls Bókun any more.
+ * The product mapping table (prisma/catalog/product-map.json): website page ↔ Bókun product ↔
+ * Mornby tour, with each product's booking mode. With Bókun connected (docs/BOKUN.md), bookings
+ * for a product with a `bokunId` are also created in Bókun and its seats are read from Bókun.
  */
 export interface MappedProduct {
   slug: string;
