@@ -24,6 +24,7 @@ import { getPaymentProvider } from "@/lib/payment/payment.provider";
 import { sendConfirmationEmail } from "@/modules/bookings/confirmation-email";
 import { getEmailProvider } from "@/lib/email/email.provider";
 import { isVehicleDeparture, partySizeError, seatsToReserve } from "@/modules/pricing/departure-pricing";
+import { airportTransferNote, type AirportTransfer } from "@/modules/bookings/airport-transfer";
 import { priceBooking, type AddOnChoice } from "@/modules/pricing/booking-pricing";
 import { referringAffiliateId } from "@/modules/affiliates/affiliate.repository";
 import { earnCommission, reverseCommissionForRefund } from "@/modules/affiliates/commission";
@@ -55,6 +56,8 @@ export interface CreateBookingInput {
   idempotencyKey?: string;
   /** Pay everything now (default), or the deposit now and the balance later (modules/bookings/deposit.ts). */
   paymentPlan?: "FULL" | "DEPOSIT";
+  /** Private tours only: airport arrival and departure for a transfer (modules/bookings/airport-transfer.ts). */
+  airportTransfer?: AirportTransfer;
 }
 
 /** What the checkout should do next. */
@@ -238,6 +241,7 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
 
       // Capacity: shared departures take one seat per guest, private ones the whole vehicle
       const isVehicle = isVehicleDeparture(departure);
+      if (input.airportTransfer && !isVehicle) throw new BookingRefused("Airport transfers can be added to private tours only.");
       const reservedSeats = seatsToReserve(departure, totalSeats);
 
       // The hold is claimed once: a second request with the same hold finds it no longer ACTIVE.
@@ -287,6 +291,8 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
         taxCents: 0,
         totalCents: totals.totalCents,
         inventorySource: departure.inventorySource,
+        // Not charged online yet: the team confirms the transfer and its price.
+        ...(input.airportTransfer ? { airportTransfer: { ...input.airportTransfer, priceCents: null } } : {}),
       };
 
       const created = await tx.booking.create({
@@ -317,7 +323,9 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
           depositAmount: deposit?.depositCents ?? null,
           balanceDueAt: deposit?.balanceDueAt ?? null,
           paymentExpiresAt: new Date(now.getTime() + PENDING_PAYMENT_MINUTES * 60_000),
-          specialRequests: input.specialRequests,
+          specialRequests: input.airportTransfer
+            ? [airportTransferNote(input.airportTransfer), input.specialRequests].filter(Boolean).join("\n")
+            : input.specialRequests,
           voucherCode: newVoucherCode(),
           // Staff scan this to check the guest in; it carries a signature, not the guest's details.
           qrCodeUrl: await QRCode.toDataURL(checkinLink(bookingReference), { margin: 1, width: 300 }),

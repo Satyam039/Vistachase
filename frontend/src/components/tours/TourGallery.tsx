@@ -270,25 +270,32 @@ export function TourGallery({
           </div>
         ) : (
           <>
-            <div className="sticky top-[calc(var(--vc-header-h,80px)+16px)] z-20 mb-8 flex items-center justify-between gap-3 rounded-full bg-white py-2 pl-5 pr-2 sm:pl-6 shadow-[0_12px_24px_-20px_rgba(12,31,33,0.45)] ring-1 ring-obsidian-900/[0.08]">
-              <h2
-                id="results-heading"
-                className="text-lg text-obsidian-900"
-                aria-live="polite"
-              >
-                {tours.length}{" "}
-                {tours.length === 1 ? "experience" : "experiences"}
+            {/* Tickets have no prices here to sort by, so their list has no count-and-sort bar. */}
+            {isTickets ? (
+              <h2 id="results-heading" className="sr-only">
+                Activity tickets
               </h2>
-              <Dropdown
-                variant="pill"
-                label="Sort by"
-                labelClassName="sr-only sm:not-sr-only whitespace-nowrap text-sm text-slate-600"
-                className="flex items-center gap-2 [&>div]:w-44 sm:[&>div]:w-56"
-                value={sort}
-                onChange={(v) => setSort(v as SortKey)}
-                options={Object.entries(SORTS).map(([key, label]) => ({ value: key, label }))}
-              />
-            </div>
+            ) : (
+              <div className="sticky top-[calc(var(--vc-header-h,80px)+16px)] z-20 mb-8 flex items-center justify-between gap-3 rounded-full bg-white py-2 pl-5 pr-2 sm:pl-6 shadow-[0_12px_24px_-20px_rgba(12,31,33,0.45)] ring-1 ring-obsidian-900/[0.08]">
+                <h2
+                  id="results-heading"
+                  className="text-lg text-obsidian-900"
+                  aria-live="polite"
+                >
+                  {tours.length}{" "}
+                  {tours.length === 1 ? "experience" : "experiences"}
+                </h2>
+                <Dropdown
+                  variant="pill"
+                  label="Sort by"
+                  labelClassName="sr-only sm:not-sr-only whitespace-nowrap text-sm text-slate-600"
+                  className="flex items-center gap-2 [&>div]:w-44 sm:[&>div]:w-56"
+                  value={sort}
+                  onChange={(v) => setSort(v as SortKey)}
+                  options={Object.entries(SORTS).map(([key, label]) => ({ value: key, label }))}
+                />
+              </div>
+            )}
             <ul
               key={sort}
               className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5"

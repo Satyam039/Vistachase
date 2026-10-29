@@ -1,7 +1,7 @@
 // Activity tickets the guest books directly with the operator (Banff Jasper Collection by Pursuit),
 // through Vista Chase's agency links (agency 5009093). Links and preferred times are the owner's
-// (2026-10-29). A ticket product listed here shows a "Book tickets" button instead of the enquiry
-// form; a ticket missing here keeps the request form.
+// (2026-10-29). A ticket listed here has no page of its own: its card says "Book Now" and opens the
+// operator's booking page, and its old URL redirects there (app/[slug]/page.tsx).
 
 const GLACIER_ADVENTURE_URL =
   "https://bookings.banffjaspercollection.com/RKY/activities/details/1/ICE-BTC-BA-GA/Attraction?WebLink=5JMNSDKc4w3ABB1JC90edA%3d%3d&agencyNumber=5009093&wlid=1812&lob=Glacier+Adventure#/select-ticket/book-adventure";

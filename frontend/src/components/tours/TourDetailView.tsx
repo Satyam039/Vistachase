@@ -26,8 +26,8 @@ import {
 import { Dropdown } from "@/components/forms/Dropdown";
 import { DepartureCalendar } from "@/components/booking/DepartureCalendar";
 import { PriceTag } from "@/components/pricing/PriceTag";
+import { AIRPORT_TRANSFER_PRICE_NOTE, AirportTransferToggle } from "@/components/booking/AirportTransferFields";
 import { cancellationShort, SEATS_MESSAGE } from "@/lib/policy";
-import { activityTicket, type ActivityTicket } from "@/lib/activityTickets";
 import { Rail } from "@/components/motion/Rail";
 import { BreadcrumbJsonLd, JsonLd } from "@/components/seo/JsonLd";
 import { ProductGallery, type GallerySlide } from "@/components/tours/ProductGallery";
@@ -68,46 +68,6 @@ const FACT_ICONS = [Clock, Users, MapPin, Coffee];
 
 /** Banff Elite (sister company) plans fully tailored multi-day itineraries; the button shows once its URL is set. */
 const BANFF_ELITE_URL = process.env.NEXT_PUBLIC_BANFF_ELITE_URL || "https://banffelite.com";
-
-/** Activity tickets sold by the operator: book on its page (our agency link), at the slot we recommend. */
-function TicketPanel({ ticket }: { ticket: ActivityTicket }) {
-  return (
-    <div className="space-y-4">
-      {ticket.preferredTime && (
-        <div className="p-4 rounded-2xl bg-ocean-500/10 border border-ocean-500/30 text-obsidian-900 text-xs space-y-1.5">
-          <div className="flex items-center gap-2 font-bold">
-            <Clock className="w-4 h-4 text-ocean-600" aria-hidden="true" />
-            <span>Preferred booking time: {ticket.preferredTime}</span>
-          </div>
-          {ticket.note && <p className="text-slate-700">{ticket.note}</p>}
-        </div>
-      )}
-      {!ticket.preferredTime && ticket.note && <p className="text-sm text-slate-700">{ticket.note}</p>}
-
-      <div className="space-y-3 pt-2">
-        <a
-          href={ticket.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="w-full py-4 rounded-xl font-bold text-xs uppercase tracking-widest text-obsidian-900 golden-summit-btn flex items-center justify-center gap-2 shadow-lg transition-all"
-        >
-          <span>Book Tickets</span>
-          <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
-        </a>
-        <p className="text-xs text-slate-600 text-center">
-          Opens the Banff Jasper Collection booking page, where you choose your date and time and pay.
-        </p>
-        <Link
-          href="/concierge"
-          className="w-full py-3 rounded-xl font-medium text-xs text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 flex items-center justify-center gap-2 transition-colors"
-        >
-          <Sparkles className="w-4 h-4 text-ocean-600" />
-          <span>Plan it around a tour with the AI Concierge</span>
-        </Link>
-      </div>
-    </div>
-  );
-}
 
 /** Enquiry-only products: choose a vehicle and party size, then request a tailored quote. */
 function EnquiryPanel({ tour }: { tour: TourWithAvailability }) {
@@ -282,7 +242,6 @@ export function TourDetailView({
   const categoryInfo = CATEGORY[categoryKey] ?? CATEGORY.SHARED;
   const isPrivate = tour.category === "PRIVATE" || tour.category === "MULTIDAY";
   const isEnquiry = tour.bookingMode === "ENQUIRY";
-  const ticket = activityTicket(tour.slug, tour.category);
   const price = fromPrice(tour);
   const unitLabel = priceUnitLabel(tour);
 
@@ -312,6 +271,9 @@ export function TourDetailView({
   const adults = Math.max(1, Math.min(adultsWanted, maxPartySize));
   const children = Math.max(0, Math.min(childrenWanted, maxPartySize - adults));
   const childFare = currentDeparture?.childPrice ?? currentDeparture?.price ?? price;
+  // Private tours: optional airport transfer; checkout asks for the flight dates and times.
+  const offersAirport = tour.category === "PRIVATE";
+  const [airport, setAirport] = useState(false);
 
   // FAQ accordion state
 
@@ -536,23 +498,18 @@ export function TourDetailView({
                   price={price}
                   currency={tour.currency}
                   unit={tour.category === "TICKET" ? "per ticket" : unitLabel}
-                  lead={isEnquiry && !ticket ? "Tailored quote from" : "From"}
-                  noPriceLabel={ticket ? "Prices on the booking page" : undefined}
+                  lead={isEnquiry ? "Tailored quote from" : "From"}
                 />
                 {/* No sales tax is added at checkout (backend booking-pricing.ts), so prices are tax-inclusive. */}
                 {price > 0 && (
                   <p className="mt-1.5 text-sm text-slate-600">
-                    {ticket
-                      ? "Priced by the operator; your total is shown on its booking page."
-                      : `Taxes included. ${isEnquiry ? "We confirm your total with your quote." : "Your total is shown before you pay."}`}
+                    {`Taxes included. ${isEnquiry ? "We confirm your total with your quote." : "Your total is shown before you pay."}`}
                   </p>
                 )}
               </div>
 
               {/* Enquiry products / departure selector */}
-              {ticket ? (
-                <TicketPanel ticket={ticket} />
-              ) : isEnquiry ? (
+              {isEnquiry ? (
                 <EnquiryPanel tour={tour} />
               ) : tour.departures.length === 0 ? (
                 // No scheduled dates yet: still a clear primary action (request a date).
@@ -598,12 +555,15 @@ export function TourDetailView({
 
                   {/* Party: one guest count for a private vehicle, adults + children otherwise */}
                   {isVehicle ? (
-                    <PartySizeStepper
-                      value={partySize}
-                      max={maxPartySize}
-                      onChange={setPartySize}
-                      hint={`Vehicle seats up to ${maxPartySize}`}
-                    />
+                    <>
+                      <PartySizeStepper
+                        value={partySize}
+                        max={maxPartySize}
+                        onChange={setPartySize}
+                        hint={`Vehicle seats up to ${maxPartySize}`}
+                      />
+                      {offersAirport && <AirportTransferToggle checked={airport} onChange={setAirport} />}
+                    </>
                   ) : (
                     <>
                       <PartySizeStepper
@@ -629,10 +589,18 @@ export function TourDetailView({
                   {/* Price Calculation Breakdown */}
                   <div className="px-4 py-3 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5 text-xs">
                     {isVehicle ? (
-                      <div className="flex items-center justify-between text-slate-600">
-                        <span>Private vehicle flat rate</span>
-                        <span>{money(calculatedTotal)} CAD</span>
-                      </div>
+                      <>
+                        <div className="flex items-center justify-between text-slate-600">
+                          <span>Private vehicle flat rate</span>
+                          <span>{money(calculatedTotal)} CAD</span>
+                        </div>
+                        {offersAirport && airport && (
+                          <div className="flex items-center justify-between gap-3 text-slate-600">
+                            <span>Airport transfer</span>
+                            <span className="text-right">{AIRPORT_TRANSFER_PRICE_NOTE}</span>
+                          </div>
+                        )}
+                      </>
                     ) : (
                       <>
                         <div className="flex items-center justify-between text-slate-600">
@@ -659,7 +627,7 @@ export function TourDetailView({
                       href={`/book?${new URLSearchParams({
                         departureId: selectedDepartureId || tour.departures[0]?.id || "",
                         ...(isVehicle
-                          ? { guests: String(partySize) }
+                          ? { guests: String(partySize), ...(offersAirport && airport ? { airport: "1" } : {}) }
                           : { guests: String(adults + children), adults: String(adults), children: String(children) }),
                       }).toString()}`}
                       className="w-full h-13 py-4 rounded-full text-base font-medium text-obsidian-900 golden-summit-btn flex items-center justify-center gap-2 shadow-lg transition-all hover:scale-[1.01]"
@@ -687,7 +655,7 @@ export function TourDetailView({
                 </div>
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-ocean-600 shrink-0" aria-hidden="true" />
-                  <span>{ticket ? "Booked and paid on the operator's secure site" : "Secure checkout · mobile voucher by email"}</span>
+                  <span>Secure checkout · mobile voucher by email</span>
                 </div>
               </div>
             </div>
@@ -718,23 +686,10 @@ export function TourDetailView({
             currency={tour.currency}
             unit={tour.category === "TICKET" ? "per ticket" : unitLabel}
             layout="inline"
-            noPriceLabel={ticket ? "Prices on the booking page" : undefined}
           />
-          {ticket ? (
-            <a
-              href={ticket.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="golden-summit-btn inline-flex h-12 shrink-0 items-center gap-1.5 rounded-full px-6 text-base"
-            >
-              Book tickets
-              <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
-            </a>
-          ) : (
-            <a href="#booking" className="golden-summit-btn inline-flex h-12 shrink-0 items-center rounded-full px-6 text-base">
-              {isEnquiry || tour.departures.length === 0 ? "Request a date" : "Check availability"}
-            </a>
-          )}
+          <a href="#booking" className="golden-summit-btn inline-flex h-12 shrink-0 items-center rounded-full px-6 text-base">
+            {isEnquiry || tour.departures.length === 0 ? "Request a date" : "Check availability"}
+          </a>
         </div>
       </MobileBookingBar>
     </div>

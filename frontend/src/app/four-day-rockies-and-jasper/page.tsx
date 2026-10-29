@@ -23,6 +23,7 @@ import {
   X,
 } from "lucide-react";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
+import { PACKAGE_DAY_PRICE, PRIVATE_MAX_GUESTS } from "@/lib/privateTours";
 
 export const metadata: Metadata = {
   title: "Four-Day Rockies & Jasper | Private Banff, Yoho, Columbia Icefield & Jasper Tour | Vista Chase",
@@ -534,9 +535,16 @@ export default function FourDayRockiesAndJasperPage() {
             <div className="border-b border-white/10 pb-5">
               <span className="text-xs uppercase tracking-[0.2em] text-summit-300">Private Journey</span>
               <h3 className="mt-1 text-2xl font-light text-white">Four-Day Rockies &amp; Jasper</h3>
-              {/* No confirmed package price yet: the team quotes per vehicle with the dates. */}
-              <p className="mt-4 text-3xl font-light text-white">Price on request</p>
-              <p className="mt-1 text-xs text-white/60">Per vehicle, confirmed with your dates and group size. Taxes and required fees included.</p>
+              {/* The doc's package price (lib/privateTours.ts): per day per vehicle, summer season only. */}
+              <p className="mt-4 flex items-baseline gap-1.5 text-white">
+                <span className="text-xs text-white/60">From</span>
+                <span className="text-3xl font-light tabular-nums">CAD ${(PACKAGE_DAY_PRICE.summer * 4).toLocaleString("en-CA")}</span>
+                <span className="text-xs text-white/70">per vehicle</span>
+              </p>
+              <p className="mt-1 text-xs text-white/60">
+                CAD ${PACKAGE_DAY_PRICE.summer.toLocaleString("en-CA")} per day, up to {PRIVATE_MAX_GUESTS} guests. Available June 1 to October 10 only. Add
+                optional activities and airport transfers when you request your dates.
+              </p>
             </div>
 
             <ul className="mt-6 space-y-3.5 text-sm text-white/85">

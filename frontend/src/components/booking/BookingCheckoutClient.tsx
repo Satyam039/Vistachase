@@ -46,6 +46,14 @@ import { TextArea } from "@astryxdesign/core/TextArea";
 import { TextInput } from "@astryxdesign/core/TextInput";
 import { Thumbnail } from "@astryxdesign/core/Thumbnail";
 import { QuantityInput } from "@/components/forms/QuantityInput";
+import {
+  AIRPORT_TRANSFER_PRICE_NOTE,
+  AirportTransferDetails,
+  AirportTransferToggle,
+  airportTransferError,
+  EMPTY_AIRPORT_TRANSFER,
+  type AirportTransferValue,
+} from "@/components/booking/AirportTransferFields";
 import { Dropdown } from "@/components/forms/Dropdown";
 import { PhoneField } from "@/components/forms/PhoneField";
 import { dialCode } from "@/lib/countries";
@@ -208,6 +216,7 @@ export function BookingCheckoutClient({
   initialGuests,
   initialAdults,
   initialChildren,
+  initialAirport = false,
 }: {
   departure: DepartureData;
   stops: StopData[];
@@ -217,6 +226,8 @@ export function BookingCheckoutClient({
   /** Adults and children chosen on the tour page (?adults=&children=); take precedence over ?guests=. */
   initialAdults?: number;
   initialChildren?: number;
+  /** Airport transfer ticked on a private tour's page (?airport=1). */
+  initialAirport?: boolean;
 }) {
   // The responsive variant changes rendered order, so measure the host rather than the viewport.
   const hostRef = useRef<HTMLElement | null>(null);
@@ -250,6 +261,9 @@ export function BookingCheckoutClient({
     initialAdults ? Math.max(0, Math.min(initialChildren ?? 0, departure.seatsAvailable - Math.min(initialAdults, departure.seatsAvailable))) : 0,
   );
   const [infants, setInfants] = useState(0);
+  // Airport transfer (private tours only): no price yet, so it doesn't change the total.
+  const [airport, setAirport] = useState(initialAirport && departure.tour?.category === "PRIVATE");
+  const [airportTransfer, setAirportTransfer] = useState<AirportTransferValue>(EMPTY_AIRPORT_TRANSFER);
 
   // Contact
   const [customerName, setCustomerName] = useState("");
@@ -562,6 +576,8 @@ export function BookingCheckoutClient({
     } else if (totalSeats > seatCapacity) {
       party.seats = `Only ${seatCapacity} ${seatCapacity === 1 ? "seat is" : "seats are"} left on this departure.`;
     }
+    const airportError = airport ? airportTransferError(airportTransfer) : null;
+    if (airportError) party.airport = airportError;
 
     const contact: Record<string, string> = {};
     if (!customerName.trim())
@@ -580,6 +596,8 @@ export function BookingCheckoutClient({
     totalSeats,
     seatCapacity,
     isVehicle,
+    airport,
+    airportTransfer,
     customerName,
     customerEmail,
     phoneLocal,
@@ -639,6 +657,7 @@ export function BookingCheckoutClient({
           childrenCount: children,
           infantsCount: infants,
           specialRequests: specialRequests.trim() || undefined,
+          airportTransfer: airport ? airportTransfer : undefined,
           promoCode: appliedPromo?.code,
           paymentPlan: plan,
         }),
@@ -800,6 +819,7 @@ export function BookingCheckoutClient({
             value={customPickup.trim() || selectedStop?.name || ""}
           />
         )}
+        {airport && <SummaryRow label="Airport transfer" value={AIRPORT_TRANSFER_PRICE_NOTE} />}
       </VStack>
       <Divider />
       <VStack gap={2}>
@@ -1150,6 +1170,18 @@ export function BookingCheckoutClient({
                               variant="detached"
                               message={currentErrors.seats}
                             />
+                          )}
+                          {departure.tour?.category === "PRIVATE" && (
+                            <>
+                              <AirportTransferToggle checked={airport} onChange={setAirport} />
+                              {airport && (
+                                <AirportTransferDetails
+                                  value={airportTransfer}
+                                  onChange={setAirportTransfer}
+                                  error={currentErrors.airport}
+                                />
+                              )}
+                            </>
                           )}
                         </VStack>
                       )}
