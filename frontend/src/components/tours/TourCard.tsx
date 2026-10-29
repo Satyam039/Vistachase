@@ -19,6 +19,7 @@ import {
   priceUnitLabel,
   reviewsLabel,
 } from "@/lib/tours";
+import { activityTicket } from "@/lib/activityTickets";
 
 export {
   CATEGORY_LABEL,
@@ -39,6 +40,10 @@ function formatShortDate(date: string) {
 }
 
 function availability(tour: TourWithAvailability, seats: number, date?: string) {
+  const ticket = activityTicket(tour.slug, tour.category);
+  if (ticket) {
+    return { variant: "neutral" as const, text: ticket.preferredTime ? `Book online · best time ${ticket.preferredTime}` : "Book online" };
+  }
   if (tour.bookingMode === "ENQUIRY") {
     return { variant: "neutral" as const, text: "Custom dates on request" };
   }
