@@ -17,6 +17,7 @@ import type { TourFaq, TourTab, TourWithAvailability } from "@/lib/api/types";
 import { BANFF_YOHO, ICEFIELD } from "@/lib/sharedTours";
 import { PRIVATE_FAQS, PRIVATE_OPTIONS } from "@/lib/privateTours";
 import { cancellationSentence } from "@/lib/policy";
+import { activityTicket } from "@/lib/activityTickets";
 
 interface DocContent {
   title: string;
@@ -287,6 +288,9 @@ function withPolicyFaq(tour: TourWithAvailability): TourWithAvailability {
 
 /** The tour with the owner's doc copy applied, when there is any for it. */
 export function withDocContent(tour: TourWithAvailability): TourWithAvailability {
+  // Activity tickets show the operator's own photo (owner, 2026-10-30) over the catalog image.
+  const ticketImage = activityTicket(tour.slug, tour.category)?.image;
+  if (ticketImage) tour = { ...tour, featuredImage: ticketImage };
   const c = CONTENT[tour.slug];
   if (!c) return withPolicyFaq(tour);
 
