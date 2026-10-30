@@ -19,7 +19,7 @@ Secrets are entered in Render, never committed. The full list with comments is i
 Required for the backend:
 - `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, `VOUCHER_SECRET`, `FRONTEND_URL`
 - `PAYMENT_PROVIDER=stripe`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`
-- `EMAIL_PROVIDER=resend`, `RESEND_API_KEY`, `EMAIL_FROM` (on a verified domain), `ENQUIRIES_TO`, `OPS_ALERT_EMAIL`
+- `EMAIL_PROVIDER=resend`, `RESEND_API_KEY`, `EMAIL_FROM` (on a verified domain); or `EMAIL_PROVIDER=smtp` with `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` (Gmail: smtp.gmail.com, 465, an App Password; `EMAIL_FROM` = that mailbox), `ENQUIRIES_TO`, `OPS_ALERT_EMAIL`
 - `PROMO_CODES`, the same codes as in Bókun
 
 Required for the frontend: `BACKEND_URL` (read at build time), `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`.
