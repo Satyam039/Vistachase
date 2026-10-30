@@ -9,6 +9,8 @@ const GLACIER_ADVENTURE_URL =
 export interface ActivityTicket {
   /** Operator booking page for this ticket (opens in a new tab). */
   url: string;
+  /** Card photo from the operator's (Pursuit) image library, sent by the owner on 2026-10-30. */
+  image?: string;
   /** The time slot we recommend, shown next to the button. */
   preferredTime?: string;
   /** Why that slot, or how the ticket compares, in one line. */
@@ -17,10 +19,12 @@ export interface ActivityTicket {
 
 export const ACTIVITY_TICKETS: Record<string, ActivityTicket> = {
   "banff-gondola-tickets": {
+    image: "/media/photos/tickets/banff-gondola-summit-firepit.webp",
     url: "https://bookings.banffjaspercollection.com/RKY/activities/details/1/YBA-BTC-BA-BGR/Attraction?WebLink=%2fQCx2XCHrDMbzHLvNWJ5IA%3d%3d&agencyNumber=5009093&wlid=1808&lob=Banff+Gondola#/select-ticket/book-adventure",
     preferredTime: "9:00 AM",
   },
   "lake-minnewanka-cruise-tickets": {
+    image: "/media/photos/tickets/lake-minnewanka-cruise.webp",
     url: "https://bookings.banffjaspercollection.com/RKY/activities/details/1/YBA-BTC-BA-BLC/Attraction?WebLink=UIL4QpnESxfATEyJJVwTVg%3d%3d&agencyNumber=5009093&wlid=1810&lob=Banff+Lake+Cruise#/select-ticket/book-adventure",
     preferredTime: "2:00 to 4:00 PM",
   },
@@ -31,16 +35,19 @@ export const ACTIVITY_TICKETS: Record<string, ActivityTicket> = {
   },
   // No stand-alone Skywalk link was given: the Glacier Adventure ticket includes the Skywalk.
   "columbia-icefield-skywalk-tickets": {
+    image: "/media/photos/tickets/columbia-icefield-skywalk.webp",
     url: GLACIER_ADVENTURE_URL,
     preferredTime: "3:30 PM",
     note: "The Skywalk is booked as part of the Glacier Adventure (Ice Explorer + Skywalk). The 3:30 PM slot usually saves a few dollars.",
   },
   "ice-odyssey-tickets": {
+    image: "/media/photos/tickets/ice-odyssey-glacier.webp",
     url: "https://bookings.banffjaspercollection.com/RKY/activities/details/1/ICE-BTC-BA-IO/Attraction?WebLink=TrJgkm9fFeCfISdNV4i2Sw%3d%3d&agencyNumber=5009093&wlid=1811&lob=Glacier+Adventure#/select-ticket/book-adventure",
     preferredTime: "3:30 PM",
     note: "The business-class glacier experience: more private, with extra time on the ice.",
   },
   "maligne-lake-cruise-tickets": {
+    image: "/media/photos/tickets/maligne-lake-cruise-dock.webp",
     url: "https://bookings.banffjaspercollection.com/RKY/activities/details/1/YJA-BTC-BA-MLC/Attraction?WebLink=rAP7e7CLsF7jalx7WLOBHg%3d%3d&agencyNumber=5009093&wlid=1813&lob=Maligne+Lake+Cruise#/select-ticket/book-adventure",
     preferredTime: "9:00 to 10:00 AM (early morning)",
   },
