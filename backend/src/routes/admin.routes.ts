@@ -23,7 +23,8 @@ import { createStop, listStops, updateStop } from "@/modules/admin/pickup-admin"
 import { sendConfirmationEmail } from "@/modules/bookings/confirmation-email";
 import { linkTripBookings, tripOf, tripSummary } from "@/modules/bookings/trip";
 import { emailDeliveryConfigured, getEmailProvider } from "@/lib/email/email.provider";
-import { bokunAvailabilitySyncEnabled, bokunConfig, bokunConnected } from "@/modules/bokun/config";
+import { bokunAvailabilitySyncEnabled, bokunConfig, bokunConnected, bokunIsTestAccount } from "@/modules/bokun/config";
+import { checkBokunProducts } from "@/modules/bokun/bokun-products";
 import { bokunSyncStatus, processBokunSyncTasks, queueUpcomingBookings, retryBokunSync } from "@/modules/bokun/bokun-sync";
 import { syncBokunSeats } from "@/modules/bokun/availability-sync";
 import { PRODUCT_MAP } from "@/modules/tours/product-map";
@@ -867,6 +868,7 @@ router.get("/bokun", async (_req, res, next) => {
       success: true,
       connected,
       apiUrl: bokunConfig().apiUrl,
+      testAccount: bokunIsTestAccount(),
       seatSync: bokunAvailabilitySyncEnabled(),
       products: PRODUCT_MAP.filter((p) => p.bookingMode === "BOKUN").map((p) => ({ slug: p.slug, bokunId: p.bokunId })),
       ...(await bokunSyncStatus()),
@@ -876,11 +878,24 @@ router.get("/bokun", async (_req, res, next) => {
   }
 });
 
+// The connected account's Bókun products, and whether each website product's Bókun ID is among
+// them (a test account has different IDs than the live one: docs/BOKUN.md "Test account").
+router.get("/bokun/products", async (_req, res, next) => {
+  try {
+    if (!bokunConnected()) return res.status(409).json({ success: false, error: "Bókun isn't connected yet." });
+    const check = await checkBokunProducts();
+    res.json({ success: true, ...check });
+  } catch (e) {
+    if ((e as { status?: number }).status) return res.status(502).json({ success: false, error: `Bókun didn't list its products: ${(e as Error).message.slice(0, 300)}` });
+    next(e);
+  }
+});
+
 router.post("/bokun/sync", requireStaff(MANAGERS), async (req, res, next) => {
   try {
     if (!bokunConnected()) return res.status(409).json({ success: false, error: "Bókun isn't connected yet: add BOKUN_ACCESS_KEY and BOKUN_SECRET_KEY to the server's .env and restart." });
     const bookings = await processBokunSyncTasks();
-    const seats = bokunAvailabilitySyncEnabled() ? await syncBokunSeats() : { skipped: "Seat sync is off (BOKUN_AVAILABILITY_SYNC=false)." };
+    const seats = bokunAvailabilitySyncEnabled() ? await syncBokunSeats() : { skipped: bokunIsTestAccount() ? "Seat sync is off for a Bókun test account (BOKUN_AVAILABILITY_SYNC=true turns it on)." : "Seat sync is off (BOKUN_AVAILABILITY_SYNC=false)." };
     await audit(req, "BOKUN_SYNC", "Bokun", "manual", { bookings, seats });
     res.json({ success: true, bookings, seats });
   } catch (e) {
