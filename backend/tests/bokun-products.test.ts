@@ -63,3 +63,36 @@ describe("seat sync with a Bókun test account", () => {
     expect(bokunAvailabilitySyncEnabled()).toBe(false);
   });
 });
+
+describe("matching Bókun start times", () => {
+  it("reads the vendor's day whatever its time zone, and loose time formats", async () => {
+    const { findSlot } = await import("@/modules/bokun/bokun-booking");
+    const ist = Date.parse("2026-11-25T18:30:00Z"); // midnight 26 Nov in India
+    const banff = Date.parse("2026-11-26T07:00:00Z"); // midnight 26 Nov in Banff
+    expect(findSlot([{ date: ist, startTime: "7:00" }], "2026-11-26", "07:00")).toBeTruthy();
+    expect(findSlot([{ date: banff, startTime: "07:00:00" }], "2026-11-26", "07:00")).toBeTruthy();
+    expect(findSlot([{ date: banff, startTime: "08:00" }], "2026-11-26", "07:00")).toBeUndefined();
+  });
+
+  it("says which start times Bókun has when the departure isn't offered", async () => {
+    const { reserveInBokun } = await import("@/modules/bokun/bokun-booking");
+    const api: BokunApi = {
+      getAvailabilities: async () => [{ date: Date.parse("2026-11-26T00:00:00Z"), startTime: "08:30", availabilityCount: 10 }],
+      fetch: async () => ({ pricingCategories: [{ id: 1, title: "Adult" }] }),
+    };
+    const input = {
+      bookingReference: "VC-TEST",
+      productBokunId: "30159",
+      category: "PRIVATE",
+      date: "2026-11-26",
+      time: "07:00",
+      adults: 2,
+      children: 0,
+      infants: 0,
+      customerName: "Test Guest",
+      customerEmail: "t@example.com",
+      customerPhone: "+10000000000",
+    };
+    await expect(reserveInBokun(api, input as never, undefined as never)).rejects.toThrow(/only 08:30 on that day/);
+  });
+});

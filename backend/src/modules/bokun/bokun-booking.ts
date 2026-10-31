@@ -64,8 +64,19 @@ export interface BokunPayment {
 type Availability = BokunAvailability;
 
 /** Bókun's "YYYY-MM-DD" and "HH:mm" for one availability (start times without a clock read as 00:00). */
-export const slotDate = (a: BokunAvailability) => new Date(a.date).toISOString().slice(0, 10);
-export const slotTime = (a: BokunAvailability) => (/^\d{2}:\d{2}$/.test(a.startTime ?? "") ? a.startTime! : "00:00");
+// Bókun sends the day as the epoch time of midnight in the vendor's time zone, so a vendor east of
+// UTC (India: 18:30 UTC the day before) or west of it (Banff: 07:00 UTC) is rounded to the nearest
+// UTC midnight to get the vendor's calendar day.
+const DAY_MS = 86_400_000;
+export const slotDate = (a: BokunAvailability) => {
+  const ms = typeof a.date === "number" ? a.date : Date.parse(String(a.date));
+  return new Date(Math.round(ms / DAY_MS) * DAY_MS).toISOString().slice(0, 10);
+};
+/** "7:00", "07:00" and "07:00:00" all read as "07:00". */
+export const slotTime = (a: BokunAvailability) => {
+  const m = /^(\d{1,2}):(\d{2})/.exec(a.startTime ?? "");
+  return m ? `${m[1].padStart(2, "0")}:${m[2]}` : "00:00";
+};
 
 const RESERVE = "RESERVE_FOR_EXTERNAL_PAYMENT";
 const isChild = (title: string) => /child|youth|kid/i.test(title);
@@ -136,7 +147,12 @@ export async function reserveInBokun(client: BokunApi, input: BokunReservationIn
     client.fetch("GET", `/activity.json/${input.productBokunId}?lang=EN&currency=CAD`) as Promise<{ pricingCategories?: BokunCategory[] } | null>,
   ]);
   const slot = findSlot(Array.isArray(list) ? list : [], input.date, input.time);
-  if (!slot || slot.unavailable) throw new BokunUnavailableError("Bókun doesn't offer this departure.");
+  if (!slot || slot.unavailable) {
+    const sameDay = (Array.isArray(list) ? list : []).filter((a) => slotDate(a) === input.date && !a.unavailable).map(slotTime);
+    throw new BokunUnavailableError(
+      `Bókun doesn't offer this departure (${input.date} ${input.time}). Bókun has ${sameDay.length ? `only ${[...new Set(sameDay)].join(", ")}` : "no start times"} on that day: add a ${input.time} start time with seats on that date in Bókun.`,
+    );
+  }
   const seatsLeft = Math.max(0, slot.availabilityCount ?? 0);
   const needed = input.category === "PRIVATE" ? 1 : input.adults + input.children;
   if (slot.soldOut || seatsLeft < needed) throw new BokunUnavailableError(`Bókun has ${seatsLeft} seat(s) left.`);
