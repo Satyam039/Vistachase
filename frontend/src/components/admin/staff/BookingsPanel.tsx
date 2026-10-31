@@ -96,7 +96,7 @@ export function BookingsPanel({
     );
     if (!res.ok) return setError(errorOf(res.data, "Couldn't load bookings."));
     setError("");
-    setBookings(res.data.bookings);
+    setBookings(Array.isArray(res.data.bookings) ? res.data.bookings : []);
   }, [q, status, flagged]);
 
   useEffect(() => {
@@ -237,7 +237,7 @@ export function BookingsPanel({
                     </Chip>
                   </td>
                   <td className="px-6 py-4">
-                    {b.flags.length === 0 ? (
+                    {!b.flags?.length ? (
                       <span className="text-sm text-slate-600">–</span>
                     ) : (
                       <span className="flex flex-wrap gap-1">
