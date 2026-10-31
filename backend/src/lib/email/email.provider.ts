@@ -1,3 +1,5 @@
+import nodemailer, { type Transporter } from "nodemailer";
+
 export interface EmailPayload {
   to: string | string[];
   subject: string;
@@ -19,12 +21,11 @@ class ConsoleEmailProvider implements IEmailProvider {
   async sendEmail(payload: EmailPayload): Promise<{ success: boolean; messageId: string }> {
     const messageId = `mock_msg_${Date.now()}`;
     console.log("\n================ [EMAIL DISPATCH: CONSOLE PROVIDER] ================");
+    console.log("ℹ️ Real emails are NOT enabled (EMAIL_PROVIDER=console). To send real emails, set EMAIL_PROVIDER=resend or EMAIL_PROVIDER=smtp.");
     console.log(`To: ${Array.isArray(payload.to) ? payload.to.join(", ") : payload.to}`);
     console.log(`From: ${payload.from || process.env.EMAIL_FROM || "bookings@vistachase.com"}`);
     console.log(`Subject: ${payload.subject}`);
     console.log("----------------------- [EMAIL CONTENT PREVIEW] -----------------------");
-    // Link tokens (password reset, staff invites, email confirmation, voucher, check-in, review,
-    // tracking) never go to the logs.
     const preview = payload.text || payload.html.replace(/<[^>]*>?/gm, "").substring(0, 300) + "...";
     console.log(redactTokens(preview));
     console.log("===================================================================\n");
@@ -40,6 +41,8 @@ class ResendEmailProvider implements IEmailProvider {
   }
 
   async sendEmail(payload: EmailPayload): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    const from = payload.from || process.env.EMAIL_FROM || "bookings@vistachase.com";
+    const to = Array.isArray(payload.to) ? payload.to : [payload.to];
     try {
       const response = await fetch("https://api.resend.com/emails", {
         method: "POST",
@@ -48,31 +51,83 @@ class ResendEmailProvider implements IEmailProvider {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: payload.from || process.env.EMAIL_FROM || "bookings@vistachase.com",
-          to: payload.to,
+          from,
+          to,
           subject: payload.subject,
           html: payload.html,
           text: payload.text,
         }),
       });
 
-      const data = (await response.json()) as { id?: string; message?: string };
+      const data = (await response.json()) as { id?: string; message?: string; name?: string; statusCode?: number };
       if (!response.ok) {
-        return { success: false, error: data.message || "Failed to send email" };
+        const errorMsg = data.message || `Resend error (${response.status})`;
+        console.error(`❌ [ResendEmailProvider] Failed to send email to ${to.join(", ")}:`, errorMsg);
+        if (errorMsg.includes("domain") || response.status === 403) {
+          console.error("💡 Hint: In Resend, the sender domain in EMAIL_FROM must be verified in https://resend.com/domains. For testing without a verified domain, use EMAIL_FROM='onboarding@resend.dev' and send only to your account email.");
+        }
+        return { success: false, error: errorMsg };
       }
+
+      console.log(`✅ [ResendEmailProvider] Email sent successfully to ${to.join(", ")}, messageId: ${data.id}`);
       return { success: true, messageId: data.id };
     } catch (err: unknown) {
-      return { success: false, error: (err as Error).message };
+      const errorMsg = (err as Error).message;
+      console.error(`❌ [ResendEmailProvider] Network error sending to ${to.join(", ")}:`, errorMsg);
+      return { success: false, error: errorMsg };
     }
   }
 }
 
-// Not built yet. It says so instead of reporting a send that never happened (EMAIL_PROVIDER=ses
-// used to look configured while every email was dropped). Use EMAIL_PROVIDER=resend.
+class SmtpEmailProvider implements IEmailProvider {
+  private transporter: Transporter;
+
+  constructor(options: {
+    host: string;
+    port: number;
+    secure?: boolean;
+    user: string;
+    pass: string;
+  }) {
+    this.transporter = nodemailer.createTransport({
+      host: options.host,
+      port: options.port,
+      secure: options.secure ?? options.port === 465,
+      auth: {
+        user: options.user,
+        pass: options.pass,
+      },
+      tls: {
+        rejectUnauthorized: false,
+      },
+    });
+  }
+
+  async sendEmail(payload: EmailPayload): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    const from = payload.from || process.env.EMAIL_FROM || process.env.SMTP_USER || "bookings@vistachase.com";
+    const to = Array.isArray(payload.to) ? payload.to.join(", ") : payload.to;
+    try {
+      const info = await this.transporter.sendMail({
+        from,
+        to,
+        subject: payload.subject,
+        html: payload.html,
+        text: payload.text,
+      });
+      console.log(`✅ [SmtpEmailProvider] Email sent successfully to ${to}, messageId: ${info.messageId}`);
+      return { success: true, messageId: info.messageId };
+    } catch (err: unknown) {
+      const errorMsg = (err as Error).message;
+      console.error(`❌ [SmtpEmailProvider] Failed to send email to ${to}:`, errorMsg);
+      return { success: false, error: errorMsg };
+    }
+  }
+}
+
 class SESEmailProvider implements IEmailProvider {
   async sendEmail(payload: EmailPayload): Promise<{ success: boolean; messageId?: string; error?: string }> {
-    console.error(`[SESEmailProvider] not implemented: email to ${Array.isArray(payload.to) ? payload.to.length + " recipients" : "1 recipient"} was NOT sent. Set EMAIL_PROVIDER=resend.`);
-    return { success: false, error: "The SES email provider is not implemented; use EMAIL_PROVIDER=resend." };
+    console.error(`[SESEmailProvider] not implemented: email to ${Array.isArray(payload.to) ? payload.to.length + " recipients" : "1 recipient"} was NOT sent. Set EMAIL_PROVIDER=resend or smtp.`);
+    return { success: false, error: "The SES email provider is not implemented; use EMAIL_PROVIDER=resend or EMAIL_PROVIDER=smtp." };
   }
 }
 
@@ -80,20 +135,48 @@ let emailInstance: IEmailProvider | null = null;
 
 /** True when emails really leave the server (not the console provider used in development). */
 export function emailDeliveryConfigured(): boolean {
-  const providerType = process.env.EMAIL_PROVIDER || "console";
-  return providerType === "resend" && !!process.env.RESEND_API_KEY;
+  const providerType = (process.env.EMAIL_PROVIDER || "").toLowerCase();
+  if (providerType === "resend" || (!providerType && process.env.RESEND_API_KEY)) {
+    return Boolean(process.env.RESEND_API_KEY);
+  }
+  if (providerType === "smtp" || (!providerType && process.env.SMTP_HOST && process.env.SMTP_USER)) {
+    return Boolean(process.env.SMTP_HOST && process.env.SMTP_USER);
+  }
+  return false;
 }
 
 export function getEmailProvider(): IEmailProvider {
   if (emailInstance) return emailInstance;
 
-  const providerType = process.env.EMAIL_PROVIDER || "console";
-  if (providerType === "resend" && process.env.RESEND_API_KEY) {
-    emailInstance = new ResendEmailProvider(process.env.RESEND_API_KEY);
-  } else if (providerType === "ses" && process.env.AWS_ACCESS_KEY_ID) {
-    emailInstance = new SESEmailProvider();
-  } else {
-    emailInstance = new ConsoleEmailProvider();
+  const providerType = (process.env.EMAIL_PROVIDER || "").toLowerCase();
+
+  if (providerType === "resend" || (!providerType && process.env.RESEND_API_KEY)) {
+    if (process.env.RESEND_API_KEY) {
+      emailInstance = new ResendEmailProvider(process.env.RESEND_API_KEY);
+      return emailInstance;
+    }
   }
+
+  if (providerType === "smtp" || (!providerType && process.env.SMTP_HOST && process.env.SMTP_USER)) {
+    emailInstance = new SmtpEmailProvider({
+      host: process.env.SMTP_HOST || "localhost",
+      port: Number(process.env.SMTP_PORT) || 587,
+      secure: process.env.SMTP_SECURE === "true" || Number(process.env.SMTP_PORT) === 465,
+      user: process.env.SMTP_USER || "",
+      pass: process.env.SMTP_PASS || "",
+    });
+    return emailInstance;
+  }
+
+  if (providerType === "ses" && process.env.AWS_ACCESS_KEY_ID) {
+    emailInstance = new SESEmailProvider();
+    return emailInstance;
+  }
+
+  emailInstance = new ConsoleEmailProvider();
   return emailInstance;
+}
+
+export function setEmailProvider(provider: IEmailProvider | null) {
+  emailInstance = provider;
 }

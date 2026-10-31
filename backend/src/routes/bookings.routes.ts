@@ -4,7 +4,8 @@
 
 import { Router } from "express";
 import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
-import { cancelBooking, createBooking, getBookingByReference, paymentState } from "@/modules/bookings/booking.repository";
+import { cancelBooking, confirmPaidBooking, createBooking, getBookingByReference, paymentState } from "@/modules/bookings/booking.repository";
+import { getPaymentProvider } from "@/lib/payment/payment.provider";
 import { getAuthenticatedStaff, getAuthenticatedUser, getSessionUser, ownsBooking } from "@/lib/auth/admin-guard";
 import { verifyBookingLink } from "@/lib/security/signed-links";
 import { paymentSummary } from "@/modules/bookings/deposit";
@@ -103,13 +104,37 @@ router.get("/", rateLimitMiddleware("booking_read", { maxRequests: 30, windowSec
   try {
     const query = parseOr400(readSchema, req.query, res);
     if (!query) return;
-    const booking = await getBookingByReference(query.ref);
+    let booking = await getBookingByReference(query.ref);
     const allowed =
       booking &&
       (verifyBookingLink(booking.bookingReference, "voucher", query.t) ||
         ownsBooking(await getSessionUser(req), booking) ||
         (await getAuthenticatedStaff(req)));
     if (!booking || !allowed) return res.status(404).json({ success: false, error: "Booking not found" });
+
+    // If still pending, check if payment provider already confirmed the charge (handles missing/delayed webhooks)
+    if (booking.status === "PENDING_PAYMENT") {
+      const pendingPayment = booking.payments.find((p) => p.status === "PENDING" && p.transactionId);
+      if (pendingPayment?.transactionId) {
+        const provider = getPaymentProvider();
+        if (provider.retrievePaymentIntent) {
+          try {
+            const intent = await provider.retrievePaymentIntent(pendingPayment.transactionId);
+            if (intent && intent.paid) {
+              await confirmPaidBooking(booking.bookingReference, {
+                amount: intent.amount,
+                currency: intent.currency,
+                transactionId: intent.intentId,
+              });
+              const refreshed = await getBookingByReference(query.ref);
+              if (refreshed) booking = refreshed;
+            }
+          } catch (e) {
+            console.error(`Auto-confirm check failed for ${booking.bookingReference}:`, (e as Error).message);
+          }
+        }
+      }
+    }
 
     return res.json({
       success: true,

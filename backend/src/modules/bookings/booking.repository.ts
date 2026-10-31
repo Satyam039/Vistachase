@@ -573,7 +573,14 @@ export async function confirmPaidBooking(reference: string, verified?: VerifiedP
         </div>`,
       text: `Your Vista Chase booking ${booking.bookingReference} is confirmed.\n${title}, ${when} (Mountain Time).\n${amountLines.text}\nVoucher: ${link}\n${policyLine}`,
     })
-    .catch((e) => console.error("Confirmation email failed:", (e as Error).message));
+    .then((res) => {
+      if (!res.success) {
+        console.error(`[Email] Booking confirmation email failed for ${booking.bookingReference}:`, res.error);
+      } else {
+        console.log(`[Email] Booking confirmation email sent for ${booking.bookingReference} (id: ${res.messageId})`);
+      }
+    })
+    .catch((e) => console.error(`[Email] Confirmation email failed for ${booking.bookingReference}:`, (e as Error).message));
 
   return updated;
 }
@@ -747,7 +754,14 @@ export async function cancelBooking(reference: string, customerEmail?: string) {
         </div>`,
       text: `Your Vista Chase booking ${booking.bookingReference} is cancelled.${refundedCents > 0 ? ` Refund: $${(refundedCents / 100).toFixed(2)} ${booking.currency}.` : ""}`,
     })
-    .catch((e) => console.error("Cancellation email failed:", (e as Error).message));
+    .then((res) => {
+      if (!res.success) {
+        console.error(`[Email] Cancellation email failed for ${booking.bookingReference}:`, res.error);
+      } else {
+        console.log(`[Email] Cancellation email sent for ${booking.bookingReference} (id: ${res.messageId})`);
+      }
+    })
+    .catch((e) => console.error(`[Email] Cancellation email failed for ${booking.bookingReference}:`, (e as Error).message));
 
   return { success: true, booking: final, refundedAmount: refundedCents / 100, refundOwedAmount: failedCents / 100, message: "Reservation cancelled and capacity released." };
 }

@@ -32,14 +32,20 @@ export async function createEnquiry(input: EnquiryInput) {
     input.message,
   ].filter((l): l is string => l !== null);
 
-  await getEmailProvider()
+  const emailResult = await getEmailProvider()
     .sendEmail({
       to: process.env.ENQUIRIES_TO || "info@vistachase.com",
       subject: `${tour ? `Tour request: ${tour.title}` : "Website enquiry"} from ${input.name}`,
       text: lines.join("\n"),
       html: `<p>${lines.map(escape).join("<br>")}</p>`,
     })
-    .catch((err) => console.error("[enquiries] email failed", err));
+    .catch((err) => ({ success: false, messageId: undefined as string | undefined, error: (err as Error).message }));
+
+  if (!emailResult.success) {
+    console.error(`[Enquiries] Failed to send enquiry email for enquiry #${enquiry.id}:`, emailResult.error);
+  } else {
+    console.log(`[Enquiries] Enquiry email sent successfully for enquiry #${enquiry.id} (id: ${emailResult.messageId ?? "ok"})`);
+  }
 
   return { id: enquiry.id };
 }
