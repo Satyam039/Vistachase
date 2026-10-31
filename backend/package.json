@@ -18,6 +18,7 @@
     "seed:fixtures": "node -r dotenv/config prisma/seed-fixtures.js",
     "seed:departures": "tsx scripts/seed-departures.ts",
     "seed:pickups": "tsx scripts/seed-pickup-stops.ts",
+    "seed:blog": "tsx scripts/import-webflow-blog.ts",
     "worker": "node dist/worker.js",
     "dev:worker": "tsx watch src/worker.ts",
     "finance:export": "tsx scripts/finance-export.ts"

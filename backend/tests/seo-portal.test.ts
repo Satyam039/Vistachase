@@ -2,12 +2,15 @@
 // the Webflow HTML converter, CSV imports (blog posts, redirects), the migration checklist's
 // evidence rule, admin-approved changes (verification, tracking) and crawler rules.
 
+import fs from "node:fs";
+import path from "node:path";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import request from "supertest";
 import prisma from "@/lib/db/prisma";
 import { createApp } from "@/app";
 import { signToken } from "@/lib/auth/auth";
 import { htmlToMarkdown } from "@/modules/seo/portal/html-to-markdown";
+import { postsFromCsv } from "@/modules/seo/portal/imports";
 import { validateSchema } from "@/modules/seo/portal/schema";
 import { headingOutline } from "@/modules/seo/portal/blog";
 import { parseRobots, robotsAllows, robotsPreview } from "@/modules/seo/portal/technical";
@@ -178,6 +181,20 @@ describe("Webflow HTML conversion", () => {
     const html = `<p>Before</p><table><thead><tr><th>Tour</th><th>Price</th></tr></thead><tbody><tr><td><p><strong>Banff</strong> | day</p></td><td>$189</td></tr><tr><td><a href="https://www.vistachase.com/lake-louise">Lake Louise</a><img src="/x.jpg"></td><td>$99</td></tr></tbody></table><p>After</p>`;
     const out = htmlToMarkdown(html, { siteHosts: ["www.vistachase.com"] });
     expect(out.markdown).toBe("Before\n\n| Tour | Price |\n| --- | --- |\n| **Banff** / day | $189 |\n| [Lake Louise](/lake-louise) | $99 |\n\nAfter");
+  });
+
+  it("treats Webflow's inherit-alt placeholder as no alt text", () => {
+    const out = htmlToMarkdown(`<img src="https://cdn.prod.website-files.com/x/a.png" alt="__wf_reserved_inherit">`, { siteHosts: ["www.vistachase.com"] });
+    expect(out.markdown).toBe("![](https://cdn.prod.website-files.com/x/a.png)");
+    expect(out.stats.images[0].alt).toBeNull();
+  });
+
+  it("reads the bundled Webflow blog export (prisma/catalog/webflow-blog-posts.csv)", () => {
+    const posts = postsFromCsv(fs.readFileSync(path.resolve(__dirname, "../prisma/catalog/webflow-blog-posts.csv"), "utf8"));
+    expect(posts.length).toBe(89);
+    expect(posts.filter((p) => p.state === "draft").length).toBe(6);
+    expect(new Set(posts.map((p) => p.slug)).size).toBe(89);
+    expect(posts.every((p) => p.name && p.slug && p.bodyHtml)).toBe(true);
   });
 
   it("reports heading jumps", () => {
