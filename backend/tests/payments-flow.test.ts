@@ -1,11 +1,12 @@
 // The paid booking flow: the server prices everything in cents, bookings wait in PENDING_PAYMENT
 // until the payment provider confirms, and only a correctly signed Stripe webhook confirms them.
 
-import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from "vitest";
 import request from "supertest";
 import Stripe from "stripe";
 import prisma from "@/lib/db/prisma";
 import { createApp } from "@/app";
+import { getEmailProvider } from "@/lib/email/email.provider";
 import { createBooking, expireUnpaidBookings } from "@/modules/bookings/booking.repository";
 import { cancellationTerms, eligibleRefundCents, policyDecision } from "@/modules/bookings/cancellation-policy";
 import { setPaymentProviderForTests, type IPaymentProvider } from "@/lib/payment/payment.provider";
@@ -154,9 +155,15 @@ describe("paid booking flow", () => {
     const failed = (await createBooking(guest(3))).booking!.bookingReference;
     const abandoned = (await createBooking(guest(4))).booking!.bookingReference;
 
+    const send = vi.spyOn(getEmailProvider(), "sendEmail");
     const { payload, header } = signedEvent("payment_intent.payment_failed", failed);
     await request(createApp()).post("/api/webhooks/stripe").set("Content-Type", "application/json").set("stripe-signature", header).send(payload);
     expect((await prisma.booking.findUniqueOrThrow({ where: { bookingReference: failed } })).status).toBe("CANCELLED");
+    // The guest is told once; Stripe retrying the event sends nothing more.
+    await request(createApp()).post("/api/webhooks/stripe").set("Content-Type", "application/json").set("stripe-signature", header).send(payload);
+    const told = send.mock.calls.filter(([e]) => e.subject.includes("payment didn't go through") && e.subject.includes(failed));
+    expect(told).toHaveLength(1);
+    send.mockRestore();
 
     // Back-date the payment window of this departure's unpaid bookings only: expiring "31 minutes
     // from now" would also expire other test files' pending bookings running at the same time.
