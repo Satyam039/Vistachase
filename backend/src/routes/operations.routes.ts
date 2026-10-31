@@ -11,6 +11,7 @@ import {
 } from "@/modules/operations/operations.repository";
 import prisma from "@/lib/db/prisma";
 import { todayInMountainTime } from "@/lib/utils/time";
+import { syncSeatsFromBokun } from "@/jobs/tasks";
 
 const router = Router();
 
@@ -158,6 +159,20 @@ router.get("/drivers", async (_req, res) => {
     return res.json({ success: true, drivers });
   } catch (error: any) {
     return res.status(500).json({ error: "Failed to load drivers." });
+  }
+});
+
+// 10. Manual Bókun Availability Sync
+router.post("/sync-bokun", async (_req, res) => {
+  try {
+    const result = await syncSeatsFromBokun();
+    if ("skipped" in result) {
+      return res.status(200).json({ success: true, message: result.skipped, skipped: true });
+    }
+    return res.json({ success: true, result });
+  } catch (error: any) {
+    console.error("Bókun sync error:", error);
+    return res.status(500).json({ error: error.message || "Bókun sync failed." });
   }
 });
 
