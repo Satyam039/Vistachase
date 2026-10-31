@@ -4,12 +4,12 @@
 // Prefilled from the product page's Request link (?tour=slug&guests=n). Errors are announced and
 // tied to their fields; success replaces the form with a confirmation.
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { CheckCircle2, Send } from "lucide-react";
 import { Dropdown } from "@/components/forms/Dropdown";
 import { PhoneField } from "@/components/forms/PhoneField";
 import { dialCode } from "@/lib/countries";
-import { openDatePicker } from "@/lib/utils/datePicker";
+import { RequestDateCalendar, longDay, tripDates } from "@/components/forms/RequestDateCalendar";
 
 type Fields = "name" | "email" | "phone" | "message" | "date" | "guests" | "tour";
 const FIELD =
@@ -26,17 +26,22 @@ export function ContactForm({
   defaultTour = "",
   defaultGuests,
   defaultMessage,
+  defaultDate,
+  tripDays = 1,
 }: {
   tours?: { slug: string; title: string }[];
   defaultTour?: string;
   defaultGuests?: number;
   /** Prefilled message, e.g. for a package request. */
   defaultMessage?: string;
+  /** Preselected date ("YYYY-MM-DD"), e.g. a shuttle departure's day. */
+  defaultDate?: string;
+  /** Days in the requested trip (2–4 for the multi-day packages); the calendar highlights them all. */
+  tripDays?: number;
 }) {
   const [state, setState] = useState<"idle" | "sending" | "sent">("idle");
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<Fields, string>>>({});
-  const today = new Date().toISOString().slice(0, 10);
 
   const initialCategory =
     defaultTour.includes("private") || defaultTour.includes("three-day") || defaultTour.includes("four-day")
@@ -50,9 +55,29 @@ export function ContactForm({
   const [phoneCountry, setPhoneCountry] = useState("CA");
   const [phoneLocal, setPhoneLocal] = useState("");
   const [tourCategory, setTourCategory] = useState(initialCategory);
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState(defaultDate && /^\d{4}-\d{2}-\d{2}$/.test(defaultDate) ? defaultDate : "");
   const [guests, setGuests] = useState(defaultGuests ? String(defaultGuests) : "");
   const [message, setMessage] = useState(defaultMessage || "");
+  // Dates the calendar wrote into the message, so choosing again replaces them but never what the
+  // guest typed themselves.
+  const filled = useRef<Record<string, string>>({});
+
+  const chooseDate = (day: string) => {
+    setDate(day);
+    setFieldErrors((f) => ({ ...f, date: undefined }));
+    const days = tripDates(day, tripDays);
+    const values: Record<string, string> = { start: longDay(days[0]) };
+    days.forEach((d, i) => (values[`day${i + 1}`] = longDay(d)));
+    setMessage((text) =>
+      text.replace(/^(Preferred (start|Day (\d)) date:)[ \t]*(.*)$/gim, (line, label: string, which: string, n: string | undefined, current: string) => {
+        const key = n ? `day${n}` : "start";
+        const next = values[key];
+        if (!next || (current.trim() && current.trim() !== filled.current[key])) return line;
+        filled.current[key] = next;
+        return `${label} ${next}`;
+      }),
+    );
+  };
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -215,22 +240,21 @@ export function ContactForm({
         {err("tour")}
       </div>
 
-      <label className="block">
-        <span className="mb-1.5 block text-sm font-medium text-slate-700">Preferred date</span>
-        <input
-          name="date"
-          type="date"
-          required
-          min={today}
+      <div className="sm:col-span-2">
+        <span id="contact-date-label" className="mb-1.5 block text-sm font-medium text-slate-700">
+          {tripDays > 1 ? `Preferred start date (${tripDays}-day trip)` : "Preferred date"}
+        </span>
+        <input type="hidden" name="date" value={date} />
+        <RequestDateCalendar
           value={date}
-          onChange={(e) => setDate(e.target.value)}
-          onClick={openDatePicker}
-          onFocus={openDatePicker}
-          className={FIELD}
-          {...aria("date")}
+          onChange={chooseDate}
+          tripDays={tripDays}
+          labelId="contact-date-label"
+          invalid={Boolean(fieldErrors.date)}
+          describedBy={fieldErrors.date ? "contact-date-error" : undefined}
         />
         {err("date")}
-      </label>
+      </div>
 
       <label className="block">
         <span className="mb-1.5 block text-sm font-medium text-slate-700">Guests</span>

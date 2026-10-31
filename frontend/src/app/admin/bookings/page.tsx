@@ -10,6 +10,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AdminHeader, StaffSignIn } from "@/components/admin/AdminHeader";
 import { BokunPanel } from "@/components/admin/staff/BokunPanel";
 import { BookingsPanel } from "@/components/admin/staff/BookingsPanel";
+import { EmailStatus } from "@/components/admin/staff/EmailStatus";
 import { FlagsPanel } from "@/components/admin/staff/FlagsPanel";
 import { QuickBookForm } from "@/components/admin/staff/QuickBookForm";
 import { RequestsPanel } from "@/components/admin/staff/RequestsPanel";
@@ -137,6 +138,7 @@ export default function AdminBookingsPage() {
 
         {access === "ok" && (
           <>
+            <EmailStatus canTest={isManager} />
             <div
               role="tablist"
               aria-label="Booking sections"

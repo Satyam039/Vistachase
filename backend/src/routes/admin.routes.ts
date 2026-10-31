@@ -22,7 +22,7 @@ import { createDepartures, departureProducts, listDepartures, setDepartureStatus
 import { createStop, listStops, updateStop } from "@/modules/admin/pickup-admin";
 import { sendConfirmationEmail } from "@/modules/bookings/confirmation-email";
 import { linkTripBookings, tripOf, tripSummary } from "@/modules/bookings/trip";
-import { emailDeliveryConfigured, getEmailProvider } from "@/lib/email/email.provider";
+import { emailDeliveryConfigured, emailSetup, getEmailProvider } from "@/lib/email/email.provider";
 import { bokunAvailabilitySyncEnabled, bokunConfig, bokunConnected } from "@/modules/bokun/config";
 import { bokunSyncStatus, processBokunSyncTasks, queueUpcomingBookings, retryBokunSync } from "@/modules/bokun/bokun-sync";
 import { syncBokunSeats } from "@/modules/bokun/availability-sync";
@@ -270,6 +270,32 @@ router.patch("/bookings/:id", async (req, res, next) => {
     const booking = await prisma.booking.update({ where: { id: String(req.params.id) }, data: body, select: bookingSelect });
     await audit(req, "UPDATE_BOOKING", "Booking", booking.id, body);
     res.json({ success: true, booking: { ...booking, totalAmount: booking.totalAmount / 100 } });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// Email delivery: which provider sends booking confirmations, and a test message to the signed-in
+// staff member's own address (never to anyone else), with the provider's exact error if it fails.
+router.get("/email/status", async (_req, res) => {
+  const setup = emailSetup();
+  res.json({ success: true, email: { provider: setup.provider, configured: setup.configured, problem: setup.problem, from: process.env.EMAIL_FROM || process.env.SMTP_USER || null } });
+});
+
+router.post("/email/test", requireStaff(MANAGERS), rateLimitMiddleware("admin_email_test", { maxRequests: 5, windowSeconds: 600 }), async (req, res, next) => {
+  try {
+    const staff = (req as StaffRequest).staff;
+    const setup = emailSetup();
+    if (!setup.configured) return res.status(409).json({ success: false, error: `Email isn't set up on the server (${setup.problem}). Emails only go to the server log.` });
+    const result = await getEmailProvider().sendEmail({
+      to: staff.email,
+      subject: "Vista Chase test email",
+      html: `<p>This is a test email from the Vista Chase admin dashboard.</p><p>If you can read it, booking confirmations are being delivered.</p>`,
+      text: "This is a test email from the Vista Chase admin dashboard. If you can read it, booking confirmations are being delivered.",
+    });
+    await audit(req, result.success ? "EMAIL_TEST_SENT" : "EMAIL_TEST_FAILED", "User", staff.userId, { provider: setup.provider, error: result.error ?? null });
+    if (!result.success) return res.status(502).json({ success: false, error: result.error || "The email provider refused the message." });
+    res.json({ success: true, to: staff.email });
   } catch (e) {
     next(e);
   }

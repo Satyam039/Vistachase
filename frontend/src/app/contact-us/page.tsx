@@ -150,9 +150,11 @@ export default async function ContactUsPage({ searchParams }: { searchParams: Pr
           <p className="mb-8 mt-2 text-base text-slate-600">Group trips, custom private days, accessibility needs or anything else.</p>
           <ContactForm
             tours={tours}
-            defaultTour={requested?.slug}
+            defaultTour={requested?.slug ?? (isTwoDayPrivate || isThreeDay || isFourDay ? pkg : undefined)}
             defaultGuests={Number.isFinite(guests) && guests > 0 ? guests : undefined}
             defaultMessage={packageMessage || undefined}
+            defaultDate={shuttle ? params.date : undefined}
+            tripDays={isTwoDayShared || isTwoDayPrivate ? 2 : isThreeDay ? 3 : isFourDay ? 4 : 1}
           />
         </section>
       </div>

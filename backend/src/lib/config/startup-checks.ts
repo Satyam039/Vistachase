@@ -2,6 +2,8 @@
 // boot (server.ts); everything here is a loud warning instead, so a missing key never takes the
 // live site down, but nobody can miss it in the PM2 log either.
 
+import { emailSetup } from "@/lib/email/email.provider";
+
 const EXAMPLE_JWT_SECRETS = ["super-secret-jwt-token-vista-chase-rockies-2026-development-only", "super-secret-test-key-must-be-32-chars!"];
 
 export function configWarnings(env: NodeJS.ProcessEnv = process.env): string[] {
@@ -28,9 +30,9 @@ export function configWarnings(env: NodeJS.ProcessEnv = process.env): string[] {
     warnings.push("FEATURE_MOCK_PAYMENT=true: bookings are confirmed without any payment. Never on the live site.");
   }
 
-  const emailProvider = env.EMAIL_PROVIDER || "console";
-  if (!(emailProvider === "resend" && env.RESEND_API_KEY)) {
-    warnings.push(`Email is not being sent (EMAIL_PROVIDER=${emailProvider}${emailProvider === "resend" ? " without RESEND_API_KEY" : ""}): confirmations, password resets and email confirmation links only go to the log.`);
+  const email = emailSetup(env);
+  if (!email.configured) {
+    warnings.push(`Email is not being sent (${email.problem}): confirmations, password resets and email confirmation links only go to the log. Set EMAIL_PROVIDER=resend with RESEND_API_KEY, or EMAIL_PROVIDER=smtp with SMTP_HOST, SMTP_PORT, SMTP_USER and SMTP_PASS.`);
   }
   const whatsapp = (env.WHATSAPP_PROVIDER || "console").toLowerCase();
   if (whatsapp !== "twilio" && whatsapp !== "meta") {

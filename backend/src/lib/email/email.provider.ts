@@ -1,3 +1,5 @@
+import nodemailer from "nodemailer";
+
 export interface EmailPayload {
   to: string | string[];
   subject: string;
@@ -82,31 +84,97 @@ class ResendEmailProvider implements IEmailProvider {
   }
 }
 
-// Not built yet. It says so instead of reporting a send that never happened (EMAIL_PROVIDER=ses
-// used to look configured while every email was dropped). Use EMAIL_PROVIDER=resend.
-class SESEmailProvider implements IEmailProvider {
-  async sendEmail(payload: EmailPayload): Promise<{ success: boolean; messageId?: string; error?: string }> {
-    console.error(`[SESEmailProvider] not implemented: email to ${Array.isArray(payload.to) ? payload.to.length + " recipients" : "1 recipient"} was NOT sent. Set EMAIL_PROVIDER=resend.`);
-    return { success: false, error: "The SES email provider is not implemented; use EMAIL_PROVIDER=resend." };
+/**
+ * Any SMTP mailbox: Gmail / Google Workspace (an app password), Zoho, Hostinger, Outlook / Microsoft
+ * 365, or Amazon SES through its SMTP endpoint (email-smtp.<region>.amazonaws.com, SES SMTP
+ * credentials). Port 465 uses TLS from the start; 587 (and 25) upgrade with STARTTLS.
+ */
+export class SmtpEmailProvider implements IEmailProvider {
+  private transport: nodemailer.Transporter;
+
+  constructor(config: SmtpConfig) {
+    this.transport = nodemailer.createTransport({
+      host: config.host,
+      port: config.port,
+      secure: config.secure,
+      auth: { user: config.user, pass: config.pass },
+      connectionTimeout: 15_000,
+      greetingTimeout: 15_000,
+      socketTimeout: 30_000,
+    });
   }
+
+  async sendEmail(payload: EmailPayload): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    try {
+      const info = await this.transport.sendMail({
+        from: payload.from || process.env.EMAIL_FROM || process.env.SMTP_USER,
+        to: payload.to,
+        subject: payload.subject,
+        html: payload.html,
+        text: payload.text,
+        ...(payload.replyTo ? { replyTo: payload.replyTo } : {}),
+        attachments: payload.attachments?.map((a) => ({ filename: a.filename, content: a.content, contentType: a.contentType })),
+      });
+      return { success: true, messageId: info.messageId };
+    } catch (err: unknown) {
+      // The server's reply (e.g. "535 Authentication failed"), never the password.
+      return { success: false, error: (err as Error).message.slice(0, 300) };
+    }
+  }
+}
+
+export interface SmtpConfig {
+  host: string;
+  port: number;
+  secure: boolean;
+  user: string;
+  pass: string;
+}
+
+/** SMTP settings from the environment, or null when they are incomplete. */
+export function smtpConfig(env: NodeJS.ProcessEnv = process.env): SmtpConfig | null {
+  const host = env.SMTP_HOST?.trim();
+  const user = env.SMTP_USER?.trim();
+  const pass = env.SMTP_PASS;
+  if (!host || !user || !pass) return null;
+  const port = Number(env.SMTP_PORT) || 587;
+  const secure = env.SMTP_SECURE ? /^(true|1|yes)$/i.test(env.SMTP_SECURE) : port === 465;
+  return { host, port, secure, user, pass };
+}
+
+/**
+ * Which provider sends email and whether it really leaves the server. EMAIL_PROVIDER=smtp (or ses
+ * with SMTP_* set, i.e. SES through its SMTP endpoint) uses SMTP; resend needs RESEND_API_KEY.
+ * Anything else, or missing settings, falls back to the console (emails only go to the log).
+ */
+export function emailSetup(env: NodeJS.ProcessEnv = process.env): { provider: "resend" | "smtp" | "console"; configured: boolean; problem: string | null } {
+  const wanted = (env.EMAIL_PROVIDER || "console").toLowerCase();
+  if (wanted === "resend") {
+    return env.RESEND_API_KEY ? { provider: "resend", configured: true, problem: null } : { provider: "console", configured: false, problem: "EMAIL_PROVIDER=resend without RESEND_API_KEY" };
+  }
+  if (wanted === "smtp" || wanted === "ses") {
+    return smtpConfig(env)
+      ? { provider: "smtp", configured: true, problem: null }
+      : { provider: "console", configured: false, problem: `EMAIL_PROVIDER=${wanted} without SMTP_HOST, SMTP_USER and SMTP_PASS` };
+  }
+  return { provider: "console", configured: false, problem: `EMAIL_PROVIDER=${wanted}` };
 }
 
 let emailInstance: IEmailProvider | null = null;
 
 /** True when emails really leave the server (not the console provider used in development). */
 export function emailDeliveryConfigured(): boolean {
-  const providerType = process.env.EMAIL_PROVIDER || "console";
-  return providerType === "resend" && !!process.env.RESEND_API_KEY;
+  return emailSetup().configured;
 }
 
 export function getEmailProvider(): IEmailProvider {
   if (emailInstance) return emailInstance;
 
-  const providerType = process.env.EMAIL_PROVIDER || "console";
-  if (providerType === "resend" && process.env.RESEND_API_KEY) {
-    emailInstance = new ResendEmailProvider(process.env.RESEND_API_KEY);
-  } else if (providerType === "ses" && process.env.AWS_ACCESS_KEY_ID) {
-    emailInstance = new SESEmailProvider();
+  const setup = emailSetup();
+  if (setup.provider === "resend") {
+    emailInstance = new ResendEmailProvider(process.env.RESEND_API_KEY!);
+  } else if (setup.provider === "smtp") {
+    emailInstance = new SmtpEmailProvider(smtpConfig()!);
   } else {
     emailInstance = new ConsoleEmailProvider();
   }

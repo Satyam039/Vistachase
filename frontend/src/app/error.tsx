@@ -1,7 +1,13 @@
 "use client";
 
 // Shown when a page can't load its data (usually the booking system answering slowly for a
-// moment). Same look as the 404 page; "Try again" re-renders the page on the server.
+// moment) or fails in the browser. Same look as the 404 page.
+//
+// After a deploy, a tab opened earlier still points at the previous build's script files, which no
+// longer exist: the next client-side navigation fails with a chunk-load error. That is fixed by a
+// full reload, so it happens once automatically. "Try again" re-renders on the server for server
+// errors (they carry a digest) and reloads the page for errors raised in the browser. The small
+// reference line (digest, else the error type) helps staff report what went wrong.
 
 import { useEffect, useTransition } from "react";
 import Image from "next/image";
@@ -9,20 +15,40 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Phone, RotateCw } from "lucide-react";
 
+const STALE_BUILD = /ChunkLoadError|Loading (CSS )?chunk|Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module/i;
+const RELOADED_KEY = "vc-error-reloaded";
+
+const isStaleBuild = (error: Error) => STALE_BUILD.test(`${error?.name ?? ""} ${error?.message ?? ""}`);
+
 export default function PageError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   const router = useRouter();
   const [isRetrying, startRetry] = useTransition();
 
   useEffect(() => {
     console.error(error);
+    if (!isStaleBuild(error)) return;
+    // One automatic reload per page per minute, so a real outage can't loop.
+    try {
+      const last = Number(sessionStorage.getItem(RELOADED_KEY) ?? 0);
+      if (Date.now() - last < 60_000) return;
+      sessionStorage.setItem(RELOADED_KEY, String(Date.now()));
+    } catch {
+      // Storage blocked: still reload once; the page will show this screen if it fails again.
+    }
+    window.location.reload();
   }, [error]);
 
   const retry = () => {
+    if (!error.digest) {
+      window.location.reload();
+      return;
+    }
     startRetry(() => {
       router.refresh();
       reset();
     });
   };
+  const reference = error.digest ?? (error.name && error.name !== "Error" ? error.name : null);
 
   return (
     <div className="bg-obsidian-50">
@@ -56,6 +82,7 @@ export default function PageError({ error, reset }: { error: Error & { digest?: 
               Home page
             </Link>
           </p>
+          {reference && <p className="mt-3 font-mono text-xs text-white/75">Reference: {reference}</p>}
         </div>
       </section>
     </div>
