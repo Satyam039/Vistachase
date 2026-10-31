@@ -18,6 +18,16 @@ Without the Bókun keys nothing calls Bókun and the site works as before.
 4. Open **Admin → Bookings → Bókun**. It should say "Connected". Press **Sync now**, then check **Seat sync**: every website departure should match a Bókun start time.
 5. Press **Send upcoming bookings** once to add bookings made before Bókun was connected.
 
+## Test account
+
+A Bókun test account (website.bokuntest.com, `BOKUN_API_URL=https://api.bokuntest.com`) has its own product IDs, so the live IDs in `product-map.json` are refused there with "404 Activity not found". To test:
+
+1. Create the tours as products in the test account (or note the ones it already has).
+2. **Admin → Bookings → Bókun → Products → Check products** lists the account's products. Pick the matching one for each website tour and copy the `BOKUN_PRODUCT_OVERRIDES=slug:id,...` line it shows into `backend/.env`.
+3. Restart the API (`pm2 restart vistachase-backend --update-env`) and press **Retry** on the stopped bookings.
+
+With a test account, seat sync is off unless `BOKUN_AVAILABILITY_SYNC=true`, so made-up test seats never replace the real calendar's seat counts. Before going live: remove `BOKUN_PRODUCT_OVERRIDES`, set the live keys and `BOKUN_API_URL=https://api.bokun.io`, restart.
+
 Optional settings: `BOKUN_AVAILABILITY_SYNC=false` keeps sending bookings but stops reading seats; `BOKUN_SYNC_DAYS` (default 90) is how far ahead seats are read.
 
 ## Products
