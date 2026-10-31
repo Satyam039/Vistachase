@@ -62,7 +62,7 @@ export function GuestTestimonials({ reviews }: { reviews: SliderReview[] }) {
             const review = TRIPADVISOR_REVIEWS.find((r) => r.id === x.reviewId);
             if (!review) return null;
             return (
-              <li key={x.reviewId} data-reveal className="flex flex-col rounded-[1.25rem] bg-white/[0.04] p-6 ring-1 ring-white/10">
+              <li key={x.reviewId} data-reveal className="flex flex-col rounded-none bg-white/[0.04] p-6 ring-1 ring-white/10">
                 <p className="text-xs uppercase tracking-[0.22em] text-summit-300">{x.theme}</p>
                 <blockquote className="mt-3 flex-1 text-lg font-light leading-relaxed text-white">&ldquo;{x.excerpt}&rdquo;</blockquote>
                 <p className="mt-5 text-sm text-slate-300">

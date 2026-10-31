@@ -201,7 +201,7 @@ describe("paying the balance", () => {
 });
 
 describe("cancelling a deposit booking", () => {
-  it("paid in full: refunds 80% (the balance) and keeps the deposit", async () => {
+  it("paid in full: a shared tour refunds everything, balance first", async () => {
     const { reference } = await depositBooking();
     await startBalancePayment(reference);
     const pending = await prisma.payment.findFirstOrThrow({ where: { booking: { bookingReference: reference }, kind: "BALANCE", status: "PENDING" } });
@@ -212,21 +212,25 @@ describe("cancelling a deposit booking", () => {
     const booking = await load(reference);
     const result = await cancelBooking(reference, booking.customerEmail);
     expect(result.success).toBe(true);
-    expect(result.refundedAmount).toBe(320);
-    expect(refunds).toEqual([{ transactionId: pending.transactionId, amount: 32000 }]);
+    expect(result.refundedAmount).toBe(400);
+    const deposit = booking.payments.find((p) => p.kind === "DEPOSIT")!;
+    expect(refunds).toEqual([
+      { transactionId: pending.transactionId, amount: 32000 },
+      { transactionId: deposit.transactionId, amount: 8000 },
+    ]);
     const after = await load(reference);
-    expect(after.payments.find((p) => p.kind === "DEPOSIT")?.status).toBe("SUCCEEDED");
+    expect(after.payments.find((p) => p.kind === "DEPOSIT")?.status).toBe("REFUNDED");
     expect(after.payments.find((p) => p.kind === "BALANCE" && p.id === pending.id)?.status).toBe("REFUNDED");
   });
 
-  it("deposit only: nothing to refund, seats released", async () => {
-    const { reference, dep } = await depositBooking();
+  it("deposit only: a shared tour refunds the deposit (a deposit doesn't change the policy), seats released", async () => {
+    const { reference, dep, depositPayment } = await depositBooking();
     refunds.length = 0;
     setPaymentProviderForTests(browserPays);
     const result = await cancelBooking(reference, (await load(reference)).customerEmail);
     expect(result.success).toBe(true);
-    expect(result.refundedAmount).toBe(0);
-    expect(refunds).toHaveLength(0);
+    expect(result.refundedAmount).toBe(80);
+    expect(refunds).toEqual([{ transactionId: depositPayment.transactionId, amount: 8000 }]);
     expect((await prisma.tourDeparture.findUniqueOrThrow({ where: { id: dep.id } })).capacityBooked).toBe(0);
   });
 });

@@ -23,6 +23,9 @@ export interface PaymentIntentResponse {
   currency: string;
   /** True when the payment is already complete (mock); otherwise the guest pays in the browser. */
   paid: boolean;
+  /** Set by retrievePaymentIntent: what was actually received and the intent's metadata. */
+  amountReceived?: number;
+  metadata?: Record<string, string>;
 }
 
 export interface IPaymentProvider {
@@ -102,6 +105,8 @@ class StripePaymentProvider implements IPaymentProvider {
       amount: intent.amount,
       currency: intent.currency.toUpperCase(),
       paid: intent.status === "succeeded",
+      amountReceived: intent.amount_received,
+      metadata: intent.metadata ?? {},
     };
   }
 

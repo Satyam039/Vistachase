@@ -9,6 +9,8 @@
 //   every 5 minutes   SEO pages scheduled to publish go live
 //   04:00 Mountain    SEO audit of the live pages (docs/SEO.md)
 //   hourly (:20)      deposit bookings: balance reminders, staff flag 72h before (docs/DEPOSITS.md)
+//   every 2 minutes   website bookings and cancellations to Bókun (with BOKUN_* keys)
+//   every 15 minutes  Bókun's seats into our departures (with BOKUN_* keys; docs/BOKUN.md)
 //   every 5 minutes   T-60 WhatsApp tracking link to guests picked up within the hour (only with
 //                     WHATSAPP_PROVIDER=twilio or meta)
 
@@ -16,15 +18,15 @@ import "dotenv/config";
 import { Queue, Worker } from "bullmq";
 import IORedis from "ioredis";
 import prisma from "@/lib/db/prisma";
-import { expireHoldsAndUnpaidBookings, maturePartnerCommissions, publishScheduledSeoPages, reconcileBookings, remindUnpaidBalances, runNightlySeoAudit, sendReviewRequests, sendT60WhatsApp, syncBokunDepartures, syncWebflowBlogPosts, whatsAppDeliveryConfigured } from "@/jobs/tasks";
+import { expireHoldsAndUnpaidBookings, maturePartnerCommissions, sendBookingsToBokun, syncSeatsFromBokun, publishScheduledSeoPages, reconcileBookings, remindUnpaidBalances, retryConfirmationEmails, runNightlySeoAudit, sendReviewRequests, sendT60WhatsApp, syncWebflowBlogPosts, whatsAppDeliveryConfigured } from "@/jobs/tasks";
 import { isWebflowSyncEnabled, webflowSyncMinutes } from "@/modules/seo/portal/webflow-sync";
+import { bokunConfigured } from "@/modules/bokun/config";
 
 const QUEUE = "vista-chase-jobs";
 const TZ = "America/Edmonton";
 
 const JOBS: Record<string, () => Promise<unknown>> = {
   "expire-holds": () => expireHoldsAndUnpaidBookings(),
-  "bokun-availability": () => syncBokunDepartures(),
   "reconcile-bookings": () => reconcileBookings(),
   "review-requests": () => sendReviewRequests(),
   "partner-commissions": () => maturePartnerCommissions(),
@@ -32,7 +34,10 @@ const JOBS: Record<string, () => Promise<unknown>> = {
   "seo-audit": () => runNightlySeoAudit(),
   "webflow-blog-sync": () => syncWebflowBlogPosts(),
   "balance-reminders": () => remindUnpaidBalances(),
+  "confirmation-email-retry": () => retryConfirmationEmails(),
   "whatsapp-t60": () => sendT60WhatsApp(),
+  "bokun-bookings": () => sendBookingsToBokun(),
+  "bokun-seats": () => syncSeatsFromBokun(),
 };
 
 async function main() {
@@ -41,13 +46,21 @@ async function main() {
   const queue = new Queue(QUEUE, { connection });
 
   await queue.upsertJobScheduler("expire-holds", { every: 5 * 60 * 1000 }, { name: "expire-holds" });
-  await queue.upsertJobScheduler("bokun-availability", { every: 15 * 60 * 1000 }, { name: "bokun-availability" });
+  await queue.removeJobScheduler("bokun-availability"); // retired Bókun sync, scheduled by older releases
+  if (bokunConfigured()) {
+    await queue.upsertJobScheduler("bokun-bookings", { every: 2 * 60 * 1000 }, { name: "bokun-bookings" });
+    await queue.upsertJobScheduler("bokun-seats", { every: 15 * 60 * 1000 }, { name: "bokun-seats" });
+  } else {
+    await queue.removeJobScheduler("bokun-bookings");
+    await queue.removeJobScheduler("bokun-seats");
+  }
   await queue.upsertJobScheduler("reconcile-bookings", { pattern: "0 2 * * *", tz: TZ }, { name: "reconcile-bookings" });
   await queue.upsertJobScheduler("review-requests", { pattern: "0 10 * * *", tz: TZ }, { name: "review-requests" });
   await queue.upsertJobScheduler("partner-commissions", { pattern: "0 3 * * *", tz: TZ }, { name: "partner-commissions" });
   await queue.upsertJobScheduler("seo-scheduled-publish", { every: 5 * 60 * 1000 }, { name: "seo-scheduled-publish" });
   await queue.upsertJobScheduler("seo-audit", { pattern: "0 4 * * *", tz: TZ }, { name: "seo-audit" });
   await queue.upsertJobScheduler("balance-reminders", { pattern: "20 * * * *", tz: TZ }, { name: "balance-reminders" });
+  await queue.upsertJobScheduler("confirmation-email-retry", { pattern: "*/15 * * * *", tz: TZ }, { name: "confirmation-email-retry" });
   if (isWebflowSyncEnabled()) await queue.upsertJobScheduler("webflow-blog-sync", { every: webflowSyncMinutes() * 60 * 1000 }, { name: "webflow-blog-sync" });
   else await queue.removeJobScheduler("webflow-blog-sync");
   if (whatsAppDeliveryConfigured()) await queue.upsertJobScheduler("whatsapp-t60", { every: 5 * 60 * 1000 }, { name: "whatsapp-t60" });

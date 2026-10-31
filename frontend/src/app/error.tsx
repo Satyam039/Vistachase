@@ -8,6 +8,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Phone, RotateCw } from "lucide-react";
+import { isStaleBuildError, reloadOnceForNewVersion } from "@/lib/staleBuild";
 
 export default function PageError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   const router = useRouter();
@@ -15,9 +16,12 @@ export default function PageError({ error, reset }: { error: Error & { digest?: 
 
   useEffect(() => {
     console.error(error);
+    if (isStaleBuildError(error)) reloadOnceForNewVersion();
   }, [error]);
 
   const retry = () => {
+    // Old page code from before a deploy: only a full reload loads the new code.
+    if (isStaleBuildError(error)) return window.location.reload();
     startRetry(() => {
       router.refresh();
       reset();

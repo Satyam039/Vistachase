@@ -82,7 +82,7 @@ export function GalleryBrowser({ photos, areas }: { photos: GalleryPhoto[]; area
                 type="button"
                 onClick={(e) => open(i, e.currentTarget)}
                 aria-label={`View larger: ${p.caption}`}
-                className="group relative block w-full overflow-hidden rounded-[1.5rem] bg-obsidian-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-600"
+                className="group relative block w-full overflow-hidden rounded-none bg-obsidian-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-600"
               >
                 <Image
                   src={p.src}

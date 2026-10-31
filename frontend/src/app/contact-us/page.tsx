@@ -21,8 +21,7 @@ const baseMetadata: Metadata = {
 
 const CHANNELS = [
   { icon: Phone, title: "Call us", value: "+1 (825) 734-9456", note: "Lines open 6 a.m. – 9 p.m. Mountain Time", href: "tel:+18257349456" },
-  { icon: Mail, title: "Booking inquiries", value: "bookings@vistachase.com", note: "Tours, shuttles & reservations", href: "mailto:bookings@vistachase.com" },
-  { icon: Mail, title: "Support email", value: "support@vistachase.com", note: "General questions & customer care", href: "mailto:support@vistachase.com" },
+  { icon: Mail, title: "Email us", value: "support@vistachase.com", note: "Bookings, questions & customer care", href: "mailto:support@vistachase.com" },
   { icon: Sparkles, title: "AI concierge", value: "Ask anything, any time", note: "Tours, pickups and bookings", href: "/concierge" },
 ];
 
@@ -50,16 +49,16 @@ export default async function ContactUsPage({ searchParams }: { searchParams: Pr
     packageMessage = TWO_DAY_PACKAGE.requestMessage;
   } else if (isTwoDayPrivate) {
     packageTitle = "Request the Private Two-Day Rockies Explorer";
-    packageSubtitle = "Tell us your preferred dates and party size. Our team confirms your private vehicle and driver-guide for both days with 10% off.";
-    packageMessage = "I'd like to book the Private Two-Day Rockies Explorer (Private Banff & Yoho + Columbia Icefield Adventure, 10% off).\nPreferred Day 1 date:\nPreferred Day 2 date:\nGroup size:\nWhere we're staying:";
+    packageSubtitle = "Tell us your preferred dates and party size. Our team confirms your private vehicle and driver-guide for both days, at CAD $1,599 per day (June 1 to October 10) or $1,299 per day (October 11 to May 31).";
+    packageMessage = "I'd like to book the Private Two-Day Rockies Explorer (Private Banff & Yoho + Columbia Icefield Adventure).\nPreferred Day 1 date:\nPreferred Day 2 date:\nGroup size:\nWhere we're staying:\nAirport transfer needed (yes/no):\nAirport arrival date and time:\nAirport departure date and time:";
   } else if (isThreeDay) {
     packageTitle = "Request the Three-Day Rockies Discovery";
     packageSubtitle = "Tell us your preferred dates and group size. Our team will coordinate your 3-day private itinerary, driver-guide, and vehicle.";
-    packageMessage = "I'd like to book the Three-Day Rockies Discovery (Private Banff, Yoho & Columbia Icefield Tour).\nPreferred start date:\nGroup size:\nWhere we're staying (Banff, Canmore, or Lake Louise):\nOptional activities of interest (Banff Gondola, Ice Explorer, Skywalk):";
+    packageMessage = "I'd like to book the Three-Day Rockies Discovery (Private Banff, Yoho & Columbia Icefield Tour).\nPreferred start date:\nGroup size:\nWhere we're staying (Banff, Canmore, or Lake Louise):\nOptional activities of interest (Banff Gondola, Ice Explorer, Skywalk):\nAirport transfer needed (yes/no):\nAirport arrival date and time:\nAirport departure date and time:";
   } else if (isFourDay) {
     packageTitle = "Request the Four-Day Rockies & Jasper";
     packageSubtitle = "Tell us your preferred dates, group size, and final drop-off location. Our team will tailor your 4-day journey across Banff, Yoho, and Jasper.";
-    packageMessage = "I'd like to book the Four-Day Rockies & Jasper Private Tour.\nPreferred start date:\nGroup size:\nLuggage count:\nFinal drop-off destination (Banff, Lake Louise, Canmore, or Calgary):\nOptional activities of interest:";
+    packageMessage = "I'd like to book the Four-Day Rockies & Jasper Private Tour.\nPreferred start date:\nGroup size:\nLuggage count:\nFinal drop-off destination (Banff, Lake Louise, Canmore, or Calgary):\nOptional activities of interest:\nAirport transfer needed (yes/no):\nAirport arrival date and time:\nAirport departure date and time:";
   }
 
   // "Book This Departure" on /shuttles when that departure isn't bookable online yet.
@@ -81,6 +80,8 @@ export default async function ContactUsPage({ searchParams }: { searchParams: Pr
     tours = [];
   }
   const requested = tours.find((t) => t.slug === params.tour);
+  // Tour and package requests get a full calendar; multi-day packages highlight every day of the trip.
+  const requestDays = isTwoDayShared || isTwoDayPrivate ? 2 : isThreeDay ? 3 : isFourDay ? 4 : params.tour ? 1 : undefined;
   const guests = Number(params.guests);
 
   return (
@@ -120,20 +121,20 @@ export default async function ContactUsPage({ searchParams }: { searchParams: Pr
 
       <div className="mx-auto grid max-w-7xl items-start gap-8 px-page py-14 sm:py-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] lg:gap-12">
         {/* Ways to reach us */}
-        <aside className="space-y-4" aria-label="Ways to reach us">
+        <aside className="min-w-0 space-y-4" aria-label="Ways to reach us">
           <ul className="space-y-3" data-stagger>
             {CHANNELS.map(({ icon: Icon, title, value, note, href }) => (
               <li key={title}>
                 <Link
                   href={href}
-                  className="group flex items-center gap-4 rounded-[1.5rem] bg-white p-5 ring-1 ring-obsidian-900/[0.07] transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_40px_-28px_rgba(12,31,33,0.5)]"
+                  className="group flex items-center gap-4 rounded-none bg-white p-5 ring-1 ring-obsidian-900/[0.07] transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_40px_-28px_rgba(12,31,33,0.5)]"
                 >
                   <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-summit-200 text-obsidian-900">
                     <Icon className="h-5 w-5" aria-hidden="true" />
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm text-slate-600">{title}</span>
-                    <span className="block text-lg text-obsidian-900">{value}</span>
+                    <span className="block break-words text-lg text-obsidian-900">{value}</span>
                     <span className="block text-sm text-slate-600">{note}</span>
                   </span>
                   <ArrowUpRight className="h-5 w-5 shrink-0 text-slate-400 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-obsidian-900" aria-hidden="true" />
@@ -144,16 +145,18 @@ export default async function ContactUsPage({ searchParams }: { searchParams: Pr
         </aside>
 
         {/* Form */}
-        <section aria-labelledby="form-heading" className="rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:p-10" data-reveal>
+        <section aria-labelledby="form-heading" className="rounded-none bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:p-10" data-reveal>
           <h2 id="form-heading" className="text-2xl font-light text-obsidian-900 sm:text-3xl">
             Send us a message
           </h2>
           <p className="mb-8 mt-2 text-base text-slate-600">Group trips, custom private days, accessibility needs or anything else.</p>
           <ContactForm
             tours={tours}
-            defaultTour={requested?.slug}
+            defaultTour={requested?.slug ?? params.tour}
             defaultGuests={Number.isFinite(guests) && guests > 0 ? guests : undefined}
             defaultMessage={packageMessage || undefined}
+            requestDays={requestDays}
+            defaultCategory={isTwoDayPrivate || isThreeDay || isFourDay ? "private" : shuttle && !pkg ? "shuttle" : undefined}
           />
         </section>
       </div>
@@ -166,7 +169,7 @@ export default async function ContactUsPage({ searchParams }: { searchParams: Pr
         <ul className="grid gap-3 sm:grid-cols-3" data-stagger>
           {SELF_SERVE.map(({ icon: Icon, label, href }) => (
             <li key={href}>
-              <Link href={href} className="group flex items-center justify-between rounded-2xl bg-white px-5 py-4 ring-1 ring-obsidian-900/[0.07] transition-colors hover:ring-ocean-600/40">
+              <Link href={href} className="group flex items-center justify-between rounded-none bg-white px-5 py-4 ring-1 ring-obsidian-900/[0.07] transition-colors hover:ring-ocean-600/40">
                 <span className="flex items-center gap-3 text-base text-obsidian-900">
                   <Icon className="h-5 w-5 text-ocean-600" aria-hidden="true" />
                   {label}

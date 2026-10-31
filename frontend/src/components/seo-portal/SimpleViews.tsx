@@ -1,6 +1,6 @@
 "use client";
 
-// Portal sections that are mostly the existing SEO panels (shared with /admin/seo) plus the
+// Portal sections that are mostly the existing SEO panels (also used by the page editor) plus the
 // portal's import tools.
 
 import { useEffect, useState } from "react";
@@ -71,7 +71,7 @@ export function AnalyticsView() {
       <PortalHeading title="Analytics & Search Console" intro="Connection status only. Traffic, clicks, impressions and rankings appear here once Google Search Console or GA4 is connected on the server; nothing is estimated." />
       {data && (
         <div className="grid gap-4 lg:grid-cols-2">
-          <section className="rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07]">
+          <section className="rounded-none bg-white p-6 ring-1 ring-obsidian-900/[0.07]">
             <h2 className="text-xl text-obsidian-900">Google tag on the site</h2>
             <dl className="mt-4 space-y-2 text-sm text-slate-700">
               <div>
@@ -101,7 +101,7 @@ export function AnalyticsView() {
               Changing these needs an admin: <Link href="/seo/settings" className="text-ocean-700 underline underline-offset-2">Settings → Approvals</Link>.
             </p>
           </section>
-          <section className="rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07]">
+          <section className="rounded-none bg-white p-6 ring-1 ring-obsidian-900/[0.07]">
             <h2 className="text-xl text-obsidian-900">Search data</h2>
             <p className="mt-2 text-sm text-slate-600">{data.searchMetricRows ? `${data.searchMetricRows} rows of provider data stored.` : "No search data: not connected."}</p>
           </section>

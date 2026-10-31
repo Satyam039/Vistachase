@@ -31,7 +31,7 @@ export function WhyTravelersLove() {
 
         <div className="grid items-center gap-12 lg:grid-cols-12">
           <div className="lg:col-span-5">
-            <div className="relative overflow-hidden rounded-[2rem]" data-reveal="clip">
+            <div className="relative overflow-hidden rounded-none" data-reveal="clip">
               <div className="relative h-[28rem] sm:h-[34rem]">
                 <Image src="/media/site/feature-image-1.webp" alt="A Vista Chase guide with guests in the Rockies" fill sizes="(max-width: 1024px) 100vw, 40vw" className="object-cover" data-parallax="10" />
                 <div className="vc-scrim" aria-hidden="true" />
@@ -42,7 +42,7 @@ export function WhyTravelersLove() {
 
           <ul className="grid gap-4 sm:grid-cols-2 lg:col-span-7" data-stagger>
             {REASONS.map(({ icon: Icon, title, body }) => (
-              <li key={title} className="group h-full rounded-[1.75rem] bg-gradient-to-b from-[#181d21] via-[#121619] to-[#0a0d0f] p-6 ring-1 ring-white/[0.12] transition-[transform,box-shadow,border-color] duration-500 hover:-translate-y-1.5 hover:ring-summit-400/40 hover:shadow-[0_24px_50px_-20px_rgba(0,0,0,0.6)]">
+              <li key={title} className="group h-full rounded-none bg-gradient-to-b from-[#181d21] via-[#121619] to-[#0a0d0f] p-6 ring-1 ring-white/[0.12] transition-[transform,box-shadow,border-color] duration-500 hover:-translate-y-1.5 hover:ring-summit-400/40 hover:shadow-[0_24px_50px_-20px_rgba(0,0,0,0.6)]">
                 <span className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-summit-500/15 text-summit-400 transition-colors group-hover:bg-summit-500/25">
                   <Icon className="h-5 w-5" aria-hidden="true" />
                 </span>

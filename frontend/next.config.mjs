@@ -52,6 +52,14 @@ const nextConfig = {
       },
     ];
   },
+  // SEO and page copy moved out of the admin area into the SEO portal (src/lib/portals.ts).
+  async redirects() {
+    return [
+      { source: '/admin/seo', destination: '/seo', permanent: false },
+      { source: '/admin/seo/pages/:id', destination: '/seo/pages/:id', permanent: false },
+      { source: '/admin/content', destination: '/seo/content', permanent: false },
+    ];
+  },
   async headers() {
     return [
       // The SEO portal is a staff workspace: never indexed, whatever robots.txt says.

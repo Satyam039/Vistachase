@@ -2,6 +2,7 @@ import { Router } from "express";
 import { getSessionUser } from "@/lib/auth/admin-guard";
 import { getCustomerBookings } from "@/modules/bookings/booking.repository";
 import { paymentSummary } from "@/modules/bookings/deposit";
+import { tripOf } from "@/modules/bookings/trip";
 
 const router = Router();
 
@@ -16,8 +17,19 @@ router.get("/trips", async (req, res) => {
     // Amounts in dollars, like GET /api/bookings (the database keeps cents). emailVerified: false
     // tells the page to offer the confirmation link, which brings in bookings made with this email
     // before the account existed.
-    const bookings = rows.map(({ payments, ...b }) => ({
+    // trip: the multi-day trip a booking is a day of (title, Day 1 reference, day N of M), so the
+    // page can show the days together under one reference. The price snapshot itself stays here.
+    const bookings = rows.map(({ payments, flags, priceSnapshot, ...b }) => ({
       ...b,
+      trip: tripOf(priceSnapshot, b.bookingReference),
+      cancelRequest: flags[0]
+        ? {
+            status: flags[0].status === "OPEN" ? ("PENDING" as const) : flags[0].resolution?.startsWith("Declined") ? ("DECLINED" as const) : ("CLOSED" as const),
+            reason: flags[0].resolution?.startsWith("Declined: ") ? flags[0].resolution.slice("Declined: ".length) : null,
+            requestedAt: flags[0].createdAt,
+            answeredAt: flags[0].resolvedAt,
+          }
+        : null,
       totalAmount: b.totalAmount / 100,
       ...paymentSummary(b, payments),
     }));

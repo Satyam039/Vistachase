@@ -32,7 +32,7 @@ function PageList({ rows, selected, onSelect }: { rows: Row[]; selected: string 
   const shown = useMemo(() => (term ? rows.filter((r) => r.label.toLowerCase().includes(term) || r.path.toLowerCase().includes(term)) : rows), [rows, term]);
   const groups = ORDER.map((g) => ({ g, items: shown.filter((r) => r.group === g).sort((a, b) => Number(b.pageType === "HOME") - Number(a.pageType === "HOME") || a.path.localeCompare(b.path)) })).filter((x) => x.items.length);
   return (
-    <nav aria-label="Pages" className="rounded-[1.75rem] bg-white p-4 ring-1 ring-obsidian-900/[0.07]">
+    <nav aria-label="Pages" className="rounded-none bg-white p-4 ring-1 ring-obsidian-900/[0.07]">
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" aria-hidden="true" />
         <label htmlFor="page-settings-search" className="sr-only">
@@ -132,7 +132,7 @@ function Inner() {
             {row ? (
               <SeoPageEditor key={row.id} id={row.id} mode="draft" canPublish={me.seo.manage} compact />
             ) : (
-              <p className="rounded-[1.75rem] bg-white px-6 py-8 text-sm text-slate-600 ring-1 ring-obsidian-900/10">No pages are listed yet. Add them from Pages &amp; metadata.</p>
+              <p className="rounded-none bg-white px-6 py-8 text-sm text-slate-600 ring-1 ring-obsidian-900/10">No pages are listed yet. Add them from Pages &amp; metadata.</p>
             )}
           </div>
         </div>

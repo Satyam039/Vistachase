@@ -58,17 +58,20 @@ const GROUPS: { heading: string; links: FooterLink[] }[] = [
   {
     heading: "Company",
     links: [
-      { label: "About Vista Chase", href: "/about-us" },
+      { label: "About Us", href: "/about-us" },
       { label: "Blogs", href: "/blog" },
       { label: "Partner program", href: "/partners" },
       { label: "Partner login", href: "/partners/login" },
+      { label: "Terms & Conditions", href: "/terms-and-conditions" },
+      { label: "Cancellation Policy", href: "/privacy-policy-vista-chase" },
       { label: "Contact us", href: "/contact-us" },
     ],
   },
 ];
 
 const PROMISES = [
-  { icon: CalendarCheck, text: "Free cancellation up to 72 hours before" },
+  // Booking & Cancellation Policy, per kind of booking (lib/policy.ts).
+  { icon: CalendarCheck, text: "Free cancellation: 24h shared tours & shuttles, 72h private tours" },
   { icon: ShieldCheck, text: "Parks Canada licensed commercial operator" },
   { icon: MapPin, text: "Hotel pickup in Banff, Canmore & Lake Louise" },
 ];
@@ -85,7 +88,7 @@ const LISTED_ON = [
 const LEGAL: FooterLink[] = [
   { label: "Terms", href: "/terms-and-conditions" },
   { label: "Privacy", href: "/privacy-policy" },
-  { label: "Cancellation policy", href: "/cancellation-policy" },
+  { label: "Cancellation policy", href: "/privacy-policy-vista-chase" },
   { label: "Travel trade & agents", href: "/affiliates" },
   { label: "Staff portal", href: "/admin" },
 ];
@@ -191,7 +194,7 @@ export function SiteFooter() {
       <div className="mx-auto max-w-7xl px-page pt-12 sm:pt-16">
         <section
           aria-labelledby="footer-plan-heading"
-          className="relative isolate overflow-hidden rounded-[2rem] px-6 py-12 sm:px-12 sm:py-16"
+          className="relative isolate overflow-hidden rounded-none px-6 py-12 sm:px-12 sm:py-16"
           data-reveal="clip"
         >
           <Image
@@ -233,12 +236,6 @@ export function SiteFooter() {
                 </a>
               </li>
               <li>
-                <a href="mailto:bookings@vistachase.com" className="inline-flex h-10 items-center gap-2 rounded-full bg-white/10 px-4 text-sm text-white backdrop-blur-md hover:bg-white/20">
-                  <Mail className="h-4 w-4 text-summit-300" aria-hidden="true" />
-                  bookings@vistachase.com
-                </a>
-              </li>
-              <li>
                 <a href="mailto:support@vistachase.com" className="inline-flex h-10 items-center gap-2 rounded-full bg-white/10 px-4 text-sm text-white backdrop-blur-md hover:bg-white/20">
                   <Mail className="h-4 w-4 text-summit-300" aria-hidden="true" />
                   support@vistachase.com
@@ -252,7 +249,7 @@ export function SiteFooter() {
 
       {/* 2. Main */}
       <div className="mx-auto grid max-w-7xl gap-10 px-page py-14 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,3fr)] lg:gap-14">
-        <div className="max-w-md space-y-6">
+        <div className="min-w-0 max-w-md space-y-6">
           <Link href="/" aria-label="Vista Chase home" className="inline-block rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-summit-500">
             <BrandLogo variant="white" height={84} alt="Vista Chase" />
           </Link>
@@ -265,19 +262,19 @@ export function SiteFooter() {
             href="https://www.tripadvisor.ca/Attraction_Review-g154911-d26518659-Reviews-Vista_Chase-Banff_Banff_National_Park_Alberta.html"
             target="_blank"
             rel="noopener noreferrer"
-            className="group relative flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.04] p-3 pr-10 transition-colors hover:border-summit-500/60 hover:bg-white/[0.08] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-summit-500"
+            className="group relative flex items-center gap-4 rounded-none border border-white/10 bg-white/[0.04] p-3 pr-10 transition-colors hover:border-summit-500/60 hover:bg-white/[0.08] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-summit-500"
           >
             <AwardMark />
             <span className="min-w-0">
-              <span className="block whitespace-nowrap text-base text-white">#6 experience in Canada</span>
-              <span className="block whitespace-nowrap text-xs text-white/70">TripAdvisor Best of the Best 2026</span>
-              <span className="mt-1.5 flex items-center gap-1.5 whitespace-nowrap text-sm text-white/85">
+              <span className="block text-base text-white sm:whitespace-nowrap">#6 experience in Canada</span>
+              <span className="block text-xs text-white/70 sm:whitespace-nowrap">TripAdvisor Best of the Best 2026</span>
+              <span className="mt-1.5 flex flex-wrap items-center gap-x-1.5 text-sm text-white/85 sm:whitespace-nowrap">
                 <span className="flex" aria-hidden="true">
                   {[0, 1, 2, 3, 4].map((i) => (
                     <Star key={i} className="h-3.5 w-3.5 fill-summit-500 text-summit-500" />
                   ))}
                 </span>
-                5.0<span className="sr-only"> out of 5</span> · 1,000+ reviews
+                5.0<span className="sr-only"> out of 5</span> · 1,700+ reviews
                 <ArrowUpRight className="absolute right-3.5 top-3.5 h-4 w-4 text-white/60 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true" />
                 <span className="sr-only">(opens TripAdvisor in a new tab)</span>
               </span>
@@ -311,7 +308,7 @@ export function SiteFooter() {
 
       {/* 3. Trust: promises as three equal columns, then the review platforms in equal cells */}
       <div className="mx-auto max-w-7xl px-page">
-        <ul className="grid gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 sm:grid-cols-3" aria-label="Booking with Vista Chase">
+        <ul className="grid gap-px overflow-hidden rounded-none border border-white/10 bg-white/10 sm:grid-cols-3" aria-label="Booking with Vista Chase">
           {PROMISES.map(({ icon: Icon, text }) => (
             <li key={text} className="flex items-center gap-3.5 bg-obsidian-950 px-5 py-5">
               <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-summit-500/15 text-summit-400">
@@ -325,7 +322,7 @@ export function SiteFooter() {
           <p className="shrink-0 text-sm uppercase tracking-[0.18em] text-white/65">Reviewed on</p>
           <ul className="grid flex-1 grid-cols-3 gap-3 sm:grid-cols-5">
             {LISTED_ON.map((l) => (
-              <li key={l.name} className="flex h-16 items-center justify-center rounded-xl border border-white/[0.08] px-3">
+              <li key={l.name} className="flex h-16 items-center justify-center rounded-none border border-white/[0.08] px-3">
                 <Image
                   src={l.src}
                   alt={l.name}

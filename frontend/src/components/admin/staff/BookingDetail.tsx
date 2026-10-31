@@ -1,8 +1,10 @@
 "use client";
 
 // One booking: guest and party, pickup, add-ons, payments, flags and its audit trail, plus admin
-// notes, Resend voucher and (managers only) the staff cancellation with a recorded refund choice.
+// notes, Resend voucher and (managers only) Approve for a booking waiting for payment and the staff
+// cancellation with a recorded refund choice.
 
+import { TripSection, type AdminTrip } from "@/components/admin/staff/TripSection";
 import {
   useCallback,
   useEffect,
@@ -31,6 +33,7 @@ import {
   experienceOf,
   type BookingRow,
 } from "@/components/admin/staff/BookingsPanel";
+import { ApproveBookingForm } from "@/components/admin/staff/RequestsPanel";
 
 interface Flag {
   id: string;
@@ -43,7 +46,7 @@ interface Flag {
   createdAt: string;
 }
 
-interface Detail extends Omit<BookingRow, "flags"> {
+interface Detail extends Omit<BookingRow, "flags" | "trip"> {
   adultsCount: number;
   childrenCount: number;
   infantsCount: number;
@@ -58,6 +61,20 @@ interface Detail extends Omit<BookingRow, "flags"> {
     createdAt: string;
   }[];
   flags: Flag[];
+  trip: AdminTrip | null;
+  confirmationEmailSentAt: string | null;
+  confirmationEmailError: string | null;
+  emailDelivery?: boolean;
+  bokunBookingId?: string | null;
+  externalSyncStatus?: "NOT_REQUIRED" | "PENDING" | "SYNCED" | "FAILED";
+}
+
+/** Where the booking stands in Bókun (docs/BOKUN.md). */
+function bokunLabel(b: Pick<Detail, "bokunBookingId" | "externalSyncStatus">) {
+  if (b.bokunBookingId) return `In Bókun as ${b.bokunBookingId}`;
+  if (b.externalSyncStatus === "PENDING") return "On its way to Bókun";
+  if (b.externalSyncStatus === "FAILED") return "Not in Bókun: see its flag";
+  return null;
 }
 
 interface HistoryRow {
@@ -77,6 +94,7 @@ interface CancelResult {
 }
 
 const CANCELLABLE = ["PENDING_PAYMENT", "CONFIRMED", "PAID_UNSYNCED"];
+const APPROVABLE = ["PENDING_PAYMENT", "PAID_UNSYNCED"];
 const MANAGERS = ["ADMIN", "OPERATOR"];
 
 const REFUNDS: {
@@ -87,7 +105,7 @@ const REFUNDS: {
   {
     value: "POLICY",
     label: "By the policy",
-    hint: "Full refund for 1–6 guests; groups of 7+ and multi-day tours keep the 20% deposit.",
+    hint: "Full refund, except private multi-day packages, which keep 20% of the total.",
   },
   {
     value: "FULL",
@@ -124,6 +142,7 @@ export function BookingDetail({
   const [busy, setBusy] = useState(false);
   const [notes, setNotes] = useState("");
   const [cancelled, setCancelled] = useState<CancelResult | null>(null);
+  const [approving, setApproving] = useState(false);
 
   const load = useCallback(async () => {
     const res = await adminApi<{
@@ -179,12 +198,15 @@ export function BookingDetail({
     setBusy(false);
     notify(
       res.ok
-        ? `Voucher sent to ${booking?.customerEmail ?? "the guest"}.`
+        ? `Voucher${booking && ["CONFIRMED", "COMPLETED"].includes(booking.status) ? " and PDF itinerary" : ""} sent to ${booking?.customerEmail ?? "the guest"}.`
         : errorOf(res.data, "Couldn't send the voucher."),
     );
     if (res.ok) await load();
   }
 
+  const canApprove = Boolean(
+    booking && MANAGERS.includes(role) && APPROVABLE.includes(booking.status),
+  );
   const canCancel = Boolean(
     booking && MANAGERS.includes(role) && CANCELLABLE.includes(booking.status),
   );
@@ -305,7 +327,26 @@ export function BookingDetail({
               <Fact label="Booked">
                 <span className="block text-sm">{when(booking.createdAt)}</span>
               </Fact>
+              {bokunLabel(booking) && (
+                <Fact label="Bókun">
+                  <span className="block text-sm">{bokunLabel(booking)}</span>
+                </Fact>
+              )}
             </div>
+
+            <TripSection
+              reference={booking.bookingReference}
+              trip={booking.trip}
+              emailSentAt={booking.confirmationEmailSentAt}
+              emailError={booking.confirmationEmailError}
+              emailDelivery={booking.emailDelivery !== false}
+              canLink={MANAGERS.includes(role)}
+              notify={notify}
+              onChanged={() => {
+                void load();
+                onChanged();
+              }}
+            />
 
             <Section title="Add-ons">
               {booking.items.length === 0 ? (
@@ -452,6 +493,36 @@ export function BookingDetail({
                 </button>
               </form>
             </Section>
+
+            {canApprove && !cancelled && (
+              <Section title="Approve booking">
+                {!approving ? (
+                  <button
+                    type="button"
+                    className={quietBtn}
+                    onClick={() => setApproving(true)}
+                  >
+                    Approve booking
+                  </button>
+                ) : (
+                  <ApproveBookingForm
+                    booking={{
+                      ...booking,
+                      paid: booking.payments
+                        .filter((p) => p.status === "SUCCEEDED")
+                        .reduce((sum, p) => sum + p.amount, 0),
+                    }}
+                    onCancel={() => setApproving(false)}
+                    onDone={async (m) => {
+                      notify(m);
+                      setApproving(false);
+                      await load();
+                      onChanged();
+                    }}
+                  />
+                )}
+              </Section>
+            )}
 
             {cancelled ? (
               <Section title="Cancelled">

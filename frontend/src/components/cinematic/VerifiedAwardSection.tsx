@@ -164,7 +164,7 @@ export function VerifiedAwardSection({ quote }: { quote?: AwardQuote | null }) {
 
               {/* A real guest's words about this tour, with their name and where they wrote it */}
               {quote && (
-                <figure className="mt-6 rounded-2xl border border-summit-500/25 bg-white/90 p-5 shadow-sm">
+                <figure className="mt-6 rounded-none border border-summit-500/25 bg-white/90 p-5 shadow-sm">
                   <div className="mb-2 flex gap-0.5" aria-label={`${quote.rating} out of 5 stars`} role="img">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star
@@ -216,7 +216,7 @@ export function VerifiedAwardSection({ quote }: { quote?: AwardQuote | null }) {
                 href={AWARD_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block w-full max-w-md rounded-2xl bg-white p-6 shadow-[0_30px_70px_-25px_rgba(15,23,42,0.25)] ring-1 ring-summit-500/30 transition-transform duration-500 hover:scale-[1.02] sm:p-10"
+                className="block w-full max-w-md rounded-none bg-white p-6 shadow-[0_30px_70px_-25px_rgba(15,23,42,0.25)] ring-1 ring-summit-500/30 transition-transform duration-500 hover:scale-[1.02] sm:p-10"
               >
                 <Image
                   src="/media/badges/tripadvisor-best-of-the-best-2026.png"
@@ -245,7 +245,7 @@ export function VerifiedAwardSection({ quote }: { quote?: AwardQuote | null }) {
                 return (
                   <div
                     key={s.label}
-                    className="group relative flex flex-col items-center text-center rounded-2xl bg-white/95 p-6 sm:p-7 border border-summit-500/25 shadow-sm transition-all duration-300 hover:shadow-md hover:border-summit-500/50 hover:-translate-y-0.5"
+                    className="group relative flex flex-col items-center text-center rounded-none bg-white/95 p-6 sm:p-7 border border-summit-500/25 shadow-sm transition-all duration-300 hover:shadow-md hover:border-summit-500/50 hover:-translate-y-0.5"
                   >
                     {/* Top gold accent line on pedestal */}
                     <div className="absolute top-0 left-6 right-6 h-0.5 bg-gradient-to-r from-transparent via-summit-500 to-transparent opacity-40 group-hover:opacity-100 transition-opacity" />

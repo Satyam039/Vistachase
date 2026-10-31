@@ -9,7 +9,7 @@
     "metaTitle": "Banff Highlights Shared Tour | Best-Selling Banff Day Trip",
     "metaDescription": "See Banff’s top lakes and lookouts in one full-day shared tour. Lake Louise, Moraine Lake, Peyto Lake, Johnston Canyon & more. Small groups, expert guides.",
     "rating": 5.0,
-    "reviewCountLabel": "1000+",
+    "reviewCountLabel": "1700+",
     "facts": [
       {
         "label": "Duration",
@@ -341,7 +341,7 @@
       },
       {
         "question": "What is your cancellation policy?",
-        "answer": "Cancel at least 72 hours before your tour for a full refund (groups of 1–6). For groups of 7 or more, the 20% deposit is non-refundable and the rest is refunded. Cancellations within 72 hours aren't refunded."
+        "answer": "Cancel at least 24 hours before departure for a full refund. Cancellations after that, late arrivals and no-shows aren't refunded."
       }
     ],
     "crossSells": [
@@ -363,7 +363,7 @@
     "metaTitle": "Heart of Banff Shared Tour | Explore Banff’s Top Sights in One Day",
     "metaDescription": "Explore Banff’s lakes, lookouts, Bow Falls, Minnewanka & more on this 8–10 hour small-group shared tour. Max 12 guests, expert local guide. Book your Banff adventure.",
     "rating": 5.0,
-    "reviewCountLabel": "1000+",
+    "reviewCountLabel": "1700+",
     "facts": [
       {
         "label": "Duration",
@@ -725,7 +725,7 @@
     "metaTitle": "Banff + Yoho Shared Tour | Most Famous Day Trip from Banff",
     "metaDescription": "Visit Lake Louise, Emerald Lake, Moraine Lake (summer), Natural Bridge & Takakkaw Falls on the Banff + Yoho Shared Tour. Small groups, expert guides, hotel pickup.",
     "rating": 5.0,
-    "reviewCountLabel": "1000+",
+    "reviewCountLabel": "1700+",
     "facts": [
       {
         "label": "Duration",
@@ -1075,7 +1075,7 @@
     "metaTitle": "Icefields Parkway & Jasper Shared Tour | Banff to Jasper Day Trip",
     "metaDescription": "Explore glaciers, waterfalls & top Jasper attractions on this Icefields Parkway shared tour. Bow Lake, Peyto Lake, Athabasca Glacier & more. Small groups, expert guides.",
     "rating": 5.0,
-    "reviewCountLabel": "1000+",
+    "reviewCountLabel": "1700+",
     "facts": [
       {
         "label": "Duration",
@@ -1437,7 +1437,7 @@
     "metaTitle": "Winter Special Shared Tour | Ice Bubbles & Banff Winter Day Trip",
     "metaDescription": "See Lake Louise, Abraham Lake ice bubbles, Bow Lake & Peyto Lake on this full-day Banff winter shared tour. Small groups, expert guides, heated vehicles.",
     "rating": 5.0,
-    "reviewCountLabel": "1000+",
+    "reviewCountLabel": "1700+",
     "facts": [
       {
         "label": "Duration",
@@ -1785,7 +1785,7 @@
     "metaTitle": "Banff Bestseller Private Tour | Luxury SUV Day Trip with Local Guide",
     "metaDescription": "Explore Banff your way with a private luxury SUV tour. Visit Lake Louise, Moraine Lake, Bow Lake & hidden lookouts with a local guide. Flexible, crowd-free & customizable.",
     "rating": 5.0,
-    "reviewCountLabel": "1000+",
+    "reviewCountLabel": "1700+",
     "facts": [
       {
         "label": "Duration",
@@ -2149,7 +2149,7 @@
     "metaTitle": "Icefields Parkway – Jasper Private Tour | Luxury SUV Day Trip",
     "metaDescription": "See glaciers, waterfalls & turquoise lakes on a private Icefields Parkway tour. Luxury SUV, expert guide, flexible stops & Glacier Bus/Skywalk options included.",
     "rating": 5.0,
-    "reviewCountLabel": "1000+",
+    "reviewCountLabel": "1700+",
     "facts": [
       {
         "label": "Duration",
@@ -2520,7 +2520,7 @@
     "metaTitle": "Winter Signature Private Tour | Banff Winter Day Trip by SUV",
     "metaDescription": "Explore Banff’s frozen lakes, ice bubbles & icy canyons on a private winter SUV tour. Heated vehicle, ice cleats, expert guide & flexible itinerary included.",
     "rating": 5.0,
-    "reviewCountLabel": "1000+",
+    "reviewCountLabel": "1700+",
     "facts": [
       {
         "label": "Duration",
@@ -2865,7 +2865,7 @@
     "metaTitle": "Banff & Yoho Customizable Private Tour | Design Your Day",
     "metaDescription": "Choose any 6 Banff & Yoho destinations for your private SUV tour. Flexible, scenic, customizable full-day itinerary with expert local guide. Book now, pay later.",
     "rating": 5.0,
-    "reviewCountLabel": "1000+",
+    "reviewCountLabel": "1700+",
     "facts": [
       {
         "label": "Duration",
@@ -3316,7 +3316,7 @@
     "metaTitle": "Jasper National Park Private Tour | Customizable Day Trip",
     "metaDescription": "Design your perfect Jasper day. Choose 6 stops — Spirit Island, Maligne Canyon, Athabasca Falls & more. Private SUV, expert guide, flexible schedule. Book now, pay later.",
     "rating": 5.0,
-    "reviewCountLabel": "1000+",
+    "reviewCountLabel": "1700+",
     "facts": [
       {
         "label": "Duration",
@@ -3711,7 +3711,7 @@
     "metaTitle": "Sunrise Shuttle to Moraine Lake & Lake Louise | Vista Chase",
     "metaDescription": "Catch the first light at Moraine Lake and Lake Louise with our Sunrise Shuttle. Guaranteed access, early arrival, and breathtaking golden-hour views. Book now.",
     "rating": 5.0,
-    "reviewCountLabel": "1000+",
+    "reviewCountLabel": "1700+",
     "facts": [
       {
         "label": "Duration",
@@ -3995,7 +3995,7 @@
     "metaTitle": "Day Shuttle to Moraine Lake & Lake Louise | 3–4 Hours Each",
     "metaDescription": "Enjoy 3–4 hours at both Moraine Lake and Lake Louise with our full-day shuttle. Plenty of time to hike, canoe, and explore at your own pace. Reserve your seat today.",
     "rating": 5.0,
-    "reviewCountLabel": "1000+",
+    "reviewCountLabel": "1700+",
     "facts": [
       {
         "label": "Duration",
@@ -4258,7 +4258,7 @@
     "metaTitle": "Multi-Day Banff Tours | Custom Rockies Itineraries – Vista Chase",
     "metaDescription": "Book multi-day Banff tour packages with Vista Chase. Custom itineraries, airport transfers, no car needed & stress-free Rockies travel.",
     "rating": 5.0,
-    "reviewCountLabel": "1000+",
+    "reviewCountLabel": "1700+",
     "facts": [
       {
         "label": "Duration",

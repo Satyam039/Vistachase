@@ -10,19 +10,26 @@ import { approveMaturedCommissions } from "@/modules/affiliates/commission";
 import { pruneOldClicks } from "@/modules/affiliates/affiliate.repository";
 import { sendBalanceReminders } from "@/modules/bookings/deposit-payments";
 import { dispatchT60ScheduledBatch, whatsAppDeliveryConfigured } from "@/lib/whatsapp/whatsapp.provider";
-import { syncBokunAvailability } from "@/modules/bokun/availability-sync";
-import { bokunConfig } from "@/modules/bokun/product-map";
+
+/** Every 2 minutes: website bookings and cancellations waiting to reach Bókun (skipped without keys). */
+export async function sendBookingsToBokun() {
+  const { processBokunSyncTasks } = await import("@/modules/bokun/bokun-sync");
+  return processBokunSyncTasks();
+}
+
+/** Every 15 minutes: Bókun's seats into our departures (skipped without keys or when switched off). */
+export async function syncSeatsFromBokun() {
+  const { bokunAvailabilitySyncEnabled } = await import("@/modules/bokun/config");
+  if (!bokunAvailabilitySyncEnabled()) return { skipped: "Bókun seat sync is off" };
+  const { syncBokunSeats } = await import("@/modules/bokun/availability-sync");
+  const result = await syncBokunSeats();
+  // The full list is in the sync log (Admin → Bookings → Bókun); the job log gets the count.
+  return "notInBokun" in result ? { ...result, notInBokun: result.notInBokun.length } : result;
+}
 
 /** Every few minutes: free seats held by expired holds and by bookings never paid for. */
 export async function expireHoldsAndUnpaidBookings(now = new Date()) {
   return await freeExpiredSeats({ now });
-}
-
-/** Every 15 minutes: departure dates, seats and prices from Bókun (skipped until the keys are set). */
-export async function syncBokunDepartures() {
-  const { accessKey, secretKey } = bokunConfig();
-  if (!accessKey || !secretKey) return { skipped: "Bókun keys are not set" };
-  return syncBokunAvailability();
 }
 
 export interface ReconciliationIssue {
@@ -40,6 +47,10 @@ export async function reconcileBookings() {
   const add = (rows: { bookingReference: string }[], problem: string) => rows.forEach((r) => issues.push({ bookingReference: r.bookingReference, problem }));
 
   add(await prisma.booking.findMany({ where: { status: "PAID_UNSYNCED" }, select: { bookingReference: true } }), "Paid, but marked unsynced by the former Bókun integration: confirm it by hand");
+  add(
+    await prisma.booking.findMany({ where: { status: { in: ["CONFIRMED", "COMPLETED"] }, externalSyncStatus: "FAILED" }, select: { bookingReference: true } }),
+    "Confirmed on the website but not in Bókun: see its Bókun flag (Admin → Bookings → Flags)",
+  );
   add(
     await prisma.booking.findMany({
       where: { status: "PENDING_PAYMENT", createdAt: { lt: new Date(Date.now() - 60 * 60 * 1000) } },
@@ -130,6 +141,12 @@ export async function runNightlySeoAudit() {
 export async function syncWebflowBlogPosts() {
   const { scheduledWebflowSync } = await import("@/modules/seo/portal/webflow-sync");
   return scheduledWebflowSync();
+}
+
+/** Every 15 minutes: confirmation emails that failed are sent again (confirmation-email.ts). */
+export async function retryConfirmationEmails(now = new Date()) {
+  const { retryFailedConfirmationEmails } = await import("@/modules/bookings/confirmation-email");
+  return retryFailedConfirmationEmails(now);
 }
 
 /** Hourly: deposit bookings with an unpaid balance get their reminders; staff are flagged 72h before. */

@@ -1,6 +1,6 @@
 # Booking engine (first-party)
 
-Vista Chase bookings, seat holds and seat counts live only in this site's PostgreSQL database. No external booking system is called when a guest holds seats, books, pays or cancels. The Bókun API integration was removed on 2026-10-10 (PR #26); its data fields are kept for a future sync (section 5).
+Vista Chase bookings, seat holds and seat counts live in this site's PostgreSQL database, which stays the booking system guests use. No external booking system is called while a guest holds seats, books or pays. With Bókun connected, each confirmed or cancelled booking is also sent to Bókun afterwards and Bókun's seat counts are read in (section 5, docs/BOKUN.md).
 
 ## 1. How a booking is saved
 
@@ -72,7 +72,9 @@ Rolling back the code after the migration is safe while no booking has status `E
 
 Also recommended: set `RUN_JOBS_IN_API=true` (or run the worker) so expiry and the nightly reconciliation run on a schedule. Seat release no longer depends on it.
 
-## 5. Future provider sync (Bókun), not built
+## 5. Provider sync (Bókun)
+
+Built on 2026-10-29: docs/BOKUN.md describes what runs and how to switch it on. The rest of this section is the original plan; steps 5 (Bókun webhooks) and 7 (shadow mode) are not built.
 
 What is already in the data model:
 - `Booking.bokunBookingId` (unique external reference)

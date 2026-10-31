@@ -7,6 +7,7 @@ import { normalizePath } from "@/modules/seo/paths";
 import { activeRedirectMap } from "@/modules/seo/seo.redirects";
 import { publishedPageSchema } from "@/modules/seo/portal/schema";
 import { BLOG_PREFIX, GUIDE_PREFIX, NON_INDEXABLE_PATHS, STATIC_ROUTES, type CmsPrefix } from "@/modules/seo/static-routes";
+import { ON_SALE, REMOVED_TOUR_SLUGS } from "@/modules/tours/product-map";
 
 const PUBLIC_FIELDS = {
   path: true,
@@ -152,11 +153,11 @@ export interface SitemapEntry {
 export async function sitemapEntries(): Promise<SitemapEntry[]> {
   const [pages, tours, destinations, redirects] = await Promise.all([
     prisma.seoPage.findMany({ select: { path: true, status: true, robotsIndex: true, sitemapInclude: true, canonicalUrl: true, lastCrawl: true, sitemapPriority: true, updatedAt: true, dateModified: true, tour: { select: { updatedAt: true } } } }),
-    prisma.tour.findMany({ select: { slug: true, updatedAt: true } }),
+    prisma.tour.findMany({ where: ON_SALE, select: { slug: true, updatedAt: true } }),
     prisma.destination.findMany({ select: { slug: true, createdAt: true } }),
     activeRedirectMap(),
   ]);
-  const excluded = new Set([...NON_INDEXABLE_PATHS, ...Object.keys(redirects)]);
+  const excluded = new Set([...NON_INDEXABLE_PATHS, ...Object.keys(redirects), ...REMOVED_TOUR_SLUGS.map((s) => `/${s}`)]);
   const byPath = new Map(pages.map((p) => [p.path, p]));
   const out = new Map<string, SitemapEntry>();
 

@@ -8,7 +8,7 @@ import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 const baseMetadata: Metadata = {
   title: "Banff & Jasper Activity Tickets | Gondola, Icefield, Lake Cruises | Vista Chase",
   description:
-    "Add the Banff Gondola, Open Top Touring, a Lake Minnewanka or Maligne Lake cruise, the Columbia Icefield Adventure or the Banff Upper Hot Springs to your Rockies trip. One request, timed around your Vista Chase tour.",
+    "Add the Banff Gondola, a Lake Minnewanka or Maligne Lake cruise, the Columbia Icefield Adventure or the Skywalk to your Rockies trip. Book online at the times we recommend, around your Vista Chase tour.",
   alternates: { canonical: "/banff-activity-tickets" },
 };
 
@@ -20,7 +20,7 @@ export default async function BanffActivityTicketsPage() {
       <PageSeoExtras path="/banff-activity-tickets" />
     <TourGallery
       heading="Banff activity tickets"
-      intro="The Rockies' classic experiences, timed around your day. Tell us your date and party size and we request your preferred time slot, then confirm tickets and price, on their own or alongside any Vista Chase tour."
+      intro="The Rockies' classic experiences, timed around your day. Open a ticket, check our recommended time and book it directly on the Banff Jasper Collection booking page, on its own or alongside any Vista Chase tour."
       ctaLabel="Ask the concierge"
       ctaHref="/concierge"
       tours={tours}

@@ -76,7 +76,7 @@ export default async function TwoDayRockiesExplorerPage() {
       <div className="mx-auto grid max-w-7xl items-start gap-8 px-page py-14 sm:py-20 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:gap-12">
         <div className="space-y-6">
           {TWO_DAY_PACKAGE.days.map((d, i) => (
-            <article key={d.slug} className="overflow-hidden rounded-[1.5rem] bg-white ring-1 ring-obsidian-900/[0.07] sm:grid sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+            <article key={d.slug} className="overflow-hidden rounded-none bg-white ring-1 ring-obsidian-900/[0.07] sm:grid sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
               <div className="relative aspect-[4/3] sm:aspect-auto">
                 <Image src={d.image} alt={d.imageAlt} fill sizes="(max-width: 640px) 92vw, 320px" className="object-cover" />
               </div>
@@ -115,7 +115,7 @@ export default async function TwoDayRockiesExplorerPage() {
           </p>
         </div>
 
-        <aside className="rounded-[1.5rem] bg-obsidian-950 p-6 text-white sm:p-8 lg:sticky lg:top-[calc(var(--vc-header-h,80px)+24px)]" aria-label="Price and booking">
+        <aside className="rounded-none bg-obsidian-950 p-6 text-white sm:p-8 lg:sticky lg:top-[calc(var(--vc-header-h,80px)+24px)]" aria-label="Price and booking">
           <PackagePrice price={price} separate={separate} size="lg" />
           <ul className="mt-6 space-y-3 text-base text-white/85">
             <li className="flex gap-3">

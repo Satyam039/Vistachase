@@ -196,13 +196,13 @@ export default function DispatchBoardPage() {
         {loading ? (
           <div className="space-y-4" aria-hidden="true">
             {[0, 1].map((i) => (
-              <div key={i} className="h-40 rounded-[1.75rem] bg-white ring-1 ring-obsidian-900/[0.07] motion-safe:animate-pulse" />
+              <div key={i} className="h-40 rounded-none bg-white ring-1 ring-obsidian-900/[0.07] motion-safe:animate-pulse" />
             ))}
           </div>
         ) : (
           !unauthorized &&
           (manifests.length === 0 ? (
-            <div className="rounded-[1.75rem] bg-white p-10 text-center ring-1 ring-obsidian-900/[0.07]">
+            <div className="rounded-none bg-white p-10 text-center ring-1 ring-obsidian-900/[0.07]">
               <span className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-ocean-50 text-ocean-700">
                 <Truck className="h-6 w-6" aria-hidden="true" />
               </span>
@@ -213,7 +213,7 @@ export default function DispatchBoardPage() {
             <ul className="space-y-6">
               {manifests.map((m) => (
                 <li key={m.departureId}>
-                  <article aria-labelledby={`dep-${m.departureId}`} className="overflow-hidden rounded-[1.75rem] bg-white ring-1 ring-obsidian-900/[0.07]">
+                  <article aria-labelledby={`dep-${m.departureId}`} className="overflow-hidden rounded-none bg-white ring-1 ring-obsidian-900/[0.07]">
                     <header className="flex flex-col gap-5 border-b border-obsidian-900/[0.06] p-6 lg:flex-row lg:items-center lg:justify-between">
                       <div className="flex items-start gap-4">
                         <span className="inline-flex h-12 shrink-0 items-center rounded-2xl bg-ocean-950 px-3.5 font-mono text-base text-white">{m.departureTime}</span>
@@ -266,7 +266,7 @@ export default function DispatchBoardPage() {
                                 return (
                                   <li
                                     key={p.id}
-                                    className={`flex flex-col gap-3 rounded-2xl p-4 ring-1 sm:flex-row sm:items-center sm:justify-between ${
+                                    className={`flex flex-col gap-3 rounded-none p-4 ring-1 sm:flex-row sm:items-center sm:justify-between ${
                                       p.isBoarded ? "bg-ocean-50/60 ring-ocean-600/20" : "bg-white ring-obsidian-900/[0.08]"
                                     }`}
                                   >

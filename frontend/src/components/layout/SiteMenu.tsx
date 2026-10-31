@@ -10,7 +10,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowRight, ChevronDown, Menu, Phone, Sparkles, X } from "lucide-react";
+import { ArrowRight, ChevronDown, Mail, Menu, Phone, Sparkles, X } from "lucide-react";
 import { BrandMark } from "@/components/brand/BrandMark";
 
 type MenuLink = { title: string; description?: string; href: string };
@@ -24,7 +24,7 @@ export const MENU_SECTIONS: MenuSection[] = [
       { title: "Shared tours", description: "Small groups of up to 12, our best-sellers", href: "/shared-tours" },
       { title: "Private tours", description: "Your own vehicle and guide, your pace", href: "/private-tours" },
       { title: "Shuttles", description: "Guaranteed Moraine Lake & Lake Louise access", href: "/shuttles" },
-      { title: "Banff activity tickets", description: "Gondola, Icefield, lake cruises, hot springs", href: "/banff-activity-tickets" },
+      { title: "Banff activity tickets", description: "Gondola, Icefield, lake cruises", href: "/banff-activity-tickets" },
     ],
   },
   {
@@ -41,23 +41,13 @@ export const MENU_SECTIONS: MenuSection[] = [
   },
   {
     id: "about",
-    title: "About Vista Chase",
+    title: "About Us",
     links: [
       { title: "Our story", href: "/about-us" },
       { title: "Gallery", href: "/gallery" },
       { title: "FAQ & cancellation", href: "/faq" },
       { title: "Search tours & dates", description: "Filter by date, guests and destination", href: "/search" },
       { title: "Hotel pickup finder", description: "Your pickup point and time", href: "/pickup-finder" },
-    ],
-  },
-  {
-    id: "contact",
-    title: "Contact us",
-    links: [
-      { title: "Send a message", description: "Inquiries, private charters & custom quotes", href: "/contact-us" },
-      { title: "Call +1 (825) 734-9456", description: "Lines open 6 a.m. – 9 p.m. Mountain Time", href: "tel:+18257349456" },
-      { title: "Email bookings@vistachase.com", description: "Direct booking and reservation inquiries", href: "mailto:bookings@vistachase.com" },
-      { title: "Support: support@vistachase.com", description: "Existing bookings and general customer care", href: "mailto:support@vistachase.com" },
     ],
   },
   {
@@ -244,19 +234,23 @@ export function SiteMenu() {
             </ul>
           </div>
 
-          {/* Bottom row: book, call, concierge - mobile stacked & responsive */}
+          {/* Bottom row: book, call, concierge, contact - mobile stacked & responsive */}
           <div className="flex flex-col gap-3 border-t border-white/[0.08] bg-obsidian-950/90 p-5 backdrop-blur-md sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-6 sm:px-10 lg:px-16 sm:py-6">
             <Link href="/banff-highlights-tour" className="golden-summit-btn flex h-12 items-center justify-center rounded-full px-6 text-sm font-medium">
               Book a tour
             </Link>
-            <div className="flex items-center justify-between gap-4 pt-1 sm:pt-0">
-              <a href="tel:+18257349456" className="inline-flex h-11 items-center gap-2 text-sm text-white/75 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-summit-300">
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-1 pt-1 sm:pt-0">
+              <a href="tel:+18257349456" className="inline-flex h-11 items-center gap-2 whitespace-nowrap text-sm text-white/75 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-summit-300">
                 <Phone className="h-4 w-4" aria-hidden="true" />
                 +1 (825) 734-9456
               </a>
-              <Link href="/concierge" className="inline-flex h-11 items-center gap-2 text-sm text-white/75 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-summit-300">
+              <Link href="/concierge" className="inline-flex h-11 items-center gap-2 whitespace-nowrap text-sm text-white/75 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-summit-300">
                 <Sparkles className="h-4 w-4 text-summit-300" aria-hidden="true" />
                 AI Concierge
+              </Link>
+              <Link href="/contact-us" className="inline-flex h-11 items-center gap-2 whitespace-nowrap text-sm text-white/75 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-summit-300">
+                <Mail className="h-4 w-4 text-summit-300" aria-hidden="true" />
+                Contact us
               </Link>
             </div>
           </div>

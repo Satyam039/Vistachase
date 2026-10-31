@@ -16,21 +16,22 @@ import crypto from "node:crypto";
 import QRCode from "qrcode";
 import { Prisma, type Booking, type Payment } from "@prisma/client";
 import prisma from "@/lib/db/prisma";
-import { getBokunOperationsProvider } from "@/modules/bokun/bokun.provider";
-import { BokunUnavailableError, type BokunReservationInput } from "@/modules/bokun/bokun-booking";
 import { formatDateOnly, formatTimeOfDay, getMountainTimeInstant } from "@/lib/utils/time";
 import { bookingClosedError } from "@/modules/departures/booking-window";
 import { endBooking, freeExpiredSeats, inventoryError, PENDING_PAYMENT_MINUTES, takeBookedSeats } from "@/modules/departures/inventory";
 import { transitionBooking } from "@/modules/bookings/booking-status";
 import { getPaymentProvider } from "@/lib/payment/payment.provider";
+import { sendConfirmationEmail } from "@/modules/bookings/confirmation-email";
 import { getEmailProvider } from "@/lib/email/email.provider";
 import { isVehicleDeparture, partySizeError, seatsToReserve } from "@/modules/pricing/departure-pricing";
+import { airportTransferNote, type AirportTransfer } from "@/modules/bookings/airport-transfer";
 import { priceBooking, type AddOnChoice } from "@/modules/pricing/booking-pricing";
 import { referringAffiliateId } from "@/modules/affiliates/affiliate.repository";
 import { earnCommission, reverseCommissionForRefund } from "@/modules/affiliates/commission";
 import { sendCommissionEarnedEmail } from "@/modules/affiliates/partner-emails";
 import { checkinLink, signBookingLink, voucherLink } from "@/lib/security/signed-links";
-import { DEPOSIT_PERCENT, DEPOSIT_MIN_DAYS_BEFORE, depositPlanRefundCents, depositTerms, firstChargeCents, paymentSummary } from "@/modules/bookings/deposit";
+import { DEPOSIT_PERCENT, DEPOSIT_MIN_DAYS_BEFORE, depositTerms, firstChargeCents, paymentSummary } from "@/modules/bookings/deposit";
+import { policyDecision } from "@/modules/bookings/cancellation-policy";
 
 export interface CreateBookingInput {
   holdToken?: string;
@@ -55,6 +56,8 @@ export interface CreateBookingInput {
   idempotencyKey?: string;
   /** Pay everything now (default), or the deposit now and the balance later (modules/bookings/deposit.ts). */
   paymentPlan?: "FULL" | "DEPOSIT";
+  /** Private tours only: airport arrival and departure for a transfer (modules/bookings/airport-transfer.ts). */
+  airportTransfer?: AirportTransfer;
 }
 
 /** What the checkout should do next. */
@@ -179,42 +182,6 @@ function isUniqueViolation(error: unknown, field: string) {
   );
 }
 
-type BookingForBokun = {
-  bookingReference: string;
-  adultsCount: number;
-  childrenCount: number;
-  infantsCount: number;
-  customerName: string;
-  customerEmail: string;
-  customerPhone: string;
-  pickupCustomText: string | null;
-  pickupTime: string | null;
-  specialRequests: string | null;
-  pickupStop?: { name: string } | null;
-};
-
-function bokunReservationInput(
-  booking: BookingForBokun,
-  departure: { date: Date; departureTime: Date; tour: { bokunId: string | null; category: string } | null },
-): BokunReservationInput {
-  const pickupPlace = booking.pickupStop?.name ?? booking.pickupCustomText ?? "";
-  return {
-    bookingReference: booking.bookingReference,
-    productBokunId: departure.tour!.bokunId!,
-    category: departure.tour!.category,
-    date: formatDateOnly(departure.date),
-    time: formatTimeOfDay(departure.departureTime),
-    adults: booking.adultsCount,
-    children: booking.childrenCount,
-    infants: booking.infantsCount,
-    customerName: booking.customerName,
-    customerEmail: booking.customerEmail,
-    customerPhone: booking.customerPhone,
-    pickup: [pickupPlace, booking.pickupTime].filter(Boolean).join(" at "),
-    specialRequests: booking.specialRequests ?? undefined,
-  };
-}
-
 /** Staff bookings (Quick Book, modules/admin/booking-admin.ts): paid outside the online checkout. */
 export interface CreateBookingOptions {
   /** Don't start an online payment: the caller records how the guest paid, then confirms. */
@@ -274,6 +241,7 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
 
       // Capacity: shared departures take one seat per guest, private ones the whole vehicle
       const isVehicle = isVehicleDeparture(departure);
+      if (input.airportTransfer && !isVehicle) throw new BookingRefused("Airport transfers can be added to private tours only.");
       const reservedSeats = seatsToReserve(departure, totalSeats);
 
       // The hold is claimed once: a second request with the same hold finds it no longer ACTIVE.
@@ -323,6 +291,8 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
         taxCents: 0,
         totalCents: totals.totalCents,
         inventorySource: departure.inventorySource,
+        // Not charged online yet: the team confirms the transfer and its price.
+        ...(input.airportTransfer ? { airportTransfer: { ...input.airportTransfer, priceCents: null } } : {}),
       };
 
       const created = await tx.booking.create({
@@ -353,7 +323,9 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
           depositAmount: deposit?.depositCents ?? null,
           balanceDueAt: deposit?.balanceDueAt ?? null,
           paymentExpiresAt: new Date(now.getTime() + PENDING_PAYMENT_MINUTES * 60_000),
-          specialRequests: input.specialRequests,
+          specialRequests: input.airportTransfer
+            ? [airportTransferNote(input.airportTransfer), input.specialRequests].filter(Boolean).join("\n")
+            : input.specialRequests,
           voucherCode: newVoucherCode(),
           // Staff scan this to check the guest in; it carries a signature, not the guest's details.
           qrCodeUrl: await QRCode.toDataURL(checkinLink(bookingReference), { margin: 1, width: 300 }),
@@ -380,25 +352,6 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
     }
     if (error instanceof BookingRefused) return { success: false, error: error.message };
     throw error;
-  }
-
-  // Hold the seats in Bókun while the guest pays. Sold out there: refuse now, before any payment.
-  // Bókun unreachable: carry on; confirmPaidBooking tries again once the guest has paid.
-  const departureWithTour = await prisma.tourDeparture.findUnique({
-    where: { id: input.departureId },
-    include: { tour: true },
-  });
-  if (departureWithTour?.tour?.bokunId) {
-    try {
-      const code = await getBokunOperationsProvider().reserve(bokunReservationInput(booking, departureWithTour));
-      await prisma.booking.update({ where: { id: booking.id }, data: { bokunBookingId: code } });
-    } catch (error) {
-      if (error instanceof BokunUnavailableError) {
-        await failPendingBooking(booking.bookingReference, `not available in Bókun: ${error.message}`);
-        return { success: false, error: "Sorry, this departure has just sold out in Bókun. Please choose another date or time." };
-      }
-      console.error(`Bókun reservation failed for ${booking.bookingReference}:`, (error as Error).message);
-    }
   }
 
   if (options.offlinePayment || options.deferPayment) return { success: true, booking: bookingDto(booking, []), nextStep: "PAY" };
@@ -473,6 +426,10 @@ export async function confirmPaidBooking(reference: string, verified?: VerifiedP
   });
   if (!booking) return null;
   const transactionId = verified?.transactionId;
+  if ((booking.status === "CONFIRMED" || booking.status === "COMPLETED") && transactionId) {
+    await settleAfterStaffApproval(booking, transactionId);
+    return booking;
+  }
   if (!["PENDING_PAYMENT", "EXPIRED", "CANCELLED"].includes(booking.status)) return booking; // already handled (webhook retries)
 
   // A DEPOSIT booking is confirmed by its deposit; anything else by its total.
@@ -512,75 +469,9 @@ export async function confirmPaidBooking(reference: string, verified?: VerifiedP
   if (!confirmedNow) return updated; // a concurrent call confirmed (and emailed) it
   if (confirmedNow.commission) notifyCommissionEarned(confirmedNow.commission.affiliateId, booking.bookingReference, confirmedNow.commission.amountCents, booking.currency);
 
-  const tour = booking.tourDeparture.tour;
-  if (tour?.bokunId) {
-    const bokun = getBokunOperationsProvider();
-    let code = booking.bokunBookingId;
-    try {
-      if (!code) code = await bokun.reserve(bokunReservationInput(booking, booking.tourDeparture));
-      const paymentId = transactionId ?? (await prisma.payment.findFirst({ where: { bookingId: booking.id }, select: { transactionId: true } }))?.transactionId;
-      await bokun.confirmReservation(code, booking.bookingReference, {
-        amount: (verified?.amount ?? booking.totalAmount) / 100,
-        currency: booking.currency,
-        transactionId: paymentId ?? undefined,
-      });
-      await prisma.booking.update({ where: { id: booking.id }, data: { bokunBookingId: code } });
-    } catch (error) {
-      const message = (error as Error).message.slice(0, 300);
-      console.error(`Bókun confirmation failed for ${booking.bookingReference}:`, message);
-      await prisma.booking.update({
-        where: { id: booking.id },
-        data: {
-          status: "PAID_UNSYNCED",
-          adminNotes: [booking.adminNotes, `Bókun: ${code ? `reservation ${code} not confirmed` : "not reserved"} (${message})`].filter(Boolean).join("\n"),
-        },
-      });
-      if (code) await bokun.abortReservation(code).catch(() => undefined);
-    }
-  }
-
-  const title = tour?.title || booking.tourDeparture.shuttleRoute?.name || "Vista Chase experience";
-  const when = `${formatDateOnly(booking.tourDeparture.date)} at ${formatTimeOfDay(booking.tourDeparture.departureTime)}`;
-  const total = `$${(booking.totalAmount / 100).toFixed(2)} ${booking.currency}`;
-  const link = voucherLink(booking.bookingReference);
-  const deposit = booking.paymentPlan === "DEPOSIT" && booking.depositAmount ? booking.depositAmount : 0;
-  const amountLines = deposit
-    ? {
-        html: `<p><strong>Deposit paid:</strong> $${(deposit / 100).toFixed(2)} ${booking.currency} (of ${total})</p>
-            <p><strong>Balance:</strong> $${((booking.totalAmount - deposit) / 100).toFixed(2)} ${booking.currency}, due by ${balanceDueLabel(booking.balanceDueAt)}</p>`,
-        text: `Deposit paid: $${(deposit / 100).toFixed(2)} ${booking.currency} of ${total}. Balance $${((booking.totalAmount - deposit) / 100).toFixed(2)} ${booking.currency} due by ${balanceDueLabel(booking.balanceDueAt)}; pay it from your voucher.`,
-      }
-    : { html: `<p><strong>Total paid:</strong> ${total}</p>`, text: `Total paid: ${total}.` };
-  const policyLine = deposit
-    ? `The ${DEPOSIT_PERCENT}% deposit is non-refundable. Cancel up to 72 hours before departure and everything else you've paid is refunded.`
-    : "Free cancellation up to 72 hours before departure.";
-  getEmailProvider()
-    .sendEmail({
-      to: booking.customerEmail,
-      subject: `Your Vista Chase booking is confirmed: ${booking.bookingReference}`,
-      html: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #1c1f23;">
-          <h2>Your booking is confirmed</h2>
-          <p>Hi ${escapeHtml(booking.customerName)}, thank you for booking with Vista Chase.</p>
-          <div style="border: 1px solid #e1e1db; border-radius: 8px; padding: 16px; margin: 20px 0;">
-            <p><strong>Booking reference:</strong> ${booking.bookingReference}</p>
-            <p><strong>Experience:</strong> ${escapeHtml(title)}</p>
-            <p><strong>Date and time:</strong> ${when} (Mountain Time)</p>
-            ${amountLines.html}
-          </div>
-          <p><a href="${link}" style="color: #257780; font-weight: bold;">Open your voucher</a>${deposit ? " to pay the balance, and" : " and"} show it to your guide at pickup.</p>
-          <p style="color: #5d6168; font-size: 13px;">${policyLine} Questions? Reply to this email or call +1 (825) 734-9456.</p>
-        </div>`,
-      text: `Your Vista Chase booking ${booking.bookingReference} is confirmed.\n${title}, ${when} (Mountain Time).\n${amountLines.text}\nVoucher: ${link}\n${policyLine}`,
-    })
-    .then((res) => {
-      if (!res.success) {
-        console.error(`[Email] Booking confirmation email failed for ${booking.bookingReference}:`, res.error);
-      } else {
-        console.log(`[Email] Booking confirmation email sent for ${booking.bookingReference} (id: ${res.messageId})`);
-      }
-    })
-    .catch((e) => console.error(`[Email] Confirmation email failed for ${booking.bookingReference}:`, (e as Error).message));
+  // One email with the PDF itinerary; a multi-day trip's goes out when its last day confirms.
+  // Awaited so the claim and any failure are recorded before this returns; it never throws here.
+  await sendConfirmationEmail(booking.bookingReference).catch((e) => console.error("Confirmation email failed:", (e as Error).message));
 
   return updated;
 }
@@ -601,27 +492,52 @@ export async function flagBooking(bookingId: string, action: "PAYMENT_AMOUNT_MIS
   ]);
 }
 
+/**
+ * A card payment that finished after staff approved the booking by hand (admin "Approve", which
+ * marks the unfinished online payment FAILED). It pays a PAYMENT_DUE left open by the approval;
+ * otherwise the guest has paid twice and staff are flagged to refund one. Webhook retries find no
+ * FAILED row to move and do nothing.
+ */
+async function settleAfterStaffApproval(booking: { id: string; adminNotes: string | null; currency: string }, transactionId: string) {
+  const moved = await prisma.payment.updateMany({ where: { bookingId: booking.id, transactionId, status: "FAILED" }, data: { status: "SUCCEEDED" } });
+  if (moved.count === 0) return;
+  const due = await prisma.bookingFlag.findFirst({ where: { bookingId: booking.id, type: "PAYMENT_DUE", status: "OPEN" } });
+  const payment = await prisma.payment.findUnique({ where: { transactionId }, select: { amount: true } });
+  if (due && payment && payment.amount < (due.amountCents ?? 0)) {
+    // Part of what's due (a deposit-sized card payment): the flag keeps the rest.
+    await prisma.bookingFlag.update({
+      where: { id: due.id },
+      data: { amountCents: (due.amountCents ?? 0) - payment.amount, note: `${due.note} Paid ${(payment.amount / 100).toFixed(2)} ${booking.currency} online (${transactionId}).` },
+    });
+    return;
+  }
+  if (due) {
+    await prisma.$transaction(async (tx) => {
+      const claimed = await tx.bookingFlag.updateMany({
+        where: { id: due.id, status: "OPEN" },
+        data: { status: "RESOLVED", resolvedAt: new Date(), resolution: `Paid online (${transactionId}).` },
+      });
+      if (claimed.count === 1) {
+        const paid = await tx.payment.aggregate({ where: { bookingId: booking.id, status: "SUCCEEDED" }, _sum: { amount: true } });
+        await earnCommission(tx, booking.id, paid._sum.amount ?? 0);
+      }
+    });
+    return;
+  }
+  await flagBooking(booking.id, "LATE_PAYMENT", `Payment ${transactionId} succeeded after staff approved the booking and recorded another payment: the guest may have paid twice. Refund one by hand.`, booking.adminNotes);
+}
+
 /** Payment failed or was never completed: cancel the pending booking and release its seats (once). */
 export async function failPendingBooking(reference: string, reason: string) {
-  let reservedInBokun: string | null = null;
   const booking = await prisma.booking.findUnique({ where: { bookingReference: reference } });
   if (!booking || booking.status !== "PENDING_PAYMENT") return false;
-  reservedInBokun = booking.bokunBookingId;
-  const failed = await prisma.$transaction(async (tx) => {
+  return await prisma.$transaction(async (tx) => {
     const ended = await endBooking(tx, booking, ["PENDING_PAYMENT"], "CANCELLED", reason);
     if (ended) {
       await tx.booking.update({ where: { id: booking.id }, data: { adminNotes: [booking.adminNotes, `Payment not completed: ${reason}`].filter(Boolean).join("\n") } });
     }
     return ended;
   });
-  // Release Bókun's hold too (it would also lapse by itself after 30 minutes).
-  if (failed && reservedInBokun) {
-    const code = reservedInBokun;
-    await getBokunOperationsProvider()
-      .abortReservation(code)
-      .catch((e) => console.error(`Bókun abort failed for ${reference}:`, (e as Error).message));
-  }
-  return failed;
 }
 
 /** Expires bookings whose payment window has passed and frees their seats (run by the jobs). */
@@ -642,15 +558,6 @@ export async function getBookingByReference(reference: string) {
   });
 }
 
-/**
- * Refund owed under the cancellation policy, in cents: full for 1–6 guests; for 7+ guests and
- * multi-day trips the 20% deposit is kept.
- */
-export function refundableAmount(paidCents: number, guests: number, category?: string | null) {
-  const keepsDeposit = guests >= 7 || category === "MULTIDAY";
-  return keepsDeposit ? Math.round(paidCents * 0.8) : paidCents;
-}
-
 /** Cancels a booking for its owner (the caller has already proved ownership). */
 export async function cancelBooking(reference: string, customerEmail?: string) {
   const booking = await prisma.booking.findUnique({
@@ -665,13 +572,13 @@ export async function cancelBooking(reference: string, customerEmail?: string) {
     return { success: false, error: "Booking is already cancelled" };
   }
 
-  // Policy (vistachase.com terms): cancel at least 72 hours before departure, in Mountain Time.
-  const departureAt = getMountainTimeInstant(booking.tourDeparture.date, booking.tourDeparture.departureTime);
-  const hoursLeft = (departureAt.getTime() - Date.now()) / 3_600_000;
-  if (hoursLeft < 72) {
+  // Booking & Cancellation Policy (cancellation-policy.ts): 24 hours for shared tours and shuttles,
+  // 72 for private tours (80% back on private packages), in Mountain Time.
+  const policy = await policyDecision(booking);
+  if (!policy.eligible) {
     return {
       success: false,
-      error: `Cancellation window closed. Bookings can be cancelled for a refund up to 72 hours before departure. This departure is in ${Math.max(0, Math.round(hoursLeft))} hours.`,
+      error: `Cancellation window closed. This booking can be cancelled for a refund up to ${policy.cutoffHours} hours before ${policy.keepPercent > 0 ? "the first tour day" : "departure"}; that is ${Math.max(0, Math.round(policy.hoursLeft))} hours away.`,
     };
   }
 
@@ -680,27 +587,23 @@ export async function cancelBooking(reference: string, customerEmail?: string) {
     endBooking(tx, booking, ["PENDING_PAYMENT", "CONFIRMED", "PAID_UNSYNCED"], "CANCELLED", "cancelled by guest"),
   );
   if (!cancelledNow) return { success: false, error: "Booking is already cancelled" };
+  // The guest cancelled it themselves, so an open request to staff is answered.
+  await prisma.bookingFlag.updateMany({
+    where: { bookingId: booking.id, type: "CANCEL_REQUEST", status: "OPEN" },
+    data: { status: "RESOLVED", resolvedAt: new Date(), resolution: "Guest cancelled the booking themselves." },
+  });
   const updated = await prisma.booking.findUniqueOrThrow({ where: { id: booking.id } });
 
-  // Outside the transaction: Bókun and the payment provider are network calls.
-  if (booking.bokunBookingId) {
-    await getBokunOperationsProvider()
-      .cancelBooking(booking.bokunBookingId)
-      .catch((e) => console.error("Bókun cancel failed:", (e as Error).message));
-  }
-
+  // Outside the transaction: the payment provider is a network call.
   let refundedCents = 0;
   let failedCents = 0;
   const failures: string[] = [];
-  // DEPOSIT plan: everything paid except the deposit, taken from the balance payment first.
-  let depositPlanBudget = booking.paymentPlan === "DEPOSIT" ? depositPlanRefundCents(booking, booking.payments) : 0;
+  // The policy refund, taken from the balance payment first (what is kept stays on the deposit).
+  let budget = policy.refundCents;
   const succeeded = booking.payments.filter((p) => p.status === "SUCCEEDED").sort((a, b) => (a.kind === "BALANCE" ? -1 : 0) - (b.kind === "BALANCE" ? -1 : 0));
   for (const payment of succeeded) {
-    let amount = refundableAmount(payment.amount, booking.totalSeats, booking.tourDeparture.tour?.category);
-    if (booking.paymentPlan === "DEPOSIT") {
-      amount = Math.min(payment.amount, depositPlanBudget);
-      depositPlanBudget -= amount;
-    }
+    const amount = Math.min(payment.amount, budget);
+    budget -= amount;
     if (amount <= 0) continue;
     try {
       const refund = await getPaymentProvider().refundPayment(payment.transactionId, amount, { bookingReference: booking.bookingReference });
@@ -749,19 +652,12 @@ export async function cancelBooking(reference: string, customerEmail?: string) {
           <p>Your booking <strong>${booking.bookingReference}</strong> for <strong>${escapeHtml(booking.tourDeparture.tour?.title || booking.tourDeparture.shuttleRoute?.name || "Vista Chase experience")}</strong> on ${formatDateOnly(booking.tourDeparture.date)} has been cancelled.</p>
           ${refundedCents > 0 ? `<p>We have refunded <strong>$${(refundedCents / 100).toFixed(2)} ${booking.currency}</strong> to your original payment method; it usually arrives within 5–10 business days.</p>` : ""}
           ${failedCents > 0 ? `<p>Your refund of <strong>$${(failedCents / 100).toFixed(2)} ${booking.currency}</strong> couldn't be sent automatically. Our team has been notified and will send it to your original payment method.</p>` : ""}
-          <p>${booking.paymentPlan === "DEPOSIT" ? `You paid with a ${DEPOSIT_PERCENT}% deposit, which is non-refundable; everything else you paid is refunded.` : "Bookings of 1–6 guests are refunded in full. For groups of 7 or more and multi-day trips, the 20% deposit is non-refundable."}</p>
+          <p>${policy.keepPercent > 0 ? `This is a private multi-day package: ${policy.keepPercent}% of the total price is non-refundable, and everything else you paid is refunded.` : "Cancelled within the policy deadline, so everything you paid is refunded."}</p>
           <p>Questions? Reply to this email or call +1 (825) 734-9456.</p>
         </div>`,
       text: `Your Vista Chase booking ${booking.bookingReference} is cancelled.${refundedCents > 0 ? ` Refund: $${(refundedCents / 100).toFixed(2)} ${booking.currency}.` : ""}`,
     })
-    .then((res) => {
-      if (!res.success) {
-        console.error(`[Email] Cancellation email failed for ${booking.bookingReference}:`, res.error);
-      } else {
-        console.log(`[Email] Cancellation email sent for ${booking.bookingReference} (id: ${res.messageId})`);
-      }
-    })
-    .catch((e) => console.error(`[Email] Cancellation email failed for ${booking.bookingReference}:`, (e as Error).message));
+    .catch((e) => console.error("Cancellation email failed:", (e as Error).message));
 
   return { success: true, booking: final, refundedAmount: refundedCents / 100, refundOwedAmount: failedCents / 100, message: "Reservation cancelled and capacity released." };
 }
@@ -769,7 +665,7 @@ export async function cancelBooking(reference: string, customerEmail?: string) {
 /**
  * My trips: bookings the account made while signed in, plus those made with its email once the
  * email is verified (same rule as ownsBooking). Only the fields the trips page shows: never staff
- * notes, tracking tokens, payment rows or price snapshots.
+ * notes or tracking tokens; payment rows and the price snapshot are reduced by the route.
  */
 export async function getCustomerBookings(account: { userId: string; email: string; emailVerified: boolean }) {
   return await prisma.booking.findMany({
@@ -810,6 +706,15 @@ export async function getCustomerBookings(account: { userId: string; email: stri
       balanceDueAt: true,
       balancePaidAt: true,
       payments: { select: { status: true, amount: true } },
+      // Read only for the multi-day trip link (routes/account.routes.ts strips it).
+      priceSnapshot: true,
+      // The guest's latest cancellation request, shown on My trips (pending, or declined with why).
+      flags: {
+        where: { type: "CANCEL_REQUEST" },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: { status: true, resolution: true, createdAt: true, resolvedAt: true },
+      },
     },
     orderBy: { createdAt: "desc" },
   });

@@ -88,6 +88,7 @@ jobs:
             fi
             npm run seed:departures || true
             npm run seed:pickups || true
+            npm run seed:blog || true
             rm -rf dist-prev
             if [ -d dist ]; then cp -a dist dist-prev; fi
             if ! npm run build; then

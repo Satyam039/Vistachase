@@ -63,11 +63,11 @@ const SHUTTLE_FAQS = [
   },
   {
     q: "Can I bring luggage, strollers, or outdoor gear?",
-    a: "Small daypacks, camera bags, hiking poles (with rubber tips), and compact foldable strollers are welcome on board. If you have larger luggage or special mobility equipment, please contact us in advance at bookings@vistachase.com so we can ensure suitable vehicle accommodation.",
+    a: "Small daypacks, camera bags, hiking poles (with rubber tips), and compact foldable strollers are welcome on board. If you have larger luggage or special mobility equipment, please contact us in advance at support@vistachase.com so we can ensure suitable vehicle accommodation.",
   },
   {
     q: "What is your cancellation policy for lake shuttles?",
-    a: "Shuttle reservations can be canceled for a 100% full refund up to 72 hours before your scheduled departure time. Bookings canceled within 72 hours are non-refundable as vehicle seating is reserved exclusively for your party.",
+    a: "Cancel at least 24 hours before your scheduled departure for a full refund. Cancellations after that, missed pickups and no-shows aren't refunded.",
   },
   {
     q: "What should I wear and bring on the shuttle?",
@@ -142,6 +142,9 @@ export default async function ShuttlesPage() {
         </div>
       </section>
 
+      {/* Why book with us, just under the hero (owner's notes, point 3) */}
+      <TrustRow />
+
       {/* Choose your lake day */}
       <section id="departures" aria-labelledby="lake-day-heading" className="scroll-mt-32 mx-auto max-w-7xl px-page py-16 sm:py-20">
         <div className="mx-auto mb-10 max-w-3xl text-center" data-reveal>
@@ -206,7 +209,7 @@ export default async function ShuttlesPage() {
                             <Link
                               href={`/book?departureId=${dep.id}`}
                               aria-label={`Book ${route.name}, ${day} ${date} at ${dep.departureTime}, $${dep.price}, available`}
-                              className="block w-32 rounded-2xl border border-obsidian-900/10 bg-white px-4 py-3.5 text-center transition-[border-color,box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:border-ocean-600/50 hover:shadow-[0_16px_30px_-22px_rgba(12,31,33,0.5)]"
+                              className="block w-32 rounded-none border border-obsidian-900/10 bg-white px-4 py-3.5 text-center transition-[border-color,box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:border-ocean-600/50 hover:shadow-[0_16px_30px_-22px_rgba(12,31,33,0.5)]"
                             >
                               {body}
                             </Link>
@@ -250,7 +253,7 @@ export default async function ShuttlesPage() {
           </h2>
           <ol className="mt-6 space-y-3" data-stagger>
             {STEPS.map(({ icon: Icon, title, body }, i) => (
-              <li key={title} className="flex items-start gap-4 rounded-2xl bg-white p-5 ring-1 ring-obsidian-900/[0.07]">
+              <li key={title} className="flex items-start gap-4 rounded-none bg-white p-5 ring-1 ring-obsidian-900/[0.07]">
                 <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-obsidian-950 text-summit-400">
                   <Icon className="h-5 w-5" aria-hidden="true" />
                 </span>
@@ -284,7 +287,6 @@ export default async function ShuttlesPage() {
         </div>
       </section>
 
-      <TrustRow />
     </div>
     </>
   );

@@ -9,7 +9,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Eye, EyeOff } from "lucide-react";
 import { AUTH_FIELD, AuthShell } from "@/components/forms/AuthShell";
-import { homeForRole } from "@/components/admin/AdminHeader";
+import { homeForRole, safeNextFor } from "@/lib/portals";
 
 const DEV = process.env.NODE_ENV !== "production";
 
@@ -35,7 +35,10 @@ export default function LoginPage() {
       if (!res.ok || !data.success) {
         setErrorMsg(data.error || "That email and password don't match.");
       } else {
-        router.push(homeForRole(data.user?.role));
+        // ?next= is set when a staff page sent a signed-out visitor here; it's only followed into
+        // the area the account belongs to.
+        const next = new URLSearchParams(window.location.search).get("next");
+        router.push(safeNextFor(data.user?.role, next) ?? homeForRole(data.user?.role));
       }
     } catch {
       setErrorMsg("We couldn't reach the server. Please try again.");

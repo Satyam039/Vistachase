@@ -51,10 +51,15 @@ export function ShuttleDayPlanner({ today, live, fromPrice }: { today: string; l
     return live.find((l) => l.date === date && times.includes(l.time) && l.seatsAvailable > 0);
   };
 
+  const bookHref = (d: ShuttleDeparture) => {
+    const match = liveFor(d);
+    return match ? `/book?departureId=${match.id}` : `/contact-us?shuttle=${d.number}&date=${date}&pickup=${pickup}`;
+  };
+  const chosenDeparture = departures.find((d) => d.number === chosen);
+
   const choose = (n: string) => {
     const num = Number(n) || null;
     setChosen(num);
-    if (num) document.getElementById(`shuttle-departure-${num}`)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   };
 
   return (
@@ -63,19 +68,19 @@ export function ShuttleDayPlanner({ today, live, fromPrice }: { today: string; l
       <form
         onSubmit={(e) => e.preventDefault()}
         aria-label="Find a shuttle departure"
-        className="mx-auto grid max-w-5xl gap-3 rounded-[1.5rem] bg-white p-4 shadow-[0_24px_60px_-40px_rgba(12,31,33,0.55)] ring-1 ring-obsidian-900/[0.07] sm:grid-cols-3 sm:p-5"
+        className="mx-auto grid max-w-5xl gap-3 rounded-none bg-white p-4 shadow-[0_24px_60px_-40px_rgba(12,31,33,0.55)] ring-1 ring-obsidian-900/[0.07] sm:grid-cols-2 sm:p-5 lg:grid-cols-[1fr_1fr_1.3fr_auto] lg:items-end"
       >
         <label className="block">
           <span className="mb-1.5 flex items-center gap-1.5 text-sm text-slate-600">
             <CalendarDays className="h-4 w-4 text-ocean-600" aria-hidden="true" />
-            1. Date
+            Date
           </span>
           <input type="date" value={date} min={today} onChange={(e) => e.target.value && (setDate(e.target.value), setChosen(null))} className={fieldClass} />
         </label>
         <label className="block">
           <span className="mb-1.5 flex items-center gap-1.5 text-sm text-slate-600">
             <MapPin className="h-4 w-4 text-ocean-600" aria-hidden="true" />
-            2. Pickup location
+            Pickup location
           </span>
           <select value={pickup} onChange={(e) => setPickup(e.target.value as ShuttlePickup)} className={fieldClass}>
             {SHUTTLE_PICKUPS.map((p) => (
@@ -88,18 +93,47 @@ export function ShuttleDayPlanner({ today, live, fromPrice }: { today: string; l
         <label className="block">
           <span className="mb-1.5 flex items-center gap-1.5 text-sm text-slate-600">
             <Clock className="h-4 w-4 text-ocean-600" aria-hidden="true" />
-            3. Available departures
+            Available departures
           </span>
           <select value={chosen ?? ""} onChange={(e) => choose(e.target.value)} disabled={departures.length === 0} className={`${fieldClass} disabled:bg-obsidian-50 disabled:text-slate-500`}>
             <option value="">{departures.length ? `${departures.length} departures` : "No departures"}</option>
             {departures.map((d) => (
               <option key={d.number} value={d.number}>
-                {d.number} · {d.name}
+                {d.name}
                 {d.pickup[pickup] ? ` · ${clock(d.pickup[pickup]!)}` : ""}
               </option>
             ))}
           </select>
         </label>
+        {/* Book Now sits in the bar: full width on phones, beside the fields on large screens. */}
+        <div className="sm:col-span-2 lg:col-span-1">
+          {chosenDeparture ? (
+            <Link
+              href={bookHref(chosenDeparture)}
+              className="golden-summit-btn inline-flex h-12 w-full items-center justify-center gap-2 rounded-full px-6 text-base lg:w-auto"
+            >
+              Book Now
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          ) : (
+            <span
+              aria-disabled="true"
+              className="inline-flex h-12 w-full cursor-not-allowed items-center justify-center gap-2 rounded-full bg-obsidian-100 px-6 text-base text-slate-500 lg:w-auto"
+            >
+              Book Now
+            </span>
+          )}
+        </div>
+        {chosenDeparture && (
+          <p className="text-sm leading-snug text-slate-700 sm:col-span-2 lg:col-span-4" aria-live="polite">
+            <span className="text-obsidian-900">
+              {chosenDeparture.name}
+              {chosenDeparture.pickup[pickup] ? ` · ${clock(chosenDeparture.pickup[pickup]!)} from ${pickupLabel}` : ` · ${pickupLabel}`}
+            </span>
+            {" · "}
+            {longDate(date)} · back in Banff around {clock(chosenDeparture.returnBanff)}
+          </p>
+        )}
       </form>
 
       <div className="mx-auto mt-14 max-w-3xl text-center">
@@ -113,7 +147,7 @@ export function ShuttleDayPlanner({ today, live, fromPrice }: { today: string; l
       </div>
 
       {departures.length === 0 ? (
-        <div className="mx-auto mt-8 max-w-xl rounded-[1.5rem] bg-white p-6 text-center ring-1 ring-obsidian-900/[0.07]">
+        <div className="mx-auto mt-8 max-w-xl rounded-none bg-white p-6 text-center ring-1 ring-obsidian-900/[0.07]">
           <p className="text-base text-slate-700">Shuttles operate June to September. Pick a date in season to see departures.</p>
           {!inSeason(today) && (
             <button type="button" onClick={() => setDate(firstShuttleDate(today))} className="mt-4 text-base text-ocean-700 underline underline-offset-4">
@@ -126,9 +160,7 @@ export function ShuttleDayPlanner({ today, live, fromPrice }: { today: string; l
           {departures.map((d) => {
             const match = liveFor(d);
             const price = match?.price ?? fromPrice;
-            const href = match
-              ? `/book?departureId=${match.id}`
-              : `/contact-us?shuttle=${d.number}&date=${date}&pickup=${pickup}`;
+            const href = bookHref(d);
             const rows: [string, string][] = [
               ["Canmore pickup", clock(d.pickup.canmore!)],
               ["Banff pickup", clock(d.pickup.banff!)],
@@ -143,7 +175,7 @@ export function ShuttleDayPlanner({ today, live, fromPrice }: { today: string; l
               <li
                 key={d.number}
                 id={`shuttle-departure-${d.number}`}
-                className={`flex scroll-mt-32 flex-col rounded-[1.5rem] bg-white p-5 ring-1 transition-shadow sm:p-6 ${chosen === d.number ? "shadow-[0_20px_44px_-28px_rgba(12,31,33,0.6)] ring-2 ring-ocean-600" : "ring-obsidian-900/[0.08]"}`}
+                className={`flex scroll-mt-32 flex-col rounded-none bg-white p-5 ring-1 transition-shadow sm:p-6 ${chosen === d.number ? "shadow-[0_20px_44px_-28px_rgba(12,31,33,0.6)] ring-2 ring-ocean-600" : "ring-obsidian-900/[0.08]"}`}
               >
                 <p className="text-sm uppercase tracking-[0.18em] text-ocean-600">Departure {d.number}</p>
                 <h4 className="mt-1 text-xl font-light text-obsidian-900">{d.name}</h4>

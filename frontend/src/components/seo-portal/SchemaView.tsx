@@ -178,17 +178,17 @@ export function SchemaView() {
       <PortalHeading title="Schema markup" intro="Structured data (JSON-LD) on the site. Pages built in code keep their coded schema; blocks managed here go on one page or, with an admin's approval, every page. A page block is added alongside the page's coded schema." />
       {data && (
         <div className="grid gap-4 sm:grid-cols-3">
-          <div className="rounded-2xl bg-white p-5 ring-1 ring-obsidian-900/[0.07]">
+          <div className="rounded-none bg-white p-5 ring-1 ring-obsidian-900/[0.07]">
             <p className="text-sm text-slate-600">Pages with schema (last audit)</p>
             <p className="mt-1 text-3xl font-light">
               {data.summary.pagesWithSchema}/{data.summary.pagesCrawled}
             </p>
           </div>
-          <div className="rounded-2xl bg-white p-5 ring-1 ring-obsidian-900/[0.07]">
+          <div className="rounded-none bg-white p-5 ring-1 ring-obsidian-900/[0.07]">
             <p className="text-sm text-slate-600">Invalid blocks found</p>
             <p className={`mt-1 text-3xl font-light ${data.summary.invalidBlocks ? "text-red-700" : ""}`}>{data.summary.invalidBlocks}</p>
           </div>
-          <div className="rounded-2xl bg-white p-5 ring-1 ring-obsidian-900/[0.07]">
+          <div className="rounded-none bg-white p-5 ring-1 ring-obsidian-900/[0.07]">
             <p className="text-sm text-slate-600">Types</p>
             <p className="mt-1 text-sm text-slate-700">{Object.entries(data.summary.types).map(([t, n]) => `${t} ${n}`).join(" · ") || "Not audited yet"}</p>
           </div>

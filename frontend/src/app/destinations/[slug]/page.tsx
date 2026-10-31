@@ -191,7 +191,7 @@ export default async function DestinationDetailPage({ params }: { params: Promis
             </h2>
           </div>
           {tours.length === 0 ? (
-            <div className="mx-auto max-w-xl rounded-[1.75rem] bg-obsidian-50 p-10 text-center">
+            <div className="mx-auto max-w-xl rounded-none bg-obsidian-50 p-10 text-center">
               <Sparkles className="mx-auto h-8 w-8 text-summit-600" aria-hidden="true" />
               <p className="mt-4 text-xl font-light text-obsidian-900">We can plan a private day here</p>
               <p className="mt-2 text-base text-slate-600">Tell us your dates and we&rsquo;ll build a route around this destination.</p>

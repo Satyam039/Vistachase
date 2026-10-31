@@ -28,11 +28,11 @@ export function configWarnings(env: NodeJS.ProcessEnv = process.env): string[] {
     warnings.push("FEATURE_MOCK_PAYMENT=true: bookings are confirmed without any payment. Never on the live site.");
   }
 
-  const emailProvider = (env.EMAIL_PROVIDER || (env.RESEND_API_KEY ? "resend" : env.SMTP_HOST ? "smtp" : "console")).toLowerCase();
-  const resendOk = emailProvider === "resend" && Boolean(env.RESEND_API_KEY);
-  const smtpOk = emailProvider === "smtp" && Boolean(env.SMTP_HOST && env.SMTP_USER);
-  if (!resendOk && !smtpOk) {
-    warnings.push(`Email is in CONSOLE mode (EMAIL_PROVIDER=${emailProvider}): confirmations, password resets and enquiry emails only go to server logs. To send real emails, set RESEND_API_KEY or SMTP credentials.`);
+  const emailProvider = env.EMAIL_PROVIDER || "console";
+  const smtpReady = !!(env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS);
+  if (!((emailProvider === "resend" && env.RESEND_API_KEY) || (emailProvider === "smtp" && smtpReady))) {
+    const missing = emailProvider === "resend" ? " without RESEND_API_KEY" : emailProvider === "smtp" ? " without SMTP_HOST, SMTP_USER and SMTP_PASS" : "";
+    warnings.push(`Email is not being sent (EMAIL_PROVIDER=${emailProvider}${missing}): confirmations, password resets and email confirmation links only go to the log.`);
   }
   const whatsapp = (env.WHATSAPP_PROVIDER || "console").toLowerCase();
   if (whatsapp !== "twilio" && whatsapp !== "meta") {

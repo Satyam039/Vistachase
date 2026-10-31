@@ -1,4 +1,4 @@
-// Travel guides written and published from the admin SEO dashboard (/admin/seo). Only published
+// Travel guides written and published from the SEO portal (/seo). Only published
 // guides render; drafts and unknown slugs 404. Structured data describes only what is shown here:
 // Article and BreadcrumbList always, FAQPage only when the guide shows FAQs.
 
@@ -155,7 +155,7 @@ export default async function GuidePage({ params }: Props) {
         )}
 
         {guide.answerSnippet && (
-          <section aria-label="In short" className="rounded-2xl border border-obsidian-900/[0.06] bg-white p-6">
+          <section aria-label="In short" className="rounded-none border border-obsidian-900/[0.06] bg-white p-6">
             <p className="mb-2 text-sm text-slate-600">In short</p>
             <p className="text-lg font-light leading-relaxed text-obsidian-900">{inline(guide.answerSnippet, "a")}</p>
           </section>
@@ -193,7 +193,7 @@ export default async function GuidePage({ params }: Props) {
         )}
 
         {guide.authorName && guide.authorBio && (
-          <section aria-label="About the author" className="rounded-2xl border border-obsidian-900/[0.06] bg-white p-6 text-sm text-slate-700">
+          <section aria-label="About the author" className="rounded-none border border-obsidian-900/[0.06] bg-white p-6 text-sm text-slate-700">
             <p className="text-obsidian-900">{guide.authorName}</p>
             <p className="mt-1">{guide.authorBio}</p>
           </section>

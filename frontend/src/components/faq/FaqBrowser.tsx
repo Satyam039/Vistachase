@@ -59,7 +59,7 @@ export function FaqBrowser({ items, topics, compact = false }: { items: FaqItem[
       </div>
 
       {shown.length === 0 ? (
-        <div className="rounded-[1.75rem] bg-white p-8 text-center ring-1 ring-obsidian-900/[0.07]">
+        <div className="rounded-none bg-white p-8 text-center ring-1 ring-obsidian-900/[0.07]">
           <p className="text-lg text-obsidian-900">No answers match &ldquo;{query}&rdquo;</p>
           <p className="mt-1 text-base text-slate-600">Ask our AI concierge, or send us a message.</p>
           <div className="mt-5 flex flex-wrap justify-center gap-3">

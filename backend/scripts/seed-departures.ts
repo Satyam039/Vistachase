@@ -6,6 +6,9 @@
 // five in August–September. Its dates are seeded through the end of the coming season, so summer
 // seats can be booked months ahead. Times stored are the Banff pickup and the Banff return.
 //
+// Private tours are priced per vehicle by season (owner's doc, 2026-10-29): `summerPrice` from June 1
+// to October 10, `price` from October 11 to May 31, up to 14 guests.
+//
 // The owner confirmed these times, seats and prices as the real schedule on 2026-10-11, so the
 // departures created here are LOCAL (listed and bookable). If a schedule below stops being
 // real, change or remove it here, and take existing dates off sale with
@@ -31,6 +34,8 @@ interface ScheduleConfig {
   times: (string | Slot)[];
   capacity: number;
   price: number; // in cents
+  /** Price (cents) from June 1 to October 10, when it differs from `price`. */
+  summerPrice?: number;
   childPrice?: number | null;
   /** Seed every date until the end of this month (1-12) of its next season, instead of 60 days. */
   seasonEndsMonth?: number;
@@ -78,15 +83,17 @@ const DEFAULT_SCHEDULES: ScheduleConfig[] = [
   {
     slug: "banff-private-tour",
     times: ["07:00", "08:00"],
-    capacity: 6,
-    price: 99900,
+    capacity: 14,
+    price: 129900,
+    summerPrice: 179900,
     childPrice: null,
   },
   {
     slug: "icefields-jasper-private-tour",
     times: ["07:00", "08:00"],
-    capacity: 6,
-    price: 145000,
+    capacity: 14,
+    price: 129900,
+    summerPrice: 159900,
     childPrice: null,
   },
   {
@@ -124,6 +131,12 @@ const DEFAULT_SCHEDULES: ScheduleConfig[] = [
     seasonEndsMonth: 9,
   },
 ];
+
+/** June 1 to October 10 (the private tours' summer season), for a YYYY-MM-DD date. */
+export function isSummerSeason(date: string): boolean {
+  const md = date.slice(5, 10);
+  return md >= "06-01" && md <= "10-10";
+}
 
 /** Days from `today` to the last day of `month` in its next season (this year's, or next year's once it has passed). */
 export function daysToSeasonEnd(today: string, month: number): number {
@@ -184,7 +197,7 @@ async function seedFallbackSchedule(daysCount = 60) {
             capacityTotal: item.capacity,
             capacityBooked: 0,
             capacityHeld: 0,
-            price: item.price,
+            price: item.summerPrice && isSummerSeason(isoDateStr) ? item.summerPrice : item.price,
             childPrice: item.childPrice ?? null,
             currency: tour.currency || "CAD",
             status: "ACTIVE",

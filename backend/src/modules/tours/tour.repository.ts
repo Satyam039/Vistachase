@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/db/prisma";
-import { PRODUCT_MAP } from "@/modules/tours/product-map";
+import { ON_SALE, PRODUCT_MAP, REMOVED_TOUR_SLUGS } from "@/modules/tours/product-map";
 import { videosFor, type PageVideo } from "@/modules/media/media.repository";
 import { getExpiredHeldSeats, liveCapacity } from "@/modules/reservations/reservation.repository";
 import { sellableInventoryWhere } from "@/modules/departures/inventory";
@@ -188,7 +188,7 @@ export async function getTours(options?: {
   destinationSlug?: string;
   isFeatured?: boolean;
 }): Promise<TourWithAvailability[]> {
-  const where: Prisma.TourWhereInput = {};
+  const where: Prisma.TourWhereInput = { ...ON_SALE };
   if (options?.category) where.category = options.category as any;
   if (options?.isFeatured !== undefined) where.isFeatured = options.isFeatured;
   if (options?.destinationSlug) {
@@ -207,6 +207,7 @@ export async function getTours(options?: {
 }
 
 export async function getTourBySlug(slug: string): Promise<TourWithAvailability | null> {
+  if (REMOVED_TOUR_SLUGS.includes(slug)) return null;
   const t = await prisma.tour.findUnique({ where: { slug }, include: bookableInclude() });
   if (!t) return null;
 

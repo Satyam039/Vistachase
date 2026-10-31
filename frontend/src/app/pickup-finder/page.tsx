@@ -101,7 +101,7 @@ export default function PickupFinderPage() {
 
       {/* Search card */}
       <div className="relative z-10 mx-auto -mt-14 max-w-6xl px-page">
-        <div className="space-y-4 rounded-[1.75rem] bg-white p-4 shadow-[0_30px_70px_-35px_rgba(12,31,33,0.5)] ring-1 ring-obsidian-900/5 sm:p-5">
+        <div className="space-y-4 rounded-none bg-white p-4 shadow-[0_30px_70px_-35px_rgba(12,31,33,0.5)] ring-1 ring-obsidian-900/5 sm:p-5">
           <label className="relative block">
             <span className="sr-only">Search your hotel</span>
             <Search
@@ -153,7 +153,7 @@ export default function PickupFinderPage() {
         className="mx-auto max-w-6xl px-page py-12"
       >
         {pickups !== null && shown.length === 0 ? (
-          <div className="rounded-[1.75rem] bg-white p-10 text-center ring-1 ring-obsidian-900/[0.07]">
+          <div className="rounded-none bg-white p-10 text-center ring-1 ring-obsidian-900/[0.07]">
             <Building2
               className="mx-auto h-9 w-9 text-ocean-600"
               aria-hidden="true"
@@ -274,7 +274,7 @@ export default function PickupFinderPage() {
                       <div className="mt-auto pt-6">
                         <div className="flex items-center justify-between gap-3 border-t border-white/[0.1] pt-5">
                           <a
-                            href={`https://www.google.com/maps/dir/?api=1&destination=${p.latitude},${p.longitude}`}
+                            href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${p.name}, ${p.address}`)}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="golden-summit-btn inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-sm"
@@ -314,7 +314,7 @@ export default function PickupFinderPage() {
         aria-labelledby="tips-heading"
         className="mx-auto max-w-6xl px-page pb-20"
       >
-        <div className="grid gap-6 rounded-[1.75rem] bg-obsidian-950 p-7 text-white sm:p-9 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+        <div className="grid gap-6 rounded-none bg-obsidian-950 p-7 text-white sm:p-9 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
           <div>
             <h2 id="tips-heading" className="text-2xl font-light text-white">
               On the day

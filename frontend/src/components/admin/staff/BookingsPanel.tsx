@@ -40,6 +40,8 @@ export interface BookingRow {
   createdAt: string;
   tourDepartureId: string | null;
   flags: { id: string; type: string }[];
+  /** Day N of a multi-day trip, known by its Day 1 reference. */
+  trip?: { title: string; reference: string; day: number; days: number } | null;
   tourDeparture: {
     date: string;
     departureTime: string | null;
@@ -94,7 +96,7 @@ export function BookingsPanel({
     );
     if (!res.ok) return setError(errorOf(res.data, "Couldn't load bookings."));
     setError("");
-    setBookings(res.data.bookings);
+    setBookings(Array.isArray(res.data.bookings) ? res.data.bookings : []);
   }, [q, status, flagged]);
 
   useEffect(() => {
@@ -198,6 +200,11 @@ export function BookingsPanel({
                         {isOpen ? ", close details" : ", open details"}
                       </span>
                     </button>
+                    {b.trip && (
+                      <span className="mt-1 block text-xs text-slate-600">
+                        Day {b.trip.day} of {b.trip.days} · {b.trip.reference}
+                      </span>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-sm">
                     <span className="block text-base text-obsidian-900">
@@ -230,7 +237,7 @@ export function BookingsPanel({
                     </Chip>
                   </td>
                   <td className="px-6 py-4">
-                    {b.flags.length === 0 ? (
+                    {!b.flags?.length ? (
                       <span className="text-sm text-slate-600">–</span>
                     ) : (
                       <span className="flex flex-wrap gap-1">

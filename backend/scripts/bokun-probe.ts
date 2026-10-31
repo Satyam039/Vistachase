@@ -11,7 +11,7 @@ import { BokunApiClient } from "../src/modules/bokun/bokun.client";
 
 /** One line per mapped product: our tour vs Bókun's name for that ID, dates found and pricing. */
 async function checkAll(client: BokunApiClient, start: string, end: string) {
-  const { PRODUCT_MAP } = await import("../src/modules/bokun/product-map");
+  const { PRODUCT_MAP } = await import("../src/modules/tours/product-map");
   for (const product of PRODUCT_MAP.filter((p) => p.bokunId)) {
     try {
       const list = ((await client.getAvailabilities(product.bokunId!, start, end)) ?? []) as any[];

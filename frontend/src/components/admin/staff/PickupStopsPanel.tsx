@@ -131,7 +131,7 @@ export function PickupStopsPanel({ notify, role }: { notify: (m: string) => void
               {canManage && editing === s.id && (
                 <tr className="bg-ocean-50/60">
                   <td colSpan={columns.length} className="px-6 pb-5">
-                    <div className="rounded-2xl bg-white p-5 ring-1 ring-obsidian-900/[0.07]">
+                    <div className="rounded-none bg-white p-5 ring-1 ring-obsidian-900/[0.07]">
                       <StopForm
                         idPrefix={`edit-${s.id}`}
                         initial={s}

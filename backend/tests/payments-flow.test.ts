@@ -6,7 +6,8 @@ import request from "supertest";
 import Stripe from "stripe";
 import prisma from "@/lib/db/prisma";
 import { createApp } from "@/app";
-import { createBooking, expireUnpaidBookings, refundableAmount } from "@/modules/bookings/booking.repository";
+import { createBooking, expireUnpaidBookings } from "@/modules/bookings/booking.repository";
+import { cancellationTerms, eligibleRefundCents, policyDecision } from "@/modules/bookings/cancellation-policy";
 import { setPaymentProviderForTests, type IPaymentProvider } from "@/lib/payment/payment.provider";
 import { priceBooking, promoPercent } from "@/modules/pricing/booking-pricing";
 import { dateOnly, timeOfDay } from "@/lib/utils/time";
@@ -78,10 +79,37 @@ describe("pricing", () => {
     process.env.NODE_ENV = env;
   });
 
-  it("keeps the 20% deposit for 7+ guests and multi-day trips", () => {
-    expect(refundableAmount(10000, 4, "SHARED")).toBe(10000);
-    expect(refundableAmount(10000, 7, "SHARED")).toBe(8000);
-    expect(refundableAmount(10000, 2, "MULTIDAY")).toBe(8000);
+  it("follows the Booking & Cancellation Policy per product type", () => {
+    expect(cancellationTerms("SHARED")).toEqual({ cutoffHours: 24, keepPercent: 0 });
+    expect(cancellationTerms("SHUTTLE")).toEqual({ cutoffHours: 24, keepPercent: 0 });
+    expect(cancellationTerms("PRIVATE")).toEqual({ cutoffHours: 72, keepPercent: 0 });
+    expect(cancellationTerms("PRIVATE", true)).toEqual({ cutoffHours: 72, keepPercent: 20 });
+    expect(cancellationTerms("MULTIDAY")).toEqual({ cutoffHours: 72, keepPercent: 20 });
+    // Group size no longer matters; a private package keeps 20% of the total, not of an instalment.
+    expect(eligibleRefundCents(10000, 10000, 0)).toBe(10000);
+    expect(eligibleRefundCents(10000, 10000, 20)).toBe(8000);
+    expect(eligibleRefundCents(2000, 10000, 20)).toBe(0);
+    expect(eligibleRefundCents(2000, 10000, 0)).toBe(2000);
+  });
+
+  it("measures the deadline from departure: 24 hours for shared tours, 72 for private, 80% back on packages", async () => {
+    const at = new Date("2028-06-10T12:00:00Z");
+    const booking = (category: string, hoursAhead: number) => {
+      const start = new Date(at.getTime() + hoursAhead * 3_600_000);
+      const mt = new Date(start.getTime() - 6 * 3_600_000); // MDT is UTC-6 in June
+      return {
+        bookingReference: "VC-POLICY",
+        totalAmount: 10000,
+        priceSnapshot: {},
+        payments: [{ status: "SUCCEEDED", amount: 10000 }],
+        tourDeparture: { date: dateOnly(mt.toISOString().slice(0, 10)), departureTime: timeOfDay(mt.toISOString().slice(11, 16)), tour: { category } },
+      };
+    };
+    expect((await policyDecision(booking("SHARED", 30), at)).refundCents).toBe(10000);
+    expect((await policyDecision(booking("SHUTTLE", 20), at)).refundCents).toBe(0);
+    expect((await policyDecision(booking("PRIVATE", 48), at)).refundCents).toBe(0);
+    expect((await policyDecision(booking("PRIVATE", 80), at)).refundCents).toBe(10000);
+    expect((await policyDecision(booking("MULTIDAY", 80), at)).refundCents).toBe(8000);
   });
 });
 
@@ -130,7 +158,10 @@ describe("paid booking flow", () => {
     await request(createApp()).post("/api/webhooks/stripe").set("Content-Type", "application/json").set("stripe-signature", header).send(payload);
     expect((await prisma.booking.findUniqueOrThrow({ where: { bookingReference: failed } })).status).toBe("CANCELLED");
 
-    expect(await expireUnpaidBookings(new Date(Date.now() + 31 * 60 * 1000))).toBeGreaterThanOrEqual(1);
+    // Back-date the payment window of this departure's unpaid bookings only: expiring "31 minutes
+    // from now" would also expire other test files' pending bookings running at the same time.
+    await prisma.booking.updateMany({ where: { tourDepartureId: departureId, status: "PENDING_PAYMENT" }, data: { paymentExpiresAt: new Date(Date.now() - 1000) } });
+    expect(await expireUnpaidBookings()).toBeGreaterThanOrEqual(1);
     expect((await prisma.booking.findUniqueOrThrow({ where: { bookingReference: abandoned } })).status).toBe("EXPIRED");
     // Seats still taken are exactly those of paid (confirmed) bookings.
     const paid = await prisma.booking.aggregate({ where: { tourDepartureId: departureId, status: "CONFIRMED" }, _sum: { totalSeats: true } });
@@ -144,12 +175,13 @@ describe("API protections", () => {
     expect(res.status).toBe(403);
   });
 
-  it("does not let the browser choose prices or the payment provider", async () => {
+  it("does not let the browser choose prices, add-ons or the payment provider", async () => {
     const res = await request(createApp())
       .post("/api/bookings")
       .send({ ...guest(5), addOns: [{ id: "lunch", price: 0 }], paymentProvider: "mock", totalAmount: 1 });
     expect(res.status).toBe(200);
     const stored = await prisma.booking.findUniqueOrThrow({ where: { bookingReference: res.body.booking.bookingReference } });
-    expect(stored.totalAmount).toBe(39800 + 2200 * 2);
+    // Checkout has no add-ons any more: the lunch the request asked for is not charged.
+    expect(stored.totalAmount).toBe(39800);
   });
 });

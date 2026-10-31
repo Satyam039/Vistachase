@@ -109,7 +109,7 @@ describe("local booking creation", () => {
     await confirmPaidBooking(stored.bookingReference, { amount: stored.totalAmount, currency: "cad", transactionId: stored.payments[0].transactionId });
     expect((await prisma.booking.findUniqueOrThrow({ where: { id: stored.id } })).status).toBe("CONFIRMED");
     const actions = (await prisma.auditLog.findMany({ where: { entityId: stored.id }, orderBy: { createdAt: "asc" } })).map((a) => a.action);
-    expect(actions).toEqual(["BOOKING_CREATED", "BOOKING_CONFIRMED"]);
+    expect(actions).toEqual(["BOOKING_CREATED", "BOOKING_CONFIRMED", "CONFIRMATION_EMAIL_SENT"]);
   });
 
   it("refuses invalid guest input at the API", async () => {
@@ -330,7 +330,7 @@ describe("inventory that can't be verified", () => {
   });
 });
 
-describe("no Bókun calls", () => {
+describe("no Bókun calls without Bókun keys", () => {
   it("holds, books, confirms and cancels without any outbound request", async () => {
     fetchSpy.mockClear();
     const dep = await departure();
@@ -339,15 +339,15 @@ describe("no Bókun calls", () => {
     expect(r.booking?.status).toBe("CONFIRMED");
     await cancelBooking(r.booking!.bookingReference, "local.guest16@example.com");
     expect(fetchSpy).not.toHaveBeenCalled();
-    expect(await prisma.bookingSyncTask.count()).toBe(0);
-    expect(await prisma.bokunSyncLog.count()).toBe(0);
+    expect(await prisma.bookingSyncTask.count({ where: { bookingId: r.booking!.id } })).toBe(0);
   });
 
-  it("ships no Bókun API client, and keeps the Bókun fields for a future sync", async () => {
+  it("talks to Bókun only from the Bókun module (docs/BOKUN.md), and keeps the Bókun fields", async () => {
     const files: string[] = [];
     const walk = (dir: string) => fs.readdirSync(dir, { withFileTypes: true }).forEach((e) => (e.isDirectory() ? walk(path.join(dir, e.name)) : files.push(path.join(dir, e.name))));
     walk(path.resolve(__dirname, "../src"));
-    for (const file of files) expect(fs.readFileSync(file, "utf8")).not.toMatch(/bokun\.(io|com)|api\.bokun/i);
+    const bokunModule = path.resolve(__dirname, "../src/modules/bokun");
+    for (const file of files.filter((f) => !f.startsWith(bokunModule))) expect(fs.readFileSync(file, "utf8")).not.toMatch(/bokun\.(io|com)|api\.bokun/i);
 
     const dep = await departure();
     const r = await createBooking(guest(dep.id, 17));

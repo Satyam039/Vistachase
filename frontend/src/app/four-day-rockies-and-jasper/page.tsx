@@ -23,6 +23,7 @@ import {
   X,
 } from "lucide-react";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
+import { PACKAGE_DAY_PRICE, PRIVATE_MAX_GUESTS } from "@/lib/privateTours";
 
 export const metadata: Metadata = {
   title: "Four-Day Rockies & Jasper | Private Banff, Yoho, Columbia Icefield & Jasper Tour | Vista Chase",
@@ -377,7 +378,7 @@ export default function FourDayRockiesAndJasperPage() {
                 {ITINERARY_DAYS.map((day) => (
                   <article
                     key={day.dayNumber}
-                    className="overflow-hidden rounded-[1.5rem] border border-obsidian-900/[0.08] bg-white p-6 sm:p-8 shadow-sm"
+                    className="overflow-hidden rounded-none border border-obsidian-900/[0.08] bg-white p-6 sm:p-8 shadow-sm"
                   >
                     <div className="border-b border-obsidian-900/[0.08] pb-4">
                       <span className="text-xs uppercase tracking-[0.24em] font-semibold text-ocean-600">
@@ -429,7 +430,7 @@ export default function FourDayRockiesAndJasperPage() {
 
             {/* Inclusions and Exclusions */}
             <section aria-labelledby="inclusions-heading" className="grid gap-6 sm:grid-cols-2">
-              <div className="rounded-[1.5rem] bg-white p-6 sm:p-8 border border-obsidian-900/[0.08] shadow-sm">
+              <div className="rounded-none bg-white p-6 sm:p-8 border border-obsidian-900/[0.08] shadow-sm">
                 <h3 id="inclusions-heading" className="text-xl font-normal text-obsidian-900 flex items-center gap-2">
                   <Check className="h-5 w-5 text-green-600" />
                   <span>What’s Included</span>
@@ -444,7 +445,7 @@ export default function FourDayRockiesAndJasperPage() {
                 </ul>
               </div>
 
-              <div className="rounded-[1.5rem] bg-white p-6 sm:p-8 border border-obsidian-900/[0.08] shadow-sm">
+              <div className="rounded-none bg-white p-6 sm:p-8 border border-obsidian-900/[0.08] shadow-sm">
                 <h3 className="text-xl font-normal text-obsidian-900 flex items-center gap-2">
                   <X className="h-5 w-5 text-slate-400" />
                   <span>What’s Not Included</span>
@@ -462,7 +463,7 @@ export default function FourDayRockiesAndJasperPage() {
 
             {/* Pickup & Accommodation info */}
             <section className="space-y-6">
-              <div className="rounded-[1.5rem] bg-white p-6 sm:p-8 border border-obsidian-900/[0.08]">
+              <div className="rounded-none bg-white p-6 sm:p-8 border border-obsidian-900/[0.08]">
                 <h3 className="text-xl font-normal text-obsidian-900 flex items-center gap-2">
                   <MapPin className="h-5 w-5 text-ocean-600" />
                   <span>Pickup &amp; Drop-Off</span>
@@ -481,7 +482,7 @@ export default function FourDayRockiesAndJasperPage() {
                 </p>
               </div>
 
-              <div className="rounded-[1.5rem] bg-white p-6 sm:p-8 border border-obsidian-900/[0.08]">
+              <div className="rounded-none bg-white p-6 sm:p-8 border border-obsidian-900/[0.08]">
                 <h3 className="text-xl font-normal text-obsidian-900 flex items-center gap-2">
                   <BedDouble className="h-5 w-5 text-ocean-600" />
                   <span>Accommodation</span>
@@ -510,7 +511,7 @@ export default function FourDayRockiesAndJasperPage() {
             </section>
 
             {/* Important Guest Information */}
-            <section aria-labelledby="important-info-heading" className="rounded-[1.5rem] bg-white p-6 sm:p-8 border border-obsidian-900/[0.08]">
+            <section aria-labelledby="important-info-heading" className="rounded-none bg-white p-6 sm:p-8 border border-obsidian-900/[0.08]">
               <h3 id="important-info-heading" className="text-xl font-normal text-obsidian-900 flex items-center gap-2">
                 <Shield className="h-5 w-5 text-ocean-600" />
                 <span>Important Guest Information</span>
@@ -528,15 +529,22 @@ export default function FourDayRockiesAndJasperPage() {
 
           {/* Sticky Booking / Request Sidebar */}
           <aside
-            className="rounded-[1.75rem] bg-obsidian-950 p-6 text-white sm:p-8 lg:sticky lg:top-[calc(var(--vc-header-h,80px)+24px)] shadow-xl border border-white/10"
+            className="rounded-none bg-obsidian-950 p-6 text-white sm:p-8 lg:sticky lg:top-[calc(var(--vc-header-h,80px)+24px)] shadow-xl border border-white/10"
             aria-label="Price and booking request"
           >
             <div className="border-b border-white/10 pb-5">
               <span className="text-xs uppercase tracking-[0.2em] text-summit-300">Private Journey</span>
               <h3 className="mt-1 text-2xl font-light text-white">Four-Day Rockies &amp; Jasper</h3>
-              {/* No confirmed package price yet: the team quotes per vehicle with the dates. */}
-              <p className="mt-4 text-3xl font-light text-white">Price on request</p>
-              <p className="mt-1 text-xs text-white/60">Per vehicle, confirmed with your dates and group size. Taxes and required fees included.</p>
+              {/* The doc's package price (lib/privateTours.ts): per day per vehicle, summer season only. */}
+              <p className="mt-4 flex items-baseline gap-1.5 text-white">
+                <span className="text-xs text-white/60">From</span>
+                <span className="text-3xl font-light tabular-nums">CAD ${(PACKAGE_DAY_PRICE.summer * 4).toLocaleString("en-CA")}</span>
+                <span className="text-xs text-white/70">per vehicle</span>
+              </p>
+              <p className="mt-1 text-xs text-white/60">
+                CAD ${PACKAGE_DAY_PRICE.summer.toLocaleString("en-CA")} per day, up to {PRIVATE_MAX_GUESTS} guests. Available June 1 to October 10 only. Add
+                optional activities and airport transfers when you request your dates.
+              </p>
             </div>
 
             <ul className="mt-6 space-y-3.5 text-sm text-white/85">

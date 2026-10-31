@@ -10,15 +10,29 @@ bookings, guests, payments, partners or commissions.
 | Screen | Who | What |
 | --- | --- | --- |
 | Bookings → Bookings | operations staff (actions: Admin, Operator) | Search, booking detail with payments, flags and history; edit notes; resend voucher; **cancel** with a refund decision |
+| Bookings → Requests | operations staff (actions: Admin, Operator) | Guests' cancellation requests (approve = cancel with a refund choice, or decline with a reason); bookings waiting for payment to **approve** by hand |
 | Bookings → Flags | operations staff (actions: Admin, Operator; Mark refunded: Admin) | Payments that didn't match or came late, refunds owed, Quick Book payments due |
 | Bookings → Quick Book | Admin, Operator | Book a departure for a guest on the phone or at the desk |
 | Departures | operations staff (changes: Admin, Operator) | List, add many dates at once, edit seats and prices, take off sale, manifest |
 | Departures → Manifest | operations staff | Printable passenger list per departure, CSV download |
 | Pickup stops | operations staff (changes: Admin, Operator) | Add, edit, turn stops on and off |
 | Audit log | Admin | Every recorded action, filterable, paged |
-| Content | Admin, SEO manager, Editor (Viewer reads) | Tour and destination words and photos, with change history ([SEO_WORKSPACE.md](SEO_WORKSPACE.md)) |
-| SEO | Admin, SEO manager (Editor writes copy, Viewer reads) | See [SEO.md](SEO.md) |
 | Staff | Admin | Invite staff (one-time password link), give or remove staff roles |
+
+## Three separate areas
+
+| Area | Address | Who |
+| --- | --- | --- |
+| Admin | `/admin` | Admin, Operator, Dispatcher (Partners, Staff and Audit log: Admin only) |
+| SEO portal | `/seo` (sign in at `/seo/login`) | SEO manager, Editor, Viewer, and Admin. Includes **Tour & destination copy** (`/seo/content`), which used to be Admin → Content |
+| Partner dashboard | `/partners/dashboard` (sign in at `/partners/login`) | Partners (AFFILIATE) |
+
+The frontend middleware (`frontend/src/middleware.ts`, rules in `frontend/src/lib/portals.ts`) asks
+`/api/auth/me` for the role before drawing any page in these areas: signed-out visitors go to that
+area's sign-in page, and other roles go to their own area, so a partner or SEO account never sees
+the admin screens. The old `/admin/seo` and `/admin/content` addresses redirect to the SEO portal.
+The API refuses the same roles on every route; `backend/tests/portal-separation.test.ts` calls
+every staff route as every other role.
 
 ## Roles take effect at once
 
@@ -29,12 +43,13 @@ they don't need to be signed out. `/api/auth/me` also returns the database role.
 
 ## Cancelling and refunds
 
-Staff can cancel a pending, confirmed or unsynced booking at any time (the guest's own 72-hour limit
+Staff can cancel a pending, confirmed or unsynced booking at any time (the guest's own deadline
 doesn't apply). The seats go back on sale at once, exactly as for a guest cancellation.
 
 Refund choice:
 
-- **Policy**: full refund for 1–6 guests; the 20% deposit is kept for 7+ guests and multi-day trips.
+- **Policy**: the Booking & Cancellation Policy (`backend/src/modules/bookings/cancellation-policy.ts`): a full
+  refund, except private multi-day packages, which keep 20% of the total price.
 - **Full**: everything paid.
 - **None**: nothing (no-show, or money kept by agreement).
 
@@ -46,6 +61,39 @@ booking becomes REFUNDED and any partner commission is reversed for that amount,
 With `STAFF_REFUNDS_VIA_PROVIDER=true`, online payments are refunded through the payment provider
 (as the guest self-cancel does); whatever couldn't be refunded that way (offline payments, failures)
 is still recorded as owed. A cancellation with no refund leaves partner commission as it is.
+
+## Requests: cancellation requests and approving bookings
+
+**Cancellation requests.** On My trips, guests press **Request cancellation** beside an upcoming
+booking (any time before departure, with an optional reason). Nothing changes for the booking: the
+request is an open `CANCEL_REQUEST` flag (migration `9d_cancel_requests`) holding the reason and the
+refund the policy gives at that moment, and the guest gets a "request received" email (staff are
+emailed too when `OPS_ALERT_EMAIL` or `ENQUIRIES_TO` is set). One open request per booking.
+
+- **Approve cancellation** cancels the booking exactly like a staff cancellation (seats back on sale,
+  refund recorded as owed or sent through the provider, guest emailed). **By the policy** follows the
+  guest's own rules as they stood when the guest asked: nothing back after the deadline (24 hours
+  before departure for shared tours and shuttles, 72 for private tours, 72 before Day 1 for private
+  packages); otherwise a full refund, or 80% of the total for a private multi-day package. A deposit
+  doesn't change this ([DEPOSITS.md](DEPOSITS.md)).
+  **Full** and **None** are there for exceptions.
+- **Decline** keeps the booking; the reason is emailed to the guest and shown on My trips, and the
+  guest may ask again.
+- Any cancellation (staff or the guest's own) closes an open request. Requests can't be closed with
+  the generic **Resolve** on the Flags tab.
+
+My trips no longer cancels on the spot: `INSTANT_SELF_CANCEL` in
+`frontend/src/app/account/trips/page.tsx` brings back instant cancellation 72+ hours out. The
+`POST /api/bookings/cancel` endpoint is unchanged.
+
+**Approve booking.** A booking left `PENDING_PAYMENT` (the card payment failed or was never
+finished) or `PAID_UNSYNCED` is listed under **Waiting for approval** and has **Approve booking**
+on its detail. Approving confirms it and keeps its seats: paid by cash, e-transfer, card terminal or
+other (an offline payment for what is still owed is recorded, commission earned), or **Not paid yet**
+(a **Payment due** flag, as for Quick Book). The unfinished online payment is marked FAILED; if the
+card payment goes through afterwards, it settles an open Payment due flag, or, when staff already
+recorded a payment, raises a **Paid after expiry** flag saying the guest may have paid twice.
+To turn a pending booking down, cancel it from its detail instead.
 
 ## Quick Book
 

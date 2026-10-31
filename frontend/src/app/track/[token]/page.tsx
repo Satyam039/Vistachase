@@ -37,7 +37,7 @@ export default async function TrackPage({ params }: TrackPageProps) {
 
   return (
     <div className="bg-obsidian-50 px-page py-16 sm:py-24">
-      <div className="mx-auto max-w-lg rounded-[1.75rem] bg-white p-8 text-center ring-1 ring-obsidian-900/[0.07] sm:p-10">
+      <div className="mx-auto max-w-lg rounded-none bg-white p-8 text-center ring-1 ring-obsidian-900/[0.07] sm:p-10">
         <span className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-ocean-50 text-ocean-700">
           <MapPinOff className="h-6 w-6" aria-hidden="true" />
         </span>

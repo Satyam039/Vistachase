@@ -82,7 +82,7 @@ export function GlobalVoiceAssistantDrawer() {
             role="dialog"
             aria-modal="true"
             aria-label="Vista Chase AI concierge"
-            className="relative flex h-full w-full flex-col overflow-hidden bg-white shadow-[0_30px_80px_-20px_rgba(12,31,33,0.45)] sm:max-w-[440px] sm:rounded-[1.75rem] sm:ring-1 sm:ring-obsidian-900/10 motion-safe:animate-[fadeUp_350ms_ease-out]"
+            className="relative flex h-full w-full flex-col overflow-hidden bg-white shadow-[0_30px_80px_-20px_rgba(12,31,33,0.45)] sm:max-w-[440px] sm:rounded-none sm:ring-1 sm:ring-obsidian-900/10 motion-safe:animate-[fadeUp_350ms_ease-out]"
           >
             <ConciergeChat variant="panel" onClose={close} />
           </div>

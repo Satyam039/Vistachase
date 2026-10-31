@@ -12,12 +12,12 @@
  *   1. Party           adults / children / infants, capped by live seat availability
  *   2. Contact         lead guest; continuing places the 10-minute seat hold, because
  *                      the hold API needs a name and email
- *   3. Pickup & extras hotel pickup, custom address, add-ons, special requests
+ *   3. Pickup & extras hotel pickup, custom address, special requests
  *   4. Review & pay    the booking request; the server prices it and, with Stripe, the guest
  *                      pays in Stripe's Payment Element (card details never touch this page)
  *
  * Every figure in the summary is derived from the same state the form writes, so the
- * total updates as the guest changes the party or add-ons.
+ * total updates as the guest changes the party or promo code.
  */
 
 import {
@@ -33,7 +33,6 @@ import { Badge } from "@astryxdesign/core/Badge";
 import { Banner } from "@astryxdesign/core/Banner";
 import { Button } from "@astryxdesign/core/Button";
 import { Card } from "@astryxdesign/core/Card";
-import { CheckboxInput } from "@astryxdesign/core/CheckboxInput";
 import { Collapsible } from "@astryxdesign/core/Collapsible";
 import { Divider } from "@astryxdesign/core/Divider";
 import { FieldStatus } from "@astryxdesign/core/FieldStatus";
@@ -47,10 +46,18 @@ import { TextArea } from "@astryxdesign/core/TextArea";
 import { TextInput } from "@astryxdesign/core/TextInput";
 import { Thumbnail } from "@astryxdesign/core/Thumbnail";
 import { QuantityInput } from "@/components/forms/QuantityInput";
+import {
+  AIRPORT_TRANSFER_PRICE_NOTE,
+  AirportTransferDetails,
+  AirportTransferToggle,
+  airportTransferError,
+  EMPTY_AIRPORT_TRANSFER,
+  type AirportTransferValue,
+} from "@/components/booking/AirportTransferFields";
 import { Dropdown } from "@/components/forms/Dropdown";
 import { PhoneField } from "@/components/forms/PhoneField";
 import { dialCode } from "@/lib/countries";
-import { balanceDueDate, DEPOSIT_PERCENT, DEPOSIT_POLICY, depositAvailable, depositFor, formatRockiesDate, SEATS_MESSAGE } from "@/lib/policy";
+import { balanceDueDate, cancellationShort, DEPOSIT_PERCENT, depositAvailable, depositFor, depositPolicy, formatRockiesDate, SEATS_MESSAGE } from "@/lib/policy";
 import { StripeCheckoutForm, stripeConfigured } from "@/components/booking/StripeCheckoutForm";
 import {
   CreditCard,
@@ -131,39 +138,6 @@ const STEPS = [
   { label: "Payment", icon: CreditCard },
 ];
 
-// `name` is what the booking API stores, so it stays identical to the previous checkout.
-const ADD_ONS = [
-  {
-    id: "parkPass",
-    name: "Parks Canada Discovery Pass Assistance",
-    label: "Parks Canada pass assistance",
-    description:
-      "We prepare your park entry pass in advance so you skip the entrance lines.",
-    price: 25,
-    perGuest: false,
-  },
-  {
-    id: "hotDrinks",
-    name: "Hot Drink & Morning Pastry Package",
-    label: "Hot drink & morning pastry",
-    description:
-      "Artisan croissants and French roast coffee at the Rockpile viewpoint.",
-    price: 15,
-    perGuest: true,
-  },
-  {
-    id: "lunch",
-    name: "Gourmet Rockies Packed Lunch",
-    label: "Gourmet packed lunch",
-    description:
-      "Alpine deli baguette, local fruit, cookies and trail mix for your hike.",
-    price: 22,
-    perGuest: true,
-  },
-] as const;
-
-type AddOnId = (typeof ADD_ONS)[number]["id"];
-
 const HOLD_SECONDS = 600;
 // Warn this long before a hold ends and offer to renew it (WCAG 2.2.1 asks for at least 20s).
 const HOLD_WARNING_SECONDS = 120;
@@ -242,6 +216,7 @@ export function BookingCheckoutClient({
   initialGuests,
   initialAdults,
   initialChildren,
+  initialAirport = false,
 }: {
   departure: DepartureData;
   stops: StopData[];
@@ -251,6 +226,8 @@ export function BookingCheckoutClient({
   /** Adults and children chosen on the tour page (?adults=&children=); take precedence over ?guests=. */
   initialAdults?: number;
   initialChildren?: number;
+  /** Airport transfer ticked on a private tour's page (?airport=1). */
+  initialAirport?: boolean;
 }) {
   // The responsive variant changes rendered order, so measure the host rather than the viewport.
   const hostRef = useRef<HTMLElement | null>(null);
@@ -284,6 +261,9 @@ export function BookingCheckoutClient({
     initialAdults ? Math.max(0, Math.min(initialChildren ?? 0, departure.seatsAvailable - Math.min(initialAdults, departure.seatsAvailable))) : 0,
   );
   const [infants, setInfants] = useState(0);
+  // Airport transfer (private tours only): no price yet, so it doesn't change the total.
+  const [airport, setAirport] = useState(initialAirport && departure.tour?.category === "PRIVATE");
+  const [airportTransfer, setAirportTransfer] = useState<AirportTransferValue>(EMPTY_AIRPORT_TRANSFER);
 
   // Contact
   const [customerName, setCustomerName] = useState("");
@@ -296,11 +276,6 @@ export function BookingCheckoutClient({
   // Pickup & extras
   const [pickupStopId, setPickupStopId] = useState(stops[0]?.id ?? "");
   const [customPickup, setCustomPickup] = useState("");
-  const [addOns, setAddOns] = useState<Record<AddOnId, boolean>>({
-    parkPass: false,
-    hotDrinks: false,
-    lunch: false,
-  });
   const [specialRequests, setSpecialRequests] = useState("");
 
   // 10-minute seat hold
@@ -563,25 +538,15 @@ export function BookingCheckoutClient({
 
   // ── Derived totals ─────────────────────────────────────────────────────────
 
-  const selectedAddOns = ADD_ONS.filter((addOn) => addOns[addOn.id]).map(
-    (addOn) => {
-      const quantity = addOn.perGuest ? totalSeats : 1;
-      return { ...addOn, quantity, total: addOn.price * quantity };
-    },
-  );
   // Same rule as the server: children pay the child price when the departure has one.
   const childPrice = departure.childPrice ?? departure.price;
   const hasChildPrice = !isVehicle && children > 0 && childPrice !== departure.price;
   const fareSubtotal = isVehicle
     ? departure.price
     : departure.price * adults + childPrice * children;
-  const addOnsTotal = selectedAddOns.reduce(
-    (sum, addOn) => sum + addOn.total,
-    0,
-  );
   // Same rounding as the server (whole cents). No sales tax is added.
   const discount = appliedPromo ? round2(fareSubtotal * (appliedPromo.percent / 100)) : 0;
-  const total = round2(fareSubtotal - discount + addOnsTotal);
+  const total = round2(fareSubtotal - discount);
   const canDeposit = total > 0 && depositAvailable(departure.date, departure.departureTime);
   const plan = canDeposit ? paymentPlan : "FULL";
   const depositNow = depositFor(total);
@@ -611,6 +576,8 @@ export function BookingCheckoutClient({
     } else if (totalSeats > seatCapacity) {
       party.seats = `Only ${seatCapacity} ${seatCapacity === 1 ? "seat is" : "seats are"} left on this departure.`;
     }
+    const airportError = airport ? airportTransferError(airportTransfer) : null;
+    if (airportError) party.airport = airportError;
 
     const contact: Record<string, string> = {};
     if (!customerName.trim())
@@ -629,6 +596,8 @@ export function BookingCheckoutClient({
     totalSeats,
     seatCapacity,
     isVehicle,
+    airport,
+    airportTransfer,
     customerName,
     customerEmail,
     phoneLocal,
@@ -688,8 +657,7 @@ export function BookingCheckoutClient({
           childrenCount: children,
           infantsCount: infants,
           specialRequests: specialRequests.trim() || undefined,
-          // The server prices add-ons itself; only the choice is sent.
-          addOns: selectedAddOns.map((addOn) => ({ id: addOn.id })),
+          airportTransfer: airport ? airportTransfer : undefined,
           promoCode: appliedPromo?.code,
           paymentPlan: plan,
         }),
@@ -817,8 +785,7 @@ export function BookingCheckoutClient({
     />
   ) : (
     <Text type="supporting" color="secondary">
-      Free cancellation up to 72 hours before departure · Instant digital
-      boarding pass
+      {cancellationShort(departure.tour?.category ?? "SHUTTLE")} · Instant digital boarding pass
     </Text>
   );
 
@@ -852,6 +819,7 @@ export function BookingCheckoutClient({
             value={customPickup.trim() || selectedStop?.name || ""}
           />
         )}
+        {airport && <SummaryRow label="Airport transfer" value={AIRPORT_TRANSFER_PRICE_NOTE} />}
       </VStack>
       <Divider />
       <VStack gap={2}>
@@ -865,17 +833,6 @@ export function BookingCheckoutClient({
           }
           value={money(fareSubtotal)}
         />
-        {selectedAddOns.map((addOn) => (
-          <SummaryRow
-            key={addOn.id}
-            label={
-              addOn.perGuest
-                ? `${addOn.label} × ${addOn.quantity}`
-                : addOn.label
-            }
-            value={money(addOn.total)}
-          />
-        ))}
         {appliedPromo && discount > 0 && (
           <SummaryRow label={`Promo ${appliedPromo.code} (−${appliedPromo.percent}%)`} value={`−${money(discount)}`} />
         )}
@@ -899,7 +856,7 @@ export function BookingCheckoutClient({
       <div className="mt-4 rounded-2xl bg-obsidian-50 p-4 border border-obsidian-900/10 text-xs">
         <p className="font-semibold uppercase tracking-wider text-slate-500">Booking inquiries & support</p>
         <p className="mt-1 text-sm text-obsidian-900">
-          Email: <a href="mailto:bookings@vistachase.com" className="text-ocean-700 underline font-medium">bookings@vistachase.com</a>
+          Email: <a href="mailto:support@vistachase.com" className="text-ocean-700 underline font-medium">support@vistachase.com</a>
         </p>
         <p className="mt-0.5 text-sm text-slate-600">
           Phone: <a href="tel:+18257349456" className="text-slate-800 hover:underline">+1 (825) 734-9456</a>
@@ -912,7 +869,7 @@ export function BookingCheckoutClient({
   // the Collapsible trigger and carries the total.
   const summaryCard = (
     <div
-      className={`rounded-[1.75rem] bg-white p-5 ring-1 ring-obsidian-900/[0.07] sm:p-6`}
+      className={`rounded-none bg-white p-5 ring-1 ring-obsidian-900/[0.07] sm:p-6`}
     >
       {isNarrow ? (
         <Collapsible
@@ -1135,7 +1092,7 @@ export function BookingCheckoutClient({
                 {isNarrow && <StackItem>{summaryCard}</StackItem>}
 
                 <StackItem size="fill">
-                  <div className="rounded-[1.75rem] bg-white p-5 ring-1 ring-obsidian-900/[0.07] sm:p-7">
+                  <div className="rounded-none bg-white p-5 ring-1 ring-obsidian-900/[0.07] sm:p-7">
                     <VStack gap={6}>
                       {confirmed ? confirmation : progress}
 
@@ -1214,6 +1171,18 @@ export function BookingCheckoutClient({
                               message={currentErrors.seats}
                             />
                           )}
+                          {departure.tour?.category === "PRIVATE" && (
+                            <>
+                              <AirportTransferToggle checked={airport} onChange={setAirport} />
+                              {airport && (
+                                <AirportTransferDetails
+                                  value={airportTransfer}
+                                  onChange={setAirportTransfer}
+                                  error={currentErrors.airport}
+                                />
+                              )}
+                            </>
+                          )}
                         </VStack>
                       )}
 
@@ -1247,7 +1216,6 @@ export function BookingCheckoutClient({
                                 autoComplete="email"
                                 startIcon={Mail}
                                 placeholder="you@example.com"
-                                description="Your boarding pass and confirmation go here."
                                 status={fieldError(currentErrors.email)}
                               />
                               <PhoneField
@@ -1256,7 +1224,6 @@ export function BookingCheckoutClient({
                                 onCountryChange={setPhoneCountry}
                                 value={phoneLocal}
                                 onChange={setPhoneLocal}
-                                description="For pickup-day SMS updates."
                                 error={currentErrors.phone}
                               />
                             </FormLayout>
@@ -1311,24 +1278,6 @@ export function BookingCheckoutClient({
                               onChange={setCustomPickup}
                               placeholder="Airbnb address or room number"
                             />
-                            <Divider />
-                            <VStack gap={3}>
-                              <Text type="label">Add-ons</Text>
-                              {ADD_ONS.map((addOn) => (
-                                <CheckboxInput
-                                  key={addOn.id}
-                                  label={`${addOn.label} · ${money(addOn.price)}${addOn.perGuest ? " per guest" : ""}`}
-                                  description={addOn.description}
-                                  value={addOns[addOn.id]}
-                                  onChange={(checked) =>
-                                    setAddOns((current) => ({
-                                      ...current,
-                                      [addOn.id]: checked,
-                                    }))
-                                  }
-                                />
-                              ))}
-                            </VStack>
                             <TextArea
                               label="Special requests"
                               isOptional
@@ -1408,7 +1357,7 @@ export function BookingCheckoutClient({
                           </Card>
 
                           {canDeposit && !awaitingPayment && (
-                            <fieldset className="rounded-2xl bg-white p-4 ring-1 ring-obsidian-900/[0.07]">
+                            <fieldset className="rounded-none bg-white p-4 ring-1 ring-obsidian-900/[0.07]">
                               <legend className="px-1 text-sm font-semibold text-obsidian-900">How would you like to pay?</legend>
                               <div className="mt-2 grid gap-3 sm:grid-cols-2">
                                 {(
@@ -1442,7 +1391,7 @@ export function BookingCheckoutClient({
                                   </label>
                                 ))}
                               </div>
-                              {plan === "DEPOSIT" && <p className="mt-3 text-sm text-slate-600">{DEPOSIT_POLICY}</p>}
+                              {plan === "DEPOSIT" && <p className="mt-3 text-sm text-slate-600">{depositPolicy(departure.tour?.category ?? "SHUTTLE")}</p>}
                             </fieldset>
                           )}
 

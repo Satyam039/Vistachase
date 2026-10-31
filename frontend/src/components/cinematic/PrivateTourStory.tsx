@@ -106,7 +106,7 @@ export function PrivateTourStory() {
           {/* Right Column: Visual Media with Fleet & Wilderness */}
           <div className="lg:col-span-6 relative order-1 lg:order-2">
             <ScrollReveal delay={150} yOffset={24}>
-              <div className="relative aspect-[4/5] sm:aspect-[16/11] lg:aspect-[4/5] w-full rounded-3xl overflow-hidden shadow-2xl bg-black border border-white/15 group">
+              <div className="relative aspect-[4/5] sm:aspect-[16/11] lg:aspect-[4/5] w-full rounded-none overflow-hidden shadow-2xl bg-black border border-white/15 group">
                 <Image
                   src="/media/photos/cadillac-escalade-iql-side.webp"
                   alt="Luxury GMC Yukon XL and Cadillac fleet in the Canadian Rockies"

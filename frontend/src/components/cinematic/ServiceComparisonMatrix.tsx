@@ -89,7 +89,7 @@ export function ServiceComparisonMatrix() {
 
         {/* Responsive Table Container */}
         <ScrollReveal delay={400} yOffset={24}>
-          <div className="overflow-x-auto rounded-3xl border border-slate-200/90 shadow-xl bg-white">
+          <div className="overflow-x-auto rounded-none border border-slate-200/90 shadow-xl bg-white">
             <table className="w-full text-left border-collapse min-w-[760px]">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50/80">

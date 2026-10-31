@@ -17,9 +17,16 @@ import {
   updateDepartureCapacity,
 } from "@/modules/admin/admin.repository";
 import { listFlags, markRefunded, OFFLINE_METHODS, quickBook, recordPayment, resolveFlag, staffCancelBooking, staffRefundsViaProvider } from "@/modules/admin/booking-admin";
+import { approveBooking, approveCancellation, declineCancellation, listRequests } from "@/modules/admin/booking-requests";
 import { createDepartures, departureProducts, listDepartures, setDepartureStatus, updateDeparture } from "@/modules/admin/departure-admin";
 import { createStop, listStops, updateStop } from "@/modules/admin/pickup-admin";
+import { sendConfirmationEmail } from "@/modules/bookings/confirmation-email";
+import { linkTripBookings, tripOf, tripSummary } from "@/modules/bookings/trip";
 import { emailDeliveryConfigured, getEmailProvider } from "@/lib/email/email.provider";
+import { bokunAvailabilitySyncEnabled, bokunConfig, bokunConnected } from "@/modules/bokun/config";
+import { bokunSyncStatus, processBokunSyncTasks, queueUpcomingBookings, retryBokunSync } from "@/modules/bokun/bokun-sync";
+import { syncBokunSeats } from "@/modules/bokun/availability-sync";
+import { PRODUCT_MAP } from "@/modules/tours/product-map";
 import { hashPassword } from "@/lib/auth/auth";
 import { ASSIGNABLE_ROLES, STAFF_LIST_ROLES } from "@/lib/auth/permissions";
 import crypto from "node:crypto";
@@ -212,7 +219,7 @@ router.patch("/enquiries/:id", async (req, res, next) => {
 const bookingSelect = {
   id: true, bookingReference: true, status: true, customerName: true, customerEmail: true, customerPhone: true,
   totalSeats: true, totalAmount: true, currency: true, pickupTime: true, pickupCustomText: true, specialRequests: true,
-  adminNotes: true, isBoarded: true, createdAt: true, bokunBookingId: true, tourDepartureId: true,
+  adminNotes: true, isBoarded: true, createdAt: true, bokunBookingId: true, tourDepartureId: true, priceSnapshot: true,
   flags: { where: { status: "OPEN" }, select: { id: true, type: true } },
   tourDeparture: { select: { date: true, departureTime: true, tour: { select: { title: true } }, shuttleRoute: { select: { name: true } } } },
 } as const;
@@ -239,7 +246,8 @@ router.get("/bookings", async (req, res, next) => {
       take: 100,
       select: bookingSelect,
     });
-    res.json({ success: true, bookings: bookings.map((b) => ({ ...b, totalAmount: b.totalAmount / 100 })) });
+    // trip: "Day 2 of 3" of a multi-day trip, known by its Day 1 reference (modules/bookings/trip.ts).
+    res.json({ success: true, bookings: bookings.map(({ priceSnapshot, ...b }) => ({ ...b, totalAmount: b.totalAmount / 100, trip: tripOf(priceSnapshot, b.bookingReference) })) });
   } catch (e) {
     next(e);
   }
@@ -271,6 +279,13 @@ router.post("/bookings/:id/resend-voucher", async (req, res, next) => {
   try {
     const booking = await prisma.booking.findUnique({ where: { id: String(req.params.id) } });
     if (!booking) return res.status(404).json({ success: false, error: "Booking not found" });
+    // A confirmed booking gets the full confirmation again, with the PDF itinerary of its trip.
+    if (booking.status === "CONFIRMED" || booking.status === "COMPLETED") {
+      const sent = await sendConfirmationEmail(booking.bookingReference, { force: true });
+      if (sent !== "sent") return res.status(502).json({ success: false, error: "The email couldn't be sent. The error is on the booking; try again shortly." });
+      await audit(req, "RESEND_VOUCHER", "Booking", booking.id, { withItinerary: true });
+      return res.json({ success: true });
+    }
     const link = voucherLink(booking.bookingReference);
     await getEmailProvider().sendEmail({
       to: booking.customerEmail,
@@ -280,6 +295,28 @@ router.post("/bookings/:id/resend-voucher", async (req, res, next) => {
     });
     await audit(req, "RESEND_VOUCHER", "Booking", booking.id, {});
     res.json({ success: true });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// Link bookings into one multi-day trip (a private multi-day tour booked day by day with Quick
+// Book): one reference, one confirmation email and one PDF itinerary for all days (trip.ts).
+const tripSchema = z.object({
+  references: z.array(referenceSchema).min(2).max(14),
+  title: z.string().trim().min(3).max(120),
+  notifyGuest: z.boolean().default(false),
+});
+
+router.post("/trips", requireStaff(MANAGERS), async (req, res, next) => {
+  try {
+    const body = parseOr400(tripSchema, req.body, res);
+    if (!body) return;
+    const linked = await linkTripBookings(body.references, body.title);
+    if ("error" in linked) return res.status(400).json({ success: false, error: linked.error });
+    for (const bookingId of linked.ids) await audit(req, "LINK_TRIP", "Booking", bookingId, { title: body.title, references: linked.references });
+    const email = body.notifyGuest ? await sendConfirmationEmail(linked.references[0], { force: true }) : null;
+    res.json({ success: true, reference: linked.references[0], references: linked.references, email });
   } catch (e) {
     next(e);
   }
@@ -297,9 +334,13 @@ router.get("/bookings/:id", async (req, res, next) => {
         items: { select: { name: true, price: true, quantity: true } },
         payments: { select: { id: true, amount: true, currency: true, provider: true, status: true, createdAt: true } },
         flags: { orderBy: { createdAt: "desc" } },
+        confirmationEmailSentAt: true,
+        confirmationEmailError: true,
+        externalSyncStatus: true,
       },
     });
     if (!booking) return res.status(404).json({ success: false, error: "Booking not found" });
+    const trip = tripOf(booking.priceSnapshot, booking.bookingReference);
     const history = await prisma.auditLog.findMany({
       where: { entityType: "Booking", entityId: booking.id },
       orderBy: { createdAt: "asc" },
@@ -310,6 +351,10 @@ router.get("/bookings/:id", async (req, res, next) => {
       success: true,
       booking: {
         ...booking,
+        priceSnapshot: undefined,
+        trip: trip ? await tripSummary(trip) : null,
+        // False while EMAIL_PROVIDER/RESEND_API_KEY aren't set: emails are only written to the server log.
+        emailDelivery: emailDeliveryConfigured(),
         totalAmount: booking.totalAmount / 100,
         items: booking.items.map((i) => ({ ...i, price: i.price / 100 })),
         payments: booking.payments.map((p) => ({ ...p, amount: p.amount / 100 })),
@@ -323,7 +368,7 @@ router.get("/bookings/:id", async (req, res, next) => {
   }
 });
 
-// Staff cancellation: no 72-hour window; seats are released and the refund decision is recorded
+// Staff cancellation: no guest deadline; seats are released and the refund decision is recorded
 // (sent through the payment provider only when STAFF_REFUNDS_VIA_PROVIDER=true).
 const cancelSchema = z.object({
   reason: z.string().trim().min(3).max(500),
@@ -338,6 +383,59 @@ router.post("/bookings/:id/cancel", requireStaff(MANAGERS), async (req, res, nex
     const result = await staffCancelBooking(id(req), body, staffId(req));
     if (result.status !== 200) return send(res, result);
     send(res, { ...result, paid: result.paidCents / 100, refundOwed: result.refundOwedCents / 100, refunded: result.refundedCents / 100, refundDue: result.refundDueCents / 100 });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// Requests (docs/ADMIN.md): guests' cancellation requests, and bookings waiting for staff approval.
+router.get("/requests", async (_req, res, next) => {
+  try {
+    res.json({ success: true, ...(await listRequests()), refundsViaProvider: staffRefundsViaProvider() });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post("/requests/:id/approve", requireStaff(MANAGERS), async (req, res, next) => {
+  try {
+    const body = parseOr400(
+      z.object({ refund: z.enum(["POLICY", "FULL", "NONE"]), note: z.string().trim().max(500).optional(), notifyGuest: z.boolean().default(true) }),
+      req.body,
+      res,
+    );
+    if (!body) return;
+    const result = await approveCancellation(id(req), body, staffId(req));
+    if (result.status !== 200 || !("paidCents" in result)) return send(res, result);
+    send(res, { ...result, paid: result.paidCents / 100, refundOwed: result.refundOwedCents / 100, refunded: result.refundedCents / 100, refundDue: result.refundDueCents / 100 });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post("/requests/:id/decline", requireStaff(MANAGERS), async (req, res, next) => {
+  try {
+    const body = parseOr400(z.object({ reason: z.string().trim().min(3).max(500), notifyGuest: z.boolean().default(true) }), req.body, res);
+    if (!body) return;
+    send(res, await declineCancellation(id(req), body, staffId(req)));
+  } catch (e) {
+    next(e);
+  }
+});
+
+// Approve a booking left waiting for payment (card failed or unfinished) or paid but unsynced.
+router.post("/bookings/:id/approve", requireStaff(MANAGERS), async (req, res, next) => {
+  try {
+    const body = parseOr400(
+      z.object({
+        payment: z.object({ method: z.enum([...OFFLINE_METHODS, "UNPAID"]), reference: z.string().trim().max(120).optional() }),
+        notifyGuest: z.boolean().default(true),
+      }),
+      req.body,
+      res,
+    );
+    if (!body) return;
+    send(res, await approveBooking(id(req), body, staffId(req)));
   } catch (e) {
     next(e);
   }
@@ -374,7 +472,7 @@ router.post("/quick-book", requireStaff(MANAGERS), async (req, res, next) => {
 });
 
 // Flags: payments that didn't match or came late, refunds owed, Quick Book payments due.
-const FLAG_TYPES = ["PAYMENT_AMOUNT_MISMATCH", "LATE_PAYMENT", "REFUND_DUE", "PAYMENT_DUE", "OTHER"] as const;
+const FLAG_TYPES = ["PAYMENT_AMOUNT_MISMATCH", "LATE_PAYMENT", "REFUND_DUE", "PAYMENT_DUE", "CANCEL_REQUEST", "OTHER"] as const;
 
 router.get("/flags", async (req, res, next) => {
   try {
@@ -755,6 +853,57 @@ router.patch("/staff/:id", requireStaff(["ADMIN"]), async (req, res, next) => {
     await audit(req, "CHANGE_ROLE", "User", user.id, { ...body, previous: previous.role });
     const setup = body.role === "CUSTOMER" ? null : await secureNewStaffAccount(req, user.id, previous.role);
     res.json({ success: true, user, ...(setup ? { invited: true, setupLink: setup.link, emailed: setup.emailed, linkExpires: setup.expires } : {}) });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// Bókun (docs/BOKUN.md): connection, bookings waiting for or stuck on their way to Bókun, and the
+// latest seat sync. Sync, send-upcoming and retry are for managers.
+router.get("/bokun", async (_req, res, next) => {
+  try {
+    const connected = bokunConnected();
+    res.json({
+      success: true,
+      connected,
+      apiUrl: bokunConfig().apiUrl,
+      seatSync: bokunAvailabilitySyncEnabled(),
+      products: PRODUCT_MAP.filter((p) => p.bookingMode === "BOKUN").map((p) => ({ slug: p.slug, bokunId: p.bokunId })),
+      ...(await bokunSyncStatus()),
+    });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post("/bokun/sync", requireStaff(MANAGERS), async (req, res, next) => {
+  try {
+    if (!bokunConnected()) return res.status(409).json({ success: false, error: "Bókun isn't connected yet: add BOKUN_ACCESS_KEY and BOKUN_SECRET_KEY to the server's .env and restart." });
+    const bookings = await processBokunSyncTasks();
+    const seats = bokunAvailabilitySyncEnabled() ? await syncBokunSeats() : { skipped: "Seat sync is off (BOKUN_AVAILABILITY_SYNC=false)." };
+    await audit(req, "BOKUN_SYNC", "Bokun", "manual", { bookings, seats });
+    res.json({ success: true, bookings, seats });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post("/bokun/queue-upcoming", requireStaff(MANAGERS), async (req, res, next) => {
+  try {
+    const result = await queueUpcomingBookings();
+    if (result.status === 200) await audit(req, "BOKUN_QUEUE_UPCOMING", "Bokun", "manual", { queued: result.queued });
+    send(res, result);
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post("/bokun/retry/:id", requireStaff(MANAGERS), async (req, res, next) => {
+  try {
+    if (!bokunConnected()) return res.status(409).json({ success: false, error: "Bókun isn't connected yet." });
+    const result = await retryBokunSync(id(req));
+    if (result.status === 200) await audit(req, "BOKUN_RETRY", "Booking", id(req), {});
+    send(res, result);
   } catch (e) {
     next(e);
   }

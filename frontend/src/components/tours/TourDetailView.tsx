@@ -26,6 +26,7 @@ import {
 import { Dropdown } from "@/components/forms/Dropdown";
 import { DepartureCalendar } from "@/components/booking/DepartureCalendar";
 import { PriceTag } from "@/components/pricing/PriceTag";
+import { AIRPORT_TRANSFER_PRICE_NOTE, AirportTransferToggle } from "@/components/booking/AirportTransferFields";
 import { cancellationShort, SEATS_MESSAGE } from "@/lib/policy";
 import { Rail } from "@/components/motion/Rail";
 import { BreadcrumbJsonLd, JsonLd } from "@/components/seo/JsonLd";
@@ -270,6 +271,9 @@ export function TourDetailView({
   const adults = Math.max(1, Math.min(adultsWanted, maxPartySize));
   const children = Math.max(0, Math.min(childrenWanted, maxPartySize - adults));
   const childFare = currentDeparture?.childPrice ?? currentDeparture?.price ?? price;
+  // Private tours: optional airport transfer; checkout asks for the flight dates and times.
+  const offersAirport = tour.category === "PRIVATE";
+  const [airport, setAirport] = useState(false);
 
   // FAQ accordion state
 
@@ -445,7 +449,7 @@ export function TourDetailView({
             {/* The "On this page" bar spans this column only, so it never slides over the booking panel. */}
             <TourSectionNav />
             {/* Key facts as icon rows (Civitatis / Expedia "Features") */}
-            <ul aria-label="Key facts" className="grid grid-cols-1 gap-x-8 gap-y-5 rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:grid-cols-2 sm:p-8" data-stagger>
+            <ul aria-label="Key facts" className="grid grid-cols-1 gap-x-8 gap-y-5 rounded-none bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:grid-cols-2 sm:p-8" data-stagger>
               {facts.map((fact) => (
                 <li key={fact.label} className="flex items-start gap-3.5">
                   <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-ocean-50 text-ocean-700">
@@ -487,7 +491,7 @@ export function TourDetailView({
           >
             <div
               ref={panelRef}
-              className={`${panelScrolls ? "lg:max-h-[calc(100vh-var(--vc-header-h,96px)-2rem)] lg:overflow-y-auto lg:overscroll-contain" : ""} rounded-[1.75rem] bg-white ring-1 ring-obsidian-900/[0.07] shadow-[0_30px_60px_-35px_rgba(12,31,33,0.4)] p-6 space-y-3.5`}
+              className={`${panelScrolls ? "lg:max-h-[calc(100vh-var(--vc-header-h,96px)-2rem)] lg:overflow-y-auto lg:overscroll-contain" : ""} rounded-none bg-white ring-1 ring-obsidian-900/[0.07] shadow-[0_30px_60px_-35px_rgba(12,31,33,0.4)] p-6 space-y-3.5`}
             >
               <div className="border-b border-slate-100 pb-3">
                 <PriceTag
@@ -499,7 +503,7 @@ export function TourDetailView({
                 {/* No sales tax is added at checkout (backend booking-pricing.ts), so prices are tax-inclusive. */}
                 {price > 0 && (
                   <p className="mt-1.5 text-sm text-slate-600">
-                    Taxes included. {isEnquiry ? "We confirm your total with your quote." : "Your total is shown before you pay."}
+                    {`Taxes included. ${isEnquiry ? "We confirm your total with your quote." : "Your total is shown before you pay."}`}
                   </p>
                 )}
               </div>
@@ -551,12 +555,15 @@ export function TourDetailView({
 
                   {/* Party: one guest count for a private vehicle, adults + children otherwise */}
                   {isVehicle ? (
-                    <PartySizeStepper
-                      value={partySize}
-                      max={maxPartySize}
-                      onChange={setPartySize}
-                      hint={`Vehicle seats up to ${maxPartySize}`}
-                    />
+                    <>
+                      <PartySizeStepper
+                        value={partySize}
+                        max={maxPartySize}
+                        onChange={setPartySize}
+                        hint={`Vehicle seats up to ${maxPartySize}`}
+                      />
+                      {offersAirport && <AirportTransferToggle checked={airport} onChange={setAirport} />}
+                    </>
                   ) : (
                     <>
                       <PartySizeStepper
@@ -582,10 +589,18 @@ export function TourDetailView({
                   {/* Price Calculation Breakdown */}
                   <div className="px-4 py-3 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5 text-xs">
                     {isVehicle ? (
-                      <div className="flex items-center justify-between text-slate-600">
-                        <span>Private vehicle flat rate</span>
-                        <span>{money(calculatedTotal)} CAD</span>
-                      </div>
+                      <>
+                        <div className="flex items-center justify-between text-slate-600">
+                          <span>Private vehicle flat rate</span>
+                          <span>{money(calculatedTotal)} CAD</span>
+                        </div>
+                        {offersAirport && airport && (
+                          <div className="flex items-center justify-between gap-3 text-slate-600">
+                            <span>Airport transfer</span>
+                            <span className="text-right">{AIRPORT_TRANSFER_PRICE_NOTE}</span>
+                          </div>
+                        )}
+                      </>
                     ) : (
                       <>
                         <div className="flex items-center justify-between text-slate-600">
@@ -612,7 +627,7 @@ export function TourDetailView({
                       href={`/book?${new URLSearchParams({
                         departureId: selectedDepartureId || tour.departures[0]?.id || "",
                         ...(isVehicle
-                          ? { guests: String(partySize) }
+                          ? { guests: String(partySize), ...(offersAirport && airport ? { airport: "1" } : {}) }
                           : { guests: String(adults + children), adults: String(adults), children: String(children) }),
                       }).toString()}`}
                       className="w-full h-13 py-4 rounded-full text-base font-medium text-obsidian-900 golden-summit-btn flex items-center justify-center gap-2 shadow-lg transition-all hover:scale-[1.01]"
@@ -666,7 +681,12 @@ export function TourDetailView({
       {/* Phones: price and booking always one tap away (GetYourGuide / Viator pattern) */}
       <MobileBookingBar>
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
-          <PriceTag price={price} currency={tour.currency} unit={tour.category === "TICKET" ? "per ticket" : unitLabel} layout="inline" />
+          <PriceTag
+            price={price}
+            currency={tour.currency}
+            unit={tour.category === "TICKET" ? "per ticket" : unitLabel}
+            layout="inline"
+          />
           <a href="#booking" className="golden-summit-btn inline-flex h-12 shrink-0 items-center rounded-full px-6 text-base">
             {isEnquiry || tour.departures.length === 0 ? "Request a date" : "Check availability"}
           </a>

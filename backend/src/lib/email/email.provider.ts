@@ -6,6 +6,15 @@ export interface EmailPayload {
   html: string;
   text?: string;
   from?: string;
+  /** Where replies go, e.g. the guest who asked for a live agent. */
+  replyTo?: string;
+  attachments?: EmailAttachment[];
+}
+
+export interface EmailAttachment {
+  filename: string;
+  content: Buffer;
+  contentType?: string;
 }
 
 export interface IEmailProvider {
@@ -25,7 +34,11 @@ class ConsoleEmailProvider implements IEmailProvider {
     console.log(`To: ${Array.isArray(payload.to) ? payload.to.join(", ") : payload.to}`);
     console.log(`From: ${payload.from || process.env.EMAIL_FROM || "bookings@vistachase.com"}`);
     console.log(`Subject: ${payload.subject}`);
+    if (payload.replyTo) console.log(`Reply-To: ${payload.replyTo}`);
+    for (const a of payload.attachments ?? []) console.log(`Attachment: ${a.filename} (${a.content.length} bytes)`);
     console.log("----------------------- [EMAIL CONTENT PREVIEW] -----------------------");
+    // Link tokens (password reset, staff invites, email confirmation, voucher, check-in, review,
+    // tracking) never go to the logs.
     const preview = payload.text || payload.html.replace(/<[^>]*>?/gm, "").substring(0, 300) + "...";
     console.log(redactTokens(preview));
     console.log("===================================================================\n");
@@ -56,6 +69,10 @@ class ResendEmailProvider implements IEmailProvider {
           subject: payload.subject,
           html: payload.html,
           text: payload.text,
+          ...(payload.replyTo ? { reply_to: payload.replyTo } : {}),
+          ...(payload.attachments?.length
+            ? { attachments: payload.attachments.map((a) => ({ filename: a.filename, content: a.content.toString("base64"), content_type: a.contentType })) }
+            : {}),
         }),
       });
 
@@ -79,27 +96,20 @@ class ResendEmailProvider implements IEmailProvider {
   }
 }
 
+// Any SMTP mailbox: Gmail or Google Workspace (smtp.gmail.com, an App Password), Hostinger or
+// GoDaddy email. SMTP_HOST, SMTP_PORT (465 = TLS, 587 = STARTTLS), SMTP_USER, SMTP_PASS.
+// EMAIL_FROM should be SMTP_USER's own address (or an alias the mailbox may send as).
 class SmtpEmailProvider implements IEmailProvider {
-  private transporter: Transporter;
+  private transport: Transporter;
 
-  constructor(options: {
-    host: string;
-    port: number;
-    secure?: boolean;
-    user: string;
-    pass: string;
-  }) {
-    this.transporter = nodemailer.createTransport({
-      host: options.host,
-      port: options.port,
-      secure: options.secure ?? options.port === 465,
-      auth: {
-        user: options.user,
-        pass: options.pass,
-      },
-      tls: {
-        rejectUnauthorized: false,
-      },
+  constructor() {
+    const port = Number(process.env.SMTP_PORT || 465);
+    this.transport = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port,
+      secure: process.env.SMTP_SECURE === "true" || port === 465,
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+      tls: { rejectUnauthorized: false },
     });
   }
 
@@ -107,12 +117,14 @@ class SmtpEmailProvider implements IEmailProvider {
     const from = payload.from || process.env.EMAIL_FROM || process.env.SMTP_USER || "bookings@vistachase.com";
     const to = Array.isArray(payload.to) ? payload.to.join(", ") : payload.to;
     try {
-      const info = await this.transporter.sendMail({
+      const info = await this.transport.sendMail({
         from,
-        to,
+        to: payload.to,
         subject: payload.subject,
         html: payload.html,
         text: payload.text,
+        replyTo: payload.replyTo,
+        attachments: payload.attachments?.map((a) => ({ filename: a.filename, content: a.content, contentType: a.contentType })),
       });
       console.log(`✅ [SmtpEmailProvider] Email sent successfully to ${to}, messageId: ${info.messageId}`);
       return { success: true, messageId: info.messageId };
@@ -124,9 +136,16 @@ class SmtpEmailProvider implements IEmailProvider {
   }
 }
 
+/** SMTP is set up: EMAIL_PROVIDER=smtp with a host, user and password. */
+function smtpConfigured(): boolean {
+  return !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+}
+
+// Not built yet. It says so instead of reporting a send that never happened (EMAIL_PROVIDER=ses
+// used to look configured while every email was dropped). Use EMAIL_PROVIDER=resend.
 class SESEmailProvider implements IEmailProvider {
   async sendEmail(payload: EmailPayload): Promise<{ success: boolean; messageId?: string; error?: string }> {
-    console.error(`[SESEmailProvider] not implemented: email to ${Array.isArray(payload.to) ? payload.to.length + " recipients" : "1 recipient"} was NOT sent. Set EMAIL_PROVIDER=resend or smtp.`);
+    console.error(`[SESEmailProvider] not implemented: email to ${Array.isArray(payload.to) ? payload.to.length + " recipients" : "1 recipient"} was NOT sent. Set EMAIL_PROVIDER=resend or EMAIL_PROVIDER=smtp.`);
     return { success: false, error: "The SES email provider is not implemented; use EMAIL_PROVIDER=resend or EMAIL_PROVIDER=smtp." };
   }
 }
@@ -136,44 +155,27 @@ let emailInstance: IEmailProvider | null = null;
 /** True when emails really leave the server (not the console provider used in development). */
 export function emailDeliveryConfigured(): boolean {
   const providerType = (process.env.EMAIL_PROVIDER || "").toLowerCase();
-  if (providerType === "resend" || (!providerType && process.env.RESEND_API_KEY)) {
-    return Boolean(process.env.RESEND_API_KEY);
-  }
-  if (providerType === "smtp" || (!providerType && process.env.SMTP_HOST && process.env.SMTP_USER)) {
-    return Boolean(process.env.SMTP_HOST && process.env.SMTP_USER);
-  }
-  return false;
+  return (
+    (providerType === "resend" && !!process.env.RESEND_API_KEY) ||
+    (!providerType && !!process.env.RESEND_API_KEY) ||
+    (providerType === "smtp" && smtpConfigured()) ||
+    (!providerType && smtpConfigured())
+  );
 }
 
 export function getEmailProvider(): IEmailProvider {
   if (emailInstance) return emailInstance;
 
   const providerType = (process.env.EMAIL_PROVIDER || "").toLowerCase();
-
-  if (providerType === "resend" || (!providerType && process.env.RESEND_API_KEY)) {
-    if (process.env.RESEND_API_KEY) {
-      emailInstance = new ResendEmailProvider(process.env.RESEND_API_KEY);
-      return emailInstance;
-    }
-  }
-
-  if (providerType === "smtp" || (!providerType && process.env.SMTP_HOST && process.env.SMTP_USER)) {
-    emailInstance = new SmtpEmailProvider({
-      host: process.env.SMTP_HOST || "localhost",
-      port: Number(process.env.SMTP_PORT) || 587,
-      secure: process.env.SMTP_SECURE === "true" || Number(process.env.SMTP_PORT) === 465,
-      user: process.env.SMTP_USER || "",
-      pass: process.env.SMTP_PASS || "",
-    });
-    return emailInstance;
-  }
-
-  if (providerType === "ses" && process.env.AWS_ACCESS_KEY_ID) {
+  if ((providerType === "resend" || !providerType) && process.env.RESEND_API_KEY) {
+    emailInstance = new ResendEmailProvider(process.env.RESEND_API_KEY);
+  } else if ((providerType === "smtp" || !providerType) && smtpConfigured()) {
+    emailInstance = new SmtpEmailProvider();
+  } else if (providerType === "ses" && process.env.AWS_ACCESS_KEY_ID) {
     emailInstance = new SESEmailProvider();
-    return emailInstance;
+  } else {
+    emailInstance = new ConsoleEmailProvider();
   }
-
-  emailInstance = new ConsoleEmailProvider();
   return emailInstance;
 }
 

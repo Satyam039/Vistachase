@@ -2,16 +2,20 @@
 // page (signed link, owner or staff only) and cancel it (owner only). The client never chooses
 // the payment provider or sends prices.
 
-import { Router } from "express";
+import { Router, type Request } from "express";
 import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
-import { cancelBooking, confirmPaidBooking, createBooking, getBookingByReference, paymentState } from "@/modules/bookings/booking.repository";
-import { getPaymentProvider } from "@/lib/payment/payment.provider";
+import { cancelBooking, createBooking, getBookingByReference, paymentState } from "@/modules/bookings/booking.repository";
 import { getAuthenticatedStaff, getAuthenticatedUser, getSessionUser, ownsBooking } from "@/lib/auth/admin-guard";
-import { verifyBookingLink } from "@/lib/security/signed-links";
+import { signBookingLink, verifyBookingLink } from "@/lib/security/signed-links";
 import { paymentSummary } from "@/modules/bookings/deposit";
 import { startBalancePayment } from "@/modules/bookings/deposit-payments";
+import { requestCancellation } from "@/modules/admin/booking-requests";
 import { createPackageBooking, PACKAGES } from "@/modules/bookings/package-booking";
+import { syncPendingPayments } from "@/modules/bookings/payment-sync";
+import { itineraryPdf, voucherPdf } from "@/modules/bookings/voucher-pdf";
+import { tripBookings, tripOf, tripSummary } from "@/modules/bookings/trip";
 import { emailSchema, parseOr400, referenceSchema, z } from "@/lib/security/validate";
+import { airportTransferSchema } from "@/modules/bookings/airport-transfer";
 
 const router = Router();
 
@@ -33,6 +37,7 @@ const createSchema = z.object({
   addOns: z.array(z.object({ id: z.string().max(40).optional(), name: z.string().max(120).optional() })).max(10).default([]),
   promoCode: z.string().trim().max(40).optional(),
   paymentPlan: z.enum(["FULL", "DEPOSIT"]).default("FULL"),
+  airportTransfer: airportTransferSchema.optional(),
 });
 
 router.post("/", rateLimitMiddleware("booking_create", { maxRequests: 5, windowSeconds: 60 }), async (req, res, next) => {
@@ -47,6 +52,9 @@ router.post("/", rateLimitMiddleware("booking_create", { maxRequests: 5, windowS
     const user = getAuthenticatedUser(req);
     const result = await createBooking({
       ...body,
+      // Checkout no longer offers add-ons (2026-10-27); any sent by an old page are ignored, so
+      // the total is the fare alone. Staff Quick Book still records add-ons.
+      addOns: [],
       idempotencyKey: rawKey,
       customerId: user && user.email.toLowerCase() === body.customerEmail ? user.userId : undefined,
       // Partner referral: the frontend stores ?ref=<code> in this cookie for 30 days.
@@ -98,47 +106,60 @@ router.post("/package", rateLimitMiddleware("booking_create", { maxRequests: 5, 
 
 const readSchema = z.object({ ref: referenceSchema, t: z.string().max(64).optional() });
 
+/**
+ * The booking, if this request may read it (voucher link, owner or staff). A payment still waiting
+ * on Stripe's webhook is first checked with Stripe itself (modules/bookings/payment-sync.ts), so the
+ * checkout and the voucher show a paid booking as confirmed even if the webhook never arrives.
+ */
+async function readableBooking(req: Request, ref: string, token: string | undefined) {
+  let booking = await getBookingByReference(ref);
+  const allowed =
+    booking &&
+    (verifyBookingLink(booking.bookingReference, "voucher", token) || ownsBooking(await getSessionUser(req), booking) || (await getAuthenticatedStaff(req)));
+  if (!booking || !allowed) return null;
+  if (booking.payments.some((p) => p.status === "PENDING") && (await syncPendingPayments(booking.bookingReference))) {
+    booking = await getBookingByReference(ref);
+  }
+  return booking;
+}
+
+// The voucher as a PDF file, with the same access as the voucher itself. In-app browsers (Gmail,
+// WhatsApp) can't print the voucher page, but they can download and open this.
+router.get("/voucher.pdf", rateLimitMiddleware("booking_read", { maxRequests: 30, windowSeconds: 60 }), async (req, res, next) => {
+  try {
+    const query = parseOr400(readSchema, req.query, res);
+    if (!query) return;
+    const booking = await readableBooking(req, query.ref, query.t);
+    if (!booking) return res.status(404).json({ success: false, error: "Booking not found" });
+    // A day of a multi-day trip downloads the whole trip: the itinerary, then every day's voucher.
+    const trip = tripOf(booking.priceSnapshot, booking.bookingReference);
+    const file = trip ? await itineraryPdf(await tripBookings(booking.bookingReference), trip) : await voucherPdf(booking);
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="vista-chase-${trip ? `itinerary-${trip.reference}` : `voucher-${booking.bookingReference}`}.pdf"`);
+    res.setHeader("Content-Length", String(file.byteLength));
+    res.setHeader("Cache-Control", "private, no-store");
+    return res.end(Buffer.from(file));
+  } catch (error) {
+    next(error);
+  }
+});
+
 // The voucher page: open with the signed link from the confirmation email, as the signed-in owner,
 // or as staff. The reference alone is not enough.
 router.get("/", rateLimitMiddleware("booking_read", { maxRequests: 30, windowSeconds: 60 }), async (req, res, next) => {
   try {
     const query = parseOr400(readSchema, req.query, res);
     if (!query) return;
-    let booking = await getBookingByReference(query.ref);
-    const allowed =
-      booking &&
-      (verifyBookingLink(booking.bookingReference, "voucher", query.t) ||
-        ownsBooking(await getSessionUser(req), booking) ||
-        (await getAuthenticatedStaff(req)));
-    if (!booking || !allowed) return res.status(404).json({ success: false, error: "Booking not found" });
-
-    // If still pending, check if payment provider already confirmed the charge (handles missing/delayed webhooks)
-    if (booking.status === "PENDING_PAYMENT") {
-      const pendingPayment = booking.payments.find((p) => p.status === "PENDING" && p.transactionId);
-      if (pendingPayment?.transactionId) {
-        const provider = getPaymentProvider();
-        if (provider.retrievePaymentIntent) {
-          try {
-            const intent = await provider.retrievePaymentIntent(pendingPayment.transactionId);
-            if (intent && intent.paid) {
-              await confirmPaidBooking(booking.bookingReference, {
-                amount: intent.amount,
-                currency: intent.currency,
-                transactionId: intent.intentId,
-              });
-              const refreshed = await getBookingByReference(query.ref);
-              if (refreshed) booking = refreshed;
-            }
-          } catch (e) {
-            console.error(`Auto-confirm check failed for ${booking.bookingReference}:`, (e as Error).message);
-          }
-        }
-      }
-    }
+    const booking = await readableBooking(req, query.ref, query.t);
+    if (!booking) return res.status(404).json({ success: false, error: "Booking not found" });
+    // The other days of a multi-day trip, each with its own voucher link (same guest, bought together).
+    const trip = tripOf(booking.priceSnapshot, booking.bookingReference);
+    const tripDays = trip ? await tripSummary(trip) : null;
 
     return res.json({
       success: true,
       booking: {
+        trip: tripDays ? { ...tripDays, days: tripDays.days.map((d) => ({ ...d, voucherPath: `/booking/${encodeURIComponent(d.bookingReference)}/voucher?t=${signBookingLink(d.bookingReference, "voucher")}` })) } : null,
         bookingReference: booking.bookingReference,
         status: booking.status,
         paymentStatus: paymentState(booking, booking.payments),
@@ -193,6 +214,28 @@ router.post("/cancel", rateLimitMiddleware("booking_cancel", { maxRequests: 5, w
     const result = await cancelBooking(body.bookingReference, booking.customerEmail);
     if (!result.success) return res.status(400).json({ success: false, error: result.error });
     return res.json({ success: true, message: result.message, refundedAmount: result.refundedAmount, booking: { bookingReference: result.booking!.bookingReference, status: result.booking!.status } });
+  } catch (error) {
+    next(error);
+  }
+});
+
+const requestCancelSchema = z.object({ bookingReference: referenceSchema, reason: z.string().trim().max(500).default(""), t: z.string().max(64).optional() });
+
+// Ask staff to cancel (My trips): the signed-in owner or the voucher link's signed token, as for
+// /cancel. Nothing changes until staff approve or decline it in admin (docs/ADMIN.md "Requests").
+router.post("/request-cancel", rateLimitMiddleware("booking_request_cancel", { maxRequests: 5, windowSeconds: 60 }), async (req, res, next) => {
+  try {
+    const body = parseOr400(requestCancelSchema, req.body, res);
+    if (!body) return;
+    const booking = await getBookingByReference(body.bookingReference);
+    const user = await getSessionUser(req);
+    const allowed = booking && (verifyBookingLink(booking.bookingReference, "voucher", body.t) || ownsBooking(user, booking));
+    if (!booking || !allowed) {
+      return res.status(403).json({ success: false, error: "Open the link in your confirmation email, or sign in to the account that made the booking." });
+    }
+    const result = await requestCancellation(booking.bookingReference, body.reason, user?.userId ?? null);
+    if (result.status !== 201) return res.status(result.status).json({ success: false, error: result.error });
+    return res.status(201).json({ success: true, request: result.request });
   } catch (error) {
     next(error);
   }

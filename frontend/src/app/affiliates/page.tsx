@@ -22,7 +22,7 @@ const AUDIENCES = [
     icon: Building,
     title: "Hotel concierge desks",
     text: "Moraine Lake is closed to private vehicles; our tours and shuttles have commercial access. Guests are picked up at their hotel.",
-    points: ["Pickup at more than 25 hotels in Banff, Canmore and Lake Louise", "Free cancellation up to 72 hours before", "Referral links with commission tracking"],
+    points: ["Pickup at more than 25 hotels in Banff, Canmore and Lake Louise", "Free cancellation up to 24 hours before on shared tours", "Referral links with commission tracking"],
   },
   {
     icon: Briefcase,
@@ -76,7 +76,7 @@ export default function AffiliatesPage() {
         <SectionHeading id="who-heading" eyebrow="Who we work with" title="Built around your guests" />
         <ul className="grid gap-6 md:grid-cols-3" data-stagger>
           {AUDIENCES.map(({ icon: Icon, title, text, points }) => (
-            <li key={title} className="flex flex-col rounded-[1.75rem] bg-white p-7 ring-1 ring-obsidian-900/[0.07]">
+            <li key={title} className="flex flex-col rounded-none bg-white p-7 ring-1 ring-obsidian-900/[0.07]">
               <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-summit-200 text-obsidian-900">
                 <Icon className="h-5 w-5" aria-hidden="true" />
               </span>

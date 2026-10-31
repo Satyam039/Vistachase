@@ -200,7 +200,7 @@ function SameAsInput({ id, label, sameLabel, value, inherited, onChange, disable
 
 function Section({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-obsidian-900/[0.08] bg-white p-5">
+    <section className="rounded-none border border-obsidian-900/[0.08] bg-white p-5">
       <h2 className="text-base text-obsidian-900">{title}</h2>
       {description && <p className="mt-1 text-sm text-slate-600">{description}</p>}
       <div className="mt-4 space-y-4">{children}</div>
@@ -842,7 +842,7 @@ export function BlogPostEditor({ id }: { id: string | null }) {
       </div>
 
       {!readOnly && (
-        <div className="sticky bottom-0 z-10 -mx-4 border-t border-obsidian-900/10 bg-white/95 px-4 py-4 backdrop-blur sm:mx-0 sm:rounded-2xl sm:border">
+        <div className="sticky bottom-0 z-10 -mx-4 border-t border-obsidian-900/10 bg-white/95 px-4 py-4 backdrop-blur sm:mx-0 sm:rounded-none sm:border">
           <div className="flex flex-wrap items-center gap-3">
             <button type="submit" disabled={!canSave || !!busy || (!dirty && !isNew)} className={quietBtn}>
               {busy === "save" ? "Saving…" : published ? "Save changes as draft" : "Save draft"}

@@ -1,6 +1,6 @@
 // About Vista Chase, structured like the "About" pages of the booking sites studied (photo hero,
 // numbers, story, values, fleet, recognition) in the brand system. Figures are the ones used across
-// the live site: since 2018, 10,000+ guests, 5.0 from 1,000+ reviews, #6 in Canada (2026).
+// the live site: since 2018, 10,000+ guests, 5.0 from 1,700+ reviews, #6 in Canada (2026).
 
 import Image from "next/image";
 import { AwardSeal } from "@/components/brand/AwardSeal";
@@ -21,7 +21,7 @@ const baseMetadata: Metadata = {
 const STATS = [
   { to: 2018, label: "guiding the Rockies since", plain: true },
   { to: 10000, suffix: "+", label: "guests guided" },
-  { to: 5, decimals: 1, label: "average rating, 1,000+ reviews" },
+  { to: 5, decimals: 1, label: "average rating, 1,700+ reviews" },
   { to: 6, prefix: "#", label: "experience in Canada, TripAdvisor 2026" },
 ];
 
@@ -128,7 +128,7 @@ export default function AboutUsPage() {
             </p>
           </div>
         </div>
-        <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem]" data-reveal="clip">
+        <div className="relative aspect-[4/5] overflow-hidden rounded-none" data-reveal="clip">
           <Image
             src="/media/photos/guide-with-guests.webp"
             alt="A Vista Chase guide with guests above the Bow Valley"
@@ -155,7 +155,7 @@ export default function AboutUsPage() {
           </div>
           <ul className="grid gap-5 md:grid-cols-3" data-stagger>
             {VALUES.map(({ icon: Icon, title, body }) => (
-              <li key={title} className="rounded-[1.75rem] bg-obsidian-50 p-7 ring-1 ring-obsidian-900/[0.06] sm:p-8">
+              <li key={title} className="rounded-none bg-obsidian-50 p-7 ring-1 ring-obsidian-900/[0.06] sm:p-8">
                 <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-obsidian-950 text-summit-400">
                   <Icon className="h-5 w-5" aria-hidden="true" />
                 </span>
@@ -199,7 +199,7 @@ export default function AboutUsPage() {
       {/* Recognition */}
       <section aria-labelledby="award-heading" className="bg-obsidian-950 py-20 text-white sm:py-24">
         <div className="mx-auto grid max-w-7xl items-center gap-10 px-page md:grid-cols-[auto_minmax(0,1fr)] md:gap-14">
-          <span className="flex h-44 w-44 items-center justify-center rounded-[1.75rem] bg-white p-5" data-reveal="scale">
+          <span className="flex h-44 w-44 items-center justify-center rounded-none bg-white p-5" data-reveal="scale">
             <AwardSeal size="md" />
           </span>
           <div data-reveal>
@@ -244,7 +244,7 @@ export default function AboutUsPage() {
             <li key={href}>
               <Link
                 href={href}
-                className="group flex items-center justify-between rounded-2xl bg-white px-6 py-5 ring-1 ring-obsidian-900/[0.07] transition-colors hover:ring-ocean-600/40"
+                className="group flex items-center justify-between rounded-none bg-white px-6 py-5 ring-1 ring-obsidian-900/[0.07] transition-colors hover:ring-ocean-600/40"
               >
                 <span className="flex items-center gap-3 text-lg text-obsidian-900">
                   <Icon className="h-5 w-5 text-ocean-600" aria-hidden="true" />

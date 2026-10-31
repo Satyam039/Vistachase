@@ -23,6 +23,8 @@ import { executeAiTool, type ToolExecutionContext } from "@/lib/ai/ai.tools";
 import { cancelBooking } from "@/modules/bookings/booking.repository";
 import type { ChatMessage, ConciergeResponse, SessionState } from "@/lib/ai/ai.provider";
 import { formatDateOnly, formatTimeOfDay } from "@/lib/utils/time";
+import { conciergeLanguage } from "@/lib/ai/languages";
+import { ON_SALE } from "@/modules/tours/product-map";
 
 export const CARD_NUMBER = /\b(?:\d[ -]*?){13,19}\b/;
 const MAX_STEPS = 8;
@@ -54,12 +56,13 @@ let catalogCache: { at: number; text: string } | null = null;
 async function catalogKnowledge(): Promise<string> {
   if (catalogCache && Date.now() - catalogCache.at < 5 * 60_000) return catalogCache.text;
   const tours = await prisma.tour.findMany({
+    where: ON_SALE,
     select: { slug: true, title: true, category: true, durationHours: true, basePrice: true, currency: true, priceUnit: true, summary: true, bookingMode: true },
     orderBy: [{ category: "asc" }, { basePrice: "asc" }],
   });
   const stops = await prisma.shuttleStop.findMany({ where: { isActive: true }, select: { name: true, town: true }, orderBy: { sortOrder: "asc" } });
   const lines = tours.map((t) => {
-    const price = t.basePrice > 0 ? `from $${t.basePrice} ${t.currency} ${t.priceUnit === "GROUP" ? "per vehicle" : "per guest"}` : "price on request";
+    const price = t.basePrice > 0 ? `from $${t.basePrice / 100} ${t.currency} ${t.priceUnit === "GROUP" ? "per vehicle" : "per guest"}` : "price on request";
     const mode = t.bookingMode === "ENQUIRY" ? "enquiry only (custom quote)" : "bookable departures";
     return `- ${t.title} [slug: ${t.slug}] · ${t.category} · ~${t.durationHours}h · ${price} · ${mode}. ${t.summary}`;
   });
@@ -79,13 +82,13 @@ Today is ${today} (Mountain Time, Canmore/Banff).
 
 ABOUT VISTA CHASE
 - Canmore-based tour operator for Banff and the Canadian Rockies since 2018. Office: 121 Bow Meadows Crescent #110, Canmore, AB. Phone +1 (825) 734-9456 (lines open 6 a.m. – 9 p.m. Mountain Time), support@vistachase.com.
-- TripAdvisor Travellers' Choice Best of the Best 2026: the shared Banff tour ranked #6 experience in Canada. Rated 5.0 from 1,000+ reviews.
-- Services: shared small-group tours (max 12 guests), private tours (per vehicle: SUV up to 6, executive van up to 13), Moraine Lake & Lake Louise shuttles, multi-day packages (enquiry), Banff activity tickets (Banff Gondola, Lake Minnewanka cruise, Columbia Icefield Skywalk, Banff Upper Hot Springs; on request).
+- TripAdvisor Travellers' Choice Best of the Best 2026: the shared Banff tour ranked #6 experience in Canada. Rated 5.0 from 1,700+ reviews.
+- Services: shared small-group tours (max 12 guests), private tours (priced per vehicle; Banff & Yoho Discovery and Columbia Icefield Adventure take up to 14 guests: Banff & Yoho CAD $1,799 from June 1 to October 10, all-inclusive, and $1,299 from October 11 to May 31; Columbia Icefield CAD $1,599 in summer and $1,299 in winter, when Abraham Lake replaces the Icefield Adventure; private Two-Day Rockies Explorer CAD $1,599 per day in summer and $1,299 per day in winter; Three-Day and Four-Day journeys CAD $1,599 per day, June 1 to October 10 only; airport transfers can be added when booking, with the guest's arrival and departure dates and times; custom private tours use an SUV up to 6 or executive van up to 13), Moraine Lake & Lake Louise shuttles, multi-day packages (enquiry), Banff activity tickets (Banff Gondola 9:00 AM, Lake Minnewanka cruise 2:00 to 4:00 PM, Columbia Icefield Glacier Adventure with Ice Explorer + Skywalk 3:30 PM, premium Ice Odyssey 3:30 PM, Maligne Lake cruise 9:00 to 10:00 AM; booked online on the operator's site through each ticket's "Book Now" button at /banff-activity-tickets).
 - Moraine Lake Road is closed to private vehicles; Vista Chase shuttles and tours have guaranteed access. Parks Canada licensed commercial operator.
 - Hotel pickup in Banff, Canmore and Lake Louise.
 
 POLICIES
-- Cancellation (legal policy): cancel at least 72 hours before departure. Groups of 1–6 get a full refund; groups of 7+ and multi-day trips get everything back except the 20% non-refundable deposit. Within 72 hours: no refund. Late arrivals (10+ minutes) and no-shows are fully charged. Refunds take 5–10 business days. Third-party activities (gondola, cruises, Ice Explorer) follow the provider's rules. Full policy: /cancellation-policy.
+- Cancellation (Booking & Cancellation Policy): shared tours and shuttles, full refund if cancelled at least 24 hours before departure; private single-day tours, full refund at least 72 hours before; private packages of two or more days, 80% refund at least 72 hours before the first tour day (20% of the total is non-refundable). After the deadline: no refund. Late arrivals (10+ minutes) and no-shows are fully charged. Refunds take 5–10 business days. Third-party activities (gondola, cruises, Ice Explorer) follow the provider's rules. Full policy: /privacy-policy-vista-chase.
 - Prices in CAD; the price shown is the price paid (no sales tax is added at checkout).
 - Guests can manage bookings at /account/trips and see vouchers at /booking/<reference>/voucher.
 
@@ -95,9 +98,18 @@ HOW TO HELP
 - Use web_search / web_fetch for live or general information (weather, road and trail conditions, Parks Canada passes and notices, wildlife, what to pack, things to do, travel logistics). Mention the source briefly.
 - Booking: find the tour and date (get_available_dates / check_availability), confirm guests and pickup, then collect the lead guest's name and email. Before calling hold_seats, restate tour, date, time, guests and price and get a clear yes. After the hold, tell them the seats are held for 10 minutes and to finish on the secure checkout link. You cannot take payment or confirm bookings yourself.
 - Never ask for or repeat card numbers, CVV or expiry. If someone shares payment details, tell them to use the secure checkout only.
-- Looking up, tracking or cancelling a booking needs the booking reference AND the email used to book. Cancel only after the guest clearly confirms, and remind them of the 72-hour policy first.
-- Enquiry-only products (custom private tours, multi-day, tickets): explain what's included and point them to the "Request" button on the product page or /contact-us.
-- If you can't help, offer the phone number and email above.`;
+- Looking up, tracking or cancelling a booking needs the booking reference AND the email used to book. Cancel only after the guest clearly confirms, and remind them of the cancellation deadline for their tour (24 hours for shared tours and shuttles, 72 hours for private tours) first.
+- Enquiry-only products (custom private tours, multi-day): explain what's included and point them to the "Request" button on the product page or /contact-us.
+- Answer the guest's latest question directly, using the whole conversation for context ("what about tomorrow?" means the tour already discussed). Don't repeat an earlier answer or fall back to a generic welcome.
+- Only state tour details, prices, times, availability and policies that come from this prompt or a tool result. If you don't have the information, say so plainly ("I don't have that information") instead of guessing.
+- If you can't help, or the guest asks for a person, tell them to tap "Chat with a live agent" under the chat (it sends this conversation to our support team), or to call or email us.`;
+}
+
+/** The guest picked a language in the chat, or left it on Auto (reply in theirs). */
+function languageInstruction(code?: string): string {
+  const lang = conciergeLanguage(code);
+  if (!lang) return "LANGUAGE: reply in the language of the guest's latest message.";
+  return `LANGUAGE: the guest chose ${lang.english}. Reply only in ${lang.english}, whatever language they write in. Keep tour names, prices, times, booking references and links exactly as given.`;
 }
 
 function memoryBlock(state: AgentState): string {
@@ -186,7 +198,7 @@ const CUSTOMER_TOOLS: Anthropic.Tool[] = [
   {
     name: "cancel_booking",
     description:
-      "Cancel a booking (free up to 72h before departure). Only after the guest explicitly confirmed they want to cancel. Requires reference and booking email.",
+      "Cancel a booking (free up to 24h before departure for shared tours and shuttles, 72h for private tours; private packages refund 80%). Only after the guest explicitly confirmed they want to cancel. Requires reference and booking email.",
     input_schema: {
       type: "object",
       properties: {
@@ -374,6 +386,7 @@ export async function runConciergeAgent(
   state: AgentState | undefined,
   ctx: ToolExecutionContext,
   onEvent?: (e: AgentEvent) => void,
+  opts: { language?: string } = {},
 ): Promise<ConciergeResponse> {
   const sessionState: AgentState = { ...(state ?? {}), memory: [...(state?.memory ?? [])] };
   const lastUser = [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
@@ -400,6 +413,7 @@ export async function runConciergeAgent(
     { type: "text", text: `${companyKnowledge()}\n\n${await catalogKnowledge()}`, cache_control: { type: "ephemeral" } },
     ...(ctx.isStaff ? [{ type: "text" as const, text: `The user is signed in as staff (${ctx.role}). Staff tools are available.` }] : []),
     ...(sessionState.memory?.length ? [{ type: "text" as const, text: memoryBlock(sessionState) }] : []),
+    { type: "text", text: languageInstruction(opts.language) },
   ];
 
   const tools: Anthropic.ToolUnion[] = [

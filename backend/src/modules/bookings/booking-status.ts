@@ -3,19 +3,25 @@
 // move, and the winner is the one that releases seats or sends email), and writes an audit row.
 //
 //   PENDING_PAYMENT → CONFIRMED     verified payment (Stripe webhook, or an instant/free booking),
-//                                   or staff Quick Book (paid offline, or unpaid with a PAYMENT_DUE flag)
+//                                   or staff Quick Book (paid offline, or unpaid with a PAYMENT_DUE flag),
+//                                   or staff Approve (docs/ADMIN.md)
+//   PAID_UNSYNCED   → CONFIRMED     staff Approve (paid under the former Bókun integration)
 //   PENDING_PAYMENT → EXPIRED       payment window passed
 //   PENDING_PAYMENT → CANCELLED     payment failed, was cancelled or couldn't start
 //   CONFIRMED       → CANCELLED     guest cancelled within policy, or staff cancelled (docs/ADMIN.md)
 //   CANCELLED       → REFUNDED      refund issued (by the provider, or marked sent by staff)
 //   CONFIRMED       → COMPLETED     the day after the trip (review request job)
 // A submitted form never confirms a booking by itself.
+//
+// With Bókun connected, CONFIRMED and CANCELLED also queue the same change for Bókun in the same
+// transaction (modules/bokun/bokun-sync.ts), so every booking lands in both systems.
 
 import type { BookingStatus, Prisma } from "@prisma/client";
+import { queueBokunSync } from "@/modules/bokun/bokun-sync";
 
 const ALLOWED_FROM: Record<BookingStatus, BookingStatus[]> = {
   PENDING_PAYMENT: [],
-  CONFIRMED: ["PENDING_PAYMENT"],
+  CONFIRMED: ["PENDING_PAYMENT", "PAID_UNSYNCED"],
   EXPIRED: ["PENDING_PAYMENT"],
   CANCELLED: ["PENDING_PAYMENT", "CONFIRMED", "PAID_UNSYNCED"],
   REFUNDED: ["CANCELLED"],
@@ -47,5 +53,6 @@ export async function transitionBooking(
   await tx.auditLog.create({
     data: { action: `BOOKING_${to}`, entityType: "Booking", entityId: bookingId, details: { to, ...details } as Prisma.InputJsonValue },
   });
+  await queueBokunSync(tx, bookingId, to);
   return true;
 }

@@ -191,7 +191,7 @@ export async function bootstrapSeo(userId?: string) {
         { title: "Destinations", path: "/destinations", description: "The places our tours visit.", section: "PRIMARY", sortOrder: 3 },
         { title: "Contact us", path: "/contact-us", description: "Questions, groups and custom trips.", section: "PRIMARY", sortOrder: 4 },
         { title: "FAQ", path: "/faq", description: "Booking, pickup, cancellation and park access answers.", section: "SECONDARY", sortOrder: 0 },
-        { title: "Cancellation policy", path: "/cancellation-policy", section: "SECONDARY", sortOrder: 1 },
+        { title: "Cancellation policy", path: "/privacy-policy-vista-chase", section: "SECONDARY", sortOrder: 1 },
         { title: "About us", path: "/about-us", section: "SECONDARY", sortOrder: 2 },
       ],
     });

@@ -184,7 +184,7 @@ export function TourSearch({
 
       {/* Sticky filter bar */}
       <div className="z-20 mx-auto mt-6 max-w-7xl px-page lg:sticky lg:top-[calc(var(--vc-header-h,80px)+16px)]">
-        <div className="grid gap-2 rounded-[1.75rem] bg-white p-2 shadow-[0_12px_24px_-20px_rgba(12,31,33,0.45)] ring-1 ring-obsidian-900/[0.08] sm:grid-cols-2 lg:grid-cols-[1.2fr_0.8fr_1fr_1fr_auto] lg:items-center lg:rounded-full">
+        <div className="grid gap-2 rounded-none bg-white p-2 shadow-[0_12px_24px_-20px_rgba(12,31,33,0.45)] ring-1 ring-obsidian-900/[0.08] sm:grid-cols-2 lg:grid-cols-[1.2fr_0.8fr_1fr_1fr_auto] lg:items-center lg:rounded-full">
           <Dropdown
             variant="pill"
             label="Destination"
@@ -237,7 +237,7 @@ export function TourSearch({
         )}
 
         {results.length === 0 ? (
-          <div className="mx-auto max-w-xl rounded-[1.75rem] bg-white p-10 text-center ring-1 ring-obsidian-900/[0.07]">
+          <div className="mx-auto max-w-xl rounded-none bg-white p-10 text-center ring-1 ring-obsidian-900/[0.07]">
             <Search className="mx-auto h-8 w-8 text-ocean-600" aria-hidden="true" />
             <h2 className="mt-4 text-2xl font-light text-obsidian-900">No tours match these filters</h2>
             <p className="mt-2 text-base text-slate-600">

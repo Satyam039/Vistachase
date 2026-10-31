@@ -164,7 +164,7 @@ export function TechnicalView() {
       />
       {error && <p className="rounded-2xl bg-red-50 px-5 py-3 text-sm text-red-800">{error}</p>}
       {!result ? (
-        <p className="rounded-2xl bg-white px-5 py-4 text-sm text-slate-600 ring-1 ring-obsidian-900/10">Not checked yet. {me.seo.manage ? "Run the checks to see the results." : "An SEO manager can run them."}</p>
+        <p className="rounded-none bg-white px-5 py-4 text-sm text-slate-600 ring-1 ring-obsidian-900/10">Not checked yet. {me.seo.manage ? "Run the checks to see the results." : "An SEO manager can run them."}</p>
       ) : (
         <>
           <p className="text-sm text-slate-600">

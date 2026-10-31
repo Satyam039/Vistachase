@@ -29,7 +29,7 @@ export function PlanAheadGuaranteedAccess() {
     <section aria-labelledby="access-heading" className="overflow-hidden bg-white py-20 sm:py-28">
       <div className="mx-auto grid max-w-7xl items-center gap-12 px-page lg:grid-cols-12 lg:gap-16">
         <div className="relative lg:col-span-6">
-          <div className="relative h-[26rem] overflow-hidden rounded-[2rem] sm:h-[36rem]" data-reveal="clip">
+          <div className="relative h-[26rem] overflow-hidden rounded-none sm:h-[36rem]" data-reveal="clip">
             <Image
               src="/media/site/about-image-1.webp"
               alt="Red canoes docked at Moraine Lake shoreline"
@@ -40,7 +40,7 @@ export function PlanAheadGuaranteedAccess() {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-ocean-950/60 via-transparent to-transparent" />
           </div>
-          <div className="absolute -bottom-6 right-4 flex max-w-xs items-center gap-3 rounded-2xl bg-white p-4 shadow-xl ring-1 ring-obsidian-900/[0.06] sm:right-6" data-reveal="scale" data-reveal-delay="200">
+          <div className="absolute -bottom-6 right-4 flex max-w-xs items-center gap-3 rounded-none bg-white p-4 shadow-xl ring-1 ring-obsidian-900/[0.06] sm:right-6" data-reveal="scale" data-reveal-delay="200">
             <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-summit-100 text-obsidian-900">
               <ShieldCheck className="h-5 w-5" aria-hidden="true" />
             </span>

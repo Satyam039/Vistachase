@@ -10,6 +10,7 @@ import { Dropdown } from "@/components/forms/Dropdown";
 import { PhoneField } from "@/components/forms/PhoneField";
 import { dialCode } from "@/lib/countries";
 import { openDatePicker } from "@/lib/utils/datePicker";
+import { RequestDateCalendar, shortDate, tripDays } from "@/components/forms/RequestDateCalendar";
 
 type Fields = "name" | "email" | "phone" | "message" | "date" | "guests" | "tour";
 const FIELD =
@@ -21,17 +22,34 @@ const GENERAL_QUESTION_OPTIONS = [
   { value: "shuttle", label: "Shuttle" },
 ];
 
+/** Writes the picked dates into the prefilled request lines ("Preferred Day 1 date:", "Preferred start date:"). */
+function fillDates(message: string, start: string, days: number) {
+  const trip = tripDays(start, days);
+  return message
+    .replace(/^((?:Preferred )?Day (\d+) date:).*$/gm, (_, label: string, n: string) => {
+      const day = trip[Number(n) - 1];
+      return day ? `${label} ${shortDate(day)}` : label;
+    })
+    .replace(/^(Preferred start date:).*$/gm, `$1 ${shortDate(start)}`);
+}
+
 export function ContactForm({
   tours = [],
   defaultTour = "",
   defaultGuests,
   defaultMessage,
+  requestDays,
+  defaultCategory,
 }: {
   tours?: { slug: string; title: string }[];
   defaultTour?: string;
   defaultGuests?: number;
   /** Prefilled message, e.g. for a package request. */
   defaultMessage?: string;
+  /** Tour or package request: show a full calendar; 2+ picks a start day and highlights the trip. */
+  requestDays?: number;
+  /** Preselects Private / Shared / Shuttle when the tour slug doesn't say. */
+  defaultCategory?: string;
 }) {
   const [state, setState] = useState<"idle" | "sending" | "sent">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -39,11 +57,12 @@ export function ContactForm({
   const today = new Date().toISOString().slice(0, 10);
 
   const initialCategory =
-    defaultTour.includes("private") || defaultTour.includes("three-day") || defaultTour.includes("four-day")
+    defaultCategory ??
+    (defaultTour.includes("private") || defaultTour.includes("three-day") || defaultTour.includes("four-day")
       ? "private"
       : defaultTour.includes("shuttle")
       ? "shuttle"
-      : "shared";
+      : "shared");
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -215,22 +234,24 @@ export function ContactForm({
         {err("tour")}
       </div>
 
-      <label className="block">
-        <span className="mb-1.5 block text-sm font-medium text-slate-700">Preferred date</span>
-        <input
-          name="date"
-          type="date"
-          required
-          min={today}
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          onClick={openDatePicker}
-          onFocus={openDatePicker}
-          className={FIELD}
-          {...aria("date")}
-        />
-        {err("date")}
-      </label>
+      {!requestDays && (
+        <label className="block">
+          <span className="mb-1.5 block text-sm font-medium text-slate-700">Preferred date</span>
+          <input
+            name="date"
+            type="date"
+            required
+            min={today}
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            onClick={openDatePicker}
+            onFocus={openDatePicker}
+            className={FIELD}
+            {...aria("date")}
+          />
+          {err("date")}
+        </label>
+      )}
 
       <label className="block">
         <span className="mb-1.5 block text-sm font-medium text-slate-700">Guests</span>
@@ -249,6 +270,21 @@ export function ContactForm({
         />
         {err("guests")}
       </label>
+
+      {!!requestDays && (
+        <div className="sm:col-span-2">
+          <RequestDateCalendar
+            days={requestDays}
+            value={date}
+            onChange={(day) => {
+              setDate(day);
+              setMessage((m) => fillDates(m, day, requestDays));
+            }}
+            error={fieldErrors.date}
+            errorId="contact-date-error"
+          />
+        </div>
+      )}
 
       <label className="block sm:col-span-2">
         <span className="mb-1.5 block text-sm font-medium text-slate-700">Message</span>

@@ -1,19 +1,38 @@
-// Website bookings → Bókun, with Bókun's two-step checkout for payments taken elsewhere (Stripe):
+// Website bookings → Bókun, with Bókun's two-step checkout for payments taken elsewhere (Stripe).
+// bokun-sync.ts runs both steps right after the booking is confirmed on this site:
 //
 //   1. reserve   POST /checkout.json/options/booking-request, then POST /checkout.json/submit with
-//                RESERVE_FOR_EXTERNAL_PAYMENT. Bókun holds the seats (up to 30 minutes) and returns a
-//                confirmation code. Done when the guest starts paying.
-//   2. confirm   POST /checkout.json/confirm-reserved/{code} with the amount paid, after Stripe
-//                reports the payment.
-//   or abort     POST /booking.json/{code}/abort-reserved when the payment fails or expires.
+//                RESERVE_FOR_EXTERNAL_PAYMENT. Bókun holds the seats and returns a confirmation code.
+//   2. confirm   POST /checkout.json/confirm-reserved/{code} with the amount the guest paid us.
+//   or abort     POST /booking.json/{code}/abort-reserved when the booking was cancelled in between.
 //   cancel       POST /booking.json/cancel-booking/{code} when a confirmed booking is cancelled
 //                (the refund is made through Stripe, not Bókun).
 //
 // The slot (startTimeId, rateId) and the passenger categories are read from Bókun at reservation
 // time, so a booking always uses Bókun's current IDs and seat count.
 
-import type { BokunApiClient } from "@/modules/bokun/bokun.client";
-import type { BokunAvailability, BokunCategory } from "@/modules/bokun/availability-sync";
+import type { BokunApi } from "@/modules/bokun/config";
+
+/** One start of a Bókun product (GET /activity.json/{id}/availabilities). */
+export interface BokunAvailability {
+  /** Epoch ms of the day (UTC midnight). */
+  date: number;
+  startTime?: string;
+  startTimeId?: number;
+  /** Seats Bókun still sells. */
+  availabilityCount?: number;
+  bookedParticipants?: number;
+  soldOut?: boolean;
+  unavailable?: boolean;
+  defaultRateId?: number;
+  rates?: { id: number; pricedPerPerson?: boolean; maxPerBooking?: number | null }[];
+}
+
+/** A Bókun passenger category (pricingCategories on GET /activity.json/{id}). */
+export interface BokunCategory {
+  id: number;
+  title: string;
+}
 
 /** Bókun has no room for this party on this departure (sold out, closed, or not offered). */
 export class BokunUnavailableError extends Error {}
@@ -42,7 +61,11 @@ export interface BokunPayment {
   transactionId?: string;
 }
 
-type Availability = BokunAvailability & { startTimeId?: number };
+type Availability = BokunAvailability;
+
+/** Bókun's "YYYY-MM-DD" and "HH:mm" for one availability (start times without a clock read as 00:00). */
+export const slotDate = (a: BokunAvailability) => new Date(a.date).toISOString().slice(0, 10);
+export const slotTime = (a: BokunAvailability) => (/^\d{2}:\d{2}$/.test(a.startTime ?? "") ? a.startTime! : "00:00");
 
 const RESERVE = "RESERVE_FOR_EXTERNAL_PAYMENT";
 const isChild = (title: string) => /child|youth|kid/i.test(title);
@@ -51,8 +74,7 @@ const groupSize = (title: string) => Number(/group of (\d+)/i.exec(title)?.[1] ?
 
 /** Bókun's start for our departure: same day and start time. */
 export function findSlot(list: Availability[], date: string, time: string) {
-  // Same reading of date and start time as the availability sync, which created the departure.
-  return list.find((a) => new Date(a.date).toISOString().slice(0, 10) === date && (/^\d{2}:\d{2}$/.test(a.startTime ?? "") ? a.startTime : "00:00") === time);
+  return list.find((a) => slotDate(a) === date && slotTime(a) === time);
 }
 
 /**
@@ -103,8 +125,12 @@ function mainContact(input: BokunReservationInput) {
   ];
 }
 
-/** Reserves the booking in Bókun for payment taken by us; returns Bókun's confirmation code. */
-export async function reserveInBokun(client: BokunApiClient, input: BokunReservationInput): Promise<string> {
+/**
+ * Reserves the booking in Bókun for payment taken by us; returns Bókun's confirmation code.
+ * `beforeSubmit` runs just before the one call that creates the reservation, so a caller can
+ * record that a reservation may exist if that call fails without an answer.
+ */
+export async function reserveInBokun(client: BokunApi, input: BokunReservationInput, beforeSubmit?: () => Promise<void>): Promise<string> {
   const [list, detail] = await Promise.all([
     client.getAvailabilities(input.productBokunId, input.date, input.date) as Promise<Availability[] | null>,
     client.fetch("GET", `/activity.json/${input.productBokunId}?lang=EN&currency=CAD`) as Promise<{ pricingCategories?: BokunCategory[] } | null>,
@@ -139,8 +165,9 @@ export async function reserveInBokun(client: BokunApiClient, input: BokunReserva
     options?: { type: string; paymentMethods?: { allowedMethods?: string[] }; allowedMethods?: string[] }[];
   } | null;
   const option = options?.options?.find((o) => (o.paymentMethods?.allowedMethods ?? o.allowedMethods ?? []).includes(RESERVE));
-  if (!option) throw new Error("Bókun offers no reserve-for-external-payment checkout for this booking.");
+  if (!option) throw new BokunUnavailableError("Bókun offers no reserve-for-external-payment checkout for this booking (check the API key's booking channel).");
 
+  await beforeSubmit?.();
   const submitted = (await client.fetch("POST", "/checkout.json/submit?currency=CAD", {
     checkoutOption: option.type,
     paymentMethod: RESERVE,
@@ -155,7 +182,7 @@ export async function reserveInBokun(client: BokunApiClient, input: BokunReserva
 }
 
 /** Confirms a reserved booking once we have the payment. */
-export async function confirmInBokun(client: BokunApiClient, code: string, reference: string, payment: BokunPayment) {
+export async function confirmInBokun(client: BokunApi, code: string, reference: string, payment: BokunPayment) {
   await client.fetch("POST", `/checkout.json/confirm-reserved/${encodeURIComponent(code)}`, {
     externalBookingReference: reference,
     amount: payment.amount,
@@ -167,11 +194,11 @@ export async function confirmInBokun(client: BokunApiClient, code: string, refer
 }
 
 /** Releases a reservation that was never paid. */
-export async function abortInBokun(client: BokunApiClient, code: string) {
+export async function abortInBokun(client: BokunApi, code: string) {
   await client.fetch("POST", `/booking.json/${encodeURIComponent(code)}/abort-reserved`, {});
 }
 
 /** Cancels a confirmed booking in Bókun; the refund is handled by our payment provider. */
-export async function cancelInBokun(client: BokunApiClient, code: string, note = "Cancelled on vistachase.com") {
+export async function cancelInBokun(client: BokunApi, code: string, note = "Cancelled on vistachase.com") {
   await client.fetch("POST", `/booking.json/cancel-booking/${encodeURIComponent(code)}`, { note, notify: false, refund: false });
 }

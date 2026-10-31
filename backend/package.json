@@ -18,6 +18,7 @@
     "seed:fixtures": "node -r dotenv/config prisma/seed-fixtures.js",
     "seed:departures": "tsx scripts/seed-departures.ts",
     "seed:pickups": "tsx scripts/seed-pickup-stops.ts",
+    "seed:blog": "tsx scripts/import-webflow-blog.ts",
     "worker": "node dist/worker.js",
     "dev:worker": "tsx watch src/worker.ts",
     "finance:export": "tsx scripts/finance-export.ts"
@@ -37,6 +38,7 @@
     "ioredis": "^5.11.1",
     "jsonwebtoken": "^9.0.2",
     "nodemailer": "^10.3.1",
+    "pdf-lib": "^1.17.1",
     "prisma": "^5.14.0",
     "qrcode": "^1.5.3",
     "sharp": "^0.35.5",

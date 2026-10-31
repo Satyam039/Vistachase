@@ -14,6 +14,7 @@ import {
   CalendarPlus,
   CheckCircle2,
   Clock,
+  Download,
   Mail,
   MapPin,
   Navigation,
@@ -23,7 +24,7 @@ import {
 import { getBookingByReference } from "@/lib/api/catalog";
 import { PrintButton } from "@/components/booking/PrintButton";
 import { BalancePayment } from "@/components/booking/BalancePayment";
-import { DEPOSIT_POLICY, canCancelFree, formatRockiesDate } from "@/lib/policy";
+import { POLICY_URL, canCancelFree, cancellationSentence, cancellationShort, depositPolicy, formatRockiesDate } from "@/lib/policy";
 import { headers } from "next/headers";
 
 export async function generateMetadata({ params }: { params: Promise<{ ref: string }> }): Promise<Metadata> {
@@ -94,12 +95,10 @@ export default async function VoucherPage({
   const cancelled = booking.status === "CANCELLED" || booking.status === "EXPIRED";
   const pickupName = booking.pickupStop?.name || booking.pickupCustomText || "Pickup to be confirmed by email";
   const pickupAddress = booking.pickupStop?.address || (booking.pickupStop ? booking.pickupStop.town : null);
-  const directions =
-    booking.pickupStop?.latitude != null && booking.pickupStop?.longitude != null
-      ? `https://www.google.com/maps/dir/?api=1&destination=${booking.pickupStop.latitude},${booking.pickupStop.longitude}`
-      : pickupAddress
-      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${pickupName}, ${pickupAddress}`)}`
-      : null;
+  // Directions by name and address: some stops' coordinates are approximate.
+  const directions = pickupAddress
+    ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${pickupName}, ${pickupAddress}`)}`
+    : null;
   const guests = [
     booking.adultsCount ? `${booking.adultsCount} adult${booking.adultsCount === 1 ? "" : "s"}` : null,
     booking.childrenCount ? `${booking.childrenCount} child${booking.childrenCount === 1 ? "" : "ren"}` : null,
@@ -112,6 +111,15 @@ export default async function VoucherPage({
     : calendarHref(title, departure.date, booking.pickupTime || departure.departureTime, departure.tour?.durationHours ?? 8, `${pickupName}${pickupAddress ? `, ${pickupAddress}` : ""}`, booking.bookingReference);
 
   const deposit = booking.paymentPlan === "DEPOSIT";
+  // Booking & Cancellation Policy: the deadline is the category's, measured from Day 1 of a package.
+  const category = departure.tour?.category ?? (departure.shuttleRoute ? "SHUTTLE" : undefined);
+  const multiDay = !!booking.trip && category === "PRIVATE";
+  const firstDay = booking.trip?.days[0];
+  const policyOpen = canCancelFree(
+    firstDay?.date ?? departure.date,
+    firstDay?.departureTime ?? departure.departureTime,
+    multiDay ? "MULTIDAY" : category,
+  );
   const balanceDue = deposit ? booking.balanceDue ?? 0 : 0;
   const balanceDueLabel = booking.balanceDueAt ? formatRockiesDate(booking.balanceDueAt) : null;
 
@@ -155,6 +163,17 @@ export default async function VoucherPage({
             )}
           </div>
           <div className="flex flex-wrap gap-3">
+            {/* A real PDF from the server: in-app browsers (Gmail, WhatsApp) can't print this page. */}
+            <a
+              href={`/api/bookings/voucher.pdf?ref=${encodeURIComponent(booking.bookingReference)}${typeof t === "string" ? `&t=${encodeURIComponent(t)}` : ""}`}
+              download={booking.trip ? `vista-chase-itinerary-${booking.trip.reference}.pdf` : `vista-chase-voucher-${booking.bookingReference}.pdf`}
+              className={`inline-flex h-11 items-center gap-2 rounded-full px-5 text-sm ${
+                cancelled ? "border border-red-900/20 text-red-950 hover:bg-red-100" : "border border-white/25 text-white hover:bg-white/10"
+              }`}
+            >
+              <Download className="h-4 w-4" aria-hidden="true" />
+              Download PDF
+            </a>
             <PrintButton
               className={`inline-flex h-11 items-center gap-2 rounded-full px-5 text-sm ${
                 cancelled ? "border border-red-900/20 text-red-950 hover:bg-red-100" : "border border-white/25 text-white hover:bg-white/10"
@@ -174,11 +193,51 @@ export default async function VoucherPage({
         </div>
       </section>
 
+      {/* A day of a multi-day trip: every day, under the trip's reference. */}
+      {booking.trip && (
+        <section aria-labelledby="trip-days" className="mx-auto max-w-6xl px-page pt-10 print:hidden">
+          <div className="bg-white p-5 ring-1 ring-obsidian-900/[0.07] sm:p-6">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+              <h2 id="trip-days" className="text-xl font-light text-obsidian-900">
+                {booking.trip.title} · {booking.trip.days.length} days
+              </h2>
+              <p className="text-sm text-slate-700">
+                Booking reference <span className="font-mono text-obsidian-900">{booking.trip.reference}</span>
+              </p>
+            </div>
+            <ol className="mt-4 divide-y divide-obsidian-900/[0.07]">
+              {booking.trip.days.map((d) => {
+                const current = d.bookingReference === booking.bookingReference;
+                const when = d.date ? new Date(`${d.date}T12:00:00`).toLocaleDateString("en-CA", { weekday: "short", month: "short", day: "numeric", year: "numeric" }) : "";
+                return (
+                  <li key={d.bookingReference} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-3 text-sm">
+                    <span className="min-w-0">
+                      <span className="block text-ocean-700">
+                        Day {d.day} · {when}
+                        {d.departureTime ? ` · ${clock(d.departureTime)}` : ""}
+                      </span>
+                      <span className="block text-base text-obsidian-900">{d.title}</span>
+                    </span>
+                    {current ? (
+                      <span className="text-slate-600">This voucher</span>
+                    ) : d.voucherPath ? (
+                      <Link href={d.voucherPath} className="text-ocean-700 underline underline-offset-4">
+                        Day {d.day} voucher
+                      </Link>
+                    ) : null}
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+        </section>
+      )}
+
       <div className="mx-auto grid max-w-6xl items-start gap-8 px-page py-10 sm:py-12 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] print:block print:p-0">
         {/* The ticket */}
         <article
           aria-label={`Voucher for ${title}`}
-          className={`overflow-hidden rounded-[2rem] bg-white shadow-[0_40px_80px_-50px_rgba(12,31,33,0.5)] ring-1 ring-obsidian-900/[0.07] print:shadow-none ${cancelled ? "opacity-60" : ""}`}
+          className={`overflow-hidden rounded-none bg-white shadow-[0_40px_80px_-50px_rgba(12,31,33,0.5)] ring-1 ring-obsidian-900/[0.07] print:shadow-none ${cancelled ? "opacity-60" : ""}`}
         >
           <div className="relative aspect-[16/7] bg-obsidian-200">
             <Image src={image} alt="" fill priority sizes="(max-width: 1024px) 100vw, 640px" className="object-cover" />
@@ -207,7 +266,7 @@ export default async function VoucherPage({
               </div>
             </div>
             {booking.qrCodeUrl && !cancelled && (
-              <figure className="justify-self-center rounded-2xl bg-white p-3 text-center ring-1 ring-obsidian-900/10 sm:justify-self-end">
+              <figure className="justify-self-center rounded-none bg-white p-3 text-center ring-1 ring-obsidian-900/10 sm:justify-self-end">
                 <Image
                   src={booking.qrCodeUrl}
                   alt={`QR code for booking ${booking.bookingReference}`}
@@ -248,7 +307,7 @@ export default async function VoucherPage({
 
         {/* What you need next */}
         <aside className="space-y-5 print:mt-6" aria-label="Trip details">
-          <section aria-labelledby="pickup-heading" className="rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:p-7">
+          <section aria-labelledby="pickup-heading" className="rounded-none bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:p-7">
             <h2 id="pickup-heading" className="flex items-center gap-2 text-lg text-obsidian-900">
               <MapPin className="h-5 w-5 text-ocean-600" aria-hidden="true" />
               Your pickup
@@ -274,7 +333,7 @@ export default async function VoucherPage({
           </section>
 
           {!cancelled && (
-            <section aria-labelledby="tracking-heading" className="rounded-[1.75rem] bg-obsidian-950 p-6 text-white sm:p-7 print:hidden">
+            <section aria-labelledby="tracking-heading" className="rounded-none bg-obsidian-950 p-6 text-white sm:p-7 print:hidden">
               <h2 id="tracking-heading" className="flex items-center gap-2 text-lg text-white">
                 <Navigation className="h-5 w-5 text-summit-400" aria-hidden="true" />
                 Track your vehicle on the day
@@ -287,7 +346,7 @@ export default async function VoucherPage({
             </section>
           )}
 
-          <section aria-labelledby="summary-heading" className="rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:p-7">
+          <section aria-labelledby="summary-heading" className="rounded-none bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:p-7">
             <h2 id="summary-heading" className="text-lg text-obsidian-900">
               Price summary
             </h2>
@@ -343,36 +402,34 @@ export default async function VoucherPage({
                 />
               </div>
             )}
-            {deposit && <p className="mt-4 text-xs leading-relaxed text-slate-600">{DEPOSIT_POLICY}</p>}
+            {deposit && <p className="mt-4 text-xs leading-relaxed text-slate-600">{depositPolicy(category, multiDay)}</p>}
           </section>
 
           {!cancelled &&
-            (canCancelFree(departure.date, departure.departureTime) ? (
-              <p className="flex items-start gap-2.5 rounded-[1.75rem] bg-emerald-50 p-5 text-sm text-emerald-900 ring-1 ring-emerald-200 print:hidden">
+            (policyOpen ? (
+              <p className="flex items-start gap-2.5 rounded-none bg-emerald-50 p-5 text-sm text-emerald-900 ring-1 ring-emerald-200 print:hidden">
                 <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" aria-hidden="true" />
                 <span>
-                  <span className="block text-base">
-                    {deposit ? "Cancel up to 72 hours before for a refund of everything but the deposit" : "Free cancellation up to 72 hours before"}
-                  </span>
-                  Plans changed? Cancel from{" "}
+                  <span className="block text-base">{cancellationShort(category, multiDay)}</span>
+                  {cancellationSentence(category, multiDay)} Plans changed? Ask from{" "}
                   <Link href="/account/trips" className="underline underline-offset-2">
                     My trips
                   </Link>
-                  . See the{" "}
-                  <Link href="/cancellation-policy" className="underline underline-offset-2">
+                  . See the full{" "}
+                  <Link href={POLICY_URL} className="underline underline-offset-2">
                     cancellation policy
-                  </Link>{" "}
-                  for groups of 7 or more.
+                  </Link>
+                  .
                 </span>
               </p>
             ) : (
-              <p className="rounded-[1.75rem] bg-obsidian-50 p-5 text-sm text-slate-700 ring-1 ring-obsidian-900/[0.07] print:hidden">
-                <span className="block text-base text-obsidian-900">Departing within 72 hours</span>
-                {deposit ? "The cancellation window has ended for this trip." : "Free cancellation has ended for this trip."} Need to change something? Call us and we&apos;ll do what we can.
+              <p className="rounded-none bg-obsidian-50 p-5 text-sm text-slate-700 ring-1 ring-obsidian-900/[0.07] print:hidden">
+                <span className="block text-base text-obsidian-900">Cancellation deadline passed</span>
+                The refund deadline for this trip has passed. Need to change something? Call us and we&apos;ll do what we can.
               </p>
             ))}
 
-          <section aria-labelledby="help-heading" className="rounded-[1.75rem] bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:p-7">
+          <section aria-labelledby="help-heading" className="rounded-none bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:p-7">
             <h2 id="help-heading" className="text-lg text-obsidian-900">
               Need help?
             </h2>
@@ -381,12 +438,6 @@ export default async function VoucherPage({
                 <a href="tel:+18257349456" className="inline-flex items-center gap-2 text-obsidian-900 hover:text-ocean-700">
                   <Phone className="h-4 w-4 text-ocean-600" aria-hidden="true" />
                   +1 (825) 734-9456 · 6 a.m. – 9 p.m. MT
-                </a>
-              </li>
-              <li>
-                <a href="mailto:bookings@vistachase.com" className="inline-flex items-center gap-2 text-obsidian-900 hover:text-ocean-700">
-                  <Mail className="h-4 w-4 text-ocean-600" aria-hidden="true" />
-                  bookings@vistachase.com
                 </a>
               </li>
               <li>

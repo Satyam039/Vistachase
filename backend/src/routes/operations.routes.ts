@@ -11,7 +11,7 @@ import {
 } from "@/modules/operations/operations.repository";
 import prisma from "@/lib/db/prisma";
 import { todayInMountainTime } from "@/lib/utils/time";
-import { syncBokunDepartures } from "@/jobs/tasks";
+import { syncSeatsFromBokun } from "@/jobs/tasks";
 
 const router = Router();
 
@@ -165,7 +165,7 @@ router.get("/drivers", async (_req, res) => {
 // 10. Manual Bókun Availability Sync
 router.post("/sync-bokun", async (_req, res) => {
   try {
-    const result = await syncBokunDepartures();
+    const result = await syncSeatsFromBokun();
     if ("skipped" in result) {
       return res.status(200).json({ success: true, message: result.skipped, skipped: true });
     }

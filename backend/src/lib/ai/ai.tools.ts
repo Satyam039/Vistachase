@@ -5,6 +5,7 @@ import { createReservationHold } from "@/modules/reservations/reservation.reposi
 import { createBooking } from "@/modules/bookings/booking.repository";
 import { sellableInventoryWhere } from "@/modules/departures/inventory";
 import { dateOnly, formatDateOnly, formatTimeOfDay, todayInMountainTime } from "@/lib/utils/time";
+import { ON_SALE } from "@/modules/tours/product-map";
 
 export interface ToolExecutionContext {
   isStaff?: boolean;
@@ -26,12 +27,13 @@ export interface ToolResult {
 export async function searchTours(args: { query?: string; category?: string }) {
   const tours = await prisma.tour.findMany({
     where: {
+      ...ON_SALE,
       ...(args.category ? { category: args.category.toUpperCase() as any } : {}),
       ...(args.query
         ? {
             OR: [
-              { title: { contains: args.query } },
-              { summary: { contains: args.query } },
+              { title: { contains: args.query, mode: "insensitive" } },
+              { summary: { contains: args.query, mode: "insensitive" } },
             ],
           }
         : {}),
@@ -51,12 +53,14 @@ export async function searchTours(args: { query?: string; category?: string }) {
     take: 6,
   });
 
-  return tours;
+  // Prices are stored in cents; the concierge talks in dollars.
+  return tours.map((t) => ({ ...t, basePrice: t.basePrice / 100 }));
 }
 
 export async function getTourDetails(args: { tourSlugOrBokunId: string }) {
   const tour = await prisma.tour.findFirst({
     where: {
+      ...ON_SALE,
       OR: [
         { slug: args.tourSlugOrBokunId },
         { bokunId: args.tourSlugOrBokunId },

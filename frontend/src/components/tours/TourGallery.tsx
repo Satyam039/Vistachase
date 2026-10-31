@@ -6,6 +6,7 @@
 //   → sticky sort bar with the result count → card grid → reassurance → guest reviews rail
 //   → FAQ (from the category's own tours) → other ways to explore
 
+import { cancellationTerms } from "@/lib/policy";
 import { useMemo, useState, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -114,15 +115,17 @@ export function TourGallery({
     return list;
   }, [sort, tours]);
 
-  // Tickets follow each operator's cancellation rules, so they don't get the 72-hour stat or the
-  // tour reassurance strip (small groups, lake access).
+  // Tickets follow each operator's cancellation rules, so they don't get the cancellation stat or
+  // the tour reassurance strip (small groups, lake access). Multi-day journeys refund 80%, so no
+  // "free cancellation" stat either.
   const isTickets = service?.id === "tickets";
+  const freeCancelHours = isTickets || service?.category === "MULTIDAY" ? null : cancellationTerms(service?.category).cutoffHours;
   const parks = new Set(tours.map((t) => t.destination.name)).size;
   const stats = [
     { value: String(tours.length), label: tours.length === 1 ? "experience" : "experiences" },
     ...(rating !== null ? [{ value: rating.toFixed(1), label: "average rating" }] : []),
     ...(reviewTotal > 0 ? [{ value: reviewTotal >= 1000 ? `${reviewTotal.toLocaleString("en-CA")}+` : String(reviewTotal), label: "guest reviews" }] : []),
-    ...(isTickets ? [] : [{ value: "72h", label: "free cancellation" }]),
+    ...(freeCancelHours ? [{ value: `${freeCancelHours}h`, label: "free cancellation" }] : []),
     ...(parks > 1 ? [{ value: String(parks), label: "national parks" }] : []),
   ].slice(0, 4);
   const others = SERVICES.filter((s) => s.id !== service?.id);
@@ -246,7 +249,7 @@ export function TourGallery({
         className="mx-auto max-w-7xl px-page py-14 sm:py-20 scroll-mt-28"
       >
         {tours.length === 0 ? (
-          <div className="mx-auto max-w-xl space-y-4 rounded-3xl bg-white p-12 text-center ring-1 ring-obsidian-900/[0.07]">
+          <div className="mx-auto max-w-xl space-y-4 rounded-none bg-white p-12 text-center ring-1 ring-obsidian-900/[0.07]">
             <Sparkles
               className="mx-auto h-8 w-8 text-summit-600"
               aria-hidden="true"
@@ -267,25 +270,32 @@ export function TourGallery({
           </div>
         ) : (
           <>
-            <div className="sticky top-[calc(var(--vc-header-h,80px)+16px)] z-20 mb-8 flex items-center justify-between gap-3 rounded-full bg-white py-2 pl-5 pr-2 sm:pl-6 shadow-[0_12px_24px_-20px_rgba(12,31,33,0.45)] ring-1 ring-obsidian-900/[0.08]">
-              <h2
-                id="results-heading"
-                className="text-lg text-obsidian-900"
-                aria-live="polite"
-              >
-                {tours.length}{" "}
-                {tours.length === 1 ? "experience" : "experiences"}
+            {/* Tickets have no prices here to sort by, so their list has no count-and-sort bar. */}
+            {isTickets ? (
+              <h2 id="results-heading" className="sr-only">
+                Activity tickets
               </h2>
-              <Dropdown
-                variant="pill"
-                label="Sort by"
-                labelClassName="sr-only sm:not-sr-only whitespace-nowrap text-sm text-slate-600"
-                className="flex items-center gap-2 [&>div]:w-44 sm:[&>div]:w-56"
-                value={sort}
-                onChange={(v) => setSort(v as SortKey)}
-                options={Object.entries(SORTS).map(([key, label]) => ({ value: key, label }))}
-              />
-            </div>
+            ) : (
+              <div className="sticky top-[calc(var(--vc-header-h,80px)+16px)] z-20 mb-8 flex items-center justify-between gap-3 rounded-full bg-white py-2 pl-5 pr-2 sm:pl-6 shadow-[0_12px_24px_-20px_rgba(12,31,33,0.45)] ring-1 ring-obsidian-900/[0.08]">
+                <h2
+                  id="results-heading"
+                  className="text-lg text-obsidian-900"
+                  aria-live="polite"
+                >
+                  {tours.length}{" "}
+                  {tours.length === 1 ? "experience" : "experiences"}
+                </h2>
+                <Dropdown
+                  variant="pill"
+                  label="Sort by"
+                  labelClassName="sr-only sm:not-sr-only whitespace-nowrap text-sm text-slate-600"
+                  className="flex items-center gap-2 [&>div]:w-44 sm:[&>div]:w-56"
+                  value={sort}
+                  onChange={(v) => setSort(v as SortKey)}
+                  options={Object.entries(SORTS).map(([key, label]) => ({ value: key, label }))}
+                />
+              </div>
+            )}
             <ul
               key={sort}
               className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5"
