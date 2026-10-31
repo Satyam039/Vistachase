@@ -16,7 +16,7 @@ import "dotenv/config";
 import { Queue, Worker } from "bullmq";
 import IORedis from "ioredis";
 import prisma from "@/lib/db/prisma";
-import { expireHoldsAndUnpaidBookings, maturePartnerCommissions, publishScheduledSeoPages, reconcileBookings, remindUnpaidBalances, runNightlySeoAudit, sendReviewRequests, sendT60WhatsApp, syncWebflowBlogPosts, whatsAppDeliveryConfigured } from "@/jobs/tasks";
+import { expireHoldsAndUnpaidBookings, maturePartnerCommissions, publishScheduledSeoPages, reconcileBookings, remindUnpaidBalances, runNightlySeoAudit, sendReviewRequests, sendT60WhatsApp, syncBokunDepartures, syncWebflowBlogPosts, whatsAppDeliveryConfigured } from "@/jobs/tasks";
 import { isWebflowSyncEnabled, webflowSyncMinutes } from "@/modules/seo/portal/webflow-sync";
 
 const QUEUE = "vista-chase-jobs";
@@ -24,6 +24,7 @@ const TZ = "America/Edmonton";
 
 const JOBS: Record<string, () => Promise<unknown>> = {
   "expire-holds": () => expireHoldsAndUnpaidBookings(),
+  "bokun-availability": () => syncBokunDepartures(),
   "reconcile-bookings": () => reconcileBookings(),
   "review-requests": () => sendReviewRequests(),
   "partner-commissions": () => maturePartnerCommissions(),
@@ -40,7 +41,7 @@ async function main() {
   const queue = new Queue(QUEUE, { connection });
 
   await queue.upsertJobScheduler("expire-holds", { every: 5 * 60 * 1000 }, { name: "expire-holds" });
-  await queue.removeJobScheduler("bokun-availability"); // retired Bókun sync, scheduled by older releases
+  await queue.upsertJobScheduler("bokun-availability", { every: 15 * 60 * 1000 }, { name: "bokun-availability" });
   await queue.upsertJobScheduler("reconcile-bookings", { pattern: "0 2 * * *", tz: TZ }, { name: "reconcile-bookings" });
   await queue.upsertJobScheduler("review-requests", { pattern: "0 10 * * *", tz: TZ }, { name: "review-requests" });
   await queue.upsertJobScheduler("partner-commissions", { pattern: "0 3 * * *", tz: TZ }, { name: "partner-commissions" });

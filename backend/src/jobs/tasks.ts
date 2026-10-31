@@ -10,10 +10,19 @@ import { approveMaturedCommissions } from "@/modules/affiliates/commission";
 import { pruneOldClicks } from "@/modules/affiliates/affiliate.repository";
 import { sendBalanceReminders } from "@/modules/bookings/deposit-payments";
 import { dispatchT60ScheduledBatch, whatsAppDeliveryConfigured } from "@/lib/whatsapp/whatsapp.provider";
+import { syncBokunAvailability } from "@/modules/bokun/availability-sync";
+import { bokunConfig } from "@/modules/bokun/product-map";
 
 /** Every few minutes: free seats held by expired holds and by bookings never paid for. */
 export async function expireHoldsAndUnpaidBookings(now = new Date()) {
   return await freeExpiredSeats({ now });
+}
+
+/** Every 15 minutes: departure dates, seats and prices from Bókun (skipped until the keys are set). */
+export async function syncBokunDepartures() {
+  const { accessKey, secretKey } = bokunConfig();
+  if (!accessKey || !secretKey) return { skipped: "Bókun keys are not set" };
+  return syncBokunAvailability();
 }
 
 export interface ReconciliationIssue {

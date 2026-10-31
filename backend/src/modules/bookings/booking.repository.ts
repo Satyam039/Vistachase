@@ -16,6 +16,8 @@ import crypto from "node:crypto";
 import QRCode from "qrcode";
 import { Prisma, type Booking, type Payment } from "@prisma/client";
 import prisma from "@/lib/db/prisma";
+import { getBokunOperationsProvider } from "@/modules/bokun/bokun.provider";
+import { BokunUnavailableError, type BokunReservationInput } from "@/modules/bokun/bokun-booking";
 import { formatDateOnly, formatTimeOfDay, getMountainTimeInstant } from "@/lib/utils/time";
 import { bookingClosedError } from "@/modules/departures/booking-window";
 import { endBooking, freeExpiredSeats, inventoryError, PENDING_PAYMENT_MINUTES, takeBookedSeats } from "@/modules/departures/inventory";
@@ -175,6 +177,42 @@ function isUniqueViolation(error: unknown, field: string) {
     error.code === "P2002" &&
     JSON.stringify(error.meta?.target ?? "").includes(field)
   );
+}
+
+type BookingForBokun = {
+  bookingReference: string;
+  adultsCount: number;
+  childrenCount: number;
+  infantsCount: number;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  pickupCustomText: string | null;
+  pickupTime: string | null;
+  specialRequests: string | null;
+  pickupStop?: { name: string } | null;
+};
+
+function bokunReservationInput(
+  booking: BookingForBokun,
+  departure: { date: Date; departureTime: Date; tour: { bokunId: string | null; category: string } | null },
+): BokunReservationInput {
+  const pickupPlace = booking.pickupStop?.name ?? booking.pickupCustomText ?? "";
+  return {
+    bookingReference: booking.bookingReference,
+    productBokunId: departure.tour!.bokunId!,
+    category: departure.tour!.category,
+    date: formatDateOnly(departure.date),
+    time: formatTimeOfDay(departure.departureTime),
+    adults: booking.adultsCount,
+    children: booking.childrenCount,
+    infants: booking.infantsCount,
+    customerName: booking.customerName,
+    customerEmail: booking.customerEmail,
+    customerPhone: booking.customerPhone,
+    pickup: [pickupPlace, booking.pickupTime].filter(Boolean).join(" at "),
+    specialRequests: booking.specialRequests ?? undefined,
+  };
 }
 
 /** Staff bookings (Quick Book, modules/admin/booking-admin.ts): paid outside the online checkout. */
@@ -344,6 +382,25 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
     throw error;
   }
 
+  // Hold the seats in Bókun while the guest pays. Sold out there: refuse now, before any payment.
+  // Bókun unreachable: carry on; confirmPaidBooking tries again once the guest has paid.
+  const departureWithTour = await prisma.tourDeparture.findUnique({
+    where: { id: input.departureId },
+    include: { tour: true },
+  });
+  if (departureWithTour?.tour?.bokunId) {
+    try {
+      const code = await getBokunOperationsProvider().reserve(bokunReservationInput(booking, departureWithTour));
+      await prisma.booking.update({ where: { id: booking.id }, data: { bokunBookingId: code } });
+    } catch (error) {
+      if (error instanceof BokunUnavailableError) {
+        await failPendingBooking(booking.bookingReference, `not available in Bókun: ${error.message}`);
+        return { success: false, error: "Sorry, this departure has just sold out in Bókun. Please choose another date or time." };
+      }
+      console.error(`Bókun reservation failed for ${booking.bookingReference}:`, (error as Error).message);
+    }
+  }
+
   if (options.offlinePayment || options.deferPayment) return { success: true, booking: bookingDto(booking, []), nextStep: "PAY" };
 
   // Start the payment outside the transaction (network call). Free bookings (100% promo) skip it.
@@ -456,6 +513,31 @@ export async function confirmPaidBooking(reference: string, verified?: VerifiedP
   if (confirmedNow.commission) notifyCommissionEarned(confirmedNow.commission.affiliateId, booking.bookingReference, confirmedNow.commission.amountCents, booking.currency);
 
   const tour = booking.tourDeparture.tour;
+  if (tour?.bokunId) {
+    const bokun = getBokunOperationsProvider();
+    let code = booking.bokunBookingId;
+    try {
+      if (!code) code = await bokun.reserve(bokunReservationInput(booking, booking.tourDeparture));
+      const paymentId = transactionId ?? (await prisma.payment.findFirst({ where: { bookingId: booking.id }, select: { transactionId: true } }))?.transactionId;
+      await bokun.confirmReservation(code, booking.bookingReference, {
+        amount: (verified?.amount ?? booking.totalAmount) / 100,
+        currency: booking.currency,
+        transactionId: paymentId ?? undefined,
+      });
+      await prisma.booking.update({ where: { id: booking.id }, data: { bokunBookingId: code } });
+    } catch (error) {
+      const message = (error as Error).message.slice(0, 300);
+      console.error(`Bókun confirmation failed for ${booking.bookingReference}:`, message);
+      await prisma.booking.update({
+        where: { id: booking.id },
+        data: {
+          status: "PAID_UNSYNCED",
+          adminNotes: [booking.adminNotes, `Bókun: ${code ? `reservation ${code} not confirmed` : "not reserved"} (${message})`].filter(Boolean).join("\n"),
+        },
+      });
+      if (code) await bokun.abortReservation(code).catch(() => undefined);
+    }
+  }
 
   const title = tour?.title || booking.tourDeparture.shuttleRoute?.name || "Vista Chase experience";
   const when = `${formatDateOnly(booking.tourDeparture.date)} at ${formatTimeOfDay(booking.tourDeparture.departureTime)}`;
@@ -514,15 +596,25 @@ export async function flagBooking(bookingId: string, action: "PAYMENT_AMOUNT_MIS
 
 /** Payment failed or was never completed: cancel the pending booking and release its seats (once). */
 export async function failPendingBooking(reference: string, reason: string) {
+  let reservedInBokun: string | null = null;
   const booking = await prisma.booking.findUnique({ where: { bookingReference: reference } });
   if (!booking || booking.status !== "PENDING_PAYMENT") return false;
-  return await prisma.$transaction(async (tx) => {
+  reservedInBokun = booking.bokunBookingId;
+  const failed = await prisma.$transaction(async (tx) => {
     const ended = await endBooking(tx, booking, ["PENDING_PAYMENT"], "CANCELLED", reason);
     if (ended) {
       await tx.booking.update({ where: { id: booking.id }, data: { adminNotes: [booking.adminNotes, `Payment not completed: ${reason}`].filter(Boolean).join("\n") } });
     }
     return ended;
   });
+  // Release Bókun's hold too (it would also lapse by itself after 30 minutes).
+  if (failed && reservedInBokun) {
+    const code = reservedInBokun;
+    await getBokunOperationsProvider()
+      .abortReservation(code)
+      .catch((e) => console.error(`Bókun abort failed for ${reference}:`, (e as Error).message));
+  }
+  return failed;
 }
 
 /** Expires bookings whose payment window has passed and frees their seats (run by the jobs). */
@@ -583,7 +675,13 @@ export async function cancelBooking(reference: string, customerEmail?: string) {
   if (!cancelledNow) return { success: false, error: "Booking is already cancelled" };
   const updated = await prisma.booking.findUniqueOrThrow({ where: { id: booking.id } });
 
-  // Outside the transaction: the payment provider is a network call.
+  // Outside the transaction: Bókun and the payment provider are network calls.
+  if (booking.bokunBookingId) {
+    await getBokunOperationsProvider()
+      .cancelBooking(booking.bokunBookingId)
+      .catch((e) => console.error("Bókun cancel failed:", (e as Error).message));
+  }
+
   let refundedCents = 0;
   let failedCents = 0;
   const failures: string[] = [];
