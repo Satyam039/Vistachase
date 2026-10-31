@@ -80,6 +80,8 @@ export default async function ContactUsPage({ searchParams }: { searchParams: Pr
     tours = [];
   }
   const requested = tours.find((t) => t.slug === params.tour);
+  // Tour and package requests get a full calendar; multi-day packages highlight every day of the trip.
+  const requestDays = isTwoDayShared || isTwoDayPrivate ? 2 : isThreeDay ? 3 : isFourDay ? 4 : params.tour ? 1 : undefined;
   const guests = Number(params.guests);
 
   return (
@@ -150,9 +152,11 @@ export default async function ContactUsPage({ searchParams }: { searchParams: Pr
           <p className="mb-8 mt-2 text-base text-slate-600">Group trips, custom private days, accessibility needs or anything else.</p>
           <ContactForm
             tours={tours}
-            defaultTour={requested?.slug}
+            defaultTour={requested?.slug ?? params.tour}
             defaultGuests={Number.isFinite(guests) && guests > 0 ? guests : undefined}
             defaultMessage={packageMessage || undefined}
+            requestDays={requestDays}
+            defaultCategory={isTwoDayPrivate || isThreeDay || isFourDay ? "private" : shuttle && !pkg ? "shuttle" : undefined}
           />
         </section>
       </div>
