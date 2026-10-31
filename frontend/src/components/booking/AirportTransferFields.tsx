@@ -1,7 +1,8 @@
 "use client";
 
 // Airport transfer add-on for private tours (owner, 2026-10-29): the guest ticks it under Guests,
-// and checkout asks for their airport arrival and departure dates and times. No transfer price is
+// and checkout asks for their airport arrival and departure dates and times, then where the transfer
+// is from and where it goes (owner, 2026-10-31). No transfer price is
 // set yet, so nothing is charged online; the team confirms the transfer and its price
 // (backend modules/bookings/airport-transfer.ts).
 
@@ -12,9 +13,13 @@ export interface AirportTransferValue {
   arrivalTime: string;
   departureDate: string;
   departureTime: string;
+  /** Where we pick the guest up, e.g. Calgary Airport (YYC). */
+  from: string;
+  /** Where we take them, e.g. their hotel. */
+  to: string;
 }
 
-export const EMPTY_AIRPORT_TRANSFER: AirportTransferValue = { arrivalDate: "", arrivalTime: "", departureDate: "", departureTime: "" };
+export const EMPTY_AIRPORT_TRANSFER: AirportTransferValue = { arrivalDate: "", arrivalTime: "", departureDate: "", departureTime: "", from: "", to: "" };
 
 export const AIRPORT_TRANSFER_PRICE_NOTE = "Price confirmed by our team before your trip";
 
@@ -25,6 +30,9 @@ export function airportTransferError(t: AirportTransferValue): string | null {
   }
   if (`${t.departureDate} ${t.departureTime}` <= `${t.arrivalDate} ${t.arrivalTime}`) {
     return "Your departure must be after your arrival.";
+  }
+  if (t.from.trim().length < 2 || t.to.trim().length < 2) {
+    return "Enter where we pick you up and where we take you.";
   }
   return null;
 }
@@ -81,6 +89,24 @@ export function AirportTransferDetails({
       />
     </label>
   );
+  const place = (id: "from" | "to", label: string, placeholder: string) => (
+    <label className="block text-sm text-obsidian-900" htmlFor={`airport-${id}`}>
+      {label}
+      <input
+        id={`airport-${id}`}
+        type="text"
+        required
+        maxLength={160}
+        autoComplete="off"
+        placeholder={placeholder}
+        value={value[id]}
+        onChange={set(id)}
+        aria-invalid={Boolean(error && value[id].trim().length < 2)}
+        aria-describedby={error ? "airport-transfer-error" : undefined}
+        className={input}
+      />
+    </label>
+  );
   return (
     <fieldset className="space-y-3">
       <legend className="text-sm font-medium text-obsidian-900">Your flights</legend>
@@ -89,6 +115,10 @@ export function AirportTransferDetails({
         {field("arrivalTime", "Arrival time", "time")}
         {field("departureDate", "Airport departure date", "date", value.arrivalDate || minDate)}
         {field("departureTime", "Departure time", "time")}
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {place("from", "From", "e.g. Calgary Airport (YYC)")}
+        {place("to", "Where to", "e.g. your hotel in Banff")}
       </div>
       {error && (
         <p id="airport-transfer-error" role="alert" className="text-sm text-red-700">

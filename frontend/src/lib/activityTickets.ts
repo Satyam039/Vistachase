@@ -9,7 +9,7 @@ const GLACIER_ADVENTURE_URL =
 export interface ActivityTicket {
   /** Operator booking page for this ticket (opens in a new tab). */
   url: string;
-  /** Card photo from the operator's (Pursuit) image library, sent by the owner on 2026-10-30. */
+  /** Card photo from the operator's (Pursuit) image library, sent by the owner (2026-10-30 and 10-31). */
   image?: string;
   /** The time slot we recommend, shown next to the button. */
   preferredTime?: string;
@@ -19,7 +19,7 @@ export interface ActivityTicket {
 
 export const ACTIVITY_TICKETS: Record<string, ActivityTicket> = {
   "banff-gondola-tickets": {
-    image: "/media/photos/tickets/banff-gondola-summit-firepit.webp",
+    image: "/media/photos/tickets/banff-gondola-summer.webp",
     url: "https://bookings.banffjaspercollection.com/RKY/activities/details/1/YBA-BTC-BA-BGR/Attraction?WebLink=%2fQCx2XCHrDMbzHLvNWJ5IA%3d%3d&agencyNumber=5009093&wlid=1808&lob=Banff+Gondola#/select-ticket/book-adventure",
     preferredTime: "9:00 AM",
   },
@@ -47,7 +47,7 @@ export const ACTIVITY_TICKETS: Record<string, ActivityTicket> = {
     note: "The business-class glacier experience: more private, with extra time on the ice.",
   },
   "maligne-lake-cruise-tickets": {
-    image: "/media/photos/tickets/maligne-lake-cruise-dock.webp",
+    image: "/media/photos/tickets/maligne-lake-cruise-boats.webp",
     url: "https://bookings.banffjaspercollection.com/RKY/activities/details/1/YJA-BTC-BA-MLC/Attraction?WebLink=rAP7e7CLsF7jalx7WLOBHg%3d%3d&agencyNumber=5009093&wlid=1813&lob=Maligne+Lake+Cruise#/select-ticket/book-adventure",
     preferredTime: "9:00 to 10:00 AM (early morning)",
   },
