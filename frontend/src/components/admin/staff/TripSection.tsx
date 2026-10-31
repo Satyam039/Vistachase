@@ -79,7 +79,7 @@ export function TripSection({
       )}
       <p className="text-sm text-slate-700">
         {!emailDelivery
-          ? "Email isn't set up on the server (EMAIL_PROVIDER=resend and RESEND_API_KEY), so the confirmation email was only written to the server log, not sent to the guest. Once email is set up, \"Resend voucher\" sends it."
+          ? "Email isn't set up on the server (EMAIL_PROVIDER=resend with RESEND_API_KEY, or EMAIL_PROVIDER=smtp with SMTP_HOST, SMTP_USER and SMTP_PASS), so the confirmation email was only written to the server log, not sent to the guest. Once email is set up, \"Resend voucher\" sends it."
           : emailSentAt
           ? `Confirmation email with the PDF itinerary sent ${when(emailSentAt)}`
           : emailError

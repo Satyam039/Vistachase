@@ -29,8 +29,10 @@ export function configWarnings(env: NodeJS.ProcessEnv = process.env): string[] {
   }
 
   const emailProvider = env.EMAIL_PROVIDER || "console";
-  if (!(emailProvider === "resend" && env.RESEND_API_KEY)) {
-    warnings.push(`Email is not being sent (EMAIL_PROVIDER=${emailProvider}${emailProvider === "resend" ? " without RESEND_API_KEY" : ""}): confirmations, password resets and email confirmation links only go to the log.`);
+  const smtpReady = !!(env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS);
+  if (!((emailProvider === "resend" && env.RESEND_API_KEY) || (emailProvider === "smtp" && smtpReady))) {
+    const missing = emailProvider === "resend" ? " without RESEND_API_KEY" : emailProvider === "smtp" ? " without SMTP_HOST, SMTP_USER and SMTP_PASS" : "";
+    warnings.push(`Email is not being sent (EMAIL_PROVIDER=${emailProvider}${missing}): confirmations, password resets and email confirmation links only go to the log.`);
   }
   const whatsapp = (env.WHATSAPP_PROVIDER || "console").toLowerCase();
   if (whatsapp !== "twilio" && whatsapp !== "meta") {

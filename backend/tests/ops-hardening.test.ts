@@ -129,4 +129,21 @@ describe("start-up configuration warnings", () => {
       }),
     ).toEqual([]);
   });
+
+  it("accepts an SMTP mailbox (Gmail) instead of Resend, and names what SMTP lacks", () => {
+    const base = {
+      NODE_ENV: "production",
+      JWT_SECRET: "x".repeat(48),
+      VOUCHER_SECRET: "y".repeat(48),
+      STRIPE_SECRET_KEY: "sk_live_123",
+      STRIPE_WEBHOOK_SECRET: "whsec_1",
+      WHATSAPP_PROVIDER: "twilio",
+      FRONTEND_URL: "https://www.vistachase.com",
+      EMAIL_PROVIDER: "smtp",
+      SMTP_HOST: "smtp.gmail.com",
+      SMTP_USER: "support@vistachase.com",
+    };
+    expect(configWarnings({ ...base, SMTP_PASS: "app-password" })).toEqual([]);
+    expect(configWarnings(base).join(" ")).toContain("EMAIL_PROVIDER=smtp without SMTP_HOST, SMTP_USER and SMTP_PASS");
+  });
 });

@@ -1,3 +1,5 @@
+import nodemailer, { type Transporter } from "nodemailer";
+
 export interface EmailPayload {
   to: string | string[];
   subject: string;
@@ -82,6 +84,45 @@ class ResendEmailProvider implements IEmailProvider {
   }
 }
 
+// Any SMTP mailbox: Gmail or Google Workspace (smtp.gmail.com, an App Password), Hostinger or
+// GoDaddy email. SMTP_HOST, SMTP_PORT (465 = TLS, 587 = STARTTLS), SMTP_USER, SMTP_PASS.
+// EMAIL_FROM should be SMTP_USER's own address (or an alias the mailbox may send as).
+class SmtpEmailProvider implements IEmailProvider {
+  private transport: Transporter;
+
+  constructor() {
+    const port = Number(process.env.SMTP_PORT || 465);
+    this.transport = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port,
+      secure: port === 465,
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    });
+  }
+
+  async sendEmail(payload: EmailPayload): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    try {
+      const info = await this.transport.sendMail({
+        from: payload.from || process.env.EMAIL_FROM || process.env.SMTP_USER,
+        to: payload.to,
+        subject: payload.subject,
+        html: payload.html,
+        text: payload.text,
+        replyTo: payload.replyTo,
+        attachments: payload.attachments?.map((a) => ({ filename: a.filename, content: a.content, contentType: a.contentType })),
+      });
+      return { success: true, messageId: info.messageId };
+    } catch (err: unknown) {
+      return { success: false, error: (err as Error).message };
+    }
+  }
+}
+
+/** SMTP is set up: EMAIL_PROVIDER=smtp with a host, user and password. */
+function smtpConfigured(): boolean {
+  return !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+}
+
 // Not built yet. It says so instead of reporting a send that never happened (EMAIL_PROVIDER=ses
 // used to look configured while every email was dropped). Use EMAIL_PROVIDER=resend.
 class SESEmailProvider implements IEmailProvider {
@@ -96,7 +137,7 @@ let emailInstance: IEmailProvider | null = null;
 /** True when emails really leave the server (not the console provider used in development). */
 export function emailDeliveryConfigured(): boolean {
   const providerType = process.env.EMAIL_PROVIDER || "console";
-  return providerType === "resend" && !!process.env.RESEND_API_KEY;
+  return (providerType === "resend" && !!process.env.RESEND_API_KEY) || (providerType === "smtp" && smtpConfigured());
 }
 
 export function getEmailProvider(): IEmailProvider {
@@ -105,6 +146,8 @@ export function getEmailProvider(): IEmailProvider {
   const providerType = process.env.EMAIL_PROVIDER || "console";
   if (providerType === "resend" && process.env.RESEND_API_KEY) {
     emailInstance = new ResendEmailProvider(process.env.RESEND_API_KEY);
+  } else if (providerType === "smtp" && smtpConfigured()) {
+    emailInstance = new SmtpEmailProvider();
   } else if (providerType === "ses" && process.env.AWS_ACCESS_KEY_ID) {
     emailInstance = new SESEmailProvider();
   } else {
