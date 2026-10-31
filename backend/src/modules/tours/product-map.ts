@@ -20,7 +20,23 @@ export interface MappedProduct {
   season: "all" | "summer" | "winter";
 }
 
-export const PRODUCT_MAP = productMap.products as MappedProduct[];
+function parseProductOverrides(): Record<string, string> {
+  const env = process.env.BOKUN_PRODUCT_OVERRIDES;
+  if (!env) return {};
+  try {
+    return Object.fromEntries(
+      env.split(",").map((pair) => pair.trim().split(":") as [string, string]),
+    );
+  } catch {
+    return {};
+  }
+}
+
+const overrides = parseProductOverrides();
+export const PRODUCT_MAP = (productMap.products as MappedProduct[]).map((p) => {
+  if (overrides[p.slug]) return { ...p, bokunId: overrides[p.slug] };
+  return p;
+});
 /**
  * Products taken off sale (owner, 2026-10-28: the Banff Upper Hot Springs and Open Top Touring
  * tickets). They are gone from the catalog files, but databases seeded earlier still hold their
