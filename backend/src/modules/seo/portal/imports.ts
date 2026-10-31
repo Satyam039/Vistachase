@@ -157,6 +157,11 @@ export function postFromItem(item: Record<string, unknown>, index: number, chang
   } as Partial<NormalizedPost>);
 }
 
+/** The rows of a Webflow CMS CSV export (Name, Slug, Post Body, ...) as NormalizedPosts. */
+export function postsFromCsv(csv: string): NormalizedPost[] {
+  return csvRecords(csv).map((r, i) => normalizePost(r, String(pick(r, F.itemId) ?? `row ${i + 2}`)));
+}
+
 // ---------------------------------------------------------------------------------------------
 // Blog posts
 
@@ -450,7 +455,7 @@ export async function createPreview(input: PreviewInput, userId: string, fetchIm
       raw = { collection: blog.collection, live: blog.live, unpublished: blog.unpublished, changesInDraft: [...blog.changesInDraft] };
     } else {
       const list = records();
-      posts = list.map((r, i) => (input.source === "JSON" ? postFromItem(r, i) : normalizePost(r, String(pick(r, F.itemId) ?? `row ${i + 2}`))));
+      posts = input.source === "JSON" ? list.map((r, i) => postFromItem(r, i)) : postsFromCsv(input.text!);
       raw = input.source === "CSV" ? { csv: input.text } : { json: list };
     }
     preview = await previewPosts(posts, options);
@@ -525,6 +530,35 @@ export function postData(f: PostFields) {
   });
 }
 
+/** Creates one previewed blog post as a CMS page at its old Webflow address, with an IMPORTED revision. */
+export async function createImportedPost(
+  row: Pick<PostRow, "ref" | "slug" | "path">,
+  data: NonNullable<ReturnType<typeof postData>["data"]>,
+  opts: { publish: boolean; source: string; userId: string | null; now: Date },
+) {
+  const { publish, source, userId, now } = opts;
+  return prisma.$transaction(async (tx) => {
+    const page = await tx.seoPage.create({
+      data: {
+        ...(data as Prisma.SeoPageCreateInput),
+        label: data.label ?? row.slug!,
+        path: row.path!,
+        pageType: "GUIDE",
+        source: "CMS",
+        status: publish ? "PUBLISHED" : "DRAFT",
+        publishedAt: publish ? now : null,
+        conversionGoal: "BOOKING",
+        importSource: source === "WEBFLOW_API" ? "WEBFLOW_API" : source === "CSV" ? "WEBFLOW_CSV" : "JSON",
+        originalUrl: `${canonicalOrigin()}${row.path}`,
+        createdById: userId,
+        updatedById: userId,
+      },
+    });
+    await tx.seoPageRevision.create({ data: { pageId: page.id, userId, action: "IMPORTED", changes: { path: { from: null, to: page.path }, status: { from: null, to: page.status } }, note: `Imported from ${source} (${row.ref}); copied as is, publishing checks not applied.` } });
+    return page;
+  });
+}
+
 export async function applyBatch(id: string, opts: ApplyOptions, userId: string) {
   if (!opts.confirm) throw new SeoError(400, "Confirm the import first.");
   const batch = await prisma.seoImportBatch.findUnique({ where: { id } });
@@ -574,26 +608,7 @@ async function applyClaimed(batch: NonNullable<Awaited<ReturnType<typeof prisma.
           continue;
         }
         const publish = Boolean(opts.publish) && (row.state === "published" || row.state === "changes-in-draft" || row.state === "unknown");
-        const created = await prisma.$transaction(async (tx) => {
-          const page = await tx.seoPage.create({
-            data: {
-              ...(data as Prisma.SeoPageCreateInput),
-              label: data.label ?? row.slug!,
-              path: row.path!,
-              pageType: "GUIDE",
-              source: "CMS",
-              status: publish ? "PUBLISHED" : "DRAFT",
-              publishedAt: publish ? now : null,
-              conversionGoal: "BOOKING",
-              importSource: batch.source === "WEBFLOW_API" ? "WEBFLOW_API" : batch.source === "CSV" ? "WEBFLOW_CSV" : "JSON",
-              originalUrl: `${canonicalOrigin()}${row.path}`,
-              createdById: userId,
-              updatedById: userId,
-            },
-          });
-          await tx.seoPageRevision.create({ data: { pageId: page.id, userId, action: "IMPORTED", changes: { path: { from: null, to: page.path }, status: { from: null, to: page.status } }, note: `Imported from ${batch.source} (${row.ref}); copied as is, publishing checks not applied.` } });
-          return page;
-        });
+        const created = await createImportedPost(row, data, { publish, source: batch.source, userId, now });
         result.created++;
         result.ids.push(created.id);
       } catch (error) {

@@ -139,7 +139,9 @@ export function htmlToMarkdown(html: string, opts: { siteHosts?: string[]; mapIm
       const mapped = opts.mapImage?.(original) ?? original;
       const href = localiseHref(mapped, siteHosts);
       if (!href) continue;
-      const alt = attr(rawTag, "alt");
+      // "__wf_reserved_inherit" is Webflow's placeholder for "use the asset's alt text", not alt text.
+      const rawAlt = attr(rawTag, "alt");
+      const alt = rawAlt === "__wf_reserved_inherit" ? null : rawAlt;
       stats.images.push({ src: href, alt });
       blank();
       lines.push(`![${escapeInline(clean(alt ?? ""))}](${href.replace(/[()\s]/g, encodeURIComponent)})`);
