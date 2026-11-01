@@ -17,7 +17,7 @@ import type { BookingStatus, BookingSyncTask, Prisma } from "@prisma/client";
 import prisma from "@/lib/db/prisma";
 import { BokunApiError } from "@/modules/bokun/bokun.client";
 import { abortInBokun, BokunUnavailableError, cancelInBokun, confirmInBokun, reserveInBokun } from "@/modules/bokun/bokun-booking";
-import { bokunClient, bokunConnected, type BokunApi } from "@/modules/bokun/config";
+import { bokunClient, bokunConnected, bokunIsTestAccount, type BokunApi } from "@/modules/bokun/config";
 import { formatDateOnly, formatTimeOfDay, todayInMountainTime, dateOnly } from "@/lib/utils/time";
 import { PRODUCT_MAP } from "@/modules/tours/product-map";
 
@@ -185,7 +185,7 @@ async function runCreate(client: BokunApi, task: BookingSyncTask, now: Date): Pr
       amount: paidCents / 100,
       currency: booking.currency,
       transactionId: paid.find((p) => p.transactionId)?.transactionId ?? undefined,
-    });
+    }, { testAccount: bokunIsTestAccount() });
     await prisma.booking.update({ where: { id: booking.id }, data: { bokunBookingId: code, externalSyncStatus: "SYNCED", lastSyncAttemptAt: now } });
     return finish(task, "SUCCEEDED", null, code);
   } catch (error) {

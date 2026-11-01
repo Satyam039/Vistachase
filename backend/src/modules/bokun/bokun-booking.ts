@@ -11,6 +11,7 @@
 // The slot (startTimeId, rateId) and the passenger categories are read from Bókun at reservation
 // time, so a booking always uses Bókun's current IDs and seat count.
 
+import { BokunApiError } from "@/modules/bokun/bokun.client";
 import type { BokunApi } from "@/modules/bokun/config";
 
 /** One start of a Bókun product (GET /activity.json/{id}/availabilities). */
@@ -197,16 +198,53 @@ export async function reserveInBokun(client: BokunApi, input: BokunReservationIn
   return code;
 }
 
-/** Confirms a reserved booking once we have the payment. */
-export async function confirmInBokun(client: BokunApi, code: string, reference: string, payment: BokunPayment) {
-  await client.fetch("POST", `/checkout.json/confirm-reserved/${encodeURIComponent(code)}`, {
-    externalBookingReference: reference,
-    amount: payment.amount,
-    currency: payment.currency,
-    sendNotificationToMainContact: false,
-    showPricesInNotification: false,
-    transactionDetails: { transactionDate: new Date().toISOString(), transactionId: payment.transactionId ?? reference },
-  });
+/**
+ * Confirms a reserved booking once we have the payment.
+ *
+ * `testAccount`: a Bókun test account (bokuntest.com) set up in another currency (e.g. INR) books
+ * in that currency and refuses our CAD payment ("Payment currency must match the booking currency
+ * INR"). Only then, and only on a test account, the confirmation is sent again in Bókun's currency
+ * for Bókun's own total, so the test can finish. A live account never does this: a currency
+ * mismatch there stops the booking for a person to look at.
+ */
+export async function confirmInBokun(client: BokunApi, code: string, reference: string, payment: BokunPayment, options: { testAccount?: boolean } = {}) {
+  const confirm = (amount: number, currency: string) =>
+    client.fetch("POST", `/checkout.json/confirm-reserved/${encodeURIComponent(code)}`, {
+      externalBookingReference: reference,
+      amount,
+      currency,
+      sendNotificationToMainContact: false,
+      showPricesInNotification: false,
+      transactionDetails: { transactionDate: new Date().toISOString(), transactionId: payment.transactionId ?? reference },
+    });
+  try {
+    await confirm(payment.amount, payment.currency);
+  } catch (error) {
+    const bokunCurrency = options.testAccount ? currencyMismatch(error) : null;
+    if (!bokunCurrency || bokunCurrency === payment.currency) throw error;
+    console.warn(`[bokun] test account books in ${bokunCurrency}, not ${payment.currency}: confirming ${code} in ${bokunCurrency} (test only).`);
+    await confirm(await bokunTotal(client, code, payment.amount), bokunCurrency);
+  }
+}
+
+/** The booking currency Bókun asked for when it refused ours, if that was the refusal. */
+export function currencyMismatch(error: unknown): string | null {
+  if (!(error instanceof BokunApiError) || error.status !== 400) return null;
+  return /currency must match the booking currency ([A-Z]{3})/i.exec(error.message)?.[1]?.toUpperCase() ?? null;
+}
+
+/** Bókun's total for a booking in its own currency (falls back to `fallback`). */
+async function bokunTotal(client: BokunApi, code: string, fallback: number): Promise<number> {
+  try {
+    const b = (await client.fetch("GET", `/booking.json/booking/${encodeURIComponent(code)}`)) as Record<string, unknown> | null;
+    for (const key of ["totalPrice", "totalDue", "priceWithDiscount", "totalPriceAmount"]) {
+      const v = Number(b?.[key]);
+      if (Number.isFinite(v) && v > 0) return v;
+    }
+  } catch {
+    // Not readable: fall back to our amount.
+  }
+  return fallback;
 }
 
 /** Releases a reservation that was never paid. */

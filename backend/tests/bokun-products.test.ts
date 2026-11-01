@@ -96,3 +96,39 @@ describe("matching Bókun start times", () => {
     await expect(reserveInBokun(api, input as never, undefined as never)).rejects.toThrow(/only 08:30 on that day/);
   });
 });
+
+describe("confirming on a test account in another currency", () => {
+  async function run(testAccount: boolean) {
+    const { confirmInBokun } = await import("@/modules/bokun/bokun-booking");
+    const { BokunApiError } = await import("@/modules/bokun/bokun.client");
+    const confirms: { amount: number; currency: string }[] = [];
+    const api: BokunApi = {
+      getAvailabilities: async () => [],
+      fetch: async (method: string, path: string, body?: any) => {
+        if (method === "GET" && path.startsWith("/booking.json/booking/")) return { totalPrice: 200000, currency: "INR" };
+        confirms.push({ amount: body.amount, currency: body.currency });
+        if (body.currency !== "INR") {
+          throw new BokunApiError(400, 'Bókun API Error: 400 Bad Request - {"message":"Error occurred: logic.InvalidDataException - Payment currency must match the booking currency INR"}');
+        }
+        return null;
+      },
+    };
+    const result = confirmInBokun(api, "WEB-1", "VC-TEST", { amount: 458, currency: "CAD" }, { testAccount });
+    return { result, confirms };
+  }
+
+  it("confirms again in Bókun's currency for Bókun's total on a test account", async () => {
+    const { result, confirms } = await run(true);
+    await result;
+    expect(confirms).toEqual([
+      { amount: 458, currency: "CAD" },
+      { amount: 200000, currency: "INR" },
+    ]);
+  });
+
+  it("stops on a live account", async () => {
+    const { result, confirms } = await run(false);
+    await expect(result).rejects.toThrow(/booking currency INR/);
+    expect(confirms).toHaveLength(1);
+  });
+});
