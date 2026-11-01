@@ -33,7 +33,7 @@ const under = (path: string, base: string) => path === base || path.startsWith(`
 
 /** The area a path belongs to, or null for public pages (and the areas' own sign-in pages). */
 export function areaOf(path: string): Exclude<Portal, "customer"> | null {
-  if (under(path, "/admin")) return "admin";
+  if (under(path, "/admin")) return under(path, "/admin/login") ? null : "admin";
   if (under(path, "/seo")) return under(path, "/seo/login") ? null : "seo";
   if (under(path, "/partners/dashboard")) return "partner";
   return null;
@@ -49,11 +49,11 @@ export function mayOpen(role: string | undefined | null, path: string): boolean 
   return true;
 }
 
-/** Where a signed-out visitor signs in for an area. */
+/** Where a signed-out visitor signs in for an area (each portal has its own sign-in page). */
 export function signInFor(area: Exclude<Portal, "customer">): string {
   if (area === "seo") return "/seo/login";
   if (area === "partner") return "/partners/login";
-  return "/login";
+  return "/admin/login";
 }
 
 /** A same-site path from ?next= that the role may open, or null. */

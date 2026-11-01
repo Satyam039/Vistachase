@@ -114,7 +114,7 @@ export function StaffSignIn({ body = "Sign in with your admin or dispatch accoun
           <p className="mt-1 text-base text-slate-600">{body}</p>
         </div>
       </div>
-      <Link href="/login" className="golden-summit-btn inline-flex h-11 shrink-0 items-center gap-2 rounded-full px-6 text-sm">
+      <Link href="/admin/login" className="golden-summit-btn inline-flex h-11 shrink-0 items-center gap-2 rounded-full px-6 text-sm">
         Sign in
         <ArrowRight className="h-4 w-4" aria-hidden="true" />
       </Link>

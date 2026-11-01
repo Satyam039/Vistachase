@@ -52,7 +52,7 @@ function CheckIn() {
         <span>
           {result.error}{" "}
           {result.error?.startsWith("Sign in") && (
-            <Link href="/login" className="underline">
+            <Link href="/admin/login?next=/admin/checkin" className="underline">
               Sign in
             </Link>
           )}

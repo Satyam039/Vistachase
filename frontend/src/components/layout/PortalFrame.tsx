@@ -8,6 +8,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { BrandMark } from "@/components/brand/BrandMark";
 
@@ -15,7 +16,7 @@ export type PortalKind = "admin" | "partner";
 
 const PORTALS: Record<PortalKind | "seo", { home: string; label: string; stayIn: string[] }> = {
   // Admins can also open the SEO portal from the admin tabs.
-  admin: { home: "/admin", label: "Vista Chase Admin", stayIn: ["/admin", "/seo", "/login"] },
+  admin: { home: "/admin", label: "Vista Chase Admin", stayIn: ["/admin", "/seo"] },
   partner: { home: "/partners/dashboard", label: "Vista Chase Partners", stayIn: ["/partners/dashboard", "/partners/login"] },
   // Used only for its links: the SEO portal draws its own frame (PortalShell). Admins switch to /admin.
   seo: { home: "/seo", label: "Vista Chase SEO", stayIn: ["/seo", "/admin"] },
@@ -59,11 +60,12 @@ export function usePortalLinks(kind: PortalKind | "seo") {
 
 async function signOut() {
   await fetch("/api/auth/logout", { method: "POST" }).catch(() => undefined);
-  window.location.assign("/login?next=/admin");
+  window.location.assign("/admin/login");
 }
 
 export function PortalFrame({ kind, children }: { kind: PortalKind; children: React.ReactNode }) {
   const portal = PORTALS[kind];
+  const onSignIn = usePathname()?.startsWith("/admin/login");
 
   usePortalLinks(kind);
 
@@ -84,7 +86,7 @@ export function PortalFrame({ kind, children }: { kind: PortalKind; children: Re
             <BrandMark size={28} variant="white" />
             <span className="text-base">{portal.label}</span>
           </Link>
-          {kind === "admin" && (
+          {kind === "admin" && !onSignIn && (
             <button
               type="button"
               onClick={() => void signOut()}
