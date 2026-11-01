@@ -252,8 +252,11 @@ export async function confirmPackagePayment(references: string[], verified?: { a
 }
 
 /** The package's payment failed or was cancelled: release every day's seats. */
+/** Cancels a package's unpaid bookings; true when any of them was still waiting for payment. */
 export async function failPackagePayment(references: string[], reason: string) {
-  for (const ref of references) await failPendingBooking(ref, reason);
+  let ended = false;
+  for (const ref of references) if (await failPendingBooking(ref, reason)) ended = true;
+  return ended;
 }
 
 /** "VC-1,VC-2" from the intent's metadata, at most a handful of well-formed references. */

@@ -20,9 +20,22 @@ export function bokunConfigured() {
   return Boolean(accessKey && secretKey);
 }
 
-/** Seats from Bókun into the calendar; on with the keys unless BOKUN_AVAILABILITY_SYNC=false. */
+/** True when the keys belong to a Bókun test account (BOKUN_API_URL on bokuntest.com). */
+export function bokunIsTestAccount() {
+  return /bokuntest\./i.test(bokunConfig().apiUrl);
+}
+
+/**
+ * Seats from Bókun into the calendar. On with the live account unless BOKUN_AVAILABILITY_SYNC=false.
+ * Off with a test account unless BOKUN_AVAILABILITY_SYNC=true: a test account's made-up seats
+ * would otherwise replace the real seat counts on the website's calendar.
+ */
 export function bokunAvailabilitySyncEnabled() {
-  return bokunConnected() && process.env.BOKUN_AVAILABILITY_SYNC !== "false";
+  if (!bokunConnected()) return false;
+  const setting = process.env.BOKUN_AVAILABILITY_SYNC;
+  if (setting === "false") return false;
+  if (testClient === null && bokunIsTestAccount()) return setting === "true";
+  return true;
 }
 
 /** How many days ahead the seat sync reads (BOKUN_SYNC_DAYS, default 90). */

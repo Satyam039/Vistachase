@@ -1,5 +1,6 @@
 // Airport transfer with a private tour (owner, 2026-10-29): under Guests the guest can add an
-// airport transfer, and checkout asks for their airport arrival and departure dates and times.
+// airport transfer, and checkout asks for their airport arrival and departure dates and times, and
+// (owner, 2026-10-31) where the transfer is from and where it goes.
 // The owner's doc gives no transfer price yet, so nothing is charged online: the team confirms the
 // transfer and its price with the guest. The details are kept in the booking's price snapshot and
 // as the first line of its special requests, so staff see them in the booking, the manifest, the
@@ -16,6 +17,8 @@ export const airportTransferSchema = z
     arrivalTime: z.string().regex(TIME, "Use HH:MM"),
     departureDate: z.string().regex(DATE, "Use YYYY-MM-DD"),
     departureTime: z.string().regex(TIME, "Use HH:MM"),
+    from: z.string().trim().min(2, "Say where we pick you up").max(160),
+    to: z.string().trim().min(2, "Say where we take you").max(160),
   })
   .refine((t) => `${t.departureDate} ${t.departureTime}` > `${t.arrivalDate} ${t.arrivalTime}`, {
     message: "Departure must be after arrival",
@@ -26,5 +29,5 @@ export type AirportTransfer = z.infer<typeof airportTransferSchema>;
 
 /** The line staff read in the booking's special requests. */
 export function airportTransferNote(t: AirportTransfer): string {
-  return `Airport transfer requested: arrival ${t.arrivalDate} ${t.arrivalTime}, departure ${t.departureDate} ${t.departureTime} (price to be confirmed by Vista Chase).`;
+  return `Airport transfer requested: from ${t.from} to ${t.to}, arrival ${t.arrivalDate} ${t.arrivalTime}, departure ${t.departureDate} ${t.departureTime} (price to be confirmed by Vista Chase).`;
 }

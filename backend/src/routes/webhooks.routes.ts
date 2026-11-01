@@ -19,6 +19,7 @@ import Stripe from "stripe";
 import { confirmPaidBooking, failPendingBooking } from "@/modules/bookings/booking.repository";
 import { failBalancePayment, recordBalancePayment } from "@/modules/bookings/deposit-payments";
 import { confirmPackagePayment, failPackagePayment, packageReferences } from "@/modules/bookings/package-booking";
+import { sendPaymentFailedEmail } from "@/modules/bookings/payment-failed-email";
 import { transitionBooking } from "@/modules/bookings/booking-status";
 import { reverseCommissionForRefund } from "@/modules/affiliates/commission";
 import prisma from "@/lib/db/prisma";
@@ -69,14 +70,15 @@ router.post("/stripe", async (req: Request, res: Response) => {
       if (event.type === "payment_intent.succeeded") {
         await confirmPackagePayment(references, { amount: intent.amount_received || intent.amount || 0, currency: intent.currency ?? "", transactionId: intent.id });
       } else if (event.type === "payment_intent.payment_failed" || event.type === "payment_intent.canceled") {
-        await failPackagePayment(references, event.type === "payment_intent.canceled" ? "payment cancelled" : "payment failed");
+        // The guest hears once, from Day 1, and only when this event ended the bookings (not on a retry).
+        if (await failPackagePayment(references, event.type === "payment_intent.canceled" ? "payment cancelled" : "payment failed")) await sendPaymentFailedEmail(references[0]);
       }
     } else if (reference) {
       if (event.type === "payment_intent.succeeded") {
         // Confirms only if Stripe's amount and currency match the booking's server-computed total.
         await confirmPaidBooking(reference, { amount: intent.amount_received || intent.amount || 0, currency: intent.currency ?? "", transactionId: intent.id });
       } else if (event.type === "payment_intent.payment_failed" || event.type === "payment_intent.canceled") {
-        await failPendingBooking(reference, event.type === "payment_intent.canceled" ? "payment cancelled" : "payment failed");
+        if (await failPendingBooking(reference, event.type === "payment_intent.canceled" ? "payment cancelled" : "payment failed")) await sendPaymentFailedEmail(reference);
       }
     }
     return res.json({ received: true });

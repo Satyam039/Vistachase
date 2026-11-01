@@ -122,7 +122,7 @@ describe("Private tours are priced and reserved per vehicle", () => {
 });
 
 describe("Airport transfer with a private tour", () => {
-  const transfer = { arrivalDate: "2027-06-19", arrivalTime: "14:30", departureDate: "2027-06-23", departureTime: "18:05" };
+  const transfer = { arrivalDate: "2027-06-19", arrivalTime: "14:30", departureDate: "2027-06-23", departureTime: "18:05", from: "Calgary Airport (YYC)", to: "Fairmont Banff Springs" };
 
   it("keeps the arrival and departure on the booking without charging for it", async () => {
     const departure = await createPrivateDeparture("2027-06-20");
@@ -141,7 +141,7 @@ describe("Airport transfer with a private tour", () => {
     expect(result.booking?.totalAmount).toBe(1250);
     const stored = await prisma.booking.findUniqueOrThrow({ where: { bookingReference: result.booking!.bookingReference } });
     expect(stored.specialRequests).toBe(
-      "Airport transfer requested: arrival 2027-06-19 14:30, departure 2027-06-23 18:05 (price to be confirmed by Vista Chase).\nChild seat please",
+      "Airport transfer requested: from Calgary Airport (YYC) to Fairmont Banff Springs, arrival 2027-06-19 14:30, departure 2027-06-23 18:05 (price to be confirmed by Vista Chase).\nChild seat please",
     );
     expect((stored.priceSnapshot as { airportTransfer?: unknown }).airportTransfer).toEqual({ ...transfer, priceCents: null });
   });
@@ -169,5 +169,11 @@ describe("Airport transfer with a private tour", () => {
     expect(airportTransferSchema.safeParse(transfer).success).toBe(true);
     expect(airportTransferSchema.safeParse({ ...transfer, departureDate: "2027-06-19", departureTime: "09:00" }).success).toBe(false);
     expect(airportTransferSchema.safeParse({ ...transfer, arrivalTime: "2:30 PM" }).success).toBe(false);
+  });
+
+  it("needs where the transfer is from and where it goes", () => {
+    expect(airportTransferSchema.safeParse({ ...transfer, from: " " }).success).toBe(false);
+    const { to: _to, ...noDestination } = transfer;
+    expect(airportTransferSchema.safeParse(noDestination).success).toBe(false);
   });
 });

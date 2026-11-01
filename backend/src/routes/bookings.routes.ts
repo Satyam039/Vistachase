@@ -10,6 +10,7 @@ import { signBookingLink, verifyBookingLink } from "@/lib/security/signed-links"
 import { paymentSummary } from "@/modules/bookings/deposit";
 import { startBalancePayment } from "@/modules/bookings/deposit-payments";
 import { requestCancellation } from "@/modules/admin/booking-requests";
+import { changeRequestSchema, guestDetailsSchema, requestDateChange, updateGuestDetails } from "@/modules/bookings/manage-booking";
 import { createPackageBooking, PACKAGES } from "@/modules/bookings/package-booking";
 import { syncPendingPayments } from "@/modules/bookings/payment-sync";
 import { itineraryPdf, voucherPdf } from "@/modules/bookings/voucher-pdf";
@@ -164,6 +165,7 @@ router.get("/", rateLimitMiddleware("booking_read", { maxRequests: 30, windowSec
         status: booking.status,
         paymentStatus: paymentState(booking, booking.payments),
         customerName: booking.customerName,
+        customerPhone: booking.customerPhone,
         adultsCount: booking.adultsCount,
         childrenCount: booking.childrenCount,
         infantsCount: booking.infantsCount,
@@ -235,6 +237,49 @@ router.post("/request-cancel", rateLimitMiddleware("booking_request_cancel", { m
     }
     const result = await requestCancellation(booking.bookingReference, body.reason, user?.userId ?? null);
     if (result.status !== 201) return res.status(result.status).json({ success: false, error: result.error });
+    return res.status(201).json({ success: true, request: result.request });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Manage booking (voucher page, linked from the confirmation email): the voucher link's signed
+// token or the signed-in owner, as for /request-cancel. modules/bookings/manage-booking.ts.
+const manageAuth = { bookingReference: referenceSchema, t: z.string().max(64).optional() };
+const detailsSchema = guestDetailsSchema.extend(manageAuth);
+const changeSchema = changeRequestSchema.extend(manageAuth);
+
+async function manageAllowed(req: Request, reference: string, token?: string) {
+  const booking = await getBookingByReference(reference);
+  const user = await getSessionUser(req);
+  const allowed = booking && (verifyBookingLink(booking.bookingReference, "voucher", token) || ownsBooking(user, booking));
+  return allowed ? { booking, userId: user?.userId ?? null } : null;
+}
+
+const MANAGE_DENIED = "Open the Manage booking link in your confirmation email, or sign in to the account that made the booking.";
+
+router.post("/manage/details", rateLimitMiddleware("booking_manage", { maxRequests: 10, windowSeconds: 60 }), async (req, res, next) => {
+  try {
+    const body = parseOr400(detailsSchema, req.body, res);
+    if (!body) return;
+    const ok = await manageAllowed(req, body.bookingReference, body.t);
+    if (!ok) return res.status(403).json({ success: false, error: MANAGE_DENIED });
+    const result = await updateGuestDetails(ok.booking.bookingReference, { customerName: body.customerName, customerPhone: body.customerPhone }, ok.userId);
+    if ("error" in result) return res.status(result.status).json({ success: false, error: result.error });
+    return res.json({ success: true, changed: result.changed, booking: result.booking });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/manage/change-date", rateLimitMiddleware("booking_manage", { maxRequests: 5, windowSeconds: 60 }), async (req, res, next) => {
+  try {
+    const body = parseOr400(changeSchema, req.body, res);
+    if (!body) return;
+    const ok = await manageAllowed(req, body.bookingReference, body.t);
+    if (!ok) return res.status(403).json({ success: false, error: MANAGE_DENIED });
+    const result = await requestDateChange(ok.booking.bookingReference, { newDate: body.newDate, preferredTime: body.preferredTime, note: body.note }, ok.userId);
+    if ("error" in result) return res.status(result.status).json({ success: false, error: result.error });
     return res.status(201).json({ success: true, request: result.request });
   } catch (error) {
     next(error);

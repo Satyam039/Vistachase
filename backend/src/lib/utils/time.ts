@@ -1,36 +1,31 @@
+/** A time zone's offset from UTC at an instant, in milliseconds (America/Edmonton: -6h or -7h). */
+function zoneOffsetMs(at: number, timeZone: string): number {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" })
+      .formatToParts(new Date(at))
+      .map((p) => [p.type, p.value]),
+  );
+  const wall = Date.UTC(+parts.year, +parts.month - 1, +parts.day, +parts.hour, +parts.minute, +parts.second);
+  return wall - Math.floor(at / 1000) * 1000;
+}
+
+/**
+ * The real instant of a stored Mountain Time departure (date + time of day).
+ * The offset is read at the departure's own instant, so the days the clocks change are right too
+ * (reading it at the wall-clock time taken as UTC put early-morning departures an hour off then).
+ */
 export function getMountainTimeInstant(dateObj: Date, timeObj: Date | null): Date {
-  const dateStr = dateObj.toISOString().split('T')[0];
-  const timeStr = timeObj ? timeObj.toISOString().split('T')[1].slice(0, 5) : "08:00";
-  
-  const dt = new Date(`${dateStr}T${timeStr}:00.000Z`);
-  
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/Edmonton',
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', second: '2-digit',
-    hour12: false,
-    timeZoneName: 'shortOffset'
-  });
-  
-  const parts = formatter.formatToParts(dt);
-  const tzOffsetPart = parts.find(p => p.type === 'timeZoneName');
-  
-  let offsetString = tzOffsetPart?.value; 
-  if (!offsetString || offsetString === 'GMT') {
-     offsetString = "-07:00"; 
-  } else {
-     offsetString = offsetString.replace('GMT', '');
-     if (offsetString.length === 2) offsetString += ':00'; 
-     if (offsetString.length === 3) offsetString = offsetString.slice(0,2) + ':00'; 
-  }
-  
-  if (offsetString.length < 6) {
-    const sign = offsetString[0];
-    const hour = offsetString.match(/\d+/)?.[0].padStart(2, '0');
-    offsetString = `${sign}${hour}:00`;
-  }
-  
-  return new Date(`${dateStr}T${timeStr}:00.000${offsetString}`);
+  const dateStr = dateObj.toISOString().split("T")[0];
+  const timeStr = timeObj ? timeObj.toISOString().split("T")[1].slice(0, 5) : "08:00";
+  return wallClockInstant(dateStr, timeStr, "America/Edmonton");
+}
+
+/** The instant a "YYYY-MM-DD" "HH:MM" wall clock in a time zone stands for. */
+export function wallClockInstant(date: string, time: string, timeZone: string): Date {
+  const wallAsUtc = new Date(`${date}T${time}:00.000Z`).getTime();
+  // Guess with the offset near that time, then correct with the offset at the guessed instant.
+  const guess = wallAsUtc - zoneOffsetMs(wallAsUtc, timeZone);
+  return new Date(wallAsUtc - zoneOffsetMs(guess, timeZone));
 }
 
 // Departure dates and times are stored as wall-clock values in Mountain Time: the date as UTC

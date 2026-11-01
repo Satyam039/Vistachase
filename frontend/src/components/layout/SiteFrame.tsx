@@ -22,6 +22,7 @@ import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { SiteMenu } from "@/components/layout/SiteMenu";
 import { GlobalVoiceAssistantDrawer } from "@/components/voice/GlobalVoiceAssistantDrawer";
 import { MotionRuntime } from "@/components/motion/MotionRuntime";
+import { PortalFrame, portalKindFor } from "@/components/layout/PortalFrame";
 
 const BOOK_HREF = "/banff-highlights-tour";
 
@@ -111,19 +112,12 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
     };
   }, [pathname]);
 
-  // Dedicated workspaces (Admin, Affiliate, SEO) have their own independent layouts and navigation.
-  // The public customer frame (announcement, top navigation, public menu, public footer, voice concierge)
-  // is reserved strictly for the customer portal.
-  const isDedicatedPortal =
-    pathname === "/admin" ||
-    pathname?.startsWith("/admin/") ||
-    pathname === "/affiliate" ||
-    pathname?.startsWith("/affiliate/") ||
-    pathname === "/partners/dashboard" ||
-    pathname === "/seo" ||
-    pathname?.startsWith("/seo/");
-
-  if (isDedicatedPortal) return <>{children}</>;
+  // The SEO portal (/seo, /seo/*) is a staff workspace with its own frame: no public header,
+  // footer, announcement or concierge there. Every other route renders exactly as before.
+  if (pathname === "/seo" || pathname?.startsWith("/seo/")) return <>{children}</>;
+  // The admin and affiliate/partner portals get their own frame too, so nothing in them leads to the public site.
+  const portal = portalKindFor(pathname);
+  if (portal) return <PortalFrame kind={portal}>{children}</PortalFrame>;
 
   return (
     <>
