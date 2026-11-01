@@ -201,6 +201,7 @@ export interface BookingDetail {
   voucherCode: string;
   customerName: string;
   customerEmail: string;
+  customerPhone?: string | null;
   totalSeats: number;
   totalAmount: number;
   currency: string;

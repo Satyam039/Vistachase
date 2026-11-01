@@ -24,6 +24,7 @@ import {
 import { getBookingByReference } from "@/lib/api/catalog";
 import { PrintButton } from "@/components/booking/PrintButton";
 import { BalancePayment } from "@/components/booking/BalancePayment";
+import { ManageBooking } from "@/components/booking/ManageBooking";
 import { POLICY_URL, canCancelFree, cancellationSentence, cancellationShort, depositPolicy, formatRockiesDate } from "@/lib/policy";
 import { headers } from "next/headers";
 
@@ -404,6 +405,16 @@ export default async function VoucherPage({
             )}
             {deposit && <p className="mt-4 text-xs leading-relaxed text-slate-600">{depositPolicy(category, multiDay)}</p>}
           </section>
+
+          {!cancelled && (
+            <ManageBooking
+              bookingReference={booking.bookingReference}
+              token={typeof t === "string" ? t : undefined}
+              customerName={booking.customerName}
+              customerPhone={booking.customerPhone}
+              currentDate={dateLabel}
+            />
+          )}
 
           {!cancelled &&
             (policyOpen ? (

@@ -9,6 +9,7 @@ import { checkinLink } from "@/lib/security/signed-links";
 import { formatDateOnly, formatTimeOfDay } from "@/lib/utils/time";
 import { paidCents, paymentSummary } from "@/modules/bookings/deposit";
 import type { getBookingByReference } from "@/modules/bookings/booking.repository";
+import { tourItinerary } from "@/modules/bookings/tour-itinerary";
 
 type VoucherBooking = NonNullable<Awaited<ReturnType<typeof getBookingByReference>>>;
 
@@ -79,11 +80,14 @@ export async function voucherPdf(booking: VoucherBooking): Promise<Uint8Array> {
   return pdf.save();
 }
 
-/** One A4 voucher page for a booking; `dayLabel` ("Day 2 of 3 · Two-Day Rockies Explorer") for trips. */
-export async function addVoucherPage(pdf: PDFDocument, booking: VoucherBooking, dayLabel?: string) {
+/**
+ * One A4 voucher page for a booking; `dayLabel` ("Day 2 of 3 · Two-Day Rockies Explorer") for trips.
+ * With the tour's itinerary (tour-itinerary.ts), on a second page when it doesn't fit.
+ */
+export async function addVoucherPage(pdf: PDFDocument, booking: VoucherBooking, dayLabel?: string, options: { itinerary?: boolean } = {}) {
   const departure = booking.tourDeparture;
   const title = departure.tour?.title || departure.shuttleRoute?.name || "Vista Chase experience";
-  const page: PDFPage = pdf.addPage([595.28, 841.89]); // A4
+  let page: PDFPage = pdf.addPage([595.28, 841.89]); // A4
   const regular = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
   const { width, height } = page.getSize();
@@ -195,6 +199,38 @@ export async function addVoucherPage(pdf: PDFDocument, booking: VoucherBooking, 
   } else if (!cancelled) {
     const paid = paidCents(booking.payments);
     row("Payment", paid >= booking.totalAmount ? "Paid in full" : `${money(booking.totalAmount - paid, booking.currency)} still to pay`);
+  }
+
+  // The tour's itinerary; it goes on a second page when it doesn't fit above the footer.
+  // Left out inside the emailed itinerary PDF, whose first page already lists it.
+  const plan = options.itinerary === false ? null : tourItinerary(departure.tour);
+  if (plan) {
+    const timeWidth = 96;
+    const lines = plan.steps.map((step) => wrap(step.text, regular, 10, inner - timeWidth));
+    const needed = 50 + lines.reduce((n, l) => n + l.length * 13 + 5, 0) + (plan.note ? 16 : 0);
+    if (y - needed < 170) {
+      page = pdf.addPage([595.28, 841.89]);
+      page.drawRectangle({ x: 0, y: height - 92, width, height: 92, color: rgb(0.047, 0.122, 0.129) });
+      text("VISTA CHASE", margin, height - 50, 20, bold, rgb(1, 1, 1));
+      text(`${booking.bookingReference} - YOUR ITINERARY`, margin, height - 70, 10, regular, rgb(0.8, 0.84, 0.85));
+      y = height - 130;
+    } else {
+      rule();
+    }
+    text("Your itinerary", margin, y, 11, bold);
+    y -= 18;
+    for (const [i, step] of plan.steps.entries()) {
+      if (step.time) text(step.time, margin, y, 9, bold, OCEAN);
+      for (const line of lines[i]) {
+        text(line, margin + timeWidth, y, 10);
+        y -= 13;
+      }
+      y -= 5;
+    }
+    if (plan.note) {
+      text(plan.note, margin, y, 9, regular, MUTED);
+      y -= 16;
+    }
   }
 
   rule();
@@ -327,6 +363,28 @@ export async function itineraryPdf(bookings: VoucherBooking[], trip: { title: st
     row("Pickup address", stop ? [stop.address, stop.town].filter(Boolean).join(", ") : null);
     if (bookings.length > 1) row("Day reference", `${b.bookingReference} (voucher ${b.voucherCode})`);
     if (!(b.status === "CONFIRMED" || b.status === "COMPLETED")) row("Status", b.status.replace(/_/g, " ").toLowerCase());
+    const plan = tourItinerary(d.tour);
+    if (plan) {
+      y -= 4;
+      room(40);
+      text("ITINERARY", margin, y, 8, bold, MUTED);
+      y -= 15;
+      for (const step of plan.steps) {
+        const lines = wrap(step.text, regular, 10, inner - 96);
+        room(lines.length * 13 + 6);
+        if (step.time) text(step.time, margin, y, 9, bold, OCEAN);
+        for (const line of lines) {
+          text(line, margin + 96, y, 10);
+          y -= 13;
+        }
+        y -= 4;
+      }
+      if (plan.note) {
+        room(16);
+        text(plan.note, margin, y, 9, regular, MUTED);
+        y -= 14;
+      }
+    }
     y -= 6;
   }
 
@@ -355,13 +413,14 @@ export async function itineraryPdf(bookings: VoucherBooking[], trip: { title: st
     text(line, margin, y, 10, regular, MUTED);
     y -= 14;
   }
-  y -= 10;
-  heading("Need help?");
-  text("+1 (825) 734-9456 (6 a.m. - 9 p.m. MT)   support@vistachase.com", margin, y, 10, regular, MUTED);
+  y -= 6;
+  room(16);
+  text("Need help?", margin, y, 10, bold);
+  text("+1 (825) 734-9456 (6 a.m. - 9 p.m. MT)   support@vistachase.com", margin + bold.widthOfTextAtSize("Need help?  ", 10), y, 10, regular, MUTED);
   for (const p of pdf.getPages()) p.drawText(safe(`Issued ${new Date().toISOString().slice(0, 10)} - vistachase.com`), { x: margin, y: 32, size: 8, font: regular, color: MUTED });
 
   for (const [i, b] of bookings.entries()) {
-    await addVoucherPage(pdf, b, bookings.length > 1 ? `Day ${i + 1} of ${bookings.length} - ${trip?.title ?? ""}` : undefined);
+    await addVoucherPage(pdf, b, bookings.length > 1 ? `Day ${i + 1} of ${bookings.length} - ${trip?.title ?? ""}` : undefined, { itinerary: false });
   }
   return pdf.save();
 }
