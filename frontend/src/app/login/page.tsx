@@ -1,6 +1,6 @@
 "use client";
 
-// Sign in for guests, partners and staff. Each role lands on its own page afterwards.
+// Sign in for guests only. Staff and partners have their own sign-in pages in their portals.
 // Demo account shortcuts exist only in local development: they are compiled out of production
 // builds so no credentials ship to the browser.
 
@@ -9,7 +9,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Eye, EyeOff } from "lucide-react";
 import { AUTH_FIELD, AuthShell } from "@/components/forms/AuthShell";
-import { homeForRole, safeNextFor } from "@/lib/portals";
+import { portalFor, signInFor } from "@/lib/portals";
 
 const DEV = process.env.NODE_ENV !== "production";
 
@@ -35,10 +35,15 @@ export default function LoginPage() {
       if (!res.ok || !data.success) {
         setErrorMsg(data.error || "That email and password don't match.");
       } else {
-        // ?next= is set when a staff page sent a signed-out visitor here; it's only followed into
-        // the area the account belongs to.
-        const next = new URLSearchParams(window.location.search).get("next");
-        router.push(safeNextFor(data.user?.role, next) ?? homeForRole(data.user?.role));
+        // Staff and partners sign in on their own portal's page (/admin/login, /seo/login,
+        // /partners/login), never here: this page is for guests only.
+        const portal = portalFor(data.user?.role);
+        if (portal !== "customer") {
+          await fetch("/api/auth/logout", { method: "POST" }).catch(() => undefined);
+          setErrorMsg(`This is a staff or partner account. Sign in at ${signInFor(portal)} instead.`);
+        } else {
+          router.push("/account/trips");
+        }
       }
     } catch {
       setErrorMsg("We couldn't reach the server. Please try again.");
@@ -108,7 +113,6 @@ export default function LoginPage() {
           <div className="mt-3 grid grid-cols-2 gap-2">
             {[
               { label: "Demo guest", email: "sarah.traveler@example.com", password: "Traveler2026!" },
-              { label: "Demo admin", email: "admin@vistachase.com", password: "VistaChaseAdmin2026!" },
             ].map((d) => (
               <button
                 key={d.label}
