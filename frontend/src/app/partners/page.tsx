@@ -61,10 +61,10 @@ export default function PartnersPage() {
             For affiliates and associates: hotels, travel agents and creators. Share your link, your guests book top-rated tours and shuttles, and you earn commission.
           </p>
           <div className="mt-7 flex flex-wrap gap-3 motion-safe:animate-[fadeUp_1300ms_ease-out]">
-            <a href="#apply" className="golden-summit-btn inline-flex h-12 items-center rounded-full px-7 text-base">
+            <Link href="/affiliate/register" className="golden-summit-btn inline-flex h-12 items-center rounded-full px-7 text-base">
               Apply now
-            </a>
-            <Link href="/partners/login" className="inline-flex h-12 items-center rounded-full border border-white/30 bg-white/10 px-7 text-base text-white backdrop-blur-md hover:bg-white/20">
+            </Link>
+            <Link href="/affiliate/login" className="inline-flex h-12 items-center rounded-full border border-white/30 bg-white/10 px-7 text-base text-white backdrop-blur-md hover:bg-white/20">
               Partner sign in
             </Link>
           </div>

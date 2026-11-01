@@ -1,12 +1,12 @@
-// The site's three staff areas, each at its own address and only for its own roles:
+// The site's three distinct portal areas, each with its own routes, access rules, and logins:
 //
-//   admin    /admin               ADMIN, OPERATOR, DISPATCHER (bookings, departures, dispatch;
-//                                 partners, staff and the audit log are ADMIN only)
-//   seo      /seo                 SEO_MANAGER, EDITOR, VIEWER, plus ADMIN (SEO and page copy)
-//   partner  /partners/dashboard  AFFILIATE (their own referrals, commissions and payouts)
+//   admin      /admin                 ADMIN, OPERATOR, DISPATCHER (dedicated /admin/login)
+//   affiliate  /affiliate             AFFILIATE (dedicated /affiliate/login, referrals, payouts)
+//   seo        /seo                   SEO_MANAGER, EDITOR, VIEWER, plus ADMIN (/seo/login)
+//   customer   / (public + /account)  CUSTOMER (dedicated /login, /register, /account/trips)
 //
-// The middleware sends anyone who opens another area to their own, before the page is drawn.
-// The API checks the role on every call as well (backend/src/lib/auth/permissions.ts).
+// The middleware enforces portal isolation before the page is drawn.
+// The backend API checks the role on every call as well (backend/src/lib/auth/permissions.ts).
 
 export type Portal = "admin" | "seo" | "partner" | "customer";
 
@@ -22,20 +22,31 @@ export function homeForRole(role: string | undefined | null): string {
   const portal = portalFor(role);
   if (portal === "admin") return "/admin";
   if (portal === "seo") return role === "EDITOR" ? "/seo/content" : "/seo";
-  if (portal === "partner") return "/partners/dashboard";
+  if (portal === "partner") return "/affiliate/dashboard";
   return "/account/trips";
 }
 
 /** Admin pages operators and dispatchers can't open. */
-export const ADMIN_ONLY_PATHS = ["/admin/partners", "/admin/staff", "/admin/audit"];
+export const ADMIN_ONLY_PATHS = ["/admin/partners", "/admin/affiliates", "/admin/staff", "/admin/roles", "/admin/audit"];
 
 const under = (path: string, base: string) => path === base || path.startsWith(`${base}/`);
 
 /** The area a path belongs to, or null for public pages (and the areas' own sign-in pages). */
-export function areaOf(path: string): Exclude<Portal, "customer"> | null {
-  if (under(path, "/admin")) return under(path, "/admin/login") ? null : "admin";
-  if (under(path, "/seo")) return under(path, "/seo/login") ? null : "seo";
+export function areaOf(path: string): Portal | null {
+  if (under(path, "/admin")) {
+    return under(path, "/admin/login") ? null : "admin";
+  }
+  if (under(path, "/seo")) {
+    return under(path, "/seo/login") ? null : "seo";
+  }
+  if (under(path, "/affiliate")) {
+    if (path === "/affiliate" || under(path, "/affiliate/login") || under(path, "/affiliate/register")) {
+      return null;
+    }
+    return "partner";
+  }
   if (under(path, "/partners/dashboard")) return "partner";
+  if (under(path, "/account")) return "customer";
   return null;
 }
 
@@ -44,20 +55,25 @@ export function mayOpen(role: string | undefined | null, path: string): boolean 
   const area = areaOf(path);
   if (!area) return true;
   if (area === "seo" && role === "ADMIN") return true;
+  if (area === "customer") {
+    // Only customer accounts may access customer account management; staff and affiliates go to their portals
+    return role === "CUSTOMER";
+  }
   if (portalFor(role) !== area) return false;
   if (area === "admin" && role !== "ADMIN") return !ADMIN_ONLY_PATHS.some((p) => under(path, p));
   return true;
 }
 
 /** Where a signed-out visitor signs in for an area (each portal has its own sign-in page). */
-export function signInFor(area: Exclude<Portal, "customer">): string {
+export function signInFor(area: Portal): string {
+  if (area === "admin") return "/admin/login";
+  if (area === "partner") return "/affiliate/login";
   if (area === "seo") return "/seo/login";
-  if (area === "partner") return "/partners/login";
-  return "/admin/login";
+  return "/login";
 }
 
 /** A same-site path from ?next= that the role may open, or null. */
 export function safeNextFor(role: string | undefined | null, next: string | null): string | null {
   if (!next || !/^\/[A-Za-z0-9/_-]*$/.test(next) || next.startsWith("//")) return null;
-  return areaOf(next) && mayOpen(role, next) ? next : null;
+  return mayOpen(role, next) ? next : null;
 }

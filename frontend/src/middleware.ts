@@ -78,6 +78,19 @@ async function sessionRole(request: NextRequest): Promise<string | null | undefi
 
 async function portalGate(request: NextRequest) {
   const path = request.nextUrl.pathname;
+
+  // Legacy partner route aliases preserved for backwards compatibility
+  if (path === "/partners/login") {
+    const target = request.nextUrl.clone();
+    target.pathname = "/affiliate/login";
+    return NextResponse.redirect(target, 301);
+  }
+  if (path === "/partners/dashboard") {
+    const target = request.nextUrl.clone();
+    target.pathname = "/affiliate/dashboard";
+    return NextResponse.redirect(target, 301);
+  }
+
   const area = areaOf(path);
   if (!area) return null;
   const role = await sessionRole(request);

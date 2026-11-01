@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Staff Sign In | Vista Chase Admin",
+  title: "Admin Portal Sign In | Vista Chase",
+  description: "Secure sign-in for Vista Chase administrators, operators and dispatchers.",
   robots: { index: false, follow: false },
 };
 

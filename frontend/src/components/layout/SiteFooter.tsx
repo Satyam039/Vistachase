@@ -60,8 +60,7 @@ const GROUPS: { heading: string; links: FooterLink[] }[] = [
     links: [
       { label: "About Us", href: "/about-us" },
       { label: "Blogs", href: "/blog" },
-      { label: "Partner program", href: "/partners" },
-      { label: "Partner login", href: "/partners/login" },
+      { label: "Affiliate program", href: "/affiliate" },
       { label: "Terms & Conditions", href: "/terms-and-conditions" },
       { label: "Cancellation Policy", href: "/privacy-policy-vista-chase" },
       { label: "Contact us", href: "/contact-us" },
@@ -90,7 +89,6 @@ const LEGAL: FooterLink[] = [
   { label: "Privacy", href: "/privacy-policy" },
   { label: "Cancellation policy", href: "/privacy-policy-vista-chase" },
   { label: "Travel trade & agents", href: "/affiliates" },
-  { label: "Staff portal", href: "/admin" },
 ];
 
 // Live-site profiles. Brand marks as 24×24 paths (lucide no longer ships them).

@@ -9,8 +9,8 @@ import { portalFor, safeNextFor } from "@/lib/portals";
 export default function AdminLoginPage() {
   return (
     <PortalSignIn
-      title="Staff sign in"
-      intro="Bookings, departures, dispatch and operations."
+      title="Admin Portal Sign In"
+      intro="Platform administration, fleet operations, departures and dispatch."
       help="Forgot your password? Ask an admin for a new password link (Staff → Password link)."
       check={async (role) =>
         portalFor(role) === "admin"

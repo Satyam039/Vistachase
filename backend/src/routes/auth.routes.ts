@@ -35,7 +35,7 @@ function setAuthCookie(req: Request, res: Response, token: string) {
 
 router.post("/login", rateLimitMiddleware("login", { maxRequests: 5, windowSeconds: 300 }), async (req, res) => {
   try {
-    const { email, password } = req.body ?? {};
+    const { email, password, expectedPortal } = req.body ?? {};
 
     if (!email || !password) {
       return res.status(400).json({ success: false, error: "Email and password are required" });
@@ -66,6 +66,26 @@ const user = await prisma.user.findUnique({
       
       return res.status(401).json({ success: false, error: "Invalid email or password" });
     }
+
+    // Portal isolation validation
+    const userRole = user.role as UserRole;
+    if (expectedPortal === "admin") {
+      const adminRoles: UserRole[] = ["ADMIN", "OPERATOR", "DISPATCHER", "SEO_MANAGER", "EDITOR", "VIEWER"];
+      if (!adminRoles.includes(userRole)) {
+        return res.status(403).json({
+          success: false,
+          error: "Access denied: this account does not have administrator or staff permissions.",
+        });
+      }
+    } else if (expectedPortal === "affiliate") {
+      const affiliateRoles: UserRole[] = ["AFFILIATE", "ADMIN"];
+      if (!affiliateRoles.includes(userRole)) {
+        return res.status(403).json({
+          success: false,
+          error: "Access denied: this account is not registered as an affiliate partner. Please apply to the partner program or sign in with your partner account.",
+        });
+      }
+    }
     
     // Success: reset attempts
     if (user.failedLoginAttempts > 0) {
@@ -90,6 +110,7 @@ const user = await prisma.user.findUnique({
         name: user.name,
         email: user.email,
         role: user.role,
+        portal: portalFor(userRole),
       },
     });
   } catch (error: unknown) {

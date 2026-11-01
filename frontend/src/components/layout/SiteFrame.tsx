@@ -115,7 +115,7 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
   // The SEO portal (/seo, /seo/*) is a staff workspace with its own frame: no public header,
   // footer, announcement or concierge there. Every other route renders exactly as before.
   if (pathname === "/seo" || pathname?.startsWith("/seo/")) return <>{children}</>;
-  // The admin and partner portals get their own frame too, so nothing in them leads to the public site.
+  // The admin and affiliate/partner portals get their own frame too, so nothing in them leads to the public site.
   const portal = portalKindFor(pathname);
   if (portal) return <PortalFrame kind={portal}>{children}</PortalFrame>;
 

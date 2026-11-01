@@ -17,7 +17,7 @@ export type PortalKind = "admin" | "partner";
 const PORTALS: Record<PortalKind | "seo", { home: string; label: string; stayIn: string[] }> = {
   // Admins can also open the SEO portal from the admin tabs.
   admin: { home: "/admin", label: "Vista Chase Admin", stayIn: ["/admin", "/seo"] },
-  partner: { home: "/partners/dashboard", label: "Vista Chase Partners", stayIn: ["/partners/dashboard", "/partners/login"] },
+  partner: { home: "/affiliate/dashboard", label: "Vista Chase Affiliates", stayIn: ["/affiliate", "/partners/dashboard", "/partners/login"] },
   // Used only for its links: the SEO portal draws its own frame (PortalShell). Admins switch to /admin.
   seo: { home: "/seo", label: "Vista Chase SEO", stayIn: ["/seo", "/admin"] },
 };
@@ -33,7 +33,7 @@ export function staysInPortal(kind: PortalKind | "seo", path: string): boolean {
 export function portalKindFor(pathname: string | null | undefined): PortalKind | null {
   if (!pathname) return null;
   if (under(pathname, "/admin")) return "admin";
-  if (under(pathname, "/partners/dashboard") || under(pathname, "/partners/login")) return "partner";
+  if (under(pathname, "/affiliate") || under(pathname, "/partners/dashboard") || under(pathname, "/partners/login")) return "partner";
   return null;
 }
 
@@ -58,9 +58,9 @@ export function usePortalLinks(kind: PortalKind | "seo") {
   }, [kind]);
 }
 
-async function signOut() {
+async function signOut(kind: PortalKind | "seo") {
   await fetch("/api/auth/logout", { method: "POST" }).catch(() => undefined);
-  window.location.assign("/admin/login");
+  window.location.assign(kind === "admin" ? "/admin/login" : "/affiliate/login");
 }
 
 export function PortalFrame({ kind, children }: { kind: PortalKind | "seo"; children: React.ReactNode }) {
@@ -89,7 +89,7 @@ export function PortalFrame({ kind, children }: { kind: PortalKind | "seo"; chil
           {kind === "admin" && !onSignIn && (
             <button
               type="button"
-              onClick={() => void signOut()}
+              onClick={() => void signOut(kind)}
               className="inline-flex h-10 items-center gap-2 rounded-full border border-white/20 px-4 text-sm text-white/85 hover:bg-white/10"
             >
               <LogOut className="h-4 w-4" aria-hidden="true" />
