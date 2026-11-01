@@ -26,6 +26,8 @@ A Bókun test account (website.bokuntest.com, `BOKUN_API_URL=https://api.bokunte
 2. **Admin → Bookings → Bókun → Products → Check products** lists the account's products. Pick the matching one for each website tour and copy the `BOKUN_PRODUCT_OVERRIDES=slug:id,...` line it shows into `backend/.env`.
 3. Restart the API (`pm2 restart vistachase-backend --update-env`) and press **Retry** on the stopped bookings.
 
+A test account set up in another currency (e.g. INR) books in that currency and refuses our CAD payment. On a test account only, the confirmation is then sent again in Bókun's currency for Bókun's own total, so the test can finish; a live account stops such a booking for a person instead.
+
 With a test account, seat sync is off unless `BOKUN_AVAILABILITY_SYNC=true`, so made-up test seats never replace the real calendar's seat counts. Before going live: remove `BOKUN_PRODUCT_OVERRIDES`, set the live keys and `BOKUN_API_URL=https://api.bokun.io`, restart.
 
 Optional settings: `BOKUN_AVAILABILITY_SYNC=false` keeps sending bookings but stops reading seats; `BOKUN_SYNC_DAYS` (default 90) is how far ahead seats are read.
