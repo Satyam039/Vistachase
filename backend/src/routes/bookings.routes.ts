@@ -58,8 +58,9 @@ router.post("/", rateLimitMiddleware("booking_create", { maxRequests: 5, windowS
       addOns: [],
       idempotencyKey: rawKey,
       customerId: user && user.email.toLowerCase() === body.customerEmail ? user.userId : undefined,
-      // Partner referral: the frontend stores ?ref=<code> in this cookie for 30 days.
-      affiliateCode: typeof req.cookies?.vc_ref === "string" ? req.cookies.vc_ref : undefined,
+      // Partner referral: the frontend stores ?ref=<code> in this cookie for 30 days,
+      // or the customer entered the partner's voucher code in promoCode.
+      affiliateCode: (typeof req.cookies?.vc_ref === "string" ? req.cookies.vc_ref : undefined) || (body.promoCode ? body.promoCode.trim().toUpperCase() : undefined),
     });
     if (!result.success) return res.status(409).json({ success: false, error: result.error });
     return res.json({ success: true, booking: result.booking, payment: result.payment ?? null, nextStep: result.nextStep, replayed: result.replayed ?? false });

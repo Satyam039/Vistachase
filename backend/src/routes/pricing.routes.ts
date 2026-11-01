@@ -6,6 +6,7 @@ import prisma from "@/lib/db/prisma";
 import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
 import { parseOr400, z } from "@/lib/security/validate";
 import { priceBooking, promoPercent } from "@/modules/pricing/booking-pricing";
+import { findActiveAffiliateByCode } from "@/modules/affiliates/affiliate.repository";
 
 const router = Router();
 
@@ -21,7 +22,24 @@ router.post("/quote", rateLimitMiddleware("promo_quote", { maxRequests: 20, wind
     const body = parseOr400(quoteSchema, req.body, res);
     if (!body) return;
     const percent = promoPercent(body.promoCode);
-    if (percent === null) return res.status(404).json({ success: false, error: "Invalid or expired promo code" });
+    if (percent === null) {
+      // Check if this code belongs to an active affiliate partner voucher
+      const partner = await findActiveAffiliateByCode(body.promoCode);
+      if (partner) {
+        const departure = await prisma.tourDeparture.findUnique({ where: { id: body.departureId }, include: { tour: true } });
+        if (!departure) return res.status(404).json({ success: false, error: "Departure not found" });
+        const totals = priceBooking(departure, { adults: body.adultsCount, children: body.childrenCount }, [], null);
+        return res.json({
+          success: true,
+          promoCode: partner.code,
+          discountPercent: 0,
+          discountAmount: 0,
+          isPartnerVoucher: true,
+          partnerName: partner.name,
+        });
+      }
+      return res.status(404).json({ success: false, error: "Invalid or expired promo code" });
+    }
 
     const departure = await prisma.tourDeparture.findUnique({ where: { id: body.departureId }, include: { tour: true } });
     if (!departure) return res.status(404).json({ success: false, error: "Departure not found" });
