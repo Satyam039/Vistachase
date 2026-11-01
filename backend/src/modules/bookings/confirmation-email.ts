@@ -75,6 +75,8 @@ export async function sendConfirmationEmail(reference: string, options: { force?
     const currency = lead.currency;
     const days = live.map((b, i) => ({ ...dayLines(b), day: i + 1, reference: b.bookingReference, link: voucherLink(b.bookingReference) }));
     const multi = live.length > 1;
+    // Manage booking (manage-booking.ts): the lead day's voucher page, opened at its Manage section.
+    const manageLink = `${voucherLink(lead.bookingReference)}#manage`;
 
     const dayHtml = days
       .map(
@@ -103,6 +105,8 @@ export async function sendConfirmationEmail(reference: string, options: { force?
           <p style="margin: 0 0 6px;"><strong>Total:</strong> ${money(total, currency)} · <strong>Paid:</strong> ${money(paid, currency)}${balance > 0 ? ` · <strong>Balance due:</strong> ${money(balance, currency)}${dueBy}` : ""}</p>
           <table role="presentation" style="width: 100%; border-collapse: collapse; margin-top: 8px;">${dayHtml}</table>
         </div>
+        <p style="margin: 24px 0;"><a href="${manageLink}" style="display: inline-block; background: #257780; color: #ffffff; text-decoration: none; padding: 12px 22px; font-weight: bold;">Manage booking</a></p>
+        <p style="color: #5d6168; font-size: 13px; margin-top: -12px;">Change the lead guest's name or phone, ask for a different date, or cancel.</p>
         <p>Be at your pickup 10 minutes early and show your voucher to your guide, printed or on your phone.</p>
         <p style="color: #5d6168; font-size: 13px;">${policy} Questions? Reply to this email, call +1 (825) 734-9456 (6 a.m. – 9 p.m. Mountain Time) or write to support@vistachase.com.</p>
       </div>`;
@@ -115,6 +119,7 @@ export async function sendConfirmationEmail(reference: string, options: { force?
       ...days.map((d) => `${multi ? `Day ${d.day}: ` : ""}${d.date}, ${d.title}${d.time ? `, departs ${d.time}` : ""}. Pickup: ${d.pickup}. Voucher: ${d.link}`),
       "",
       policy,
+      `Manage booking (change name or phone, ask for another date, cancel): ${manageLink}`,
       "Your itinerary is attached as a PDF. Questions? Call +1 (825) 734-9456 or write to support@vistachase.com.",
     ].join("\n");
 

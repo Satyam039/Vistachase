@@ -66,7 +66,7 @@ describe("confirmation email", () => {
     expect(email.text).toContain("Pickup: Moxy Banff");
     expect(email.attachments?.[0].filename).toBe(`Vista-Chase-itinerary-${ref}.pdf`);
     expect(email.attachments?.[0].content.subarray(0, 4).toString()).toBe("%PDF");
-    expect(await pages(email)).toBe(2); // itinerary + voucher
+    expect(await pages(email)).toBe(2); // itinerary (with the tour's steps) + voucher
 
     // A webhook retry or a second confirmation doesn't send it again.
     expect(await sendConfirmationEmail(ref)).toBe("already-sent");
@@ -126,7 +126,7 @@ describe("multi-day trips", () => {
     expect(email.text).toContain("Day 2:");
     expect(email.text).toContain(ref2);
     if (process.env.SAVE_ITINERARY_PDF) (await import("node:fs")).writeFileSync(process.env.SAVE_ITINERARY_PDF, email.attachments![0].content);
-    expect(await pages(email)).toBe(3); // itinerary + one voucher per day
+    expect(await pages(email)).toBe(4); // itinerary (2 pages with each day's steps) + one voucher per day
 
     const day2 = await prisma.booking.findUniqueOrThrow({ where: { bookingReference: ref2 } });
     expect(tripOf(day2.priceSnapshot, ref2)).toMatchObject({ reference: ref1, day: 2, days: 2 });

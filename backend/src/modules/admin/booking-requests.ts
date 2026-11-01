@@ -39,11 +39,11 @@ export async function guestPolicyRefundCents(booking: PolicyBooking, at = new Da
   return (await policyDecision(booking, at)).refundCents;
 }
 
-function titleOf(b: { tourDeparture: { tour: { title: string } | null; shuttleRoute: { name: string } | null } }) {
+export function titleOf(b: { tourDeparture: { tour: { title: string } | null; shuttleRoute: { name: string } | null } }) {
   return b.tourDeparture.tour?.title || b.tourDeparture.shuttleRoute?.name || "Vista Chase experience";
 }
 
-function guestEmail(to: string, subject: string, heading: string, paragraphs: string[]) {
+export function guestEmail(to: string, subject: string, heading: string, paragraphs: string[]) {
   getEmailProvider()
     .sendEmail({
       to,
@@ -59,7 +59,7 @@ function guestEmail(to: string, subject: string, heading: string, paragraphs: st
     .catch((e) => console.error(`${heading} email failed:`, (e as Error).message));
 }
 
-function opsEmail(subject: string, text: string) {
+export function opsEmail(subject: string, text: string) {
   const to = process.env.OPS_ALERT_EMAIL || process.env.ENQUIRIES_TO;
   if (!to) return;
   getEmailProvider()
