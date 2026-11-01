@@ -63,9 +63,9 @@ async function signOut() {
   window.location.assign("/admin/login");
 }
 
-export function PortalFrame({ kind, children }: { kind: PortalKind; children: React.ReactNode }) {
+export function PortalFrame({ kind, children }: { kind: PortalKind | "seo"; children: React.ReactNode }) {
   const portal = PORTALS[kind];
-  const onSignIn = usePathname()?.startsWith("/admin/login");
+  const onSignIn = usePathname()?.startsWith("/admin/login") ?? false;
 
   usePortalLinks(kind);
 
