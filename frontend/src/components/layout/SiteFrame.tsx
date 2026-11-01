@@ -111,9 +111,19 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
     };
   }, [pathname]);
 
-  // The SEO portal (/seo, /seo/*) is a staff workspace with its own frame: no public header,
-  // footer, announcement or concierge there. Every other route renders exactly as before.
-  if (pathname === "/seo" || pathname?.startsWith("/seo/")) return <>{children}</>;
+  // Dedicated workspaces (Admin, Affiliate, SEO) have their own independent layouts and navigation.
+  // The public customer frame (announcement, top navigation, public menu, public footer, voice concierge)
+  // is reserved strictly for the customer portal.
+  const isDedicatedPortal =
+    pathname === "/admin" ||
+    pathname?.startsWith("/admin/") ||
+    pathname === "/affiliate" ||
+    pathname?.startsWith("/affiliate/") ||
+    pathname === "/partners/dashboard" ||
+    pathname === "/seo" ||
+    pathname?.startsWith("/seo/");
+
+  if (isDedicatedPortal) return <>{children}</>;
 
   return (
     <>

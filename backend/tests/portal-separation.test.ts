@@ -7,7 +7,7 @@ import request from "supertest";
 import type { Router } from "express";
 import prisma from "@/lib/db/prisma";
 import { createApp } from "@/app";
-import { signToken, type UserRole } from "@/lib/auth/auth";
+import { signToken, hashPassword, type UserRole } from "@/lib/auth/auth";
 import adminRoutes from "@/routes/admin.routes";
 import operationsRoutes from "@/routes/operations.routes";
 import seoRoutes from "@/routes/seo.routes";
@@ -18,6 +18,8 @@ import affiliatesRoutes from "@/routes/affiliates.routes";
 const app = createApp();
 const unique = () => Math.random().toString(36).slice(2, 8);
 const cookies: Partial<Record<UserRole, string>> = {};
+const emails: Partial<Record<UserRole, string>> = {};
+const TEST_PASSWORD = "ValidPassword123!";
 
 type Layer = { route?: { path: string; methods: Record<string, boolean> } };
 type Method = "get" | "post" | "put" | "patch" | "delete";
@@ -55,8 +57,10 @@ async function refusedFor(role: UserRole, routes: [Method, string][]) {
 }
 
 beforeAll(async () => {
+  const hash = await hashPassword(TEST_PASSWORD);
   for (const role of ["ADMIN", "OPERATOR", "DISPATCHER", "SEO_MANAGER", "EDITOR", "VIEWER", "AFFILIATE", "CUSTOMER"] as UserRole[]) {
-    const user = await prisma.user.create({ data: { email: `sep-${role.toLowerCase()}-${unique()}@example.com`, passwordHash: "x", name: `${role} sep`, role } });
+    const user = await prisma.user.create({ data: { email: `sep-${role.toLowerCase()}-${unique()}@example.com`, passwordHash: hash, name: `${role} sep`, role } });
+    emails[role] = user.email;
     cookies[role] = `vc_token=${signToken({ userId: user.id, email: user.email, role, name: user.name })}`;
   }
 });
@@ -96,5 +100,44 @@ describe("portal separation", () => {
     expect(await portal("VIEWER")).toBe("seo");
     expect(await portal("AFFILIATE")).toBe("partner");
     expect(await portal("CUSTOMER")).toBe("customer");
+  });
+
+  it("enforces portal isolation during login with expectedPortal", async () => {
+    // 1. Customer attempting to log in on Admin portal
+    const custOnAdmin = await request(app)
+      .post("/api/auth/login")
+      .send({ email: emails.CUSTOMER, password: TEST_PASSWORD, expectedPortal: "admin" });
+    expect(custOnAdmin.status).toBe(403);
+    expect(custOnAdmin.body.error).toContain("Access denied: this account does not have administrator");
+
+    // 2. Affiliate attempting to log in on Admin portal
+    const affOnAdmin = await request(app)
+      .post("/api/auth/login")
+      .send({ email: emails.AFFILIATE, password: TEST_PASSWORD, expectedPortal: "admin" });
+    expect(affOnAdmin.status).toBe(403);
+    expect(affOnAdmin.body.error).toContain("Access denied: this account does not have administrator");
+
+    // 3. Customer attempting to log in on Affiliate portal
+    const custOnAff = await request(app)
+      .post("/api/auth/login")
+      .send({ email: emails.CUSTOMER, password: TEST_PASSWORD, expectedPortal: "affiliate" });
+    expect(custOnAff.status).toBe(403);
+    expect(custOnAff.body.error).toContain("Access denied: this account is not registered as an affiliate");
+
+    // 4. Admin logging into Admin portal succeeds
+    const adminOnAdmin = await request(app)
+      .post("/api/auth/login")
+      .send({ email: emails.ADMIN, password: TEST_PASSWORD, expectedPortal: "admin" });
+    expect(adminOnAdmin.status).toBe(200);
+    expect(adminOnAdmin.body.success).toBe(true);
+    expect(adminOnAdmin.body.user.portal).toBe("admin");
+
+    // 5. Affiliate logging into Affiliate portal succeeds
+    const affOnAff = await request(app)
+      .post("/api/auth/login")
+      .send({ email: emails.AFFILIATE, password: TEST_PASSWORD, expectedPortal: "affiliate" });
+    expect(affOnAff.status).toBe(200);
+    expect(affOnAff.body.success).toBe(true);
+    expect(affOnAff.body.user.portal).toBe("partner");
   });
 });
