@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PortalLinks } from "@/components/layout/PortalFrame";
 
 // The SEO portal: a staff workspace, never indexed (robots.txt also disallows /seo and next.config
 // sends X-Robots-Tag: noindex). The public header and footer are left out (SiteFrame).
@@ -8,5 +9,11 @@ export const metadata: Metadata = {
 };
 
 export default function SeoLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  // Links to the public site open in a new tab, so the portal never turns into the main website.
+  return (
+    <>
+      <PortalLinks kind="seo" />
+      {children}
+    </>
+  );
 }

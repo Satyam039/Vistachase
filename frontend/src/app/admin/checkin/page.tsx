@@ -84,7 +84,7 @@ function CheckIn() {
 
 export default function CheckInPage() {
   return (
-    <main className="mx-auto max-w-xl px-page py-12">
+    <div className="mx-auto max-w-xl px-page py-12">
       <h1 className="mb-6 text-3xl font-light text-obsidian-900">Voucher check-in</h1>
       <Suspense>
         <CheckIn />
@@ -94,6 +94,6 @@ export default function CheckInPage() {
           Open the dispatch board
         </Link>
       </p>
-    </main>
+    </div>
   );
 }
