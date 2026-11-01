@@ -62,6 +62,25 @@ async function main() {
     } else if (providerType === "smtp") {
       console.log("1. Verify your SMTP_HOST, SMTP_PORT, SMTP_USER, and SMTP_PASS.");
       console.log("2. For Gmail, generate an 'App Password' from Google Account Security.");
+      if (result.error?.includes("535") || result.error?.includes("BadCredentials")) {
+        console.log("\n⚠️  GMAIL 535 BAD CREDENTIALS DETECTED:");
+        console.log("   Standard Gmail account passwords cannot be used with SMTP.");
+        console.log("   Follow these steps:");
+        console.log("   1. Sign in to your Google Account (vistachase.bookings@gmail.com).");
+        console.log("   2. Turn ON '2-Step Verification' at https://myaccount.google.com/security");
+        console.log("   3. Go to https://myaccount.google.com/apppasswords");
+        console.log("   4. Enter 'Vista Chase' and generate a 16-character App Password.");
+        console.log("   5. In backend/.env, set:");
+        console.log("      EMAIL_PROVIDER=\"smtp\"");
+        console.log("      SMTP_HOST=\"smtp.gmail.com\"");
+        console.log("      SMTP_PORT=465");
+        console.log("      SMTP_SECURE=\"true\"");
+        console.log("      SMTP_USER=\"vistachase.bookings@gmail.com\"");
+        console.log("      SMTP_PASS=\"abcdefghijklmnop\"   # 16-character app password");
+        console.log("      EMAIL_FROM=\"Vista Chase <vistachase.bookings@gmail.com>\"");
+        console.log("   6. If running with PM2, reload the environment:");
+        console.log("      pm2 restart vistachase-backend --update-env");
+      }
     }
     process.exit(1);
   }

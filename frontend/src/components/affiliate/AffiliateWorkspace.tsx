@@ -92,6 +92,7 @@ export function AffiliateWorkspace({ activeTab = "overview" }: { activeTab?: Tab
   const [tours, setTours] = useState<TourOption[]>([]);
   const [target, setTarget] = useState("");
   const [copied, setCopied] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
 
   const loadDashboard = useCallback(async () => {
     const res = await fetch("/api/affiliates/me");
@@ -174,6 +175,63 @@ export function AffiliateWorkspace({ activeTab = "overview" }: { activeTab?: Tab
         {/* Tab 1: Overview */}
         {activeTab === "overview" && (
           <div className="space-y-8">
+            {/* Dedicated Partner Voucher Code Hub */}
+            <section className="relative overflow-hidden rounded-2xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-50/80 via-white to-emerald-50/30 p-6 shadow-sm">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                <div className="space-y-2">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
+                    🎟️ Dedicated Partner Voucher Code
+                  </div>
+                  <h2 className="text-xl font-medium text-slate-900">Your Exclusive Voucher Code</h2>
+                  <p className="text-xs text-slate-600 max-w-xl">
+                    Share your dedicated voucher code with guests, clients, or on social media. When customers type this code during checkout, their booking is automatically attributed to you for commission.
+                  </p>
+                </div>
+                <div className="flex flex-col sm:flex-row items-center gap-3">
+                  <div className="flex items-center gap-2 rounded-xl border border-emerald-300 bg-white px-5 py-2.5 shadow-sm">
+                    <span className="font-mono text-xl font-bold tracking-wider text-slate-900">{affiliate.code}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(affiliate.code);
+                      setCopiedCode(true);
+                      setTimeout(() => setCopiedCode(false), 2000);
+                    }}
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 text-xs font-medium text-white hover:bg-slate-800 transition"
+                  >
+                    {copiedCode ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
+                    {copiedCode ? "Code Copied!" : "Copy Voucher Code"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Affiliate Marketing Steps */}
+              <div className="mt-6 pt-5 border-t border-emerald-200/60 grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs text-slate-600">
+                <div className="flex items-start gap-2.5">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-200 font-bold text-emerald-900 text-xs">1</div>
+                  <div>
+                    <strong className="block text-slate-800">Share Your Code</strong>
+                    Give your voucher code to guests verbally, on brochures, or via social channels.
+                  </div>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-200 font-bold text-emerald-900 text-xs">2</div>
+                  <div>
+                    <strong className="block text-slate-800">Customer Checks Out</strong>
+                    Guest enters your voucher code or clicks your referral link when booking.
+                  </div>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-200 font-bold text-emerald-900 text-xs">3</div>
+                  <div>
+                    <strong className="block text-slate-800">Receive Commission</strong>
+                    Commission ({Math.round(affiliate.commissionRate * 100)}%) is automatically credited to your balance.
+                  </div>
+                </div>
+              </div>
+            </section>
+
             <section className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div>

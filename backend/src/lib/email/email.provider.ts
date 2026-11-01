@@ -104,11 +104,20 @@ class SmtpEmailProvider implements IEmailProvider {
 
   constructor() {
     const port = Number(process.env.SMTP_PORT || 465);
+    const host = (process.env.SMTP_HOST || "").trim();
+    let pass = (process.env.SMTP_PASS || "").trim().replace(/^["']|["']$/g, "");
+    // Google App Passwords are 16 characters often generated with spaces (e.g. "abcd efgh ijkl mnop")
+    if (host.toLowerCase().includes("gmail.com")) {
+      pass = pass.replace(/\s+/g, "");
+    }
+    const user = (process.env.SMTP_USER || "").trim().replace(/^["']|["']$/g, "");
+    const secure = process.env.SMTP_SECURE === "true" || port === 465;
+
     this.transport = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
+      host,
       port,
-      secure: process.env.SMTP_SECURE === "true" || port === 465,
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+      secure,
+      auth: { user, pass },
       tls: { rejectUnauthorized: false },
     });
   }
