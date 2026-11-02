@@ -15,6 +15,7 @@ import { createPackageBooking, PACKAGES } from "@/modules/bookings/package-booki
 import { syncPendingPayments } from "@/modules/bookings/payment-sync";
 import { itineraryPdf, voucherPdf } from "@/modules/bookings/voucher-pdf";
 import { tripBookings, tripOf, tripSummary } from "@/modules/bookings/trip";
+import { bookingIcs } from "@/modules/bookings/calendar-event";
 import { emailSchema, parseOr400, referenceSchema, z } from "@/lib/security/validate";
 import { airportTransferSchema } from "@/modules/bookings/airport-transfer";
 
@@ -141,6 +142,26 @@ router.get("/voucher.pdf", rateLimitMiddleware("booking_read", { maxRequests: 30
     res.setHeader("Content-Length", String(file.byteLength));
     res.setHeader("Cache-Control", "private, no-store");
     return res.end(Buffer.from(file));
+  } catch (error) {
+    next(error);
+  }
+});
+
+// "Add to calendar" (calendar-event.ts): the booking, or every day of its trip, as an .ics file.
+// Same access as the voucher: the signed link from the email, the signed-in owner, or staff.
+router.get("/calendar.ics", rateLimitMiddleware("booking_read", { maxRequests: 30, windowSeconds: 60 }), async (req, res, next) => {
+  try {
+    const query = parseOr400(readSchema, req.query, res);
+    if (!query) return;
+    const booking = await readableBooking(req, query.ref, query.t);
+    if (!booking) return res.status(404).json({ success: false, error: "Booking not found" });
+    const trip = tripOf(booking.priceSnapshot, booking.bookingReference);
+    const days = trip ? (await tripBookings(booking.bookingReference)).filter((b) => b.status === "CONFIRMED" || b.status === "COMPLETED") : [booking];
+    const ics = bookingIcs(days.length ? days : [booking]);
+    res.setHeader("Content-Type", "text/calendar; charset=utf-8");
+    res.setHeader("Content-Disposition", `inline; filename="vista-chase-${trip?.reference ?? booking.bookingReference}.ics"`);
+    res.setHeader("Cache-Control", "private, no-store");
+    return res.send(ics);
   } catch (error) {
     next(error);
   }

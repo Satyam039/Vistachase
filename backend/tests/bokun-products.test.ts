@@ -95,6 +95,35 @@ describe("matching Bókun start times", () => {
     };
     await expect(reserveInBokun(api, input as never, undefined as never)).rejects.toThrow(/only 08:30 on that day/);
   });
+
+  it("asks Bókun for a day either side, so a same-day range that comes back empty still finds the slot", async () => {
+    const { reserveInBokun } = await import("@/modules/bokun/bokun-booking");
+    const asked: string[] = [];
+    const api: BokunApi = {
+      getAvailabilities: async (_id: string, start: string, end: string) => {
+        asked.push(`${start}..${end}`);
+        if (start === end) return [];
+        return [{ date: Date.parse("2026-11-15T07:00:00Z"), startTime: "8:30", availabilityCount: 0, soldOut: true }];
+      },
+      fetch: async () => ({ pricingCategories: [{ id: 1, title: "Adult" }] }),
+    };
+    const input = {
+      bookingReference: "VC-TEST",
+      productBokunId: "30190",
+      category: "SHARED",
+      date: "2026-11-15",
+      time: "08:30",
+      adults: 2,
+      children: 0,
+      infants: 0,
+      customerName: "Test Guest",
+      customerEmail: "t@example.com",
+      customerPhone: "+10000000000",
+    };
+    // The slot is found (so the failure is about seats, not a missing start time).
+    await expect(reserveInBokun(api, input as never, undefined as never)).rejects.toThrow(/0 seat\(s\) left/);
+    expect(asked).toEqual(["2026-11-14..2026-11-16"]);
+  });
 });
 
 describe("confirming on a test account in another currency", () => {

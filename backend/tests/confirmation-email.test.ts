@@ -68,6 +68,24 @@ describe("confirmation email", () => {
     expect(email.attachments?.[0].content.subarray(0, 4).toString()).toBe("%PDF");
     expect(await pages(email)).toBe(1); // one page: itinerary, tour steps and the check-in QR code
 
+    // A hidden copy goes to support, and the calendar file and links ride along.
+    expect(email.bcc).toEqual(["support@vistachase.com"]);
+    const ics = email.attachments?.[1];
+    expect(ics?.filename).toBe(`Vista-Chase-${ref}.ics`);
+    expect(ics?.contentType).toContain("text/calendar");
+    const cal = ics!.content.toString();
+    expect(cal).toContain("BEGIN:VEVENT");
+    expect(cal).toContain(`UID:${ref}@vistachase.com`);
+    expect(cal).toContain("DTSTART:20280502T143000Z"); // 08:30 in Banff (UTC-6 in May)
+    expect(email.html).toContain("calendar.google.com/calendar/render");
+    expect(email.html).toContain("/api/bookings/calendar.ics?ref=");
+
+    const download = await request(createApp()).get("/api/bookings/calendar.ics").query({ ref, t: signBookingLink(ref, "voucher") });
+    expect(download.status).toBe(200);
+    expect(download.headers["content-type"]).toContain("text/calendar");
+    expect(download.text).toContain(`UID:${ref}@vistachase.com`);
+    expect((await request(createApp()).get("/api/bookings/calendar.ics").query({ ref })).status).toBe(404);
+
     // A webhook retry or a second confirmation doesn't send it again.
     expect(await sendConfirmationEmail(ref)).toBe("already-sent");
     expect(confirmations()).toHaveLength(1);
