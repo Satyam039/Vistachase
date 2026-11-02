@@ -20,6 +20,17 @@ import { itineraryPdf } from "@/modules/bookings/voucher-pdf";
 import { DEPOSIT_PERCENT, paidCents } from "@/modules/bookings/deposit";
 import { balanceDueLabel } from "@/modules/bookings/booking.repository";
 import { tripBookings, tripOf, type TripBooking } from "@/modules/bookings/trip";
+import { bookingIcs, googleCalendarLink, icsLink } from "@/modules/bookings/calendar-event";
+
+/**
+ * Who gets a hidden copy of every confirmation: BOOKING_COPY_TO (comma-separated), default
+ * support@vistachase.com; BOOKING_COPY_TO=off sends none.
+ */
+export function bookingCopyRecipients(): string[] {
+  const raw = (process.env.BOOKING_COPY_TO ?? "support@vistachase.com").trim();
+  if (!raw || raw.toLowerCase() === "off") return [];
+  return raw.split(",").map((s) => s.trim()).filter((s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s));
+}
 
 export type ConfirmationResult = "sent" | "already-sent" | "not-confirmed" | "waiting-for-other-days" | "failed";
 
@@ -73,10 +84,12 @@ export async function sendConfirmationEmail(reference: string, options: { force?
     const total = live.reduce((n, b) => n + b.totalAmount, 0);
     const paid = Math.min(total, live.reduce((n, b) => n + paidCents(b.payments), 0));
     const currency = lead.currency;
-    const days = live.map((b, i) => ({ ...dayLines(b), day: i + 1, reference: b.bookingReference, link: voucherLink(b.bookingReference) }));
+    const days = live.map((b, i) => ({ ...dayLines(b), day: i + 1, reference: b.bookingReference, link: voucherLink(b.bookingReference), google: googleCalendarLink(b) }));
     const multi = live.length > 1;
     // Manage booking (manage-booking.ts): the lead day's voucher page, opened at its Manage section.
     const manageLink = `${voucherLink(lead.bookingReference)}#manage`;
+    // Add to calendar: the .ics (attached too, so iPhone Mail shows "Add to Calendar") and Google.
+    const calendarFile = icsLink(lead.bookingReference);
 
     const dayHtml = days
       .map(
@@ -85,7 +98,7 @@ export async function sendConfirmationEmail(reference: string, options: { force?
             <p style="margin: 0; color: #257780; font-size: 13px; font-weight: bold;">${multi ? `Day ${d.day} · ` : ""}${escapeHtml(d.date)}</p>
             <p style="margin: 4px 0 0; font-weight: bold;">${escapeHtml(d.title)}</p>
             <p style="margin: 4px 0 0; color: #5d6168; font-size: 14px;">${d.time ? `Departs ${d.time} · ` : ""}Pickup: ${escapeHtml(d.pickup)}</p>
-            <p style="margin: 4px 0 0; font-size: 14px;"><a href="${d.link}" style="color: #257780;">${multi ? `Day ${d.day} voucher (${d.reference})` : "Open your voucher"}</a></p>
+            <p style="margin: 4px 0 0; font-size: 14px;"><a href="${d.link}" style="color: #257780;">${multi ? `Day ${d.day} voucher (${d.reference})` : "Open your voucher"}</a>${multi ? ` · <a href="${escapeHtml(d.google)}" style="color: #257780;">Add day ${d.day} to Google Calendar</a>` : ""}</p>
           </td></tr>`,
       )
       .join("");
@@ -105,6 +118,11 @@ export async function sendConfirmationEmail(reference: string, options: { force?
           <p style="margin: 0 0 6px;"><strong>Total:</strong> ${money(total, currency)} · <strong>Paid:</strong> ${money(paid, currency)}${balance > 0 ? ` · <strong>Balance due:</strong> ${money(balance, currency)}${dueBy}` : ""}</p>
           <table role="presentation" style="width: 100%; border-collapse: collapse; margin-top: 8px;">${dayHtml}</table>
         </div>
+        <p style="margin: 0 0 6px; font-weight: bold;">Add to your calendar</p>
+        <p style="margin: 0 0 20px;">
+          <a href="${escapeHtml(calendarFile)}" style="display: inline-block; border: 1px solid #257780; color: #257780; text-decoration: none; padding: 10px 16px; margin: 0 8px 8px 0;">iPhone / Apple / Outlook</a>
+          <a href="${escapeHtml(days[0].google)}" style="display: inline-block; border: 1px solid #257780; color: #257780; text-decoration: none; padding: 10px 16px; margin: 0 8px 8px 0;">Android / Google Calendar${multi ? " (Day 1)" : ""}</a>
+        </p>
         <p style="margin: 24px 0;"><a href="${manageLink}" style="display: inline-block; background: #257780; color: #ffffff; text-decoration: none; padding: 12px 22px; font-weight: bold;">Manage booking</a></p>
         <p style="color: #5d6168; font-size: 13px; margin-top: -12px;">Change the lead guest's name or phone, ask for a different date, or cancel.</p>
         <p>Be at your pickup 10 minutes early and show your voucher to your guide, printed or on your phone.</p>
@@ -120,6 +138,7 @@ export async function sendConfirmationEmail(reference: string, options: { force?
       "",
       policy,
       `Manage booking (change name or phone, ask for another date, cancel): ${manageLink}`,
+      `Add to calendar: iPhone / Apple / Outlook ${calendarFile} · Google Calendar ${days[0].google}`,
       "Your itinerary is attached as a PDF. Questions? Call +1 (825) 734-9456 or write to support@vistachase.com.",
     ].join("\n");
 
@@ -128,7 +147,11 @@ export async function sendConfirmationEmail(reference: string, options: { force?
       subject: `Your Vista Chase booking is confirmed: ${tripReference}`,
       html,
       text,
-      attachments: [{ filename: `Vista-Chase-itinerary-${tripReference}.pdf`, content: Buffer.from(pdf), contentType: "application/pdf" }],
+      bcc: bookingCopyRecipients().filter((a) => a.toLowerCase() !== lead.customerEmail.toLowerCase()),
+      attachments: [
+        { filename: `Vista-Chase-itinerary-${tripReference}.pdf`, content: Buffer.from(pdf), contentType: "application/pdf" },
+        { filename: `Vista-Chase-${tripReference}.ics`, content: Buffer.from(bookingIcs(live), "utf8"), contentType: "text/calendar; charset=utf-8; method=PUBLISH" },
+      ],
     });
     if (!result.success) throw new Error(result.error || "The email provider refused the message.");
 
