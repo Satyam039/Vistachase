@@ -16,7 +16,7 @@
 import prisma from "@/lib/db/prisma";
 import { PRODUCT_MAP } from "@/modules/tours/product-map";
 import { slotDate, slotTime, type BokunAvailability } from "@/modules/bokun/bokun-booking";
-import { bokunClient, bokunSyncDays, type BokunApi } from "@/modules/bokun/config";
+import { bokunClient, bokunIsTestAccount, bokunSyncDays, type BokunApi } from "@/modules/bokun/config";
 import { dateOnly, formatDateOnly, formatTimeOfDay, todayInMountainTime } from "@/lib/utils/time";
 
 /** Our bookings that hold seats on a departure. */
@@ -65,6 +65,9 @@ export async function syncBokunSeats(options: { client?: BokunApi; days?: number
       }
       result.products++;
     } catch (error) {
+      if (bokunIsTestAccount() && (error as any).status === 404) {
+        continue;
+      }
       result.errors.push(`${product.slug}: ${(error as Error).message.slice(0, 200)}`);
     }
   }

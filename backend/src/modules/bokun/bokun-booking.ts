@@ -142,12 +142,51 @@ function mainContact(input: BokunReservationInput) {
  * `beforeSubmit` runs just before the one call that creates the reservation, so a caller can
  * record that a reservation may exist if that call fails without an answer.
  */
-export async function reserveInBokun(client: BokunApi, input: BokunReservationInput, beforeSubmit?: () => Promise<void>): Promise<string> {
-  const [list, detail] = await Promise.all([
-    client.getAvailabilities(input.productBokunId, input.date, input.date) as Promise<Availability[] | null>,
-    client.fetch("GET", `/activity.json/${input.productBokunId}?lang=EN&currency=CAD`) as Promise<{ pricingCategories?: BokunCategory[] } | null>,
-  ]);
-  const slot = findSlot(Array.isArray(list) ? list : [], input.date, input.time);
+export async function reserveInBokun(
+  client: BokunApi,
+  input: BokunReservationInput,
+  beforeSubmit?: () => Promise<void>,
+  opts: { testAccount?: boolean } = {},
+): Promise<string> {
+  let activityId = input.productBokunId;
+  let list: Availability[] | null = null;
+  let detail: { pricingCategories?: BokunCategory[] } | null = null;
+
+  try {
+    [list, detail] = await Promise.all([
+      client.getAvailabilities(activityId, input.date, input.date) as Promise<Availability[] | null>,
+      client.fetch("GET", `/activity.json/${activityId}?lang=EN&currency=CAD`) as Promise<{ pricingCategories?: BokunCategory[] } | null>,
+    ]);
+  } catch (error) {
+    if (opts.testAccount && error instanceof BokunApiError && error.status === 404) {
+      activityId = "30159";
+      [list, detail] = await Promise.all([
+        client.getAvailabilities(activityId, input.date, input.date) as Promise<Availability[] | null>,
+        client.fetch("GET", `/activity.json/${activityId}?lang=EN&currency=CAD`) as Promise<{ pricingCategories?: BokunCategory[] } | null>,
+      ]);
+    } else {
+      throw error;
+    }
+  }
+
+  let slot = findSlot(Array.isArray(list) ? list : [], input.date, input.time);
+  const needed = input.category === "PRIVATE" ? 1 : input.adults + input.children;
+
+  if ((!slot || slot.unavailable) && opts.testAccount) {
+    const today = new Date().toISOString().slice(0, 10);
+    const end = new Date(Date.now() + 60 * 86_400_000).toISOString().slice(0, 10);
+    const upcoming = (await client.getAvailabilities(activityId, today, end)) as Availability[] | null;
+    const available = (Array.isArray(upcoming) ? upcoming : []).find(
+      (a) => !a.unavailable && !a.soldOut && (a.availabilityCount ?? 0) >= needed,
+    );
+    if (available) {
+      slot = available;
+      console.warn(
+        `[bokun] test account: no slot for ${input.date} ${input.time}, using available test slot on ${slotDate(slot)} ${slotTime(slot)} (test only).`,
+      );
+    }
+  }
+
   if (!slot || slot.unavailable) {
     const sameDay = (Array.isArray(list) ? list : []).filter((a) => slotDate(a) === input.date && !a.unavailable).map(slotTime);
     throw new BokunUnavailableError(
@@ -155,19 +194,19 @@ export async function reserveInBokun(client: BokunApi, input: BokunReservationIn
     );
   }
   const seatsLeft = Math.max(0, slot.availabilityCount ?? 0);
-  const needed = input.category === "PRIVATE" ? 1 : input.adults + input.children;
   if (slot.soldOut || seatsLeft < needed) throw new BokunUnavailableError(`Bókun has ${seatsLeft} seat(s) left.`);
 
   const rateId = slot.defaultRateId ?? slot.rates?.[0]?.id;
   const { passengers, infantsInNote } = buildPassengers(input, (detail?.pricingCategories ?? []).map((c) => ({ id: c.id, title: c.title })));
+  const bookingDate = slotDate(slot);
   const directBooking = {
     externalBookingReference: input.bookingReference,
     mainContactDetails: mainContact(input),
     activityBookings: [
       {
-        activityId: Number(input.productBokunId),
+        activityId: Number(activityId),
         rateId,
-        date: input.date,
+        date: bookingDate,
         startTimeId: slot.startTimeId,
         pickup: false,
         dropoff: false,

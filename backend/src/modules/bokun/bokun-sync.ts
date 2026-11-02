@@ -174,6 +174,7 @@ async function runCreate(client: BokunApi, task: BookingSyncTask, now: Date): Pr
           submitting = true;
           await prisma.bookingSyncTask.update({ where: { id: task.id }, data: { payload: { stage: "submitting" } } });
         },
+        { testAccount: bokunIsTestAccount() },
       );
       submitting = false;
       await prisma.bookingSyncTask.update({ where: { id: task.id }, data: { externalRef: code, payload: { stage: "reserved" } } });
