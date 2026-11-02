@@ -6,7 +6,11 @@
 //     npx tsx scripts/bokun-probe.ts 1167962     one product, full detail
 //     npx tsx scripts/bokun-probe.ts --all       every mapped product, one summary each
 //     npx tsx scripts/bokun-probe.ts --list      every product in the Bókun account, with categories
+//     npx tsx scripts/bokun-probe.ts 30190 2026-11-15   one product, every start time Bókun has that day
+//
+// Reads backend/.env, so on the server no keys need typing.
 
+import "dotenv/config";
 import { BokunApiClient } from "../src/modules/bokun/bokun.client";
 
 /** One line per mapped product: our tour vs Bókun's name for that ID, dates found and pricing. */
@@ -55,6 +59,23 @@ async function listProducts(client: BokunApiClient) {
   }
 }
 
+/** Every start time Bókun returns for one product on one day (asked with a day either side). */
+async function checkDay(client: BokunApiClient, productId: string, date: string) {
+  const { slotDate, slotTime, shiftDay } = await import("../src/modules/bokun/bokun-booking");
+  const { PRODUCT_MAP } = await import("../src/modules/tours/product-map");
+  const tours = PRODUCT_MAP.filter((p) => p.bokunId === productId).map((p) => p.slug);
+  console.log(`Bókun product ${productId} is used by: ${tours.join(", ") || "no tour on this site (check BOKUN_PRODUCT_OVERRIDES)"}`);
+  for (const [start, end] of [[date, date], [shiftDay(date, -1), shiftDay(date, 1)]]) {
+    const list = (((await client.getAvailabilities(productId, start, end)) ?? []) as any[]);
+    console.log(`\nAsked ${start} → ${end}: ${list.length} entries`);
+    for (const a of list) {
+      console.log(
+        `  ${slotDate(a)} ${slotTime(a)}  raw date ${JSON.stringify(a.date)}  seats ${a.availabilityCount ?? "?"}${a.soldOut ? " SOLD OUT" : ""}${a.unavailable ? " UNAVAILABLE" : ""}`,
+      );
+    }
+  }
+}
+
 async function main() {
   const productId = process.argv[2] || "1167962"; // banff-highlights-tour
   const { BOKUN_ACCESS_KEY, BOKUN_SECRET_KEY } = process.env;
@@ -67,6 +88,8 @@ async function main() {
   const end = day(14);
 
   if (productId === "--list") return listProducts(client);
+  const onDate = process.argv[3];
+  if (onDate && /^\d{4}-\d{2}-\d{2}$/.test(onDate)) return checkDay(client, productId, onDate);
   if (productId === "--all") {
     console.log(`API: ${apiUrl}  checking every mapped product, dates ${start} → ${end}`);
     return checkAll(client, start, end);

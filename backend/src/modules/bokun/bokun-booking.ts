@@ -85,6 +85,9 @@ const isInfant = (title: string) => /infant|baby/i.test(title);
 const groupSize = (title: string) => Number(/group of (\d+)/i.exec(title)?.[1] ?? NaN);
 
 /** Bókun's start for our departure: same day and start time. */
+/** "2026-11-15" moved by whole days. */
+export const shiftDay = (date: string, days: number) => new Date(Date.parse(`${date}T00:00:00Z`) + days * DAY_MS).toISOString().slice(0, 10);
+
 export function findSlot(list: Availability[], date: string, time: string) {
   return list.find((a) => slotDate(a) === date && slotTime(a) === time);
 }
@@ -144,14 +147,25 @@ function mainContact(input: BokunReservationInput) {
  */
 export async function reserveInBokun(client: BokunApi, input: BokunReservationInput, beforeSubmit?: () => Promise<void>): Promise<string> {
   const [list, detail] = await Promise.all([
-    client.getAvailabilities(input.productBokunId, input.date, input.date) as Promise<Availability[] | null>,
+    // One day either side: a same-day range (start = end) can come back empty from Bókun, and
+    // Bókun's day stamps can sit a few hours off UTC midnight. findSlot keeps only the asked date.
+    client.getAvailabilities(input.productBokunId, shiftDay(input.date, -1), shiftDay(input.date, 1)) as Promise<Availability[] | null>,
     client.fetch("GET", `/activity.json/${input.productBokunId}?lang=EN&currency=CAD`) as Promise<{ pricingCategories?: BokunCategory[] } | null>,
   ]);
   const slot = findSlot(Array.isArray(list) ? list : [], input.date, input.time);
   if (!slot || slot.unavailable) {
-    const sameDay = (Array.isArray(list) ? list : []).filter((a) => slotDate(a) === input.date && !a.unavailable).map(slotTime);
+    const all = Array.isArray(list) ? list : [];
+    const sameDay = all.filter((a) => slotDate(a) === input.date && !a.unavailable).map(slotTime);
+    const closed = all.filter((a) => slotDate(a) === input.date && a.unavailable).map(slotTime);
+    const nearby = [...new Set(all.map((a) => `${slotDate(a)} ${slotTime(a)}`))].slice(0, 6);
     throw new BokunUnavailableError(
-      `Bókun doesn't offer this departure (${input.date} ${input.time}). Bókun has ${sameDay.length ? `only ${[...new Set(sameDay)].join(", ")}` : "no start times"} on that day: add a ${input.time} start time with seats on that date in Bókun.`,
+      [
+        `Bókun product ${input.productBokunId} doesn't offer this departure (${input.date} ${input.time}).`,
+        `Bókun has ${sameDay.length ? `only ${[...new Set(sameDay)].join(", ")}` : "no start times"} on that day`,
+        closed.length ? `(closed: ${[...new Set(closed)].join(", ")})` : "",
+        `; ${nearby.length ? `Bókun returned ${nearby.join(", ")} around it` : "Bókun returned no dates at all around it"}.`,
+        ` Add a ${input.time} start time with seats on that date to product ${input.productBokunId} in Bókun.`,
+      ].join(" ").replace(/ ;/, ";").replace(/\s+/g, " ").trim(),
     );
   }
   const seatsLeft = Math.max(0, slot.availabilityCount ?? 0);
