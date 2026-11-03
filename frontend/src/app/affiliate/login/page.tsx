@@ -2,12 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { AlertCircle } from "lucide-react";
 import { AUTH_FIELD, AuthShell } from "@/components/forms/AuthShell";
 
 export default function AffiliateLoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -29,9 +27,9 @@ export default function AffiliateLoginPage() {
       } else {
         const next = new URLSearchParams(window.location.search).get("next");
         if (next && next.startsWith("/affiliate") && !next.startsWith("/affiliate/login")) {
-          router.push(next);
+          window.location.assign(next); // full load so the middleware sees the new cookie
         } else {
-          router.push("/affiliate/dashboard");
+          window.location.assign("/affiliate/dashboard");
         }
       }
     } catch {
