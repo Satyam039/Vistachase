@@ -25,6 +25,7 @@ import {
   balanceOwedCents,
   paidCents,
 } from "@/modules/bookings/deposit";
+import { experienceTitle } from "@/modules/bookings/tour-itinerary";
 
 const LIVE = ["CONFIRMED", "PAID_UNSYNCED"];
 const money = (cents: number, currency: string) => `$${(cents / 100).toFixed(2)} ${currency}`;
@@ -40,7 +41,7 @@ async function loadBooking(reference: string) {
 type LoadedBooking = NonNullable<Awaited<ReturnType<typeof loadBooking>>>;
 
 const departureAt = (b: LoadedBooking) => getMountainTimeInstant(b.tourDeparture.date, b.tourDeparture.departureTime);
-const titleOf = (b: LoadedBooking) => b.tourDeparture.tour?.title || b.tourDeparture.shuttleRoute?.name || "Vista Chase experience";
+const titleOf = (b: LoadedBooking) => experienceTitle(b.tourDeparture);
 
 export type BalanceStart =
   | { ok: true; paid: true; balanceDue: 0 }

@@ -21,16 +21,8 @@ import { DEPOSIT_PERCENT, paidCents } from "@/modules/bookings/deposit";
 import { balanceDueLabel } from "@/modules/bookings/booking.repository";
 import { tripBookings, tripOf, type TripBooking } from "@/modules/bookings/trip";
 import { bookingIcs, googleCalendarLink, icsLink } from "@/modules/bookings/calendar-event";
-
-/**
- * Who gets a hidden copy of every confirmation: BOOKING_COPY_TO (comma-separated), default
- * support@vistachase.com; BOOKING_COPY_TO=off sends none.
- */
-export function bookingCopyRecipients(): string[] {
-  const raw = (process.env.BOOKING_COPY_TO ?? "support@vistachase.com").trim();
-  if (!raw || raw.toLowerCase() === "off") return [];
-  return raw.split(",").map((s) => s.trim()).filter((s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s));
-}
+import { experienceTitle } from "@/modules/bookings/tour-itinerary";
+import { sendStaffBookingNotice } from "@/modules/bookings/staff-booking-notice";
 
 export type ConfirmationResult = "sent" | "already-sent" | "not-confirmed" | "waiting-for-other-days" | "failed";
 
@@ -52,7 +44,7 @@ function clock(hhmm: string | null) {
 
 function dayLines(b: TripBooking) {
   const d = b.tourDeparture;
-  const title = d.tour?.title || d.shuttleRoute?.name || "Vista Chase experience";
+  const title = experienceTitle(d);
   const time = clock(formatTimeOfDay(d.departureTime));
   const place = b.pickupStop?.name || b.pickupCustomText;
   const pickup = b.pickupTime ? `${clock(b.pickupTime)}${place ? ` at ${place}` : ""}` : (place ?? "Pickup details to follow by email");
@@ -75,6 +67,8 @@ export async function sendConfirmationEmail(reference: string, options: { force?
   if (!options.force) {
     const claimed = await prisma.booking.updateMany({ where: { id: lead.id, confirmationEmailSentAt: null }, data: { confirmationEmailSentAt: new Date() } });
     if (claimed.count === 0) return "already-sent";
+    // Staff hear about the booking whether or not the guest's email goes through (sent once).
+    await sendStaffBookingNotice(live, trip);
   }
 
   try {
@@ -147,7 +141,6 @@ export async function sendConfirmationEmail(reference: string, options: { force?
       subject: `Your Vista Chase booking is confirmed: ${tripReference}`,
       html,
       text,
-      bcc: bookingCopyRecipients().filter((a) => a.toLowerCase() !== lead.customerEmail.toLowerCase()),
       attachments: [
         { filename: `Vista-Chase-itinerary-${tripReference}.pdf`, content: Buffer.from(pdf), contentType: "application/pdf" },
         { filename: `Vista-Chase-${tripReference}.ics`, content: Buffer.from(bookingIcs(live), "utf8"), contentType: "text/calendar; charset=utf-8; method=PUBLISH" },

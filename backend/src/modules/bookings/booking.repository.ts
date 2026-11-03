@@ -32,6 +32,7 @@ import { sendCommissionEarnedEmail } from "@/modules/affiliates/partner-emails";
 import { checkinLink, signBookingLink, voucherLink } from "@/lib/security/signed-links";
 import { DEPOSIT_PERCENT, DEPOSIT_MIN_DAYS_BEFORE, depositTerms, firstChargeCents, paymentSummary } from "@/modules/bookings/deposit";
 import { policyDecision } from "@/modules/bookings/cancellation-policy";
+import { experienceTitle } from "@/modules/bookings/tour-itinerary";
 
 export interface CreateBookingInput {
   holdToken?: string;
@@ -649,7 +650,7 @@ export async function cancelBooking(reference: string, customerEmail?: string) {
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #1c1f23;">
           <h2>Booking cancelled</h2>
-          <p>Your booking <strong>${booking.bookingReference}</strong> for <strong>${escapeHtml(booking.tourDeparture.tour?.title || booking.tourDeparture.shuttleRoute?.name || "Vista Chase experience")}</strong> on ${formatDateOnly(booking.tourDeparture.date)} has been cancelled.</p>
+          <p>Your booking <strong>${booking.bookingReference}</strong> for <strong>${escapeHtml(experienceTitle(booking.tourDeparture))}</strong> on ${formatDateOnly(booking.tourDeparture.date)} has been cancelled.</p>
           ${refundedCents > 0 ? `<p>We have refunded <strong>$${(refundedCents / 100).toFixed(2)} ${booking.currency}</strong> to your original payment method; it usually arrives within 5–10 business days.</p>` : ""}
           ${failedCents > 0 ? `<p>Your refund of <strong>$${(failedCents / 100).toFixed(2)} ${booking.currency}</strong> couldn't be sent automatically. Our team has been notified and will send it to your original payment method.</p>` : ""}
           <p>${policy.keepPercent > 0 ? `This is a private multi-day package: ${policy.keepPercent}% of the total price is non-refundable, and everything else you paid is refunded.` : "Cancelled within the policy deadline, so everything you paid is refunded."}</p>
