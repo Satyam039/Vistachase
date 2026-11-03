@@ -149,48 +149,19 @@ export async function reserveInBokun(
   client: BokunApi,
   input: BokunReservationInput,
   beforeSubmit?: () => Promise<void>,
-  opts: { testAccount?: boolean } = {},
 ): Promise<string> {
-  let activityId = input.productBokunId;
-  let list: Availability[] | null = null;
-  let detail: { pricingCategories?: BokunCategory[] } | null = null;
+  // Always the guest's own date and start time: never another day or another Bókun product.
+  const activityId = input.productBokunId;
+  const [list, detail] = await Promise.all([
+    // One day either side: a same-day range (start = end) can come back empty from Bókun, and
+    // Bókun's day stamps can sit a few hours off UTC midnight. findSlot keeps only the asked date.
+    client.getAvailabilities(activityId, shiftDay(input.date, -1), shiftDay(input.date, 1)) as Promise<Availability[] | null>,
+    client.fetch("GET", `/activity.json/${activityId}?lang=EN&currency=CAD`) as Promise<{ pricingCategories?: BokunCategory[] } | null>,
+  ]);
 
-  try {
-    [list, detail] = await Promise.all([
-      // One day either side: a same-day range (start = end) can come back empty from Bókun, and
-      // Bókun's day stamps can sit a few hours off UTC midnight. findSlot keeps only the asked date.
-      client.getAvailabilities(activityId, shiftDay(input.date, -1), shiftDay(input.date, 1)) as Promise<Availability[] | null>,
-      client.fetch("GET", `/activity.json/${activityId}?lang=EN&currency=CAD`) as Promise<{ pricingCategories?: BokunCategory[] } | null>,
-    ]);
-  } catch (error) {
-    if (opts.testAccount && error instanceof BokunApiError && error.status === 404) {
-      activityId = "30159";
-      [list, detail] = await Promise.all([
-        client.getAvailabilities(activityId, shiftDay(input.date, -1), shiftDay(input.date, 1)) as Promise<Availability[] | null>,
-        client.fetch("GET", `/activity.json/${activityId}?lang=EN&currency=CAD`) as Promise<{ pricingCategories?: BokunCategory[] } | null>,
-      ]);
-    } else {
-      throw error;
-    }
-  }
-
-  let slot = findSlot(Array.isArray(list) ? list : [], input.date, input.time);
+  const slot = findSlot(Array.isArray(list) ? list : [], input.date, input.time);
   const needed = input.category === "PRIVATE" ? 1 : input.adults + input.children;
 
-  if ((!slot || slot.unavailable) && opts.testAccount) {
-    const today = new Date().toISOString().slice(0, 10);
-    const end = new Date(Date.now() + 60 * 86_400_000).toISOString().slice(0, 10);
-    const upcoming = (await client.getAvailabilities(activityId, today, end)) as Availability[] | null;
-    const available = (Array.isArray(upcoming) ? upcoming : []).find(
-      (a) => !a.unavailable && !a.soldOut && (a.availabilityCount ?? 0) >= needed,
-    );
-    if (available) {
-      slot = available;
-      console.warn(
-        `[bokun] test account: no slot for ${input.date} ${input.time}, using available test slot on ${slotDate(slot)} ${slotTime(slot)} (test only).`,
-      );
-    }
-  }
   if (!slot || slot.unavailable) {
     const all = Array.isArray(list) ? list : [];
     const sameDay = all.filter((a) => slotDate(a) === input.date && !a.unavailable).map(slotTime);

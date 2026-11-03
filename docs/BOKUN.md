@@ -44,9 +44,10 @@ Start times must match: a website departure at 08:30 is matched to the Bókun st
 |---|---|---|
 | Booking confirmed (paid, free, Quick Book, staff approval) | Reserved for external payment, then confirmed with the amount the guest paid. Bókun's confirmation code is saved on the booking (Admin booking detail → "Bókun"). Bókun doesn't email the guest; the website sends the confirmation. | `src/modules/bokun/bokun-sync.ts`, `bokun-booking.ts` |
 | Booking cancelled (guest, staff, approved request) | Cancelled in Bókun without a refund (refunds go through Stripe). If it never reached Bókun, nothing is sent. | same |
+| Seat hold and booking (before any seats are taken) | Bókun's start for that date and time is read live. No such start, or fewer seats left than the party (after our own bookings Bókun doesn't have yet and other guests' holds), and the website refuses with the seats left. Private: refused when Bókun has no vehicle left. If Bókun doesn't answer within 8 seconds the website's own seats decide. Works on a test account too. | `src/modules/bokun/bokun-seats.ts` |
 | Every 15 minutes | Bókun's seats left and seats booked set our seat counts on matching departures. Prices, times and statuses stay the website's. | `src/modules/bokun/availability-sync.ts` |
 
-The change for Bókun is queued in the same database transaction as the booking's status change (`BookingSyncTask`), sent a moment later, and retried with backoff (1, 5, 15, 60, 180, 360 minutes) if Bókun can't be reached. A Bókun outage never blocks or loses a website booking.
+The change for Bókun is queued in the same database transaction as the booking's status change (`BookingSyncTask`), sent a moment later, and retried with backoff (1, 5, 15, 60, 180, 360 minutes) if Bókun can't be reached. A Bókun outage never blocks or loses a website booking. A booking always goes to Bókun on its own date and start time; when Bókun doesn't have that start, staff are flagged (it's never moved to another day).
 
 ## When something needs a person
 
