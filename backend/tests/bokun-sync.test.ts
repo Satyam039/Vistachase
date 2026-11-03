@@ -10,6 +10,7 @@ import { setBokunClientForTests, type BokunApi } from "@/modules/bokun/config";
 import { processBokunSyncTasks, queueUpcomingBookings, retryBokunSync, setBokunAutoRunForTests } from "@/modules/bokun/bokun-sync";
 import { syncBokunSeats } from "@/modules/bokun/availability-sync";
 import { cancelBooking, createBooking } from "@/modules/bookings/booking.repository";
+import { createReservationHold } from "@/modules/reservations/reservation.repository";
 import { dateOnly, timeOfDay } from "@/lib/utils/time";
 
 const SHARED_SLUG = "banff-highlights-tour"; // Bókun 1142134
@@ -175,6 +176,7 @@ describe("website bookings reach Bókun", () => {
 
   it("sends nothing when the booking is cancelled before it reached Bókun", async () => {
     const dep = await departure(sharedTourId);
+    bokun.slot("1142134", DAY, `06:${String(minute - 1).padStart(2, "0")}`, 10);
     const booking = await book(dep);
     await cancelBooking(booking.bookingReference, booking.customerEmail);
     await run(booking.id);
@@ -185,8 +187,9 @@ describe("website bookings reach Bókun", () => {
 
   it("flags staff when Bókun has no seats, and keeps the website booking confirmed", async () => {
     const dep = await departure(sharedTourId, { time: "09:15" });
-    bokun.slot("1142134", DAY, "09:15", 1);
+    bokun.slot("1142134", DAY, "09:15", 3);
     const booking = await book(dep);
+    bokun.slots["1142134"][0].availabilityCount = 1; // sold on another channel before it was sent
     await run(booking.id);
     const after = await reload(booking.id);
     expect(after.status).toBe("CONFIRMED");
@@ -259,10 +262,72 @@ describe("website bookings reach Bókun", () => {
   });
 });
 
+describe("never more seats than Bókun has", () => {
+  const guest = { customerName: "Ada Lovelace", customerEmail: "ada.bokun@example.com", customerPhone: "+1 403 555 0100", infantsCount: 0 };
+
+  it("refuses a booking for more guests than Bókun has left, though our own calendar has room", async () => {
+    const dep = await departure(sharedTourId, { time: "12:15", capacity: 12 });
+    bokun.slot("1142134", DAY, "12:15", 5);
+    const tooMany = await createBooking({ ...guest, departureId: dep.id, adultsCount: 6, childrenCount: 0 });
+    expect(tooMany).toMatchObject({ success: false, error: "Only 5 seats left for this departure. Requested: 6" });
+    const fits = await createBooking({ ...guest, departureId: dep.id, adultsCount: 5, childrenCount: 0 });
+    expect(fits.success).toBe(true);
+    // Bókun doesn't have that booking yet, so its 5 seats are already gone here.
+    const after = await createBooking({ ...guest, departureId: dep.id, adultsCount: 1, childrenCount: 0 });
+    expect(after).toMatchObject({ success: false, error: "This departure is sold out. Please choose another date or time." });
+  });
+
+  it("refuses a seat hold Bókun can't cover, and counts other guests' holds", async () => {
+    const dep = await departure(sharedTourId, { time: "12:45" });
+    bokun.slot("1142134", DAY, "12:45", 4);
+    const first = await createReservationHold({ departureId: dep.id, seatsCount: 3, customerName: "A", customerEmail: "a@example.com" });
+    expect(first.success).toBe(true);
+    const second = await createReservationHold({ departureId: dep.id, seatsCount: 2, customerName: "B", customerEmail: "b@example.com" });
+    expect(second).toMatchObject({ success: false, error: "Only 1 seat left for this departure. Requested: 2" });
+    // The first guest's own hold isn't counted against them.
+    const booked = await createBooking({ ...guest, departureId: dep.id, adultsCount: 3, childrenCount: 0, holdToken: first.holdToken });
+    expect(booked.success).toBe(true);
+  });
+
+  it("refuses a departure Bókun doesn't offer that day, and a private vehicle Bókun has sold", async () => {
+    const shared = await departure(sharedTourId, { time: "13:15" });
+    bokun.slot("1142134", "2035-07-15", "13:15", 10); // the next day only
+    expect(await createBooking({ ...guest, departureId: shared.id, adultsCount: 1, childrenCount: 0 })).toMatchObject({
+      success: false,
+      error: "This departure is no longer available. Please choose another date or time.",
+    });
+    const priv = await departure(privateTourId, { time: "13:15", capacity: 1 });
+    bokun.slot("1167962", DAY, "13:15", 0);
+    expect(await createBooking({ ...guest, departureId: priv.id, adultsCount: 2, childrenCount: 0 })).toMatchObject({
+      success: false,
+      error: "This private vehicle is already booked for this departure.",
+    });
+  });
+
+  it("goes on with our own seats when Bókun can't be reached", async () => {
+    const dep = await departure(sharedTourId, { time: "13:45" });
+    bokun.failAvailability = new Error("fetch failed");
+    expect((await createBooking({ ...guest, departureId: dep.id, adultsCount: 2, childrenCount: 0 })).success).toBe(true);
+  });
+
+  it("sends the booking to Bókun on its own date and time, never another free day", async () => {
+    const dep = await departure(sharedTourId, { time: "14:15" });
+    bokun.slot("1142134", DAY, "14:15", 5);
+    const booking = await book(dep);
+    bokun.slots["1142134"] = [];
+    bokun.slot("1142134", "2035-07-15", "14:15", 15); // a free day next to it
+    await run(booking.id);
+    expect(bokun.made("/checkout.json/submit")).toHaveLength(0);
+    expect((await reload(booking.id)).externalSyncStatus).toBe("FAILED");
+  });
+});
+
 describe("Bókun seats in our calendar", () => {
   it("shared tours: seats sold on other channels come off our seats; our bookings not yet in Bókun still count", async () => {
     const dep = await departure(sharedTourId, { time: "13:00", capacity: 12 });
-    const booking = await book(dep); // 3 seats, not in Bókun yet (queue not run)
+    setBokunClientForTests(null); // booked before Bókun had this start
+    const booking = await book(dep); // 3 seats, not in Bókun yet
+    setBokunClientForTests(bokun.api());
     bokun.slot("1142134", DAY, "13:00", 4, 8); // Bókun: 12 seats, 8 sold elsewhere, 4 left
     const result = await syncBokunSeats({ from: DAY, days: 1 });
     expect(result).toMatchObject({ errors: [] });

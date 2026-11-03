@@ -18,6 +18,7 @@ import { Prisma, type Booking, type Payment } from "@prisma/client";
 import prisma from "@/lib/db/prisma";
 import { formatDateOnly, formatTimeOfDay, getMountainTimeInstant } from "@/lib/utils/time";
 import { bookingClosedError } from "@/modules/departures/booking-window";
+import { bokunSeatsError } from "@/modules/bokun/bokun-seats";
 import { endBooking, freeExpiredSeats, inventoryError, PENDING_PAYMENT_MINUTES, takeBookedSeats } from "@/modules/departures/inventory";
 import { transitionBooking } from "@/modules/bookings/booking-status";
 import { getPaymentProvider } from "@/lib/payment/payment.provider";
@@ -205,6 +206,9 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
 
   // Seats from expired holds and unpaid bookings on this departure come back first.
   await freeExpiredSeats({ departureId: input.departureId });
+  // Never more seats than Bókun has left (when Bókun is connected).
+  const bokunRefusal = await bokunSeatsError(input.departureId, totalSeats, { holdToken: input.holdToken });
+  if (bokunRefusal) return { success: false, error: bokunRefusal };
 
   let booking: Booking;
   try {
