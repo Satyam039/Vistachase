@@ -6,7 +6,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { AlertCircle, Eye, EyeOff } from "lucide-react";
 import { AUTH_FIELD, AuthShell } from "@/components/forms/AuthShell";
 import { portalFor, signInFor } from "@/lib/portals";
@@ -14,7 +13,6 @@ import { portalFor, signInFor } from "@/lib/portals";
 const DEV = process.env.NODE_ENV !== "production";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -42,7 +40,7 @@ export default function LoginPage() {
           await fetch("/api/auth/logout", { method: "POST" }).catch(() => undefined);
           setErrorMsg(`This is a staff or partner account. Sign in at ${signInFor(portal)} instead.`);
         } else {
-          router.push("/account/trips");
+          window.location.assign("/account/trips"); // full load so the middleware sees the new cookie
         }
       }
     } catch {
