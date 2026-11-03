@@ -68,8 +68,20 @@ describe("confirmation email", () => {
     expect(email.attachments?.[0].content.subarray(0, 4).toString()).toBe("%PDF");
     expect(await pages(email)).toBe(1); // one page: itinerary, tour steps and the check-in QR code
 
-    // A hidden copy goes to support, and the calendar file and links ride along.
-    expect(email.bcc).toEqual(["support@vistachase.com"]);
+    // The website's name for the tour, not the older database title.
+    expect(email.html).toContain("Banff &amp; Yoho Discovery (Shared Tour)");
+    // Support gets its own summary (no copy of the guest's email), and the calendar file and links ride along.
+    expect(email.bcc).toBeUndefined();
+    const staff = sent.filter((e) => e.subject.startsWith(`New booking ${ref}`));
+    expect(staff).toHaveLength(1);
+    expect(staff[0].to).toEqual(["support@vistachase.com"]);
+    expect(staff[0].replyTo).toBe("one@example.com");
+    expect(staff[0].text).toContain("Guest: Itinerary Guest");
+    expect(staff[0].text).toContain("Phone: +1 403 555 0199");
+    expect(staff[0].text).toContain("Party: 2 adults (2 seats)");
+    expect(staff[0].text).toContain("Pickup: Moxy Banff");
+    expect(staff[0].text).toMatch(/Paid: \$\d+\.\d{2} CAD/);
+    expect(staff[0].text).toContain("Date: 2028-05-02 at 08:30");
     const ics = email.attachments?.[1];
     expect(ics?.filename).toBe(`Vista-Chase-${ref}.ics`);
     expect(ics?.contentType).toContain("text/calendar");

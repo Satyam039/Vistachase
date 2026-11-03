@@ -56,6 +56,24 @@ export const WEBSITE_ITINERARIES: Record<string, ItineraryStep[]> = {
   ],
 };
 
+/**
+ * The names these tours carry on the website (frontend/src/lib/sharedTours.ts, privateTours.ts),
+ * where the database title is an older Webflow name ("Our Best Selling Banff Shared Tour").
+ * Shared and private share a page name, so emails say which one was booked.
+ */
+export const WEBSITE_TITLES: Record<string, string> = {
+  "banff-highlights-tour": "Banff & Yoho Discovery (Shared Tour)",
+  "shared-tours-icefields-jasper": "Columbia Icefield Adventure (Shared Tour)",
+  "banff-private-tour": "Banff & Yoho Discovery (Private Tour)",
+  "icefields-jasper-private-tour": "Columbia Icefield Adventure (Private Tour)",
+};
+
+/** The experience's name for vouchers and emails: the website's name for the tour, else its title. */
+export function experienceTitle(departure: { tour?: { slug: string; title: string } | null; shuttleRoute?: { name: string } | null }): string {
+  const tour = departure.tour;
+  return (tour && WEBSITE_TITLES[tour.slug]) || tour?.title || departure.shuttleRoute?.name || "Vista Chase experience";
+}
+
 const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
 
 /** The itinerary for a tour, or null when it has none (shuttles without steps, enquiries). */

@@ -6,6 +6,7 @@
 import { siteUrl, signBookingLink, voucherLink } from "@/lib/security/signed-links";
 import { getMountainTimeInstant } from "@/lib/utils/time";
 import type { TripBooking } from "@/modules/bookings/trip";
+import { experienceTitle } from "@/modules/bookings/tour-itinerary";
 
 /** How long a day lasts in the calendar when the departure has no return time. */
 const DEFAULT_HOURS = 8;
@@ -24,7 +25,7 @@ type CalendarBooking = Pick<TripBooking, "bookingReference" | "pickupTime" | "pi
 /** The calendar event for one booking (one day). */
 export function calendarDay(b: CalendarBooking): CalendarDay {
   const d = b.tourDeparture;
-  const title = d.tour?.title || d.shuttleRoute?.name || "Vista Chase experience";
+  const title = experienceTitle(d);
   const start = getMountainTimeInstant(d.date, d.departureTime);
   let end = d.returnTime ? getMountainTimeInstant(d.date, d.returnTime) : new Date(start.getTime() + DEFAULT_HOURS * 3_600_000);
   if (end <= start) end = new Date(start.getTime() + DEFAULT_HOURS * 3_600_000);

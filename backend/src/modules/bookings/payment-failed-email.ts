@@ -8,6 +8,7 @@ import { getEmailProvider } from "@/lib/email/email.provider";
 import { siteUrl } from "@/lib/security/signed-links";
 import { formatDateOnly } from "@/lib/utils/time";
 import { tripOf } from "@/modules/bookings/trip";
+import { experienceTitle } from "@/modules/bookings/tour-itinerary";
 
 const escapeHtml = (value: string) => value.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
@@ -23,7 +24,7 @@ export async function sendPaymentFailedEmail(reference: string): Promise<boolean
     if (trip && trip.reference !== booking.bookingReference) return false; // the package's Day 1 sends it
 
     const d = booking.tourDeparture;
-    const title = trip?.title ?? d.tour?.title ?? d.shuttleRoute?.name ?? "your Vista Chase experience";
+    const title = trip?.title ?? experienceTitle(d);
     const when = trip ? `starting ${formatDateOnly(d.date)}` : `on ${formatDateOnly(d.date)}`;
     const retry = d.tour?.slug ? `${siteUrl()}/tours/${d.tour.slug}` : `${siteUrl()}/search`;
     const html = `

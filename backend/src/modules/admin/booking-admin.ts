@@ -20,6 +20,7 @@ import { confirmPaidBooking, createBooking, type CreateBookingInput } from "@/mo
 import { eligibleRefundCents, policyDecision } from "@/modules/bookings/cancellation-policy";
 import { earnCommission, reverseCommissionForRefund } from "@/modules/affiliates/commission";
 import { endBooking } from "@/modules/departures/inventory";
+import { experienceTitle } from "@/modules/bookings/tour-itinerary";
 
 export const OFFLINE_METHODS = ["CASH", "ETRANSFER", "CARD_TERMINAL", "OTHER"] as const;
 export type OfflineMethod = (typeof OFFLINE_METHODS)[number];
@@ -144,7 +145,7 @@ export async function staffCancelBooking(bookingId: string, input: StaffCancelIn
   });
 
   if (input.notifyGuest) {
-    const title = booking.tourDeparture.tour?.title || booking.tourDeparture.shuttleRoute?.name || "Vista Chase experience";
+    const title = experienceTitle(booking.tourDeparture);
     const refundLine =
       refundedCents > 0 && stillOwed === 0
         ? `We have refunded ${money(refundedCents, booking.currency)} to your original payment method; it usually arrives within 5–10 business days.`
