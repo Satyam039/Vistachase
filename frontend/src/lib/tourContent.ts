@@ -35,6 +35,10 @@ interface DocContent {
   /** Answers replaced by question (regex on the question); `add` are appended. */
   faqs: { match: RegExp; answer: string }[];
   addFaqs: TourFaq[];
+  /** The page's quick facts, when the doc lists them (replaces the default four). */
+  quickFacts?: { label: string; value: string }[];
+  /** Pickup & Meeting Points paragraphs, when the doc gives them. */
+  pickup?: string[];
 }
 
 const GUIDE_CALL = "Your guide contacts you the evening before, between 6 and 9 PM, to confirm your exact pickup time.";
@@ -127,8 +131,9 @@ const CONTENT: Record<string, DocContent> = {
     title: ICEFIELD.title,
     summary:
       "Journey along the Icefields Parkway, with scenic lake stops, the Ice Explorer and Columbia Icefield Skywalk. Maximum 12 guests, pickup in Banff & Canmore.",
+    // Overview from the owner's doc (2026-11-04, Columbia Icefield Adventure page).
     description:
-      "Journey along the Icefields Parkway, with scenic stops at Bow Lake, Crowfoot Glacier, Peyto Lake and Waterfowl Lakes. At the Columbia Icefield, ride the Ice Explorer onto the Athabasca Glacier and step out on the Columbia Icefield Skywalk, both included from June 1 to October 10.\nThis tour travels as far as the Columbia Icefield and does not continue to Jasper town.",
+      "Discover one of Canada's most spectacular mountain highways on a small-group journey through the heart of the Canadian Rockies. Travel along the legendary Icefields Parkway, surrounded by towering peaks, turquoise lakes, ancient glaciers and breathtaking alpine scenery.\nWith a knowledgeable local guide, comfortable transportation and thoughtfully planned stops, experience the remarkable landscapes of Banff and Jasper National Parks at a relaxed, enjoyable pace.",
     facts: [
       { label: "Duration", value: "9–11 hours" },
       { label: "Entry fees", value: "Park admission included" },
@@ -152,13 +157,14 @@ const CONTENT: Record<string, DocContent> = {
       "Not recommended for travellers with back problems, who are pregnant, or with heart problems or other serious medical conditions",
       "Bring an extra warm layer for the glacier",
     ],
+    // Stop descriptions from the owner's doc (2026-11-04).
     stops: [
-      { name: "Bow Lake", text: "About 30 minutes beside a glacier-fed lake below Crowfoot Mountain." },
-      { name: "Crowfoot Glacier", text: "About 15 minutes at the roadside lookout." },
-      { name: "Peyto Lake", text: "About 30 minutes, with a short uphill walk to the viewpoint." },
-      { name: "Waterfowl Lakes", text: "About 15 minutes at a mountain-framed photo stop." },
-      { name: "Columbia Icefield Ice Explorer", text: "About 2 hours, riding onto the Athabasca Glacier. Included from June 1 to October 10." },
-      { name: "Columbia Icefield Skywalk", text: "About 1 hour on the glass-floored walkway above the Sunwapta Valley. Included from June 1 to October 10." },
+      { name: "Bow Lake", text: "A scenic lakeside stop surrounded by towering peaks and glacier-fed waters. Approximately 30 minutes." },
+      { name: "Crowfoot Glacier", text: "A brief roadside viewpoint overlooking the historic glacier. Approximately 15 minutes." },
+      { name: "Peyto Lake", text: "Enjoy the famous turquoise lake from its panoramic viewpoint. Approximately 30 minutes, including a short uphill walk." },
+      { name: "Waterfowl Lakes", text: "A peaceful photography stop framed by the rugged peaks of the Icefields Parkway. Approximately 15 minutes." },
+      { name: "Columbia Icefield Ice Explorer", text: "Ride a specially designed vehicle onto the Athabasca Glacier. Seasonal activity." },
+      { name: "Columbia Icefield Skywalk", text: "Experience dramatic views over the Sunwapta Valley from a glass-floored walkway. Seasonal activity." },
     ],
     steps: [
       { time: "7:30 – 8:00 AM", text: `Pickup in Canmore from about 7:30 AM and in Banff from about 8:00 AM. ${GUIDE_CALL}` },
@@ -167,11 +173,26 @@ const CONTENT: Record<string, DocContent> = {
       { time: "Afternoon", text: "Scenic drive back along the Icefields Parkway." },
       { time: "Evening", text: "Back in Banff and Canmore. Traffic, weather and road conditions can affect return times." },
     ],
+    // "Important Information" from the owner's doc (2026-11-04).
     seasonal: [
-      "Ice Explorer and Skywalk: included from June 1 to October 10.",
-      "Outside that season the glacier activities don't run, and your guide adjusts the day's stops.",
-      "Pack an extra warm layer for the Columbia Icefield.",
-      "Wildlife sightings are possible but can't be guaranteed.",
+      "Seasonal activities: The Columbia Icefield Ice Explorer and Skywalk are included on departures operating from June 1 to October 10. Outside these dates, these activities are unavailable and the sightseeing itinerary is adjusted. Abraham Lake, known for its frozen bubbles, is added to the itinerary in winter.",
+      "Weather and road conditions: Stops, routes and their order may change due to weather, road closures or operational requirements.",
+      "What to bring: Dress in layers and bring a warm jacket, comfortable walking shoes and water. Temperatures at the Columbia Icefield can be significantly colder than in Banff.",
+      "Wildlife: Wildlife sightings are possible but cannot be guaranteed.",
+    ],
+    // Quick facts and pickup text from the owner's doc (2026-11-04).
+    quickFacts: [
+      { label: "Duration", value: "9–11 hours" },
+      { label: "Group size", value: "Max 12 guests" },
+      { label: "Park admission", value: "Included" },
+      { label: "Operating season", value: "Year round · route varies by season" },
+      { label: "Hotel pickups", value: "Canmore, Banff & Lake Louise" },
+      { label: "Tickets included", value: "Columbia Icefield Adventure (June 1 – October 10)" },
+    ],
+    pickup: [
+      "Complimentary pickup and drop-off are available at designated locations in Canmore and Banff.",
+      "Pickup generally begins around 7:30 AM in Canmore and 8:00 AM in Banff. Your guide will contact you the evening before departure to confirm your exact pickup time and meeting instructions.",
+      "Please be ready at your confirmed pickup location a few minutes before the scheduled time.",
     ],
     faqs: [
       { match: /how long/i, answer: "About 9 to 11 hours. Pickups start at 7:30 AM in Canmore and 8:00 AM in Banff; your exact pickup time is confirmed before your tour." },
@@ -288,6 +309,11 @@ function withPolicyFaq(tour: TourWithAvailability): TourWithAvailability {
   return { ...tour, faqs: tour.faqs.map((f) => (POLICY_QUESTION.test(f.question) ? { ...f, answer } : f)) };
 }
 
+/** The quick facts the owner's doc sets for a tour's page, if it sets any. */
+export function docQuickFacts(slug: string): { label: string; value: string }[] | null {
+  return CONTENT[slug]?.quickFacts ?? null;
+}
+
 /** The tour with the owner's doc copy applied, when there is any for it. */
 export function withDocContent(tour: TourWithAvailability): TourWithAvailability {
   // Activity tickets show the operator's own photo (owner, 2026-10-30) over the catalog image.
@@ -330,7 +356,7 @@ export function withDocContent(tour: TourWithAvailability): TourWithAvailability
     { label: "Inclusions", sections: [section("Stop by Stop", { stops: c.stops, note: "Stops, their order and time at each may change with the season, weather and road conditions." })] },
     // The doc (2026-11-04) removed the "Your Day" timeline from the page; its pickup times still
     // feed the Pickup & Meeting Points section (TourSections reads a "Pickup" tab).
-    { label: "Pickup", sections: [section("Pickup times", { steps: c.steps })] },
+    { label: "Pickup", sections: [section("Pickup times", { steps: c.steps, body: c.pickup ?? [] })] },
     { label: "Seasonal", sections: [section("Important Information", { items: c.seasonal })] },
   ];
 

@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { Dropdown } from "@/components/forms/Dropdown";
 import { DepartureCalendar } from "@/components/booking/DepartureCalendar";
+import { docQuickFacts } from "@/lib/tourContent";
 import { PriceTag } from "@/components/pricing/PriceTag";
 import { AIRPORT_TRANSFER_PRICES, AirportTransferToggle } from "@/components/booking/AirportTransferFields";
 import { cancellationShort, SEATS_MESSAGE } from "@/lib/policy";
@@ -389,7 +390,10 @@ export function TourDetailView({
   // Quick highlights (owner's doc, 2026-11-04): Duration · Pickup · Group size · Instant
   // confirmation. Tickets keep the live page's facts.
   const instant = tour.bookingMode === "BOKUN" && tour.departures.length > 0;
-  const quickHighlights: { label: string; value: string; icon: ComponentType<{ className?: string }> }[] = [
+  const docFacts = docQuickFacts(tour.slug);
+  const quickHighlights: { label: string; value: string; icon: ComponentType<{ className?: string }> }[] = docFacts
+    ? docFacts.map((f, i) => ({ ...f, icon: [Clock, Users, CheckCircle2, Calendar, MapPin, CheckCircle2][i % 6] }))
+    : [
     { label: "Duration", value: durationLabel(tour), icon: Clock },
     {
       label: "Pickup",

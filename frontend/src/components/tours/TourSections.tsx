@@ -173,6 +173,8 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
   const overviewSections = (overview?.sections ?? []).filter((s) => !/price (in|ex)cludes/i.test(s.heading));
   const vehicles = vehiclesFor(tour);
   const pickupStep = timeline?.sections.flatMap((s) => s.steps).find((s) => /pick ?up/i.test(s.text));
+  // The doc's own Pickup & Drop-off text, where it gives one (lib/tourContent.ts).
+  const pickupText = tab(tour, /^pickup$/i)?.sections.flatMap((s) => s.body) ?? [];
 
 
 
@@ -264,7 +266,14 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
       <section id="pickup" aria-labelledby="pickup-heading" className="space-y-4">
         <SectionHeading id="pickup">Pickup &amp; Meeting Points</SectionHeading>
         <div className="space-y-3 rounded-none border border-slate-200/80 bg-white p-6 text-base text-slate-700">
-          {isTicket ? (
+          {pickupText.length > 0 ? (
+            pickupText.map((paragraph, i) => (
+              <p key={paragraph} className={i === 0 ? "flex items-start gap-2.5" : undefined}>
+                {i === 0 && <MapPin className="mt-1 h-4 w-4 shrink-0 text-ocean-600" aria-hidden="true" />}
+                <span>{paragraph}</span>
+              </p>
+            ))
+          ) : isTicket ? (
             <p>
               Meet at the attraction on your date, or add transport by booking a Vista Chase tour on the same day. We send the
               details with your confirmation.
@@ -351,16 +360,6 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
             );
           })}
         </ul>
-        {tour.facts.length > 0 && (
-          <dl className="grid gap-4 rounded-none border border-slate-200/80 bg-white p-6 sm:grid-cols-2">
-            {tour.facts.map((f) => (
-              <div key={f.label}>
-                <dt className="text-sm uppercase tracking-widest text-slate-600">{f.label}</dt>
-                <dd className="text-lg font-light text-obsidian-900">{f.value}</dd>
-              </div>
-            ))}
-          </dl>
-        )}
       </section>
 
       <section id="cancellation" aria-labelledby="cancellation-heading" className="space-y-4">
