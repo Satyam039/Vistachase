@@ -143,6 +143,7 @@ export async function createPackageBooking(input: CreatePackageInput): Promise<P
         customerName: input.customerName,
         customerEmail: input.customerEmail,
         customerPhone: input.customerPhone,
+        customerCountry: input.customerCountry,
         pickupStopId: input.pickupStopId,
         pickupCustomText: input.pickupCustomText,
         adultsCount: input.adultsCount,

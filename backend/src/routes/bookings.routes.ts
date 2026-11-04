@@ -31,6 +31,8 @@ const createSchema = z.object({
   customerName: z.string().trim().min(2).max(120),
   customerEmail: emailSchema,
   customerPhone: z.string().trim().min(7).max(32),
+  /** Country picked in the phone field (ISO 3166 two letters). */
+  customerCountry: z.string().trim().regex(/^[A-Za-z]{2}$/).optional(),
   pickupStopId: z.string().max(64).optional(),
   pickupCustomText: z.string().trim().max(200).optional(),
   adultsCount: count(30).refine((n) => n >= 1, "At least one adult is required"),
@@ -78,6 +80,7 @@ const packageSchema = z.object({
   customerName: z.string().trim().min(2).max(120),
   customerEmail: emailSchema,
   customerPhone: z.string().trim().min(7).max(32),
+  customerCountry: z.string().trim().regex(/^[A-Za-z]{2}$/).optional(),
   pickupStopId: z.string().max(64).optional(),
   pickupCustomText: z.string().trim().max(200).optional(),
   adultsCount: count(30).refine((n) => n >= 1, "At least one adult is required"),

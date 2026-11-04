@@ -677,6 +677,7 @@ export function BookingCheckoutClient({
           customerName: customerName.trim(),
           customerEmail: customerEmail.trim(),
           customerPhone: customerPhone.trim(),
+          customerCountry: phoneCountry,
           pickupStopId: pickupStopId || undefined,
           pickupCustomText: customPickup.trim() || undefined,
           adultsCount: adults,

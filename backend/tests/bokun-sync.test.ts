@@ -147,6 +147,14 @@ describe("website bookings reach Bókun", () => {
     expect(submit.paymentMethod).toBe("RESERVE_FOR_EXTERNAL_PAYMENT");
     expect(submit.directBooking.externalBookingReference).toBe(booking.bookingReference);
     expect(submit.directBooking.activityBookings[0].passengers).toHaveLength(3);
+    // Every passenger is named (Bókun can require it): the lead, then "Guest 2", "Guest 3".
+    expect(submit.directBooking.activityBookings[0].passengers.map((p: any) => p.passengerDetails.map((d: any) => d.values[0]).join(" "))).toEqual([
+      "Ada Lovelace",
+      "Guest 2 Lovelace",
+      "Guest 3 Lovelace",
+    ]);
+    // +1 is shared by several countries, so no nationality is guessed.
+    expect(submit.directBooking.mainContactDetails.map((q: any) => q.questionId)).not.toContain("nationality");
     const confirm = bokun.made("/checkout.json/confirm-reserved/")[0];
     expect(confirm.path).toContain(encodeURIComponent(synced.bokunBookingId!));
     expect(confirm.body.amount).toBe(booking.totalAmount / 100);
@@ -376,6 +384,36 @@ describe("Bókun seats in our calendar", () => {
     bokun.failAvailability = new Error("Bókun is down");
     await syncBokunSeats({ from: DAY, days: 1 });
     expect((await prisma.tourDeparture.findUniqueOrThrow({ where: { id: dep.id } })).inventorySource).toBe("LOCAL");
+  });
+});
+
+describe("the guest's country for Bókun", () => {
+  it("comes from the phone field's country, or from a calling code only one country uses", async () => {
+    const { countryFromPhone, knownCountry } = await import("@/lib/utils/phone-country");
+    expect(knownCountry("in")).toBe("IN");
+    expect(knownCountry("XX")).toBeNull();
+    expect(countryFromPhone("+91 98765 43210")).toBe("IN");
+    expect(countryFromPhone("+44 7700 900123")).toBe("GB");
+    expect(countryFromPhone("+1 403 555 0100")).toBeNull();
+    expect(countryFromPhone("403 555 0100")).toBeNull();
+  });
+
+  it("is sent as the main contact's nationality", async () => {
+    const dep = await departure(sharedTourId, { time: "09:41" });
+    bokun.slot("796650", DAY, "09:41", 10);
+    const result = await createBooking({
+      departureId: dep.id,
+      customerName: "Ravi Kumar",
+      customerEmail: "ravi.bokun@example.com",
+      customerPhone: "+1 403 555 0101",
+      customerCountry: "us",
+      adultsCount: 1,
+      childrenCount: 0,
+      infantsCount: 0,
+    });
+    await run(result.booking!.id);
+    const contact = bokun.made("/checkout.json/submit")[0].body.directBooking.mainContactDetails;
+    expect(contact).toContainEqual({ questionId: "nationality", values: ["US"] });
   });
 });
 

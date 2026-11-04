@@ -51,6 +51,8 @@ export interface BokunReservationInput {
   customerName: string;
   customerEmail: string;
   customerPhone: string;
+  /** The guest's country (ISO 3166 two letters), sent as the main contact's nationality. */
+  country?: string;
   pickup?: string;
   specialRequests?: string;
 }
@@ -135,14 +137,36 @@ export function buildNote(input: BokunReservationInput, infantsInNote: number) {
     .slice(0, 2000);
 }
 
+function splitName(name: string) {
+  const [first, ...rest] = name.trim().split(/\s+/);
+  return { first: first || name, last: rest.join(" ") || "-" };
+}
+
 function mainContact(input: BokunReservationInput) {
-  const [first, ...rest] = input.customerName.trim().split(/\s+/);
+  const { first, last } = splitName(input.customerName);
   return [
-    { questionId: "firstName", values: [first || input.customerName] },
-    { questionId: "lastName", values: [rest.join(" ") || "-"] },
+    { questionId: "firstName", values: [first] },
+    { questionId: "lastName", values: [last] },
     { questionId: "email", values: [input.customerEmail] },
     { questionId: "phoneNumber", values: [input.customerPhone] },
+    ...(input.country ? [{ questionId: "nationality", values: [input.country] }] : []),
   ];
+}
+
+/**
+ * Bókun products can require each passenger's name. The website takes only the lead guest's name,
+ * so the lead's name goes on the first passenger and "Guest 2", "Guest 3"… (lead's last name) on the
+ * others; the guide gets the real names on the day.
+ */
+export function withPassengerNames<T extends object>(passengers: T[], customerName: string) {
+  const { first, last } = splitName(customerName);
+  return passengers.map((p, i) => ({
+    ...p,
+    passengerDetails: [
+      { questionId: "firstName", values: [i === 0 ? first : `Guest ${i + 1}`] },
+      { questionId: "lastName", values: [last] },
+    ],
+  }));
 }
 
 /**
@@ -199,7 +223,7 @@ export async function reserveInBokun(
         startTimeId: slot.startTimeId,
         pickup: false,
         dropoff: false,
-        passengers,
+        passengers: withPassengerNames(passengers, input.customerName),
         extras: [],
         note: buildNote(input, infantsInNote),
       },
