@@ -21,7 +21,7 @@ interface Problem {
 interface SeatSync {
   at: string;
   status: string;
-  details: { updated?: number; unchanged?: number; notInBokun?: string[]; errors?: string[]; from?: string; to?: string } | null;
+  details: { updated?: number; unchanged?: number; offSale?: number; onSale?: number; notInBokun?: string[]; errors?: string[]; from?: string; to?: string } | null;
 }
 
 interface BokunState {
@@ -260,7 +260,7 @@ export function BokunPanel({ notify, role }: { notify: (m: string) => void; role
         title="Seat sync"
         description={
           state.lastSeatSync
-            ? `Last run ${when(state.lastSeatSync.at)} (${state.lastSeatSync.status.toLowerCase()}): ${sync?.updated ?? 0} departure(s) updated, ${sync?.unchanged ?? 0} unchanged.`
+            ? `Last run ${when(state.lastSeatSync.at)} (${state.lastSeatSync.status.toLowerCase()}): ${sync?.updated ?? 0} departure(s) updated, ${sync?.unchanged ?? 0} unchanged${sync?.offSale ? `, ${sync.offSale} taken off sale` : ""}${sync?.onSale ? `, ${sync.onSale} back on sale` : ""}.`
             : "Not run yet."
         }
       >
@@ -278,7 +278,7 @@ export function BokunPanel({ notify, role }: { notify: (m: string) => void; role
             )}
             {sync.notInBokun && sync.notInBokun.length > 0 && (
               <div>
-                <p className="font-medium">Website departures Bókun doesn&apos;t offer (bookings on them can&apos;t reach Bókun)</p>
+                <p className="font-medium">Website departures Bókun doesn&apos;t offer (off sale on the website until Bókun offers them; bookings already on them can&apos;t reach Bókun)</p>
                 <ul className="mt-1 list-disc space-y-1 pl-5">
                   {sync.notInBokun.slice(0, 15).map((d) => (
                     <li key={d}>{d}</li>

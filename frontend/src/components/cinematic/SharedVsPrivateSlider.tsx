@@ -112,7 +112,7 @@ export function SharedVsPrivateSlider() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-summit-500 shrink-0" />
-                    <span>Fixed departure timing (8:30 AM)</span>
+                    <span>Fixed departure timing (8:00 AM)</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-summit-500 shrink-0" />

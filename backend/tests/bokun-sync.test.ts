@@ -350,11 +350,40 @@ describe("Bókun seats in our calendar", () => {
     expect((await prisma.tourDeparture.findUniqueOrThrow({ where: { id: free.id } })).capacityBooked).toBe(0);
   });
 
-  it("lists our departures Bókun doesn't offer and logs the run", async () => {
+  it("takes our departures Bókun doesn't offer off sale, lists them and logs the run", async () => {
     const dep = await departure(sharedTourId, { time: "15:55" });
     const result = await syncBokunSeats({ from: DAY, days: 1 });
     expect("notInBokun" in result && result.notInBokun).toContain(`${SHARED_SLUG} ${DAY} 15:55`);
-    expect((await prisma.tourDeparture.findUniqueOrThrow({ where: { id: dep.id } })).capacityTotal).toBe(12);
+    const after = await prisma.tourDeparture.findUniqueOrThrow({ where: { id: dep.id } });
+    expect(after.capacityTotal).toBe(12);
+    expect(after.inventorySource).toBe("UNVERIFIED");
+    expect(after.status).toBe("ACTIVE");
     expect(await prisma.bokunSyncLog.findFirst({ where: { syncType: "POLL" }, orderBy: { createdAt: "desc" } })).not.toBeNull();
+  });
+
+  it("puts a departure back on sale once Bókun offers it", async () => {
+    const dep = await departure(sharedTourId, { time: "15:56" });
+    await syncBokunSeats({ from: DAY, days: 1 });
+    expect((await prisma.tourDeparture.findUniqueOrThrow({ where: { id: dep.id } })).inventorySource).toBe("UNVERIFIED");
+    bokun.slot("796650", DAY, "15:56", 12, 0);
+    const result = await syncBokunSeats({ from: DAY, days: 1 });
+    expect(result).toMatchObject({ onSale: 1 });
+    expect((await prisma.tourDeparture.findUniqueOrThrow({ where: { id: dep.id } })).inventorySource).toBe("LOCAL");
+  });
+
+  it("keeps everything on sale when Bókun can't be read", async () => {
+    const dep = await departure(sharedTourId, { time: "15:57" });
+    bokun.failAvailability = new Error("Bókun is down");
+    await syncBokunSeats({ from: DAY, days: 1 });
+    expect((await prisma.tourDeparture.findUniqueOrThrow({ where: { id: dep.id } })).inventorySource).toBe("LOCAL");
+  });
+});
+
+describe("Bókun products without a clock time", () => {
+  it("match any of our departures that day", () => {
+    const day = Date.parse(`${DAY}T00:00:00Z`);
+    expect(findSlot([{ date: day, startTime: "00:00", startTimeId: 7 }], DAY, "08:00")?.startTimeId).toBe(7);
+    expect(findSlot([{ date: day, startTimeId: 8 }], DAY, "08:00")?.startTimeId).toBe(8);
+    expect(findSlot([{ date: day, startTime: "07:00", startTimeId: 9 }], DAY, "08:00")).toBeUndefined();
   });
 });

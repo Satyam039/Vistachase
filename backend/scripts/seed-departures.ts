@@ -11,6 +11,10 @@
 // and infants (0-5, infantPrice) separately; a priced infant takes a seat. Private tours are priced
 // per vehicle, up to 14 guests. Shuttle departures each have their own fare (`fare` on the slot).
 //
+// Start times follow the live Bókun calendar (owner's choice, 2026-11-04): Banff & Yoho Discovery,
+// Columbia Icefield Adventure and the winter tours at 08:00, the private Icefield tour at 08:00 only.
+// Dates Bókun doesn't run are taken off sale by the seat sync (src/modules/bokun/availability-sync.ts).
+//
 // The owner confirmed these times, seats and prices as the real schedule on 2026-10-11, so the
 // departures created here are LOCAL (listed and bookable). If a schedule below stops being
 // real, change or remove it here, and take existing dates off sale with
@@ -58,7 +62,7 @@ const JUNE_SEPTEMBER = [6, 7, 8, 9];
 export const DEFAULT_SCHEDULES: ScheduleConfig[] = [
   {
     slug: "banff-highlights-tour", // Banff & Yoho Discovery
-    times: ["08:30"],
+    times: ["08:00"],
     capacity: 12,
     price: 22000,
     childPrice: 22000,
@@ -80,7 +84,7 @@ export const DEFAULT_SCHEDULES: ScheduleConfig[] = [
   },
   {
     slug: "shared-tours-icefields-jasper", // Columbia Icefield Adventure
-    times: ["07:30"],
+    times: ["08:00"],
     capacity: 12,
     price: 22000,
     childPrice: 22000,
@@ -89,7 +93,7 @@ export const DEFAULT_SCHEDULES: ScheduleConfig[] = [
   },
   {
     slug: "winter-special",
-    times: ["08:30"],
+    times: ["08:00"],
     capacity: 12,
     price: 16900,
     childPrice: 9900,
@@ -104,7 +108,7 @@ export const DEFAULT_SCHEDULES: ScheduleConfig[] = [
   },
   {
     slug: "icefields-jasper-private-tour",
-    times: ["07:00", "08:00"],
+    times: ["08:00"],
     capacity: 14,
     price: 124000,
     summer: { price: 175000 },
