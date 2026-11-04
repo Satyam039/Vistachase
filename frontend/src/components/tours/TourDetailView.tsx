@@ -264,13 +264,19 @@ export function TourDetailView({
   const maxPartySize = Math.max(1, Math.min(maxAvailableSeats ?? tour.maxGroupSize, tour.maxGroupSize));
   const [guests, setPartySize] = useState(2);
   const partySize = Math.min(guests, maxPartySize);
-  // Per-guest departures take adults and children separately (children pay the departure's child
-  // price when it has one; the server re-prices at checkout). Together they fit the seats left.
+  // Per-guest departures take adults (16–99), youth (6–15) and infants (0–5) separately: youth pay
+  // the departure's youth price when it has one; infants pay the infant price and take a seat when
+  // it has one, and ride free otherwise. The server re-prices at checkout. Together they fit the seats left.
   const [adultsWanted, setAdults] = useState(2);
   const [childrenWanted, setChildren] = useState(0);
+  const [infantsWanted, setInfants] = useState(0);
+  const infantsPay = currentDeparture?.infantPrice != null;
   const adults = Math.max(1, Math.min(adultsWanted, maxPartySize));
   const children = Math.max(0, Math.min(childrenWanted, maxPartySize - adults));
+  const infants = Math.max(0, Math.min(infantsWanted, infantsPay ? maxPartySize - adults - children : 4));
+  const seatedInfants = infantsPay ? infants : 0;
   const childFare = currentDeparture?.childPrice ?? currentDeparture?.price ?? price;
+  const infantFare = currentDeparture?.infantPrice ?? 0;
   // Private tours: optional airport transfer; checkout asks for the flight dates and times.
   const offersAirport = tour.category === "PRIVATE";
   const [airport, setAirport] = useState(false);
@@ -350,7 +356,7 @@ export function TourDetailView({
   const calculatedTotal = currentDeparture
     ? isVehicle
       ? currentDeparture.price
-      : currentDeparture.price * adults + childFare * children
+      : currentDeparture.price * adults + childFare * children + infantFare * seatedInfants
     : price * partySize;
 
   // Facts strip: the live page's four facts, or generic ones when a tour has none.
@@ -570,18 +576,27 @@ export function TourDetailView({
                         label="Adults"
                         unit={["Adult", "Adults"]}
                         value={adults}
-                        max={maxPartySize - children}
+                        max={maxPartySize - children - seatedInfants}
                         onChange={setAdults}
-                        hint={`Max ${maxPartySize} guests on this departure`}
+                        hint={`Age 16–99 · max ${maxPartySize} guests on this departure`}
                       />
                       <PartySizeStepper
-                        label="Children"
-                        unit={["Child", "Children"]}
+                        label="Youth"
+                        unit={["Youth", "Youth"]}
                         min={0}
                         value={children}
-                        max={maxPartySize - adults}
+                        max={maxPartySize - adults - seatedInfants}
                         onChange={setChildren}
-                        hint={currentDeparture?.childPrice != null ? `${money(currentDeparture.childPrice)} CAD each` : "Same fare as adults"}
+                        hint={`Age 6–15 · ${currentDeparture?.childPrice != null ? `${money(currentDeparture.childPrice)} CAD each` : "same fare as adults"}`}
+                      />
+                      <PartySizeStepper
+                        label="Infants"
+                        unit={["Infant", "Infants"]}
+                        min={0}
+                        value={infants}
+                        max={infantsPay ? maxPartySize - adults - children : 4}
+                        onChange={setInfants}
+                        hint={`Age 0–5 · ${infantsPay ? `${money(infantFare)} CAD each, own seat` : "free, on a lap"}`}
                       />
                     </>
                   )}
@@ -609,8 +624,14 @@ export function TourDetailView({
                         </div>
                         {children > 0 && (
                           <div className="flex items-center justify-between text-slate-600">
-                            <span>{`${children} × ${money(childFare)} CAD (${children === 1 ? "child" : "children"})`}</span>
+                            <span>{`${children} × ${money(childFare)} CAD (youth)`}</span>
                             <span>{money(childFare * children)} CAD</span>
+                          </div>
+                        )}
+                        {seatedInfants > 0 && (
+                          <div className="flex items-center justify-between text-slate-600">
+                            <span>{`${infants} × ${money(infantFare)} CAD (${infants === 1 ? "infant" : "infants"})`}</span>
+                            <span>{money(infantFare * infants)} CAD</span>
                           </div>
                         )}
                       </>
@@ -628,7 +649,7 @@ export function TourDetailView({
                         departureId: selectedDepartureId || tour.departures[0]?.id || "",
                         ...(isVehicle
                           ? { guests: String(partySize), ...(offersAirport && airport ? { airport: "1" } : {}) }
-                          : { guests: String(adults + children), adults: String(adults), children: String(children) }),
+                          : { guests: String(adults + children), adults: String(adults), children: String(children), ...(infants > 0 ? { infants: String(infants) } : {}) }),
                       }).toString()}`}
                       className="w-full h-13 py-4 rounded-full text-base font-medium text-obsidian-900 golden-summit-btn flex items-center justify-center gap-2 shadow-lg transition-all hover:scale-[1.01]"
                     >

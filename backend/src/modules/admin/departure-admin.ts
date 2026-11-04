@@ -52,6 +52,7 @@ export async function listDepartures(filter: { tourSlug?: string; routeSlug?: st
       activeBookings: d._count.bookings,
       price: d.price / 100,
       childPrice: d.childPrice != null ? d.childPrice / 100 : null,
+      infantPrice: d.infantPrice != null ? d.infantPrice / 100 : null,
       currency: d.currency,
       status: d.status,
       inventorySource: d.inventorySource,
@@ -77,6 +78,7 @@ export interface NewDepartures {
   capacityTotal: number;
   price: number; // dollars: per guest, or per vehicle for private tours
   childPrice?: number | null;
+  infantPrice?: number | null;
 }
 
 /** Adds a departure for each date × time. Ones that already exist are skipped, not changed. */
@@ -102,6 +104,7 @@ export async function createDepartures(input: NewDepartures) {
           capacityTotal: input.capacityTotal,
           price: cents(input.price),
           childPrice: input.childPrice != null ? cents(input.childPrice) : null,
+          infantPrice: input.infantPrice != null ? cents(input.infantPrice) : null,
           currency: tour?.currency ?? "CAD",
           status: "ACTIVE",
           inventorySource: "LOCAL",
@@ -118,6 +121,7 @@ export interface DepartureEdit {
   capacityTotal?: number;
   price?: number;
   childPrice?: number | null;
+  infantPrice?: number | null;
   returnTime?: string | null;
 }
 
@@ -135,11 +139,12 @@ export async function updateDeparture(id: string, edit: DepartureEdit) {
       ...(edit.capacityTotal !== undefined ? { capacityTotal: edit.capacityTotal } : {}),
       ...(edit.price !== undefined ? { price: cents(edit.price) } : {}),
       ...(edit.childPrice !== undefined ? { childPrice: edit.childPrice === null ? null : cents(edit.childPrice) } : {}),
+      ...(edit.infantPrice !== undefined ? { infantPrice: edit.infantPrice === null ? null : cents(edit.infantPrice) } : {}),
       ...(edit.returnTime !== undefined ? { returnTime: edit.returnTime ? timeOfDay(edit.returnTime) : null } : {}),
     },
   });
   if (updated.count === 0) return { status: 409, error: "Seats were booked meanwhile. Reload and try again." } as const;
-  return { status: 200, before: { capacityTotal: dep.capacityTotal, price: dep.price, childPrice: dep.childPrice, returnTime: formatTimeOfDay(dep.returnTime) } } as const;
+  return { status: 200, before: { capacityTotal: dep.capacityTotal, price: dep.price, childPrice: dep.childPrice, infantPrice: dep.infantPrice, returnTime: formatTimeOfDay(dep.returnTime) } } as const;
 }
 
 /**

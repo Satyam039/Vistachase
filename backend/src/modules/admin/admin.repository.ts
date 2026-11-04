@@ -162,6 +162,7 @@ export async function listDepartureInventory(tourSlug: string, from?: string, to
     capacityHeld: d.capacityHeld,
     price: d.price / 100,
     childPrice: d.childPrice != null ? d.childPrice / 100 : null,
+    infantPrice: d.infantPrice != null ? d.infantPrice / 100 : null,
     status: d.status,
     inventorySource: d.inventorySource,
     inventoryVerifiedAt: d.inventoryVerifiedAt,

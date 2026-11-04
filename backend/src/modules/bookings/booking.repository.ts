@@ -24,7 +24,7 @@ import { transitionBooking } from "@/modules/bookings/booking-status";
 import { getPaymentProvider } from "@/lib/payment/payment.provider";
 import { sendConfirmationEmail } from "@/modules/bookings/confirmation-email";
 import { getEmailProvider } from "@/lib/email/email.provider";
-import { isVehicleDeparture, partySizeError, seatsToReserve } from "@/modules/pricing/departure-pricing";
+import { isVehicleDeparture, partySizeError, seatedGuests, seatsToReserve } from "@/modules/pricing/departure-pricing";
 import { airportTransferNote, type AirportTransfer } from "@/modules/bookings/airport-transfer";
 import { priceBooking, type AddOnChoice } from "@/modules/pricing/booking-pricing";
 import { referringAffiliateId } from "@/modules/affiliates/affiliate.repository";
@@ -197,8 +197,10 @@ export interface CreateBookingOptions {
 }
 
 export async function createBooking(input: CreateBookingInput, options: CreateBookingOptions = {}): Promise<BookingResult> {
-  const totalSeats = input.adultsCount + input.childrenCount;
   if (input.adultsCount < 1) return { success: false, error: "At least one adult is required." };
+  // Infants take a seat where they pay (departure infantPrice set), and ride free on a lap otherwise.
+  const priced = await prisma.tourDeparture.findUnique({ where: { id: input.departureId }, select: { infantPrice: true } });
+  const totalSeats = seatedGuests(priced ?? {}, { adults: input.adultsCount, children: input.childrenCount, infants: input.infantsCount });
 
   if (input.idempotencyKey) {
     const replay = await replayBooking(input.idempotencyKey, input);
@@ -267,7 +269,7 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
         );
       }
 
-      const totals = priceBooking(departure, { adults: input.adultsCount, children: input.childrenCount }, input.addOns, input.promoCode, options.discount?.percent);
+      const totals = priceBooking(departure, { adults: input.adultsCount, children: input.childrenCount, infants: input.infantsCount }, input.addOns, input.promoCode, options.discount?.percent);
       // Deposit: online checkout only (staff bookings record their own payment), far enough ahead.
       const deposit =
         input.paymentPlan === "DEPOSIT" && !options.offlinePayment && !options.deferPayment
@@ -287,6 +289,7 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
         pricing: isVehicle ? "PER_VEHICLE" : "PER_GUEST",
         adultUnitCents: departure.price,
         childUnitCents: isVehicle ? null : (departure.childPrice ?? departure.price),
+        infantUnitCents: isVehicle ? null : departure.infantPrice,
         party: { adults: input.adultsCount, children: input.childrenCount, infants: input.infantsCount },
         fareCents: totals.fareCents,
         promo: totals.discountPercent > 0 ? { code: input.promoCode?.trim().toUpperCase() || options.discount?.label, percent: totals.discountPercent } : null,

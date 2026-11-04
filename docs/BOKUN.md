@@ -36,6 +36,20 @@ Optional settings: `BOKUN_AVAILABILITY_SYNC=false` keeps sending bookings but st
 
 Each website product is linked to its Bókun product by `bokunId` in `backend/prisma/catalog/product-map.json`. Only products with a Bókun ID and `bookingMode: "BOKUN"` sync. Activity tickets, custom private tours and multi-day requests have no Bókun booking.
 
+Bókun IDs from the owner's doc (Pricing, 2026-11-04):
+
+| Website product | Bókun ID | Linked |
+| --- | --- | --- |
+| Banff & Yoho Discovery, shared (`banff-highlights-tour`) | 796650 | yes |
+| Columbia Icefield Adventure, shared (`shared-tours-icefields-jasper`) | 856008 | yes |
+| Banff & Yoho Discovery, private (`banff-private-tour`) | 1167962 | yes |
+| Columbia Icefield Adventure, private (`icefields-jasper-private-tour`) | 1115237 | yes |
+| Moraine Lake & Lake Louise shuttle, both website products (start time IDs 6012584, 6012585, 6012588, 6012590, 6012592, 6012593, 6012602) | 1344805 | yes, matched by start time |
+| Two-Day Rockies Explorer, shared | 1328342 | no: the package books each day under its own tour's Bókun product |
+| Two-Day / Three-Day / Four-Day, private | 1344763 / 1344782 / 1344784 | no: booked on request |
+
+Both shuttle products share Bókun product 1344805; only the first stores it in the database (`Tour.bokunId` is unique), and the Bókun code reads IDs from the map. The Jasper custom private tour (request only) no longer has a Bókun ID: its old one is now the private Columbia Icefield Adventure's.
+
 Start times must match: a website departure at 08:30 is matched to the Bókun start at 08:30 on the same day. **Seat sync** in the Bókun tab lists website departures Bókun doesn't offer; a booking on one of them can't be created in Bókun and is flagged.
 
 ## What happens to a booking
