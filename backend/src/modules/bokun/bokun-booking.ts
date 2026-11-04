@@ -84,12 +84,17 @@ const isChild = (title: string) => /child|youth|kid/i.test(title);
 const isInfant = (title: string) => /infant|baby/i.test(title);
 const groupSize = (title: string) => Number(/group of (\d+)/i.exec(title)?.[1] ?? NaN);
 
-/** Bókun's start for our departure: same day and start time. */
 /** "2026-11-15" moved by whole days. */
 export const shiftDay = (date: string, days: number) => new Date(Date.parse(`${date}T00:00:00Z`) + days * DAY_MS).toISOString().slice(0, 10);
 
+/**
+ * Bókun's start for our departure: same day and start time. A product Bókun runs without a clock
+ * time (one start a day, read as 00:00, e.g. a private tour whose pickup time is agreed later)
+ * matches any of our departures that day.
+ */
 export function findSlot(list: Availability[], date: string, time: string) {
-  return list.find((a) => slotDate(a) === date && slotTime(a) === time);
+  const day = list.filter((a) => slotDate(a) === date);
+  return day.find((a) => slotTime(a) === time) ?? (day.length === 1 && slotTime(day[0]) === "00:00" ? day[0] : undefined);
 }
 
 /**
