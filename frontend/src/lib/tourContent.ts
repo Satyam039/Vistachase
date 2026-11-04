@@ -63,8 +63,9 @@ const CONTENT: Record<string, DocContent> = {
     title: BANFF_YOHO.title,
     summary:
       "Explore Lake Louise, Moraine Lake and the highlights of Banff and Yoho with a passionate guide. Maximum 12 guests, pickup in Banff & Canmore.",
+    // Overview text from the owner's doc (2026-11-04, "C. Rewrite the Overview").
     description:
-      "Explore Lake Louise, Moraine Lake and the highlights of Banff and Yoho with a passionate guide. In one full day you'll see turquoise lakes, Johnston Canyon, Emerald Lake and the Natural Bridge, with no more than 12 guests.\nPark admission is included, Moraine Lake transportation is arranged for you from June 1 to October 10, and you can leave the driving and parking to us.",
+      "Discover the extraordinary landscapes of the Canadian Rockies on a thoughtfully planned small-group journey through Banff and Yoho National Parks. From turquoise glacial lakes and dramatic mountain scenery to hidden natural wonders, enjoy an unforgettable day with an experienced local guide.\nTravel comfortably in a group of no more than 12 guests, with time to appreciate the scenery, capture photographs and discover what makes each destination remarkable.",
     facts: [
       { label: "Duration", value: "10–11 hours" },
       { label: "Entry fees", value: "Park admission included" },
@@ -108,10 +109,11 @@ const CONTENT: Record<string, DocContent> = {
       { time: "Afternoon", text: "Johnston Canyon, Lake Minnewanka and Two Jack Lake." },
       { time: "5:30 – 6:00 PM", text: "Back in Banff around 5:30 PM and Canmore around 6:00 PM." },
     ],
+    // "Important Information" from the owner's doc (2026-11-04, section E).
     seasonal: [
-      "Moraine Lake: June 1 to October 10, with transportation arranged by Vista Chase.",
-      "The route varies by season: your guide adjusts stops to road and weather conditions.",
-      "Weather: mountain conditions change quickly, so dress in layers and wear comfortable shoes.",
+      "Seasonal itinerary: The route and accessible attractions vary by season. Moraine Lake is generally accessible during its operating season, subject to conditions.",
+      "Mountain weather: Conditions can change quickly. Comfortable footwear and layered clothing are recommended.",
+      "Itinerary adjustments: Stops may change because of road closures, weather, operational restrictions or other circumstances.",
       "Wildlife sightings are possible but can't be guaranteed.",
     ],
     faqs: [
@@ -213,7 +215,7 @@ CONTENT[PRIVATE_BANFF_YOHO.slug!] = {
     { time: "Evening", text: "Drop-off at your accommodation. The day runs about 10 to 12 hours, depending on your pace." },
   ],
   seasonal: [
-    "Price per vehicle, up to 14 guests: CAD $1,799 from June 1 to October 10, all-inclusive (tax, park entry and Moraine Lake entry fees); CAD $1,299 from October 11 to May 31.",
+    "Price per vehicle, up to 14 guests: CAD $1,750 from June 1 to October 10, all-inclusive (tax, park entry and Moraine Lake entry fees); CAD $1,240 from October 11 to May 31.",
     "Moraine Lake: during its operating season (usually June to early October); access arrangements depend on your vehicle and are explained before booking.",
     "The route varies by season: your guide adjusts stops to road and weather conditions.",
     "Weather: mountain conditions change quickly, so dress in layers and wear comfortable shoes.",
@@ -253,7 +255,7 @@ CONTENT[PRIVATE_ICEFIELD.slug!] = {
     { time: "Evening", text: "Drop-off at your accommodation. Traffic, weather and road conditions can affect return times." },
   ],
   seasonal: [
-    "Price per vehicle, up to 14 guests: CAD $1,599 from June 1 to October 10; CAD $1,299 from October 11 to May 31.",
+    "Price per vehicle, up to 14 guests: CAD $1,750 from June 1 to October 10; CAD $1,240 from October 11 to May 31.",
     "Ice Explorer and Skywalk: June 1 to October 10, optional and at extra cost.",
     "From October 11 to May 31 the glacier activities don't run, and the day visits Abraham Lake instead.",
     "Pack an extra warm layer for the Columbia Icefield.",
@@ -325,12 +327,11 @@ export function withDocContent(tour: TourWithAvailability): TourWithAvailability
         section("Before You Go", { items: c.goodToKnow }),
       ],
     },
-    { label: "Inclusions", sections: [section("What You'll See on This Tour", { stops: c.stops })] },
-    {
-      label: "Itinerary",
-      sections: [section("Your Day", { steps: c.steps, note: "Stops and their order may change with the season, weather and road conditions." })],
-    },
-    { label: "Seasonal", sections: [section("Seasons & Conditions", { items: c.seasonal })] },
+    { label: "Inclusions", sections: [section("Stop by Stop", { stops: c.stops, note: "Stops, their order and time at each may change with the season, weather and road conditions." })] },
+    // The doc (2026-11-04) removed the "Your Day" timeline from the page; its pickup times still
+    // feed the Pickup & Meeting Points section (TourSections reads a "Pickup" tab).
+    { label: "Pickup", sections: [section("Pickup times", { steps: c.steps })] },
+    { label: "Seasonal", sections: [section("Important Information", { items: c.seasonal })] },
   ];
 
   const faqs = [

@@ -158,6 +158,7 @@ function PartySizeStepper({
   label = "Guests",
   unit = ["Guest", "Guests"],
   min = 1,
+  compact = false,
 }: {
   value: number;
   max: number;
@@ -166,7 +167,33 @@ function PartySizeStepper({
   label?: string;
   unit?: [string, string];
   min?: number;
+  /** One row (label and hint beside the control), so three of them fit a small laptop's panel. */
+  compact?: boolean;
 }) {
+  if (compact) {
+    const btn =
+      "w-9 h-9 rounded-lg bg-white border border-slate-200 flex items-center justify-center font-bold text-slate-700 hover:bg-slate-100 disabled:opacity-40";
+    return (
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <span className="block text-xs font-bold uppercase tracking-wider text-slate-700">{label}</span>
+          <span className="block text-xs text-slate-500">{hint}</span>
+        </div>
+        <div className="flex shrink-0 items-center gap-2 rounded-xl border border-slate-300 bg-slate-50 p-1">
+          <button type="button" aria-label={`Fewer ${unit[1].toLowerCase()}`} onClick={() => onChange(Math.max(min, value - 1))} disabled={value <= min} className={btn}>
+            -
+          </button>
+          <span className="w-6 text-center text-base font-bold tabular-nums text-slate-900" aria-live="polite">
+            {value}
+            <span className="sr-only"> {value === 1 ? unit[0] : unit[1]}</span>
+          </span>
+          <button type="button" aria-label={`More ${unit[1].toLowerCase()}`} onClick={() => onChange(Math.min(max, value + 1))} disabled={value >= max} className={btn}>
+            +
+          </button>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-700">
@@ -264,13 +291,19 @@ export function TourDetailView({
   const maxPartySize = Math.max(1, Math.min(maxAvailableSeats ?? tour.maxGroupSize, tour.maxGroupSize));
   const [guests, setPartySize] = useState(2);
   const partySize = Math.min(guests, maxPartySize);
-  // Per-guest departures take adults and children separately (children pay the departure's child
-  // price when it has one; the server re-prices at checkout). Together they fit the seats left.
+  // Per-guest departures take adults (16–99), youth (6–15) and infants (0–5) separately: youth pay
+  // the departure's youth price when it has one; infants pay the infant price and take a seat when
+  // it has one, and ride free otherwise. The server re-prices at checkout. Together they fit the seats left.
   const [adultsWanted, setAdults] = useState(2);
   const [childrenWanted, setChildren] = useState(0);
+  const [infantsWanted, setInfants] = useState(0);
+  const infantsPay = currentDeparture?.infantPrice != null;
   const adults = Math.max(1, Math.min(adultsWanted, maxPartySize));
   const children = Math.max(0, Math.min(childrenWanted, maxPartySize - adults));
+  const infants = Math.max(0, Math.min(infantsWanted, infantsPay ? maxPartySize - adults - children : 4));
+  const seatedInfants = infantsPay ? infants : 0;
   const childFare = currentDeparture?.childPrice ?? currentDeparture?.price ?? price;
+  const infantFare = currentDeparture?.infantPrice ?? 0;
   // Private tours: optional airport transfer; checkout asks for the flight dates and times.
   const offersAirport = tour.category === "PRIVATE";
   const [airport, setAirport] = useState(false);
@@ -350,12 +383,33 @@ export function TourDetailView({
   const calculatedTotal = currentDeparture
     ? isVehicle
       ? currentDeparture.price
-      : currentDeparture.price * adults + childFare * children
+      : currentDeparture.price * adults + childFare * children + infantFare * seatedInfants
     : price * partySize;
 
-  // Facts strip: the live page's four facts, or generic ones when a tour has none.
+  // Quick highlights (owner's doc, 2026-11-04): Duration · Pickup · Group size · Instant
+  // confirmation. Tickets keep the live page's facts.
+  const instant = tour.bookingMode === "BOKUN" && tour.departures.length > 0;
+  const quickHighlights: { label: string; value: string; icon: ComponentType<{ className?: string }> }[] = [
+    { label: "Duration", value: durationLabel(tour), icon: Clock },
+    {
+      label: "Pickup",
+      value: isPrivate
+        ? "Doorstep pickup in Banff, Canmore or Lake Louise"
+        : tour.category === "SHUTTLE"
+          ? "Pickup in Banff, Canmore & Lake Louise"
+          : "Hotel pickup in Banff & Canmore",
+      icon: MapPin,
+    },
+    { label: "Group size", value: groupLabel(tour), icon: Users },
+    instant
+      ? { label: "Confirmation", value: "Instant confirmation", icon: CheckCircle2 }
+      : { label: "Confirmation", value: isEnquiry ? "Tailored quote, usually within a day" : "Confirmed by our team, usually within a day", icon: CheckCircle2 },
+  ];
+  // Tickets: the live page's four facts, or generic ones when it has none.
   const facts: { label: string; value: string; icon: ComponentType<{ className?: string }> }[] =
-    tour.facts.length > 0
+    tour.category !== "TICKET"
+      ? quickHighlights
+      : tour.facts.length > 0
       ? tour.facts.slice(0, 4).map((f, i) => ({ label: f.label, value: f.value, icon: FACT_ICONS[i % FACT_ICONS.length] }))
       : [
           { label: "Duration", value: durationLabel(tour), icon: Clock },
@@ -412,31 +466,33 @@ export function TourDetailView({
             <h1 className="text-balance text-3xl font-light leading-[1.1] tracking-tight text-obsidian-900 sm:text-4xl lg:text-5xl motion-safe:animate-[fadeUp_800ms_ease-out]">
               {tour.title}
             </h1>
-            <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-base text-slate-600">
+            {/* Trust signals (owner's doc, 2026-11-04): rating · reviews · group size · free cancellation */}
+            <p className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-base text-slate-600">
               {tour.reviewCount > 0 ? (
-                <a href="#reviews" className="inline-flex items-center gap-1.5 text-obsidian-900 hover:underline">
-                  <Star className="h-4 w-4 fill-summit-500 text-summit-500" aria-hidden="true" />
-                  {tour.rating.toFixed(1)}
-                  <span className="sr-only">out of 5,</span>
-                  <span className="text-slate-600">({reviewsLabel(tour)})</span>
-                </a>
+                <>
+                  <a href="#reviews" className="inline-flex items-center gap-1.5 text-obsidian-900 hover:underline">
+                    <Star className="h-4 w-4 fill-summit-500 text-summit-500" aria-hidden="true" />
+                    {tour.rating.toFixed(1)} rating
+                  </a>
+                  <span aria-hidden="true">·</span>
+                  <a href="#reviews" className="hover:underline">{reviewsLabel(tour)}</a>
+                </>
               ) : (
                 <span>New on Vista Chase</span>
               )}
-              <span className="inline-flex items-center gap-1.5">
-                <MapPin className="h-4 w-4 text-ocean-600" aria-hidden="true" />
-                {tour.destination.name}
-              </span>
-              {"sub" in categoryInfo && <span>{categoryInfo.sub}</span>}
-            </div>
+              {tour.category !== "TICKET" && (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <span>{groupLabel(tour)}</span>
+                  <span aria-hidden="true">·</span>
+                  <a href="#cancellation" title={cancellationShort(tour.category)} className="inline-flex items-center gap-1 text-emerald-800 hover:underline">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-700" aria-hidden="true" />
+                    Free cancellation
+                  </a>
+                </>
+              )}
+            </p>
           </div>
-          <a
-            href="#cancellation"
-            className="inline-flex shrink-0 items-center gap-2 self-start rounded-full bg-emerald-50 px-4 py-2 text-base text-emerald-900 ring-1 ring-emerald-200 hover:bg-emerald-100 lg:self-auto"
-          >
-            <CheckCircle2 className="h-5 w-5 text-emerald-700" aria-hidden="true" />
-            {cancellationShort(tour.category)}
-          </a>
         </div>
 
         <ProductGallery slides={slides} title={tour.title} />
@@ -464,11 +520,7 @@ export function TourDetailView({
                   </span>
                 </li>
               ))}
-              {[
-                "Mobile voucher",
-                tour.bookingMode === "BOKUN" && tour.departures.length > 0 ? "Instant confirmation" : null,
-                tour.category !== "TICKET" ? "Hotel pickup in Banff & Canmore" : null,
-              ]
+              {(tour.category === "TICKET" ? ["Mobile voucher"] : [])
                 .filter((x): x is string => Boolean(x))
                 .map((chip) => (
                   <li key={chip} className="flex items-start gap-3.5">
@@ -551,6 +603,7 @@ export function TourDetailView({
                     value={selectedDepartureId}
                     onChange={setSelectedDepartureId}
                     describe={(d) => (isVehicle ? `$${d.price} per vehicle` : `${SEATS_MESSAGE} · $${d.price} CAD per guest`)}
+                    collapseOnSelect
                   />
 
                   {/* Party: one guest count for a private vehicle, adults + children otherwise */}
@@ -567,21 +620,33 @@ export function TourDetailView({
                   ) : (
                     <>
                       <PartySizeStepper
+                        compact
                         label="Adults"
                         unit={["Adult", "Adults"]}
                         value={adults}
-                        max={maxPartySize - children}
+                        max={maxPartySize - children - seatedInfants}
                         onChange={setAdults}
-                        hint={`Max ${maxPartySize} guests on this departure`}
+                        hint={`Age 16–99 · max ${maxPartySize} guests on this departure`}
                       />
                       <PartySizeStepper
-                        label="Children"
-                        unit={["Child", "Children"]}
+                        compact
+                        label="Youth"
+                        unit={["Youth", "Youth"]}
                         min={0}
                         value={children}
-                        max={maxPartySize - adults}
+                        max={maxPartySize - adults - seatedInfants}
                         onChange={setChildren}
-                        hint={currentDeparture?.childPrice != null ? `${money(currentDeparture.childPrice)} CAD each` : "Same fare as adults"}
+                        hint={`Age 6–15 · ${currentDeparture?.childPrice != null ? `${money(currentDeparture.childPrice)} CAD each` : "same fare as adults"}`}
+                      />
+                      <PartySizeStepper
+                        compact
+                        label="Infants"
+                        unit={["Infant", "Infants"]}
+                        min={0}
+                        value={infants}
+                        max={infantsPay ? maxPartySize - adults - children : 4}
+                        onChange={setInfants}
+                        hint={`Age 0–5 · ${infantsPay ? `${money(infantFare)} CAD each, own seat` : "free, on a lap"}`}
                       />
                     </>
                   )}
@@ -609,8 +674,14 @@ export function TourDetailView({
                         </div>
                         {children > 0 && (
                           <div className="flex items-center justify-between text-slate-600">
-                            <span>{`${children} × ${money(childFare)} CAD (${children === 1 ? "child" : "children"})`}</span>
+                            <span>{`${children} × ${money(childFare)} CAD (youth)`}</span>
                             <span>{money(childFare * children)} CAD</span>
+                          </div>
+                        )}
+                        {seatedInfants > 0 && (
+                          <div className="flex items-center justify-between text-slate-600">
+                            <span>{`${infants} × ${money(infantFare)} CAD (${infants === 1 ? "infant" : "infants"})`}</span>
+                            <span>{money(infantFare * infants)} CAD</span>
                           </div>
                         )}
                       </>
@@ -628,7 +699,7 @@ export function TourDetailView({
                         departureId: selectedDepartureId || tour.departures[0]?.id || "",
                         ...(isVehicle
                           ? { guests: String(partySize), ...(offersAirport && airport ? { airport: "1" } : {}) }
-                          : { guests: String(adults + children), adults: String(adults), children: String(children) }),
+                          : { guests: String(adults + children), adults: String(adults), children: String(children), ...(infants > 0 ? { infants: String(infants) } : {}) }),
                       }).toString()}`}
                       className="w-full h-13 py-4 rounded-full text-base font-medium text-obsidian-900 golden-summit-btn flex items-center justify-center gap-2 shadow-lg transition-all hover:scale-[1.01]"
                     >

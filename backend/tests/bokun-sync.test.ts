@@ -13,7 +13,7 @@ import { cancelBooking, createBooking } from "@/modules/bookings/booking.reposit
 import { createReservationHold } from "@/modules/reservations/reservation.repository";
 import { dateOnly, timeOfDay } from "@/lib/utils/time";
 
-const SHARED_SLUG = "banff-highlights-tour"; // Bókun 1142134
+const SHARED_SLUG = "banff-highlights-tour"; // Bókun 796650
 const PRIVATE_SLUG = "banff-private-tour"; // Bókun 1167962
 const DAY = "2035-07-14";
 
@@ -131,7 +131,7 @@ describe("Bókun booking requests", () => {
 describe("website bookings reach Bókun", () => {
   it("creates a confirmed booking in Bókun and saves Bókun's code; the website booking stays as it is", async () => {
     const dep = await departure(sharedTourId, { time: "08:30" });
-    bokun.slot("1142134", DAY, "08:30", 10);
+    bokun.slot("796650", DAY, "08:30", 10);
     const booking = await book(dep);
     expect(booking.status).toBe("CONFIRMED");
     expect(booking.externalSyncStatus).toBe("PENDING");
@@ -158,7 +158,7 @@ describe("website bookings reach Bókun", () => {
 
   it("cancels in Bókun when the booking is cancelled on the website", async () => {
     const dep = await departure(sharedTourId);
-    bokun.slot("1142134", DAY, `06:${String(minute - 1).padStart(2, "0")}`, 10);
+    bokun.slot("796650", DAY, `06:${String(minute - 1).padStart(2, "0")}`, 10);
     const booking = await book(dep);
     await run(booking.id);
     const code = (await reload(booking.id)).bokunBookingId!;
@@ -176,7 +176,7 @@ describe("website bookings reach Bókun", () => {
 
   it("sends nothing when the booking is cancelled before it reached Bókun", async () => {
     const dep = await departure(sharedTourId);
-    bokun.slot("1142134", DAY, `06:${String(minute - 1).padStart(2, "0")}`, 10);
+    bokun.slot("796650", DAY, `06:${String(minute - 1).padStart(2, "0")}`, 10);
     const booking = await book(dep);
     await cancelBooking(booking.bookingReference, booking.customerEmail);
     await run(booking.id);
@@ -187,9 +187,9 @@ describe("website bookings reach Bókun", () => {
 
   it("flags staff when Bókun has no seats, and keeps the website booking confirmed", async () => {
     const dep = await departure(sharedTourId, { time: "09:15" });
-    bokun.slot("1142134", DAY, "09:15", 3);
+    bokun.slot("796650", DAY, "09:15", 3);
     const booking = await book(dep);
-    bokun.slots["1142134"][0].availabilityCount = 1; // sold on another channel before it was sent
+    bokun.slots["796650"][0].availabilityCount = 1; // sold on another channel before it was sent
     await run(booking.id);
     const after = await reload(booking.id);
     expect(after.status).toBe("CONFIRMED");
@@ -202,7 +202,7 @@ describe("website bookings reach Bókun", () => {
 
   it("retries later when Bókun can't be reached before anything was created", async () => {
     const dep = await departure(sharedTourId, { time: "09:45" });
-    bokun.slot("1142134", DAY, "09:45", 10);
+    bokun.slot("796650", DAY, "09:45", 10);
     bokun.failAvailability = new Error("fetch failed");
     const booking = await book(dep);
     const now = new Date();
@@ -218,7 +218,7 @@ describe("website bookings reach Bókun", () => {
 
   it("never re-sends a create that got no answer; staff check Bókun and press Retry", async () => {
     const dep = await departure(sharedTourId, { time: "10:15" });
-    bokun.slot("1142134", DAY, "10:15", 10);
+    bokun.slot("796650", DAY, "10:15", 10);
     bokun.failSubmit = new Error("The operation was aborted due to timeout");
     const booking = await book(dep);
     await run(booking.id);
@@ -237,7 +237,7 @@ describe("website bookings reach Bókun", () => {
 
   it("flags a refused cancellation for staff to cancel in Bókun by hand", async () => {
     const dep = await departure(sharedTourId, { time: "10:45" });
-    bokun.slot("1142134", DAY, "10:45", 10);
+    bokun.slot("796650", DAY, "10:45", 10);
     const booking = await book(dep);
     await run(booking.id);
     bokun.failCancel = new BokunApiError(400, "Bókun API Error: 400 Booking is already cancelled");
@@ -249,7 +249,7 @@ describe("website bookings reach Bókun", () => {
 
   it("queues upcoming bookings made before Bókun was connected", async () => {
     const dep = await departure(sharedTourId, { time: "11:15" });
-    bokun.slot("1142134", DAY, "11:15", 10);
+    bokun.slot("796650", DAY, "11:15", 10);
     setBokunClientForTests(null); // not connected yet: nothing queued
     const booking = await book(dep);
     expect(await tasksFor(booking.id)).toHaveLength(0);
@@ -267,7 +267,7 @@ describe("never more seats than Bókun has", () => {
 
   it("refuses a booking for more guests than Bókun has left, though our own calendar has room", async () => {
     const dep = await departure(sharedTourId, { time: "12:15", capacity: 12 });
-    bokun.slot("1142134", DAY, "12:15", 5);
+    bokun.slot("796650", DAY, "12:15", 5);
     const tooMany = await createBooking({ ...guest, departureId: dep.id, adultsCount: 6, childrenCount: 0 });
     expect(tooMany).toMatchObject({ success: false, error: "Only 5 seats left for this departure. Requested: 6" });
     const fits = await createBooking({ ...guest, departureId: dep.id, adultsCount: 5, childrenCount: 0 });
@@ -279,7 +279,7 @@ describe("never more seats than Bókun has", () => {
 
   it("refuses a seat hold Bókun can't cover, and counts other guests' holds", async () => {
     const dep = await departure(sharedTourId, { time: "12:45" });
-    bokun.slot("1142134", DAY, "12:45", 4);
+    bokun.slot("796650", DAY, "12:45", 4);
     const first = await createReservationHold({ departureId: dep.id, seatsCount: 3, customerName: "A", customerEmail: "a@example.com" });
     expect(first.success).toBe(true);
     const second = await createReservationHold({ departureId: dep.id, seatsCount: 2, customerName: "B", customerEmail: "b@example.com" });
@@ -291,7 +291,7 @@ describe("never more seats than Bókun has", () => {
 
   it("refuses a departure Bókun doesn't offer that day, and a private vehicle Bókun has sold", async () => {
     const shared = await departure(sharedTourId, { time: "13:15" });
-    bokun.slot("1142134", "2035-07-15", "13:15", 10); // the next day only
+    bokun.slot("796650", "2035-07-15", "13:15", 10); // the next day only
     expect(await createBooking({ ...guest, departureId: shared.id, adultsCount: 1, childrenCount: 0 })).toMatchObject({
       success: false,
       error: "This departure is no longer available. Please choose another date or time.",
@@ -312,10 +312,10 @@ describe("never more seats than Bókun has", () => {
 
   it("sends the booking to Bókun on its own date and time, never another free day", async () => {
     const dep = await departure(sharedTourId, { time: "14:15" });
-    bokun.slot("1142134", DAY, "14:15", 5);
+    bokun.slot("796650", DAY, "14:15", 5);
     const booking = await book(dep);
-    bokun.slots["1142134"] = [];
-    bokun.slot("1142134", "2035-07-15", "14:15", 15); // a free day next to it
+    bokun.slots["796650"] = [];
+    bokun.slot("796650", "2035-07-15", "14:15", 15); // a free day next to it
     await run(booking.id);
     expect(bokun.made("/checkout.json/submit")).toHaveLength(0);
     expect((await reload(booking.id)).externalSyncStatus).toBe("FAILED");
@@ -328,7 +328,7 @@ describe("Bókun seats in our calendar", () => {
     setBokunClientForTests(null); // booked before Bókun had this start
     const booking = await book(dep); // 3 seats, not in Bókun yet
     setBokunClientForTests(bokun.api());
-    bokun.slot("1142134", DAY, "13:00", 4, 8); // Bókun: 12 seats, 8 sold elsewhere, 4 left
+    bokun.slot("796650", DAY, "13:00", 4, 8); // Bókun: 12 seats, 8 sold elsewhere, 4 left
     const result = await syncBokunSeats({ from: DAY, days: 1 });
     expect(result).toMatchObject({ errors: [] });
     const after = await prisma.tourDeparture.findUniqueOrThrow({ where: { id: dep.id } });

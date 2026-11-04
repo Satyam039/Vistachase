@@ -10,8 +10,10 @@ export interface DepartureAvailability {
   capacityHeld: number;
   seatsAvailable: number;
   price: number;
-  /** Per child when Bókun prices children differently; otherwise children pay `price`. */
+  /** Per youth (6–15) when it differs; otherwise youth pay `price`. */
   childPrice?: number | null;
+  /** Per infant (0–5). Set: infants pay it and take a seat. Null: free on a lap. */
+  infantPrice?: number | null;
   currency: string;
   status: string;
 }
@@ -165,6 +167,7 @@ export interface CheckoutData {
     seatsAvailable: number;
     price: number;
     childPrice?: number | null;
+    infantPrice?: number | null;
     currency: string;
     tour: {
       id: string;

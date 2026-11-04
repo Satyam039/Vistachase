@@ -550,6 +550,7 @@ const newDepartures = z
     capacityTotal: z.number().int().min(1).max(100),
     price: dollars,
     childPrice: dollars.nullable().optional(),
+    infantPrice: dollars.nullable().optional(),
   })
   .refine((d) => Boolean(d.tourSlug) !== Boolean(d.routeSlug), "Choose a tour or a shuttle route");
 
@@ -568,7 +569,7 @@ router.post("/departures", requireStaff(MANAGERS), async (req, res, next) => {
 });
 
 const departureEdit = z
-  .object({ capacityTotal: z.number().int().min(0).max(100).optional(), price: dollars.optional(), childPrice: dollars.nullable().optional(), returnTime: clock.nullable().optional() })
+  .object({ capacityTotal: z.number().int().min(0).max(100).optional(), price: dollars.optional(), childPrice: dollars.nullable().optional(), infantPrice: dollars.nullable().optional(), returnTime: clock.nullable().optional() })
   .strict(); // date and time are fixed: cancel the departure and add a new one instead
 
 router.patch("/departures/:id", requireStaff(MANAGERS), async (req, res, next) => {

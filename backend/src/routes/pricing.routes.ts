@@ -14,6 +14,7 @@ const quoteSchema = z.object({
   departureId: z.string().min(1).max(64),
   adultsCount: z.coerce.number().int().min(1).max(30),
   childrenCount: z.coerce.number().int().min(0).max(30).default(0),
+  infantsCount: z.coerce.number().int().min(0).max(10).default(0),
   promoCode: z.string().trim().min(1).max(40),
 });
 
@@ -28,7 +29,7 @@ router.post("/quote", rateLimitMiddleware("promo_quote", { maxRequests: 20, wind
       if (partner) {
         const departure = await prisma.tourDeparture.findUnique({ where: { id: body.departureId }, include: { tour: true } });
         if (!departure) return res.status(404).json({ success: false, error: "Departure not found" });
-        const totals = priceBooking(departure, { adults: body.adultsCount, children: body.childrenCount }, [], null);
+        const totals = priceBooking(departure, { adults: body.adultsCount, children: body.childrenCount, infants: body.infantsCount }, [], null);
         return res.json({
           success: true,
           promoCode: partner.code,
@@ -44,7 +45,7 @@ router.post("/quote", rateLimitMiddleware("promo_quote", { maxRequests: 20, wind
     const departure = await prisma.tourDeparture.findUnique({ where: { id: body.departureId }, include: { tour: true } });
     if (!departure) return res.status(404).json({ success: false, error: "Departure not found" });
 
-    const totals = priceBooking(departure, { adults: body.adultsCount, children: body.childrenCount }, [], body.promoCode);
+    const totals = priceBooking(departure, { adults: body.adultsCount, children: body.childrenCount, infants: body.infantsCount }, [], body.promoCode);
     return res.json({
       success: true,
       promoCode: body.promoCode.toUpperCase(),

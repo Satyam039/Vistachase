@@ -1,7 +1,7 @@
 // Airport transfer with a private tour (owner, 2026-10-29): under Guests the guest can add an
 // airport transfer, and checkout asks for their airport arrival and departure dates and times, and
 // (owner, 2026-10-31) where the transfer is from and where it goes.
-// The owner's doc gives no transfer price yet, so nothing is charged online: the team confirms the
+// The owner's doc (2026-11-04) lists prices (shown at checkout), but nothing is charged online yet: the team confirms the
 // transfer and its price with the guest. The details are kept in the booking's price snapshot and
 // as the first line of its special requests, so staff see them in the booking, the manifest, the
 // voucher and the Bókun booking note.
