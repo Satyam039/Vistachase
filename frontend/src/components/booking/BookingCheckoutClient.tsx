@@ -54,6 +54,8 @@ import {
   EMPTY_AIRPORT_TRANSFER,
   type AirportTransferValue,
 } from "@/components/booking/AirportTransferFields";
+import { ActivityAddOnFields } from "@/components/booking/ActivityAddOnFields";
+import { ACTIVITY_ADD_ONS, activityAddOnsFor, type ActivityAddOnId } from "@/lib/activityAddOns";
 import { Dropdown } from "@/components/forms/Dropdown";
 import { PhoneField } from "@/components/forms/PhoneField";
 import { dialCode } from "@/lib/countries";
@@ -269,6 +271,9 @@ export function BookingCheckoutClient({
   // Airport transfer (private tours only): no price yet, so it doesn't change the total.
   const [airport, setAirport] = useState(initialAirport && departure.tour?.category === "PRIVATE");
   const [airportTransfer, setAirportTransfer] = useState<AirportTransferValue>(EMPTY_AIRPORT_TRANSFER);
+  // Activity add-ons on this tour's itinerary (summer only): requested now, priced by the team.
+  const offeredAddOns = activityAddOnsFor(departure.tour?.slug, departure.date);
+  const [activityAddOns, setActivityAddOns] = useState<ActivityAddOnId[]>([]);
 
   // Contact
   const [customerName, setCustomerName] = useState("");
@@ -676,6 +681,7 @@ export function BookingCheckoutClient({
           infantsCount: infants,
           specialRequests: specialRequests.trim() || undefined,
           airportTransfer: airport ? airportTransfer : undefined,
+          activityAddOns: activityAddOns.filter((id) => offeredAddOns.includes(id)),
           promoCode: appliedPromo?.code,
           paymentPlan: plan,
         }),
@@ -838,6 +844,9 @@ export function BookingCheckoutClient({
           />
         )}
         {airport && <SummaryRow label="Airport transfer" value={AIRPORT_TRANSFER_PRICE_NOTE} />}
+        {activityAddOns.length > 0 && (
+          <SummaryRow label={activityAddOns.map((id) => ACTIVITY_ADD_ONS[id]).join(", ")} value="Price confirmed by our team" />
+        )}
       </VStack>
       <Divider />
       <VStack gap={2}>
@@ -1203,6 +1212,7 @@ export function BookingCheckoutClient({
                               )}
                             </>
                           )}
+                          <ActivityAddOnFields offered={offeredAddOns} value={activityAddOns} onChange={setActivityAddOns} />
                         </VStack>
                       )}
 
