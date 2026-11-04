@@ -16,6 +16,7 @@ import crypto from "node:crypto";
 import QRCode from "qrcode";
 import { Prisma, type Booking, type Payment } from "@prisma/client";
 import prisma from "@/lib/db/prisma";
+import { knownCountry } from "@/lib/utils/phone-country";
 import { formatDateOnly, formatTimeOfDay, getMountainTimeInstant } from "@/lib/utils/time";
 import { bookingClosedError } from "@/modules/departures/booking-window";
 import { bokunSeatsError } from "@/modules/bokun/bokun-seats";
@@ -43,6 +44,8 @@ export interface CreateBookingInput {
   customerName: string;
   customerEmail: string;
   customerPhone: string;
+  /** Country picked in the phone field (ISO 3166 two letters); kept in priceSnapshot for Bókun. */
+  customerCountry?: string;
   pickupStopId?: string;
   pickupCustomText?: string;
   pickupTime?: string;
@@ -313,6 +316,7 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
         taxCents: 0,
         totalCents: totals.totalCents,
         inventorySource: departure.inventorySource,
+        customerCountry: knownCountry(input.customerCountry) ?? undefined,
         // priceCents null: the team confirms the price (winter, 13+ guests); otherwise it is in addOns.
         ...(input.airportTransfer ? { airportTransfer: { ...input.airportTransfer, priceCents: transferCents } } : {}),
         // Requested, not charged: the price varies and the team confirms it.

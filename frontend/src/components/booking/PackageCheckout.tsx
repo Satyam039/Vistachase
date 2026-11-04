@@ -189,6 +189,7 @@ export function PackageCheckout({
           customerName: name.trim(),
           customerEmail: email.trim(),
           customerPhone: phone,
+          customerCountry: phoneCountry,
           pickupStopId: stopId || undefined,
           pickupCustomText: customPickup.trim() || undefined,
           adultsCount: adults,
