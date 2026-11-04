@@ -445,7 +445,7 @@ export default function MyTripsPage() {
                             <dt className="sr-only">Guests</dt>
                             <dd>
                               {b.adultsCount} adult{b.adultsCount === 1 ? "" : "s"}
-                              {b.childrenCount > 0 ? `, ${b.childrenCount} child${b.childrenCount === 1 ? "" : "ren"}` : ""}
+                              {b.childrenCount > 0 ? `, ${b.childrenCount} youth` : ""}
                             </dd>
                           </div>
                         </dl>

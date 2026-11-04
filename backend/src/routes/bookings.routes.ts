@@ -18,6 +18,7 @@ import { tripBookings, tripOf, tripSummary } from "@/modules/bookings/trip";
 import { bookingIcs } from "@/modules/bookings/calendar-event";
 import { emailSchema, parseOr400, referenceSchema, z } from "@/lib/security/validate";
 import { airportTransferSchema } from "@/modules/bookings/airport-transfer";
+import { ACTIVITY_IDS } from "@/modules/bookings/activity-addons";
 
 const router = Router();
 
@@ -40,9 +41,10 @@ const createSchema = z.object({
   promoCode: z.string().trim().max(40).optional(),
   paymentPlan: z.enum(["FULL", "DEPOSIT"]).default("FULL"),
   airportTransfer: airportTransferSchema.optional(),
+  activities: z.array(z.enum(ACTIVITY_IDS)).max(5).optional(),
 });
 
-router.post("/", rateLimitMiddleware("booking_create", { maxRequests: 5, windowSeconds: 60 }), async (req, res, next) => {
+router.post("/",rateLimitMiddleware("booking_create", { maxRequests: 5, windowSeconds: 60 }), async (req, res, next) => {
   try {
     const body = parseOr400(createSchema, req.body, res);
     if (!body) return;

@@ -49,6 +49,7 @@ interface Departure {
   capacityHeld: number;
   price: number;
   childPrice: number | null;
+  infantPrice?: number | null;
   currency: string;
   status: string;
   inventorySource: string;
@@ -166,9 +167,10 @@ export function QuickBookForm({ notify }: { notify: (m: string) => void }) {
     if (isPrivate) return departure.price;
     return (
       adults * departure.price +
-      children * (departure.childPrice ?? departure.price)
+      children * (departure.childPrice ?? departure.price) +
+      infants * (departure.infantPrice ?? 0)
     );
-  }, [departure, isPrivate, adults, children]);
+  }, [departure, isPrivate, adults, children, infants]);
 
   function reset() {
     setDepartureId("");
@@ -442,7 +444,7 @@ export function QuickBookForm({ notify }: { notify: (m: string) => void }) {
                 </div>
                 <Count
                   id="qb-adults"
-                  label="Adults"
+                  label="Adults (16–99)"
                   min={1}
                   max={30}
                   value={adults}
@@ -450,7 +452,7 @@ export function QuickBookForm({ notify }: { notify: (m: string) => void }) {
                 />
                 <Count
                   id="qb-children"
-                  label="Children"
+                  label="Youth (6–15)"
                   min={0}
                   max={30}
                   value={children}
@@ -458,7 +460,7 @@ export function QuickBookForm({ notify }: { notify: (m: string) => void }) {
                 />
                 <Count
                   id="qb-infants"
-                  label="Infants"
+                  label="Infants (0–5)"
                   min={0}
                   max={10}
                   value={infants}

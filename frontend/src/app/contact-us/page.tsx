@@ -49,7 +49,7 @@ export default async function ContactUsPage({ searchParams }: { searchParams: Pr
     packageMessage = TWO_DAY_PACKAGE.requestMessage;
   } else if (isTwoDayPrivate) {
     packageTitle = "Request the Private Two-Day Rockies Explorer";
-    packageSubtitle = "Tell us your preferred dates and party size. Our team confirms your private vehicle and driver-guide for both days, at CAD $1,599 per day (June 1 to October 10) or $1,299 per day (October 11 to May 31).";
+    packageSubtitle = "Tell us your preferred dates and party size. Our team confirms your private vehicle and driver-guide for both days, at CAD $1,575 per day (June 1 to October 10) or $1,240 per day (October 11 to May 31).";
     packageMessage = "I'd like to book the Private Two-Day Rockies Explorer (Private Banff & Yoho + Columbia Icefield Adventure).\nPreferred Day 1 date:\nPreferred Day 2 date:\nGroup size:\nWhere we're staying:\nAirport transfer needed (yes/no):\nAirport arrival date and time:\nAirport departure date and time:";
   } else if (isThreeDay) {
     packageTitle = "Request the Three-Day Rockies Discovery";

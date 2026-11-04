@@ -27,7 +27,7 @@ const money = (cents: number, currency: string) => `$${(cents / 100).toFixed(2)}
 
 function party(b: TripBooking) {
   const parts = [`${b.adultsCount} adult${b.adultsCount === 1 ? "" : "s"}`];
-  if (b.childrenCount) parts.push(`${b.childrenCount} child${b.childrenCount === 1 ? "" : "ren"}`);
+  if (b.childrenCount) parts.push(`${b.childrenCount} youth`);
   if (b.infantsCount) parts.push(`${b.infantsCount} infant${b.infantsCount === 1 ? "" : "s"}`);
   return parts.join(", ");
 }

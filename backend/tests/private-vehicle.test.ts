@@ -3,7 +3,7 @@ import prisma from "@/lib/db/prisma";
 import { createReservationHold } from "@/modules/reservations/reservation.repository";
 import { cancelBooking, createBooking } from "@/modules/bookings/booking.repository";
 import { dateOnly, timeOfDay } from "@/lib/utils/time";
-import { airportTransferSchema } from "@/modules/bookings/airport-transfer";
+import { airportTransferCents, airportTransferSchema } from "@/modules/bookings/airport-transfer";
 
 async function createPrivateDeparture(date: string) {
   const tour = await prisma.tour.findFirstOrThrow({ where: { category: "PRIVATE" } });
@@ -122,9 +122,9 @@ describe("Private tours are priced and reserved per vehicle", () => {
 });
 
 describe("Airport transfer with a private tour", () => {
-  const transfer = { arrivalDate: "2027-06-19", arrivalTime: "14:30", departureDate: "2027-06-23", departureTime: "18:05", from: "Calgary Airport (YYC)", to: "Fairmont Banff Springs" };
+  const transfer = { arrivalDate: "2027-06-19", arrivalTime: "14:30", departureDate: "2027-06-23", departureTime: "18:05", town: "BANFF" as const, from: "Calgary Airport (YYC)", to: "Fairmont Banff Springs" };
 
-  it("keeps the arrival and departure on the booking without charging for it", async () => {
+  it("keeps the arrival and departure on the booking and charges both transfers", async () => {
     const departure = await createPrivateDeparture("2027-06-20");
     const result = await createBooking({
       departureId: departure.id,
@@ -138,12 +138,21 @@ describe("Airport transfer with a private tour", () => {
       airportTransfer: transfer,
     });
     expect(result.success).toBe(true);
-    expect(result.booking?.totalAmount).toBe(1250);
+    // 1,250 vehicle + 2 × 364 (Banff, up to 6 guests).
+    expect(result.booking?.totalAmount).toBe(1250 + 728);
     const stored = await prisma.booking.findUniqueOrThrow({ where: { bookingReference: result.booking!.bookingReference } });
     expect(stored.specialRequests).toBe(
-      "Airport transfer requested: from Calgary Airport (YYC) to Fairmont Banff Springs, arrival 2027-06-19 14:30, departure 2027-06-23 18:05 (price to be confirmed by Vista Chase).\nChild seat please",
+      "Airport transfer (Banff, arrival and departure): from Calgary Airport (YYC) to Fairmont Banff Springs, arrival 2027-06-19 14:30, departure 2027-06-23 18:05 (CAD 728.00 paid at checkout).\nChild seat please",
     );
-    expect((stored.priceSnapshot as { airportTransfer?: unknown }).airportTransfer).toEqual({ ...transfer, priceCents: null });
+    expect((stored.priceSnapshot as { airportTransfer?: unknown }).airportTransfer).toEqual({ ...transfer, priceCents: 72800 });
+  });
+
+  it("prices the transfer by town and party size", () => {
+    expect(airportTransferCents({ town: "BANFF" }, 6)).toBe(72800);
+    expect(airportTransferCents({ town: "CANMORE" }, 7)).toBe(170000);
+    expect(airportTransferCents({ town: "LAKE_LOUISE" }, 2)).toBe(89000);
+    expect(airportTransferCents({ town: "LAKE_LOUISE" }, 12)).toBe(179000);
+    expect(airportTransferCents({ town: "BANFF" }, 13)).toBeNull();
   });
 
   it("is refused on a shared tour", async () => {

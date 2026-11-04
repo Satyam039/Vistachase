@@ -24,8 +24,9 @@ import { transitionBooking } from "@/modules/bookings/booking-status";
 import { getPaymentProvider } from "@/lib/payment/payment.provider";
 import { sendConfirmationEmail } from "@/modules/bookings/confirmation-email";
 import { getEmailProvider } from "@/lib/email/email.provider";
-import { isVehicleDeparture, partySizeError, seatsToReserve } from "@/modules/pricing/departure-pricing";
-import { airportTransferNote, type AirportTransfer } from "@/modules/bookings/airport-transfer";
+import { infantsPay, isVehicleDeparture, partySizeError, seatedGuests, seatsToReserve } from "@/modules/pricing/departure-pricing";
+import { airportTransferCents, airportTransferNote, type AirportTransfer } from "@/modules/bookings/airport-transfer";
+import { activitiesNote, unavailableActivities, type ActivityId } from "@/modules/bookings/activity-addons";
 import { priceBooking, type AddOnChoice } from "@/modules/pricing/booking-pricing";
 import { referringAffiliateId } from "@/modules/affiliates/affiliate.repository";
 import { earnCommission, reverseCommissionForRefund } from "@/modules/affiliates/commission";
@@ -60,6 +61,8 @@ export interface CreateBookingInput {
   paymentPlan?: "FULL" | "DEPOSIT";
   /** Private tours only: airport arrival and departure for a transfer (modules/bookings/airport-transfer.ts). */
   airportTransfer?: AirportTransfer;
+  /** Optional activities the guest wants (modules/bookings/activity-addons.ts); priced by the team. */
+  activities?: ActivityId[];
 }
 
 /** What the checkout should do next. */
@@ -197,8 +200,15 @@ export interface CreateBookingOptions {
 }
 
 export async function createBooking(input: CreateBookingInput, options: CreateBookingOptions = {}): Promise<BookingResult> {
-  const totalSeats = input.adultsCount + input.childrenCount;
   if (input.adultsCount < 1) return { success: false, error: "At least one adult is required." };
+  // Infants (0-5) take a seat only on departures where they pay an infant fare.
+  const fareOf = await prisma.tourDeparture.findUnique({
+    where: { id: input.departureId },
+    select: { price: true, infantPrice: true, capacityTotal: true, tour: { select: { category: true } } },
+  });
+  const totalSeats = fareOf
+    ? seatedGuests(fareOf, input.adultsCount, input.childrenCount, input.infantsCount)
+    : input.adultsCount + input.childrenCount;
 
   if (input.idempotencyKey) {
     const replay = await replayBooking(input.idempotencyKey, input);
@@ -247,6 +257,9 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
       // Capacity: shared departures take one seat per guest, private ones the whole vehicle
       const isVehicle = isVehicleDeparture(departure);
       if (input.airportTransfer && !isVehicle) throw new BookingRefused("Airport transfers can be added to private tours only.");
+      if (input.activities?.length && unavailableActivities(departure.tour?.slug, input.activities).length > 0) {
+        throw new BookingRefused("One of the chosen activities isn't offered on this tour. Please choose again.");
+      }
       const reservedSeats = seatsToReserve(departure, totalSeats);
 
       // The hold is claimed once: a second request with the same hold finds it no longer ACTIVE.
@@ -267,7 +280,16 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
         );
       }
 
-      const totals = priceBooking(departure, { adults: input.adultsCount, children: input.childrenCount }, input.addOns, input.promoCode, options.discount?.percent);
+      const totals = priceBooking(departure, { adults: input.adultsCount, children: input.childrenCount, infants: input.infantsCount }, input.addOns, input.promoCode, options.discount?.percent);
+      // Airport transfer (private tours): priced by town and party size, added like an add-on.
+      const transferCents = input.airportTransfer
+        ? airportTransferCents(input.airportTransfer, input.adultsCount + input.childrenCount + input.infantsCount)
+        : null;
+      if (transferCents) {
+        totals.addOns.push({ name: "Airport transfer (arrival and departure)", priceCents: transferCents, quantity: 1 });
+        totals.addOnsCents += transferCents;
+        totals.totalCents += transferCents;
+      }
       // Deposit: online checkout only (staff bookings record their own payment), far enough ahead.
       const deposit =
         input.paymentPlan === "DEPOSIT" && !options.offlinePayment && !options.deferPayment
@@ -287,6 +309,7 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
         pricing: isVehicle ? "PER_VEHICLE" : "PER_GUEST",
         adultUnitCents: departure.price,
         childUnitCents: isVehicle ? null : (departure.childPrice ?? departure.price),
+        infantUnitCents: infantsPay(departure) ? departure.infantPrice : null,
         party: { adults: input.adultsCount, children: input.childrenCount, infants: input.infantsCount },
         fareCents: totals.fareCents,
         promo: totals.discountPercent > 0 ? { code: input.promoCode?.trim().toUpperCase() || options.discount?.label, percent: totals.discountPercent } : null,
@@ -296,8 +319,9 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
         taxCents: 0,
         totalCents: totals.totalCents,
         inventorySource: departure.inventorySource,
-        // Not charged online yet: the team confirms the transfer and its price.
-        ...(input.airportTransfer ? { airportTransfer: { ...input.airportTransfer, priceCents: null } } : {}),
+        // Above 12 guests the team prices the transfer (priceCents null).
+        ...(input.airportTransfer ? { airportTransfer: { ...input.airportTransfer, priceCents: transferCents } } : {}),
+        ...(input.activities?.length ? { activities: { ids: [...new Set(input.activities)], priceCents: null } } : {}),
       };
 
       const created = await tx.booking.create({
@@ -328,9 +352,16 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
           depositAmount: deposit?.depositCents ?? null,
           balanceDueAt: deposit?.balanceDueAt ?? null,
           paymentExpiresAt: new Date(now.getTime() + PENDING_PAYMENT_MINUTES * 60_000),
-          specialRequests: input.airportTransfer
-            ? [airportTransferNote(input.airportTransfer), input.specialRequests].filter(Boolean).join("\n")
-            : input.specialRequests,
+          specialRequests:
+            [
+              input.airportTransfer ? airportTransferNote(input.airportTransfer, transferCents) : "",
+              input.activities?.length
+                ? activitiesNote(input.activities, { adults: input.adultsCount, youth: input.childrenCount, infants: input.infantsCount })
+                : "",
+              input.specialRequests ?? "",
+            ]
+              .filter(Boolean)
+              .join("\n") || undefined,
           voucherCode: newVoucherCode(),
           // Staff scan this to check the guest in; it carries a signature, not the guest's details.
           qrCodeUrl: await QRCode.toDataURL(checkinLink(bookingReference), { margin: 1, width: 300 }),

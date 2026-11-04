@@ -58,3 +58,18 @@ A booking stops and gets a flag (**Admin → Bookings → Flags**, note starting
 - a cancellation is refused by Bókun.
 
 Fix it in Bókun by hand and resolve the flag, or press **Retry** in the Bókun tab. The nightly booking check emails any confirmed booking that isn't in Bókun.
+
+## Product IDs from the owner's pricing table (2026-11-04)
+
+Set in `backend/prisma/catalog/product-map.json` and on existing databases by migration `9h_doc_pricing_infants`:
+
+| Website product | Slug | Bókun ID |
+|---|---|---|
+| Banff & Yoho Discovery (shared) | `banff-highlights-tour` | 796650 |
+| Columbia Icefield Adventure (shared) | `shared-tours-icefields-jasper` | 856008 |
+| Banff & Yoho Discovery (private vehicle) | `banff-private-tour` | 1167962 |
+| Columbia Icefield Adventure (private vehicle) | `icefields-jasper-private-tour` | 1115237 (moved off `jasper-custom-private-tour`) |
+
+The package IDs are recorded under `packages` in the same file: Two-Day Rockies Explorer shared 1328342 (the website books it as one booking per day on the two shared day tours, each reserved in its own Bókun product), private 1344763, Three-Day 1344782, Four-Day 1344784 (these three are booked on request today).
+
+Each Bókun product needs Adult / Youth / Infant passenger categories for the website's age bands (16–99, 6–15, 0–5). Infants pay and take a seat on departures with an infant fare (`TourDeparture.infantPrice`); otherwise they ride free on a lap and are written in the booking note.

@@ -27,9 +27,11 @@ export interface PackageDeparture {
   date: string;
   departureTime: string;
   seatsAvailable: number;
-  /** Dollars per adult; children pay childPrice when set. */
+  /** Dollars per adult (16–99); youth (6–15) pay childPrice when set. */
   price: number;
   childPrice?: number | null;
+  /** Dollars per infant (0–5). Set: infants pay it and take a seat; null: free on a lap. */
+  infantPrice?: number | null;
   currency: string;
 }
 
@@ -76,9 +78,12 @@ const timeLabel = (time: string) => {
 };
 
 /** A day's fare in cents with the package discount, rounded the way the server rounds. */
-function dayCents(d: PackageDeparture | undefined, adults: number, children: number, discountPercent: number) {
+function dayCents(d: PackageDeparture | undefined, adults: number, children: number, infants: number, discountPercent: number) {
   if (!d) return { fare: 0, discount: 0, total: 0 };
-  const fare = Math.round(d.price * 100) * adults + Math.round((d.childPrice ?? d.price) * 100) * children;
+  const fare =
+    Math.round(d.price * 100) * adults +
+    Math.round((d.childPrice ?? d.price) * 100) * children +
+    (d.infantPrice != null ? Math.round(d.infantPrice * 100) * infants : 0);
   const discount = Math.round((fare * discountPercent) / 100);
   return { fare, discount, total: fare - discount };
 }
@@ -115,7 +120,9 @@ export function PackageCheckout({
   const [confirmed, setConfirmed] = useState<BookingRef[] | null>(null);
   const keyRef = useRef("");
 
+  // Infants take a seat on departures with an infant fare (same rule as the server).
   const guests = adults + children;
+  const seatsOn = (d: PackageDeparture) => guests + (d.infantPrice != null ? infants : 0);
   const chosen = picks.map((id, i) => days[i].departures.find((d) => d.id === id));
 
   // A date that no longer has room for the party, or that clashes with the other day, is cleared.
@@ -123,17 +130,18 @@ export function PackageCheckout({
     setPicks((current) =>
       current.map((id, i) => {
         const d = days[i].departures.find((x) => x.id === id);
-        if (!d || d.seatsAvailable < guests) return "";
+        if (!d || d.seatsAvailable < seatsOn(d)) return "";
         const clash = current.some((otherId, j) => j !== i && days[j].departures.find((x) => x.id === otherId)?.date === d.date);
         return clash && i > 0 ? "" : id;
       }),
     );
-  }, [guests, days]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [guests, infants, days]);
 
   const optionsFor = (i: number) => {
     const taken = new Set(chosen.filter((_, j) => j !== i).map((d) => d?.date));
     return days[i].departures
-      .filter((d) => d.seatsAvailable >= guests && !taken.has(d.date))
+      .filter((d) => d.seatsAvailable >= seatsOn(d) && !taken.has(d.date))
       .map((d) => ({
         value: d.id,
         label: `${dayLabel(d.date)} · ${timeLabel(d.departureTime)}`,
@@ -141,7 +149,7 @@ export function PackageCheckout({
       }));
   };
 
-  const lines = chosen.map((d) => dayCents(d, adults, children, discountPercent));
+  const lines = chosen.map((d) => dayCents(d, adults, children, infants, discountPercent));
   const fare = lines.reduce((n, l) => n + l.fare, 0);
   const saving = lines.reduce((n, l) => n + l.discount, 0);
   const total = lines.reduce((n, l) => n + l.total, 0);
@@ -272,9 +280,9 @@ export function PackageCheckout({
       <div className="space-y-6">
         <Section icon={Users} title="Who's coming">
           <div className="grid gap-4 sm:grid-cols-3">
-            <QuantityInput label="Adults" value={adults} onChange={setAdults} min={1} max={MAX_GUESTS - children} />
-            <QuantityInput label="Children" description="Ages 2–12" value={children} onChange={setChildren} min={0} max={MAX_GUESTS - adults} />
-            <QuantityInput label="Infants" description="Under 2, on a lap" value={infants} onChange={setInfants} min={0} max={4} />
+            <QuantityInput label="Adults" description="Age 16–99" value={adults} onChange={setAdults} min={1} max={MAX_GUESTS - children - infants} />
+            <QuantityInput label="Youth" description="Age 6–15" value={children} onChange={setChildren} min={0} max={MAX_GUESTS - adults - infants} />
+            <QuantityInput label="Infants" description="Age 0–5" value={infants} onChange={setInfants} min={0} max={Math.max(0, Math.min(4, MAX_GUESTS - adults - children))} />
           </div>
           <p className="mt-3 text-sm text-slate-600">Small groups: no more than 12 guests on each tour.</p>
         </Section>
@@ -303,7 +311,7 @@ export function PackageCheckout({
                       />
                     ) : (
                       <p className="rounded-xl bg-obsidian-50 px-4 py-3 text-sm text-slate-700">
-                        No dates with {guests} free seats right now.{" "}
+                        No dates with {guests + infants} free seats right now.{" "}
                         <Link href="/contact-us?package=two-day-rockies-explorer" className="text-ocean-700 underline underline-offset-2">
                           Ask us about other dates
                         </Link>
@@ -378,7 +386,7 @@ export function PackageCheckout({
                 Day {i + 1}: {day.title}
               </p>
               <p className="text-sm text-white/70">{chosen[i] ? `${dayLabel(chosen[i]!.date)} · ${timeLabel(chosen[i]!.departureTime)}` : "Date not chosen yet"}</p>
-              {chosen[i] && <p className="mt-1 text-sm text-white/70">{cad(lines[i].fare / 100)} for {guests} {guests === 1 ? "guest" : "guests"}</p>}
+              {chosen[i] && <p className="mt-1 text-sm text-white/70">{cad(lines[i].fare / 100)} for {guests + infants} {guests + infants === 1 ? "guest" : "guests"}</p>}
             </li>
           ))}
         </ul>

@@ -31,6 +31,7 @@ const SECTIONS = [
   { id: "itinerary", label: "Itinerary" },
   { id: "whats-included", label: "What's Included" },
   { id: "pickup", label: "Pickup" },
+  { id: "important-information", label: "Important Info" },
   { id: "cancellation", label: "Cancellation" },
   { id: "reviews", label: "Reviews" },
 ] as const;
@@ -75,6 +76,15 @@ function Prose({ text, className = "text-base leading-relaxed text-slate-700" }:
 }
 
 const tab = (tour: TourWithAvailability, labels: RegExp) => tour.tabs.find((t) => labels.test(t.label));
+
+/** The "Important Information" lines: the tour's Seasonal tab (seasons, weather, adjustments). */
+function importantItems(tour: TourWithAvailability): string[] {
+  const seasonal = tab(tour, /^seasonal$/i);
+  return [
+    ...(seasonal?.sections.flatMap((s) => s.items) ?? []),
+    ...(seasonal?.sections.flatMap((s) => s.body) ?? []),
+  ];
+}
 
 function SectionBlock({ section, level = 3 }: { section: TourSection; level?: 3 | 4 }) {
   const Heading = level === 3 ? "h3" : "h4";
@@ -149,7 +159,9 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
   const seasonal = tab(tour, /^seasonal$/i);
   const overviewSections = (overview?.sections ?? []).filter((s) => !/price (in|ex)cludes/i.test(s.heading));
   const vehicles = vehiclesFor(tour);
-  const pickupStep = itinerary?.sections.flatMap((s) => s.steps).find((s) => /pick ?up/i.test(s.text));
+  const pickupTab = tab(tour, /^pickup$/i);
+  const pickupStep = [...(pickupTab?.sections ?? []), ...(itinerary?.sections ?? [])].flatMap((s) => s.steps).find((s) => /pick ?up/i.test(s.text));
+  const importantInfo = importantItems(tour);
 
 
 
@@ -177,32 +189,29 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
           </div>
         )}
         {tour.highlights.length > 0 && (
-          <ul className="grid gap-3 rounded-none border border-slate-200/80 bg-white p-6 sm:grid-cols-2" aria-label="Highlights">
-            {tour.highlights.map((h) => (
-              <li key={h} className="flex items-start gap-3 text-base text-slate-800">
-                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-ocean-600" aria-hidden="true" />
-                <span>{h}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="space-y-4">
+            <h3 className="text-xl font-light text-obsidian-900">Places You&apos;ll Discover</h3>
+            <ul className="grid gap-3 rounded-none border border-slate-200/80 bg-white p-6 sm:grid-cols-2">
+              {tour.highlights.map((h) => {
+                const seasonalPlace = /\s*\(seasonal\)$/i.test(h);
+                return (
+                  <li key={h} className="flex items-start gap-3 text-base text-slate-800">
+                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-ocean-600" aria-hidden="true" />
+                    <span>
+                      {h.replace(/\s*\(seasonal\)$/i, "")}
+                      {seasonalPlace && (
+                        <span className="ml-2 inline-flex rounded-full bg-summit-100 px-2 py-0.5 align-middle text-xs text-obsidian-900">Seasonal</span>
+                      )}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         )}
         {overviewSections.slice(1).map((s, i) => (
           <SectionBlock key={`${s.heading}-${i}`} section={s} />
         ))}
-        <div className="space-y-6">
-          <h3 className="text-xl font-light text-obsidian-900">Good to know</h3>
-          {tour.facts.length > 0 && (
-            <dl className="grid gap-4 rounded-none border border-slate-200/80 bg-white p-6 sm:grid-cols-2">
-              {tour.facts.map((f) => (
-                <div key={f.label}>
-                  <dt className="text-sm uppercase tracking-widest text-slate-600">{f.label}</dt>
-                  <dd className="text-lg font-light text-obsidian-900">{f.value}</dd>
-                </div>
-              ))}
-            </dl>
-          )}
-          {seasonal?.sections.map((s, i) => <SectionBlock key={`season-${i}`} section={s} level={4} />)}
-        </div>
       </section>
 
       <section id="itinerary" aria-labelledby="itinerary-heading" className="space-y-8">
@@ -304,6 +313,24 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
           </div>
         )}
       </section>
+
+      {importantInfo.length > 0 && (
+        <section id="important-information" aria-labelledby="important-information-heading" className="space-y-4">
+          <SectionHeading id="important-information">Important Information</SectionHeading>
+          <ul className="space-y-3 rounded-none border border-slate-200/80 bg-white p-6 text-base text-slate-700">
+            {importantInfo.map((item) => {
+              // "Label: text" lines show the label first, as the doc writes them.
+              const m = item.match(/^([^:]{3,40}):\s(.+)$/);
+              return (
+                <li key={item} className="flex items-start gap-2.5">
+                  <Check className="mt-1 h-4 w-4 shrink-0 text-ocean-600" aria-hidden="true" />
+                  <span>{m ? <><span className="text-obsidian-900">{m[1]}:</span> {m[2]}</> : item}</span>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       <section id="cancellation" aria-labelledby="cancellation-heading" className="space-y-4">
         <SectionHeading id="cancellation">Cancellation</SectionHeading>
@@ -417,8 +444,10 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
  * TourDetailView across the full content width, so all sections fit and the pills share the
  * width edge to edge; on narrow screens it scrolls sideways and keeps the active pill in view.
  */
-export function TourSectionNav() {
+export function TourSectionNav({ tour }: { tour?: TourWithAvailability }) {
   const [active, setActive] = useState<string>("overview");
+  // "Important Info" only when the tour has that section.
+  const sections = SECTIONS.filter((s) => s.id !== "important-information" || (tour && importantItems(tour).length > 0));
 
   // Highlight the section in view in the sticky bar: the last section whose top has passed
   // 40% of the viewport (scroll-based, so instant jumps and fast scrolling are caught too).
@@ -467,7 +496,7 @@ export function TourSectionNav() {
           ref={navList}
           className="vc-rail flex w-full gap-1 overflow-x-auto py-1.5 [mask-image:linear-gradient(90deg,transparent,#000_1.5rem,#000_calc(100%-1.5rem),transparent)] sm:[mask-image:none]"
         >
-          {SECTIONS.map((s) => (
+          {sections.map((s) => (
             <li key={s.id} className="flex-1 shrink-0">
               <a
                 href={`#${s.id}`}

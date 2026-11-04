@@ -162,6 +162,7 @@ export async function listDepartureInventory(tourSlug: string, from?: string, to
     capacityHeld: d.capacityHeld,
     price: d.price / 100,
     childPrice: d.childPrice != null ? d.childPrice / 100 : null,
+    infantPrice: d.infantPrice != null ? d.infantPrice / 100 : null,
     status: d.status,
     inventorySource: d.inventorySource,
     inventoryVerifiedAt: d.inventoryVerifiedAt,
@@ -253,7 +254,7 @@ function csvCell(value: unknown) {
 }
 
 export function manifestCsv(manifest: NonNullable<Awaited<ReturnType<typeof getDepartureManifest>>>) {
-  const head = ["Pickup time", "Pickup stop", "Reference", "Guest", "Phone", "Email", "Adults", "Children", "Infants", "Seats", "Add-ons", "Special requests", "Payment due", "Boarded"];
+  const head = ["Pickup time", "Pickup stop", "Reference", "Guest", "Phone", "Email", "Adults (16+)", "Youth (6–15)", "Infants (0–5)", "Seats", "Add-ons", "Special requests", "Payment due", "Boarded"];
   const rows = manifest.passengers.map((p) => [
     p.pickupTime, p.pickupStop, p.bookingReference, p.customerName, p.customerPhone, p.customerEmail, p.adults, p.children, p.infants, p.seats,
     p.addOns.join("; "), p.specialRequests ?? "", p.paymentDue ? "Yes" : "", p.isBoarded ? "Yes" : "",

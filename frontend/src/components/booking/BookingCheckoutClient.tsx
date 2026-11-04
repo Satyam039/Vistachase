@@ -47,13 +47,14 @@ import { TextInput } from "@astryxdesign/core/TextInput";
 import { Thumbnail } from "@astryxdesign/core/Thumbnail";
 import { QuantityInput } from "@/components/forms/QuantityInput";
 import {
-  AIRPORT_TRANSFER_PRICE_NOTE,
   AirportTransferDetails,
+  airportTransferPrice,
   AirportTransferToggle,
   airportTransferError,
   EMPTY_AIRPORT_TRANSFER,
   type AirportTransferValue,
 } from "@/components/booking/AirportTransferFields";
+import { activitiesFor, type ActivityId } from "@/lib/activityAddOns";
 import { Dropdown } from "@/components/forms/Dropdown";
 import { PhoneField } from "@/components/forms/PhoneField";
 import { dialCode } from "@/lib/countries";
@@ -83,8 +84,10 @@ export interface DepartureData {
   bookable?: boolean;
   notBookableReason?: string | null;
   price: number;
-  /** Per child when it differs from the adult price. */
+  /** Per youth (6–15) when it differs from the adult price. */
   childPrice?: number | null;
+  /** Per infant (0–5). Set: infants pay it and take a seat; null: free on a lap. */
+  infantPrice?: number | null;
   currency: string;
   tour?: {
     id: string;
@@ -190,7 +193,7 @@ function formatCountdown(seconds: number) {
 function partyLabel(adults: number, children: number, infants: number) {
   const parts = [`${adults} ${adults === 1 ? "adult" : "adults"}`];
   if (children > 0)
-    parts.push(`${children} ${children === 1 ? "child" : "children"}`);
+    parts.push(`${children} youth`);
   if (infants > 0)
     parts.push(`${infants} ${infants === 1 ? "infant" : "infants"}`);
   return parts.join(", ");
@@ -216,6 +219,7 @@ export function BookingCheckoutClient({
   initialGuests,
   initialAdults,
   initialChildren,
+  initialInfants,
   initialAirport = false,
 }: {
   departure: DepartureData;
@@ -226,6 +230,8 @@ export function BookingCheckoutClient({
   /** Adults and children chosen on the tour page (?adults=&children=); take precedence over ?guests=. */
   initialAdults?: number;
   initialChildren?: number;
+  /** Infants chosen on the tour page (?infants=). */
+  initialInfants?: number;
   /** Airport transfer ticked on a private tour's page (?airport=1). */
   initialAirport?: boolean;
 }) {
@@ -260,7 +266,7 @@ export function BookingCheckoutClient({
   const [children, setChildren] = useState(() =>
     initialAdults ? Math.max(0, Math.min(initialChildren ?? 0, departure.seatsAvailable - Math.min(initialAdults, departure.seatsAvailable))) : 0,
   );
-  const [infants, setInfants] = useState(0);
+  const [infants, setInfants] = useState(() => Math.max(0, Math.min(initialInfants ?? 0, MAX_INFANTS)));
   // Airport transfer (private tours only): no price yet, so it doesn't change the total.
   const [airport, setAirport] = useState(initialAirport && departure.tour?.category === "PRIVATE");
   const [airportTransfer, setAirportTransfer] = useState<AirportTransferValue>(EMPTY_AIRPORT_TRANSFER);
@@ -277,6 +283,9 @@ export function BookingCheckoutClient({
   const [pickupStopId, setPickupStopId] = useState(stops[0]?.id ?? "");
   const [customPickup, setCustomPickup] = useState("");
   const [specialRequests, setSpecialRequests] = useState("");
+  // Optional activities on this tour's itinerary (lib/activityAddOns.ts); priced by the team.
+  const tourActivities = activitiesFor(departure.tour?.slug);
+  const [activities, setActivities] = useState<ActivityId[]>([]);
 
   // 10-minute seat hold
   const [holdToken, setHoldToken] = useState("");
@@ -323,7 +332,7 @@ export function BookingCheckoutClient({
       const res = await fetch("/api/pricing/quote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ departureId: departure.id, adultsCount: adults, childrenCount: children, promoCode: promoCodeInput.trim() })
+        body: JSON.stringify({ departureId: departure.id, adultsCount: adults, childrenCount: children, infantsCount: infants, promoCode: promoCodeInput.trim() })
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
@@ -369,9 +378,12 @@ export function BookingCheckoutClient({
     setPaymentState("slow");
   };
 
-  const totalSeats = adults + children;
   // Private tours sell the whole vehicle: one price, every seat, guests up to the vehicle size.
   const isVehicle = departure.tour?.category === "PRIVATE";
+  // Same rule as the server: infants (0–5) pay and take a seat only where there is an infant fare.
+  const infantsPay = !isVehicle && departure.infantPrice != null;
+  const paidInfants = infantsPay ? infants : 0;
+  const totalSeats = adults + children + paidInfants;
   const vehicleIsFree =
     Boolean(holdToken) || liveSeatsAvailable >= departure.capacityTotal;
   const seatCapacity = isVehicle
@@ -441,6 +453,7 @@ export function BookingCheckoutClient({
           if (!data.hold.isVehicle) {
             setAdults(Math.max(1, data.hold.seatsCount));
             setChildren(0);
+            setInfants(0);
           }
         } else {
           setHoldNotice({
@@ -538,15 +551,19 @@ export function BookingCheckoutClient({
 
   // ── Derived totals ─────────────────────────────────────────────────────────
 
-  // Same rule as the server: children pay the child price when the departure has one.
+  // Same rule as the server: youth pay the youth price and infants the infant price when there is one.
   const childPrice = departure.childPrice ?? departure.price;
+  const infantPrice = infantsPay ? departure.infantPrice ?? 0 : 0;
   const hasChildPrice = !isVehicle && children > 0 && childPrice !== departure.price;
+  const hasSplitFare = hasChildPrice || paidInfants > 0;
   const fareSubtotal = isVehicle
     ? departure.price
-    : departure.price * adults + childPrice * children;
+    : departure.price * adults + childPrice * children + infantPrice * paidInfants;
   // Same rounding as the server (whole cents). No sales tax is added.
   const discount = appliedPromo ? round2(fareSubtotal * (appliedPromo.percent / 100)) : 0;
-  const total = round2(fareSubtotal - discount);
+  // Airport transfer (private tours): both trips, priced by town and party; the team quotes above 12.
+  const transferPrice = isVehicle && airport ? airportTransferPrice(airportTransfer.town, adults + children + infants) : null;
+  const total = round2(fareSubtotal - discount + (transferPrice ?? 0));
   const canDeposit = total > 0 && depositAvailable(departure.date, departure.departureTime);
   const plan = canDeposit ? paymentPlan : "FULL";
   const depositNow = depositFor(total);
@@ -658,6 +675,7 @@ export function BookingCheckoutClient({
           infantsCount: infants,
           specialRequests: specialRequests.trim() || undefined,
           airportTransfer: airport ? airportTransfer : undefined,
+          activities: activities.length > 0 ? activities : undefined,
           promoCode: appliedPromo?.code,
           paymentPlan: plan,
         }),
@@ -819,7 +837,13 @@ export function BookingCheckoutClient({
             value={customPickup.trim() || selectedStop?.name || ""}
           />
         )}
-        {airport && <SummaryRow label="Airport transfer" value={AIRPORT_TRANSFER_PRICE_NOTE} />}
+        {activities.length > 0 && (
+          <SummaryRow
+            label="Activities (price confirmed by our team)"
+            value={tourActivities.filter((a) => activities.includes(a.id)).map((a) => a.name).join(", ")}
+          />
+        )}
+        {airport && transferPrice == null &&<SummaryRow label="Airport transfer" value="Priced by our team for groups over 12" />}
       </VStack>
       <Divider />
       <VStack gap={2}>
@@ -827,8 +851,12 @@ export function BookingCheckoutClient({
           label={
             isVehicle
               ? `Private vehicle · up to ${departure.capacityTotal} guests`
-              : hasChildPrice
-                ? `Fare · ${adults} × ${money(departure.price)} + ${children} × ${money(childPrice)} (child)`
+              : hasSplitFare
+                ? `Fare · ${[
+                    `${adults} × ${money(departure.price)}`,
+                    children > 0 ? `${children} × ${money(childPrice)} (youth)` : "",
+                    paidInfants > 0 ? `${paidInfants} × ${money(infantPrice)} (infant)` : "",
+                  ].filter(Boolean).join(" + ")}`
                 : `Fare · ${totalSeats} × ${money(departure.price)}`
           }
           value={money(fareSubtotal)}
@@ -836,6 +864,7 @@ export function BookingCheckoutClient({
         {appliedPromo && discount > 0 && (
           <SummaryRow label={`Promo ${appliedPromo.code} (−${appliedPromo.percent}%)`} value={`−${money(discount)}`} />
         )}
+        {transferPrice != null && <SummaryRow label="Airport transfer · arrival and departure" value={money(transferPrice)} />}
         <Divider />
         <HStack hAlign="between" vAlign="center">
           <Text type="large" weight="bold">
@@ -1114,7 +1143,9 @@ export function BookingCheckoutClient({
                             <VStack gap={1}>
                               <Heading level={2}>Who&apos;s coming?</Heading>
                               <Text type="supporting" color="secondary">
-                                Infants (0–2) don&apos;t take a paid seat.
+                                {infantsPay
+                                  ? "Infants (0–5) pay the infant fare and take a seat."
+                                  : "Infants (0–5) ride on a lap and don't take a paid seat."}
                               </Text>
                             </VStack>
                             <Badge
@@ -1141,27 +1172,27 @@ export function BookingCheckoutClient({
                           <FormLayout>
                             <QuantityInput
                               label="Adults"
-                              description="Age 12+"
+                              description="Age 16–99"
                               value={adults}
                               onChange={setAdults}
                               min={1}
-                              max={Math.max(1, seatCapacity - children)}
+                              max={Math.max(1, seatCapacity - children - paidInfants)}
                             />
                             <QuantityInput
-                              label="Children"
-                              description="Age 3–11"
+                              label="Youth"
+                              description="Age 6–15"
                               value={children}
                               onChange={setChildren}
                               min={0}
-                              max={Math.max(0, seatCapacity - adults)}
+                              max={Math.max(0, seatCapacity - adults - paidInfants)}
                             />
                             <QuantityInput
                               label="Infants"
-                              description="Age 0–2"
+                              description="Age 0–5"
                               value={infants}
                               onChange={setInfants}
                               min={0}
-                              max={MAX_INFANTS}
+                              max={infantsPay ? Math.max(0, Math.min(MAX_INFANTS, seatCapacity - adults - children)) : MAX_INFANTS}
                             />
                           </FormLayout>
                           {currentErrors.seats && (
@@ -1288,6 +1319,34 @@ export function BookingCheckoutClient({
                               placeholder="Anniversary trip, window seat, dietary needs…"
                             />
                           </FormLayout>
+                          {tourActivities.length > 0 && (
+                            <fieldset className="space-y-3">
+                              <legend className="text-base text-obsidian-900">Optional activities</legend>
+                              <p className="text-sm text-slate-600">
+                                Prices vary by date and age ({partyLabel(adults, children, infants)}). Nothing is charged now: our team
+                                confirms the price with you and books the tickets.
+                              </p>
+                              {tourActivities.map((a) => (
+                                <label
+                                  key={a.id}
+                                  className={`flex cursor-pointer items-start gap-3 rounded-2xl border bg-white p-4 text-sm ${activities.includes(a.id) ? "border-ocean-500 ring-1 ring-ocean-500" : "border-slate-200"}`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    className="mt-0.5 h-4 w-4 shrink-0 accent-ocean-700"
+                                    checked={activities.includes(a.id)}
+                                    onChange={(e) =>
+                                      setActivities((list) => (e.target.checked ? [...list, a.id] : list.filter((x) => x !== a.id)))
+                                    }
+                                  />
+                                  <span>
+                                    <span className="block text-base text-obsidian-900">{a.name}</span>
+                                    <span className="block text-slate-600">{a.detail} Price varies.</span>
+                                  </span>
+                                </label>
+                              ))}
+                            </fieldset>
+                          )}
                         </VStack>
                       )}
 

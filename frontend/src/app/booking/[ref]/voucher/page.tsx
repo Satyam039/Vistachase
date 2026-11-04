@@ -102,7 +102,7 @@ export default async function VoucherPage({
     : null;
   const guests = [
     booking.adultsCount ? `${booking.adultsCount} adult${booking.adultsCount === 1 ? "" : "s"}` : null,
-    booking.childrenCount ? `${booking.childrenCount} child${booking.childrenCount === 1 ? "" : "ren"}` : null,
+    booking.childrenCount ? `${booking.childrenCount} youth` : null,
     booking.infantsCount ? `${booking.infantsCount} infant${booking.infantsCount === 1 ? "" : "s"}` : null,
   ]
     .filter(Boolean)

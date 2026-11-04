@@ -6,8 +6,9 @@
 // five in August–September. Its dates are seeded through the end of the coming season, so summer
 // seats can be booked months ahead. Times stored are the Banff pickup and the Banff return.
 //
-// Private tours are priced per vehicle by season (owner's doc, 2026-10-29): `summerPrice` from June 1
-// to October 10, `price` from October 11 to May 31, up to 14 guests.
+// Prices from the owner's doc pricing table (2026-11-04): `summer` from June 1 to October 10,
+// otherwise `price`. Shared tours: adult 16+, youth 6-15 (childPrice), infant 0-5 (infantPrice, pays
+// and takes a seat). Private tours per vehicle, up to 14 guests. Shuttle per guest by departure.
 //
 // The owner confirmed these times, seats and prices as the real schedule on 2026-10-11, so the
 // departures created here are LOCAL (listed and bookable). If a schedule below stops being
@@ -27,16 +28,20 @@ interface Slot {
   returnTime?: string;
   /** Months (1-12) this slot runs; every day when omitted. */
   months?: number[];
+  /** Price (cents) of this departure when it differs from the product's. */
+  price?: number;
 }
 
 interface ScheduleConfig {
   slug: string;
   times: (string | Slot)[];
   capacity: number;
-  price: number; // in cents
-  /** Price (cents) from June 1 to October 10, when it differs from `price`. */
-  summerPrice?: number;
-  childPrice?: number | null;
+  price: number; // in cents, adult (16+) or per vehicle
+  childPrice?: number | null; // youth 6-15
+  /** Infants 0-5: set = they pay this and take a seat; omitted = free on a lap. */
+  infantPrice?: number | null;
+  /** Prices (cents) from June 1 to October 10, where they differ. */
+  summer?: { price?: number; childPrice?: number; infantPrice?: number };
   /** Seed every date until the end of this month (1-12) of its next season, instead of 60 days. */
   seasonEndsMonth?: number;
 }
@@ -49,8 +54,9 @@ const DEFAULT_SCHEDULES: ScheduleConfig[] = [
     slug: "banff-highlights-tour",
     times: ["08:30"],
     capacity: 12,
-    price: 18900,
-    childPrice: 11900,
+    price: 22000,
+    childPrice: 22000,
+    infantPrice: 17000,
   },
   {
     slug: "shared-tours-heart-of-banff",
@@ -70,8 +76,10 @@ const DEFAULT_SCHEDULES: ScheduleConfig[] = [
     slug: "shared-tours-icefields-jasper",
     times: ["07:30"],
     capacity: 12,
-    price: 22900,
-    childPrice: 15900,
+    price: 22000,
+    childPrice: 22000,
+    infantPrice: 17000,
+    summer: { price: 32000, childPrice: 28000 },
   },
   {
     slug: "winter-special",
@@ -84,16 +92,16 @@ const DEFAULT_SCHEDULES: ScheduleConfig[] = [
     slug: "banff-private-tour",
     times: ["07:00", "08:00"],
     capacity: 14,
-    price: 129900,
-    summerPrice: 179900,
+    price: 124000,
+    summer: { price: 175000 },
     childPrice: null,
   },
   {
     slug: "icefields-jasper-private-tour",
     times: ["07:00", "08:00"],
     capacity: 14,
-    price: 129900,
-    summerPrice: 159900,
+    price: 124000,
+    summer: { price: 175000 },
     childPrice: null,
   },
   {
@@ -107,14 +115,14 @@ const DEFAULT_SCHEDULES: ScheduleConfig[] = [
   {
     slug: "full-day-at-lake-louise-and-moraine-lake",
     times: [
-      { time: "06:30", returnTime: "13:00", months: JUNE_SEPTEMBER },
-      { time: "10:15", returnTime: "15:45", months: JUNE_SEPTEMBER },
+      { time: "06:30", returnTime: "13:00", months: JUNE_SEPTEMBER, price: 12000 },
+      { time: "10:15", returnTime: "15:45", months: JUNE_SEPTEMBER, price: 12000 },
       { time: "11:30", returnTime: "18:00", months: JUNE_SEPTEMBER },
       { time: "14:00", returnTime: "20:30", months: JUNE_SEPTEMBER },
       { time: "16:45", returnTime: "22:00", months: JUNE_JULY },
     ],
     capacity: 14,
-    price: 9900,
+    price: 10800,
     childPrice: null,
     seasonEndsMonth: 9,
   },
@@ -126,7 +134,7 @@ const DEFAULT_SCHEDULES: ScheduleConfig[] = [
       { time: "04:15", returnTime: "10:30", months: JUNE_SEPTEMBER },
     ],
     capacity: 14,
-    price: 8900,
+    price: 13000,
     childPrice: null,
     seasonEndsMonth: 9,
   },
@@ -173,7 +181,8 @@ async function seedFallbackSchedule(daysCount = 60) {
 
       const month = Number(isoDateStr.slice(5, 7));
       for (const slot of item.times) {
-        const { time: timeStr, returnTime, months } = typeof slot === "string" ? { time: slot } as Slot : slot;
+        const { time: timeStr, returnTime, months, price: slotPrice } = typeof slot === "string" ? ({ time: slot } as Slot) : slot;
+        const summer = isSummerSeason(isoDateStr) ? item.summer ?? {} : {};
         if (months && !months.includes(month)) continue;
         const existing = await prisma.tourDeparture.findFirst({
           where: {
@@ -197,8 +206,9 @@ async function seedFallbackSchedule(daysCount = 60) {
             capacityTotal: item.capacity,
             capacityBooked: 0,
             capacityHeld: 0,
-            price: item.summerPrice && isSummerSeason(isoDateStr) ? item.summerPrice : item.price,
-            childPrice: item.childPrice ?? null,
+            price: slotPrice ?? summer.price ?? item.price,
+            childPrice: summer.childPrice ?? item.childPrice ?? null,
+            infantPrice: summer.infantPrice ?? item.infantPrice ?? null,
             currency: tour.currency || "CAD",
             status: "ACTIVE",
             inventorySource: "LOCAL",

@@ -122,7 +122,7 @@ export function buildNote(input: BokunReservationInput, infantsInNote: number) {
   return [
     `Booked on vistachase.com, reference ${input.bookingReference}.`,
     input.pickup ? `Pickup: ${input.pickup}.` : "",
-    infantsInNote > 0 ? `Also ${infantsInNote} infant${infantsInNote === 1 ? "" : "s"} (0–2, no seat).` : "",
+    infantsInNote > 0 ? `Also ${infantsInNote} infant${infantsInNote === 1 ? "" : "s"} (0–5, no seat).` : "",
     input.specialRequests ? `Guest requests: ${input.specialRequests}` : "",
   ]
     .filter(Boolean)

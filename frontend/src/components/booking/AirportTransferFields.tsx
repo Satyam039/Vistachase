@@ -1,14 +1,32 @@
 "use client";
 
 // Airport transfer add-on for private tours (owner, 2026-10-29): the guest ticks it under Guests,
-// and checkout asks for their airport arrival and departure dates and times, then where the transfer
-// is from and where it goes (owner, 2026-10-31). No transfer price is
-// set yet, so nothing is charged online; the team confirms the transfer and its price
-// (backend modules/bookings/airport-transfer.ts).
+// and checkout asks for their airport arrival and departure dates and times, the town, and where the
+// transfer is from and where it goes (owner, 2026-10-31). Prices from the owner's doc pricing table
+// (2026-11-04), per one-way trip: Banff or Canmore CAD 364 up to 6 guests, 850 up to 12; Lake Louise
+// 445 / 895. The booking covers both trips. Same numbers as backend modules/bookings/airport-transfer.ts,
+// which prices it again at checkout.
 
 import { Plane } from "lucide-react";
+import { Dropdown } from "@/components/forms/Dropdown";
+
+export type AirportTown = "BANFF" | "CANMORE" | "LAKE_LOUISE";
+const TOWNS: { value: AirportTown; label: string }[] = [
+  { value: "BANFF", label: "Banff" },
+  { value: "CANMORE", label: "Canmore" },
+  { value: "LAKE_LOUISE", label: "Lake Louise" },
+];
+const LEG_PRICE: Record<AirportTown, [number, number]> = { BANFF: [364, 850], CANMORE: [364, 850], LAKE_LOUISE: [445, 895] };
+
+/** Both transfers (arrival and departure) in dollars, or null above 12 guests (the team quotes). */
+export function airportTransferPrice(town: AirportTown, guests: number): number | null {
+  if (guests > 12) return null;
+  return LEG_PRICE[town][guests <= 6 ? 0 : 1] * 2;
+}
 
 export interface AirportTransferValue {
+  /** Town at the mountain end; sets the price. */
+  town: AirportTown;
   arrivalDate: string;
   arrivalTime: string;
   departureDate: string;
@@ -19,9 +37,9 @@ export interface AirportTransferValue {
   to: string;
 }
 
-export const EMPTY_AIRPORT_TRANSFER: AirportTransferValue = { arrivalDate: "", arrivalTime: "", departureDate: "", departureTime: "", from: "", to: "" };
+export const EMPTY_AIRPORT_TRANSFER: AirportTransferValue = { town: "BANFF", arrivalDate: "", arrivalTime: "", departureDate: "", departureTime: "", from: "", to: "" };
 
-export const AIRPORT_TRANSFER_PRICE_NOTE = "Price confirmed by our team before your trip";
+export const AIRPORT_TRANSFER_PRICE_NOTE = "From CAD $728 for both trips (Banff or Canmore, up to 6 guests)";
 
 /** What's missing or wrong, if anything. */
 export function airportTransferError(t: AirportTransferValue): string | null {
@@ -50,7 +68,8 @@ export function AirportTransferToggle({ checked, onChange }: { checked: boolean;
           Add airport transfer
         </span>
         <span className="mt-0.5 block text-xs text-slate-600">
-          Calgary Airport (YYC) pickup and drop-off. We ask for your arrival and departure times. {AIRPORT_TRANSFER_PRICE_NOTE}.
+          Private Calgary Airport (YYC) transfer on arrival and departure. Per trip: Banff or Canmore CAD $364 up to 6
+          guests, $850 up to 12; Lake Louise $445 / $895. Checked bags: one per guest.
         </span>
       </span>
     </label>
@@ -110,6 +129,13 @@ export function AirportTransferDetails({
   return (
     <fieldset className="space-y-3">
       <legend className="text-sm font-medium text-obsidian-900">Your flights</legend>
+      <Dropdown
+        id="airport-town"
+        label="Transfer between Calgary Airport and"
+        options={TOWNS}
+        value={value.town}
+        onChange={(town) => onChange({ ...value, town: town as AirportTown })}
+      />
       <div className="grid grid-cols-2 gap-3">
         {field("arrivalDate", "Airport arrival date", "date", minDate)}
         {field("arrivalTime", "Arrival time", "time")}

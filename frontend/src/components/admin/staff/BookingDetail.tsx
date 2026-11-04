@@ -291,7 +291,7 @@ export function BookingDetail({
                   {booking.adultsCount} adult
                   {booking.adultsCount === 1 ? "" : "s"}
                   {booking.childrenCount > 0 &&
-                    `, ${booking.childrenCount} child${booking.childrenCount === 1 ? "" : "ren"}`}
+                    `, ${booking.childrenCount} youth`}
                   {booking.infantsCount > 0 &&
                     `, ${booking.infantsCount} infant${booking.infantsCount === 1 ? "" : "s"}`}
                 </span>

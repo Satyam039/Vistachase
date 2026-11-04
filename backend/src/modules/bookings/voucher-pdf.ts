@@ -198,7 +198,7 @@ export async function addVoucherPage(pdf: PDFDocument, booking: VoucherBooking, 
   const guests =
     [
       booking.adultsCount ? `${booking.adultsCount} adult${booking.adultsCount === 1 ? "" : "s"}` : null,
-      booking.childrenCount ? `${booking.childrenCount} child${booking.childrenCount === 1 ? "" : "ren"}` : null,
+      booking.childrenCount ? `${booking.childrenCount} youth` : null,
       booking.infantsCount ? `${booking.infantsCount} infant${booking.infantsCount === 1 ? "" : "s"}` : null,
     ]
       .filter(Boolean)
@@ -384,7 +384,7 @@ export async function itineraryPdf(bookings: VoucherBooking[], trip: { title: st
   const guests =
     [
       lead.adultsCount ? `${lead.adultsCount} adult${lead.adultsCount === 1 ? "" : "s"}` : null,
-      lead.childrenCount ? `${lead.childrenCount} child${lead.childrenCount === 1 ? "" : "ren"}` : null,
+      lead.childrenCount ? `${lead.childrenCount} youth` : null,
       lead.infantsCount ? `${lead.infantsCount} infant${lead.infantsCount === 1 ? "" : "s"}` : null,
     ]
       .filter(Boolean)

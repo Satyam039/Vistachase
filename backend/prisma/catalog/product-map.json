@@ -5,7 +5,8 @@
   "bookingMode: BOKUN = instant booking through Bokun; ENQUIRY = request form (custom itineraries, multi-day).",
   "mornbyTour: the tour name in Mornby (mornby.com > Tours). mornbyMatch 'proposed' means matched by name and route and needs confirming by operations; 'none' means Mornby has no matching tour yet.",
   "places / season: used to pick each product's gallery photos from backend/media (see prisma/catalog/load-catalog.js).",
-  "TICKET products (Banff activity tickets) are new: not on the live site, content in extra-products.json. They take requests (ENQUIRY) until their Bokun IDs exist; then set bookingMode to BOKUN."
+  "TICKET products (Banff activity tickets) are new: not on the live site, content in extra-products.json. They take requests (ENQUIRY) until their Bokun IDs exist; then set bookingMode to BOKUN.",
+  "Bókun IDs from the owner's doc pricing table (2026-11-04): Banff & Yoho Discovery shared 796650 / private 1167962, Columbia Icefield Adventure shared 856008 / private 1115237 (it was on jasper-custom-private-tour before). Packages: see 'packages'."
  ],
  "bokun": {
   "onlineSalesChannelId": "90615648-3c90-4d07-9dac-d39089e7728b"
@@ -16,7 +17,7 @@
    "url": "https://www.vistachase.com/banff-highlights-tour",
    "category": "SHARED",
    "bookingMode": "BOKUN",
-   "bokunId": "1142134",
+   "bokunId": "796650",
    "destination": "banff-national-park",
    "mornbyTour": "Banff Shared DAY TOUR",
    "mornbyMatch": "proposed",
@@ -73,7 +74,7 @@
    "url": "https://www.vistachase.com/shared-tours-icefields-jasper",
    "category": "SHARED",
    "bookingMode": "BOKUN",
-   "bokunId": "1114201",
+   "bokunId": "856008",
    "destination": "jasper-national-park",
    "mornbyTour": "Jasper Shared Tour",
    "mornbyMatch": "proposed",
@@ -132,7 +133,7 @@
    "url": "https://www.vistachase.com/icefields-jasper-private-tour",
    "category": "PRIVATE",
    "bookingMode": "BOKUN",
-   "bokunId": "1023457",
+   "bokunId": "1115237",
    "destination": "jasper-national-park",
    "mornbyTour": "Jasper & Columbia Icefield Private Day Tour (Private)",
    "mornbyMatch": "proposed",
@@ -192,7 +193,7 @@
    "url": "https://www.vistachase.com/jasper-custom-private-tour",
    "category": "PRIVATE",
    "bookingMode": "ENQUIRY",
-   "bokunId": "1115237",
+   "bokunId": null,
    "destination": "jasper-national-park",
    "mornbyTour": null,
    "mornbyMatch": "none",
@@ -354,5 +355,31 @@
    "season": "all"
   }
  ],
- "mornbyOnly": []
+ "mornbyOnly": [],
+ "packages": [
+  {
+   "slug": "two-day-rockies-explorer",
+   "title": "Two-Day Rockies Explorer (Shared)",
+   "bokunId": "1328342",
+   "note": "Booked on the website as one booking per day on the two shared day tours, each reserved in its own Bókun product."
+  },
+  {
+   "slug": "two-day-rockies-explorer-private",
+   "title": "Two-Day Rockies Explorer (Private Vehicle)",
+   "bokunId": "1344763",
+   "note": "On request (contact form) today."
+  },
+  {
+   "slug": "three-day-rockies-discovery",
+   "title": "Three-Day Rockies Discovery (Private Vehicle)",
+   "bokunId": "1344782",
+   "note": "On request (contact form) today."
+  },
+  {
+   "slug": "four-day-rockies-and-jasper",
+   "title": "Four-Day Rockies & Jasper (Private Vehicle)",
+   "bokunId": "1344784",
+   "note": "On request (contact form) today."
+  }
+ ]
 }

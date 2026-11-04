@@ -264,7 +264,8 @@ model TourDeparture {
   capacityBooked      Int               @default(0)
   capacityHeld        Int               @default(0)
   price               Int // cents: per guest (adult), or per vehicle for private tours
-  childPrice          Int? // cents per child, when Bókun prices children differently
+  childPrice          Int? // cents per youth (6-15), when it differs from the adult price
+  infantPrice         Int? // cents per infant (0-5); set = infants pay and take a seat, null = free on a lap
   currency            String            @default("CAD")
   status              DepartureStatus   @default(ACTIVE) // ACTIVE, FULL, CANCELLED
   inventorySource     InventorySource   @default(UNVERIFIED)

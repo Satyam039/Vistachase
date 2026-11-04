@@ -260,6 +260,13 @@ export function TourDetailView({
   const bookableDepartures = tour.departures.filter((d) => departureFits(tour, d, 1));
   const [selectedDepartureId, setSelectedDepartureId] = useState(bookableDepartures[0]?.id ?? "");
   const currentDeparture = tour.departures.find((d) => d.id === selectedDepartureId);
+  // The calendar folds into one line once a date is picked, so price, guests and the booking button
+  // stay in view on short laptop screens (owner's doc); "Change date" opens it again.
+  const [pickerOpen, setPickerOpen] = useState(true);
+  const pickDeparture = (id: string) => {
+    setSelectedDepartureId(id);
+    setPickerOpen(false);
+  };
   const maxAvailableSeats = isVehicle ? currentDeparture?.capacityTotal : currentDeparture?.seatsAvailable;
   const maxPartySize = Math.max(1, Math.min(maxAvailableSeats ?? tour.maxGroupSize, tour.maxGroupSize));
   const [guests, setPartySize] = useState(2);
@@ -268,8 +275,13 @@ export function TourDetailView({
   // price when it has one; the server re-prices at checkout). Together they fit the seats left.
   const [adultsWanted, setAdults] = useState(2);
   const [childrenWanted, setChildren] = useState(0);
+  const [infantsWanted, setInfants] = useState(0);
+  // Infants (0–5) pay and take a seat only where the departure has an infant fare; otherwise free on a lap.
+  const infantFare = currentDeparture?.infantPrice ?? null;
   const adults = Math.max(1, Math.min(adultsWanted, maxPartySize));
   const children = Math.max(0, Math.min(childrenWanted, maxPartySize - adults));
+  const infants = Math.max(0, Math.min(infantsWanted, infantFare != null ? maxPartySize - adults - children : 4));
+  const paidInfants = infantFare != null ? infants : 0;
   const childFare = currentDeparture?.childPrice ?? currentDeparture?.price ?? price;
   // Private tours: optional airport transfer; checkout asks for the flight dates and times.
   const offersAirport = tour.category === "PRIVATE";
@@ -350,7 +362,7 @@ export function TourDetailView({
   const calculatedTotal = currentDeparture
     ? isVehicle
       ? currentDeparture.price
-      : currentDeparture.price * adults + childFare * children
+      : currentDeparture.price * adults + childFare * children + (infantFare ?? 0) * paidInfants
     : price * partySize;
 
   // Facts strip: the live page's four facts, or generic ones when a tour has none.
@@ -427,6 +439,9 @@ export function TourDetailView({
                 <MapPin className="h-4 w-4 text-ocean-600" aria-hidden="true" />
                 {tour.destination.name}
               </span>
+              {tour.category !== "TICKET" && tour.maxGroupSize > 0 && (
+                <span>{tour.category === "PRIVATE" ? `Up to ${tour.maxGroupSize} guests` : `Max ${tour.maxGroupSize} guests`}</span>
+              )}
               {"sub" in categoryInfo && <span>{categoryInfo.sub}</span>}
             </div>
           </div>
@@ -447,7 +462,7 @@ export function TourDetailView({
         <div className="grid grid-cols-1 items-start gap-12 lg:grid-cols-12">
           <div className="space-y-12 lg:col-span-7">
             {/* The "On this page" bar spans this column only, so it never slides over the booking panel. */}
-            <TourSectionNav />
+            <TourSectionNav tour={tour} />
             {/* Key facts as icon rows (Civitatis / Expedia "Features") */}
             <ul aria-label="Key facts" className="grid grid-cols-1 gap-x-8 gap-y-5 rounded-none bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:grid-cols-2 sm:p-8" data-stagger>
               {facts.map((fact) => (
@@ -545,13 +560,34 @@ export function TourDetailView({
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <DepartureCalendar
-                    departures={tour.departures}
-                    isBookable={(d) => departureFits(tour, d, 1)}
-                    value={selectedDepartureId}
-                    onChange={setSelectedDepartureId}
-                    describe={(d) => (isVehicle ? `$${d.price} per vehicle` : `${SEATS_MESSAGE} · $${d.price} CAD per guest`)}
-                  />
+                  {pickerOpen || !currentDeparture ? (
+                    <DepartureCalendar
+                      departures={tour.departures}
+                      isBookable={(d) => departureFits(tour, d, 1)}
+                      value={selectedDepartureId}
+                      onChange={pickDeparture}
+                      describe={(d) => (isVehicle ? `$${d.price} per vehicle` : `${SEATS_MESSAGE} · $${d.price} CAD per guest`)}
+                    />
+                  ) : (
+                    <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                      <span className="flex min-w-0 items-center gap-2.5 text-base text-obsidian-900">
+                        <Calendar className="h-4 w-4 shrink-0 text-ocean-700" aria-hidden="true" />
+                        <span className="min-w-0">
+                          <span className="sr-only">Selected date: </span>
+                          {new Date(`${currentDeparture.date}T12:00:00`).toLocaleDateString("en-CA", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
+                          <span className="text-slate-600"> · {currentDeparture.departureTime}</span>
+                        </span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setPickerOpen(true)}
+                        aria-expanded={false}
+                        className="inline-flex min-h-11 shrink-0 items-center rounded-full px-3 text-sm text-ocean-700 underline underline-offset-4 hover:bg-ocean-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ocean-600"
+                      >
+                        Change date
+                      </button>
+                    </div>
+                  )}
 
                   {/* Party: one guest count for a private vehicle, adults + children otherwise */}
                   {isVehicle ? (
@@ -567,21 +603,30 @@ export function TourDetailView({
                   ) : (
                     <>
                       <PartySizeStepper
-                        label="Adults"
+                        label="Adults (16–99)"
                         unit={["Adult", "Adults"]}
                         value={adults}
-                        max={maxPartySize - children}
+                        max={maxPartySize - children - paidInfants}
                         onChange={setAdults}
                         hint={`Max ${maxPartySize} guests on this departure`}
                       />
                       <PartySizeStepper
-                        label="Children"
-                        unit={["Child", "Children"]}
+                        label="Youth (6–15)"
+                        unit={["Youth", "Youth"]}
                         min={0}
                         value={children}
-                        max={maxPartySize - adults}
+                        max={maxPartySize - adults - paidInfants}
                         onChange={setChildren}
                         hint={currentDeparture?.childPrice != null ? `${money(currentDeparture.childPrice)} CAD each` : "Same fare as adults"}
+                      />
+                      <PartySizeStepper
+                        label="Infants (0–5)"
+                        unit={["Infant", "Infants"]}
+                        min={0}
+                        value={infants}
+                        max={infantFare != null ? maxPartySize - adults - children : 4}
+                        onChange={setInfants}
+                        hint={infantFare != null ? `${money(infantFare)} CAD each, takes a seat` : "Free on a lap"}
                       />
                     </>
                   )}
@@ -609,8 +654,14 @@ export function TourDetailView({
                         </div>
                         {children > 0 && (
                           <div className="flex items-center justify-between text-slate-600">
-                            <span>{`${children} × ${money(childFare)} CAD (${children === 1 ? "child" : "children"})`}</span>
+                            <span>{`${children} × ${money(childFare)} CAD (youth)`}</span>
                             <span>{money(childFare * children)} CAD</span>
+                          </div>
+                        )}
+                        {paidInfants > 0 && infantFare != null && (
+                          <div className="flex items-center justify-between text-slate-600">
+                            <span>{`${paidInfants} × ${money(infantFare)} CAD (${paidInfants === 1 ? "infant" : "infants"})`}</span>
+                            <span>{money(infantFare * paidInfants)} CAD</span>
                           </div>
                         )}
                       </>
@@ -628,7 +679,7 @@ export function TourDetailView({
                         departureId: selectedDepartureId || tour.departures[0]?.id || "",
                         ...(isVehicle
                           ? { guests: String(partySize), ...(offersAirport && airport ? { airport: "1" } : {}) }
-                          : { guests: String(adults + children), adults: String(adults), children: String(children) }),
+                          : { guests: String(adults + children + paidInfants), adults: String(adults), children: String(children), infants: String(infants) }),
                       }).toString()}`}
                       className="w-full h-13 py-4 rounded-full text-base font-medium text-obsidian-900 golden-summit-btn flex items-center justify-center gap-2 shadow-lg transition-all hover:scale-[1.01]"
                     >

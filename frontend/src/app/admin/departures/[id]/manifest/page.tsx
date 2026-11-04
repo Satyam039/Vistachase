@@ -144,7 +144,7 @@ export default function DepartureManifestPage() {
                 [
                   ["Bookings", totals.bookings],
                   ["Adults", totals.adults],
-                  ["Children", totals.children],
+                  ["Youth", totals.children],
                   ["Infants", totals.infants],
                   ["Seats", `${totals.seats} of ${m.capacityTotal}`],
                   ["Boarded", `${totals.boarded} of ${totals.bookings}`],
