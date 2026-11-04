@@ -25,8 +25,9 @@ import {
 } from "lucide-react";
 import { Dropdown } from "@/components/forms/Dropdown";
 import { DepartureCalendar } from "@/components/booking/DepartureCalendar";
+import { docQuickFacts } from "@/lib/tourContent";
 import { PriceTag } from "@/components/pricing/PriceTag";
-import { AIRPORT_TRANSFER_PRICE_NOTE, AirportTransferToggle } from "@/components/booking/AirportTransferFields";
+import { AIRPORT_TRANSFER_PRICES, AirportTransferToggle } from "@/components/booking/AirportTransferFields";
 import { cancellationShort, SEATS_MESSAGE } from "@/lib/policy";
 import { Rail } from "@/components/motion/Rail";
 import { BreadcrumbJsonLd, JsonLd } from "@/components/seo/JsonLd";
@@ -389,7 +390,10 @@ export function TourDetailView({
   // Quick highlights (owner's doc, 2026-11-04): Duration · Pickup · Group size · Instant
   // confirmation. Tickets keep the live page's facts.
   const instant = tour.bookingMode === "BOKUN" && tour.departures.length > 0;
-  const quickHighlights: { label: string; value: string; icon: ComponentType<{ className?: string }> }[] = [
+  const docFacts = docQuickFacts(tour.slug);
+  const quickHighlights: { label: string; value: string; icon: ComponentType<{ className?: string }> }[] = docFacts
+    ? docFacts.map((f, i) => ({ ...f, icon: [Clock, Users, CheckCircle2, Calendar, MapPin, CheckCircle2][i % 6] }))
+    : [
     { label: "Duration", value: durationLabel(tour), icon: Clock },
     {
       label: "Pickup",
@@ -662,7 +666,7 @@ export function TourDetailView({
                         {offersAirport && airport && (
                           <div className="flex items-center justify-between gap-3 text-slate-600">
                             <span>Airport transfer</span>
-                            <span className="text-right">{AIRPORT_TRANSFER_PRICE_NOTE}</span>
+                            <span className="text-right">{`From $${AIRPORT_TRANSFER_PRICES[0].small} both ways, priced at checkout`}</span>
                           </div>
                         )}
                       </>

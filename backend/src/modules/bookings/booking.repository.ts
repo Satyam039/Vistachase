@@ -25,7 +25,7 @@ import { getPaymentProvider } from "@/lib/payment/payment.provider";
 import { sendConfirmationEmail } from "@/modules/bookings/confirmation-email";
 import { getEmailProvider } from "@/lib/email/email.provider";
 import { isVehicleDeparture, partySizeError, seatedGuests, seatsToReserve } from "@/modules/pricing/departure-pricing";
-import { airportTransferNote, type AirportTransfer } from "@/modules/bookings/airport-transfer";
+import { airportTransferLabel, airportTransferNote, airportTransferPriceCents, type AirportTransfer } from "@/modules/bookings/airport-transfer";
 import { activityAddOnsError, activityAddOnsNote, ACTIVITY_ADD_ONS, type ActivityAddOnId } from "@/modules/bookings/activity-add-ons";
 import { priceBooking, type AddOnChoice } from "@/modules/pricing/booking-pricing";
 import { referringAffiliateId } from "@/modules/affiliates/affiliate.repository";
@@ -276,6 +276,14 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
       }
 
       const totals = priceBooking(departure, { adults: input.adultsCount, children: input.childrenCount, infants: input.infantsCount }, input.addOns, input.promoCode, options.discount?.percent);
+      // Airport transfer (private tours): charged with the tour when it has a price, never discounted.
+      const partySize = input.adultsCount + input.childrenCount + input.infantsCount;
+      const transferCents = input.airportTransfer ? airportTransferPriceCents(input.airportTransfer, partySize) : null;
+      if (input.airportTransfer && transferCents != null) {
+        totals.addOns.push({ name: airportTransferLabel(input.airportTransfer, partySize), priceCents: transferCents, quantity: 1 });
+        totals.addOnsCents += transferCents;
+        totals.totalCents += transferCents;
+      }
       // Deposit: online checkout only (staff bookings record their own payment), far enough ahead.
       const deposit =
         input.paymentPlan === "DEPOSIT" && !options.offlinePayment && !options.deferPayment
@@ -305,8 +313,8 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
         taxCents: 0,
         totalCents: totals.totalCents,
         inventorySource: departure.inventorySource,
-        // Not charged online yet: the team confirms the transfer and its price.
-        ...(input.airportTransfer ? { airportTransfer: { ...input.airportTransfer, priceCents: null } } : {}),
+        // priceCents null: the team confirms the price (winter, 13+ guests); otherwise it is in addOns.
+        ...(input.airportTransfer ? { airportTransfer: { ...input.airportTransfer, priceCents: transferCents } } : {}),
         // Requested, not charged: the price varies and the team confirms it.
         ...(activityAddOns.length > 0
           ? { activityAddOns: activityAddOns.map((id) => ({ id, name: ACTIVITY_ADD_ONS[id], priceCents: null })) }
@@ -344,7 +352,7 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
           specialRequests:
             input.airportTransfer || activityAddOns.length > 0
               ? [
-                  input.airportTransfer ? airportTransferNote(input.airportTransfer) : null,
+                  input.airportTransfer ? airportTransferNote(input.airportTransfer, transferCents) : null,
                   activityAddOns.length > 0
                     ? activityAddOnsNote(activityAddOns, { adults: input.adultsCount, children: input.childrenCount, infants: input.infantsCount })
                     : null,

@@ -51,6 +51,7 @@ import {
   AirportTransferDetails,
   AirportTransferToggle,
   airportTransferError,
+  airportTransferPrice,
   EMPTY_AIRPORT_TRANSFER,
   type AirportTransferValue,
 } from "@/components/booking/AirportTransferFields";
@@ -569,7 +570,9 @@ export function BookingCheckoutClient({
     .join(" + ");
   // Same rounding as the server (whole cents). No sales tax is added.
   const discount = appliedPromo ? round2(fareSubtotal * (appliedPromo.percent / 100)) : 0;
-  const total = round2(fareSubtotal - discount);
+  // Airport transfer (private tours): the doc's both-ways price, added after any promo discount.
+  const transferPrice = airport ? airportTransferPrice(airportTransfer, adults + children + infants) : null;
+  const total = round2(fareSubtotal - discount + (transferPrice ?? 0));
   const canDeposit = total > 0 && depositAvailable(departure.date, departure.departureTime);
   const plan = canDeposit ? paymentPlan : "FULL";
   const depositNow = depositFor(total);
@@ -680,7 +683,7 @@ export function BookingCheckoutClient({
           childrenCount: children,
           infantsCount: infants,
           specialRequests: specialRequests.trim() || undefined,
-          airportTransfer: airport ? airportTransfer : undefined,
+          airportTransfer: airport ? { ...airportTransfer, area: airportTransfer.area || undefined } : undefined,
           activityAddOns: activityAddOns.filter((id) => offeredAddOns.includes(id)),
           promoCode: appliedPromo?.code,
           paymentPlan: plan,
@@ -843,7 +846,7 @@ export function BookingCheckoutClient({
             value={customPickup.trim() || selectedStop?.name || ""}
           />
         )}
-        {airport && <SummaryRow label="Airport transfer" value={AIRPORT_TRANSFER_PRICE_NOTE} />}
+        {airport && transferPrice == null && <SummaryRow label="Airport transfer" value={AIRPORT_TRANSFER_PRICE_NOTE} />}
         {activityAddOns.length > 0 && (
           <SummaryRow label={activityAddOns.map((id) => ACTIVITY_ADD_ONS[id]).join(", ")} value="Price confirmed by our team" />
         )}
@@ -863,6 +866,7 @@ export function BookingCheckoutClient({
         {appliedPromo && discount > 0 && (
           <SummaryRow label={`Promo ${appliedPromo.code} (−${appliedPromo.percent}%)`} value={`−${money(discount)}`} />
         )}
+        {transferPrice != null && <SummaryRow label="Airport transfer, both ways" value={money(transferPrice)} />}
         <Divider />
         <HStack hAlign="between" vAlign="center">
           <Text type="large" weight="bold">
