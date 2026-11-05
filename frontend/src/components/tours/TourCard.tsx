@@ -110,7 +110,7 @@ export function TourCard({
       <div className="relative aspect-[5/4] w-full overflow-hidden bg-obsidian-900">
         <Image
           src={image ?? tour.featuredImage}
-          alt=""
+          alt={tour.title}
           fill
           sizes="(max-width: 640px) 90vw, (max-width: 1024px) 46vw, (max-width: 1280px) 31vw, 400px"
           className="object-cover transition-transform duration-[1.4s] ease-out group-hover:scale-[1.04]"
@@ -137,7 +137,9 @@ export function TourCard({
           </p>
           <TitleTag className={CARD_TITLE}>
             {ticket ? (
-              <a href={ticket.url} target="_blank" rel="noopener noreferrer" className="focus-visible:outline-none">
+              // Agency (commission) links to the operator: marked sponsored for search engines, and the
+              // referrer is kept so the operator sees the visit came from Vista Chase.
+              <a href={ticket.url} target="_blank" rel="sponsored nofollow noopener" className="focus-visible:outline-none">
                 <span className="absolute inset-0 z-10 group-has-[:focus-visible]:outline group-has-[:focus-visible]:outline-2 group-has-[:focus-visible]:outline-offset-2 group-has-[:focus-visible]:outline-summit-300" />
                 {title ?? tour.title}
                 <span className="sr-only"> (book on the operator&apos;s site, opens in a new tab)</span>

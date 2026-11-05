@@ -26,7 +26,7 @@ import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 import { PACKAGE_DAY_PRICE, PRIVATE_MAX_GUESTS } from "@/lib/privateTours";
 
 export const metadata: Metadata = {
-  title: "Four-Day Rockies & Jasper | Private Banff, Yoho, Columbia Icefield & Jasper Tour | Vista Chase",
+  title: "Four-Day Rockies & Jasper Private Tour | Vista Chase",
   description:
     "Explore further across four days of lakes, waterfalls, mountain roads and glacier scenery. Travel privately with your own driver-guide, continue to Jasper after day three, and finish in Banff, Lake Louise, Canmore or Calgary.",
   alternates: { canonical: "/four-day-rockies-and-jasper" },

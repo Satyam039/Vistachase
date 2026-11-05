@@ -12,7 +12,7 @@ import { withSeo } from "@/lib/seo/server";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 const baseMetadata: Metadata = {
-  title: "Canadian Rockies Destinations | Banff, Lake Louise, Moraine Lake & Jasper | Vista Chase",
+  title: "Canadian Rockies Destinations | Vista Chase",
   description: "Moraine Lake, Lake Louise, Banff, Yoho and Jasper national parks: where Vista Chase tours go and how to see them.",
   alternates: { canonical: "/destinations" },
 };

@@ -17,6 +17,9 @@ const thumb = (s: GallerySlide) => (s.kind === "video" ? s.video.poster : s.src)
 const label = (s: GallerySlide, i: number, n: number, title: string) =>
   s.kind === "video" ? `Play video: ${s.video.title}` : `Show photo ${i + 1} of ${n}: ${title}`;
 
+/** Alt text for a gallery picture: the tour's name and which photo it is (video: its own title). */
+const altOf = (s: GallerySlide, i: number, title: string) => (s.kind === "video" ? s.video.title : `${title}, photo ${i + 1}`);
+
 export function ProductGallery({ slides, title }: { slides: GallerySlide[]; title: string }) {
   const [selected, setSelected] = useState(0);
   const dialog = useRef<HTMLDialogElement>(null);
@@ -59,7 +62,7 @@ export function ProductGallery({ slides, title }: { slides: GallerySlide[]; titl
                 k >= 2 ? "lg:col-start-4" : "lg:col-start-3"
               } ${k % 2 === 0 ? "lg:row-start-1" : "lg:row-start-2"}`}
             >
-              <Image src={thumb(s)} alt="" fill sizes="(max-width: 640px) 25vw, 20vw" className="object-cover transition-transform duration-700 group-hover:scale-105" />
+              <Image src={thumb(s)} alt={altOf(s, i, title)} fill sizes="(max-width: 640px) 25vw, 20vw" className="object-cover transition-transform duration-700 group-hover:scale-105" />
               {s.kind === "video" && !last && (
                 <span className="absolute inset-0 flex items-center justify-center bg-black/20" aria-hidden="true">
                   <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-obsidian-900">
@@ -104,7 +107,7 @@ export function ProductGallery({ slides, title }: { slides: GallerySlide[]; titl
                 aria-label={label(s, i, slides.length, title)}
                 className="group relative block aspect-[4/3] w-full overflow-hidden rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-600"
               >
-                <Image src={thumb(s)} alt="" fill sizes="(max-width: 640px) 50vw, 33vw" className="object-cover transition-transform duration-700 group-hover:scale-105" />
+                <Image src={thumb(s)} alt={altOf(s, i, title)} fill sizes="(max-width: 640px) 50vw, 33vw" className="object-cover transition-transform duration-700 group-hover:scale-105" />
                 {s.kind === "video" && (
                   <span className="absolute inset-0 flex items-center justify-center bg-black/20" aria-hidden="true">
                     <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-obsidian-900">

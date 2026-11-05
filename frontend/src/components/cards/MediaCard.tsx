@@ -96,7 +96,8 @@ export function MediaCard({
   const Title = headingLevel === 2 ? "h2" : "h3";
   const body = (
     <>
-      <CardMedia src={image} alt={imageAlt} sizes={sizes} aspect={aspect} parallax={parallax}>
+      {/* Photos are content: without an alt of its own the card's title describes it. */}
+      <CardMedia src={image} alt={imageAlt || title} sizes={sizes} aspect={aspect} parallax={parallax}>
         {badge && <span className={`absolute left-3 top-3 ${CARD_BADGE}`}>{badge}</span>}
       </CardMedia>
 

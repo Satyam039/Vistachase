@@ -22,7 +22,7 @@ import { mergeSeo, seoFetch, siteOrigin, type SeoMeta } from "@/lib/seo/server";
 import { BreadcrumbJsonLd, JsonLd } from "@/components/seo/JsonLd";
 import { GuideBlock, guideRootClass, inline, parseGuide, plainText, safeHref, type Block } from "@/components/seo/GuideMarkdown";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
-import { PostCard, PostImage, postImageSrc, type PostSummary } from "@/components/blog/posts";
+import { PostCard, PostImage, brandedTitle, postImageSrc, withoutBrand, type PostSummary } from "@/components/blog/posts";
 
 interface Post extends SeoMeta {
   label: string;
@@ -58,22 +58,36 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const post = await loadPost(slug);
   if (!post) return { title: "Page not found | Vista Chase" };
-  const title = post.seoTitle ?? `${post.label} | Vista Chase`;
+  // Titles: the brand once, and only when it fits in ~60 characters (names often carry it already).
+  const title = { absolute: brandedTitle(post.seoTitle ?? post.label) };
   const description = post.metaDescription ?? post.excerpt ?? undefined;
   const published = post.datePublished ?? post.publishedAt ?? undefined;
+  // Share image: the post's own (main, else thumbnail, else the first picture in the text).
+  const image = postImageSrc(post.ogImage) ?? postImageSrc(post.featuredImage) ?? postImageSrc(post.thumbnailImage) ?? firstBodyImage(post.body);
+  const images = image ? [{ url: image, alt: post.featuredImageAlt || post.thumbnailAlt || withoutBrand(post.label) }] : undefined;
   return mergeSeo(
     {
       title,
       description,
       alternates: { canonical: post.path },
-      openGraph: { type: "article", title, description, url: post.path, ...(published ? { publishedTime: published } : {}), ...(post.dateModified ? { modifiedTime: post.dateModified } : {}) },
-      twitter: { card: "summary_large_image" },
+      openGraph: { type: "article", title: title.absolute, description, url: post.path, ...(images ? { images } : {}), ...(published ? { publishedTime: published } : {}), ...(post.dateModified ? { modifiedTime: post.dateModified } : {}) },
+      twitter: { card: "summary_large_image", ...(image ? { images: [image] } : {}) },
     },
-    post,
+    { ...post, seoTitle: post.seoTitle ? brandedTitle(post.seoTitle) : null },
   );
 }
 
 const MORE_STORIES = 3;
+
+/** The first picture in a post's text that the site may show, if any. */
+function firstBodyImage(body: string | null): string | null {
+  const re = /!\[[^\]]*\]\(([^)\s]+)/g;
+  for (let m = re.exec(body ?? ""); m; m = re.exec(body ?? "")) {
+    const src = postImageSrc(m[1]);
+    if (src) return src;
+  }
+  return null;
+}
 
 const plain = (s: string) => s.replace(/[*_`]/g, "").replace(/\s+/g, " ").trim().toLowerCase();
 
@@ -182,18 +196,18 @@ export default async function BlogPostPage({ params }: Props) {
   if (!post) notFound();
 
   const origin = siteOrigin();
-  const heading = plainText(post.h1 ?? post.label);
+  const heading = withoutBrand(plainText(post.h1 ?? post.label));
   const faqs = Array.isArray(post.faqs) ? post.faqs : [];
   const mainImage = post.featuredImage ? postImageSrc(post.featuredImage) : null;
   const opening = post.body ? openingOf(post.body, heading, mainImage) : { body: "", lead: null };
-  const hero = mainImage ? { src: mainImage, alt: post.featuredImageAlt ?? "" } : opening.lead;
+  const hero = mainImage ? { src: mainImage, alt: post.featuredImageAlt || heading } : opening.lead ? { ...opening.lead, alt: opening.lead.alt || heading } : null;
   const abs = (p: string) => (p.startsWith("/") ? `${origin}${p}` : p);
   const published = post.datePublished ?? post.publishedAt;
   const modified = post.dateModified ?? post.updatedAt;
   const blocks = Array.isArray(post.schema) ? post.schema : [];
   const hasPostingBlock = blocks.some((b) => typesOf(b).some((t) => t === "BlogPosting" || t === "Article"));
   const cta = post.ctaText && post.ctaUrl ? safeHref(post.ctaUrl) : null;
-  const socialImage = post.ogImage ?? post.featuredImage ?? hero?.src ?? null;
+  const socialImage = post.ogImage ?? post.featuredImage ?? hero?.src ?? postImageSrc(post.thumbnailImage) ?? firstBodyImage(post.body);
   const minutes = post.body ? readingMinutes(post.body) : null;
   const { lead, rest } = leadOf(parseGuide(opening.body), hero ? 150 : 0);
   const spreads = spreadsOf(rest);
@@ -236,7 +250,7 @@ export default async function BlogPostPage({ params }: Props) {
           items={[
             { name: "Home", path: "/" },
             { name: "Blog", path: "/blog" },
-            { name: post.breadcrumbLabel ?? post.label, path: post.path },
+            { name: post.breadcrumbLabel ?? withoutBrand(post.label), path: post.path },
           ]}
         />
         {faqs.length > 0 && (
@@ -270,7 +284,7 @@ export default async function BlogPostPage({ params }: Props) {
                   <ChevronRight className="h-3.5 w-3.5" />
                 </li>
                 <li aria-current="page" className="text-obsidian-900">
-                  {post.breadcrumbLabel ?? post.label}
+                  {post.breadcrumbLabel ?? withoutBrand(post.label)}
                 </li>
               </ol>
             </nav>

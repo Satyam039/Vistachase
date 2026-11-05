@@ -27,9 +27,8 @@ export const metadata: Metadata = {
     ],
     apple: "/media/brand/apple-touch-icon.png",
   },
-  alternates: {
-    canonical: "/",
-  },
+  // No site-wide canonical: a canonical here would be inherited by every page that doesn't set its
+  // own, telling Google those pages are copies of the homepage. Each page sets its own.
   openGraph: {
     title: "Vista Chase | Banff & Canadian Rockies Tours & Shuttles",
     description: "Guaranteed access to Moraine Lake & Lake Louise, luxury private tours, and Canadian Rockies adventures.",
@@ -78,11 +77,9 @@ const jsonLd = {
     "Icefields Parkway",
     "Jasper National Park",
   ],
-  "aggregateRating": {
-    "@type": "AggregateRating",
-    "ratingValue": "5.0",
-    "reviewCount": "742",
-  },
+  // No aggregateRating here: the site-wide 742 conflicted with the "1,700+ reviews" shown on the
+  // pages, and Google doesn't show review stars for a business's own rating of itself. Tour pages
+  // carry their own rating (TourDetailView).
 };
 
 /**

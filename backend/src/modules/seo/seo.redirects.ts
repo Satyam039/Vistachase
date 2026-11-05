@@ -93,10 +93,27 @@ export async function deleteRedirect(id: string, userId: string) {
 }
 
 /** What the middleware needs: active redirects as {from: [to, status]}, loops left out. */
+/**
+ * Redirects built into the site (SEO audit, 5 Nov 2026). Old Webflow blog posts that were never
+ * migrated (they 404'd while other posts still linked to them) go to the closest live page, and a
+ * test post is retired. A redirect saved in the SEO portal for the same old URL wins, so staff can
+ * still change any of these without a deploy.
+ */
+export const BUILT_IN_REDIRECTS: Record<string, string> = {
+  "/blog-post/luxury-banff-tours": "/blog-post/luxury-banff-tours-what-vip-travelers-actually-get",
+  "/blog-post/canadian-rockies-private-road-trip-itinerary-guide": "/multi-day-tour-package-for-banff",
+  "/blog-post/how-many-days-in-banff-and-jasper": "/blog-post/5-day-banff-itinerary",
+  "/blog-post/luxury-alaska-cruise-and-banff-tour": "/blog-post/what-to-do-in-banff-after-your-alaska-cruise-ends",
+  // Test post ("lake lousie", subtitle "NA"): never meant to be public.
+  "/blog-post/lake-lousie": "/blog-post/lake-louise-hiking-guide",
+};
+
 export async function activeRedirectMap() {
   const active = await prisma.seoRedirect.findMany({ where: { active: true }, select: { fromPath: true, toPath: true, statusCode: true } });
-  const loops = new Set(resolveChains(active).filter((c) => c.loop).map((c) => c.fromPath));
+  const saved = new Set(active.map((r) => r.fromPath));
+  const all = [...active, ...Object.entries(BUILT_IN_REDIRECTS).filter(([from]) => !saved.has(from)).map(([fromPath, toPath]) => ({ fromPath, toPath, statusCode: 301 }))];
+  const loops = new Set(resolveChains(all).filter((c) => c.loop).map((c) => c.fromPath));
   const map: Record<string, [string, number]> = {};
-  for (const r of active) if (!loops.has(r.fromPath) && !isReservedPath(r.fromPath)) map[r.fromPath] = [r.toPath, r.statusCode];
+  for (const r of all) if (!loops.has(r.fromPath) && !isReservedPath(r.fromPath)) map[r.fromPath] = [r.toPath, r.statusCode];
   return map;
 }

@@ -24,11 +24,15 @@ export const dynamic = "force-dynamic";
 const FALLBACK_IMAGE = "/media/photos/moraine-lake-perfect-reflection.webp";
 
 export async function generateMetadata(): Promise<Metadata> {
-  return withSeo("/guides", {
+  const meta = await withSeo("/guides", {
     title: "Banff travel guides | Vista Chase",
     description: "Trip-planning guides for Banff and the Canadian Rockies from the Vista Chase team.",
     alternates: { canonical: "/guides" },
   });
+  // With no guides published the page is empty: keep it out of search until there are some
+  // (the sitemap leaves it out too). If the guide list can't be loaded, the page's settings stand.
+  const body = await seoFetch<{ guides: GuideSummary[] }>("/guides", 5000);
+  return body && body.guides.length === 0 ? { ...meta, robots: { index: false, follow: true } } : meta;
 }
 
 const date = (iso: string) => new Date(iso).toLocaleDateString("en-CA", { year: "numeric", month: "long", day: "numeric", timeZone: "America/Edmonton" });

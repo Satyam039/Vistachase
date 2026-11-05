@@ -43,13 +43,13 @@ function arrange(posts: PostSummary[]) {
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const page = pageOf((await searchParams).page) ?? 1;
   const meta = await withSeo("/blog", {
-    title: "Banff blog | Vista Chase",
-    description: "Stories, tips and seasonal updates for Banff and the Canadian Rockies from the Vista Chase team.",
+    title: "Banff Blog: Travel Tips & Rockies Guides | Vista Chase",
+    description: "Local tips, hiking guides and trip-planning advice for Banff, Lake Louise, Moraine Lake and the Canadian Rockies from the Vista Chase team.",
     alternates: { canonical: "/blog" },
   });
   if (page === 1) return meta;
   // Later pages list different posts, so each is its own canonical page with its own title.
-  const title = typeof meta.title === "string" ? meta.title : "Banff blog | Vista Chase";
+  const title = typeof meta.title === "string" ? meta.title : "Banff Blog: Travel Tips & Rockies Guides | Vista Chase";
   return { ...meta, title: `${title} (page ${page})`, alternates: { ...meta.alternates, canonical: `/blog?page=${page}` } };
 }
 
@@ -86,7 +86,7 @@ export default async function BlogPage({ searchParams }: Props) {
                 </li>
               </ol>
             </nav>
-            <p className="text-xs uppercase tracking-[0.28em] text-ocean-600">Blogs</p>
+            <p className="text-xs uppercase tracking-[0.28em] text-ocean-600">Blog</p>
             <h1 className="mt-4 text-balance text-4xl font-light tracking-tight text-obsidian-900 sm:text-6xl">The Vista Chase blog</h1>
             <p className="mx-auto mt-5 max-w-2xl text-lg font-light leading-relaxed text-slate-700">Stories and planning tips from Banff and the Canadian Rockies.</p>
           </div>

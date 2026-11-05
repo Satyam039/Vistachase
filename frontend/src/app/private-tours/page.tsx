@@ -7,7 +7,7 @@ import { withSeo } from "@/lib/seo/server";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 const baseMetadata: Metadata = {
-  title: "Private Tours of the Canadian Rockies | Banff, Lake Louise & Jasper | Vista Chase",
+  title: "Private Tours in Banff & the Canadian Rockies | Vista Chase",
   description:
     "Explore the Canadian Rockies with your own guide, private vehicle and doorstep pickup. Explore for 1 to 5 days, doorstep pickup, optional activities and airport transfers.",
   alternates: {

@@ -21,6 +21,8 @@ const nextConfig = {
   // frontend/ is a standalone app; don't let Next infer a parent folder as the workspace root
   outputFileTracingRoot: path.dirname(fileURLToPath(import.meta.url)),
   reactStrictMode: true,
+  // Don't advertise the framework in every response (X-Powered-By: Next.js).
+  poweredByHeader: false,
   eslint: {
     ignoreDuringBuilds: true,
   },

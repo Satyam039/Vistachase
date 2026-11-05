@@ -27,7 +27,7 @@ import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 import { PACKAGE_DAY_PRICE, PRIVATE_MAX_GUESTS } from "@/lib/privateTours";
 
 export const metadata: Metadata = {
-  title: "Three-Day Rockies Discovery | Private Banff, Yoho & Columbia Icefield Tour | Vista Chase",
+  title: "Three-Day Rockies Discovery Private Tour | Vista Chase",
   description:
     "Three remarkable days exploring mountain towns, iconic lakes, waterfalls and glacier landscapes with your own driver-guide, private vehicle and doorstep pickup. Accommodation booked directly by guests.",
   alternates: { canonical: "/three-day-rockies-discovery" },

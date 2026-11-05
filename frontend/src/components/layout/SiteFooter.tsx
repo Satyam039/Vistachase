@@ -50,7 +50,7 @@ const GROUPS: { heading: string; links: FooterLink[] }[] = [
       { label: "Hotel pickup finder", href: "/pickup-finder" },
       { label: "My trips & vouchers", href: "/account/trips" },
       { label: "FAQ & cancellation", href: "/faq" },
-      { label: "Travel guides", href: "/guides" },
+      // "Travel guides" (/guides) comes back here once guides are published; an empty page isn't linked.
       { label: "AI concierge", href: "/concierge" },
       { label: "Photo gallery", href: "/gallery" },
     ],
@@ -59,8 +59,8 @@ const GROUPS: { heading: string; links: FooterLink[] }[] = [
     heading: "Company",
     links: [
       { label: "About Us", href: "/about-us" },
-      { label: "Blogs", href: "/blog" },
-      { label: "Affiliate program", href: "/affiliate" },
+      { label: "Blog", href: "/blog" },
+      { label: "Affiliate program", href: "/partners" },
       { label: "Terms & Conditions", href: "/terms-and-conditions" },
       { label: "Cancellation Policy", href: "/privacy-policy-vista-chase" },
       { label: "Contact us", href: "/contact-us" },

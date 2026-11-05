@@ -6,9 +6,9 @@ import { withSeo } from "@/lib/seo/server";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 const baseMetadata: Metadata = {
-  title: "Banff & Jasper Activity Tickets | Gondola, Icefield, Lake Cruises | Vista Chase",
+  title: "Banff & Jasper Activity Tickets | Vista Chase",
   description:
-    "Add the Banff Gondola, a Lake Minnewanka or Maligne Lake cruise, the Columbia Icefield Adventure or the Skywalk to your Rockies trip. Book online at the times we recommend, around your Vista Chase tour.",
+    "Add the Banff Gondola, a Lake Minnewanka or Maligne Lake cruise, the Columbia Icefield Adventure or Skywalk to your Rockies trip, at the times we recommend.",
   alternates: { canonical: "/banff-activity-tickets" },
 };
 

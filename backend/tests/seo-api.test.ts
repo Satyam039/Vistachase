@@ -284,12 +284,15 @@ describe("keywords", () => {
 
 describe("sitemap and llms.txt", () => {
   it("lists indexable pages only", async () => {
-    const entries: { path: string; lastModified: string }[] = (await request(app).get("/api/seo/public/sitemap")).body.entries;
+    const entries: { path: string; lastModified: string | null }[] = (await request(app).get("/api/seo/public/sitemap")).body.entries;
     const paths = entries.map((e) => e.path);
     expect(paths).toContain("/");
     expect(paths).toContain("/destinations/moraine-lake");
     for (const p of ["/login", "/register", "/book", "/search", "/partners/dashboard", "/cancellation-policy"]) expect(paths).not.toContain(p);
-    expect(entries.every((e) => !Number.isNaN(Date.parse(e.lastModified)))).toBe(true);
+    // lastmod only where the content's real change date is known; never the time of the request.
+    expect(entries.every((e) => e.lastModified === null || !Number.isNaN(Date.parse(e.lastModified)))).toBe(true);
+    expect(entries.find((e) => e.path === "/")?.lastModified).toBeNull();
+    for (const p of ["/two-day-rockies-explorer", "/three-day-rockies-discovery", "/four-day-rockies-and-jasper"]) expect(paths).toContain(p);
   });
 
   it("serves llms.txt only once switched on, with the saved pages", async () => {

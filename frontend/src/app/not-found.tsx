@@ -5,7 +5,7 @@ import { ArrowRight, Bus, Compass, MapPin, Search, Users } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Page not found | Vista Chase",
-  robots: { index: false, follow: false },
+  // No robots tag here: Next.js already adds noindex to every 404, and a second tag was duplicated.
 };
 
 // 404 (GetYourGuide / Expedia pattern): a photo, a plain apology, search first, then the most-used

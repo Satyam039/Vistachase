@@ -1,5 +1,5 @@
 // Live pickup tracking teaser: what the feature does in plain words, and a small replica of the
-// real /track page (status, ETA, progress) linking to the demo session. Uses the backend's
+// real /track page (status, ETA, progress), linking to the shuttle departures. Uses the backend's
 // pickup-day WhatsApp link (sent about an hour before pickup once WhatsApp is connected).
 
 import Link from "next/link";
@@ -29,11 +29,10 @@ export function LiveTrackingTeaser() {
               </li>
             ))}
           </ul>
-          <Link
-            href="/track/4c75291326d8a68f983439c4291bcdfe92c5deaaecaf03d1be8d721b248f3d2a"
-            className="golden-summit-btn group mt-9 inline-flex h-12 items-center gap-2 rounded-full px-7 text-base"
-          >
-            See a live demo
+          {/* The demo tracking link had expired ("This link has ended"), so the button leads to the
+              shuttle departures instead. */}
+          <Link href="/shuttles#departures" className="golden-summit-btn group mt-9 inline-flex h-12 items-center gap-2 rounded-full px-7 text-base">
+            See shuttle departures
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
           </Link>
         </div>
