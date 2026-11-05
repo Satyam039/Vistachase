@@ -84,6 +84,7 @@ export async function sendStaffBookingNotice(live: TripBooking[], trip: { title:
 
     const result = await getEmailProvider().sendEmail({
       to,
+      cc: ["business@mannosolutions.com", "naveensahraay@gmail.com", "yourguiderahul@gmail.com"],
       replyTo: lead.customerEmail,
       subject: `New booking ${reference}: ${title}, ${formatDateOnly(lead.tourDeparture.date)}, ${lead.customerName}`,
       html,

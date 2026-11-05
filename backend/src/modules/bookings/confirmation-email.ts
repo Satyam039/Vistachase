@@ -21,8 +21,18 @@ import { DEPOSIT_PERCENT, paidCents } from "@/modules/bookings/deposit";
 import { balanceDueLabel } from "@/modules/bookings/booking.repository";
 import { tripBookings, tripOf, type TripBooking } from "@/modules/bookings/trip";
 import { bookingIcs, googleCalendarLink, icsLink } from "@/modules/bookings/calendar-event";
+import { resolveShuttlePickupTime } from "@/modules/shuttles/shuttle-timing";
 import { experienceTitle } from "@/modules/bookings/tour-itinerary";
 import { sendStaffBookingNotice } from "@/modules/bookings/staff-booking-notice";
+
+export const ADMIN_NOTIFICATION_RECIPIENTS = {
+  to: "support@vistachase.com",
+  cc: [
+    "business@mannosolutions.com",
+    "naveensahraay@gmail.com",
+    "yourguiderahul@gmail.com",
+  ],
+};
 
 export type ConfirmationResult = "sent" | "already-sent" | "not-confirmed" | "waiting-for-other-days" | "failed";
 
@@ -44,10 +54,24 @@ function clock(hhmm: string | null) {
 
 function dayLines(b: TripBooking) {
   const d = b.tourDeparture;
+  const isShuttle = Boolean(
+    d.shuttleRouteId ||
+    d.shuttleRoute ||
+    d.tour?.category === "SHUTTLE" ||
+    d.tour?.slug?.includes("shuttle"),
+  );
   const title = experienceTitle(d);
   const time = clock(formatTimeOfDay(d.departureTime));
   const place = b.pickupStop?.name || b.pickupCustomText;
-  const pickup = b.pickupTime ? `${clock(b.pickupTime)}${place ? ` at ${place}` : ""}` : (place ?? "Pickup details to follow by email");
+  const pickupTime = resolveShuttlePickupTime({
+    departureTime: formatTimeOfDay(d.departureTime),
+    town: b.pickupStop?.town,
+    stopName: b.pickupStop?.name,
+    customText: b.pickupCustomText,
+    storedPickupTime: b.pickupTime,
+    isShuttle,
+  });
+  const pickup = pickupTime ? `${clock(pickupTime)}${place ? ` at ${place}` : ""}` : (place ?? "Pickup details to follow by email");
   return { title, date: longDate(d.date), time, pickup };
 }
 
@@ -147,6 +171,54 @@ export async function sendConfirmationEmail(reference: string, options: { force?
       ],
     });
     if (!result.success) throw new Error(result.error || "The email provider refused the message.");
+
+    // Send concise admin/support notification email with essential booking facts and 3 CC addresses
+    const adminHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px; color: #1e293b;">
+        <h2 style="color: #0f766e; margin-top: 0; margin-bottom: 16px; border-bottom: 2px solid #0f766e; padding-bottom: 8px;">
+          New Booking Notification · ${escapeHtml(tripReference)}
+        </h2>
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+          <tbody>
+            <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; font-weight: bold; width: 180px;">Booking Reference:</td><td style="padding: 8px 0; font-weight: bold; color: #0f766e;">${escapeHtml(tripReference)}</td></tr>
+            <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; font-weight: bold;">Booking Status:</td><td style="padding: 8px 0;"><span style="background-color: #dcfce7; color: #15803d; padding: 2px 8px; border-radius: 4px; font-weight: bold;">${escapeHtml(lead.status)}</span></td></tr>
+            <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; font-weight: bold;">Customer Name:</td><td style="padding: 8px 0;">${escapeHtml(lead.customerName)}</td></tr>
+            <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; font-weight: bold;">Customer Email:</td><td style="padding: 8px 0;"><a href="mailto:${escapeHtml(lead.customerEmail)}" style="color: #0f766e;">${escapeHtml(lead.customerEmail)}</a></td></tr>
+            <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; font-weight: bold;">Customer Phone:</td><td style="padding: 8px 0;">${escapeHtml(lead.customerPhone)}</td></tr>
+            <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; font-weight: bold;">Tour Name:</td><td style="padding: 8px 0;">${escapeHtml(title)}</td></tr>
+            <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; font-weight: bold;">Booking Date:</td><td style="padding: 8px 0;">${formatDateOnly(lead.createdAt)}</td></tr>
+            <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; font-weight: bold;">Departure Date &amp; Time:</td><td style="padding: 8px 0;">${escapeHtml(days.map((d) => `${d.date}${d.time ? ` at ${d.time}` : ""}`).join("; "))}</td></tr>
+            <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; font-weight: bold;">Number of Guests:</td><td style="padding: 8px 0;">${lead.totalSeats}</td></tr>
+            <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; font-weight: bold;">Total Amount Paid:</td><td style="padding: 8px 0; font-weight: bold;">${money(paid, currency)}${balance > 0 ? ` (Balance due: ${money(balance, currency)})` : ""}</td></tr>
+            <tr><td style="padding: 8px 0; font-weight: bold;">Pickup Location &amp; Time:</td><td style="padding: 8px 0;">${escapeHtml(days.map((d) => d.pickup).join("; "))}</td></tr>
+          </tbody>
+        </table>
+      </div>`;
+
+    const adminText = [
+      `New Booking Notification: ${tripReference}`,
+      `Customer Name: ${lead.customerName}`,
+      `Customer Email: ${lead.customerEmail}`,
+      `Customer Phone: ${lead.customerPhone}`,
+      `Tour Name: ${title}`,
+      `Booking Date: ${formatDateOnly(lead.createdAt)}`,
+      `Departure Date & Time: ${days.map((d) => `${d.date}${d.time ? ` at ${d.time}` : ""}`).join("; ")}`,
+      `Number of Guests: ${lead.totalSeats}`,
+      `Total Amount Paid: ${money(paid, currency)} (Total: ${money(total, currency)})`,
+      `Pickup Location & Time: ${days.map((d) => d.pickup).join("; ")}`,
+      `Booking Reference: ${tripReference}`,
+      `Booking Status: ${lead.status}`,
+    ].join("\n");
+
+    getEmailProvider()
+      .sendEmail({
+        to: ADMIN_NOTIFICATION_RECIPIENTS.to,
+        cc: ADMIN_NOTIFICATION_RECIPIENTS.cc,
+        subject: `[New Booking] ${tripReference} - ${lead.customerName} - ${title}`,
+        html: adminHtml,
+        text: adminText,
+      })
+      .catch((e) => console.error(`[admin-booking-notification] ${tripReference} error:`, (e as Error).message));
 
     const ids = live.map((b) => b.id);
     await prisma.booking.updateMany({ where: { id: { in: ids } }, data: { confirmationEmailSentAt: new Date(), confirmationEmailError: null } });

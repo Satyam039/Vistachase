@@ -58,7 +58,7 @@ export function PartnerApplyForm() {
           Your referral code is <span className="font-mono">{code}</span>. We review applications within two business days. Once
           you&apos;re approved, every booking made through your links is credited to you.
         </p>
-        <Link href="/partners/login" className="inline-flex min-h-11 items-center underline underline-offset-4">
+        <Link href="/affiliate/login" className="inline-flex min-h-11 items-center underline underline-offset-4">
           Sign in to your partner dashboard
         </Link>
       </div>

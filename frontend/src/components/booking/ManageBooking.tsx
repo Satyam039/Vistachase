@@ -7,7 +7,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarClock, CheckCircle2, UserRound } from "lucide-react";
+import { AlertTriangle, CalendarClock, CheckCircle2, UserRound, XCircle } from "lucide-react";
 
 const input =
   "mt-1 block h-11 w-full rounded-none border border-slate-300 bg-white px-3 text-base text-obsidian-900 focus:border-ocean-600 focus:outline-none focus:ring-2 focus:ring-ocean-600/30";
@@ -30,12 +30,18 @@ export function ManageBooking({
   customerName,
   customerPhone,
   currentDate,
+  policyOpen = true,
+  refundAmount,
+  currency = "CAD",
 }: {
   bookingReference: string;
   token?: string;
   customerName: string;
   customerPhone?: string | null;
   currentDate: string;
+  policyOpen?: boolean;
+  refundAmount?: number;
+  currency?: string;
 }) {
   const router = useRouter();
   const [name, setName] = useState(customerName);
@@ -47,6 +53,8 @@ export function ManageBooking({
   const [preferredTime, setPreferredTime] = useState("");
   const [note, setNote] = useState("");
   const [changeState, setChangeState] = useState<{ busy?: boolean; done?: boolean; error?: string }>({});
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [cancelState, setCancelState] = useState<{ busy?: boolean; done?: boolean; error?: string }>({});
 
   const saveDetails = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,6 +74,20 @@ export function ManageBooking({
     setChangeState({ busy: true });
     const result = await post("/api/bookings/manage/change-date", { bookingReference, t: token, newDate, preferredTime, note });
     setChangeState(result.ok ? { done: true } : { error: result.error });
+  };
+
+  const handleCancelBooking = async () => {
+    setCancelState({ busy: true });
+    const result = await post("/api/bookings/cancel", { bookingReference, t: token });
+    if (!result.ok) {
+      setCancelState({ error: result.error });
+      return;
+    }
+    setCancelState({ done: true });
+    setShowCancelConfirm(false);
+    setTimeout(() => {
+      router.refresh();
+    }, 1200);
   };
 
   return (
@@ -136,12 +158,71 @@ export function ManageBooking({
               maxLength={500}
             />
           </label>
-          <button type="submit" className={button} disabled={changeState.busy}>
-            {changeState.busy ? "Sending…" : "Request new date"}
-          </button>
+          <div className="flex flex-wrap items-center gap-3 pt-1">
+            <button type="submit" className={button} disabled={changeState.busy || cancelState.busy}>
+              {changeState.busy ? "Sending…" : "Request new date"}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowCancelConfirm(true);
+                setCancelState({});
+              }}
+              className="inline-flex h-11 items-center justify-center rounded-none border border-red-300 bg-red-50/60 px-5 text-sm font-medium text-red-800 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={changeState.busy || cancelState.busy}
+            >
+              Cancel booking
+            </button>
+          </div>
           {changeState.error && (
             <p role="alert" className="text-sm text-red-700">
               {changeState.error}
+            </p>
+          )}
+
+          {showCancelConfirm && (
+            <div className="mt-4 rounded-none border border-red-200 bg-red-50/80 p-4 space-y-3" role="alert">
+              <div className="flex items-start gap-2.5">
+                <AlertTriangle className="h-5 w-5 text-red-700 shrink-0 mt-0.5" aria-hidden="true" />
+                <div className="space-y-1">
+                  <h4 className="text-sm font-semibold text-red-950">Confirm Booking Cancellation</h4>
+                  <p className="text-xs leading-relaxed text-red-900">
+                    {policyOpen
+                      ? `This booking is within the cancellation window. Cancelling will immediately release your seats and refund ${refundAmount != null ? `$${refundAmount.toFixed(2)} ${currency}` : "your payment"} to your original payment method.`
+                      : "The free cancellation window for this booking has closed. Cancelling will release your reserved seats, but this departure is non-refundable."}
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={handleCancelBooking}
+                  disabled={cancelState.busy}
+                  className="inline-flex h-10 items-center justify-center rounded-none bg-red-700 px-4 text-sm font-medium text-white hover:bg-red-800 disabled:opacity-60"
+                >
+                  {cancelState.busy ? "Cancelling…" : "Yes, cancel booking"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowCancelConfirm(false)}
+                  disabled={cancelState.busy}
+                  className="inline-flex h-10 items-center justify-center rounded-none border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                >
+                  Keep my booking
+                </button>
+              </div>
+              {cancelState.error && (
+                <p role="alert" className="text-xs text-red-700 font-medium">
+                  {cancelState.error}
+                </p>
+              )}
+            </div>
+          )}
+
+          {cancelState.done && (
+            <p role="status" className="mt-4 flex items-start gap-2 bg-red-50 p-4 text-sm text-red-900 ring-1 ring-red-200">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-red-700" aria-hidden="true" />
+              Your booking has been cancelled and the seats released. We&apos;ve sent a confirmation email.
             </p>
           )}
         </form>

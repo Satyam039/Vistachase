@@ -35,6 +35,8 @@ import { sendCommissionEarnedEmail } from "@/modules/affiliates/partner-emails";
 import { checkinLink, signBookingLink, voucherLink } from "@/lib/security/signed-links";
 import { DEPOSIT_PERCENT, DEPOSIT_MIN_DAYS_BEFORE, depositTerms, firstChargeCents, paymentSummary } from "@/modules/bookings/deposit";
 import { policyDecision } from "@/modules/bookings/cancellation-policy";
+import { resolveShuttlePickupTime } from "@/modules/shuttles/shuttle-timing";
+import { ADMIN_NOTIFICATION_RECIPIENTS } from "@/modules/bookings/confirmation-email";
 import { experienceTitle } from "@/modules/bookings/tour-itinerary";
 
 export interface CreateBookingInput {
@@ -274,7 +276,9 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
         throw new BookingRefused(
           isVehicle
             ? "This private vehicle is already booked for this departure."
-            : `Requested ${totalSeats} seats, but only ${Math.max(0, available)} seats are available.`,
+            : available <= 0
+              ? "Tickets Sold Out. This departure is fully booked (0 seats are available)."
+              : `Requested ${totalSeats} seats, but only ${Math.max(0, available)} seats are available.`,
         );
       }
 
@@ -325,6 +329,22 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
           : {}),
       };
 
+      const stop = input.pickupStopId ? await tx.shuttleStop.findUnique({ where: { id: input.pickupStopId } }) : null;
+      const isShuttle = Boolean(
+        departure.shuttleRouteId ||
+        departure.shuttleRoute ||
+        departure.tour?.category === "SHUTTLE" ||
+        departure.tour?.slug?.includes("shuttle"),
+      );
+      const resolvedPickupTime = resolveShuttlePickupTime({
+        departureTime: formatTimeOfDay(departure.departureTime),
+        town: stop?.town,
+        stopName: stop?.name,
+        customText: input.pickupCustomText,
+        storedPickupTime: input.pickupTime,
+        isShuttle,
+      });
+
       const created = await tx.booking.create({
         data: {
           bookingReference,
@@ -337,7 +357,7 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
           tourDepartureId: input.departureId,
           pickupStopId: input.pickupStopId,
           pickupCustomText: input.pickupCustomText,
-          pickupTime: input.pickupTime,
+          pickupTime: resolvedPickupTime,
           adultsCount: input.adultsCount,
           childrenCount: input.childrenCount,
           infantsCount: input.infantsCount,
@@ -585,7 +605,7 @@ export async function expireUnpaidBookings(now = new Date()) {
 }
 
 export async function getBookingByReference(reference: string) {
-  return await prisma.booking.findUnique({
+  const booking = await prisma.booking.findUnique({
     where: { bookingReference: reference },
     include: {
       tourDeparture: { include: { tour: true, shuttleRoute: true } },
@@ -595,6 +615,23 @@ export async function getBookingByReference(reference: string) {
       review: true,
     },
   });
+  if (booking) {
+    const isShuttle = Boolean(
+      booking.tourDeparture.shuttleRouteId ||
+      booking.tourDeparture.shuttleRoute ||
+      booking.tourDeparture.tour?.category === "SHUTTLE" ||
+      booking.tourDeparture.tour?.slug?.includes("shuttle"),
+    );
+    booking.pickupTime = resolveShuttlePickupTime({
+      departureTime: formatTimeOfDay(booking.tourDeparture.departureTime),
+      town: booking.pickupStop?.town,
+      stopName: booking.pickupStop?.name,
+      customText: booking.pickupCustomText,
+      storedPickupTime: booking.pickupTime,
+      isShuttle,
+    });
+  }
+  return booking;
 }
 
 /** Cancels a booking for its owner (the caller has already proved ownership). */
@@ -697,6 +734,37 @@ export async function cancelBooking(reference: string, customerEmail?: string) {
       text: `Your Vista Chase booking ${booking.bookingReference} is cancelled.${refundedCents > 0 ? ` Refund: $${(refundedCents / 100).toFixed(2)} ${booking.currency}.` : ""}`,
     })
     .catch((e) => console.error("Cancellation email failed:", (e as Error).message));
+
+  // Send admin cancellation notification with CC to the 3 admin email addresses
+  const adminCancelHtml = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px; color: #1e293b;">
+      <h2 style="color: #dc2626; margin-top: 0; margin-bottom: 16px; border-bottom: 2px solid #dc2626; padding-bottom: 8px;">
+        Booking Cancelled · ${escapeHtml(booking.bookingReference)}
+      </h2>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <tbody>
+          <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; font-weight: bold; width: 180px;">Booking Reference:</td><td style="padding: 8px 0; font-weight: bold; color: #dc2626;">${escapeHtml(booking.bookingReference)}</td></tr>
+          <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; font-weight: bold;">Status:</td><td style="padding: 8px 0;"><span style="background-color: #fee2e2; color: #b91c1c; padding: 2px 8px; border-radius: 4px; font-weight: bold;">${escapeHtml(final.status)}</span></td></tr>
+          <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; font-weight: bold;">Customer Name:</td><td style="padding: 8px 0;">${escapeHtml(booking.customerName)}</td></tr>
+          <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; font-weight: bold;">Customer Email:</td><td style="padding: 8px 0;"><a href="mailto:${escapeHtml(booking.customerEmail)}" style="color: #0f766e;">${escapeHtml(booking.customerEmail)}</a></td></tr>
+          <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; font-weight: bold;">Customer Phone:</td><td style="padding: 8px 0;">${escapeHtml(booking.customerPhone)}</td></tr>
+          <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; font-weight: bold;">Experience:</td><td style="padding: 8px 0;">${escapeHtml(booking.tourDeparture.tour?.title || booking.tourDeparture.shuttleRoute?.name || "Vista Chase experience")}</td></tr>
+          <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; font-weight: bold;">Departure Date:</td><td style="padding: 8px 0;">${formatDateOnly(booking.tourDeparture.date)}</td></tr>
+          <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; font-weight: bold;">Seats Released:</td><td style="padding: 8px 0;">${booking.totalSeats}</td></tr>
+          <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; font-weight: bold;">Amount Refunded:</td><td style="padding: 8px 0; font-weight: bold;">$${(refundedCents / 100).toFixed(2)} ${booking.currency}</td></tr>
+        </tbody>
+      </table>
+    </div>`;
+
+  getEmailProvider()
+    .sendEmail({
+      to: ADMIN_NOTIFICATION_RECIPIENTS.to,
+      cc: ADMIN_NOTIFICATION_RECIPIENTS.cc,
+      subject: `[Booking Cancelled] ${booking.bookingReference} - ${booking.customerName}`,
+      html: adminCancelHtml,
+      text: `Booking Cancelled: ${booking.bookingReference}\nCustomer: ${booking.customerName} (${booking.customerEmail}, ${booking.customerPhone})\nSeats Released: ${booking.totalSeats}\nRefunded: $${(refundedCents / 100).toFixed(2)} ${booking.currency}\nStatus: ${final.status}`,
+    })
+    .catch((e) => console.error("Admin cancellation email notification failed:", (e as Error).message));
 
   return { success: true, booking: final, refundedAmount: refundedCents / 100, refundOwedAmount: failedCents / 100, message: "Reservation cancelled and capacity released." };
 }

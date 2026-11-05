@@ -27,7 +27,7 @@ export default function AffiliateLoginPage() {
       } else {
         const next = new URLSearchParams(window.location.search).get("next");
         if (next && next.startsWith("/affiliate") && !next.startsWith("/affiliate/login")) {
-          window.location.assign(next); // full load so the middleware sees the new cookie
+          window.location.assign(next);
         } else {
           window.location.assign("/affiliate/dashboard");
         }
@@ -95,6 +95,18 @@ export default function AffiliateLoginPage() {
         >
           {loading ? "Signing in…" : "Sign in to Affiliate Portal"}
         </button>
+        <div className="pt-1 text-center">
+          <button
+            type="button"
+            onClick={() => {
+              setEmail("partner.demo@example.com");
+              setPassword("PartnerDemo2026!");
+            }}
+            className="text-xs text-ocean-700 hover:text-ocean-900 underline underline-offset-2"
+          >
+            Fill Demo Partner: partner.demo@example.com
+          </button>
+        </div>
       </form>
     </AuthShell>
   );

@@ -13,6 +13,7 @@ import { formatDateOnly, formatTimeOfDay } from "@/lib/utils/time";
 import { paidCents, paymentSummary } from "@/modules/bookings/deposit";
 import type { getBookingByReference } from "@/modules/bookings/booking.repository";
 import { experienceTitle, tourItinerary } from "@/modules/bookings/tour-itinerary";
+import { resolveShuttlePickupTime } from "@/modules/shuttles/shuttle-timing";
 
 type VoucherBooking = NonNullable<Awaited<ReturnType<typeof getBookingByReference>>>;
 
@@ -205,13 +206,27 @@ export async function addVoucherPage(pdf: PDFDocument, booking: VoucherBooking, 
       .join(", ") || `${booking.totalSeats} guest${booking.totalSeats === 1 ? "" : "s"}`;
   const stop = booking.pickupStop;
   const pickupPlace = stop?.name || booking.pickupCustomText || null;
+  const isShuttle = Boolean(
+    departure.shuttleRouteId ||
+    departure.shuttleRoute ||
+    departure.tour?.category === "SHUTTLE" ||
+    departure.tour?.slug?.includes("shuttle"),
+  );
+  const pickupTime = resolveShuttlePickupTime({
+    departureTime: formatTimeOfDay(departure.departureTime),
+    town: stop?.town,
+    stopName: stop?.name,
+    customText: booking.pickupCustomText,
+    storedPickupTime: booking.pickupTime,
+    isShuttle,
+  });
   row("Date", longDate(departure.date));
   row("Departs", clock(departure.departureTime) ?? "To be confirmed");
   row("Returns (approx.)", clock(departure.returnTime));
   row(
     "Pickup",
-    booking.pickupTime
-      ? `${clock(booking.pickupTime)} ${pickupPlace ? `at ${pickupPlace}` : "(place to be confirmed by email)"}`
+    pickupTime
+      ? `${clock(pickupTime)} ${pickupPlace ? `at ${pickupPlace}` : "(place to be confirmed by email)"}`
       : (pickupPlace ?? "To be confirmed by email"),
   );
   row("Pickup address", stop ? [stop.address, stop.town].filter(Boolean).join(", ") : null);
@@ -415,9 +430,23 @@ export async function itineraryPdf(bookings: VoucherBooking[], trip: { title: st
     const beside = dayQr ? inner - 130 - dayQr - 16 : inner - 130;
     const stop = b.pickupStop;
     const place = stop?.name || b.pickupCustomText || null;
+    const isShuttle = Boolean(
+      d.shuttleRouteId ||
+      d.shuttleRoute ||
+      d.tour?.category === "SHUTTLE" ||
+      d.tour?.slug?.includes("shuttle"),
+    );
+    const pickupTime = resolveShuttlePickupTime({
+      departureTime: formatTimeOfDay(d.departureTime),
+      town: stop?.town,
+      stopName: stop?.name,
+      customText: b.pickupCustomText,
+      storedPickupTime: b.pickupTime,
+      isShuttle,
+    });
     row("Departs", clock(d.departureTime) ?? "To be confirmed", beside);
     row("Returns (approx.)", clock(d.returnTime), beside);
-    row("Pickup", b.pickupTime ? `${clock(b.pickupTime)}${place ? ` at ${place}` : ""}` : (place ?? "To be confirmed by email"), beside);
+    row("Pickup", pickupTime ? `${clock(pickupTime)}${place ? ` at ${place}` : ""}` : (place ?? "To be confirmed by email"), beside);
     row("Pickup address", stop ? [stop.address, stop.town].filter(Boolean).join(", ") : null, beside);
     if (bookings.length > 1) row("Day reference", b.bookingReference, beside);
     if (!(b.status === "CONFIRMED" || b.status === "COMPLETED")) row("Status", b.status.replace(/_/g, " ").toLowerCase(), beside);

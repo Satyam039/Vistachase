@@ -413,6 +413,9 @@ export default async function VoucherPage({
               customerName={booking.customerName}
               customerPhone={booking.customerPhone}
               currentDate={dateLabel}
+              policyOpen={policyOpen}
+              refundAmount={booking.totalAmount / 100}
+              currency={booking.currency}
             />
           )}
 

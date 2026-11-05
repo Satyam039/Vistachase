@@ -135,7 +135,7 @@ export default function PartnersPage() {
             </p>
             <p className="mt-4 text-base text-slate-700">
               Already a partner?{" "}
-              <Link href="/partners/login" className="text-ocean-700 underline underline-offset-4">
+              <Link href="/affiliate/login" className="text-ocean-700 underline underline-offset-4">
                 Sign in
               </Link>
             </p>
