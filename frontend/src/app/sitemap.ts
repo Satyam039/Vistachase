@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 interface Entry {
   path: string;
-  lastModified: string;
+  lastModified: string | null;
   priority: number | null;
 }
 
@@ -20,7 +20,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Ticket pages redirect to the operator's booking site (app/[slug]/page.tsx), so they're not listed.
   return body.entries.filter((e) => !(e.path.slice(1) in ACTIVITY_TICKETS)).map((e) => ({
     url: `${origin}${e.path === "/" ? "/" : e.path}`,
-    lastModified: e.lastModified,
+    ...(e.lastModified ? { lastModified: e.lastModified } : {}),
     ...(e.priority != null ? { priority: e.priority } : {}),
   }));
 }

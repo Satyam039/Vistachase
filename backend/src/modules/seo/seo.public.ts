@@ -40,6 +40,9 @@ export async function publicMeta(rawPath: string) {
 /** A published guide (/guides/<slug>) or blog post (/blog-post/<slug>) with its content. */
 export async function publicGuide(slug: string, prefix: CmsPrefix = GUIDE_PREFIX) {
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) return null;
+  const redirects = await activeRedirectMap();
+  // A post that has been redirected away (e.g. a retired test post) is no longer served.
+  if (redirects[`${prefix}${slug}`]) return null;
   const page = await prisma.seoPage.findFirst({
     where: { path: `${prefix}${slug}`, source: "CMS", status: "PUBLISHED" },
     select: {
@@ -77,7 +80,31 @@ export async function publicGuide(slug: string, prefix: CmsPrefix = GUIDE_PREFIX
   const schema = await publishedPageSchema(id);
   // Related links: only pages that are published here or are known site routes.
   const related = await prisma.seoPage.findMany({ where: { path: { in: page.relatedPaths }, status: "PUBLISHED" }, select: { path: true, label: true, seoTitle: true } });
-  return { ...content, schema, related: related.map((r) => ({ path: r.path, label: r.label })) };
+  return { ...content, body: cleanBody(content.body, redirects), schema, related: related.map((r) => ({ path: r.path, label: r.label })) };
+}
+
+const SITE_LINK = /\]\((?:https?:\/\/(?:www\.)?vistachase\.com)?(\/[^)\s?#]*)([^)\s]*)((?:\s+"[^"]*")?)\)/gi;
+
+/**
+ * What the page shows of a stored post body (the stored post is never changed):
+ * - Webflow's empty paragraphs (a lone zero-width joiner, U+200D) are dropped, and stray joiners
+ *   are removed; joiners inside emoji sequences are kept.
+ * - Links to this site that hit a redirect point straight at the redirect's target, so readers
+ *   and crawlers don't go through a hop (or used to land on a 404).
+ */
+export function cleanBody(body: string | null, redirects: Record<string, [string, number]>): string | null {
+  if (!body) return body;
+  const text = body
+    .split("\n")
+    .filter((line) => !/^[\s\u200d\u200b\u00a0]+$/.test(line) || !/[\u200d\u200b]/.test(line))
+    .join("\n")
+    .replace(/(?<!\p{Extended_Pictographic}\ufe0f?)\u200d/gu, "")
+    .replace(/\n{3,}/g, "\n\n");
+  return text.replace(SITE_LINK, (all, path: string, rest: string, title: string) => {
+    const key = path.length > 1 ? path.replace(/\/+$/, "") : path;
+    const to = redirects[key]?.[0];
+    return to ? `](${to}${rest}${title})` : all;
+  });
 }
 
 export async function publicGuides() {
@@ -90,10 +117,12 @@ export async function publicGuides() {
 
 /** Published blog posts for /blog: featured first, then newest (original Webflow dates when known). */
 export async function publicBlogPosts() {
-  const posts = await prisma.seoPage.findMany({
+  const redirects = await activeRedirectMap();
+  const found = await prisma.seoPage.findMany({
     where: { source: "CMS", status: "PUBLISHED", path: { startsWith: BLOG_PREFIX } },
     select: { path: true, label: true, excerpt: true, featuredImage: true, featuredImageAlt: true, thumbnailImage: true, thumbnailAlt: true, featured: true, publishedAt: true, datePublished: true, robotsIndex: true },
   });
+  const posts = found.filter((p) => !redirects[p.path]);
   const date = (p: (typeof posts)[number]) => (p.datePublished ?? p.publishedAt ?? new Date(0)).getTime();
   return posts
     .sort((a, b) => Number(b.featured) - Number(a.featured) || date(b) - date(a))
@@ -141,7 +170,8 @@ export function blockedCrawlers(rules: unknown): string[] {
 
 export interface SitemapEntry {
   path: string;
-  lastModified: string;
+  /** The content's real last change, or null when it isn't known (never the time of the request). */
+  lastModified: string | null;
   priority: number | null;
 }
 
@@ -161,7 +191,10 @@ export async function sitemapEntries(): Promise<SitemapEntry[]> {
   const byPath = new Map(pages.map((p) => [p.path, p]));
   const out = new Map<string, SitemapEntry>();
 
-  const add = (path: string, lastModified: Date, priority: number | null) => {
+  // Pages built in code, tours and destinations don't record when their content last changed (the
+  // deploy touches every tour row), so they carry no lastmod rather than a fake "now". Blog posts
+  // and guides keep their own modified date.
+  const add = (path: string, lastModified: Date | null, priority: number | null) => {
     if (excluded.has(path)) return;
     const row = byPath.get(path);
     if (row) {
@@ -174,17 +207,18 @@ export async function sitemapEntries(): Promise<SitemapEntry[]> {
       const robots = (row.lastCrawl as { robots?: string } | null)?.robots;
       if (robots && /noindex/i.test(robots)) return;
       // Blog posts: the content's own modified date (kept from Webflow), not the row's.
-      const updated = (row.dateModified ? [row.dateModified] : [row.updatedAt, row.tour?.updatedAt, lastModified]).filter(Boolean) as Date[];
-      out.set(path, { path, lastModified: new Date(Math.max(...updated.map((d) => d.getTime()))).toISOString(), priority: row.sitemapPriority ?? priority });
+      const updated = row.dateModified ?? lastModified;
+      out.set(path, { path, lastModified: updated ? updated.toISOString() : null, priority: row.sitemapPriority ?? priority });
       return;
     }
-    out.set(path, { path, lastModified: lastModified.toISOString(), priority });
+    out.set(path, { path, lastModified: lastModified ? lastModified.toISOString() : null, priority });
   };
 
-  const now = new Date();
-  for (const r of STATIC_ROUTES) if (r.indexable) add(r.path, now, r.sitemapPriority ?? null);
-  for (const t of tours) add(`/${t.slug}`, t.updatedAt, 0.8);
-  for (const d of destinations) add(`/destinations/${d.slug}`, d.createdAt, 0.6);
+  // /guides lists published guides; while there are none it's an empty page, so it stays out.
+  const hasGuides = pages.some((p) => p.path.startsWith(GUIDE_PREFIX) && p.status === "PUBLISHED" && p.robotsIndex);
+  for (const r of STATIC_ROUTES) if (r.indexable && (r.path !== "/guides" || hasGuides)) add(r.path, null, r.sitemapPriority ?? null);
+  for (const t of tours) add(`/${t.slug}`, null, 0.8);
+  for (const d of destinations) add(`/destinations/${d.slug}`, null, 0.6);
   for (const p of pages) if (p.path.startsWith(GUIDE_PREFIX) || p.path.startsWith(BLOG_PREFIX)) add(p.path, p.dateModified ?? p.updatedAt, 0.5);
   return [...out.values()].sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0) || a.path.localeCompare(b.path));
 }

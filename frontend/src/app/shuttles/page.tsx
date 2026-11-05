@@ -18,7 +18,7 @@ import { withSeo } from "@/lib/seo/server";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 const baseMetadata: Metadata = {
-  title: "Moraine Lake & Lake Louise Shuttles | Vista Chase (Guaranteed Access)",
+  title: "Moraine Lake & Lake Louise Shuttles | Vista Chase",
   description:
     "Sunrise and day shuttles to Moraine Lake and Lake Louise from Canmore and Banff. Parks Canada entry, a local guide and guaranteed access included.",
   alternates: { canonical: "/shuttles" },

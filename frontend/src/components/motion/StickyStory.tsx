@@ -61,7 +61,7 @@ export function StickyStory({ chapters, tone = "dark" }: { chapters: StoryChapte
                 i === active ? "scale-100 opacity-100" : "scale-105 opacity-0"
               }`}
             >
-              <Image src={c.image} alt="" fill sizes="55vw" className="object-cover" />
+              <Image src={c.image} alt={c.title} fill sizes="55vw" className="object-cover" />
               {c.video && i === active && (
                 <AmbientVideo src={c.video.src} poster={c.video.poster} className="absolute inset-0 h-full w-full object-cover" once />
               )}

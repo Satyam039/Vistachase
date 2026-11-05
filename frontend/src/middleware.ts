@@ -108,6 +108,20 @@ async function portalGate(request: NextRequest) {
   return response;
 }
 
+// Webflow served mixed-case addresses (/About-Us), and old links with capitals must still land:
+// public pages answer one permanent redirect to the lower-case address. Areas whose addresses
+// carry case-sensitive codes (booking references, tracking and review links) are left alone.
+const CASE_SENSITIVE = /^\/(booking|review|track|account|admin|seo|affiliate|partners|book|verify-email|reset-password)(\/|$)/i;
+
+function lowerCaseRedirect(request: NextRequest) {
+  const path = request.nextUrl.pathname;
+  const lower = path.toLowerCase();
+  if (lower === path || CASE_SENSITIVE.test(path)) return null;
+  const target = request.nextUrl.clone();
+  target.pathname = lower; // the query string (utm, ref) is kept
+  return NextResponse.redirect(target, 301);
+}
+
 export async function middleware(request: NextRequest, event: NextFetchEvent) {
   const gate = await portalGate(request);
   if (gate) return gate;
@@ -118,6 +132,10 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
     target.pathname = redirect[0]; // the query string (utm, ref) is kept
     return NextResponse.redirect(target, redirect[1]);
   }
+
+  // After the saved redirects, so a redirect saved for a mixed-case old address still wins.
+  const lower = lowerCaseRedirect(request);
+  if (lower) return lower;
 
   const ref = request.nextUrl.searchParams.get("ref");
   const response = NextResponse.next();

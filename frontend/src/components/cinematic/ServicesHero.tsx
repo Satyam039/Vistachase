@@ -143,7 +143,7 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
             >
               <Image
                 src={hero.src}
-                alt=""
+                alt={`${s.title} in the Canadian Rockies`}
                 fill
                 priority={i === 0}
                 quality={85}

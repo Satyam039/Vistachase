@@ -1,7 +1,7 @@
 "use client";
 
-// Photo gallery: area chips, a masonry grid at each photo's true proportions (captions always
-// visible), and a full-screen viewer (native <dialog>: Esc closes, focus returns) with
+// Photo gallery: area chips, an even grid of same-size 4:3 tiles (photos cropped to fill, captions
+// always visible, captions as alt text; the first row loads straight away), and a full-screen viewer (native <dialog>: Esc closes, focus returns) with
 // previous/next buttons and arrow keys.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -74,23 +74,24 @@ export function GalleryBrowser({ photos, areas }: { photos: GalleryPhoto[]; area
         {shown.length} photos
       </p>
 
-      <ul key={area} className="columns-1 gap-5 sm:columns-2 lg:columns-3 [&>li]:mb-5" data-stagger>
+      {/* No scroll-reveal here: tiles appeared late (blank space) while scrolling a long grid. */}
+      <ul key={area} className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {shown.map((p, i) => (
-          <li key={p.src} className="break-inside-avoid">
+          <li key={p.src}>
             <figure>
               <button
                 type="button"
                 onClick={(e) => open(i, e.currentTarget)}
                 aria-label={`View larger: ${p.caption}`}
-                className="group relative block w-full overflow-hidden rounded-none bg-obsidian-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-600"
+                className="group relative block aspect-[4/3] w-full overflow-hidden rounded-none bg-obsidian-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-600"
               >
                 <Image
                   src={p.src}
-                  alt=""
-                  width={p.w}
-                  height={p.h}
+                  alt={p.caption}
+                  fill
+                  priority={i < 3}
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                  className="h-auto w-full transition-transform duration-[1.2s] ease-out group-hover:scale-[1.04]"
+                  className="object-cover transition-transform duration-[1.2s] ease-out group-hover:scale-[1.04]"
                 />
                 <span className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-obsidian-900 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" aria-hidden="true">
                   <Expand className="h-4 w-4" />

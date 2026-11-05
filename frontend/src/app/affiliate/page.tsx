@@ -6,6 +6,8 @@ import { BrandMark } from "@/components/brand/BrandMark";
 export const metadata: Metadata = {
   title: "Affiliate Portal | Vista Chase",
   description: "Independent partner and affiliate portal for hotels, travel advisors and content creators.",
+  alternates: { canonical: "/affiliate" },
+  robots: { index: false, follow: true },
 };
 
 const BENEFITS = [

@@ -15,7 +15,7 @@ import { fromPrice } from "@/lib/tours";
 import { PICKUP_TIMES, TWO_DAY_PACKAGE, packagePrice } from "@/lib/sharedTours";
 
 export const metadata: Metadata = {
-  title: "Two-Day Rockies Explorer | Banff, Yoho & Columbia Icefield | Vista Chase",
+  title: "Two-Day Rockies Explorer: Banff & Icefield | Vista Chase",
   description:
     "Both small-group day tours in one booking: Banff & Yoho Discovery and the Columbia Icefield Adventure. Save 10%, maximum 12 guests each day, pickup in Banff & Canmore. Accommodation not included.",
   alternates: { canonical: "/two-day-rockies-explorer" },

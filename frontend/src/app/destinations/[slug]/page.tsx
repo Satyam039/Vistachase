@@ -69,13 +69,28 @@ const STORIES: Record<string, { tagline: string; match: string[]; highlights: Hi
   },
 };
 
+// Search descriptions (about 150 characters) used when the destination has none of its own in the
+// database. A description published in the SEO portal still wins.
+const META_DESCRIPTION: Record<string, string> = {
+  "banff-national-park":
+    "Guided Banff National Park tours with hotel pickup in Banff, Canmore and Lake Louise: small-group and private tours, plus Moraine Lake and Lake Louise shuttles.",
+  "lake-louise":
+    "Skip the Lake Louise parking hunt: guaranteed shuttles from Banff, Canmore and Lake Louise hotels, plus small-group and private tours that include the lake.",
+  "moraine-lake":
+    "Moraine Lake is closed to private cars. Get there on a guaranteed sunrise or daytime shuttle, or on a small-group or private tour with hotel pickup.",
+  "yoho-national-park":
+    "Explore Yoho National Park, from Emerald Lake to the Natural Bridge and Spiral Tunnels, on our Banff & Yoho small-group tour or a private tour.",
+  "jasper-national-park":
+    "Drive the Icefields Parkway to the Columbia Icefield and Jasper on a small-group or private tour from Banff and Canmore, with stops at Peyto Lake and Bow Lake.",
+};
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const dest = await getDestinationBySlug(slug);
   if (!dest) return { title: "Destination not found | Vista Chase" };
   return withSeo(`/destinations/${dest.slug}`, {
     title: dest.metaTitle || `${dest.name} Tours & Shuttles | Vista Chase`,
-    description: dest.metaDescription || dest.description,
+    description: dest.metaDescription || META_DESCRIPTION[dest.slug] || dest.description,
     alternates: { canonical: `/destinations/${dest.slug}` },
   });
 }
@@ -107,7 +122,7 @@ export default async function DestinationDetailPage({ params }: { params: Promis
       {/* Hero */}
       <section data-nav-hero className="relative isolate flex min-h-[72vh] items-end overflow-hidden bg-obsidian-950 text-white">
         <div className="absolute inset-0 -z-10">
-          <Image src={dest.heroImage} alt="" fill priority sizes="100vw" className="object-cover" data-parallax="10" />
+          <Image src={dest.heroImage} alt={dest.name} fill priority sizes="100vw" className="object-cover" data-parallax="10" />
         </div>
         {/* Outside the -z-10 layer so its pause button stacks above the hero text; the video and
             the scrim stay behind it. */}

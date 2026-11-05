@@ -22,6 +22,24 @@ export interface PostSummary {
   datePublished: string | null;
 }
 
+// Webflow post names often end with the brand ("… | Vista Chase", "… | VistaChase", "… | Vista Chase
+// Tours"). The page title adds the brand itself, so it's taken off names before they're shown or used.
+const BRAND_SUFFIX = /\s*[|–—-]\s*vista\s*chase(\s+tours)?\s*$/i;
+
+/** A post name without a trailing brand suffix. */
+export const withoutBrand = (name: string) => {
+  let s = name.trim();
+  while (BRAND_SUFFIX.test(s)) s = s.replace(BRAND_SUFFIX, "").trim();
+  return s || name.trim();
+};
+
+/** Search results cut titles at about 60 characters: the brand is added only when it fits. */
+export const TITLE_MAX = 60;
+export const brandedTitle = (name: string) => {
+  const base = withoutBrand(name);
+  return base.length + " | Vista Chase".length <= TITLE_MAX ? `${base} | Vista Chase` : base;
+};
+
 const WEBFLOW_CDN = /^https:\/\/([a-z0-9-]+\.)*(website-files\.com|webflow\.com|webflow\.io)\/[^\s\\"'()<>]+$/i;
 
 /** The image address if the site may show it (site media or Webflow's CDN), else null. */
@@ -35,17 +53,17 @@ export function postImageSrc(src: string | null | undefined): string | null {
 /** Card image: the Webflow "Thumbnail Image" (made for the post grid), else the main image. */
 export function cardImageOf(p: PostSummary) {
   const thumb = postImageSrc(p.thumbnailImage);
-  if (thumb) return { src: thumb, alt: p.thumbnailAlt ?? "" };
+  if (thumb) return { src: thumb, alt: p.thumbnailAlt || withoutBrand(p.label) };
   const main = postImageSrc(p.featuredImage);
-  return main ? { src: main, alt: p.featuredImageAlt ?? "" } : null;
+  return main ? { src: main, alt: p.featuredImageAlt || withoutBrand(p.label) } : null;
 }
 
 /** Lead image: the main image, else the thumbnail. */
 export function leadImageOf(p: PostSummary) {
   const main = postImageSrc(p.featuredImage);
-  if (main) return { src: main, alt: p.featuredImageAlt ?? "" };
+  if (main) return { src: main, alt: p.featuredImageAlt || withoutBrand(p.label) };
   const thumb = postImageSrc(p.thumbnailImage);
-  return thumb ? { src: thumb, alt: p.thumbnailAlt ?? "" } : null;
+  return thumb ? { src: thumb, alt: p.thumbnailAlt || withoutBrand(p.label) } : null;
 }
 
 // Shown when a post has no usable image (decorative only).
@@ -86,7 +104,7 @@ export function LeadStory({ post }: { post: PostSummary }) {
         <Meta post={post} tone="dark" />
         <h2 className="mt-4 text-balance text-3xl font-light leading-tight tracking-tight text-white sm:text-4xl lg:text-5xl">
           <Link href={post.path} className="after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:outline focus-visible:after:outline-2 focus-visible:after:outline-offset-4 focus-visible:after:outline-summit-200">
-            {post.label}
+            {withoutBrand(post.label)}
           </Link>
         </h2>
         {post.excerpt && <p className="mt-5 line-clamp-4 text-lg font-light leading-relaxed text-white/80">{post.excerpt}</p>}
@@ -114,7 +132,7 @@ export function PostCard({ post, size = "regular", headingLevel = 3 }: { post: P
         <Meta post={post} />
         <H className={`mt-3 text-balance font-light leading-snug tracking-tight text-obsidian-900 ${size === "large" ? "text-2xl" : "text-xl"}`}>
           <Link href={post.path} className="after:absolute after:inset-0 group-hover:underline group-hover:decoration-1 group-hover:underline-offset-4 focus-visible:outline-none focus-visible:after:outline focus-visible:after:outline-2 focus-visible:after:outline-offset-4 focus-visible:after:outline-ocean-600">
-            {post.label}
+            {withoutBrand(post.label)}
           </Link>
         </H>
         {post.excerpt && <p className="mt-3 line-clamp-3 text-base font-light leading-relaxed text-slate-700">{post.excerpt}</p>}

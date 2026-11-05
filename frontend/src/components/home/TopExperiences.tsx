@@ -245,7 +245,7 @@ function ExperienceCard({ card }: { card: LinkCard }) {
       <div className="relative aspect-[5/4] w-full overflow-hidden bg-obsidian-900">
         <Image
           src={image}
-          alt=""
+          alt={title}
           fill
           sizes="(max-width: 640px) 90vw, (max-width: 1024px) 46vw, (max-width: 1280px) 31vw, 400px"
           className="object-cover transition-transform duration-[1.4s] ease-out group-hover:scale-[1.04]"

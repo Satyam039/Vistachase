@@ -8,7 +8,7 @@ import { withSeo } from "@/lib/seo/server";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 const baseMetadata: Metadata = {
-  title: "Small-Group Tours in the Canadian Rockies | Vista Chase (Max 12 Guests)",
+  title: "Small-Group Tours in Banff & the Rockies | Vista Chase",
   description:
     "Banff & Yoho Discovery, Columbia Icefield Adventure or both in the Two-Day Rockies Explorer. Maximum 12 guests, passionate local guides, park admission included, pickup in Banff & Canmore.",
   alternates: {

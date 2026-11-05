@@ -319,7 +319,8 @@ export function TourDetailView({
       name: tour.title,
       description: tour.metaDescription ?? tour.summary,
       touristType: isPrivate ? "Private Group" : "Small Group",
-      image: images,
+      // Absolute addresses: crawlers read JSON-LD without resolving it against the page.
+      image: images.map((src) => (src.startsWith("/") ? `${siteOrigin ?? "https://www.vistachase.com"}${src}` : src)),
       offers: {
         "@type": "Offer",
         price,
