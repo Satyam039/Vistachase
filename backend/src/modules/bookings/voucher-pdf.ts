@@ -12,7 +12,7 @@ import { checkinLink } from "@/lib/security/signed-links";
 import { formatDateOnly, formatTimeOfDay } from "@/lib/utils/time";
 import { paidCents, paymentSummary } from "@/modules/bookings/deposit";
 import type { getBookingByReference } from "@/modules/bookings/booking.repository";
-import { tourItinerary } from "@/modules/bookings/tour-itinerary";
+import { experienceTitle, tourItinerary } from "@/modules/bookings/tour-itinerary";
 import { resolveShuttlePickupTime } from "@/modules/shuttles/shuttle-timing";
 
 type VoucherBooking = NonNullable<Awaited<ReturnType<typeof getBookingByReference>>>;
@@ -129,7 +129,7 @@ export async function voucherPdf(booking: VoucherBooking): Promise<Uint8Array> {
  */
 export async function addVoucherPage(pdf: PDFDocument, booking: VoucherBooking, dayLabel?: string, options: { itinerary?: boolean } = {}) {
   const departure = booking.tourDeparture;
-  const title = departure.tour?.title || departure.shuttleRoute?.name || "Vista Chase experience";
+  const title = experienceTitle(departure);
   const page: PDFPage = pdf.addPage([595.28, 841.89]); // A4
   const regular = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
@@ -369,7 +369,7 @@ export async function itineraryPdf(bookings: VoucherBooking[], trip: { title: st
   const titleWidth = single ? inner - qrSize - 24 : inner;
   text(allConfirmed ? "CONFIRMED" : "NOT CONFIRMED - see the status of each day below", margin, y, 11, bold, allConfirmed ? OCEAN : RED);
   y -= 26;
-  const title = trip?.title ?? (lead.tourDeparture.tour?.title || lead.tourDeparture.shuttleRoute?.name || "Vista Chase experience");
+  const title = trip?.title ?? experienceTitle(lead.tourDeparture);
   for (const line of wrap(title, bold, 19, titleWidth)) {
     text(line, margin, y, 19, bold);
     y -= 23;
@@ -408,7 +408,7 @@ export async function itineraryPdf(bookings: VoucherBooking[], trip: { title: st
   heading(bookings.length > 1 ? "Your days" : "Your tour");
   for (const [i, b] of bookings.entries()) {
     const d = b.tourDeparture;
-    const name = d.tour?.title || d.shuttleRoute?.name || "Vista Chase experience";
+    const name = experienceTitle(d);
     const dayQr = single ? 0 : 76;
     room(dayQr ? dayQr + 30 : 90);
     const dayTop = y + 10;

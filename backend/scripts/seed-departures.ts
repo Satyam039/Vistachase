@@ -6,8 +6,14 @@
 // five in August–September. Its dates are seeded through the end of the coming season, so summer
 // seats can be booked months ahead. Times stored are the Banff pickup and the Banff return.
 //
-// Private tours are priced per vehicle by season (owner's doc, 2026-10-29): `summerPrice` from June 1
-// to October 10, `price` from October 11 to May 31, up to 14 guests.
+// Prices are the owner's doc Pricing table (2026-11-04): summer (`summer`) runs June 1 to October 10,
+// winter the rest of the year. Shared tours and shuttles price adults (16+), youth (6-15, childPrice)
+// and infants (0-5, infantPrice) separately; a priced infant takes a seat. Private tours are priced
+// per vehicle, up to 14 guests. Shuttle departures each have their own fare (`fare` on the slot).
+//
+// Start times follow the live Bókun calendar (owner's choice, 2026-11-04): Banff & Yoho Discovery,
+// Columbia Icefield Adventure and the winter tours at 08:00, the private Icefield tour at 08:00 only.
+// Dates Bókun doesn't run are taken off sale by the seat sync (src/modules/bokun/availability-sync.ts).
 //
 // The owner confirmed these times, seats and prices as the real schedule on 2026-10-11, so the
 // departures created here are LOCAL (listed and bookable). If a schedule below stops being
@@ -22,35 +28,45 @@ import prisma from "../src/lib/db/prisma";
 import { PRODUCT_MAP } from "../src/modules/tours/product-map";
 import { dateOnly, timeOfDay, todayInMountainTime } from "../src/lib/utils/time";
 
+/** Cents: adult (or per vehicle), youth 6-15, infant 0-5. null = youth pay the adult fare / infants ride free. */
+interface Fare {
+  price: number;
+  childPrice?: number | null;
+  infantPrice?: number | null;
+}
+
 interface Slot {
   time: string;
   returnTime?: string;
   /** Months (1-12) this slot runs; every day when omitted. */
   months?: number[];
+  /** This departure's own fare, instead of the schedule's. */
+  fare?: Fare;
 }
 
-interface ScheduleConfig {
+interface ScheduleConfig extends Fare {
   slug: string;
   times: (string | Slot)[];
   capacity: number;
-  price: number; // in cents
-  /** Price (cents) from June 1 to October 10, when it differs from `price`. */
-  summerPrice?: number;
-  childPrice?: number | null;
+  /** Fare from June 1 to October 10, when it differs. */
+  summer?: Fare;
   /** Seed every date until the end of this month (1-12) of its next season, instead of 60 days. */
   seasonEndsMonth?: number;
 }
 
 const JUNE_JULY = [6, 7];
+/** Shuttles: one fare for adults, youth and infants (owner's doc, 2026-11-04). */
+const shuttleFare = (cents: number): Fare => ({ price: cents, childPrice: cents, infantPrice: cents });
 const JUNE_SEPTEMBER = [6, 7, 8, 9];
 
-const DEFAULT_SCHEDULES: ScheduleConfig[] = [
+export const DEFAULT_SCHEDULES: ScheduleConfig[] = [
   {
-    slug: "banff-highlights-tour",
-    times: ["08:30"],
+    slug: "banff-highlights-tour", // Banff & Yoho Discovery
+    times: ["08:00"],
     capacity: 12,
-    price: 18900,
-    childPrice: 11900,
+    price: 22000,
+    childPrice: 22000,
+    infantPrice: 17000,
   },
   {
     slug: "shared-tours-heart-of-banff",
@@ -67,15 +83,17 @@ const DEFAULT_SCHEDULES: ScheduleConfig[] = [
     childPrice: 10900,
   },
   {
-    slug: "shared-tours-icefields-jasper",
-    times: ["07:30"],
+    slug: "shared-tours-icefields-jasper", // Columbia Icefield Adventure
+    times: ["08:00"],
     capacity: 12,
-    price: 22900,
-    childPrice: 15900,
+    price: 22000,
+    childPrice: 22000,
+    infantPrice: 17000,
+    summer: { price: 32000, childPrice: 28000, infantPrice: 17000 },
   },
   {
     slug: "winter-special",
-    times: ["08:30"],
+    times: ["08:00"],
     capacity: 12,
     price: 16900,
     childPrice: 9900,
@@ -84,16 +102,16 @@ const DEFAULT_SCHEDULES: ScheduleConfig[] = [
     slug: "banff-private-tour",
     times: ["07:00", "08:00"],
     capacity: 14,
-    price: 129900,
-    summerPrice: 179900,
+    price: 124000,
+    summer: { price: 175000 },
     childPrice: null,
   },
   {
     slug: "icefields-jasper-private-tour",
-    times: ["07:00", "08:00"],
+    times: ["08:00"],
     capacity: 14,
-    price: 129900,
-    summerPrice: 159900,
+    price: 124000,
+    summer: { price: 175000 },
     childPrice: null,
   },
   {
@@ -103,19 +121,18 @@ const DEFAULT_SCHEDULES: ScheduleConfig[] = [
     price: 125000,
     childPrice: null,
   },
-  // Shuttle departures 3-7 (Morning to Late Afternoon).
+  // Shuttle departures 3-7 (Morning to Late Afternoon). Same fare for every age.
   {
     slug: "full-day-at-lake-louise-and-moraine-lake",
     times: [
-      { time: "06:30", returnTime: "13:00", months: JUNE_SEPTEMBER },
-      { time: "10:15", returnTime: "15:45", months: JUNE_SEPTEMBER },
-      { time: "11:30", returnTime: "18:00", months: JUNE_SEPTEMBER },
-      { time: "14:00", returnTime: "20:30", months: JUNE_SEPTEMBER },
-      { time: "16:45", returnTime: "22:00", months: JUNE_JULY },
+      { time: "06:30", returnTime: "13:00", months: JUNE_SEPTEMBER, fare: shuttleFare(12000) },
+      { time: "10:15", returnTime: "15:45", months: JUNE_SEPTEMBER, fare: shuttleFare(12000) },
+      { time: "11:30", returnTime: "18:00", months: JUNE_SEPTEMBER, fare: shuttleFare(10800) },
+      { time: "14:00", returnTime: "20:30", months: JUNE_SEPTEMBER, fare: shuttleFare(10800) },
+      { time: "16:45", returnTime: "22:00", months: JUNE_JULY, fare: shuttleFare(10800) },
     ],
     capacity: 14,
-    price: 9900,
-    childPrice: null,
+    ...shuttleFare(10800),
     seasonEndsMonth: 9,
   },
   // Shuttle departures 1-2 (Early Morning).
@@ -126,13 +143,19 @@ const DEFAULT_SCHEDULES: ScheduleConfig[] = [
       { time: "04:15", returnTime: "10:30", months: JUNE_SEPTEMBER },
     ],
     capacity: 14,
-    price: 8900,
-    childPrice: null,
+    ...shuttleFare(13000),
     seasonEndsMonth: 9,
   },
 ];
 
-/** June 1 to October 10 (the private tours' summer season), for a YYYY-MM-DD date. */
+/** The fare a new departure gets: the slot's own, else the season's, else the schedule's. */
+export function fareFor(item: ScheduleConfig, slot: string | Slot, date: string) {
+  const own = typeof slot === "string" ? undefined : slot.fare;
+  const fare = own ?? (item.summer && isSummerSeason(date) ? item.summer : item);
+  return { price: fare.price, childPrice: fare.childPrice ?? null, infantPrice: fare.infantPrice ?? null };
+}
+
+/** June 1 to October 10 (the summer season), for a YYYY-MM-DD date. */
 export function isSummerSeason(date: string): boolean {
   const md = date.slice(5, 10);
   return md >= "06-01" && md <= "10-10";
@@ -197,8 +220,7 @@ async function seedFallbackSchedule(daysCount = 60) {
             capacityTotal: item.capacity,
             capacityBooked: 0,
             capacityHeld: 0,
-            price: item.summerPrice && isSummerSeason(isoDateStr) ? item.summerPrice : item.price,
-            childPrice: item.childPrice ?? null,
+            ...fareFor(item, slot, isoDateStr),
             currency: tour.currency || "CAD",
             status: "ACTIVE",
             inventorySource: "LOCAL",

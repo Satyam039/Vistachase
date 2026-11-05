@@ -9,8 +9,10 @@
 // Month arrows only move to months that have departures. Keyboard: Tab lands on the selected (or
 // first available) day; arrow keys move between available days, Home/End jump to the first/last.
 // When a day has more than one departure, its times appear as a second choice underneath.
+// With `collapseOnSelect`, picking a day (or a time) folds the calendar into one line with a
+// "Change date" button, so the booking button stays in view on small laptops (owner's doc, 2026-11-04).
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { DepartureAvailability } from "@/lib/api/types";
 
@@ -28,6 +30,7 @@ export function DepartureCalendar({
   value,
   onChange,
   describe,
+  collapseOnSelect = false,
 }: {
   departures: DepartureAvailability[];
   /** Whether this departure can be booked for the current party (seats left, whole vehicle free). */
@@ -37,7 +40,12 @@ export function DepartureCalendar({
   onChange: (departureId: string) => void;
   /** The line shown under the calendar for the selected departure (price, availability). */
   describe: (d: DepartureAvailability) => string;
+  /** Fold into a one-line summary once the guest picks a date. */
+  collapseOnSelect?: boolean;
 }) {
+  const [open, setOpen] = useState(true);
+  const changeButton = useRef<HTMLButtonElement>(null);
+  const reopened = useRef(false);
   const bookable = departures.filter(isBookable);
   const bookableDays = Array.from(new Set(bookable.map(dayOf))).sort();
   const fullDays = new Set(departures.map(dayOf).filter((d) => !bookableDays.includes(d)));
@@ -70,6 +78,45 @@ export function DepartureCalendar({
     const dep = bookable.find((d) => dayOf(d) === day);
     if (dep) onChange(dep.id);
   };
+  // A click (or Enter) chooses; arrow keys only move. A day with several times waits for the time.
+  const choose = (day: string) => {
+    pick(day);
+    if (collapseOnSelect && bookable.filter((d) => dayOf(d) === day).length === 1) setOpen(false);
+  };
+
+  // Keep focus on the control that replaced the one the guest used.
+  useEffect(() => {
+    if (!open) changeButton.current?.focus();
+    else if (reopened.current) grid.current?.querySelector<HTMLButtonElement>('button[tabindex="0"]')?.focus();
+  }, [open]);
+
+  if (collapseOnSelect && !open && selected && selectedDay) {
+    return (
+      <fieldset className="space-y-2.5">
+        <legend className="mb-1.5 block text-sm text-slate-700">Departure date</legend>
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-obsidian-900/10 bg-white px-4 py-3">
+          <p className="min-w-0 text-sm text-slate-700" aria-live="polite">
+            <span className="block text-base text-obsidian-900">
+              {longDate(selectedDay)} · {selected.departureTime.slice(0, 5)}
+            </span>
+            <span className="block text-slate-600">{describe(selected)}</span>
+          </p>
+          <button
+            ref={changeButton}
+            type="button"
+            aria-expanded={false}
+            onClick={() => {
+              reopened.current = true;
+              setOpen(true);
+            }}
+            className="min-h-10 shrink-0 rounded-full px-4 text-sm text-obsidian-900 ring-1 ring-obsidian-900/15 transition-colors hover:ring-obsidian-900/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ocean-600"
+          >
+            Change date
+          </button>
+        </div>
+      </fieldset>
+    );
+  }
 
   const onKeyDown = (e: React.KeyboardEvent, day: string) => {
     const i = inMonth.indexOf(day);
@@ -131,7 +178,7 @@ export function DepartureCalendar({
                     tabIndex={day === tabStop ? 0 : -1}
                     aria-pressed={isAvailable ? isSelected : undefined}
                     aria-label={`${longDate(day)}, ${state}`}
-                    onClick={() => pick(day)}
+                    onClick={() => choose(day)}
                     onKeyDown={(e) => onKeyDown(e, day)}
                     className={`flex h-10 w-full max-w-11 flex-col items-center justify-center rounded-full text-base tabular-nums transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ocean-600 ${
                       isSelected
@@ -180,7 +227,10 @@ export function DepartureCalendar({
               type="button"
               role="radio"
               aria-checked={d.id === value}
-              onClick={() => onChange(d.id)}
+              onClick={() => {
+                onChange(d.id);
+                if (collapseOnSelect) setOpen(false);
+              }}
               className={`h-10 rounded-full px-4 text-sm ring-1 transition-colors ${
                 d.id === value ? "bg-obsidian-950 text-white ring-obsidian-950" : "bg-white text-obsidian-900 ring-obsidian-900/15 hover:ring-obsidian-900/40"
               }`}

@@ -4,6 +4,7 @@ import { getCacheProvider } from "@/lib/cache/cache.provider";
 import { isVehicleDeparture, partySizeError, seatsToReserve } from "@/modules/pricing/departure-pricing";
 import { formatDateOnly, formatTimeOfDay } from "@/lib/utils/time";
 import { bookingClosedError } from "@/modules/departures/booking-window";
+import { bokunSeatsError } from "@/modules/bokun/bokun-seats";
 import { endHold, freeExpiredSeats, inventoryError, takeHeldSeats } from "@/modules/departures/inventory";
 
 export interface CreateHoldInput {
@@ -36,6 +37,10 @@ export async function createReservationHold(input: CreateHoldInput): Promise<Hol
   // Seats from expired holds and unpaid bookings on this departure come back first, even when no
   // job runner is on.
   await freeExpiredSeats({ departureId: input.departureId });
+
+  // Never more seats than Bókun has left (when Bókun is connected).
+  const bokunRefusal = await bokunSeatsError(input.departureId, input.seatsCount);
+  if (bokunRefusal) return { success: false, error: bokunRefusal };
 
   return await prisma.$transaction(async (tx) => {
     const departure = await tx.tourDeparture.findUnique({

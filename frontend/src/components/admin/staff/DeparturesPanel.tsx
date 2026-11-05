@@ -26,6 +26,7 @@ interface Departure {
   activeBookings: number;
   price: number;
   childPrice: number | null;
+  infantPrice?: number | null;
   currency: string;
   status: DepartureStatus;
   inventorySource: "LOCAL" | "UNVERIFIED" | "EXTERNAL";
@@ -243,7 +244,8 @@ export function DeparturesPanel({ notify, role }: { notify: (m: string) => void;
                       <td className="px-6 py-4 text-right tabular-nums">{d.activeBookings}</td>
                       <td className="px-6 py-4 text-right tabular-nums">
                         <span className="block">{money(d.price, d.currency)}</span>
-                        {d.childPrice != null && <span className="block text-sm text-slate-600">Child {money(d.childPrice, d.currency)}</span>}
+                        {d.childPrice != null && <span className="block text-sm text-slate-600">Youth {money(d.childPrice, d.currency)}</span>}
+                        {d.infantPrice != null && <span className="block text-sm text-slate-600">Infant {money(d.infantPrice, d.currency)}</span>}
                       </td>
                       <td className="px-6 py-4">
                         <span className="flex flex-wrap gap-1">
@@ -317,6 +319,7 @@ function EditDepartureForm({ departure: d, onSaved }: { departure: Departure; on
   const [seats, setSeats] = useState(String(d.capacityTotal));
   const [price, setPrice] = useState(String(d.price));
   const [childPrice, setChildPrice] = useState(d.childPrice != null ? String(d.childPrice) : "");
+  const [infantPrice, setInfantPrice] = useState(d.infantPrice != null ? String(d.infantPrice) : "");
   const [returnTime, setReturnTime] = useState(d.returnTime ?? "");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -329,6 +332,8 @@ function EditDepartureForm({ departure: d, onSaved }: { departure: Departure; on
     if (Number(price) !== d.price) body.price = Number(price);
     const child = childPrice.trim() === "" ? null : Number(childPrice);
     if (child !== d.childPrice) body.childPrice = child;
+    const infant = infantPrice.trim() === "" ? null : Number(infantPrice);
+    if (infant !== (d.infantPrice ?? null)) body.infantPrice = infant;
     const ret = returnTime || null;
     if (ret !== d.returnTime) body.returnTime = ret;
     if (Object.keys(body).length === 0) return setError("Nothing changed.");
@@ -356,9 +361,15 @@ function EditDepartureForm({ departure: d, onSaved }: { departure: Departure; on
       </div>
       <div>
         <label htmlFor={`${p}-child`} className={labelCls}>
-          Child price (optional)
+          Youth 6–15 price (optional)
         </label>
         <input id={`${p}-child`} type="number" min={0} max={100000} step="0.01" inputMode="decimal" className={field} value={childPrice} onChange={(e) => setChildPrice(e.target.value)} />
+      </div>
+      <div>
+        <label htmlFor={`${p}-infant`} className={labelCls}>
+          Infant 0–5 price (optional)
+        </label>
+        <input id={`${p}-infant`} type="number" min={0} max={100000} step="0.01" inputMode="decimal" className={field} value={infantPrice} onChange={(e) => setInfantPrice(e.target.value)} />
       </div>
       <div>
         <label htmlFor={`${p}-return`} className={labelCls}>
@@ -393,6 +404,7 @@ function AddDeparturesForm({ products, today, onAdded }: { products: Products; t
   const [seats, setSeats] = useState("");
   const [price, setPrice] = useState("");
   const [childPrice, setChildPrice] = useState("");
+  const [infantPrice, setInfantPrice] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -423,6 +435,7 @@ function AddDeparturesForm({ products, today, onAdded }: { products: Products; t
       capacityTotal: Number(seats),
       price: Number(price),
       ...(childPrice.trim() ? { childPrice: Number(childPrice) } : {}),
+      ...(infantPrice.trim() ? { infantPrice: Number(infantPrice) } : {}),
     });
     setBusy(false);
     if (!res.ok) return setError(errorOf(res.data, "Couldn't add departures."));
@@ -504,12 +517,18 @@ function AddDeparturesForm({ products, today, onAdded }: { products: Products; t
       </div>
       <div>
         <label htmlFor="add-dep-child" className={labelCls}>
-          Child price (optional)
+          Youth 6–15 price (optional)
         </label>
         <input id="add-dep-child" type="number" min={0} max={100000} step="0.01" inputMode="decimal" className={field} value={childPrice} onChange={(e) => setChildPrice(e.target.value)} />
       </div>
+      <div>
+        <label htmlFor="add-dep-infant" className={labelCls}>
+          Infant 0–5 price (optional)
+        </label>
+        <input id="add-dep-infant" type="number" min={0} max={100000} step="0.01" inputMode="decimal" className={field} value={infantPrice} onChange={(e) => setInfantPrice(e.target.value)} />
+      </div>
       <p className="text-sm text-slate-600 sm:col-span-2 lg:col-span-4">
-        Prices are per guest. Private tours are priced per vehicle: the price is for the whole vehicle, and seats are the vehicle&apos;s seats.
+        Prices are per guest: adults 16–99; youth 6–15 pay the adult price when no youth price is set; infants 0–5 ride free on a lap when no infant price is set, and take a seat when one is. Private tours are priced per vehicle: the price is for the whole vehicle, and seats are the vehicle&apos;s seats.
       </p>
       {error && (
         <p role="alert" className="text-sm text-red-700 sm:col-span-2 lg:col-span-4">

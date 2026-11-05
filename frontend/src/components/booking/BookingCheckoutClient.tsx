@@ -51,9 +51,12 @@ import {
   AirportTransferDetails,
   AirportTransferToggle,
   airportTransferError,
+  airportTransferPrice,
   EMPTY_AIRPORT_TRANSFER,
   type AirportTransferValue,
 } from "@/components/booking/AirportTransferFields";
+import { ActivityAddOnFields } from "@/components/booking/ActivityAddOnFields";
+import { ACTIVITY_ADD_ONS, activityAddOnsFor, type ActivityAddOnId } from "@/lib/activityAddOns";
 import { Dropdown } from "@/components/forms/Dropdown";
 import { PhoneField } from "@/components/forms/PhoneField";
 import { dialCode } from "@/lib/countries";
@@ -83,8 +86,10 @@ export interface DepartureData {
   bookable?: boolean;
   notBookableReason?: string | null;
   price: number;
-  /** Per child when it differs from the adult price. */
+  /** Per youth (6–15) when it differs from the adult price. */
   childPrice?: number | null;
+  /** Per infant (0–5). Set: infants pay it and take a seat. Null: they ride free on a lap. */
+  infantPrice?: number | null;
   currency: string;
   tour?: {
     id: string;
@@ -190,7 +195,7 @@ function formatCountdown(seconds: number) {
 function partyLabel(adults: number, children: number, infants: number) {
   const parts = [`${adults} ${adults === 1 ? "adult" : "adults"}`];
   if (children > 0)
-    parts.push(`${children} ${children === 1 ? "child" : "children"}`);
+    parts.push(`${children} youth`);
   if (infants > 0)
     parts.push(`${infants} ${infants === 1 ? "infant" : "infants"}`);
   return parts.join(", ");
@@ -216,6 +221,7 @@ export function BookingCheckoutClient({
   initialGuests,
   initialAdults,
   initialChildren,
+  initialInfants,
   initialAirport = false,
 }: {
   departure: DepartureData;
@@ -226,6 +232,8 @@ export function BookingCheckoutClient({
   /** Adults and children chosen on the tour page (?adults=&children=); take precedence over ?guests=. */
   initialAdults?: number;
   initialChildren?: number;
+  /** Infants chosen on the tour page (?infants=). */
+  initialInfants?: number;
   /** Airport transfer ticked on a private tour's page (?airport=1). */
   initialAirport?: boolean;
 }) {
@@ -260,10 +268,13 @@ export function BookingCheckoutClient({
   const [children, setChildren] = useState(() =>
     initialAdults ? Math.max(0, Math.min(initialChildren ?? 0, departure.seatsAvailable - Math.min(initialAdults, departure.seatsAvailable))) : 0,
   );
-  const [infants, setInfants] = useState(0);
+  const [infants, setInfants] = useState(() => Math.max(0, Math.min(initialInfants ?? 0, MAX_INFANTS)));
   // Airport transfer (private tours only): no price yet, so it doesn't change the total.
   const [airport, setAirport] = useState(initialAirport && departure.tour?.category === "PRIVATE");
   const [airportTransfer, setAirportTransfer] = useState<AirportTransferValue>(EMPTY_AIRPORT_TRANSFER);
+  // Activity add-ons on this tour's itinerary (summer only): requested now, priced by the team.
+  const offeredAddOns = activityAddOnsFor(departure.tour?.slug, departure.date);
+  const [activityAddOns, setActivityAddOns] = useState<ActivityAddOnId[]>([]);
 
   // Contact
   const [customerName, setCustomerName] = useState("");
@@ -323,7 +334,7 @@ export function BookingCheckoutClient({
       const res = await fetch("/api/pricing/quote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ departureId: departure.id, adultsCount: adults, childrenCount: children, promoCode: promoCodeInput.trim() })
+        body: JSON.stringify({ departureId: departure.id, adultsCount: adults, childrenCount: children, infantsCount: infants, promoCode: promoCodeInput.trim() })
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
@@ -369,9 +380,12 @@ export function BookingCheckoutClient({
     setPaymentState("slow");
   };
 
-  const totalSeats = adults + children;
   // Private tours sell the whole vehicle: one price, every seat, guests up to the vehicle size.
   const isVehicle = departure.tour?.category === "PRIVATE";
+  // Same rule as the server: where the departure has an infant price, infants pay it and take a seat.
+  const infantsPay = !isVehicle && departure.infantPrice != null;
+  const seatedInfants = infantsPay ? infants : 0;
+  const totalSeats = adults + children + seatedInfants;
   const vehicleIsFree =
     Boolean(holdToken) || liveSeatsAvailable >= departure.capacityTotal;
   const seatCapacity = isVehicle
@@ -538,15 +552,27 @@ export function BookingCheckoutClient({
 
   // ── Derived totals ─────────────────────────────────────────────────────────
 
-  // Same rule as the server: children pay the child price when the departure has one.
+  // Same rule as the server: youth pay the youth price when the departure has one, infants the
+  // infant price when it has one (free otherwise).
   const childPrice = departure.childPrice ?? departure.price;
+  const infantPrice = departure.infantPrice ?? 0;
   const hasChildPrice = !isVehicle && children > 0 && childPrice !== departure.price;
+  const hasInfantFare = infantsPay && infants > 0;
   const fareSubtotal = isVehicle
     ? departure.price
-    : departure.price * adults + childPrice * children;
+    : departure.price * adults + childPrice * children + infantPrice * seatedInfants;
+  const fareLabel = [
+    `${adults} × ${money(departure.price)}${hasChildPrice || hasInfantFare ? " (adult)" : ""}`,
+    children > 0 ? `${children} × ${money(childPrice)} (youth)` : null,
+    hasInfantFare ? `${infants} × ${money(infantPrice)} (infant)` : null,
+  ]
+    .filter(Boolean)
+    .join(" + ");
   // Same rounding as the server (whole cents). No sales tax is added.
   const discount = appliedPromo ? round2(fareSubtotal * (appliedPromo.percent / 100)) : 0;
-  const total = round2(fareSubtotal - discount);
+  // Airport transfer (private tours): the doc's both-ways price, added after any promo discount.
+  const transferPrice = airport ? airportTransferPrice(airportTransfer, adults + children + infants) : null;
+  const total = round2(fareSubtotal - discount + (transferPrice ?? 0));
   const canDeposit = total > 0 && depositAvailable(departure.date, departure.departureTime);
   const plan = canDeposit ? paymentPlan : "FULL";
   const depositNow = depositFor(total);
@@ -653,13 +679,15 @@ export function BookingCheckoutClient({
           customerName: customerName.trim(),
           customerEmail: customerEmail.trim(),
           customerPhone: customerPhone.trim(),
+          customerCountry: phoneCountry,
           pickupStopId: pickupStopId || undefined,
           pickupCustomText: customPickup.trim() || undefined,
           adultsCount: adults,
           childrenCount: children,
           infantsCount: infants,
           specialRequests: specialRequests.trim() || undefined,
-          airportTransfer: airport ? airportTransfer : undefined,
+          airportTransfer: airport ? { ...airportTransfer, area: airportTransfer.area || undefined } : undefined,
+          activityAddOns: activityAddOns.filter((id) => offeredAddOns.includes(id)),
           promoCode: appliedPromo?.code,
           paymentPlan: plan,
         }),
@@ -844,7 +872,10 @@ export function BookingCheckoutClient({
             value={customPickup.trim() || selectedStop?.name || ""}
           />
         )}
-        {airport && <SummaryRow label="Airport transfer" value={AIRPORT_TRANSFER_PRICE_NOTE} />}
+        {airport && transferPrice == null && <SummaryRow label="Airport transfer" value={AIRPORT_TRANSFER_PRICE_NOTE} />}
+        {activityAddOns.length > 0 && (
+          <SummaryRow label={activityAddOns.map((id) => ACTIVITY_ADD_ONS[id]).join(", ")} value="Price confirmed by our team" />
+        )}
       </VStack>
       <Divider />
       <VStack gap={2}>
@@ -852,8 +883,8 @@ export function BookingCheckoutClient({
           label={
             isVehicle
               ? `Private vehicle · up to ${departure.capacityTotal} guests`
-              : hasChildPrice
-                ? `Fare · ${adults} × ${money(departure.price)} + ${children} × ${money(childPrice)} (child)`
+              : hasChildPrice || hasInfantFare
+                ? `Fare · ${fareLabel}`
                 : `Fare · ${totalSeats} × ${money(departure.price)}`
           }
           value={money(fareSubtotal)}
@@ -861,6 +892,7 @@ export function BookingCheckoutClient({
         {appliedPromo && discount > 0 && (
           <SummaryRow label={`Promo ${appliedPromo.code} (−${appliedPromo.percent}%)`} value={`−${money(discount)}`} />
         )}
+        {transferPrice != null && <SummaryRow label="Airport transfer, both ways" value={money(transferPrice)} />}
         <Divider />
         <HStack hAlign="between" vAlign="center">
           <Text type="large" weight="bold">
@@ -1134,7 +1166,9 @@ export function BookingCheckoutClient({
                           <VStack gap={2} hAlign="start">
                             <Heading level={2}>Who&apos;s coming?</Heading>
                             <Text type="supporting" color="secondary">
-                              Infants (0–2) don&apos;t take a paid seat.
+                              {infantsPay
+                                ? "Infants (0–5) take a seat and pay the infant fare."
+                                : "Infants (0–5) ride free on a lap."}
                             </Text>
                             {seatCapacity <= 0 ? (
                               <div className="w-full rounded-xl border border-red-300 bg-red-50 p-3.5 text-sm font-medium text-red-800" role="alert">
@@ -1145,14 +1179,18 @@ export function BookingCheckoutClient({
                                 <Badge
                                   variant={
                                     isVehicle
-                                      ? "success"
+                                      ? seatCapacity > 0
+                                        ? "success"
+                                        : "error"
                                       : seatCapacity > 4
                                         ? "success"
                                         : "warning"
                                   }
                                   label={
                                     isVehicle
-                                      ? `Whole vehicle · up to ${seatCapacity} guests`
+                                      ? seatCapacity > 0
+                                        ? `Whole vehicle · up to ${seatCapacity} guests`
+                                        : "Vehicle already booked"
                                       : SEATS_MESSAGE
                                   }
                                 />
@@ -1164,27 +1202,27 @@ export function BookingCheckoutClient({
                           <FormLayout>
                             <QuantityInput
                               label="Adults"
-                              description="Age 12+"
+                              description="Age 16–99"
                               value={adults}
                               onChange={setAdults}
                               min={1}
-                              max={Math.max(1, seatCapacity - children)}
+                              max={Math.max(1, seatCapacity - children - seatedInfants)}
                             />
                             <QuantityInput
-                              label="Children"
-                              description="Age 3–11"
+                              label="Youth"
+                              description="Age 6–15"
                               value={children}
                               onChange={setChildren}
                               min={0}
-                              max={Math.max(0, seatCapacity - adults)}
+                              max={Math.max(0, seatCapacity - adults - seatedInfants)}
                             />
                             <QuantityInput
                               label="Infants"
-                              description="Age 0–2"
+                              description="Age 0–5"
                               value={infants}
                               onChange={setInfants}
                               min={0}
-                              max={MAX_INFANTS}
+                              max={infantsPay ? Math.max(0, Math.min(MAX_INFANTS, seatCapacity - adults - children)) : MAX_INFANTS}
                             />
                           </FormLayout>
                           {currentErrors.seats && (
@@ -1206,6 +1244,7 @@ export function BookingCheckoutClient({
                               )}
                             </>
                           )}
+                          <ActivityAddOnFields offered={offeredAddOns} value={activityAddOns} onChange={setActivityAddOns} />
                         </VStack>
                       )}
 

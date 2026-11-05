@@ -25,14 +25,14 @@ function fakeAccount(items: { id: number; title: string }[]) {
 describe("Bókun products check", () => {
   it("lists the account's products and marks website links it doesn't have", async () => {
     const { api, calls } = fakeAccount([
-      { id: 1142134, title: "Banff Highlights" },
+      { id: 796650, title: "Banff Highlights" },
       { id: 55501, title: "Test Icefields" },
     ]);
     const check = await checkBokunProducts(api);
     expect(calls[0]).toMatchObject({ method: "POST", path: expect.stringContaining("/activity.json/search") });
-    expect(check!.activities.map((a) => a.id)).toEqual(["1142134", "55501"]);
+    expect(check!.activities.map((a) => a.id)).toEqual(["796650", "55501"]);
     const highlights = check!.products.find((p) => p.slug === "banff-highlights-tour");
-    expect(highlights).toMatchObject({ bokunId: "1142134", found: true, title: "Banff Highlights" });
+    expect(highlights).toMatchObject({ bokunId: "796650", found: true, title: "Banff Highlights" });
     expect(check!.products.filter((p) => p.bokunId && !p.found).length).toBeGreaterThan(0);
   });
 

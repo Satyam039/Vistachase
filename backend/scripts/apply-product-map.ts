@@ -13,10 +13,15 @@ async function main() {
   const tours = await prisma.tour.findMany({ select: { id: true, slug: true, bokunId: true, bookingMode: true } });
   const bySlug = new Map(tours.map((t) => [t.slug, t]));
 
+  // Tour.bokunId is unique: when products share a Bókun product (the two shuttles), only the first
+  // stores it. Bókun code reads the IDs from the map, so the others still connect.
+  const firstSlug = new Map<string, string>();
+  for (const p of PRODUCT_MAP) if (p.bokunId && !firstSlug.has(p.bokunId)) firstSlug.set(p.bokunId, p.slug);
+
   const changes = PRODUCT_MAP.flatMap((p) => {
     const tour = bySlug.get(p.slug);
     if (!tour) return [];
-    const bokunId = p.bokunId ?? null;
+    const bokunId = p.bokunId && firstSlug.get(p.bokunId) === p.slug ? p.bokunId : null;
     if (tour.bokunId === bokunId && tour.bookingMode === p.bookingMode) return [];
     return [{ tour, bokunId, bookingMode: p.bookingMode }];
   });

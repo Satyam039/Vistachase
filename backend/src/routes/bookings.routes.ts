@@ -18,6 +18,7 @@ import { tripBookings, tripOf, tripSummary } from "@/modules/bookings/trip";
 import { bookingIcs } from "@/modules/bookings/calendar-event";
 import { emailSchema, parseOr400, referenceSchema, z } from "@/lib/security/validate";
 import { airportTransferSchema } from "@/modules/bookings/airport-transfer";
+import { activityAddOnsSchema } from "@/modules/bookings/activity-add-ons";
 
 const router = Router();
 
@@ -30,6 +31,8 @@ const createSchema = z.object({
   customerName: z.string().trim().min(2).max(120),
   customerEmail: emailSchema,
   customerPhone: z.string().trim().min(7).max(32),
+  /** Country picked in the phone field (ISO 3166 two letters). */
+  customerCountry: z.string().trim().regex(/^[A-Za-z]{2}$/).optional(),
   pickupStopId: z.string().max(64).optional(),
   pickupCustomText: z.string().trim().max(200).optional(),
   adultsCount: count(30).refine((n) => n >= 1, "At least one adult is required"),
@@ -40,6 +43,7 @@ const createSchema = z.object({
   promoCode: z.string().trim().max(40).optional(),
   paymentPlan: z.enum(["FULL", "DEPOSIT"]).default("FULL"),
   airportTransfer: airportTransferSchema.optional(),
+  activityAddOns: activityAddOnsSchema.default([]),
 });
 
 router.post("/", rateLimitMiddleware("booking_create", { maxRequests: 5, windowSeconds: 60 }), async (req, res, next) => {
@@ -76,6 +80,7 @@ const packageSchema = z.object({
   customerName: z.string().trim().min(2).max(120),
   customerEmail: emailSchema,
   customerPhone: z.string().trim().min(7).max(32),
+  customerCountry: z.string().trim().regex(/^[A-Za-z]{2}$/).optional(),
   pickupStopId: z.string().max(64).optional(),
   pickupCustomText: z.string().trim().max(200).optional(),
   adultsCount: count(30).refine((n) => n >= 1, "At least one adult is required"),

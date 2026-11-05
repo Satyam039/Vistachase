@@ -3,9 +3,13 @@
 // the seat counts of our matching departures (same tour, date and start time), so seats sold on
 // Bókun's other channels (Viator, GetYourGuide, agents, the Bókun dashboard) can't be sold again here.
 //
-// The website keeps its own schedule and prices (scripts/seed-departures.ts, Admin → Departures):
-// the sync never creates, closes or reprices a departure, and never changes a departure's status.
-// Departures Bókun doesn't offer are listed in the sync log so staff can line the two up.
+// The website keeps its own prices and creates its departures from its own schedule
+// (scripts/seed-departures.ts, Admin → Departures), but Bókun's live calendar decides which of them
+// are on sale: with the live account, a departure Bókun doesn't offer (no start that day at that
+// time) is taken off sale (inventorySource UNVERIFIED), and put back on sale (LOCAL) once Bókun
+// offers it. To close a date, close it in Bókun. Bookings already made are never touched, and the
+// sync never creates, cancels or reprices a departure. With a test account nothing goes off sale.
+// Departures Bókun doesn't offer are also listed in the sync log.
 //
 //   Shared tours and shuttles: total = Bókun's seats left + Bókun's booked; booked = Bókun's booked
 //     + our bookings Bókun doesn't have yet. Holds stay on top, so seats left here never exceed
@@ -15,7 +19,7 @@
 
 import prisma from "@/lib/db/prisma";
 import { PRODUCT_MAP } from "@/modules/tours/product-map";
-import { slotDate, slotTime, type BokunAvailability } from "@/modules/bokun/bokun-booking";
+import { findSlot, slotDate, type BokunAvailability } from "@/modules/bokun/bokun-booking";
 import { bokunClient, bokunIsTestAccount, bokunSyncDays, type BokunApi } from "@/modules/bokun/config";
 import { dateOnly, formatDateOnly, formatTimeOfDay, todayInMountainTime } from "@/lib/utils/time";
 
@@ -28,6 +32,9 @@ export interface SeatSyncResult {
   unchanged: number;
   /** Our departures (slug date time) that Bókun doesn't offer, first 50. */
   notInBokun: string[];
+  /** Departures taken off sale / put back on sale this run because of Bókun's calendar. */
+  offSale: number;
+  onSale: number;
   errors: string[];
 }
 
@@ -38,7 +45,8 @@ export async function syncBokunSeats(options: { client?: BokunApi; days?: number
   const days = options.days ?? bokunSyncDays();
   const start = options.from ?? todayInMountainTime(options.now);
   const end = formatDateOnly(new Date(dateOnly(start).getTime() + (days - 1) * 86_400_000));
-  const result: SeatSyncResult = { products: 0, updated: 0, unchanged: 0, notInBokun: [], errors: [] };
+  const result: SeatSyncResult = { products: 0, updated: 0, unchanged: 0, notInBokun: [], offSale: 0, onSale: 0, errors: [] };
+  const followCalendar = !bokunIsTestAccount();
 
   for (const product of PRODUCT_MAP.filter((p) => p.bokunId && p.bookingMode === "BOKUN")) {
     const tour = await prisma.tour.findUnique({ where: { slug: product.slug }, select: { id: true, category: true } });
@@ -46,22 +54,36 @@ export async function syncBokunSeats(options: { client?: BokunApi; days?: number
     try {
       const fetchedAt = new Date();
       const raw = await client.getAvailabilities(product.bokunId!, start, end);
-      const slots = new Map<string, BokunAvailability>();
-      for (const a of (Array.isArray(raw) ? raw : []) as BokunAvailability[]) slots.set(`${slotDate(a)} ${slotTime(a)}`, a);
+      const byDay = new Map<string, BokunAvailability[]>();
+      for (const a of (Array.isArray(raw) ? raw : []) as BokunAvailability[]) {
+        const day = slotDate(a);
+        byDay.set(day, [...(byDay.get(day) ?? []), a]);
+      }
 
       const departures = await prisma.tourDeparture.findMany({
         where: { tourId: tour.id, status: { not: "CANCELLED" }, date: { gte: dateOnly(start), lte: dateOnly(end) } },
-        select: { id: true, date: true, departureTime: true },
+        select: { id: true, date: true, departureTime: true, inventorySource: true },
         orderBy: [{ date: "asc" }, { departureTime: "asc" }],
       });
+      const offSale: string[] = [];
+      const onSale: string[] = [];
       for (const dep of departures) {
-        const key = `${formatDateOnly(dep.date)} ${formatTimeOfDay(dep.departureTime)}`;
-        const slot = slots.get(key);
+        const date = formatDateOnly(dep.date);
+        const key = `${date} ${formatTimeOfDay(dep.departureTime)}`;
+        const slot = findSlot(byDay.get(date) ?? [], date, formatTimeOfDay(dep.departureTime));
         if (!slot) {
           if (result.notInBokun.length < 50) result.notInBokun.push(`${product.slug} ${key}`);
+          if (followCalendar && dep.inventorySource === "LOCAL") offSale.push(dep.id);
           continue;
         }
+        if (followCalendar && dep.inventorySource === "UNVERIFIED") onSale.push(dep.id);
         (await applySlot(dep.id, tour.category, slot, fetchedAt)) ? result.updated++ : result.unchanged++;
+      }
+      if (offSale.length > 0) {
+        result.offSale += (await prisma.tourDeparture.updateMany({ where: { id: { in: offSale }, inventorySource: "LOCAL" }, data: { inventorySource: "UNVERIFIED", inventoryVerifiedAt: null } })).count;
+      }
+      if (onSale.length > 0) {
+        result.onSale += (await prisma.tourDeparture.updateMany({ where: { id: { in: onSale }, inventorySource: "UNVERIFIED" }, data: { inventorySource: "LOCAL", inventoryVerifiedAt: fetchedAt } })).count;
       }
       result.products++;
     } catch (error) {
@@ -75,7 +97,7 @@ export async function syncBokunSeats(options: { client?: BokunApi; days?: number
   await prisma.bokunSyncLog.create({
     data: {
       syncType: "POLL",
-      recordsSynced: result.updated,
+      recordsSynced: result.updated + result.offSale + result.onSale,
       status: result.errors.length === 0 ? "SUCCESS" : result.products > 0 ? "PARTIAL" : "FAILED",
       details: { ...result, from: start, to: end },
     },

@@ -7,7 +7,6 @@
 // back out.
 
 import { useState, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
 import { AlertCircle, Eye, EyeOff, Lock } from "lucide-react";
 import { AUTH_FIELD } from "@/components/forms/AuthShell";
 
@@ -29,7 +28,6 @@ export function PortalSignIn({
   /** Local development only: a button that fills a demo account. */
   demo?: { label: string; email: string; password: string };
 }) {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -54,7 +52,10 @@ export function PortalSignIn({
       } else {
         const result = await check(data.user?.role);
         if ("go" in result) {
-          router.replace(result.go);
+          // A full page load, not router.replace: the router may still hold the redirect to this
+          // sign-in page that the middleware gave while signed out (prefetch), which sent people
+          // straight back here with no error. A fresh request carries the new session cookie.
+          window.location.replace(result.go);
           return;
         }
         await fetch("/api/auth/logout", { method: "POST" }).catch(() => undefined);

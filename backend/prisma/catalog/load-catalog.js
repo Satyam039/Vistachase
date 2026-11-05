@@ -11,6 +11,11 @@ const productMap = require("./product-map.json");
 const { assets: media } = require("../../media/manifest.json");
 
 const mapBySlug = new Map(productMap.products.map((p) => [p.slug, p]));
+// Tour.bokunId is unique, but two products may share one Bókun product (both Moraine Lake
+// shuttles are one Bókun product with several start times, owner's doc 2026-11-04): only the first
+// product in the map stores it on its tour. Bókun code reads the IDs from the map itself.
+const firstSlugByBokunId = new Map();
+for (const p of productMap.products) if (p.bokunId && !firstSlugByBokunId.has(p.bokunId)) firstSlugByBokunId.set(p.bokunId, p.slug);
 const mediaById = new Map(media.map((a) => [a.id, a]));
 const mediaByUrl = new Map(media.filter((a) => a.source.url).map((a) => [a.source.url, a]));
 
@@ -159,7 +164,7 @@ function toTourData(product, index, destinationIds) {
     // New products have no reviews yet: rating 0 and no count, so pages show no stars for them.
     rating: product.rating ?? 0,
     reviewCount: product.reviewCountLabel ? parseInt(product.reviewCountLabel.replace(/\D/g, ""), 10) : 0,
-    bokunId: map.bokunId,
+    bokunId: map.bokunId && firstSlugByBokunId.get(map.bokunId) === product.slug ? map.bokunId : null,
     bookingMode: map.bookingMode,
     priceUnit: product.priceUnit === "group" ? "GROUP" : "PERSON",
     facts: product.facts || [],

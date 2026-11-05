@@ -16,15 +16,18 @@ import crypto from "node:crypto";
 import QRCode from "qrcode";
 import { Prisma, type Booking, type Payment } from "@prisma/client";
 import prisma from "@/lib/db/prisma";
+import { knownCountry } from "@/lib/utils/phone-country";
 import { formatDateOnly, formatTimeOfDay, getMountainTimeInstant } from "@/lib/utils/time";
 import { bookingClosedError } from "@/modules/departures/booking-window";
+import { bokunSeatsError } from "@/modules/bokun/bokun-seats";
 import { endBooking, freeExpiredSeats, inventoryError, PENDING_PAYMENT_MINUTES, takeBookedSeats } from "@/modules/departures/inventory";
 import { transitionBooking } from "@/modules/bookings/booking-status";
 import { getPaymentProvider } from "@/lib/payment/payment.provider";
 import { sendConfirmationEmail } from "@/modules/bookings/confirmation-email";
 import { getEmailProvider } from "@/lib/email/email.provider";
-import { isVehicleDeparture, partySizeError, seatsToReserve } from "@/modules/pricing/departure-pricing";
-import { airportTransferNote, type AirportTransfer } from "@/modules/bookings/airport-transfer";
+import { isVehicleDeparture, partySizeError, seatedGuests, seatsToReserve } from "@/modules/pricing/departure-pricing";
+import { airportTransferLabel, airportTransferNote, airportTransferPriceCents, type AirportTransfer } from "@/modules/bookings/airport-transfer";
+import { activityAddOnsError, activityAddOnsNote, ACTIVITY_ADD_ONS, type ActivityAddOnId } from "@/modules/bookings/activity-add-ons";
 import { priceBooking, type AddOnChoice } from "@/modules/pricing/booking-pricing";
 import { referringAffiliateId } from "@/modules/affiliates/affiliate.repository";
 import { earnCommission, reverseCommissionForRefund } from "@/modules/affiliates/commission";
@@ -34,6 +37,7 @@ import { DEPOSIT_PERCENT, DEPOSIT_MIN_DAYS_BEFORE, depositTerms, firstChargeCent
 import { policyDecision } from "@/modules/bookings/cancellation-policy";
 import { resolveShuttlePickupTime } from "@/modules/shuttles/shuttle-timing";
 import { ADMIN_NOTIFICATION_RECIPIENTS } from "@/modules/bookings/confirmation-email";
+import { experienceTitle } from "@/modules/bookings/tour-itinerary";
 
 export interface CreateBookingInput {
   holdToken?: string;
@@ -42,6 +46,8 @@ export interface CreateBookingInput {
   customerName: string;
   customerEmail: string;
   customerPhone: string;
+  /** Country picked in the phone field (ISO 3166 two letters); kept in priceSnapshot for Bókun. */
+  customerCountry?: string;
   pickupStopId?: string;
   pickupCustomText?: string;
   pickupTime?: string;
@@ -60,6 +66,8 @@ export interface CreateBookingInput {
   paymentPlan?: "FULL" | "DEPOSIT";
   /** Private tours only: airport arrival and departure for a transfer (modules/bookings/airport-transfer.ts). */
   airportTransfer?: AirportTransfer;
+  /** Activity add-ons the guest asks for (modules/bookings/activity-add-ons.ts); priced by the team. */
+  activityAddOns?: ActivityAddOnId[];
 }
 
 /** What the checkout should do next. */
@@ -197,8 +205,10 @@ export interface CreateBookingOptions {
 }
 
 export async function createBooking(input: CreateBookingInput, options: CreateBookingOptions = {}): Promise<BookingResult> {
-  const totalSeats = input.adultsCount + input.childrenCount;
   if (input.adultsCount < 1) return { success: false, error: "At least one adult is required." };
+  // Infants take a seat where they pay (departure infantPrice set), and ride free on a lap otherwise.
+  const priced = await prisma.tourDeparture.findUnique({ where: { id: input.departureId }, select: { infantPrice: true } });
+  const totalSeats = seatedGuests(priced ?? {}, { adults: input.adultsCount, children: input.childrenCount, infants: input.infantsCount });
 
   if (input.idempotencyKey) {
     const replay = await replayBooking(input.idempotencyKey, input);
@@ -207,6 +217,9 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
 
   // Seats from expired holds and unpaid bookings on this departure come back first.
   await freeExpiredSeats({ departureId: input.departureId });
+  // Never more seats than Bókun has left (when Bókun is connected).
+  const bokunRefusal = await bokunSeatsError(input.departureId, totalSeats, { holdToken: input.holdToken });
+  if (bokunRefusal) return { success: false, error: bokunRefusal };
 
   let booking: Booking;
   try {
@@ -244,6 +257,9 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
       // Capacity: shared departures take one seat per guest, private ones the whole vehicle
       const isVehicle = isVehicleDeparture(departure);
       if (input.airportTransfer && !isVehicle) throw new BookingRefused("Airport transfers can be added to private tours only.");
+      const activityAddOns = Array.from(new Set(input.activityAddOns ?? []));
+      const addOnRefusal = activityAddOnsError(activityAddOns, departure.tour?.slug, formatDateOnly(departure.date));
+      if (addOnRefusal) throw new BookingRefused(addOnRefusal);
       const reservedSeats = seatsToReserve(departure, totalSeats);
 
       // The hold is claimed once: a second request with the same hold finds it no longer ACTIVE.
@@ -266,7 +282,15 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
         );
       }
 
-      const totals = priceBooking(departure, { adults: input.adultsCount, children: input.childrenCount }, input.addOns, input.promoCode, options.discount?.percent);
+      const totals = priceBooking(departure, { adults: input.adultsCount, children: input.childrenCount, infants: input.infantsCount }, input.addOns, input.promoCode, options.discount?.percent);
+      // Airport transfer (private tours): charged with the tour when it has a price, never discounted.
+      const partySize = input.adultsCount + input.childrenCount + input.infantsCount;
+      const transferCents = input.airportTransfer ? airportTransferPriceCents(input.airportTransfer, partySize) : null;
+      if (input.airportTransfer && transferCents != null) {
+        totals.addOns.push({ name: airportTransferLabel(input.airportTransfer, partySize), priceCents: transferCents, quantity: 1 });
+        totals.addOnsCents += transferCents;
+        totals.totalCents += transferCents;
+      }
       // Deposit: online checkout only (staff bookings record their own payment), far enough ahead.
       const deposit =
         input.paymentPlan === "DEPOSIT" && !options.offlinePayment && !options.deferPayment
@@ -286,6 +310,7 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
         pricing: isVehicle ? "PER_VEHICLE" : "PER_GUEST",
         adultUnitCents: departure.price,
         childUnitCents: isVehicle ? null : (departure.childPrice ?? departure.price),
+        infantUnitCents: isVehicle ? null : departure.infantPrice,
         party: { adults: input.adultsCount, children: input.childrenCount, infants: input.infantsCount },
         fareCents: totals.fareCents,
         promo: totals.discountPercent > 0 ? { code: input.promoCode?.trim().toUpperCase() || options.discount?.label, percent: totals.discountPercent } : null,
@@ -295,8 +320,13 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
         taxCents: 0,
         totalCents: totals.totalCents,
         inventorySource: departure.inventorySource,
-        // Not charged online yet: the team confirms the transfer and its price.
-        ...(input.airportTransfer ? { airportTransfer: { ...input.airportTransfer, priceCents: null } } : {}),
+        customerCountry: knownCountry(input.customerCountry) ?? undefined,
+        // priceCents null: the team confirms the price (winter, 13+ guests); otherwise it is in addOns.
+        ...(input.airportTransfer ? { airportTransfer: { ...input.airportTransfer, priceCents: transferCents } } : {}),
+        // Requested, not charged: the price varies and the team confirms it.
+        ...(activityAddOns.length > 0
+          ? { activityAddOns: activityAddOns.map((id) => ({ id, name: ACTIVITY_ADD_ONS[id], priceCents: null })) }
+          : {}),
       };
 
       const stop = input.pickupStopId ? await tx.shuttleStop.findUnique({ where: { id: input.pickupStopId } }) : null;
@@ -336,9 +366,18 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
           depositAmount: deposit?.depositCents ?? null,
           balanceDueAt: deposit?.balanceDueAt ?? null,
           paymentExpiresAt: new Date(now.getTime() + PENDING_PAYMENT_MINUTES * 60_000),
-          specialRequests: input.airportTransfer
-            ? [airportTransferNote(input.airportTransfer), input.specialRequests].filter(Boolean).join("\n")
-            : input.specialRequests,
+          specialRequests:
+            input.airportTransfer || activityAddOns.length > 0
+              ? [
+                  input.airportTransfer ? airportTransferNote(input.airportTransfer, transferCents) : null,
+                  activityAddOns.length > 0
+                    ? activityAddOnsNote(activityAddOns, { adults: input.adultsCount, children: input.childrenCount, infants: input.infantsCount })
+                    : null,
+                  input.specialRequests,
+                ]
+                  .filter(Boolean)
+                  .join("\n")
+              : input.specialRequests,
           voucherCode: newVoucherCode(),
           // Staff scan this to check the guest in; it carries a signature, not the guest's details.
           qrCodeUrl: await QRCode.toDataURL(checkinLink(bookingReference), { margin: 1, width: 300 }),
@@ -672,7 +711,7 @@ export async function cancelBooking(reference: string, customerEmail?: string) {
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #1c1f23;">
           <h2>Booking cancelled</h2>
-          <p>Your booking <strong>${booking.bookingReference}</strong> for <strong>${escapeHtml(booking.tourDeparture.tour?.title || booking.tourDeparture.shuttleRoute?.name || "Vista Chase experience")}</strong> on ${formatDateOnly(booking.tourDeparture.date)} has been cancelled.</p>
+          <p>Your booking <strong>${booking.bookingReference}</strong> for <strong>${escapeHtml(experienceTitle(booking.tourDeparture))}</strong> on ${formatDateOnly(booking.tourDeparture.date)} has been cancelled.</p>
           ${refundedCents > 0 ? `<p>We have refunded <strong>$${(refundedCents / 100).toFixed(2)} ${booking.currency}</strong> to your original payment method; it usually arrives within 5–10 business days.</p>` : ""}
           ${failedCents > 0 ? `<p>Your refund of <strong>$${(failedCents / 100).toFixed(2)} ${booking.currency}</strong> couldn't be sent automatically. Our team has been notified and will send it to your original payment method.</p>` : ""}
           <p>${policy.keepPercent > 0 ? `This is a private multi-day package: ${policy.keepPercent}% of the total price is non-refundable, and everything else you paid is refunded.` : "Cancelled within the policy deadline, so everything you paid is refunded."}</p>

@@ -1,9 +1,10 @@
 "use client";
 
-// Product page body laid out like Viator: a sticky "On this page" bar (Overview, Itinerary,
-// What's Included, Pickup, Cancellation, Reviews; FAQs follow without a tab) over
-// stacked sections, so everything can be scanned and linked. Content comes from the catalog
-// imported from the live product pages (tour.tabs, inclusions, faqs).
+// Product page body in the order of the owner's doc (2026-11-04, "Banff & Yoho Discovery"): Overview
+// + Places You'll Discover, Itinerary, Included / Not included, Pickup & meeting points, then
+// Important information, Cancellation and Reviews (FAQs follow without a tab), under a sticky
+// "On this page" bar. Content comes from the catalog imported from the live product pages
+// (tour.tabs, inclusions, faqs) and lib/tourContent.ts.
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
@@ -24,16 +25,20 @@ interface Review {
   date: string;
 }
 
-// The tab bar: the six sections every product page has, in booking order. FAQs follow Reviews
+// The tab bar: the sections every product page has, in booking order. FAQs follow Reviews
 // on the page without a tab of their own.
 const SECTIONS = [
   { id: "overview", label: "Overview" },
   { id: "itinerary", label: "Itinerary" },
   { id: "whats-included", label: "What's Included" },
   { id: "pickup", label: "Pickup" },
+  { id: "important-information", label: "Important Info" },
   { id: "cancellation", label: "Cancellation" },
   { id: "reviews", label: "Reviews" },
 ] as const;
+
+/** Stops that only open part of the year (doc: write "Seasonal" beside Moraine Lake). */
+const SEASONAL_PLACE = /moraine lake|ice explorer|skywalk/i;
 
 
 // Imported live-site copy packs several lines into one paragraph ("Doorstep Pickup – we collect
@@ -72,6 +77,21 @@ function Prose({ text, className = "text-base leading-relaxed text-slate-700" }:
       )}
     </>
   );
+}
+
+/**
+ * Important information (doc, 2026-11-04: replaces "Good to know" and "Seasons & Conditions"): the
+ * tour's own seasonal notes, or the doc's general statements when it has none.
+ */
+function importantInformation(tour: TourWithAvailability, seasonal: string[]): string[] {
+  if (seasonal.length > 0) return seasonal;
+  if (tour.category === "TICKET") return ["Times, seasons and access are set by the attraction operator and confirmed with your booking."];
+  return [
+    "Seasonal itinerary: The route and accessible attractions vary by season.",
+    "Mountain weather: Conditions can change quickly. Comfortable footwear and layered clothing are recommended.",
+    "Itinerary adjustments: Stops may change because of road closures, weather, operational restrictions or other circumstances.",
+    "Wildlife sightings are possible but can't be guaranteed.",
+  ];
 }
 
 const tab = (tour: TourWithAvailability, labels: RegExp) => tour.tabs.find((t) => labels.test(t.label));
@@ -146,10 +166,15 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
   const overview = tab(tour, /^overview$/i);
   const seeTab = tab(tour, /^(inclusions|selection)$/i);
   const itinerary = tab(tour, /^(itinerary|process)$/i);
+  // Pickup times live in the day's timeline: the itinerary, or a "Pickup" tab where the doc
+  // removed the timeline from the page (lib/tourContent.ts).
+  const timeline = itinerary ?? tab(tour, /^pickup$/i);
   const seasonal = tab(tour, /^seasonal$/i);
   const overviewSections = (overview?.sections ?? []).filter((s) => !/price (in|ex)cludes/i.test(s.heading));
   const vehicles = vehiclesFor(tour);
-  const pickupStep = itinerary?.sections.flatMap((s) => s.steps).find((s) => /pick ?up/i.test(s.text));
+  const pickupStep = timeline?.sections.flatMap((s) => s.steps).find((s) => /pick ?up/i.test(s.text));
+  // The doc's own Pickup & Drop-off text, where it gives one (lib/tourContent.ts).
+  const pickupText = tab(tour, /^pickup$/i)?.sections.flatMap((s) => s.body) ?? [];
 
 
 
@@ -177,32 +202,32 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
           </div>
         )}
         {tour.highlights.length > 0 && (
-          <ul className="grid gap-3 rounded-none border border-slate-200/80 bg-white p-6 sm:grid-cols-2" aria-label="Highlights">
-            {tour.highlights.map((h) => (
-              <li key={h} className="flex items-start gap-3 text-base text-slate-800">
-                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-ocean-600" aria-hidden="true" />
-                <span>{h}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="space-y-4">
+            <h3 className="text-xl font-light text-obsidian-900">{isTicket ? "Highlights" : "Places You\u2019ll Discover"}</h3>
+            <ul className="grid gap-3 rounded-none border border-slate-200/80 bg-white p-6 sm:grid-cols-2" aria-label={isTicket ? "Highlights" : "Places you'll discover"}>
+              {tour.highlights.map((h) => {
+                const seasonalPlace = SEASONAL_PLACE.test(h);
+                const name = seasonalPlace ? h.replace(/\s*\((summer|seasonal)\)\s*$/i, "") : h;
+                return (
+                  <li key={h} className="flex items-start gap-3 text-base text-slate-800">
+                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-ocean-600" aria-hidden="true" />
+                    <span>
+                      {name}
+                      {seasonalPlace && (
+                        <span className="ml-2 inline-block rounded-full bg-summit-100 px-2 py-0.5 align-middle text-xs uppercase tracking-wider text-obsidian-900 ring-1 ring-summit-300">
+                          Seasonal
+                        </span>
+                      )}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         )}
         {overviewSections.slice(1).map((s, i) => (
           <SectionBlock key={`${s.heading}-${i}`} section={s} />
         ))}
-        <div className="space-y-6">
-          <h3 className="text-xl font-light text-obsidian-900">Good to know</h3>
-          {tour.facts.length > 0 && (
-            <dl className="grid gap-4 rounded-none border border-slate-200/80 bg-white p-6 sm:grid-cols-2">
-              {tour.facts.map((f) => (
-                <div key={f.label}>
-                  <dt className="text-sm uppercase tracking-widest text-slate-600">{f.label}</dt>
-                  <dd className="text-lg font-light text-obsidian-900">{f.value}</dd>
-                </div>
-              ))}
-            </dl>
-          )}
-          {seasonal?.sections.map((s, i) => <SectionBlock key={`season-${i}`} section={s} level={4} />)}
-        </div>
       </section>
 
       <section id="itinerary" aria-labelledby="itinerary-heading" className="space-y-8">
@@ -213,9 +238,10 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
       </section>
 
       <section id="whats-included" aria-labelledby="whats-included-heading" className="space-y-6">
-        <SectionHeading id="whats-included">What&apos;s Included</SectionHeading>
+        <SectionHeading id="whats-included">What&apos;s Included / Not Included</SectionHeading>
         <div className="grid gap-6 sm:grid-cols-2">
           <ul className="space-y-3 rounded-none border border-slate-200/80 bg-white p-6" aria-label="Included">
+            <li className="text-sm uppercase tracking-widest text-slate-600" aria-hidden="true">Included</li>
             {tour.inclusions.map((item) => (
               <li key={item} className="flex items-start gap-2.5 text-base text-slate-800">
                 <Check className="mt-1 h-4 w-4 shrink-0 text-emerald-700" aria-hidden="true" />
@@ -225,6 +251,7 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
           </ul>
           {tour.exclusions.length > 0 && (
             <ul className="space-y-3 rounded-none border border-slate-200/80 bg-white p-6" aria-label="Not included">
+              <li className="text-sm uppercase tracking-widest text-slate-600" aria-hidden="true">Not included</li>
               {tour.exclusions.map((item) => (
                 <li key={item} className="flex items-start gap-2.5 text-base text-slate-600">
                   <X className="mt-1 h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
@@ -237,9 +264,16 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
       </section>
 
       <section id="pickup" aria-labelledby="pickup-heading" className="space-y-4">
-        <SectionHeading id="pickup">Pickup</SectionHeading>
+        <SectionHeading id="pickup">Pickup &amp; Meeting Points</SectionHeading>
         <div className="space-y-3 rounded-none border border-slate-200/80 bg-white p-6 text-base text-slate-700">
-          {isTicket ? (
+          {pickupText.length > 0 ? (
+            pickupText.map((paragraph, i) => (
+              <p key={paragraph} className={i === 0 ? "flex items-start gap-2.5" : undefined}>
+                {i === 0 && <MapPin className="mt-1 h-4 w-4 shrink-0 text-ocean-600" aria-hidden="true" />}
+                <span>{paragraph}</span>
+              </p>
+            ))
+          ) : isTicket ? (
             <p>
               Meet at the attraction on your date, or add transport by booking a Vista Chase tour on the same day. We send the
               details with your confirmation.
@@ -303,6 +337,29 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
             </ul>
           </div>
         )}
+      </section>
+
+      <section id="important-information" aria-labelledby="important-information-heading" className="space-y-4">
+        <SectionHeading id="important-information">Important Information</SectionHeading>
+        <ul className="space-y-3 rounded-none border border-slate-200/80 bg-white p-6">
+          {importantInformation(tour, seasonal?.sections.flatMap((s) => s.items) ?? []).map((item) => {
+            const m = item.match(/^([^:]{2,40}):\s+(.+)$/);
+            return (
+              <li key={item} className="flex items-start gap-2.5 text-base leading-relaxed text-slate-700">
+                <Check className="mt-1 h-4 w-4 shrink-0 text-ocean-600" aria-hidden="true" />
+                <span>
+                  {m ? (
+                    <>
+                      <span className="text-obsidian-900">{m[1]}:</span> {m[2]}
+                    </>
+                  ) : (
+                    item
+                  )}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
       </section>
 
       <section id="cancellation" aria-labelledby="cancellation-heading" className="space-y-4">

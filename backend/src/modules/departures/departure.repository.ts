@@ -57,6 +57,7 @@ export async function getCheckoutDeparture(departureId?: string) {
       ...departure,
       price: departure.price / 100, // stored in cents; the checkout shows dollars
       childPrice: departure.childPrice != null ? departure.childPrice / 100 : null,
+      infantPrice: departure.infantPrice != null ? departure.infantPrice / 100 : null,
       ...liveCapacity(departure, expiredHeld),
       // Whether this departure can be booked online now, and why not (shown by the checkout).
       bookable: departure.status === "ACTIVE" && !inventoryError(departure) && !bookingClosedError(departure),

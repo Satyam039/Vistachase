@@ -15,6 +15,7 @@
 
 import type { BookingStatus, BookingSyncTask, Prisma } from "@prisma/client";
 import prisma from "@/lib/db/prisma";
+import { countryFromPhone, knownCountry } from "@/lib/utils/phone-country";
 import { BokunApiError } from "@/modules/bokun/bokun.client";
 import { abortInBokun, BokunUnavailableError, cancelInBokun, confirmInBokun, reserveInBokun } from "@/modules/bokun/bokun-booking";
 import { bokunClient, bokunConnected, bokunIsTestAccount, type BokunApi } from "@/modules/bokun/config";
@@ -167,6 +168,7 @@ async function runCreate(client: BokunApi, task: BookingSyncTask, now: Date): Pr
           customerName: booking.customerName,
           customerEmail: booking.customerEmail,
           customerPhone: booking.customerPhone,
+          country: knownCountry((booking.priceSnapshot as { customerCountry?: unknown } | null)?.customerCountry) ?? countryFromPhone(booking.customerPhone) ?? undefined,
           pickup: [place, booking.pickupTime ? `at ${booking.pickupTime}` : ""].filter(Boolean).join(" ") || undefined,
           specialRequests: booking.specialRequests ?? undefined,
         },
@@ -174,7 +176,6 @@ async function runCreate(client: BokunApi, task: BookingSyncTask, now: Date): Pr
           submitting = true;
           await prisma.bookingSyncTask.update({ where: { id: task.id }, data: { payload: { stage: "submitting" } } });
         },
-        { testAccount: bokunIsTestAccount() },
       );
       submitting = false;
       await prisma.bookingSyncTask.update({ where: { id: task.id }, data: { externalRef: code, payload: { stage: "reserved" } } });

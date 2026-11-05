@@ -2,12 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { AlertCircle } from "lucide-react";
 import { AUTH_FIELD, AuthShell } from "@/components/forms/AuthShell";
 
 export default function AffiliateLoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -28,10 +26,11 @@ export default function AffiliateLoginPage() {
         setErrorMsg(data.error || "That email and password don't match.");
       } else {
         const next = new URLSearchParams(window.location.search).get("next");
-        const destination = next && next.startsWith("/affiliate") && !next.startsWith("/affiliate/login")
-          ? next
-          : "/affiliate/dashboard";
-        window.location.href = destination;
+        if (next && next.startsWith("/affiliate") && !next.startsWith("/affiliate/login")) {
+          window.location.assign(next);
+        } else {
+          window.location.assign("/affiliate/dashboard");
+        }
       }
     } catch {
       setErrorMsg("We couldn't reach the server. Please try again.");

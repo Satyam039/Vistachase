@@ -93,6 +93,7 @@ export interface TourWithAvailability {
     seatsAvailable: number;
     price: number;
     childPrice: number | null;
+    infantPrice: number | null;
     currency: string;
     status: string;
     inventorySource: string;
@@ -176,6 +177,7 @@ function toTourDto(t: TourRow, expiredHeld: Map<string, number>): TourWithAvaila
       ...liveCapacity(d, expiredHeld),
       price: d.price / 100,
       childPrice: d.childPrice != null ? d.childPrice / 100 : null,
+      infantPrice: d.infantPrice != null ? d.infantPrice / 100 : null,
       currency: d.currency,
       status: d.status,
       inventorySource: d.inventorySource,

@@ -51,6 +51,8 @@ export interface BokunReservationInput {
   customerName: string;
   customerEmail: string;
   customerPhone: string;
+  /** The guest's country (ISO 3166 two letters), sent as the main contact's nationality. */
+  country?: string;
   pickup?: string;
   specialRequests?: string;
 }
@@ -84,12 +86,17 @@ const isChild = (title: string) => /child|youth|kid/i.test(title);
 const isInfant = (title: string) => /infant|baby/i.test(title);
 const groupSize = (title: string) => Number(/group of (\d+)/i.exec(title)?.[1] ?? NaN);
 
-/** Bókun's start for our departure: same day and start time. */
 /** "2026-11-15" moved by whole days. */
 export const shiftDay = (date: string, days: number) => new Date(Date.parse(`${date}T00:00:00Z`) + days * DAY_MS).toISOString().slice(0, 10);
 
+/**
+ * Bókun's start for our departure: same day and start time. A product Bókun runs without a clock
+ * time (one start a day, read as 00:00, e.g. a private tour whose pickup time is agreed later)
+ * matches any of our departures that day.
+ */
 export function findSlot(list: Availability[], date: string, time: string) {
-  return list.find((a) => slotDate(a) === date && slotTime(a) === time);
+  const day = list.filter((a) => slotDate(a) === date);
+  return day.find((a) => slotTime(a) === time) ?? (day.length === 1 && slotTime(day[0]) === "00:00" ? day[0] : undefined);
 }
 
 /**
@@ -122,7 +129,7 @@ export function buildNote(input: BokunReservationInput, infantsInNote: number) {
   return [
     `Booked on vistachase.com, reference ${input.bookingReference}.`,
     input.pickup ? `Pickup: ${input.pickup}.` : "",
-    infantsInNote > 0 ? `Also ${infantsInNote} infant${infantsInNote === 1 ? "" : "s"} (0–2, no seat).` : "",
+    infantsInNote > 0 ? `Also ${infantsInNote} infant${infantsInNote === 1 ? "" : "s"} (0–5).` : "",
     input.specialRequests ? `Guest requests: ${input.specialRequests}` : "",
   ]
     .filter(Boolean)
@@ -130,14 +137,36 @@ export function buildNote(input: BokunReservationInput, infantsInNote: number) {
     .slice(0, 2000);
 }
 
+function splitName(name: string) {
+  const [first, ...rest] = name.trim().split(/\s+/);
+  return { first: first || name, last: rest.join(" ") || "-" };
+}
+
 function mainContact(input: BokunReservationInput) {
-  const [first, ...rest] = input.customerName.trim().split(/\s+/);
+  const { first, last } = splitName(input.customerName);
   return [
-    { questionId: "firstName", values: [first || input.customerName] },
-    { questionId: "lastName", values: [rest.join(" ") || "-"] },
+    { questionId: "firstName", values: [first] },
+    { questionId: "lastName", values: [last] },
     { questionId: "email", values: [input.customerEmail] },
     { questionId: "phoneNumber", values: [input.customerPhone] },
+    ...(input.country ? [{ questionId: "nationality", values: [input.country] }] : []),
   ];
+}
+
+/**
+ * Bókun products can require each passenger's name. The website takes only the lead guest's name,
+ * so the lead's name goes on the first passenger and "Guest 2", "Guest 3"… (lead's last name) on the
+ * others; the guide gets the real names on the day.
+ */
+export function withPassengerNames<T extends object>(passengers: T[], customerName: string) {
+  const { first, last } = splitName(customerName);
+  return passengers.map((p, i) => ({
+    ...p,
+    passengerDetails: [
+      { questionId: "firstName", values: [i === 0 ? first : `Guest ${i + 1}`] },
+      { questionId: "lastName", values: [last] },
+    ],
+  }));
 }
 
 /**
@@ -149,48 +178,19 @@ export async function reserveInBokun(
   client: BokunApi,
   input: BokunReservationInput,
   beforeSubmit?: () => Promise<void>,
-  opts: { testAccount?: boolean } = {},
 ): Promise<string> {
-  let activityId = input.productBokunId;
-  let list: Availability[] | null = null;
-  let detail: { pricingCategories?: BokunCategory[] } | null = null;
+  // Always the guest's own date and start time: never another day or another Bókun product.
+  const activityId = input.productBokunId;
+  const [list, detail] = await Promise.all([
+    // One day either side: a same-day range (start = end) can come back empty from Bókun, and
+    // Bókun's day stamps can sit a few hours off UTC midnight. findSlot keeps only the asked date.
+    client.getAvailabilities(activityId, shiftDay(input.date, -1), shiftDay(input.date, 1)) as Promise<Availability[] | null>,
+    client.fetch("GET", `/activity.json/${activityId}?lang=EN&currency=CAD`) as Promise<{ pricingCategories?: BokunCategory[] } | null>,
+  ]);
 
-  try {
-    [list, detail] = await Promise.all([
-      // One day either side: a same-day range (start = end) can come back empty from Bókun, and
-      // Bókun's day stamps can sit a few hours off UTC midnight. findSlot keeps only the asked date.
-      client.getAvailabilities(activityId, shiftDay(input.date, -1), shiftDay(input.date, 1)) as Promise<Availability[] | null>,
-      client.fetch("GET", `/activity.json/${activityId}?lang=EN&currency=CAD`) as Promise<{ pricingCategories?: BokunCategory[] } | null>,
-    ]);
-  } catch (error) {
-    if (opts.testAccount && error instanceof BokunApiError && error.status === 404) {
-      activityId = "30159";
-      [list, detail] = await Promise.all([
-        client.getAvailabilities(activityId, shiftDay(input.date, -1), shiftDay(input.date, 1)) as Promise<Availability[] | null>,
-        client.fetch("GET", `/activity.json/${activityId}?lang=EN&currency=CAD`) as Promise<{ pricingCategories?: BokunCategory[] } | null>,
-      ]);
-    } else {
-      throw error;
-    }
-  }
-
-  let slot = findSlot(Array.isArray(list) ? list : [], input.date, input.time);
+  const slot = findSlot(Array.isArray(list) ? list : [], input.date, input.time);
   const needed = input.category === "PRIVATE" ? 1 : input.adults + input.children;
 
-  if ((!slot || slot.unavailable) && opts.testAccount) {
-    const today = new Date().toISOString().slice(0, 10);
-    const end = new Date(Date.now() + 60 * 86_400_000).toISOString().slice(0, 10);
-    const upcoming = (await client.getAvailabilities(activityId, today, end)) as Availability[] | null;
-    const available = (Array.isArray(upcoming) ? upcoming : []).find(
-      (a) => !a.unavailable && !a.soldOut && (a.availabilityCount ?? 0) >= needed,
-    );
-    if (available) {
-      slot = available;
-      console.warn(
-        `[bokun] test account: no slot for ${input.date} ${input.time}, using available test slot on ${slotDate(slot)} ${slotTime(slot)} (test only).`,
-      );
-    }
-  }
   if (!slot || slot.unavailable) {
     const all = Array.isArray(list) ? list : [];
     const sameDay = all.filter((a) => slotDate(a) === input.date && !a.unavailable).map(slotTime);
@@ -223,7 +223,7 @@ export async function reserveInBokun(
         startTimeId: slot.startTimeId,
         pickup: false,
         dropoff: false,
-        passengers,
+        passengers: withPassengerNames(passengers, input.customerName),
         extras: [],
         note: buildNote(input, infantsInNote),
       },
