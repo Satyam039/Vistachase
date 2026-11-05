@@ -55,6 +55,7 @@ export function mayOpen(role: string | undefined | null, path: string): boolean 
   const area = areaOf(path);
   if (!area) return true;
   if (area === "seo" && role === "ADMIN") return true;
+  if (area === "partner" && role === "ADMIN") return true;
   if (area === "customer") {
     // Only customer accounts may access customer account management; staff and affiliates go to their portals
     return role === "CUSTOMER";

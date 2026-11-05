@@ -8,6 +8,8 @@ export interface EmailPayload {
   from?: string;
   /** Where replies go, e.g. the guest who asked for a live agent. */
   replyTo?: string;
+  /** Carbon copy recipients */
+  cc?: string | string[];
   /** Hidden copies, e.g. support@vistachase.com on every booking confirmation. */
   bcc?: string[];
   attachments?: EmailAttachment[];
@@ -37,6 +39,7 @@ class ConsoleEmailProvider implements IEmailProvider {
     console.log(`From: ${payload.from || process.env.EMAIL_FROM || "bookings@vistachase.com"}`);
     console.log(`Subject: ${payload.subject}`);
     if (payload.replyTo) console.log(`Reply-To: ${payload.replyTo}`);
+    if (payload.cc) console.log(`Cc: ${Array.isArray(payload.cc) ? payload.cc.join(", ") : payload.cc}`);
     if (payload.bcc?.length) console.log(`Bcc: ${payload.bcc.join(", ")}`);
     for (const a of payload.attachments ?? []) console.log(`Attachment: ${a.filename} (${a.content.length} bytes)`);
     console.log("----------------------- [EMAIL CONTENT PREVIEW] -----------------------");
@@ -73,6 +76,7 @@ class ResendEmailProvider implements IEmailProvider {
           html: payload.html,
           text: payload.text,
           ...(payload.replyTo ? { reply_to: payload.replyTo } : {}),
+          ...(payload.cc ? { cc: Array.isArray(payload.cc) ? payload.cc : [payload.cc] } : {}),
           ...(payload.bcc?.length ? { bcc: payload.bcc } : {}),
           ...(payload.attachments?.length
             ? { attachments: payload.attachments.map((a) => ({ filename: a.filename, content: a.content.toString("base64"), content_type: a.contentType })) }
@@ -137,6 +141,7 @@ class SmtpEmailProvider implements IEmailProvider {
         html: payload.html,
         text: payload.text,
         replyTo: payload.replyTo,
+        ...(payload.cc ? { cc: payload.cc } : {}),
         ...(payload.bcc?.length ? { bcc: payload.bcc } : {}),
         attachments: payload.attachments?.map((a) => ({ filename: a.filename, content: a.content, contentType: a.contentType })),
       });

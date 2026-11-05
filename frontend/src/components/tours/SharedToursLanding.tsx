@@ -317,12 +317,12 @@ function Facts({ duration }: { duration: string }) {
   );
 }
 
-function Price({ price, unit = "CAD/guest" }: { price: number; unit?: string }) {
+function Price({ price, unit = "CAD/guest", showOriginal = true }: { price: number; unit?: string; showOriginal?: boolean }) {
   return (
     <div className="min-w-0">
       {hasPrice(price) ? (
         <>
-          <PriceTag price={price} currency="CAD" unit={unit} size="sm" tone="dark" layout="inline" />
+          <PriceTag price={price} currency="CAD" unit={unit} size="sm" tone="dark" layout="inline" showOriginal={showOriginal} />
           <p className="mt-0.5 text-xs text-white/55">Taxes and required fees included</p>
         </>
       ) : (
@@ -360,7 +360,7 @@ function CardButton({ href, label }: { href: string; label: string }) {
   );
 }
 
-function Itinerary({ days }: { days: DayTour[] }) {
+export function Itinerary({ days }: { days: DayTour[] }) {
   return (
     <details className="group/plan mt-4 border-t border-white/[0.08] pt-2.5">
       <summary className="flex min-h-9 cursor-pointer list-none items-center justify-between gap-2 text-xs uppercase tracking-[0.16em] text-white/75 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-summit-300 [&::-webkit-details-marker]:hidden">
@@ -433,9 +433,8 @@ function DayCard({ tour, price, award = false }: { tour: DayTour; price: number;
           <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
           {tour.keyNote}
         </p>
-        <Itinerary days={[tour]} />
         <div className="mt-auto border-t border-white/[0.08] pt-4">
-          <Price price={price} />
+          <Price price={price} showOriginal={false} />
           <CardButton href={`/${tour.slug}`} label={tour.button} />
         </div>
       </div>
@@ -464,7 +463,6 @@ function PackageCard({ price, separate }: { price: number; separate: number }) {
           <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
           {TWO_DAY_PACKAGE.keyNote}
         </p>
-        <Itinerary days={TWO_DAY_PACKAGE.days} />
         <div className="mt-auto border-t border-white/[0.08] pt-4">
           <PackagePrice price={price} separate={separate} />
           <CardButton href={TWO_DAY_PACKAGE.href} label={TWO_DAY_PACKAGE.button} />

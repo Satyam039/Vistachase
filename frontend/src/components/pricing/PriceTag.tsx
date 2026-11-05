@@ -12,6 +12,7 @@ export function PriceTag({
   size = "md",
   layout = "stacked",
   noPriceLabel = "Price on request",
+  showOriginal = true,
 }: {
   price: number | null | undefined;
   currency?: string;
@@ -25,6 +26,8 @@ export function PriceTag({
   layout?: "stacked" | "inline";
   /** Shown when there is no price. */
   noPriceLabel?: string;
+  /** When false, only the current selling price is shown (no strikethrough markup). */
+  showOriginal?: boolean;
 }) {
   const muted = tone === "dark" ? "text-slate-300" : "text-slate-600";
   const strong = tone === "dark" ? "text-white" : "text-obsidian-900";
@@ -37,7 +40,7 @@ export function PriceTag({
       </p>
     );
   }
-  const original = originalPrice(price);
+  const original = showOriginal ? originalPrice(price) : null;
   if (layout === "inline") {
     return (
       <p className={`flex flex-wrap items-baseline gap-x-1.5 ${muted} text-sm`}>

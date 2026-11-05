@@ -14,6 +14,64 @@ export const SHUTTLE_PICKUPS: { id: ShuttlePickup; label: string; short: string 
   { id: "samson", label: "Lake Louise Village (Samson Mall)", short: "Samson Mall" },
 ];
 
+/** Calculate time in "HH:MM" that is `minutes` after/before `time` "HH:MM". */
+export function addMinutesToTime(time: string, minutes: number): string {
+  const [h, m] = time.slice(0, 5).split(":").map(Number);
+  const totalMinutes = ((h * 60 + m + minutes) % 1440 + 1440) % 1440;
+  const newH = Math.floor(totalMinutes / 60);
+  const newM = totalMinutes % 60;
+  return `${String(newH).padStart(2, "0")}:${String(newM).padStart(2, "0")}`;
+}
+
+/** Samson Mall pickup is always exactly 40 minutes after the Banff pickup time. */
+export function calculateSamsonPickup(banffTime: string): string {
+  return addMinutesToTime(banffTime, 40);
+}
+
+/** Canmore pickup is always 30 minutes before the Banff pickup time. */
+export function calculateCanmorePickup(banffTime: string): string {
+  return addMinutesToTime(banffTime, -30);
+}
+
+export function resolveShuttlePickupTime(params: {
+  departureTime: string;
+  town?: string | null;
+  stopName?: string | null;
+  customText?: string | null;
+  storedPickupTime?: string | null;
+}): string {
+  const town = (params.town || "").toLowerCase();
+  const name = (params.stopName || "").toLowerCase();
+  const text = (params.customText || "").toLowerCase();
+
+  const timeMatch = params.departureTime.match(/(\d{1,2}):(\d{2})/);
+  const time = timeMatch ? `${timeMatch[1].padStart(2, "0")}:${timeMatch[2]}` : params.departureTime.slice(0, 5);
+
+  const isCanmore = town.includes("canmore") || name.includes("canmore") || text.includes("canmore");
+  const isSamson = town.includes("louise") || name.includes("samson") || text.includes("samson") || text.includes("lake louise");
+
+  if (params.storedPickupTime && params.storedPickupTime.trim()) {
+    const stored = params.storedPickupTime.trim();
+    const storedMatch = stored.match(/(\d{1,2}):(\d{2})/);
+    const storedHHMM = storedMatch ? `${storedMatch[1].padStart(2, "0")}:${storedMatch[2]}` : stored;
+    if (isCanmore && storedHHMM === time) {
+      return calculateCanmorePickup(time);
+    }
+    if (isSamson && storedHHMM === time) {
+      return calculateSamsonPickup(time);
+    }
+    return stored;
+  }
+
+  if (isCanmore) {
+    return calculateCanmorePickup(time);
+  }
+  if (isSamson) {
+    return calculateSamsonPickup(time);
+  }
+  return time;
+}
+
 export interface ShuttleDeparture {
   number: number;
   name: string;
@@ -27,13 +85,13 @@ export interface ShuttleDeparture {
 }
 
 export const SHUTTLE_DEPARTURES: ShuttleDeparture[] = [
-  { number: 1, name: "Early Morning", pickup: { canmore: "02:45", banff: "03:15", samson: null }, moraine: ["04:30", "06:00"], louise: ["06:30", "08:00"], returnBanff: "09:00", returnCanmore: "09:30" },
-  { number: 2, name: "Early Morning", pickup: { canmore: "03:45", banff: "04:15", samson: null }, moraine: ["05:30", "07:00"], louise: ["07:30", "09:30"], returnBanff: "10:30", returnCanmore: "11:00" },
-  { number: 3, name: "Morning", pickup: { canmore: "06:00", banff: "06:30", samson: null }, moraine: ["07:30", "09:00"], louise: ["09:30", "12:00"], returnBanff: "13:00", returnCanmore: "13:30" },
-  { number: 4, name: "Late Morning", pickup: { canmore: "09:45", banff: "10:15", samson: null }, moraine: ["11:15", "12:45"], louise: ["13:15", "14:45"], returnBanff: "15:45", returnCanmore: "16:15" },
-  { number: 5, name: "Midday", pickup: { canmore: "11:00", banff: "11:30", samson: null }, moraine: ["12:30", "14:15"], louise: ["14:45", "17:00"], returnBanff: "18:00", returnCanmore: "18:30" },
-  { number: 6, name: "Afternoon", pickup: { canmore: "13:30", banff: "14:00", samson: null }, moraine: ["15:00", "16:30"], louise: ["17:00", "19:30"], returnBanff: "20:30", returnCanmore: "21:00" },
-  { number: 7, name: "Late Afternoon", pickup: { canmore: "16:15", banff: "16:45", samson: null }, moraine: ["17:45", "19:00"], louise: ["19:30", "21:00"], returnBanff: "22:00", returnCanmore: "22:30" },
+  { number: 1, name: "Early Morning", pickup: { canmore: "02:45", banff: "03:15", samson: calculateSamsonPickup("03:15") }, moraine: ["04:30", "06:00"], louise: ["06:30", "08:00"], returnBanff: "09:00", returnCanmore: "09:30" },
+  { number: 2, name: "Early Morning", pickup: { canmore: "03:45", banff: "04:15", samson: calculateSamsonPickup("04:15") }, moraine: ["05:30", "07:00"], louise: ["07:30", "09:30"], returnBanff: "10:30", returnCanmore: "11:00" },
+  { number: 3, name: "Morning", pickup: { canmore: "06:00", banff: "06:30", samson: calculateSamsonPickup("06:30") }, moraine: ["07:30", "09:00"], louise: ["09:30", "12:00"], returnBanff: "13:00", returnCanmore: "13:30" },
+  { number: 4, name: "Late Morning", pickup: { canmore: "09:45", banff: "10:15", samson: calculateSamsonPickup("10:15") }, moraine: ["11:15", "12:45"], louise: ["13:15", "14:45"], returnBanff: "15:45", returnCanmore: "16:15" },
+  { number: 5, name: "Midday", pickup: { canmore: "11:00", banff: "11:30", samson: calculateSamsonPickup("11:30") }, moraine: ["12:30", "14:15"], louise: ["14:45", "17:00"], returnBanff: "18:00", returnCanmore: "18:30" },
+  { number: 6, name: "Afternoon", pickup: { canmore: "13:30", banff: "14:00", samson: calculateSamsonPickup("14:00") }, moraine: ["15:00", "16:30"], louise: ["17:00", "19:30"], returnBanff: "20:30", returnCanmore: "21:00" },
+  { number: 7, name: "Late Afternoon", pickup: { canmore: "16:15", banff: "16:45", samson: calculateSamsonPickup("16:45") }, moraine: ["17:45", "19:00"], louise: ["19:30", "21:00"], returnBanff: "22:00", returnCanmore: "22:30" },
 ];
 
 /**

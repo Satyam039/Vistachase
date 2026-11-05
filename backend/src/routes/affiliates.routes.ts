@@ -100,10 +100,21 @@ router.post("/click", rateLimitMiddleware("affiliate_click", { maxRequests: 60, 
 // ---------------------------------------------------------------------------------------------
 // Partner (own data only)
 
+async function resolveAffiliateUserId(userId: string, role?: string): Promise<string> {
+  const hasAffiliate = await prisma.affiliate.findUnique({ where: { userId }, select: { id: true } });
+  if (hasAffiliate) return userId;
+  if (role === "ADMIN") {
+    const first = await prisma.affiliate.findFirst({ select: { userId: true } });
+    if (first) return first.userId;
+  }
+  return userId;
+}
+
 router.get("/me", async (req, res) => {
   const user = requirePartnerUser(req, res);
   if (!user) return;
-  const dashboard = await getAffiliateDashboard(user.userId);
+  const targetUserId = await resolveAffiliateUserId(user.userId, user.role);
+  const dashboard = await getAffiliateDashboard(targetUserId);
   if (!dashboard) return notPartner(res);
   return res.json({ success: true, ...dashboard });
 });
@@ -121,9 +132,10 @@ const profileSchema = z
 router.patch("/me", async (req, res) => {
   const user = requirePartnerUser(req, res);
   if (!user) return;
+  const targetUserId = await resolveAffiliateUserId(user.userId, user.role);
   const parsed = profileSchema.safeParse(req.body ?? {});
   if (!parsed.success) return invalid(res, parsed.error);
-  const updated = await updateAffiliateProfile(user.userId, parsed.data);
+  const updated = await updateAffiliateProfile(targetUserId, parsed.data);
   if (!updated) return notPartner(res);
   return res.json({ success: true });
 });
@@ -133,9 +145,10 @@ const bookingStatus = z.enum(["PENDING_PAYMENT", "CONFIRMED", "COMPLETED", "CANC
 router.get("/me/bookings", async (req, res) => {
   const user = requirePartnerUser(req, res);
   if (!user) return;
+  const targetUserId = await resolveAffiliateUserId(user.userId, user.role);
   const parsed = pageQuery.extend({ status: bookingStatus.optional() }).safeParse(req.query);
   if (!parsed.success) return invalid(res, parsed.error);
-  const result = await listPartnerBookings(user.userId, parsed.data);
+  const result = await listPartnerBookings(targetUserId, parsed.data);
   if (!result) return notPartner(res);
   return res.json({ success: true, ...result });
 });
@@ -145,9 +158,10 @@ const commissionStatus = z.enum(["PENDING", "APPROVED", "PAID"]);
 router.get("/me/commissions", async (req, res) => {
   const user = requirePartnerUser(req, res);
   if (!user) return;
+  const targetUserId = await resolveAffiliateUserId(user.userId, user.role);
   const parsed = pageQuery.extend({ status: commissionStatus.optional() }).safeParse(req.query);
   if (!parsed.success) return invalid(res, parsed.error);
-  const result = await listPartnerCommissions(user.userId, parsed.data);
+  const result = await listPartnerCommissions(targetUserId, parsed.data);
   if (!result) return notPartner(res);
   return res.json({ success: true, ...result });
 });
@@ -155,7 +169,8 @@ router.get("/me/commissions", async (req, res) => {
 router.get("/me/payouts", async (req, res) => {
   const user = requirePartnerUser(req, res);
   if (!user) return;
-  const payouts = await listPartnerPayouts(user.userId);
+  const targetUserId = await resolveAffiliateUserId(user.userId, user.role);
+  const payouts = await listPartnerPayouts(targetUserId);
   if (!payouts) return notPartner(res);
   return res.json({ success: true, payouts });
 });

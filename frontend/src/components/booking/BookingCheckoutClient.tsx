@@ -566,11 +566,13 @@ export function BookingCheckoutClient({
 
   const errorsByStep = useMemo<Array<Record<string, string>>>(() => {
     const party: Record<string, string> = {};
-    if (totalSeats < 1) {
+    const isSoldOut = seatCapacity <= 0 || (liveSeatsAvailable <= 0 && !holdToken);
+    if (isSoldOut) {
+      party.seats = isVehicle
+        ? "This private vehicle is already booked for this departure."
+        : "Tickets Sold Out. This departure is fully booked.";
+    } else if (totalSeats < 1) {
       party.seats = "Add at least one adult.";
-    } else if (isVehicle && seatCapacity === 0) {
-      party.seats =
-        "This private vehicle is already booked for this departure.";
     } else if (isVehicle && totalSeats > seatCapacity) {
       party.seats = `This private vehicle seats up to ${seatCapacity} guests.`;
     } else if (totalSeats > seatCapacity) {
@@ -691,6 +693,29 @@ export function BookingCheckoutClient({
     if (notBookable) {
       setHoldNotice(notBookableNotice);
       return;
+    }
+    // Early availability re-check before proceeding from Party to Customer Information
+    if (step === 0) {
+      await refreshAvailability();
+      const currentCapacity = isVehicle
+        ? (vehicleIsFree ? departure.capacityTotal : 0)
+        : liveSeatsAvailable + (holdToken ? holdSeats : 0);
+      if (currentCapacity <= 0) {
+        markAttempted([0]);
+        setHoldNotice({
+          status: "error",
+          title: "Tickets Sold Out · This departure is fully booked.",
+        });
+        return;
+      }
+      if (totalSeats > currentCapacity) {
+        markAttempted([0]);
+        setHoldNotice({
+          status: "warning",
+          title: `Only ${currentCapacity} seat${currentCapacity === 1 ? " is" : "s are"} left on this departure.`,
+        });
+        return;
+      }
     }
     markAttempted([step]);
     if (Object.keys(errorsByStep[step]).length > 0) {
@@ -951,10 +976,11 @@ export function BookingCheckoutClient({
         )}
         <StackItem size="fill">
           <Button
-            label={continueLabel}
+            label={step === 0 && seatCapacity <= 0 ? "Tickets Sold Out" : continueLabel}
             variant="primary"
             width="100%"
             isLoading={isPlacingHold || isSubmitting}
+            isDisabled={step === 0 && seatCapacity <= 0}
             onClick={goNext}
           />
         </StackItem>
@@ -1105,37 +1131,34 @@ export function BookingCheckoutClient({
 
                       {!confirmed && step === 0 && (
                         <VStack ref={stepContentRef} gap={5}>
-                          <HStack
-                            gap={3}
-                            vAlign="center"
-                            hAlign="between"
-                            wrap="wrap"
-                          >
-                            <VStack gap={1}>
-                              <Heading level={2}>Who&apos;s coming?</Heading>
-                              <Text type="supporting" color="secondary">
-                                Infants (0–2) don&apos;t take a paid seat.
-                              </Text>
-                            </VStack>
-                            <Badge
-                              variant={
-                                isVehicle
-                                  ? seatCapacity > 0
-                                    ? "success"
-                                    : "error"
-                                  : seatCapacity > 4
-                                    ? "success"
-                                    : "warning"
-                              }
-                              label={
-                                isVehicle
-                                  ? seatCapacity > 0
-                                    ? `Whole vehicle · up to ${seatCapacity} guests`
-                                    : "Vehicle already booked"
-                                  : SEATS_MESSAGE
-                              }
-                            />
-                          </HStack>
+                          <VStack gap={2} hAlign="start">
+                            <Heading level={2}>Who&apos;s coming?</Heading>
+                            <Text type="supporting" color="secondary">
+                              Infants (0–2) don&apos;t take a paid seat.
+                            </Text>
+                            {seatCapacity <= 0 ? (
+                              <div className="w-full rounded-xl border border-red-300 bg-red-50 p-3.5 text-sm font-medium text-red-800" role="alert">
+                                ⚠️ Tickets Sold Out · This departure is fully booked.
+                              </div>
+                            ) : (
+                              <div className="pt-0.5">
+                                <Badge
+                                  variant={
+                                    isVehicle
+                                      ? "success"
+                                      : seatCapacity > 4
+                                        ? "success"
+                                        : "warning"
+                                  }
+                                  label={
+                                    isVehicle
+                                      ? `Whole vehicle · up to ${seatCapacity} guests`
+                                      : SEATS_MESSAGE
+                                  }
+                                />
+                              </div>
+                            )}
+                          </VStack>
                           {/* Counters stack at every width: with their +/- buttons, three side by side
                           don't fit the form column beside the summary. */}
                           <FormLayout>

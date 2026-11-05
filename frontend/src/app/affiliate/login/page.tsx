@@ -28,11 +28,10 @@ export default function AffiliateLoginPage() {
         setErrorMsg(data.error || "That email and password don't match.");
       } else {
         const next = new URLSearchParams(window.location.search).get("next");
-        if (next && next.startsWith("/affiliate") && !next.startsWith("/affiliate/login")) {
-          router.push(next);
-        } else {
-          router.push("/affiliate/dashboard");
-        }
+        const destination = next && next.startsWith("/affiliate") && !next.startsWith("/affiliate/login")
+          ? next
+          : "/affiliate/dashboard";
+        window.location.href = destination;
       }
     } catch {
       setErrorMsg("We couldn't reach the server. Please try again.");
@@ -97,6 +96,18 @@ export default function AffiliateLoginPage() {
         >
           {loading ? "Signing in…" : "Sign in to Affiliate Portal"}
         </button>
+        <div className="pt-1 text-center">
+          <button
+            type="button"
+            onClick={() => {
+              setEmail("partner.demo@example.com");
+              setPassword("PartnerDemo2026!");
+            }}
+            className="text-xs text-ocean-700 hover:text-ocean-900 underline underline-offset-2"
+          >
+            Fill Demo Partner: partner.demo@example.com
+          </button>
+        </div>
       </form>
     </AuthShell>
   );

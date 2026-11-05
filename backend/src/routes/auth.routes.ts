@@ -79,7 +79,15 @@ const user = await prisma.user.findUnique({
       }
     } else if (expectedPortal === "affiliate") {
       const affiliateRoles: UserRole[] = ["AFFILIATE", "ADMIN"];
-      if (!affiliateRoles.includes(userRole)) {
+      let isAffiliate = affiliateRoles.includes(userRole);
+      if (!isAffiliate) {
+        const affiliate = await prisma.affiliate.findUnique({ where: { userId: user.id } });
+        if (affiliate) {
+          isAffiliate = true;
+          await prisma.user.update({ where: { id: user.id }, data: { role: "AFFILIATE" } });
+        }
+      }
+      if (!isAffiliate) {
         return res.status(403).json({
           success: false,
           error: "Access denied: this account is not registered as an affiliate partner. Please apply to the partner program or sign in with your partner account.",
