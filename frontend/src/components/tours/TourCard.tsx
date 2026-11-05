@@ -110,6 +110,17 @@ export function TourCard({
     tour.slug === "banff-yoho-discovery" ||
     tour.slug === "columbia-icefield-adventure";
 
+  const seasonal =
+    tour.slug === "banff-highlights-tour" || tour.slug === "banff-yoho-discovery"
+      ? { summer: "$220", winter: "$220" }
+      : tour.slug === "shared-tours-icefields-jasper" || tour.slug === "columbia-icefield-adventure"
+      ? { summer: "$320", winter: "$220" }
+      : tour.slug === "banff-private-tour"
+      ? { summer: "$1,750", winter: "$1,240" }
+      : tour.slug === "icefields-jasper-private-tour"
+      ? { summer: "$1,750", winter: "$1,240" }
+      : null;
+
   return (
     <article className="group relative flex h-full flex-col text-white transition-transform duration-500 ease-out hover:-translate-y-1">
       {/* Image block: square corners, nothing over the photo but the badges */}
@@ -218,6 +229,12 @@ export function TourCard({
                 />
               </div>
               {hasPrice(price) && <p className="mt-0.5 text-xs text-white/55">Taxes and required fees included</p>}
+              {seasonal && (
+                <div className="mt-1 flex flex-wrap gap-x-2.5 gap-y-0.5 text-[11px] text-white/60">
+                  <span>Summer: <strong className="font-medium text-summit-200">{seasonal.summer}</strong></span>
+                  <span>Winter: <strong className="font-medium text-white/80">{seasonal.winter}</strong></span>
+                </div>
+              )}
             </div>
             <span className="mb-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center ring-1 ring-summit-200/40 text-summit-200 transition-colors duration-300 group-hover:bg-summit-200 group-hover:text-obsidian-900" aria-hidden="true">
               <ArrowRight className="h-3.5 w-3.5" />

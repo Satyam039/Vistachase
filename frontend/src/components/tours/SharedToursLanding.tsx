@@ -430,6 +430,16 @@ function DayCard({ tour, price, award = false }: { tour: DayTour; price: number;
           {tour.keyNote}
         </p>
         <div className="mt-auto border-t border-white/[0.08] pt-4">
+          <div className="mb-3 space-y-1 rounded-lg bg-white/[0.04] p-2.5 text-xs">
+            <div className="flex items-center justify-between text-white/80">
+              <span className="text-white/55">Summer Price (Jun 1–Oct 10):</span>
+              <span className="font-medium text-summit-200">CAD ${tour.slug === "shared-tours-icefields-jasper" ? 320 : 220}/guest</span>
+            </div>
+            <div className="flex items-center justify-between text-white/80">
+              <span className="text-white/55">Winter Price (Oct 11–May 31):</span>
+              <span className="font-medium text-white">CAD $220/guest</span>
+            </div>
+          </div>
           <Price price={price} showOriginal={false} />
           <CardButton href={`/${tour.slug}`} label={tour.button} />
         </div>
@@ -460,6 +470,16 @@ function PackageCard({ price, separate }: { price: number; separate: number }) {
           {TWO_DAY_PACKAGE.keyNote}
         </p>
         <div className="mt-auto border-t border-white/[0.08] pt-4">
+          <div className="mb-3 space-y-1 rounded-lg bg-white/[0.04] p-2.5 text-xs">
+            <div className="flex items-center justify-between text-white/80">
+              <span className="text-white/55">Summer Price (Jun 1–Oct 10):</span>
+              <span className="font-medium text-summit-200">CAD $486/guest</span>
+            </div>
+            <div className="flex items-center justify-between text-white/80">
+              <span className="text-white/55">Winter Price (Oct 11–May 31):</span>
+              <span className="font-medium text-white">CAD $396/guest</span>
+            </div>
+          </div>
           <PackagePrice price={price} separate={separate} />
           <CardButton href={TWO_DAY_PACKAGE.href} label={TWO_DAY_PACKAGE.button} />
         </div>
