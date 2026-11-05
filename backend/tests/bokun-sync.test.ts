@@ -425,3 +425,26 @@ describe("Bókun products without a clock time", () => {
     expect(findSlot([{ date: day, startTime: "07:00", startTimeId: 9 }], DAY, "08:00")).toBeUndefined();
   });
 });
+
+describe("Bókun start time IDs (owner's doc, 2026-11-05)", () => {
+  const day = Date.parse(`${DAY}T00:00:00Z`);
+  it("match the start with the product's ID whatever its clock time", () => {
+    // Columbia Icefield: summer and winter starts have their own IDs and times.
+    expect(findSlot([{ date: day, startTime: "07:30", startTimeId: 4945518 }], DAY, "08:00", [4945517, 4945518])?.startTimeId).toBe(4945518);
+    // A private tour's 8am start serves the 07:00 departure too.
+    expect(findSlot([{ date: day, startTime: "08:00", startTimeId: 4787116 }], DAY, "07:00", [4787116])?.startTimeId).toBe(4787116);
+  });
+  it("pick by clock time when the day has several known starts, and ignore other starts", () => {
+    const list = [
+      { date: day, startTime: "03:15", startTimeId: 6012584 },
+      { date: day, startTime: "04:15", startTimeId: 6012585 },
+      { date: day, startTime: "05:00", startTimeId: 999 },
+    ];
+    const ids = [6012584, 6012585];
+    expect(findSlot(list, DAY, "04:15", ids)?.startTimeId).toBe(6012585);
+    expect(findSlot(list, DAY, "05:00", ids)).toBeUndefined();
+  });
+  it("fall back to the clock time when Bókun returns none of them (test account)", () => {
+    expect(findSlot([{ date: day, startTime: "08:00", startTimeId: 1 }], DAY, "08:00", [4787116])?.startTimeId).toBe(1);
+  });
+});

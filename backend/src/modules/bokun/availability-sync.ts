@@ -18,7 +18,7 @@
 //     sold out here when Bókun has nothing left, open again when Bókun has.
 
 import prisma from "@/lib/db/prisma";
-import { PRODUCT_MAP } from "@/modules/tours/product-map";
+import { BOKUN_PRODUCTS } from "@/modules/tours/product-map";
 import { findSlot, slotDate, type BokunAvailability } from "@/modules/bokun/bokun-booking";
 import { bokunClient, bokunIsTestAccount, bokunSyncDays, type BokunApi } from "@/modules/bokun/config";
 import { dateOnly, formatDateOnly, formatTimeOfDay, todayInMountainTime } from "@/lib/utils/time";
@@ -48,7 +48,7 @@ export async function syncBokunSeats(options: { client?: BokunApi; days?: number
   const result: SeatSyncResult = { products: 0, updated: 0, unchanged: 0, notInBokun: [], offSale: 0, onSale: 0, errors: [] };
   const followCalendar = !bokunIsTestAccount();
 
-  for (const product of PRODUCT_MAP.filter((p) => p.bokunId && p.bookingMode === "BOKUN")) {
+  for (const product of BOKUN_PRODUCTS) {
     const tour = await prisma.tour.findUnique({ where: { slug: product.slug }, select: { id: true, category: true } });
     if (!tour) continue;
     try {
@@ -70,7 +70,7 @@ export async function syncBokunSeats(options: { client?: BokunApi; days?: number
       for (const dep of departures) {
         const date = formatDateOnly(dep.date);
         const key = `${date} ${formatTimeOfDay(dep.departureTime)}`;
-        const slot = findSlot(byDay.get(date) ?? [], date, formatTimeOfDay(dep.departureTime));
+        const slot = findSlot(byDay.get(date) ?? [], date, formatTimeOfDay(dep.departureTime), product.bokunStartTimeIds);
         if (!slot) {
           if (result.notInBokun.length < 50) result.notInBokun.push(`${product.slug} ${key}`);
           if (followCalendar && dep.inventorySource === "LOCAL") offSale.push(dep.id);

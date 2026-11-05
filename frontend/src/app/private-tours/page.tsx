@@ -1,6 +1,7 @@
 import { getCategoryExtras, getTours } from "@/lib/api/catalog";
 import { FALLBACK_TOURS } from "@/lib/api/fallback-data";
 import { PrivateToursLanding } from "@/components/tours/PrivateToursLanding";
+import { toursForCards } from "@/lib/experiences";
 import type { TourWithAvailability } from "@/lib/api/types";
 import type { Metadata } from "next";
 import { withSeo } from "@/lib/seo/server";
@@ -35,7 +36,7 @@ export default async function PrivateToursPage() {
   return (
     <>
       <PageSeoExtras path="/private-tours" />
-      <PrivateToursLanding tours={tours} reviews={reviews} />
+      <PrivateToursLanding tours={toursForCards(tours, 60)} reviews={reviews} />
     </>
   );
 }

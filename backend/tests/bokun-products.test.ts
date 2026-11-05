@@ -36,6 +36,15 @@ describe("Bókun products check", () => {
     expect(check!.products.filter((p) => p.bokunId && !p.found).length).toBeGreaterThan(0);
   });
 
+  it("checks only the products the owner's list offers (2026-11-05)", async () => {
+    const check = await checkBokunProducts(fakeAccount([]).api);
+    const slugs = check!.products.map((p) => p.slug);
+    expect(slugs).toContain("shared-tours-icefields-jasper");
+    expect(slugs).not.toContain("winter-special");
+    expect(slugs).not.toContain("shared-tours-heart-of-banff");
+    expect(slugs).not.toContain("winter-signature-private-tour");
+  });
+
   it("returns null without a connection", async () => {
     expect(await checkBokunProducts(null)).toBeNull();
   });

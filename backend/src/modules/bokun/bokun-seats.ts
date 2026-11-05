@@ -12,7 +12,7 @@
 
 import prisma from "@/lib/db/prisma";
 import { findSlot, shiftDay, type BokunAvailability } from "@/modules/bokun/bokun-booking";
-import { bokunProductId } from "@/modules/bokun/bokun-sync";
+import { bokunProductId, bokunStartTimeIds } from "@/modules/bokun/bokun-sync";
 import { bokunClient, bokunConnected, type BokunApi } from "@/modules/bokun/config";
 import { formatDateOnly, formatTimeOfDay } from "@/lib/utils/time";
 
@@ -47,7 +47,7 @@ export async function bokunSeatsError(
   let slot: BokunAvailability | undefined;
   try {
     const list = (await withTimeout(client.getAvailabilities(productId, shiftDay(date, -1), shiftDay(date, 1)))) as BokunAvailability[] | null;
-    slot = findSlot(Array.isArray(list) ? list : [], date, time);
+    slot = findSlot(Array.isArray(list) ? list : [], date, time, bokunStartTimeIds(departure.tour?.slug));
   } catch (error) {
     console.warn(`[bokun] seat check skipped for ${departure.tour?.slug} ${date} ${time}: ${(error as Error).message.slice(0, 200)}`);
     return null;

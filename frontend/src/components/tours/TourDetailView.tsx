@@ -28,6 +28,7 @@ import { DepartureCalendar } from "@/components/booking/DepartureCalendar";
 import { docQuickFacts } from "@/lib/tourContent";
 import { PriceTag } from "@/components/pricing/PriceTag";
 import { AIRPORT_TRANSFER_PRICES, AirportTransferToggle } from "@/components/booking/AirportTransferFields";
+import { groupEnquiryHref } from "@/lib/experiences";
 import { cancellationShort, SEATS_MESSAGE } from "@/lib/policy";
 import { Rail } from "@/components/motion/Rail";
 import { BreadcrumbJsonLd, JsonLd } from "@/components/seo/JsonLd";
@@ -653,6 +654,13 @@ export function TourDetailView({
                         onChange={setInfants}
                         hint={`Age 0–5 · ${infantsPay ? `${money(infantFare)} CAD each, own seat` : "free, on a lap"}`}
                       />
+                      {/* More than 12: the team plans it (owner's doc, 2026-11-05). */}
+                      <p className="text-xs text-slate-600">
+                        More than 12 guests?{" "}
+                        <Link href={groupEnquiryHref(currentDeparture?.date)} className="text-ocean-700 underline underline-offset-2 hover:text-ocean-800">
+                          Plan a group trip with our team
+                        </Link>
+                      </p>
                     </>
                   )}
 

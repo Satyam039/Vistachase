@@ -5,7 +5,8 @@
   "bookingMode: BOKUN = instant booking through Bokun; ENQUIRY = request form (custom itineraries, multi-day).",
   "mornbyTour: the tour name in Mornby (mornby.com > Tours). mornbyMatch 'proposed' means matched by name and route and needs confirming by operations; 'none' means Mornby has no matching tour yet.",
   "places / season: used to pick each product's gallery photos from backend/media (see prisma/catalog/load-catalog.js).",
-  "TICKET products (Banff activity tickets) are new: not on the live site, content in extra-products.json. They take requests (ENQUIRY) until their Bokun IDs exist; then set bookingMode to BOKUN."
+  "TICKET products (Banff activity tickets) are new: not on the live site, content in extra-products.json. They take requests (ENQUIRY) until their Bokun IDs exist; then set bookingMode to BOKUN.",
+  "bokunStartTimeIds: the Bokun start time IDs of the product (owner's doc, 2026-11-05). A website departure is matched to the start with one of these IDs on its day (by clock time when the day has several), so a clock time that differs in Bokun still matches."
  ],
  "bokun": {
   "onlineSalesChannelId": "90615648-3c90-4d07-9dac-d39089e7728b"
@@ -17,6 +18,7 @@
    "category": "SHARED",
    "bookingMode": "BOKUN",
    "bokunId": "796650",
+   "bokunStartTimeIds": [5931121],
    "destination": "banff-national-park",
    "mornbyTour": "Banff Shared DAY TOUR",
    "mornbyMatch": "proposed",
@@ -74,6 +76,7 @@
    "category": "SHARED",
    "bookingMode": "BOKUN",
    "bokunId": "856008",
+   "bokunStartTimeIds": [4945517, 4945518],
    "destination": "jasper-national-park",
    "mornbyTour": "Jasper Shared Tour",
    "mornbyMatch": "proposed",
@@ -113,6 +116,7 @@
    "category": "PRIVATE",
    "bookingMode": "BOKUN",
    "bokunId": "1167962",
+   "bokunStartTimeIds": [4787116],
    "destination": "banff-national-park",
    "mornbyTour": "Banff Private Tour",
    "mornbyMatch": "proposed",
@@ -133,6 +137,7 @@
    "category": "PRIVATE",
    "bookingMode": "BOKUN",
    "bokunId": "1115237",
+   "bokunStartTimeIds": [4434478],
    "destination": "jasper-national-park",
    "mornbyTour": "Jasper & Columbia Icefield Private Day Tour (Private)",
    "mornbyMatch": "proposed",
@@ -213,6 +218,7 @@
    "category": "SHUTTLE",
    "bookingMode": "BOKUN",
    "bokunId": "1344805",
+   "bokunStartTimeIds": [6012584, 6012585, 6012588, 6012590, 6012592, 6012593, 6012602],
    "destination": "moraine-lake",
    "mornbyTour": "Moraine Lake & Lake Louise Shuttle",
    "mornbyMatch": "proposed",
@@ -228,6 +234,7 @@
    "category": "SHUTTLE",
    "bookingMode": "BOKUN",
    "bokunId": "1344805",
+   "bokunStartTimeIds": [6012584, 6012585, 6012588, 6012590, 6012592, 6012593, 6012602],
    "destination": "moraine-lake",
    "mornbyTour": "Moraine Lake & Lake Louise Shuttle",
    "mornbyMatch": "proposed",

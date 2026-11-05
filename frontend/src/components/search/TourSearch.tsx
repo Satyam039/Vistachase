@@ -4,23 +4,28 @@
 // a header with the keyword field, type chips, a sticky filter bar (destination, guests, date,
 // sort) with the live result count, then results grouped by type in the shared TourCard grid.
 //
-// Filters live in the URL (/search?q=&category=&destination=&seats=&date=), so a search can be
-// shared or bookmarked and Back restores it. The server renders the first result set from the
-// same params, so the page works without JS.
+// Filters live in the URL (/search?q=&category=&seats=&date=), so a search can be shared or
+// bookmarked and Back restores it. The server renders the first result set from the same params,
+// so the page works without JS.
+//
+// Results are only the experiences Vista Chase offers (lib/experiences.ts, the home rail's list:
+// owner's doc, 2026-11-05), each shown when it runs for the party on the chosen date. The bar
+// shows the chosen experience type (not a destination), and a party over 12 goes to the contact page.
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { CalendarDays, ChevronRight, MapPin, Search, SlidersHorizontal, Users, X } from "lucide-react";
+import { CalendarDays, ChevronRight, Compass, Search, SlidersHorizontal, Users, X } from "lucide-react";
 import { Dropdown } from "@/components/forms/Dropdown";
-import { TourCard, fromPrice, nextDepartureFor } from "@/components/tours/TourCard";
+import { TourCard, fromPrice } from "@/components/tours/TourCard";
+import { ExperienceCard } from "@/components/home/TopExperiences";
+import { MAX_SEARCH_GUESTS, buildExperienceTabs, groupEnquiryHref, guestOptions, type ExperienceCard as Experience } from "@/lib/experiences";
 import type { TourWithAvailability } from "@/lib/api/types";
 import { openDatePicker } from "@/lib/utils/datePicker";
 
 export interface SearchFilters {
   q: string;
   category: string;
-  destination: string;
   seats: number;
   date: string;
 }
@@ -28,10 +33,11 @@ export interface SearchFilters {
 const CATEGORY_LABELS: Record<string, string> = {
   SHARED: "Shared tours",
   PRIVATE: "Private tours",
-  SHUTTLE: "Lake shuttles",
   MULTIDAY: "Multi-Day Journeys",
+  SHUTTLE: "Lake shuttles",
   TICKET: "Activity tickets",
 };
+const CATEGORIES = Object.keys(CATEGORY_LABELS) as (keyof typeof CATEGORY_LABELS)[];
 
 const SORTS = [
   { value: "recommended", label: "Recommended" },
@@ -42,7 +48,7 @@ const SORTS = [
 type SortValue = (typeof SORTS)[number]["value"];
 
 const KEYWORD_URL_DELAY_MS = 300;
-const EMPTY: SearchFilters = { q: "", category: "ALL", destination: "ALL", seats: 1, date: "" };
+const EMPTY: SearchFilters = { q: "", category: "ALL", seats: 1, date: "" };
 const CONTROL =
   "h-11 w-full appearance-none rounded-full border border-obsidian-900/10 bg-white pl-10 pr-4 text-sm text-obsidian-900 focus:border-ocean-600 focus:outline-none focus:ring-2 focus:ring-ocean-600/30";
 
@@ -51,18 +57,13 @@ function todayIso() {
   return new Date(now.getTime() - now.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
 }
 
-export function filterTours(tours: TourWithAvailability[], filters: SearchFilters) {
+/** The offered experiences that match the filters, in the home rail's order. */
+export function filterExperiences(all: Experience[], filters: SearchFilters) {
   const keyword = filters.q.trim().toLowerCase();
-  return tours.filter((tour) => {
-    if (filters.category !== "ALL" && tour.category !== filters.category) return false;
-    if (filters.destination !== "ALL" && tour.destination.slug !== filters.destination) return false;
-    if (keyword) {
-      const text = `${tour.title} ${tour.summary} ${tour.description} ${tour.destination.name} ${tour.highlights.join(" ")}`.toLowerCase();
-      if (!text.includes(keyword)) return false;
-    }
-    // A chosen date narrows to tours that actually run that day with room for the party.
-    if (filters.date && !nextDepartureFor(tour, filters.seats, filters.date)) return false;
-    return true;
+  return all.filter((card) => {
+    if (filters.category !== "ALL" && card.category !== filters.category) return false;
+    if (keyword && !card.text.includes(keyword)) return false;
+    return card.fits(filters.seats, filters.date);
   });
 }
 
@@ -70,27 +71,20 @@ function filtersToQuery(filters: SearchFilters) {
   const params = new URLSearchParams();
   if (filters.q.trim()) params.set("q", filters.q.trim());
   if (filters.category !== "ALL") params.set("category", filters.category);
-  if (filters.destination !== "ALL") params.set("destination", filters.destination);
   if (filters.seats !== 1) params.set("seats", String(filters.seats));
   if (filters.date) params.set("date", filters.date);
   return params.toString();
 }
 
-// "Price on request" (0) always sorts after priced tours.
-const priceKey = (t: TourWithAvailability, dir: 1 | -1) => {
-  const p = fromPrice(t);
+// "Price on request" (0) always sorts after priced experiences.
+const cardPrice = (c: Experience) => (c.kind === "tour" ? fromPrice(c.tour) : c.price);
+const priceKey = (c: Experience, dir: 1 | -1) => {
+  const p = cardPrice(c);
   return p > 0 ? p * dir : Number.POSITIVE_INFINITY;
 };
+const rating = (c: Experience) => (c.kind === "tour" ? [c.tour.rating, c.tour.reviewCount] : [0, 0]);
 
-export function TourSearch({
-  tours,
-  destinations,
-  initialFilters,
-}: {
-  tours: TourWithAvailability[];
-  destinations: { slug: string; name: string }[];
-  initialFilters: SearchFilters;
-}) {
+export function TourSearch({ tours, initialFilters }: { tours: TourWithAvailability[]; initialFilters: SearchFilters }) {
   const router = useRouter();
   const pathname = usePathname();
   const [filters, setFilters] = useState<SearchFilters>(initialFilters);
@@ -106,18 +100,30 @@ export function TourSearch({
     return () => clearTimeout(timer);
   }, [filters, pathname, router]);
 
-  const categories = useMemo(() => ["ALL", ...Object.keys(CATEGORY_LABELS).filter((c) => tours.some((t) => t.category === c))], [tours]);
-  const destinationOptions = useMemo(() => destinations.filter((d) => tours.some((t) => t.destination.slug === d.slug)), [destinations, tours]);
+  const offered = useMemo(() => {
+    const tabs = buildExperienceTabs(tours);
+    return CATEGORIES.flatMap((c) => tabs[c as keyof typeof tabs]);
+  }, [tours]);
+  const categories = useMemo(() => ["ALL", ...CATEGORIES.filter((c) => offered.some((x) => x.category === c))], [offered]);
 
   const results = useMemo(() => {
-    const filtered = filterTours(tours, filters);
+    const filtered = filterExperiences(offered, filters);
+    if (sort === "recommended") return filtered;
     return [...filtered].sort((a, b) => {
       if (sort === "price-asc") return priceKey(a, 1) - priceKey(b, 1);
       if (sort === "price-desc") return priceKey(a, -1) - priceKey(b, -1);
-      if (sort === "rating") return b.rating - a.rating || b.reviewCount - a.reviewCount;
-      return b.reviewCount - a.reviewCount || Number(b.isFeatured) - Number(a.isFeatured);
+      const [ra, ca] = rating(a);
+      const [rb, cb] = rating(b);
+      return rb - ra || cb - ca;
     });
-  }, [tours, filters, sort]);
+  }, [offered, filters, sort]);
+
+  // More than 12 guests: the team plans it (owner's doc, 2026-11-05).
+  const chooseGuests = (value: string) => {
+    const seats = Number(value) || 1;
+    if (seats > MAX_SEARCH_GUESTS) router.push(groupEnquiryHref(filters.date || undefined));
+    else update({ seats });
+  };
 
   const sections = useMemo(() => {
     if (filters.category !== "ALL") return [{ category: filters.category, items: results }];
@@ -187,12 +193,12 @@ export function TourSearch({
         <div className="grid gap-2 rounded-none bg-white p-2 shadow-[0_12px_24px_-20px_rgba(12,31,33,0.45)] ring-1 ring-obsidian-900/[0.08] sm:grid-cols-2 lg:grid-cols-[1.2fr_0.8fr_1fr_1fr_auto] lg:items-center lg:rounded-full">
           <Dropdown
             variant="pill"
-            label="Destination"
+            label="Experience"
             hideLabel
-            icon={MapPin}
-            value={filters.destination}
-            onChange={(v) => update({ destination: v })}
-            options={[{ value: "ALL", label: "All destinations" }, ...destinationOptions.map((d) => ({ value: d.slug, label: d.name }))]}
+            icon={Compass}
+            value={filters.category}
+            onChange={(v) => update({ category: v })}
+            options={categories.map((c) => ({ value: c, label: c === "ALL" ? "All experiences" : CATEGORY_LABELS[c] }))}
           />
           <Dropdown
             variant="pill"
@@ -200,8 +206,8 @@ export function TourSearch({
             hideLabel
             icon={Users}
             value={String(filters.seats)}
-            onChange={(v) => update({ seats: Number(v) || 1 })}
-            options={[1, 2, 3, 4, 5, 6, 7].map((n) => ({ value: String(n), label: n === 7 ? "7+ guests" : `${n} ${n === 1 ? "guest" : "guests"}` }))}
+            onChange={chooseGuests}
+            options={guestOptions()}
           />
           <label className="relative block">
             <span className="sr-only">Date</span>
@@ -241,7 +247,7 @@ export function TourSearch({
             <Search className="mx-auto h-8 w-8 text-ocean-600" aria-hidden="true" />
             <h2 className="mt-4 text-2xl font-light text-obsidian-900">No tours match these filters</h2>
             <p className="mt-2 text-base text-slate-600">
-              {filters.date ? "Nothing runs that day with room for your party. Try another date or a smaller group." : "Try a different keyword, destination or type."}
+              {filters.date ? "Nothing runs that day with room for your party. Try another date or a smaller group." : "Try a different keyword or experience."}
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <button type="button" onClick={() => setFilters(EMPTY)} className="golden-summit-btn inline-flex h-11 items-center rounded-full px-6 text-sm">
@@ -263,9 +269,13 @@ export function TourSearch({
                   <span className="text-sm text-slate-600">{section.items.length}</span>
                 </div>
                 <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
-                  {section.items.map((tour) => (
-                    <li key={tour.id}>
-                      <TourCard tour={tour} seats={filters.seats} date={filters.date || undefined} />
+                  {section.items.map((card) => (
+                    <li key={card.key}>
+                      {card.kind === "tour" ? (
+                        <TourCard tour={card.tour} title={card.title} image={card.image} seats={filters.seats} date={filters.date || undefined} />
+                      ) : (
+                        <ExperienceCard card={card} />
+                      )}
                     </li>
                   ))}
                 </ul>

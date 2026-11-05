@@ -4,10 +4,12 @@ import { createReservationHold } from "@/modules/reservations/reservation.reposi
 import { getTourBySlug } from "@/modules/tours/tour.repository";
 import { getCheckoutDeparture } from "@/modules/departures/departure.repository";
 import { dateOnly, timeOfDay } from "@/lib/utils/time";
+import { ON_SALE } from "@/modules/tours/product-map";
 
 describe("Live seat availability ignores expired holds", () => {
   it("counts live holds as taken but frees seats once a hold has expired", async () => {
-    const tour = await prisma.tour.findFirstOrThrow();
+    // A tour still on sale: product pages don't list retired ones.
+    const tour = await prisma.tour.findFirstOrThrow({ where: ON_SALE });
     const departure = await prisma.tourDeparture.create({
       data: { inventorySource: "LOCAL",
         tourId: tour.id,

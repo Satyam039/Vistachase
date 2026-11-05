@@ -41,6 +41,8 @@ export class BokunUnavailableError extends Error {}
 export interface BokunReservationInput {
   bookingReference: string;
   productBokunId: string;
+  /** The product's Bókun start time IDs (product-map.json), when known. */
+  startTimeIds?: number[];
   /** Our tour category: PRIVATE books the whole vehicle. */
   category: string;
   date: string; // YYYY-MM-DD
@@ -93,9 +95,16 @@ export const shiftDay = (date: string, days: number) => new Date(Date.parse(`${d
  * Bókun's start for our departure: same day and start time. A product Bókun runs without a clock
  * time (one start a day, read as 00:00, e.g. a private tour whose pickup time is agreed later)
  * matches any of our departures that day.
+ *
+ * With the product's start time IDs (owner's doc, 2026-11-05; product-map.json), the day's start
+ * with one of those IDs is used: the one at the same clock time, or the only one that day (so the
+ * Columbia Icefield's summer and winter starts, or a private tour's 8am start, match whatever clock
+ * time the website shows). IDs Bókun doesn't return (a test account) fall back to the clock time.
  */
-export function findSlot(list: Availability[], date: string, time: string) {
+export function findSlot(list: Availability[], date: string, time: string, startTimeIds: number[] = []) {
   const day = list.filter((a) => slotDate(a) === date);
+  const known = day.filter((a) => a.startTimeId != null && startTimeIds.includes(Number(a.startTimeId)));
+  if (known.length > 0) return known.find((a) => slotTime(a) === time) ?? (known.length === 1 ? known[0] : undefined);
   return day.find((a) => slotTime(a) === time) ?? (day.length === 1 && slotTime(day[0]) === "00:00" ? day[0] : undefined);
 }
 
@@ -188,7 +197,7 @@ export async function reserveInBokun(
     client.fetch("GET", `/activity.json/${activityId}?lang=EN&currency=CAD`) as Promise<{ pricingCategories?: BokunCategory[] } | null>,
   ]);
 
-  const slot = findSlot(Array.isArray(list) ? list : [], input.date, input.time);
+  const slot = findSlot(Array.isArray(list) ? list : [], input.date, input.time, input.startTimeIds);
   const needed = input.category === "PRIVATE" ? 1 : input.adults + input.children;
 
   if (!slot || slot.unavailable) {
