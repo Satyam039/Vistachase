@@ -88,7 +88,7 @@ export async function createReservationHold(input: CreateHoldInput): Promise<Hol
         error: isVehicle
           ? "This private vehicle is already reserved for this departure."
           : available <= 0
-            ? "Tickets Sold Out. This departure is fully booked."
+            ? "Tickets Sold Out. This departure is fully booked (0 seats are available)."
             : `Only ${Math.max(0, available)} seat(s) available for this departure. Requested: ${input.seatsCount}`,
       };
     }

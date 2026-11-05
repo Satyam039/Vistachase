@@ -80,7 +80,8 @@ export async function getDispatchManifest(date: string) {
         stopName: b.pickupStop?.name,
         customText: b.pickupCustomText,
         storedPickupTime: b.pickupTime,
-      });
+        isShuttle: Boolean(dep.shuttleRouteId || dep.shuttleRoute || dep.tour?.category === "SHUTTLE"),
+      }) || undefined;
 
       if (!stopsMap.has(stopKey)) {
         stopsMap.set(stopKey, {
@@ -200,7 +201,7 @@ export async function getDepartureManifest(departureId: string) {
   const dep = await prisma.tourDeparture.findUnique({
     where: { id: departureId },
     include: {
-      tour: { select: { title: true } },
+      tour: { select: { title: true, category: true } },
       shuttleRoute: { select: { name: true } },
       bookings: {
         where: { status: { in: ["CONFIRMED", "PAID_UNSYNCED", "COMPLETED"] } },
@@ -224,13 +225,15 @@ export async function getDepartureManifest(departureId: string) {
       seats: b.totalSeats,
       pickupStop: b.pickupStop ? `${b.pickupStop.name}, ${b.pickupStop.town}` : b.pickupCustomText || "Not chosen",
       pickupAddress: b.pickupStop?.address ?? null,
-      pickupTime: resolveShuttlePickupTime({
-        departureTime,
-        town: b.pickupStop?.town,
-        stopName: b.pickupStop?.name,
-        customText: b.pickupCustomText,
-        storedPickupTime: b.pickupTime,
-      }),
+      pickupTime:
+        resolveShuttlePickupTime({
+          departureTime,
+          town: b.pickupStop?.town,
+          stopName: b.pickupStop?.name,
+          customText: b.pickupCustomText,
+          storedPickupTime: b.pickupTime,
+          isShuttle: Boolean(dep.shuttleRouteId || dep.shuttleRoute || dep.tour?.category === "SHUTTLE"),
+        }) || b.pickupTime || departureTime,
       stopOrder: b.pickupStop?.sortOrder ?? 9999,
       addOns: b.items.map((i) => (i.quantity > 1 ? `${i.name} × ${i.quantity}` : i.name)),
       specialRequests: b.specialRequests,

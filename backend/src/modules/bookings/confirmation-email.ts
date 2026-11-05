@@ -54,6 +54,12 @@ function clock(hhmm: string | null) {
 
 function dayLines(b: TripBooking) {
   const d = b.tourDeparture;
+  const isShuttle = Boolean(
+    d.shuttleRouteId ||
+    d.shuttleRoute ||
+    d.tour?.category === "SHUTTLE" ||
+    d.tour?.slug?.includes("shuttle"),
+  );
   const title = experienceTitle(d);
   const time = clock(formatTimeOfDay(d.departureTime));
   const place = b.pickupStop?.name || b.pickupCustomText;
@@ -63,6 +69,7 @@ function dayLines(b: TripBooking) {
     stopName: b.pickupStop?.name,
     customText: b.pickupCustomText,
     storedPickupTime: b.pickupTime,
+    isShuttle,
   });
   const pickup = pickupTime ? `${clock(pickupTime)}${place ? ` at ${place}` : ""}` : (place ?? "Pickup details to follow by email");
   return { title, date: longDate(d.date), time, pickup };

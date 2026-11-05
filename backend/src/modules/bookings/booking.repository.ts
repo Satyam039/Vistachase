@@ -277,7 +277,7 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
           isVehicle
             ? "This private vehicle is already booked for this departure."
             : available <= 0
-              ? "Tickets Sold Out. This departure is fully booked."
+              ? "Tickets Sold Out. This departure is fully booked (0 seats are available)."
               : `Requested ${totalSeats} seats, but only ${Math.max(0, available)} seats are available.`,
         );
       }
@@ -330,12 +330,19 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
       };
 
       const stop = input.pickupStopId ? await tx.shuttleStop.findUnique({ where: { id: input.pickupStopId } }) : null;
+      const isShuttle = Boolean(
+        departure.shuttleRouteId ||
+        departure.shuttleRoute ||
+        departure.tour?.category === "SHUTTLE" ||
+        departure.tour?.slug?.includes("shuttle"),
+      );
       const resolvedPickupTime = resolveShuttlePickupTime({
         departureTime: formatTimeOfDay(departure.departureTime),
         town: stop?.town,
         stopName: stop?.name,
         customText: input.pickupCustomText,
         storedPickupTime: input.pickupTime,
+        isShuttle,
       });
 
       const created = await tx.booking.create({
@@ -609,12 +616,19 @@ export async function getBookingByReference(reference: string) {
     },
   });
   if (booking) {
+    const isShuttle = Boolean(
+      booking.tourDeparture.shuttleRouteId ||
+      booking.tourDeparture.shuttleRoute ||
+      booking.tourDeparture.tour?.category === "SHUTTLE" ||
+      booking.tourDeparture.tour?.slug?.includes("shuttle"),
+    );
     booking.pickupTime = resolveShuttlePickupTime({
       departureTime: formatTimeOfDay(booking.tourDeparture.departureTime),
       town: booking.pickupStop?.town,
       stopName: booking.pickupStop?.name,
       customText: booking.pickupCustomText,
       storedPickupTime: booking.pickupTime,
+      isShuttle,
     });
   }
   return booking;

@@ -30,7 +30,8 @@ export function resolveShuttlePickupTime(params: {
   stopName?: string | null;
   customText?: string | null;
   storedPickupTime?: string | null;
-}): string {
+  isShuttle?: boolean;
+}): string | null {
   const town = (params.town || "").toLowerCase();
   const name = (params.stopName || "").toLowerCase();
   const text = (params.customText || "").toLowerCase();
@@ -61,5 +62,8 @@ export function resolveShuttlePickupTime(params: {
   if (isSamson) {
     return calculateSamsonPickup(time);
   }
-  return time;
+  if (params.isShuttle) {
+    return time;
+  }
+  return null;
 }
