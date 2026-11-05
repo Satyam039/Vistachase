@@ -41,8 +41,9 @@ const AREAS: { id: AirportArea; label: string }[] = [
   { id: "LAKE_LOUISE", label: "Lake Louise" },
 ];
 
-/** The transfer's price in dollars (both ways), or null when our team confirms it. Same rule as the server. */
+/** The transfer's price in dollars (both ways), or null when our team confirms it. Same rule as the server. Available only for 2+ guests. */
 export function airportTransferPrice(t: Pick<AirportTransferValue, "area" | "arrivalDate">, guests: number): number | null {
+  if (guests < 2) return null;
   if (!t.area || !t.arrivalDate) return null;
   const md = t.arrivalDate.slice(5, 10);
   if (md < "06-01" || md > "10-10") return null;

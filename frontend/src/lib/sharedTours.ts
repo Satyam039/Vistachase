@@ -53,7 +53,7 @@ export const BANFF_YOHO: DayTour = {
   highlight: "Iconic lakes and sightseeing · One full day · Award-winning tour",
   duration: "1 full day",
   keyNote: "Route varies by season",
-  image: "/media/photos/moraine-lake-ten-peaks.webp",
+  image: "/media/photos/canadian-rockies-vista-2585.jpg",
   imageAlt: "Moraine Lake below the Valley of the Ten Peaks",
   button: "View Banff & Yoho Tour",
   stops: [
@@ -84,7 +84,7 @@ export const ICEFIELD: DayTour = {
   highlight: "Icefields Parkway · Ice Explorer and Skywalk on the summer itinerary · One full day",
   duration: "1 full day",
   keyNote: "Glacier activities included on the summer itinerary",
-  image: "/media/photos/columbia-icefield-ice-explorer.jpg",
+  image: "/media/photos/pursuit-sherps-snowcoach-01.jpg",
   imageAlt: "Ice Explorer on the Athabasca Glacier",
   button: "View Icefield Tour",
   stops: [
@@ -117,8 +117,8 @@ export const TWO_DAY_PACKAGE = {
   saving: "Save 10% when booking both",
   discount: 0.1,
   images: [
-    { src: "/media/photos/moraine-lake-classic.webp", alt: "Moraine Lake" },
-    { src: "/media/photos/athabasca-glacier.webp", alt: "The Athabasca Glacier" },
+    { src: "/media/photos/canadian-rockies-vista-3609.jpg", alt: "Emerald Lake & Yoho National Park" },
+    { src: "/media/photos/columbia-icefield-athabasca-glacier-master.jpg", alt: "The Athabasca Glacier" },
   ],
   button: "View Two-Day Package",
   requestMessage:

@@ -41,6 +41,24 @@ export const PACKAGES: TourPackage[] = [
     tourSlugs: ["banff-highlights-tour", "shared-tours-icefields-jasper"],
     discountPercent: 10,
   },
+  {
+    slug: "two-day-rockies-explorer-private",
+    title: "Private Two-Day Rockies Explorer",
+    tourSlugs: ["banff-private-tour", "icefields-jasper-private-tour"],
+    discountPercent: 0,
+  },
+  {
+    slug: "three-day-rockies-discovery",
+    title: "Three-Day Rockies Discovery",
+    tourSlugs: ["banff-private-tour", "icefields-jasper-private-tour", "banff-private-tour"],
+    discountPercent: 0,
+  },
+  {
+    slug: "four-day-rockies-and-jasper",
+    title: "Four-Day Rockies & Jasper",
+    tourSlugs: ["banff-private-tour", "icefields-jasper-private-tour", "icefields-jasper-private-tour", "banff-private-tour"],
+    discountPercent: 0,
+  },
 ];
 
 export const findPackage = (slug: string) => PACKAGES.find((p) => p.slug === slug) ?? null;
@@ -114,7 +132,7 @@ async function packageError(pkg: TourPackage, departureIds: string[]): Promise<s
     if (closed) return `Day ${i + 1} (${d.tour.title}): ${closed}`;
     dates.add(d.date.toISOString().slice(0, 10));
   }
-  if (dates.size !== departureIds.length) return "The two tours are full-day trips, so they need to be on different days.";
+  if (dates.size !== departureIds.length) return "The tours are full-day trips, so they need to be on different days.";
   return null;
 }
 

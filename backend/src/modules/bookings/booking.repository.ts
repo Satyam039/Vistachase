@@ -285,6 +285,9 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
       const totals = priceBooking(departure, { adults: input.adultsCount, children: input.childrenCount, infants: input.infantsCount }, input.addOns, input.promoCode, options.discount?.percent);
       // Airport transfer (private tours): charged with the tour when it has a price, never discounted.
       const partySize = input.adultsCount + input.childrenCount + input.infantsCount;
+      if (input.airportTransfer && partySize < 2) {
+        throw new BookingRefused("Airport transfer is available only for bookings with two or more guests.");
+      }
       const transferCents = input.airportTransfer ? airportTransferPriceCents(input.airportTransfer, partySize) : null;
       if (input.airportTransfer && transferCents != null) {
         totals.addOns.push({ name: airportTransferLabel(input.airportTransfer, partySize), priceCents: transferCents, quantity: 1 });

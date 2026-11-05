@@ -405,19 +405,26 @@ export function BookingCheckoutClient({
     setHoldExpiresAt(0);
   }, []);
 
-  const refreshAvailability = useCallback(async () => {
+  const refreshAvailability = useCallback(async (): Promise<number | null> => {
     try {
       const res = await fetch(
         `/api/departures/checkout?departureId=${encodeURIComponent(departure.id)}`,
       );
       const data = await res.json();
       if (res.ok && typeof data.departure?.seatsAvailable === "number") {
-        setLiveSeatsAvailable(data.departure.seatsAvailable);
+        const seats = data.departure.seatsAvailable;
+        setLiveSeatsAvailable(seats);
+        return seats;
       }
     } catch {
       // Keep the last known figure; the hold and booking APIs re-check capacity anyway.
     }
+    return null;
   }, [departure.id]);
+
+  useEffect(() => {
+    void refreshAvailability();
+  }, [refreshAvailability]);
 
   const releaseHold = useCallback(
     async (token: string, seats: number) => {
@@ -496,6 +503,13 @@ export function BookingCheckoutClient({
       void releaseHold(holdToken, holdSeats);
     }
   }, [holdToken, isVehicle, holdSeats, totalSeats, releaseHold]);
+
+  // Airport transfer is only available for bookings with 2 or more guests.
+  useEffect(() => {
+    if (totalSeats < 2 && airport) {
+      setAirport(false);
+    }
+  }, [totalSeats, airport]);
 
   const placeHold = async () => {
     setIsPlacingHold(true);
@@ -604,7 +618,7 @@ export function BookingCheckoutClient({
     } else if (totalSeats > seatCapacity) {
       party.seats = `Only ${seatCapacity} ${seatCapacity === 1 ? "seat is" : "seats are"} left on this departure.`;
     }
-    const airportError = airport ? airportTransferError(airportTransfer) : null;
+    const airportError = airport && totalSeats >= 2 ? airportTransferError(airportTransfer) : null;
     if (airportError) party.airport = airportError;
 
     const contact: Record<string, string> = {};
@@ -724,10 +738,11 @@ export function BookingCheckoutClient({
     }
     // Early availability re-check before proceeding from Party to Customer Information
     if (step === 0) {
-      await refreshAvailability();
+      const freshSeats = await refreshAvailability();
+      const currentAvailable = freshSeats ?? liveSeatsAvailable;
       const currentCapacity = isVehicle
         ? (vehicleIsFree ? departure.capacityTotal : 0)
-        : liveSeatsAvailable + (holdToken ? holdSeats : 0);
+        : currentAvailable + (holdToken ? holdSeats : 0);
       if (currentCapacity <= 0) {
         markAttempted([0]);
         setHoldNotice({
@@ -1232,7 +1247,7 @@ export function BookingCheckoutClient({
                               message={currentErrors.seats}
                             />
                           )}
-                          {departure.tour?.category === "PRIVATE" && (
+                          {departure.tour?.category === "PRIVATE" && totalSeats >= 2 && (
                             <>
                               <AirportTransferToggle checked={airport} onChange={setAirport} />
                               {airport && (

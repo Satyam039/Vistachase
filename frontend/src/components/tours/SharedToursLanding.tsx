@@ -297,7 +297,7 @@ function pick(id: Parameters<typeof serviceById>[0]) {
   return { href: s?.href ?? "/search", image: s?.image ?? "/media/photos/moraine-lake-classic.webp" };
 }
 
-/** Duration, group size and pickup: the same three facts on every card. */
+/** Duration and group size on every card (pickup details inside the tour view). */
 function Facts({ duration }: { duration: string }) {
   return (
     <ul className="mt-4 flex flex-wrap gap-x-4 gap-y-1.5 text-sm text-white/75" aria-label="Key details">
@@ -308,10 +308,6 @@ function Facts({ duration }: { duration: string }) {
       <li className="flex items-center gap-1.5">
         <Users className="h-3.5 w-3.5 text-summit-300" aria-hidden="true" />
         Max 12 guests
-      </li>
-      <li className="flex items-center gap-1.5">
-        <MapPin className="h-3.5 w-3.5 text-summit-300" aria-hidden="true" />
-        Pickup in Banff &amp; Canmore
       </li>
     </ul>
   );

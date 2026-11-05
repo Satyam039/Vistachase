@@ -160,7 +160,15 @@ export function ExperienceCard({ card }: { card: LinkCard }) {
               <>
                 <div className="flex min-w-0 items-baseline gap-1.5 whitespace-nowrap">
                   <span className="text-xs text-white/55">From</span>
-                  <PriceTag price={price} currency="CAD" unit={unit} size="sm" tone="dark" layout="inline" />
+                  <PriceTag
+                    price={price}
+                    currency="CAD"
+                    unit={unit}
+                    size="sm"
+                    tone="dark"
+                    layout="inline"
+                    showOriginal={card.key !== "banff-highlights-tour" && card.key !== "shared-tours-icefields-jasper"}
+                  />
                 </div>
                 <p className="mt-0.5 text-xs text-white/55">Taxes and required fees included</p>
               </>

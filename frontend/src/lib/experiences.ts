@@ -21,13 +21,13 @@ export type ExperienceCategory = "SHARED" | "PRIVATE" | "SHUTTLE" | "MULTIDAY" |
 export const SUNRISE_SHUTTLE = "sunrise-shuttle-to-moraine-lake-and-lake-louise";
 export const DAY_SHUTTLE = "full-day-at-lake-louise-and-moraine-lake";
 const SHUTTLE_PHOTOS = [
-  "/media/photos/moraine-lake-reflection-morning.webp",
   "/media/photos/lake-louise-sunrise.webp",
-  "/media/photos/moraine-lake-ten-peaks.webp",
+  "/media/photos/moraine-lake-reflection-morning.webp",
+  "/media/photos/canadian-rockies-vista-1346.jpg",
   "/media/photos/lake-louise-red-canoes.webp",
-  "/media/photos/moraine-lake-perfect-reflection.webp",
-  "/media/photos/lake-louise-shoreline.webp",
+  "/media/photos/canadian-rockies-vista-5562.jpg",
   "/media/photos/moraine-lake-canoes.webp",
+  "/media/photos/lake-louise-shoreline.webp",
 ];
 
 /** Search and the home rail: party size up to this; more goes to the contact page (doc, 2026-11-05). */
@@ -98,7 +98,10 @@ export function buildExperienceTabs(tours: TourWithAvailability[]): ExperienceTa
   const tourCard = (category: ExperienceCategory, slug: string | undefined, title?: string, image?: string): ExperienceCard[] => {
     const tour = bySlug(slug);
     if (!tour) return [];
-    return [{ kind: "tour", key: tour.slug, tour, title, image, category, text: `${title ?? ""} ${tourText(tour)}`.toLowerCase(), fits: (s, d) => tourFits(tour, s, d) }];
+    const typeLabel = category === "SHARED" ? "SHARED TOUR" : category === "PRIVATE" ? "PRIVATE TOUR" : category === "SHUTTLE" ? "SHUTTLE" : "TOUR";
+    const raw = title ?? tour.title;
+    const formattedTitle = raw.includes("–") ? raw : `${raw.toUpperCase()} – ${typeLabel}`;
+    return [{ kind: "tour", key: tour.slug, tour, title: formattedTitle, image, category, text: `${formattedTitle} ${tourText(tour)}`.toLowerCase(), fits: (s, d) => tourFits(tour, s, d) }];
   };
   const linkCard = (category: ExperienceCategory, card: LinkCard, fits: CardBase["fits"]): ExperienceCard => ({
     kind: "link",
@@ -112,17 +115,17 @@ export function buildExperienceTabs(tours: TourWithAvailability[]): ExperienceTa
   const icefield = bySlug(ICEFIELD.slug);
   const sharedPackage = packagePrice(price(BANFF_YOHO.slug), price(ICEFIELD.slug));
   const shared: ExperienceCard[] = [
-    ...tourCard("SHARED", BANFF_YOHO.slug, BANFF_YOHO.title, BANFF_YOHO.image),
-    ...tourCard("SHARED", ICEFIELD.slug, ICEFIELD.title, ICEFIELD.image),
+    ...tourCard("SHARED", BANFF_YOHO.slug, "BANFF & YOHO DISCOVERY – SHARED TOUR", "/media/photos/canadian-rockies-vista-2585.jpg"),
+    ...tourCard("SHARED", ICEFIELD.slug, "COLUMBIA ICEFIELD ADVENTURE – SHARED TOUR", "/media/photos/pursuit-sherps-snowcoach-01.jpg"),
     linkCard(
       "SHARED",
       {
         key: "two-day-shared",
         href: TWO_DAY_PACKAGE.href,
-        image: TWO_DAY_PACKAGE.images[0].src,
+        image: "/media/photos/canadian-rockies-vista-3609.jpg",
         badge: TWO_DAY_PACKAGE.saving,
         eyebrow: "Banff, Yoho & Icefields Parkway",
-        title: TWO_DAY_PACKAGE.title,
+        title: "TWO-DAY ROCKIES EXPLORER – SHARED TOUR",
         facts: [
           { icon: Clock, text: TWO_DAY_PACKAGE.duration },
           { icon: Users, text: "Max 12 guests" },
@@ -141,28 +144,39 @@ export function buildExperienceTabs(tours: TourWithAvailability[]): ExperienceTa
   ];
 
   const privateCard = (category: ExperienceCategory, opt: PrivateTourOption): ExperienceCard => {
-    if (opt.slug && bySlug(opt.slug)) return tourCard(category, opt.slug, opt.title, opt.image)[0];
+    const typeLabel = opt.isCustomPartner ? "BY BANFF ELITE" : "PRIVATE TOUR";
+    const formattedTitle = opt.title.includes("–") ? opt.title : `${opt.title.toUpperCase()} – ${typeLabel}`;
+    const cardImage =
+      opt.id === "banff-yoho-private"
+        ? "/media/photos/canadian-rockies-vista-5105.jpg"
+        : opt.id === "columbia-icefield-private"
+        ? "/media/photos/columbia-icefield-athabasca-glacier-master.jpg"
+        : opt.id === "two-day-rockies-private"
+        ? "/media/photos/canadian-rockies-vista-3715.jpg"
+        : opt.image;
+
+    if (opt.slug && bySlug(opt.slug)) return tourCard(category, opt.slug, formattedTitle, cardImage)[0];
     const privateDays = PRIVATE_OPTIONS.flatMap((o) => (o.slug && bySlug(o.slug) ? [bySlug(o.slug)!] : []));
     const fits: CardBase["fits"] = opt.isCustomPartner
-      ? (seats) => seats <= 14
+      ? (seats) => seats <= 13
       : opt.id === "two-day-rockies-private"
         ? (seats, date) => privateDays.some((t) => tourFits(t, seats, date))
-        : (seats, date) => seats <= 14 && (!date || inSummer(date)); // three- and four-day: summer only, on request
+        : (seats, date) => seats <= 13 && (!date || inSummer(date)); // three- and four-day: summer only, on request
     return linkCard(
       category,
       {
         key: opt.id,
         href: opt.buttonHref,
         external: opt.isCustomPartner,
-        image: opt.image,
+        image: cardImage,
         badge: opt.isCustomPartner ? "By Banff Elite" : "Private tour",
         eyebrow: opt.suggestedStay,
-        title: opt.title,
+        title: formattedTitle,
         facts: [
           { icon: Clock, text: opt.duration },
-          { icon: Users, text: opt.transport },
+          { icon: Users, text: "Private, up to 13 guests" },
         ],
-        note: opt.isCustomPartner ? opt.activities : opt.pickup,
+        note: opt.isCustomPartner ? opt.activities : undefined,
         price: opt.priceFrom,
         unit: "CAD/vehicle",
         noPrice: opt.isCustomPartner ? "Personalised quote" : "Price on request",
@@ -184,7 +198,7 @@ export function buildExperienceTabs(tours: TourWithAvailability[]): ExperienceTa
         image: SHUTTLE_PHOTOS[i % SHUTTLE_PHOTOS.length],
         badge: d.number <= 2 ? "Sunrise shuttle" : "Day shuttle",
         eyebrow: "Moraine Lake & Lake Louise",
-        title: `Departure ${d.number} · ${d.name}`,
+        title: `DEPARTURE ${d.number}: ${d.name.toUpperCase()} – SHUTTLE`,
         facts: [
           { icon: Clock, text: `Banff ${clock(d.pickup.banff!)} · Canmore ${clock(d.pickup.canmore!)}` },
           { icon: CalendarDays, text: LATE_SEASON_DEPARTURES.includes(d.number) ? "June–September" : "June–July" },

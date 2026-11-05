@@ -63,8 +63,8 @@ const JUNE_JULY = [6, 7];
 const shuttleFare = (cents: number): Fare => ({ price: cents, childPrice: cents, infantPrice: cents });
 const JUNE_SEPTEMBER = [6, 7, 8, 9];
 
-/** How far ahead tours get dates (shuttles: to the end of their season). */
-export const SEED_DAYS = 365;
+/** How far ahead tours get dates: 5 years (shuttles: to the end of their season). */
+export const SEED_DAYS = 1825;
 
 export const DEFAULT_SCHEDULES: ScheduleConfig[] = [
   {
@@ -77,7 +77,7 @@ export const DEFAULT_SCHEDULES: ScheduleConfig[] = [
   },
   {
     slug: "shared-tours-icefields-jasper", // Columbia Icefield Adventure
-    times: ["08:00"],
+    times: ["07:30"],
     capacity: 12,
     price: 22000,
     childPrice: 22000,
@@ -87,7 +87,7 @@ export const DEFAULT_SCHEDULES: ScheduleConfig[] = [
   {
     slug: "banff-private-tour",
     times: ["07:00", "08:00"],
-    capacity: 14,
+    capacity: 13,
     price: 124000,
     summer: { price: 175000 },
     childPrice: null,
@@ -95,7 +95,7 @@ export const DEFAULT_SCHEDULES: ScheduleConfig[] = [
   {
     slug: "icefields-jasper-private-tour",
     times: ["08:00"],
-    capacity: 14,
+    capacity: 13,
     price: 124000,
     summer: { price: 175000 },
     childPrice: null,

@@ -49,7 +49,17 @@ export function DepartureCalendar({
   const bookable = departures.filter(isBookable);
   const bookableDays = Array.from(new Set(bookable.map(dayOf))).sort();
   const fullDays = new Set(departures.map(dayOf).filter((d) => !bookableDays.includes(d)));
-  const months = Array.from(new Set(departures.map((d) => monthKey(dayOf(d))))).sort();
+  
+  // Extend calendar to show the next 5 years (60 months) from today, keeping all departure months
+  const now = new Date();
+  const startMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const fiveYearMonths: string[] = [];
+  for (let i = 0; i <= 60; i++) {
+    const d = new Date(startMonth.getFullYear(), startMonth.getMonth() + i, 1);
+    fiveYearMonths.push(`${d.getFullYear()}-${pad(d.getMonth() + 1)}`);
+  }
+  const depMonths = departures.map((d) => monthKey(dayOf(d)));
+  const months = Array.from(new Set([...fiveYearMonths, ...depMonths])).sort();
 
   const selected = departures.find((d) => d.id === value);
   const selectedDay = selected ? dayOf(selected) : undefined;
@@ -218,28 +228,6 @@ export function DepartureCalendar({
           </li>
         )}
       </ul>
-
-      {sameDay.length > 1 && (
-        <div role="radiogroup" aria-label="Departure time" className="flex flex-wrap gap-2">
-          {sameDay.map((d) => (
-            <button
-              key={d.id}
-              type="button"
-              role="radio"
-              aria-checked={d.id === value}
-              onClick={() => {
-                onChange(d.id);
-                if (collapseOnSelect) setOpen(false);
-              }}
-              className={`h-10 rounded-full px-4 text-sm ring-1 transition-colors ${
-                d.id === value ? "bg-obsidian-950 text-white ring-obsidian-950" : "bg-white text-obsidian-900 ring-obsidian-900/15 hover:ring-obsidian-900/40"
-              }`}
-            >
-              {d.departureTime.slice(0, 5)}
-            </button>
-          ))}
-        </div>
-      )}
 
       <p className="text-sm text-slate-700" aria-live="polite">
         {selected && selectedDay ? (

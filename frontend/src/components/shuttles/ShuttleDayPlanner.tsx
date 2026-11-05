@@ -10,6 +10,8 @@ import Link from "next/link";
 import { ArrowRight, CalendarDays, Clock, MapPin, Users } from "lucide-react";
 import {
   SHUTTLE_PICKUPS,
+  calculateCanmorePickup,
+  calculateSamsonPickup,
   clock,
   clockRange,
   departuresFor,
@@ -161,10 +163,15 @@ export function ShuttleDayPlanner({ today, live, fromPrice }: { today: string; l
             const match = liveFor(d);
             const price = match?.price ?? fromPrice;
             const href = bookHref(d);
+            const banffTime = d.pickup.banff || "03:15";
+            const canmoreTime = d.pickup.canmore || calculateCanmorePickup(banffTime);
+            const samsonTime = d.pickup.samson || calculateSamsonPickup(banffTime);
+            const chosenPickupTime =
+              pickup === "canmore" ? canmoreTime : pickup === "samson" ? samsonTime : banffTime;
             const rows: [string, string][] = [
-              ["Canmore pickup", clock(d.pickup.canmore!)],
-              ["Banff pickup", clock(d.pickup.banff!)],
-              ["Samson Mall pickup", d.pickup.samson ? clock(d.pickup.samson) : "Time to be confirmed"],
+              ["Canmore pickup", clock(canmoreTime)],
+              ["Banff pickup", clock(banffTime)],
+              ["Samson Mall pickup", clock(samsonTime)],
               ["Moraine Lake visit", clockRange(d.moraine)],
               ["Lake Louise visit", clockRange(d.louise)],
               ["Estimated Banff return", clock(d.returnBanff)],
@@ -180,7 +187,7 @@ export function ShuttleDayPlanner({ today, live, fromPrice }: { today: string; l
                 <p className="text-sm uppercase tracking-[0.18em] text-ocean-600">Departure {d.number}</p>
                 <h4 className="mt-1 text-xl font-light text-obsidian-900">{d.name}</h4>
                 <p className="mt-1 text-sm text-slate-600">
-                  {d.pickup[pickup] ? `${clock(d.pickup[pickup]!)} from ${pickupLabel}` : `${pickupLabel} time to be confirmed`}
+                  {`${clock(chosenPickupTime)} from ${pickupLabel}`}
                 </p>
                 <dl className="mt-4 divide-y divide-obsidian-900/[0.07] text-sm">
                   {rows.map(([k, v]) => (
