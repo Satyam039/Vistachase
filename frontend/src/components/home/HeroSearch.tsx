@@ -9,6 +9,7 @@
 import { CalendarDays, Compass, Search, Users } from "lucide-react";
 import { Dropdown } from "@/components/forms/Dropdown";
 import { openDatePicker } from "@/lib/utils/datePicker";
+import { guestOptions } from "@/lib/experiences";
 
 const SEGMENT = "group relative flex min-w-0 flex-col justify-center rounded-none px-4 py-1.5 transition-colors hover:bg-obsidian-50 focus-within:bg-obsidian-50";
 const LABEL = "flex items-center gap-1.5 text-xs uppercase tracking-[0.14em] text-slate-600";
@@ -70,7 +71,8 @@ export function HeroSearch({ className = "", category }: { className?: string; c
               Guests
             </>
           }
-          options={[1, 2, 3, 4, 5, 6, 7].map((n) => ({ value: String(n), label: `${n} ${n === 1 ? "guest" : "guests"}` }))}
+          // 1 to 12, then "12+ guests": the search sends a larger group to the contact page.
+          options={guestOptions()}
         />
       </div>
       <button

@@ -1,4 +1,6 @@
-import { getDestinations, getTours } from "@/lib/api/catalog";
+import { redirect } from "next/navigation";
+import { getTours } from "@/lib/api/catalog";
+import { MAX_SEARCH_GUESTS, groupEnquiryHref, toursForCards } from "@/lib/experiences";
 import { TourSearch, type SearchFilters } from "@/components/search/TourSearch";
 import type { Metadata } from "next";
 
@@ -26,23 +28,19 @@ export default async function SearchResultsPage({
   }>;
 }) {
   const searchParams = await searchParamsPromise;
-  const seats = Math.min(7, Math.max(1, parseInt(searchParams.seats || "1", 10) || 1));
+  const date = searchParams.date && ISO_DATE.test(searchParams.date) ? searchParams.date : "";
+  const asked = Math.max(1, parseInt(searchParams.seats || "1", 10) || 1);
+  // More than 12 guests: the team plans it on the contact page (owner's doc, 2026-11-05).
+  if (asked > MAX_SEARCH_GUESTS) redirect(groupEnquiryHref(date || undefined));
   const initialFilters: SearchFilters = {
     q: searchParams.q ?? "",
     category: searchParams.category?.toUpperCase() || "ALL",
-    destination: searchParams.destination || "ALL",
-    seats,
-    date: searchParams.date && ISO_DATE.test(searchParams.date) ? searchParams.date : "",
+    seats: asked,
+    date,
   };
 
   // All tours load once; filtering happens in place on the client.
-  const [tours, destinations] = await Promise.all([getTours(), getDestinations()]);
+  const tours = await getTours();
 
-  return (
-    <TourSearch
-      tours={tours}
-      destinations={destinations.map((d) => ({ slug: d.slug, name: d.name }))}
-      initialFilters={initialFilters}
-    />
-  );
+  return <TourSearch tours={toursForCards(tours)} initialFilters={initialFilters} />;
 }

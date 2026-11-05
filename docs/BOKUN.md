@@ -40,17 +40,19 @@ Bókun IDs from the owner's doc (Pricing, 2026-11-04):
 
 | Website product | Bókun ID | Linked |
 | --- | --- | --- |
-| Banff & Yoho Discovery, shared (`banff-highlights-tour`) | 796650 | yes |
-| Columbia Icefield Adventure, shared (`shared-tours-icefields-jasper`) | 856008 | yes |
-| Banff & Yoho Discovery, private (`banff-private-tour`) | 1167962 | yes |
-| Columbia Icefield Adventure, private (`icefields-jasper-private-tour`) | 1115237 | yes |
+| Banff & Yoho Discovery, shared (`banff-highlights-tour`, start time ID 5931121) | 796650 | yes |
+| Columbia Icefield Adventure, shared (`shared-tours-icefields-jasper`, start time IDs 4945517 winter, 4945518 summer) | 856008 | yes |
+| Banff & Yoho Discovery, private (`banff-private-tour`, 8am start time ID 4787116) | 1167962 | yes |
+| Columbia Icefield Adventure, private (`icefields-jasper-private-tour`, 8am start time ID 4434478) | 1115237 | yes |
 | Moraine Lake & Lake Louise shuttle, both website products (start time IDs 6012584, 6012585, 6012588, 6012590, 6012592, 6012593, 6012602) | 1344805 | yes, matched by start time |
 | Two-Day Rockies Explorer, shared | 1328342 | no: the package books each day under its own tour's Bókun product |
 | Two-Day / Three-Day / Four-Day, private | 1344763 / 1344782 / 1344784 | no: booked on request |
 
 Both shuttle products share Bókun product 1344805; only the first stores it in the database (`Tour.bokunId` is unique), and the Bókun code reads IDs from the map. The Jasper custom private tour (request only) no longer has a Bókun ID: its old one is now the private Columbia Icefield Adventure's.
 
-Start times must match: a website departure at 08:00 is matched to the Bókun start at 08:00 on the same day (a Bókun product with one start a day and no clock time, shown as 00:00, matches any website departure that day). Bókun's live calendar decides what is on sale: with the live account the seat sync takes a website departure Bókun doesn't offer off sale, and puts it back on sale once Bókun offers it. To close a date, close it in Bókun. **Seat sync** in the Bókun tab lists those departures; a booking already on one of them can't be created in Bókun and is flagged.
+Start times (owner's doc, 2026-11-05): each product's Bókun start time IDs are in `product-map.json` (`bokunStartTimeIds`). A website departure is matched to the start with one of those IDs on its day: the one at the same clock time, or the only one that day, so the Icefield's summer and winter starts and the private tours' 8am start match whatever time the website shows. When Bókun returns none of those IDs (a test account), the clock time decides: a website departure at 08:00 is matched to the Bókun start at 08:00 on the same day (a Bókun product with one start a day and no clock time, shown as 00:00, matches any website departure that day).
+
+Tours retired from the owner's product list (2026-11-05: Heart of Banff, the old Banff & Yoho shared tour, Winter Special, Winter Signature and the two custom private tours; `RETIRED_TOUR_SLUGS` in `src/modules/tours/product-map.ts`) are off sale and left out of the seat sync and the products check. Bookings already made for them still sync their cancellations. Bókun's live calendar decides what is on sale: with the live account the seat sync takes a website departure Bókun doesn't offer off sale, and puts it back on sale once Bókun offers it. To close a date, close it in Bókun. **Seat sync** in the Bókun tab lists those departures; a booking already on one of them can't be created in Bókun and is flagged.
 
 ## What happens to a booking
 

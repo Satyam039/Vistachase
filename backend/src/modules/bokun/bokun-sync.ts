@@ -34,6 +34,11 @@ const STALE_MS = 10 * 60_000;
 const FLAG_PREFIX = "Bókun:";
 
 /** The tour's Bókun product: the product map (prisma/catalog/product-map.json) first, then the database. */
+/** The Bókun start time IDs of a website product (product-map.json), if the doc gives them. */
+export function bokunStartTimeIds(slug: string | null | undefined): number[] {
+  return PRODUCT_MAP.find((p) => p.slug === slug)?.bokunStartTimeIds ?? [];
+}
+
 export function bokunProductId(tour: { slug: string; bokunId: string | null } | null | undefined) {
   if (!tour) return null;
   const mapped = PRODUCT_MAP.find((p) => p.slug === tour.slug);
@@ -159,6 +164,7 @@ async function runCreate(client: BokunApi, task: BookingSyncTask, now: Date): Pr
         {
           bookingReference: booking.bookingReference,
           productBokunId: productId,
+          startTimeIds: bokunStartTimeIds(tour.slug),
           category: tour.category,
           date: formatDateOnly(dep.date),
           time: formatTimeOfDay(dep.departureTime),

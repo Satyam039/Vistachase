@@ -6,6 +6,7 @@ import type { TourWithAvailability } from "@/lib/api/types";
 import { SERVICES } from "@/lib/services";
 import { TrustRow } from "@/components/home/TrustRow";
 import { TopExperiences } from "@/components/home/TopExperiences";
+import { toursForCards } from "@/lib/experiences";
 import { ExperienceCategories } from "@/components/cinematic/ExperienceCategories";
 import { DestinationStoryStream } from "@/components/cinematic/DestinationStoryStream";
 import { PlanAheadGuaranteedAccess } from "@/components/cinematic/PlanAheadGuaranteedAccess";
@@ -89,7 +90,7 @@ export default async function HomePage() {
       <TrustRow />
       <NatGeoFeatureSection />
       <VerifiedAwardSection quote={awardQuote} />
-      <TopExperiences tours={tours} />
+      <TopExperiences tours={toursForCards(tours, 60)} />
       <ExperienceCategories />
       <DestinationStoryStream />
       <PlanAheadGuaranteedAccess />

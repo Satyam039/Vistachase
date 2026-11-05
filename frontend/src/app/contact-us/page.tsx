@@ -31,7 +31,7 @@ const SELF_SERVE = [
   { icon: HelpCircle, label: "FAQ & cancellation", href: "/faq" },
 ];
 
-export default async function ContactUsPage({ searchParams }: { searchParams: Promise<{ tour?: string; guests?: string; package?: string; shuttle?: string; date?: string; pickup?: string }> }) {
+export default async function ContactUsPage({ searchParams }: { searchParams: Promise<{ tour?: string; guests?: string; package?: string; shuttle?: string; date?: string; pickup?: string; group?: string }> }) {
   const params = await searchParams;
   const pkg = params.package;
   const isTwoDayShared = pkg === TWO_DAY_PACKAGE.slug;
@@ -70,6 +70,14 @@ export default async function ContactUsPage({ searchParams }: { searchParams: Pr
     packageTitle = "Book your lake shuttle";
     packageSubtitle = `Departure ${shuttle.number} · ${shuttle.name}. Tell us how many guests and we'll confirm your seats by email.`;
     packageMessage = `I'd like to book the Moraine Lake & Lake Louise Shuttle.\nDeparture: ${shuttle.number} · ${shuttle.name}\nDate: ${date}\nPickup: ${pickup.label}${time ? ` (${clock(time)})` : ""}\nNumber of guests:`;
+  }
+
+  // More than 12 guests from the search (owner's doc, 2026-11-05: "12+ redirect to our contact us page").
+  if (!packageTitle && params.group === "1") {
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(params.date ?? "") ? params.date : "";
+    packageTitle = "Plan a group trip";
+    packageSubtitle = "Travelling with more than 12 guests? Tell us your dates and group size, and our team will plan the right tours and vehicles for your group.";
+    packageMessage = `We're a group of more than 12 guests.\nPreferred date${date ? `: ${date}` : ":"}\nNumber of guests:\nTours or shuttles we're interested in:\nWhere we're staying:`;
   }
 
   let tours: { slug: string; title: string }[] = [];

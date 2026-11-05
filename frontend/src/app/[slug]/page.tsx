@@ -2,13 +2,14 @@
 // /winter-special, …). Static routes such as /about-us take precedence over this
 // segment; anything that isn't a tour slug falls through to the 404 page.
 import { cache } from "react";
-import { notFound, redirect } from "next/navigation";
+import { notFound, permanentRedirect, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getTourBySlug, getTours } from "@/lib/api/catalog";
 import { TourDetailView } from "@/components/tours/TourDetailView";
 import { siteOrigin, withSeo } from "@/lib/seo/server";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 import { activityTicket } from "@/lib/activityTickets";
+import { RETIRED_TOUR_REDIRECTS } from "@/lib/retiredTours";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -31,6 +32,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function TourPage({ params }: Props) {
   const { slug } = await params;
+  // Tours retired from the owner's product list go to the closest offered page.
+  if (RETIRED_TOUR_REDIRECTS[slug]) permanentRedirect(RETIRED_TOUR_REDIRECTS[slug]);
   const tour = await loadTour(slug);
   if (!tour) notFound();
   // Activity tickets are booked on the operator's site, so their old pages send guests straight there.

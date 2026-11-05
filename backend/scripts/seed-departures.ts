@@ -1,5 +1,9 @@
-// Seeds the rolling schedule of departures for the next 60 days for the instant-booking products
+// Seeds the rolling schedule of departures for the next 365 days for the instant-booking products
 // (fixed times, capacity and prices below). Existing departures are left as they are.
+// A year ahead (owner's doc, 2026-11-05: the Two-Day shared tour couldn't be booked past Jan 4
+// 2027, the end of the old 60-day window). Bókun's live calendar still decides which dates are on
+// sale: the seat check at booking time reads Bókun for every date (src/modules/bokun/bokun-seats.ts).
+// Tours retired from the owner's product list (RETIRED_TOUR_SLUGS) get no new dates.
 //
 // The Moraine Lake & Lake Louise shuttle runs June–September only, on the timetable in the owner's
 // doc (same numbers as frontend/src/lib/shuttleSchedule.ts): seven departures a day in June–July,
@@ -50,7 +54,7 @@ interface ScheduleConfig extends Fare {
   capacity: number;
   /** Fare from June 1 to October 10, when it differs. */
   summer?: Fare;
-  /** Seed every date until the end of this month (1-12) of its next season, instead of 60 days. */
+  /** Seed every date until the end of this month (1-12) of its next season, instead of SEED_DAYS. */
   seasonEndsMonth?: number;
 }
 
@@ -58,6 +62,9 @@ const JUNE_JULY = [6, 7];
 /** Shuttles: one fare for adults, youth and infants (owner's doc, 2026-11-04). */
 const shuttleFare = (cents: number): Fare => ({ price: cents, childPrice: cents, infantPrice: cents });
 const JUNE_SEPTEMBER = [6, 7, 8, 9];
+
+/** How far ahead tours get dates (shuttles: to the end of their season). */
+export const SEED_DAYS = 365;
 
 export const DEFAULT_SCHEDULES: ScheduleConfig[] = [
   {
@@ -69,20 +76,6 @@ export const DEFAULT_SCHEDULES: ScheduleConfig[] = [
     infantPrice: 17000,
   },
   {
-    slug: "shared-tours-heart-of-banff",
-    times: ["08:00"],
-    capacity: 12,
-    price: 14900,
-    childPrice: 9900,
-  },
-  {
-    slug: "shared-tours-banff-yoho",
-    times: ["08:00"],
-    capacity: 12,
-    price: 17900,
-    childPrice: 10900,
-  },
-  {
     slug: "shared-tours-icefields-jasper", // Columbia Icefield Adventure
     times: ["08:00"],
     capacity: 12,
@@ -90,13 +83,6 @@ export const DEFAULT_SCHEDULES: ScheduleConfig[] = [
     childPrice: 22000,
     infantPrice: 17000,
     summer: { price: 32000, childPrice: 28000, infantPrice: 17000 },
-  },
-  {
-    slug: "winter-special",
-    times: ["08:00"],
-    capacity: 12,
-    price: 16900,
-    childPrice: 9900,
   },
   {
     slug: "banff-private-tour",
@@ -112,13 +98,6 @@ export const DEFAULT_SCHEDULES: ScheduleConfig[] = [
     capacity: 14,
     price: 124000,
     summer: { price: 175000 },
-    childPrice: null,
-  },
-  {
-    slug: "winter-signature-private-tour",
-    times: ["08:00"],
-    capacity: 6,
-    price: 125000,
     childPrice: null,
   },
   // Shuttle departures 3-7 (Morning to Late Afternoon). Same fare for every age.
@@ -169,8 +148,8 @@ export function daysToSeasonEnd(today: string, month: number): number {
   return Math.round((end - Date.UTC(y, m - 1, Number(today.slice(8, 10)))) / 86_400_000);
 }
 
-async function seedFallbackSchedule(daysCount = 60) {
-  console.log(`📅 Generating rolling 60-day departures schedule for all tours...`);
+async function seedFallbackSchedule(daysCount = SEED_DAYS) {
+  console.log(`📅 Generating rolling ${daysCount}-day departures schedule for all tours...`);
   const today = todayInMountainTime();
   const startDate = new Date(dateOnly(today));
 
@@ -236,7 +215,7 @@ async function seedFallbackSchedule(daysCount = 60) {
 }
 
 async function main() {
-  await seedFallbackSchedule(60);
+  await seedFallbackSchedule(SEED_DAYS);
 }
 
 if (!process.env.VITEST) main()
