@@ -113,13 +113,13 @@ export function ContactForm({
 
     setState("sending");
     const fullPhone = `+${dialCode(phoneCountry)} ${phoneLocal.trim()}`;
-    const formattedDate = fromDate ? (toDate ? `${fromDate} to ${toDate}` : fromDate) : "";
     const payload = {
       name: name.trim(),
       email: email.trim(),
       phone: fullPhone,
       tourSlug: tourCategory,
-      date: formattedDate,
+      date: fromDate,
+      toDate: requestDays ? "" : toDate,
       guests: Number(guests),
       message: message.trim(),
     };

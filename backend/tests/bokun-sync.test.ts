@@ -9,6 +9,7 @@ import { buildPassengers, findSlot } from "@/modules/bokun/bokun-booking";
 import { setBokunClientForTests, type BokunApi } from "@/modules/bokun/config";
 import { processBokunSyncTasks, queueUpcomingBookings, retryBokunSync, setBokunAutoRunForTests } from "@/modules/bokun/bokun-sync";
 import { syncBokunSeats } from "@/modules/bokun/availability-sync";
+import { CALENDAR_DAYS, syncFarCalendarFromBokun } from "@/jobs/tasks";
 import { cancelBooking, createBooking } from "@/modules/bookings/booking.repository";
 import { createReservationHold } from "@/modules/reservations/reservation.repository";
 import { dateOnly, timeOfDay } from "@/lib/utils/time";
@@ -384,6 +385,18 @@ describe("Bókun seats in our calendar", () => {
     bokun.failAvailability = new Error("Bókun is down");
     await syncBokunSeats({ from: DAY, days: 1 });
     expect((await prisma.tourDeparture.findUniqueOrThrow({ where: { id: dep.id } })).inventorySource).toBe("LOCAL");
+  });
+});
+
+describe("the calendar five years ahead follows Bókun (owner, 2026-11-06)", () => {
+  it("reads Bókun a year at a time past the 15-minute window, out to five years", async () => {
+    const now = new Date("2026-11-06T18:00:00Z");
+    const result = await syncFarCalendarFromBokun(now);
+    expect("runs" in result && result.runs!.map((r) => r.from)).toEqual(["2027-02-04", "2028-02-04", "2029-02-03", "2030-02-03", "2031-02-03"]);
+    const ranges = bokun.made("/activity.json/796650/availabilities");
+    expect(ranges[0].path).toContain("start=2027-02-04&end=2028-02-03");
+    expect(ranges.at(-1)!.path).toContain("end=2031-11-05");
+    expect("runs" in result && result.runs!.reduce((n, r) => n + r.days, 0)).toBe(CALENDAR_DAYS - 90 + 1);
   });
 });
 

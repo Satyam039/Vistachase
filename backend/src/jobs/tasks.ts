@@ -27,6 +27,29 @@ export async function syncSeatsFromBokun() {
   return "notInBokun" in result ? { ...result, notInBokun: result.notInBokun.length } : result;
 }
 
+/** How far ahead the website sells dates (scripts/seed-departures.ts SEED_DAYS: five years). */
+export const CALENDAR_DAYS = 1825;
+
+/**
+ * Every 6 hours: the same seat sync for the dates past the 15-minute window, out to five years, a
+ * year at a time, so the far end of the calendar also follows Bókun's calendar (dates Bókun doesn't
+ * run go off sale, owner 2026-11-06). Read-only towards Bókun, like the 15-minute sync.
+ */
+export async function syncFarCalendarFromBokun(now = new Date()) {
+  const { bokunAvailabilitySyncEnabled, bokunSyncDays } = await import("@/modules/bokun/config");
+  if (!bokunAvailabilitySyncEnabled()) return { skipped: "Bókun seat sync is off" };
+  const { syncBokunSeats } = await import("@/modules/bokun/availability-sync");
+  const today = dateOnly(todayInMountainTime(now)).getTime();
+  const runs: { from: string; days: number; offSale?: number; onSale?: number; errors?: number }[] = [];
+  for (let offset = bokunSyncDays(); offset <= CALENDAR_DAYS; offset += 365) {
+    const from = new Date(today + offset * 86_400_000).toISOString().slice(0, 10);
+    const days = Math.min(365, CALENDAR_DAYS - offset + 1);
+    const result = await syncBokunSeats({ from, days });
+    runs.push("skipped" in result ? { from, days } : { from, days, offSale: result.offSale, onSale: result.onSale, errors: result.errors.length });
+  }
+  return { runs };
+}
+
 /** Every few minutes: free seats held by expired holds and by bookings never paid for. */
 export async function expireHoldsAndUnpaidBookings(now = new Date()) {
   return await freeExpiredSeats({ now });

@@ -3,7 +3,7 @@
 // jobs don't run twice. Nightly emails stay with the worker. A run is skipped while the previous one
 // of the same job is still going.
 
-import { expireHoldsAndUnpaidBookings, maturePartnerCommissions, sendBookingsToBokun, syncSeatsFromBokun, publishScheduledSeoPages, remindUnpaidBalances, retryConfirmationEmails, runNightlySeoAudit, sendT60WhatsApp, syncWebflowBlogPosts, whatsAppDeliveryConfigured } from "@/jobs/tasks";
+import { expireHoldsAndUnpaidBookings, maturePartnerCommissions, sendBookingsToBokun, syncSeatsFromBokun, syncFarCalendarFromBokun, publishScheduledSeoPages, remindUnpaidBalances, retryConfirmationEmails, runNightlySeoAudit, sendT60WhatsApp, syncWebflowBlogPosts, whatsAppDeliveryConfigured } from "@/jobs/tasks";
 import { isWebflowSyncEnabled, webflowSyncMinutes } from "@/modules/seo/portal/webflow-sync";
 
 type Job = { name: string; everyMs: number; run: () => Promise<unknown> };
@@ -15,6 +15,7 @@ type Job = { name: string; everyMs: number; run: () => Promise<unknown> };
 export const BOKUN_JOBS: Job[] = [
   { name: "bokun-bookings", everyMs: 2 * 60 * 1000, run: () => sendBookingsToBokun() },
   { name: "bokun-seats", everyMs: 15 * 60 * 1000, run: () => syncSeatsFromBokun() },
+  { name: "bokun-calendar", everyMs: 6 * 60 * 60 * 1000, run: () => syncFarCalendarFromBokun() },
 ];
 
 const JOBS: Job[] = [

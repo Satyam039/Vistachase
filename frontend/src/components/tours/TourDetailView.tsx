@@ -610,6 +610,7 @@ export function TourDetailView({
                     onChange={setSelectedDepartureId}
                     describe={(d) => (isVehicle ? `$${d.price} per vehicle` : `${SEATS_MESSAGE} · $${d.price} CAD per guest`)}
                     collapseOnSelect
+                    showTimes={tour.category === "SHUTTLE"}
                   />
 
                   {/* Party: one guest count for a private vehicle, adults + children otherwise */}

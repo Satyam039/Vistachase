@@ -25,7 +25,7 @@ export default async function TwoDayBookPage() {
     href: `/${d.slug}`,
     departures: (tours[i]?.departures ?? [])
       .filter((x) => x.status === "ACTIVE" && x.seatsAvailable > 0)
-      .map((x) => ({ id: x.id, date: x.date, departureTime: x.departureTime, seatsAvailable: x.seatsAvailable, price: x.price, childPrice: x.childPrice, infantPrice: x.infantPrice, currency: x.currency })),
+      .map((x) => ({ id: x.id, date: x.date, departureTime: x.departureTime, seatsAvailable: x.seatsAvailable, capacityTotal: x.capacityTotal, price: x.price, childPrice: x.childPrice, infantPrice: x.infantPrice, currency: x.currency })),
   }));
   const firstDeparture = days.find((d) => d.departures.length > 0)?.departures[0];
   const checkout = firstDeparture ? await getCheckoutData(firstDeparture.id).catch(() => null) : null;

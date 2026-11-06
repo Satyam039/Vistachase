@@ -1,6 +1,9 @@
-// Package deals: several day tours booked and paid together, with a package discount. Today there is
-// one, the Two-Day Rockies Explorer (Banff & Yoho Discovery + Columbia Icefield Adventure, 10% off),
-// from the owner's "Update Vista Chase web" doc.
+// Package deals: several day tours booked and paid together, with a package discount. The shared
+// Two-Day Rockies Explorer (Banff & Yoho Discovery + Columbia Icefield Adventure, 10% off), and the
+// private Two-Day, Three-Day and Four-Day journeys (owner 2026-11-06: booked like a private tour,
+// not requested), each day a private day tour on a date the guest picks (owner's doc Pricing:
+// CAD 1,575 a day in summer = the private day price 1,750 less 10%; 1,240 a day in winter = the
+// winter day price; Three- and Four-Day run June 1 to October 10 only).
 //
 // A package is ordinary bookings, one per day, so seats, manifests, vouchers, check-in, cancellation
 // and refunds work exactly as for a single tour. Each booking is priced with the package discount and
@@ -31,7 +34,11 @@ export interface TourPackage {
   title: string;
   /** The tours in the package, one booking each, in the order the guest sees them (Day 1, Day 2). */
   tourSlugs: string[];
+  /** Package discount; for a day from October 11 to May 31, `winterDiscountPercent` when set. */
   discountPercent: number;
+  winterDiscountPercent?: number;
+  /** Every day must be June 1 to October 10. */
+  summerOnly?: boolean;
 }
 
 export const PACKAGES: TourPackage[] = [
@@ -41,29 +48,47 @@ export const PACKAGES: TourPackage[] = [
     tourSlugs: ["banff-highlights-tour", "shared-tours-icefields-jasper"],
     discountPercent: 10,
   },
+  // Private journeys, per vehicle. The days follow each page's itinerary: Banff & Yoho days are the
+  // private Banff & Yoho Discovery, Icefields Parkway / Jasper days the private Columbia Icefield tour.
   {
     slug: "two-day-rockies-explorer-private",
     title: "Private Two-Day Rockies Explorer",
     tourSlugs: ["banff-private-tour", "icefields-jasper-private-tour"],
-    discountPercent: 0,
+    discountPercent: 10,
+    winterDiscountPercent: 0,
   },
   {
     slug: "three-day-rockies-discovery",
     title: "Three-Day Rockies Discovery",
-    tourSlugs: ["banff-private-tour", "icefields-jasper-private-tour", "banff-private-tour"],
-    discountPercent: 0,
+    // Day 1 Banff, Day 2 Lake Louise, Moraine Lake & Yoho, Day 3 Icefields Parkway.
+    tourSlugs: ["banff-private-tour", "banff-private-tour", "icefields-jasper-private-tour"],
+    discountPercent: 10,
+    summerOnly: true,
   },
   {
     slug: "four-day-rockies-and-jasper",
     title: "Four-Day Rockies & Jasper",
-    tourSlugs: ["banff-private-tour", "icefields-jasper-private-tour", "icefields-jasper-private-tour", "banff-private-tour"],
-    discountPercent: 0,
+    // Day 1 Banff, Day 2 Lake Louise, Moraine Lake & Yoho, Day 3 Icefields Parkway to Jasper, Day 4 Jasper and return.
+    tourSlugs: ["banff-private-tour", "banff-private-tour", "icefields-jasper-private-tour", "icefields-jasper-private-tour"],
+    discountPercent: 10,
+    summerOnly: true,
   },
 ];
 
 export const findPackage = (slug: string) => PACKAGES.find((p) => p.slug === slug) ?? null;
 
-export interface CreatePackageInput extends Omit<CreateBookingInput, "departureId" | "holdToken" | "promoCode" | "paymentPlan" | "addOns" | "idempotencyKey"> {
+/** June 1 to October 10, for a YYYY-MM-DD date (same season as the departure prices). */
+const inSummer = (date: string) => {
+  const md = date.slice(5, 10);
+  return md >= "06-01" && md <= "10-10";
+};
+
+/** The package discount for a day on `date`. */
+export function packageDiscountFor(pkg: TourPackage, date: string) {
+  return inSummer(date) ? pkg.discountPercent : (pkg.winterDiscountPercent ?? pkg.discountPercent);
+}
+
+export interface CreatePackageInput extends Omit<CreateBookingInput, "departureId" | "holdToken" | "promoCode" | "paymentPlan" | "addOns" | "idempotencyKey" | "activityAddOns"> {
   packageSlug: string;
   /** One departure per tour in the package, in the package's order. */
   departureIds: string[];
@@ -130,7 +155,9 @@ async function packageError(pkg: TourPackage, departureIds: string[]): Promise<s
     if (!d || d.tour?.slug !== pkg.tourSlugs[i]) return `Day ${i + 1}: that departure isn't part of the ${pkg.title}. Please choose the date again.`;
     const closed = bookingClosedError(d);
     if (closed) return `Day ${i + 1} (${d.tour.title}): ${closed}`;
-    dates.add(d.date.toISOString().slice(0, 10));
+    const day = d.date.toISOString().slice(0, 10);
+    if (pkg.summerOnly && !inSummer(day)) return `Day ${i + 1}: the ${pkg.title} runs from June 1 to October 10 only.`;
+    dates.add(day);
   }
   if (dates.size !== departureIds.length) return "The tours are full-day trips, so they need to be on different days.";
   return null;
@@ -149,6 +176,9 @@ export async function createPackageBooking(input: CreatePackageInput): Promise<P
 
   const invalid = await packageError(pkg, input.departureIds);
   if (invalid) return { success: false, error: invalid };
+  const departureDates = new Map(
+    (await prisma.tourDeparture.findMany({ where: { id: { in: input.departureIds } }, select: { id: true, date: true } })).map((d) => [d.id, d.date.toISOString().slice(0, 10)]),
+  );
 
   const made: NonNullable<BookingResult["booking"]>[] = [];
   const release = async (reason: string) => {
@@ -172,8 +202,10 @@ export async function createPackageBooking(input: CreatePackageInput): Promise<P
         departureId,
         idempotencyKey: dayKey(input.idempotencyKey, i + 1),
         paymentPlan: "FULL",
+        // A private journey's airport transfer (both ways) is booked once, with Day 1.
+        airportTransfer: i === 0 ? input.airportTransfer : undefined,
       },
-      { deferPayment: true, discount: { percent: pkg.discountPercent, label: pkg.title.toUpperCase() } },
+      { deferPayment: true, discount: { percent: packageDiscountFor(pkg, departureDates.get(departureId) ?? ""), label: pkg.title.toUpperCase() } },
     );
     if (!result.success || !result.booking) {
       await release(`${pkg.title}: day ${i + 1} could not be booked`);
@@ -191,7 +223,7 @@ export async function createPackageBooking(input: CreatePackageInput): Promise<P
     await prisma.booking.update({
       where: { id: b.id },
       data: {
-        priceSnapshot: { ...(b.priceSnapshot as object), package: { slug: pkg.slug, title: pkg.title, day: i + 1, references, discountPercent: pkg.discountPercent } },
+        priceSnapshot: { ...(b.priceSnapshot as object), package: { slug: pkg.slug, title: pkg.title, day: i + 1, references, discountPercent: packageDiscountFor(pkg, departureDates.get(input.departureIds[i]) ?? "") } },
         adminNotes: [b.adminNotes, `${pkg.title}, day ${i + 1} of ${references.length}: booked and paid together with ${others}.`].filter(Boolean).join("\n"),
       },
     });

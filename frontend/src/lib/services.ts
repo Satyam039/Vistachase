@@ -47,7 +47,7 @@ export const SERVICES: Service[] = [
     title: "Private tours",
     tagline: "Why go private? Your vehicle, your guide, your pace.",
     reasons: [
-      "A luxury SUV for up to 6 or an executive van for up to 13",
+      "Private, up to 13 guests",
       "Choose your stops and how long you stay",
       "Pickup wherever you are staying",
       "Priced per vehicle, not per person",

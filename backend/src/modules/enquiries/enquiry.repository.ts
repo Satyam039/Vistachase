@@ -9,16 +9,24 @@ export interface EnquiryInput {
   tourSlug?: string;
   guests?: number;
   date?: string;
+  /** The trip's last day (From/To dates); kept in the email and message, the record stores `date`. */
+  toDate?: string;
   message: string;
 }
 
 const escape = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
 /** Saves an enquiry and emails the team (reply-to the guest). The record is kept even if email fails. */
-export async function createEnquiry(input: EnquiryInput) {
+export async function createEnquiry({ toDate, ...input }: EnquiryInput) {
   const tour = input.tourSlug ? await prisma.tour.findUnique({ where: { slug: input.tourSlug }, select: { title: true } }) : null;
   const enquiry = await prisma.enquiry.create({
-    data: { ...input, tourSlug: tour ? input.tourSlug : undefined, date: input.date ? dateOnly(input.date) : undefined },
+    data: {
+      ...input,
+      // Staff see the To date in Admin → Enquiries too: the record has one date column (the From date).
+      message: input.date && toDate ? `Trip dates: from ${input.date} to ${toDate}\n\n${input.message}` : input.message,
+      tourSlug: tour ? input.tourSlug : undefined,
+      date: input.date ? dateOnly(input.date) : undefined,
+    },
   });
 
   const lines = [
@@ -26,7 +34,7 @@ export async function createEnquiry(input: EnquiryInput) {
     `Email: ${input.email}`,
     input.phone ? `Phone: ${input.phone}` : null,
     tour ? `Tour: ${tour.title}` : null,
-    input.date ? `Preferred date: ${input.date}` : null,
+    input.date && toDate ? `Trip dates: from ${input.date} to ${toDate}` : input.date ? `Preferred date: ${input.date}` : null,
     input.guests ? `Guests: ${input.guests}` : null,
     "",
     input.message,

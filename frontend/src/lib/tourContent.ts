@@ -219,7 +219,7 @@ CONTENT[PRIVATE_BANFF_YOHO.slug!] = {
     { label: "Entry fees", value: "Park admission included" },
     { label: "Pickup", value: "Doorstep pickup included" },
     { label: "Operation", value: "Year round · route varies by season" },
-    { label: "Group", value: "Up to 13 guests" },
+    { label: "Group", value: "Private, up to 13 guests" },
   ],
   highlights: BANFF_YOHO.stops,
   inclusions: [...PRIVATE_INCLUSIONS, "Moraine Lake access arrangements during its operating season"],
@@ -259,7 +259,7 @@ CONTENT[PRIVATE_ICEFIELD.slug!] = {
   facts: [
     { label: "Entry fees", value: "Park admission included" },
     { label: "Pickup", value: "Doorstep pickup included" },
-    { label: "Group", value: "Up to 13 guests" },
+    { label: "Group", value: "Private, up to 13 guests" },
   ],
   highlights: [...ICEFIELD.stops.filter((s) => !/ice explorer|skywalk/i.test(s)), "Columbia Icefield (Ice Explorer and Skywalk optional)"],
   inclusions: PRIVATE_INCLUSIONS,
@@ -315,10 +315,17 @@ export function docQuickFacts(slug: string): { label: string; value: string }[] 
 }
 
 /** The tour with the owner's doc copy applied, when there is any for it. */
+/** Private group size, word for word everywhere (owner, 2026-11-06), over older catalog wording such as "Up to 6 or 13 guests". */
+export const PRIVATE_GROUP_TEXT = "Private, up to 13 guests";
+const OLD_PRIVATE_GROUP = /up to (6 or 13|13|14) guests/i;
+
 export function withDocContent(tour: TourWithAvailability): TourWithAvailability {
   // Activity tickets show the operator's own photo (owner, 2026-10-30) over the catalog image.
   const ticketImage = activityTicket(tour.slug, tour.category)?.image;
   if (ticketImage) tour = { ...tour, featuredImage: ticketImage };
+  if ((tour.category === "PRIVATE" || tour.category === "MULTIDAY") && tour.facts?.some((f) => OLD_PRIVATE_GROUP.test(f.value))) {
+    tour = { ...tour, facts: tour.facts.map((f) => (OLD_PRIVATE_GROUP.test(f.value) ? { ...f, value: PRIVATE_GROUP_TEXT } : f)) };
+  }
   const c = CONTENT[tour.slug];
   if (!c) return withPolicyFaq(tour);
 

@@ -12,6 +12,8 @@ const schema = z.object({
   tourSlug: z.string().trim().max(120).optional().or(z.literal("")),
   guests: z.coerce.number().int().min(1).max(60).optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().or(z.literal("")),
+  // "Plan your trip" asks From and To dates (owner, 2026-11-06): `date` is the From date.
+  toDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().or(z.literal("")),
   message: z.string().trim().min(5).max(4000),
   // Honeypot: real visitors never see or fill this field.
   website: z.string().max(500).optional(),
@@ -35,8 +37,11 @@ router.post("/", rateLimitMiddleware("enquiry_create", { maxRequests: 5, windowS
 
   recent.push(now);
   hits.set(key, recent);
-  const { website: _honeypot, phone, tourSlug, date, ...rest } = parsed.data;
-  const result = await createEnquiry({ ...rest, phone: phone || undefined, tourSlug: tourSlug || undefined, date: date || undefined });
+  const { website: _honeypot, phone, tourSlug, date, toDate, ...rest } = parsed.data;
+  if (date && toDate && toDate < date) {
+    return res.status(400).json({ success: false, error: "Please check the highlighted fields.", fields: { toDate: ["To Date must be on or after From Date."] } });
+  }
+  const result = await createEnquiry({ ...rest, phone: phone || undefined, tourSlug: tourSlug || undefined, date: date || undefined, toDate: toDate || undefined });
   return res.status(201).json({ success: true, id: result.id });
 });
 
