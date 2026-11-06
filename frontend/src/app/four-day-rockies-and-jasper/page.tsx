@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 import { PACKAGE_DAY_PRICE, PRIVATE_MAX_GUESTS } from "@/lib/privateTours";
+import { MultiDayBookingPanel } from "@/components/booking/MultiDayBookingPanel";
 
 export const metadata: Metadata = {
   title: "Four-Day Rockies & Jasper Private Tour | Vista Chase",
@@ -527,60 +528,24 @@ export default function FourDayRockiesAndJasperPage() {
             </section>
           </div>
 
-          {/* Sticky Booking / Request Sidebar */}
+          {/* Sticky Booking Panel */}
           <aside
             className="rounded-none bg-obsidian-950 p-6 text-white sm:p-8 lg:sticky lg:top-[calc(var(--vc-header-h,80px)+24px)] shadow-xl border border-white/10"
             aria-label="Price and booking request"
           >
-            <div className="border-b border-white/10 pb-5">
-              <span className="text-xs uppercase tracking-[0.2em] text-summit-300">Private Journey</span>
-              <h3 className="mt-1 text-2xl font-light text-white">Four-Day Rockies &amp; Jasper</h3>
-              {/* The doc's package price (lib/privateTours.ts): per day per vehicle, summer season only. */}
-              <p className="mt-4 flex items-baseline gap-1.5 text-white">
-                <span className="text-xs text-white/60">From</span>
-                <span className="text-3xl font-light tabular-nums">CAD ${(PACKAGE_DAY_PRICE.summer * 4).toLocaleString("en-CA")}</span>
-                <span className="text-xs text-white/70">per vehicle</span>
-              </p>
-              <p className="mt-1 text-xs text-white/60">
-                CAD ${PACKAGE_DAY_PRICE.summer.toLocaleString("en-CA")} per day, up to {PRIVATE_MAX_GUESTS} guests. Available June 1 to October 10 only. Add
-                optional activities and airport transfers when you request your dates.
-              </p>
-            </div>
-
-            <ul className="mt-6 space-y-3.5 text-sm text-white/85">
-              <li className="flex items-center gap-3">
-                <Clock className="h-4 w-4 text-summit-300 shrink-0" aria-hidden="true" />
-                <span>4-day private journey</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <Users className="h-4 w-4 text-summit-300 shrink-0" aria-hidden="true" />
-                <span>Exclusive private vehicle for your group</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <MapPin className="h-4 w-4 text-summit-300 shrink-0" aria-hidden="true" />
-                <span>Starts in Banff/Canmore, finishes in Calgary/Banff</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <Plane className="h-4 w-4 text-summit-300 shrink-0" aria-hidden="true" />
-                <span>Airport transfers available to add</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <BedDouble className="h-4 w-4 text-summit-300 shrink-0" aria-hidden="true" />
-                <span>Jasper stay required after day 3</span>
-              </li>
-            </ul>
-
-            <div className="mt-8">
-              <Link
-                href={requestHref}
-                className="golden-summit-btn inline-flex h-12 w-full items-center justify-center gap-2 rounded-full px-6 text-sm font-medium uppercase tracking-[0.14em]"
-              >
-                Request This Package <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </Link>
-              <p className="mt-3 text-center text-xs text-white/60">
-                Tell us your travel dates, passenger count and luggage needs. We’ll reply with a confirmed quote.
-              </p>
-            </div>
+            <MultiDayBookingPanel
+              packageSlug="four-day-rockies-and-jasper"
+              title="Four-Day Rockies & Jasper"
+              dayCount={4}
+              dayLabels={[
+                "Day 1 — Banff & Surrounding Viewpoints",
+                "Day 2 — Lake Louise, Moraine Lake & Yoho",
+                "Day 3 — Icefields Parkway to Jasper",
+                "Day 4 — Jasper Highlights & Return Transfer",
+              ]}
+              summerDayPrice={1575}
+              winterDayPrice={1240}
+            />
 
             <div className="mt-6 border-t border-white/10 pt-4 text-center">
               <p className="text-xs text-white/70">Need assistance planning?</p>

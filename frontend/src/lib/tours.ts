@@ -26,11 +26,11 @@ export function durationLabel(tour: TourWithAvailability) {
   return tour?.facts?.find((f) => /duration/i.test(f.label))?.value ?? `${tour?.durationHours ?? 8} hours`;
 }
 
-/** Group size line; per-group tours list their vehicle sizes ("6 or 13 guests"). */
+/** Group size line; private tours display "Private, up to 13 guests". */
 export function groupLabel(tour: TourWithAvailability) {
   if (tour?.category === "TICKET") return "Individual tickets";
-  if (Array.isArray(tour?.vehicleOptions) && tour.vehicleOptions.length > 0) {
-    return `Private, up to ${tour.vehicleOptions.map((v) => v.seats).join(" or ")} guests`;
+  if (tour?.category === "PRIVATE" || (Array.isArray(tour?.vehicleOptions) && tour.vehicleOptions.length > 0)) {
+    return "Private, up to 13 guests";
   }
   return `Max ${tour?.maxGroupSize ?? 12} guests`;
 }

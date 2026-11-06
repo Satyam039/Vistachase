@@ -12,7 +12,7 @@ import { dialCode } from "@/lib/countries";
 import { openDatePicker } from "@/lib/utils/datePicker";
 import { RequestDateCalendar, shortDate, tripDays } from "@/components/forms/RequestDateCalendar";
 
-type Fields = "name" | "email" | "phone" | "message" | "date" | "guests" | "tour";
+type Fields = "name" | "email" | "phone" | "message" | "date" | "fromDate" | "toDate" | "guests" | "tour";
 const FIELD =
   "h-12 w-full rounded-xl border border-obsidian-900/10 bg-white px-4 text-base text-obsidian-900 placeholder:text-slate-400 focus:border-ocean-600 focus:outline-none focus:ring-2 focus:ring-ocean-600/30 aria-[invalid=true]:border-red-600";
 
@@ -69,7 +69,8 @@ export function ContactForm({
   const [phoneCountry, setPhoneCountry] = useState("CA");
   const [phoneLocal, setPhoneLocal] = useState("");
   const [tourCategory, setTourCategory] = useState(initialCategory);
-  const [date, setDate] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const [guests, setGuests] = useState(defaultGuests ? String(defaultGuests) : "");
   const [message, setMessage] = useState(defaultMessage || "");
 
@@ -91,8 +92,11 @@ export function ContactForm({
     if (!tourCategory) {
       errs.tour = "Please select Private, Shared, or Shuttle.";
     }
-    if (!date) {
-      errs.date = "Please select your preferred date.";
+    if (!fromDate) {
+      errs.fromDate = "Please select your trip start date (From Date).";
+    }
+    if (toDate && toDate < fromDate) {
+      errs.toDate = "To Date must be on or after From Date.";
     }
     if (!guests || Number(guests) < 1) {
       errs.guests = "Enter the number of guests.";
@@ -109,12 +113,13 @@ export function ContactForm({
 
     setState("sending");
     const fullPhone = `+${dialCode(phoneCountry)} ${phoneLocal.trim()}`;
+    const formattedDate = fromDate ? (toDate ? `${fromDate} to ${toDate}` : fromDate) : "";
     const payload = {
       name: name.trim(),
       email: email.trim(),
       phone: fullPhone,
       tourSlug: tourCategory,
-      date,
+      date: formattedDate,
       guests: Number(guests),
       message: message.trim(),
     };
@@ -235,22 +240,43 @@ export function ContactForm({
       </div>
 
       {!requestDays && (
-        <label className="block">
-          <span className="mb-1.5 block text-sm font-medium text-slate-700">Preferred date</span>
-          <input
-            name="date"
-            type="date"
-            required
-            min={today}
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            onClick={openDatePicker}
-            onFocus={openDatePicker}
-            className={FIELD}
-            {...aria("date")}
-          />
-          {err("date")}
-        </label>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-medium text-slate-700">From Date</span>
+            <input
+              name="fromDate"
+              type="date"
+              required
+              min={today}
+              value={fromDate}
+              onChange={(e) => {
+                setFromDate(e.target.value);
+                if (toDate && toDate < e.target.value) setToDate(e.target.value);
+              }}
+              onClick={openDatePicker}
+              onFocus={openDatePicker}
+              className={FIELD}
+              {...aria("fromDate")}
+            />
+            {err("fromDate")}
+          </label>
+
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-medium text-slate-700">To Date</span>
+            <input
+              name="toDate"
+              type="date"
+              min={fromDate || today}
+              value={toDate}
+              onChange={(e) => setToDate(e.target.value)}
+              onClick={openDatePicker}
+              onFocus={openDatePicker}
+              className={FIELD}
+              {...aria("toDate")}
+            />
+            {err("toDate")}
+          </label>
+        </div>
       )}
 
       <label className="block">
@@ -275,12 +301,12 @@ export function ContactForm({
         <div className="sm:col-span-2">
           <RequestDateCalendar
             days={requestDays}
-            value={date}
+            value={fromDate}
             onChange={(day) => {
-              setDate(day);
+              setFromDate(day);
               setMessage((m) => fillDates(m, day, requestDays));
             }}
-            error={fieldErrors.date}
+            error={fieldErrors.fromDate}
             errorId="contact-date-error"
           />
         </div>

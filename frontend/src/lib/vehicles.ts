@@ -30,7 +30,8 @@ const SUV_PHOTOS: VehiclePhoto[] = [{ src: "/media/photos/cadillac-escalade-moun
 const mentions = (items: string[], re: RegExp) => items.some((i) => re.test(i));
 
 export function vehiclesFor(tour: TourWithAvailability): VehicleInfo[] {
-  if (tour.category === "TICKET") return [];
+  // Shared tours and tickets do not display vehicle options
+  if (tour.category === "TICKET" || tour.category === "SHARED") return [];
   const heated = mentions(tour.inclusions, /heated/i);
   const winterTires = mentions(tour.inclusions, /winter tires/i);
 

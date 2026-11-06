@@ -104,6 +104,23 @@ export function TourCard({
   // Every tour and shuttle in the catalog picks up in Banff and Canmore; tickets have no pickup.
   const pickup = tour.category !== "TICKET";
 
+  const isExcludedStrikethrough =
+    tour.slug === "banff-highlights-tour" ||
+    tour.slug === "shared-tours-icefields-jasper" ||
+    tour.slug === "banff-yoho-discovery" ||
+    tour.slug === "columbia-icefield-adventure";
+
+  const seasonal =
+    tour.slug === "banff-highlights-tour" || tour.slug === "banff-yoho-discovery"
+      ? { summer: "$220", winter: "$220" }
+      : tour.slug === "shared-tours-icefields-jasper" || tour.slug === "columbia-icefield-adventure"
+      ? { summer: "$320", winter: "$220" }
+      : tour.slug === "banff-private-tour"
+      ? { summer: "$1,750", winter: "$1,240" }
+      : tour.slug === "icefields-jasper-private-tour"
+      ? { summer: "$1,750", winter: "$1,240" }
+      : null;
+
   return (
     <article className="group relative flex h-full flex-col text-white transition-transform duration-500 ease-out hover:-translate-y-1">
       {/* Image block: square corners, nothing over the photo but the badges */}
@@ -177,13 +194,6 @@ export function TourCard({
             </li>
           </ul>
 
-          {pickup && (
-            <p className="mt-1.5 flex items-center gap-1 text-xs text-white/55">
-              <MapPin className="h-3 w-3 shrink-0 text-summit-300" aria-hidden="true" />
-              Pickup in Banff &amp; Canmore
-            </p>
-          )}
-
           <p className="mb-4 mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-white/55">
             <span className="inline-flex items-center gap-1">
               <CheckCircle2 className="h-3 w-3 shrink-0 text-summit-300" aria-hidden="true" />
@@ -208,9 +218,23 @@ export function TourCard({
             <div className="min-w-0">
               <div className="flex min-w-0 items-baseline gap-1.5 whitespace-nowrap">
                 {hasPrice(price) && <span className="text-xs text-white/55">From</span>}
-                <PriceTag price={price} currency={tour.currency} unit={`${tour.currency}/${unitLabel}`} size="sm" tone="dark" layout="inline" />
+                <PriceTag
+                  price={price}
+                  currency={tour.currency}
+                  unit={`${tour.currency}/${unitLabel}`}
+                  size="sm"
+                  tone="dark"
+                  layout="inline"
+                  showOriginal={!isExcludedStrikethrough}
+                />
               </div>
               {hasPrice(price) && <p className="mt-0.5 text-xs text-white/55">Taxes and required fees included</p>}
+              {seasonal && (
+                <div className="mt-1 flex flex-wrap gap-x-2.5 gap-y-0.5 text-[11px] text-white/60">
+                  <span>Summer: <strong className="font-medium text-summit-200">{seasonal.summer}</strong></span>
+                  <span>Winter: <strong className="font-medium text-white/80">{seasonal.winter}</strong></span>
+                </div>
+              )}
             </div>
             <span className="mb-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center ring-1 ring-summit-200/40 text-summit-200 transition-colors duration-300 group-hover:bg-summit-200 group-hover:text-obsidian-900" aria-hidden="true">
               <ArrowRight className="h-3.5 w-3.5" />

@@ -475,9 +475,20 @@ function PrivateTourCard({
                   <span className="text-xs text-white/70">per vehicle</span>
                 </div>
                 <p className="mt-0.5 text-xs text-white/55">Taxes and required fees included</p>
-                {option.priceNote && (
+                {option.seasonalPricing ? (
+                  <div className="mt-2.5 space-y-1 rounded-lg bg-white/[0.04] p-2.5 text-xs">
+                    <div className="flex items-center justify-between text-white/80">
+                      <span className="text-white/55">Summer Price:</span>
+                      <span className="font-medium text-summit-200">{option.seasonalPricing.summer}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-white/80">
+                      <span className="text-white/55">Winter Price:</span>
+                      <span className="font-medium text-white">{option.seasonalPricing.winter}</span>
+                    </div>
+                  </div>
+                ) : option.priceNote ? (
                   <p className="mt-1 text-xs text-summit-300 font-medium">{option.priceNote}</p>
-                )}
+                ) : null}
               </div>
             )}
           </div>

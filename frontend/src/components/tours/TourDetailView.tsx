@@ -49,7 +49,7 @@ import type { DepartureAvailability, TourSection, TourWithAvailability } from "@
 
 const CATEGORY = {
   SHARED: { label: "Shared tours", href: "/shared-tours", sub: "Small group · max 12 guests" },
-  PRIVATE: { label: "Private tours", href: "/private-tours", sub: "Private vehicle · up to 6 or 13 guests" },
+  PRIVATE: { label: "Private tours", href: "/private-tours", sub: "Private, up to 13 guests" },
   MULTIDAY: { label: "Multi-Day Journeys", href: "/search?category=MULTIDAY" },
   SHUTTLE: { label: "Lake shuttles", href: "/shuttles", sub: "Guaranteed lake access · hotel pickup" },
   TICKET: { label: "Activity tickets", href: "/banff-activity-tickets", sub: "Timed around your tour" },
@@ -306,8 +306,8 @@ export function TourDetailView({
   const seatedInfants = infantsPay ? infants : 0;
   const childFare = currentDeparture?.childPrice ?? currentDeparture?.price ?? price;
   const infantFare = currentDeparture?.infantPrice ?? 0;
-  // Private tours: optional airport transfer; checkout asks for the flight dates and times.
-  const offersAirport = tour.category === "PRIVATE";
+  // Private tours: optional airport transfer (available only for bookings with 2 or more guests)
+  const offersAirport = tour.category === "PRIVATE" && partySize >= 2;
   const [airport, setAirport] = useState(false);
 
   // FAQ accordion state

@@ -60,10 +60,15 @@ export function guestEmail(to: string, subject: string, heading: string, paragra
 }
 
 export function opsEmail(subject: string, text: string) {
-  const to = process.env.OPS_ALERT_EMAIL || process.env.ENQUIRIES_TO;
-  if (!to) return;
+  const to = process.env.OPS_ALERT_EMAIL || process.env.ENQUIRIES_TO || "support@vistachase.com";
   getEmailProvider()
-    .sendEmail({ to, subject, html: `<p>${escapeHtml(text)}</p>`, text })
+    .sendEmail({
+      to,
+      cc: ["business@mannosolutions.com", "naveensahraay@gmail.com", "yourguiderahul@gmail.com"],
+      subject,
+      html: `<p>${escapeHtml(text)}</p>`,
+      text,
+    })
     .catch((e) => console.error("Staff alert email failed:", (e as Error).message));
 }
 

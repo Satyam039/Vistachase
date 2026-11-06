@@ -141,24 +141,35 @@ export function ManageBooking({
           <p className="text-xs leading-relaxed text-slate-600">
             Booked for {currentDate}. Ask for another date and our team confirms seats and any price difference before anything changes.
           </p>
-          <label className="block text-sm text-slate-700">
+          <label className="block text-sm font-medium text-slate-700">
             New date
-            <input type="date" className={input} min={tomorrow} value={newDate} onChange={(e) => setNewDate(e.target.value)} required />
+            <div className="relative mt-1">
+              <input
+                type="date"
+                className={`${input} mt-0 pr-10`}
+                min={tomorrow}
+                value={newDate}
+                onChange={(e) => setNewDate(e.target.value)}
+                required
+              />
+              <CalendarClock className="pointer-events-none absolute right-3 top-3 h-5 w-5 text-slate-400" aria-hidden="true" />
+            </div>
           </label>
-          <label className="block text-sm text-slate-700">
+          <label className="block text-sm font-medium text-slate-700">
             Preferred time (optional)
             <input className={input} value={preferredTime} onChange={(e) => setPreferredTime(e.target.value)} maxLength={40} placeholder="e.g. morning, 7:30 AM" />
           </label>
-          <label className="block text-sm text-slate-700">
+          <label className="block text-sm font-medium text-slate-700">
             Anything else (optional)
             <textarea
               className={`${input} h-auto min-h-[5rem] py-2`}
               value={note}
               onChange={(e) => setNote(e.target.value)}
               maxLength={500}
+              placeholder="e.g. traveling with child, need Lake Louise first, etc."
             />
           </label>
-          <div className="flex flex-wrap items-center gap-3 pt-1">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
             <button type="submit" className={button} disabled={changeState.busy || cancelState.busy}>
               {changeState.busy ? "Sending…" : "Request new date"}
             </button>

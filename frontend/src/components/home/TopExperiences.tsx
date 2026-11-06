@@ -106,6 +106,17 @@ export function TopExperiences({ tours }: { tours: TourWithAvailability[] }) {
  *  multi-day journeys, shuttle departures). The whole card is one link. */
 export function ExperienceCard({ card }: { card: LinkCard }) {
   const { href, external, image, badge, eyebrow, title, facts, note, price, unit, noPrice } = card;
+  const seasonal =
+    card.key === "two-day-shared"
+      ? { summer: "$486", winter: "$396" }
+      : card.key === "two-day-rockies-private"
+      ? { summer: "$1,575/day", winter: "$1,240/day" }
+      : card.key === "three-day-rockies-discovery"
+      ? { summer: "$1,575/day", winter: "Summer only" }
+      : card.key === "four-day-rockies-jasper"
+      ? { summer: "$1,575/day", winter: "Summer only" }
+      : null;
+
   return (
     <article className="group relative flex h-full flex-col text-white transition-transform duration-500 ease-out hover:-translate-y-1">
       <div className="relative aspect-[5/4] w-full overflow-hidden bg-obsidian-900">
@@ -160,9 +171,23 @@ export function ExperienceCard({ card }: { card: LinkCard }) {
               <>
                 <div className="flex min-w-0 items-baseline gap-1.5 whitespace-nowrap">
                   <span className="text-xs text-white/55">From</span>
-                  <PriceTag price={price} currency="CAD" unit={unit} size="sm" tone="dark" layout="inline" />
+                  <PriceTag
+                    price={price}
+                    currency="CAD"
+                    unit={unit}
+                    size="sm"
+                    tone="dark"
+                    layout="inline"
+                    showOriginal={card.key !== "banff-highlights-tour" && card.key !== "shared-tours-icefields-jasper"}
+                  />
                 </div>
                 <p className="mt-0.5 text-xs text-white/55">Taxes and required fees included</p>
+                {seasonal && (
+                  <div className="mt-1 flex flex-wrap gap-x-2.5 gap-y-0.5 text-[11px] text-white/60">
+                    <span>Summer: <strong className="font-medium text-summit-200">{seasonal.summer}</strong></span>
+                    <span>Winter: <strong className="font-medium text-white/80">{seasonal.winter}</strong></span>
+                  </div>
+                )}
               </>
             ) : (
               <p className="text-sm text-white/80">{noPrice}</p>

@@ -43,8 +43,9 @@ export const AIRPORT_TRANSFER_PRICES = {
   LAKE_LOUISE: { small: 44500, large: 89500 },
 } as const;
 
-/** The transfer's price in cents (both ways), or null when the team confirms it (winter, 13+ guests, no area). */
+/** The transfer's price in cents (both ways), or null when the team confirms it (winter, 13+ guests, no area). Available only for 2+ guests. */
 export function airportTransferPriceCents(t: Pick<AirportTransfer, "area" | "arrivalDate">, guests: number): number | null {
+  if (guests < 2) return null;
   if (!t.area) return null;
   const md = t.arrivalDate.slice(5, 10);
   if (md < "06-01" || md > "10-10") return null;

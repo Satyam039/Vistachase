@@ -16,7 +16,7 @@ const COMPARISON_DATA = [
   {
     feature: "Group Size",
     shared: "Max 12 guests (small group)",
-    private: "Exclusive private group (up to 6 or 13)",
+    private: "Private, up to 13 guests",
     shuttle: "Direct shuttle passengers",
     activity: "Individual or party admissions",
   },

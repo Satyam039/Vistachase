@@ -119,7 +119,7 @@ export function PrivateTourStory() {
                 {/* Fleet VIP Badge */}
                 <div className="absolute top-5 left-5 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-summit-300 text-xs font-medium">
                   <Sparkles className="w-3.5 h-3.5 text-summit-500" />
-                  <span>Exclusive Private Fleet (Up to 6 or 13 Guests)</span>
+                  <span>Exclusive Private Fleet (Private, up to 13 guests)</span>
                 </div>
 
                 {/* Bottom Overlay Summary */}

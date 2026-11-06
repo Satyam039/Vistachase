@@ -297,7 +297,7 @@ function pick(id: Parameters<typeof serviceById>[0]) {
   return { href: s?.href ?? "/search", image: s?.image ?? "/media/photos/moraine-lake-classic.webp" };
 }
 
-/** Duration, group size and pickup: the same three facts on every card. */
+/** Duration and group size on every card (pickup details inside the tour view). */
 function Facts({ duration }: { duration: string }) {
   return (
     <ul className="mt-4 flex flex-wrap gap-x-4 gap-y-1.5 text-sm text-white/75" aria-label="Key details">
@@ -308,10 +308,6 @@ function Facts({ duration }: { duration: string }) {
       <li className="flex items-center gap-1.5">
         <Users className="h-3.5 w-3.5 text-summit-300" aria-hidden="true" />
         Max 12 guests
-      </li>
-      <li className="flex items-center gap-1.5">
-        <MapPin className="h-3.5 w-3.5 text-summit-300" aria-hidden="true" />
-        Pickup in Banff &amp; Canmore
       </li>
     </ul>
   );
@@ -434,6 +430,16 @@ function DayCard({ tour, price, award = false }: { tour: DayTour; price: number;
           {tour.keyNote}
         </p>
         <div className="mt-auto border-t border-white/[0.08] pt-4">
+          <div className="mb-3 space-y-1 rounded-lg bg-white/[0.04] p-2.5 text-xs">
+            <div className="flex items-center justify-between text-white/80">
+              <span className="text-white/55">Summer Price (Jun 1–Oct 10):</span>
+              <span className="font-medium text-summit-200">CAD ${tour.slug === "shared-tours-icefields-jasper" ? 320 : 220}/guest</span>
+            </div>
+            <div className="flex items-center justify-between text-white/80">
+              <span className="text-white/55">Winter Price (Oct 11–May 31):</span>
+              <span className="font-medium text-white">CAD $220/guest</span>
+            </div>
+          </div>
           <Price price={price} showOriginal={false} />
           <CardButton href={`/${tour.slug}`} label={tour.button} />
         </div>
@@ -464,6 +470,16 @@ function PackageCard({ price, separate }: { price: number; separate: number }) {
           {TWO_DAY_PACKAGE.keyNote}
         </p>
         <div className="mt-auto border-t border-white/[0.08] pt-4">
+          <div className="mb-3 space-y-1 rounded-lg bg-white/[0.04] p-2.5 text-xs">
+            <div className="flex items-center justify-between text-white/80">
+              <span className="text-white/55">Summer Price (Jun 1–Oct 10):</span>
+              <span className="font-medium text-summit-200">CAD $486/guest</span>
+            </div>
+            <div className="flex items-center justify-between text-white/80">
+              <span className="text-white/55">Winter Price (Oct 11–May 31):</span>
+              <span className="font-medium text-white">CAD $396/guest</span>
+            </div>
+          </div>
           <PackagePrice price={price} separate={separate} />
           <CardButton href={TWO_DAY_PACKAGE.href} label={TWO_DAY_PACKAGE.button} />
         </div>
