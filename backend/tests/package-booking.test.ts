@@ -170,3 +170,68 @@ describe("two-day package", () => {
     expect(flagged.flags[0].note).toContain("refunded in Stripe");
   });
 });
+
+// Private journeys (owner 2026-11-06: booked like a private tour, a date the guest picks for each day).
+describe("private multi-day journeys", () => {
+  async function vehicle(slug: string, date: string, price: number) {
+    const tour = await prisma.tour.findUniqueOrThrow({ where: { slug } });
+    const d = await prisma.tourDeparture.create({
+      data: { inventorySource: "LOCAL", tourId: tour.id, date: dateOnly(date), departureTime: timeOfDay("08:00"), capacityTotal: 13, capacityBooked: 0, capacityHeld: 0, price, status: "ACTIVE" },
+    });
+    return d.id;
+  }
+  const party = (n: number, packageSlug: string, departureIds: string[], extra: Record<string, unknown> = {}) => ({
+    packageSlug,
+    departureIds,
+    customerName: `Private Journey ${n}`,
+    customerEmail: `journey${n}@example.com`,
+    customerPhone: "+1 403 555 0102",
+    adultsCount: 4,
+    childrenCount: 0,
+    infantsCount: 0,
+    ...extra,
+  });
+
+  it("three days on dates the guest picks (not in a row): CAD 1,575 a vehicle a day in summer", async () => {
+    setPaymentProviderForTests(browserPays);
+    const ids = [
+      await vehicle("banff-private-tour", "2027-07-02", 175000),
+      await vehicle("banff-private-tour", "2027-07-05", 175000),
+      await vehicle("icefields-jasper-private-tour", "2027-07-09", 175000),
+    ];
+    const result = await createPackageBooking(party(1, "three-day-rockies-discovery", ids));
+    expect(result.success).toBe(true);
+    expect(result.bookings).toHaveLength(3);
+    expect(result.totalAmount).toBe(1575 * 3);
+    const stored = await prisma.booking.findMany({ where: { bookingReference: { in: result.bookings!.map((b) => b.bookingReference) } } });
+    expect(stored.map((b) => b.totalAmount).sort()).toEqual([157500, 157500, 157500]);
+  });
+
+  it("four-day journey: summer only, and the days follow the itinerary's tours", async () => {
+    const winter = [
+      await vehicle("banff-private-tour", "2027-11-02", 124000),
+      await vehicle("banff-private-tour", "2027-11-03", 124000),
+      await vehicle("icefields-jasper-private-tour", "2027-11-04", 124000),
+      await vehicle("icefields-jasper-private-tour", "2027-11-05", 124000),
+    ];
+    const refused = await createPackageBooking(party(2, "four-day-rockies-and-jasper", winter));
+    expect(refused).toMatchObject({ success: false });
+    expect(refused.error).toContain("June 1 to October 10");
+
+    const wrongOrder = [winter[2], winter[0], winter[1], winter[3]];
+    expect((await createPackageBooking(party(3, "four-day-rockies-and-jasper", wrongOrder))).success).toBe(false);
+  });
+
+  it("private two-day in winter is CAD 1,240 a day, and the airport transfer is booked once with Day 1", async () => {
+    setPaymentProviderForTests(browserPays);
+    const ids = [await vehicle("banff-private-tour", "2027-12-08", 124000), await vehicle("icefields-jasper-private-tour", "2027-12-10", 124000)];
+    const transfer = { area: "BANFF" as const, arrivalDate: "2027-12-07", arrivalTime: "14:00", departureDate: "2027-12-11", departureTime: "10:00", from: "Calgary Airport", to: "Banff" };
+    const result = await createPackageBooking(party(4, "two-day-rockies-explorer-private", ids, { airportTransfer: transfer }));
+    expect(result.success).toBe(true);
+    // Winter transfers are priced by the team, so the total is the two days alone.
+    expect(result.totalAmount).toBe(1240 * 2);
+    const [a, b] = await Promise.all(result.bookings!.map((x) => prisma.booking.findUniqueOrThrow({ where: { bookingReference: x.bookingReference } })));
+    expect((a.priceSnapshot as { airportTransfer?: unknown }).airportTransfer).toBeTruthy();
+    expect((b.priceSnapshot as { airportTransfer?: unknown }).airportTransfer).toBeUndefined();
+  });
+});

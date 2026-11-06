@@ -8,7 +8,10 @@
 //   no tour    faded number, nothing underneath
 // Month arrows only move to months that have departures. Keyboard: Tab lands on the selected (or
 // first available) day; arrow keys move between available days, Home/End jump to the first/last.
-// When a day has more than one departure, its times appear as a second choice underneath.
+// Tours show no time choice (owner, 2026-11-06): each tour runs at its one Bókun start time, and a
+// day picks that departure. Only shuttles (`showTimes`), which run several departures a day by
+// design, list the day's times underneath. The months run five years ahead (owner, 2026-11-06);
+// which of those dates are on sale follows Bókun's calendar (src/modules/bokun/availability-sync.ts).
 // With `collapseOnSelect`, picking a day (or a time) folds the calendar into one line with a
 // "Change date" button, so the booking button stays in view on small laptops (owner's doc, 2026-11-04).
 
@@ -31,6 +34,7 @@ export function DepartureCalendar({
   onChange,
   describe,
   collapseOnSelect = false,
+  showTimes = false,
 }: {
   departures: DepartureAvailability[];
   /** Whether this departure can be booked for the current party (seats left, whole vehicle free). */
@@ -42,6 +46,8 @@ export function DepartureCalendar({
   describe: (d: DepartureAvailability) => string;
   /** Fold into a one-line summary once the guest picks a date. */
   collapseOnSelect?: boolean;
+  /** List the day's departure times when it has several (shuttles only). */
+  showTimes?: boolean;
 }) {
   const [open, setOpen] = useState(true);
   const changeButton = useRef<HTMLButtonElement>(null);
@@ -50,7 +56,7 @@ export function DepartureCalendar({
   const bookableDays = Array.from(new Set(bookable.map(dayOf))).sort();
   const fullDays = new Set(departures.map(dayOf).filter((d) => !bookableDays.includes(d)));
   
-  // Extend calendar to show the next 5 years (60 months) from today, keeping all departure months
+  // The next 5 years (60 months) from today, plus any departure month beyond.
   const now = new Date();
   const startMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const fiveYearMonths: string[] = [];
@@ -88,10 +94,10 @@ export function DepartureCalendar({
     const dep = bookable.find((d) => dayOf(d) === day);
     if (dep) onChange(dep.id);
   };
-  // A click (or Enter) chooses; arrow keys only move. A day with several times waits for the time.
+  // A click (or Enter) chooses; arrow keys only move. On a shuttle, a day with several times waits for the time.
   const choose = (day: string) => {
     pick(day);
-    if (collapseOnSelect && bookable.filter((d) => dayOf(d) === day).length === 1) setOpen(false);
+    if (collapseOnSelect && (!showTimes || bookable.filter((d) => dayOf(d) === day).length === 1)) setOpen(false);
   };
 
   // Keep focus on the control that replaced the one the guest used.
@@ -228,6 +234,28 @@ export function DepartureCalendar({
           </li>
         )}
       </ul>
+
+      {showTimes && sameDay.length > 1 && (
+        <div role="radiogroup" aria-label="Departure time" className="flex flex-wrap gap-2">
+          {sameDay.map((d) => (
+            <button
+              key={d.id}
+              type="button"
+              role="radio"
+              aria-checked={d.id === value}
+              onClick={() => {
+                onChange(d.id);
+                if (collapseOnSelect) setOpen(false);
+              }}
+              className={`h-10 rounded-full px-4 text-sm ring-1 transition-colors ${
+                d.id === value ? "bg-obsidian-950 text-white ring-obsidian-950" : "bg-white text-obsidian-900 ring-obsidian-900/15 hover:ring-obsidian-900/40"
+              }`}
+            >
+              {d.departureTime.slice(0, 5)}
+            </button>
+          ))}
+        </div>
+      )}
 
       <p className="text-sm text-slate-700" aria-live="polite">
         {selected && selectedDay ? (

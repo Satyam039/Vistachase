@@ -20,12 +20,16 @@ export type ExperienceCategory = "SHARED" | "PRIVATE" | "SHUTTLE" | "MULTIDAY" |
 /** Shuttle products the timetable's departures are sold under (seed-departures.ts). */
 export const SUNRISE_SHUTTLE = "sunrise-shuttle-to-moraine-lake-and-lake-louise";
 export const DAY_SHUTTLE = "full-day-at-lake-louise-and-moraine-lake";
+// Card photos (owner 2026-11-06): one photo per card, each showing that experience's own places.
+// The owner's Drive folder supplied the Columbia Icefield and Maligne Lake photos (optimised
+// *-card.webp copies); it has no Moraine Lake, Lake Louise or Yoho photos, so those cards use the
+// site's own library.
 const SHUTTLE_PHOTOS = [
   "/media/photos/lake-louise-sunrise.webp",
   "/media/photos/moraine-lake-reflection-morning.webp",
-  "/media/photos/canadian-rockies-vista-1346.jpg",
+  "/media/photos/moraine-lake-rockpile-view.webp",
   "/media/photos/lake-louise-red-canoes.webp",
-  "/media/photos/canadian-rockies-vista-5562.jpg",
+  "/media/photos/moraine-lake-perfect-reflection.webp",
   "/media/photos/moraine-lake-canoes.webp",
   "/media/photos/lake-louise-shoreline.webp",
 ];
@@ -115,14 +119,15 @@ export function buildExperienceTabs(tours: TourWithAvailability[]): ExperienceTa
   const icefield = bySlug(ICEFIELD.slug);
   const sharedPackage = packagePrice(price(BANFF_YOHO.slug), price(ICEFIELD.slug));
   const shared: ExperienceCard[] = [
-    ...tourCard("SHARED", BANFF_YOHO.slug, "BANFF & YOHO DISCOVERY – SHARED TOUR", "/media/photos/canadian-rockies-vista-2585.jpg"),
-    ...tourCard("SHARED", ICEFIELD.slug, "COLUMBIA ICEFIELD ADVENTURE – SHARED TOUR", "/media/photos/pursuit-sherps-snowcoach-01.jpg"),
+    ...tourCard("SHARED", BANFF_YOHO.slug, "BANFF & YOHO DISCOVERY – SHARED TOUR", BANFF_YOHO.image),
+    ...tourCard("SHARED", ICEFIELD.slug, "COLUMBIA ICEFIELD ADVENTURE – SHARED TOUR", ICEFIELD.image),
     linkCard(
       "SHARED",
       {
         key: "two-day-shared",
         href: TWO_DAY_PACKAGE.href,
-        image: "/media/photos/canadian-rockies-vista-3609.jpg",
+        // Peyto Lake is on both days' routes.
+        image: "/media/photos/peyto-lake.webp",
         badge: TWO_DAY_PACKAGE.saving,
         eyebrow: "Banff, Yoho & Icefields Parkway",
         title: "TWO-DAY ROCKIES EXPLORER – SHARED TOUR",
@@ -146,14 +151,7 @@ export function buildExperienceTabs(tours: TourWithAvailability[]): ExperienceTa
   const privateCard = (category: ExperienceCategory, opt: PrivateTourOption): ExperienceCard => {
     const typeLabel = opt.isCustomPartner ? "BY BANFF ELITE" : "PRIVATE TOUR";
     const formattedTitle = opt.title.includes("–") ? opt.title : `${opt.title.toUpperCase()} – ${typeLabel}`;
-    const cardImage =
-      opt.id === "banff-yoho-private"
-        ? "/media/photos/canadian-rockies-vista-5105.jpg"
-        : opt.id === "columbia-icefield-private"
-        ? "/media/photos/columbia-icefield-athabasca-glacier-master.jpg"
-        : opt.id === "two-day-rockies-private"
-        ? "/media/photos/canadian-rockies-vista-3715.jpg"
-        : opt.image;
+    const cardImage = opt.image;
 
     if (opt.slug && bySlug(opt.slug)) return tourCard(category, opt.slug, formattedTitle, cardImage)[0];
     const privateDays = PRIVATE_OPTIONS.flatMap((o) => (o.slug && bySlug(o.slug) ? [bySlug(o.slug)!] : []));
@@ -161,7 +159,7 @@ export function buildExperienceTabs(tours: TourWithAvailability[]): ExperienceTa
       ? (seats) => seats <= 13
       : opt.id === "two-day-rockies-private"
         ? (seats, date) => privateDays.some((t) => tourFits(t, seats, date))
-        : (seats, date) => seats <= 13 && (!date || inSummer(date)); // three- and four-day: summer only, on request
+        : (seats, date) => seats <= 13 && (!date || inSummer(date)); // three- and four-day: summer only
     return linkCard(
       category,
       {

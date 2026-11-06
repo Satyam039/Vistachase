@@ -87,6 +87,8 @@ const packageSchema = z.object({
   childrenCount: count(30).default(0),
   infantsCount: count(10).default(0),
   specialRequests: z.string().trim().max(1000).optional(),
+  // Private journeys: Calgary airport transfer, booked with Day 1 (2+ guests, as for a private tour).
+  airportTransfer: airportTransferSchema.optional(),
 });
 
 // A package (modules/bookings/package-booking.ts): one booking per day, one payment for all of them.

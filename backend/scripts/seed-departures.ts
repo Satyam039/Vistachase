@@ -1,4 +1,4 @@
-// Seeds the rolling schedule of departures for the next 365 days for the instant-booking products
+// Seeds the rolling schedule of departures for the next five years (SEED_DAYS) for the instant-booking products
 // (fixed times, capacity and prices below). Existing departures are left as they are.
 // A year ahead (owner's doc, 2026-11-05: the Two-Day shared tour couldn't be booked past Jan 4
 // 2027, the end of the old 60-day window). Bókun's live calendar still decides which dates are on

@@ -18,7 +18,7 @@ import "dotenv/config";
 import { Queue, Worker } from "bullmq";
 import IORedis from "ioredis";
 import prisma from "@/lib/db/prisma";
-import { expireHoldsAndUnpaidBookings, maturePartnerCommissions, sendBookingsToBokun, syncSeatsFromBokun, publishScheduledSeoPages, reconcileBookings, remindUnpaidBalances, retryConfirmationEmails, runNightlySeoAudit, sendReviewRequests, sendT60WhatsApp, syncWebflowBlogPosts, whatsAppDeliveryConfigured } from "@/jobs/tasks";
+import { expireHoldsAndUnpaidBookings, maturePartnerCommissions, sendBookingsToBokun, syncSeatsFromBokun, syncFarCalendarFromBokun, publishScheduledSeoPages, reconcileBookings, remindUnpaidBalances, retryConfirmationEmails, runNightlySeoAudit, sendReviewRequests, sendT60WhatsApp, syncWebflowBlogPosts, whatsAppDeliveryConfigured } from "@/jobs/tasks";
 import { isWebflowSyncEnabled, webflowSyncMinutes } from "@/modules/seo/portal/webflow-sync";
 import { bokunConfigured } from "@/modules/bokun/config";
 
@@ -38,6 +38,7 @@ const JOBS: Record<string, () => Promise<unknown>> = {
   "whatsapp-t60": () => sendT60WhatsApp(),
   "bokun-bookings": () => sendBookingsToBokun(),
   "bokun-seats": () => syncSeatsFromBokun(),
+  "bokun-calendar": () => syncFarCalendarFromBokun(),
 };
 
 async function main() {
@@ -50,9 +51,11 @@ async function main() {
   if (bokunConfigured()) {
     await queue.upsertJobScheduler("bokun-bookings", { every: 2 * 60 * 1000 }, { name: "bokun-bookings" });
     await queue.upsertJobScheduler("bokun-seats", { every: 15 * 60 * 1000 }, { name: "bokun-seats" });
+    await queue.upsertJobScheduler("bokun-calendar", { every: 6 * 60 * 60 * 1000 }, { name: "bokun-calendar" });
   } else {
     await queue.removeJobScheduler("bokun-bookings");
     await queue.removeJobScheduler("bokun-seats");
+    await queue.removeJobScheduler("bokun-calendar");
   }
   await queue.upsertJobScheduler("reconcile-bookings", { pattern: "0 2 * * *", tz: TZ }, { name: "reconcile-bookings" });
   await queue.upsertJobScheduler("review-requests", { pattern: "0 10 * * *", tz: TZ }, { name: "review-requests" });

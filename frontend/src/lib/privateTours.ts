@@ -36,9 +36,71 @@ export const PRIVATE_INTRO = {
 // Per-vehicle prices from the owner's doc (Pricing, 2026-10-29), CAD, up to 13 guests. Summer is
 // June 1 – October 10, winter October 11 – May 31. The day tours are charged from their departures
 // (backend scripts/seed-departures.ts and migration 9g_private_seasonal_prices); the packages are
-// booked on request, so their prices here are what the team quotes.
+// booked online from those same departures with the package price (PRIVATE_PACKAGES below).
 export const PRIVATE_MAX_GUESTS = 13;
 export const PACKAGE_DAY_PRICE = { summer: 1575, winter: 1240 };
+
+/**
+ * A package booked in one checkout (components/booking/PackageBookingSection.tsx). Must match
+ * backend/src/modules/bookings/package-booking.ts PACKAGES: the same days (each a day tour, in
+ * order) and discounts. Private journeys: the private day price less 10% in summer (1,750 -> 1,575
+ * a day, the doc's package price) and the winter day price (1,240) unchanged.
+ */
+export interface PackageConfig {
+  slug: string;
+  title: string;
+  days: { slug: string; title: string; label: string }[];
+  discountPercent: number;
+  winterDiscountPercent?: number;
+  summerOnly?: boolean;
+  vehicle?: boolean;
+  maxGuests?: number;
+}
+
+const BANFF_DAY = "banff-private-tour";
+const ICEFIELD_DAY = "icefields-jasper-private-tour";
+
+export const PRIVATE_PACKAGES: Record<"two" | "three" | "four", PackageConfig> = {
+  two: {
+    slug: "two-day-rockies-explorer-private",
+    title: "Private Two-Day Rockies Explorer",
+    days: [
+      { slug: BANFF_DAY, title: "Banff & Yoho Discovery", label: "Private · Lake Louise, Moraine Lake & Yoho" },
+      { slug: ICEFIELD_DAY, title: "Columbia Icefield Adventure", label: "Private · Icefields Parkway" },
+    ],
+    discountPercent: 10,
+    winterDiscountPercent: 0,
+    vehicle: true,
+    maxGuests: PRIVATE_MAX_GUESTS,
+  },
+  three: {
+    slug: "three-day-rockies-discovery",
+    title: "Three-Day Rockies Discovery",
+    days: [
+      { slug: BANFF_DAY, title: "Banff's Lakes, Viewpoints & Mountain Scenery", label: "Private · Banff" },
+      { slug: BANFF_DAY, title: "Lake Louise, Moraine Lake & Yoho", label: "Private · Lake Louise & Yoho" },
+      { slug: ICEFIELD_DAY, title: "Icefields Parkway, Glaciers & Scenic Lakes", label: "Private · Icefields Parkway" },
+    ],
+    discountPercent: 10,
+    summerOnly: true,
+    vehicle: true,
+    maxGuests: PRIVATE_MAX_GUESTS,
+  },
+  four: {
+    slug: "four-day-rockies-and-jasper",
+    title: "Four-Day Rockies & Jasper",
+    days: [
+      { slug: BANFF_DAY, title: "Banff & Surrounding Viewpoints", label: "Private · Banff" },
+      { slug: BANFF_DAY, title: "Lake Louise, Moraine Lake & Yoho", label: "Private · Lake Louise & Yoho" },
+      { slug: ICEFIELD_DAY, title: "Icefields Parkway to Jasper", label: "Private · Icefields Parkway" },
+      { slug: ICEFIELD_DAY, title: "Jasper Highlights & Return Transfer", label: "Private · Jasper" },
+    ],
+    discountPercent: 10,
+    summerOnly: true,
+    vehicle: true,
+    maxGuests: PRIVATE_MAX_GUESTS,
+  },
+};
 
 export interface PrivateTourOption {
   id: string;
@@ -87,8 +149,8 @@ export const PRIVATE_OPTIONS: PrivateTourOption[] = [
     },
     buttonLabel: "View Itinerary",
     buttonHref: "/banff-private-tour",
-    image: "/media/photos/canadian-rockies-vista-5105.jpg",
-    imageAlt: "Moraine Lake and Ten Peaks in Banff National Park",
+    image: "/media/photos/lake-louise-chateau-view.webp",
+    imageAlt: "Lake Louise below Victoria Glacier in Banff National Park",
   },
   {
     id: "columbia-icefield-private",
@@ -110,7 +172,7 @@ export const PRIVATE_OPTIONS: PrivateTourOption[] = [
     },
     buttonLabel: "View Itinerary",
     buttonHref: "/icefields-jasper-private-tour",
-    image: "/media/photos/columbia-icefield-athabasca-glacier-master.jpg",
+    image: "/media/photos/columbia-icefield-athabasca-glacier-card.webp",
     imageAlt: "Peyto Lake and Athabasca Glacier along the Icefields Parkway",
   },
   {
@@ -132,9 +194,9 @@ export const PRIVATE_OPTIONS: PrivateTourOption[] = [
       winter: "CAD $1,240/day ($2,480)",
     },
     buttonLabel: "View Itinerary",
-    buttonHref: "/contact-us?package=two-day-rockies-explorer-private",
-    image: "/media/photos/canadian-rockies-vista-3715.jpg",
-    imageAlt: "Two-day private Canadian Rockies exploration",
+    buttonHref: "/two-day-rockies-explorer/private",
+    image: "/media/photos/columbia-icefield-skywalk-guests-card.webp",
+    imageAlt: "The Columbia Icefield Skywalk above the Sunwapta Valley",
   },
   {
     id: "three-day-rockies-discovery",
@@ -181,7 +243,7 @@ export const PRIVATE_OPTIONS: PrivateTourOption[] = [
     },
     buttonLabel: "View Itinerary",
     buttonHref: "/four-day-rockies-and-jasper",
-    image: "/media/photos/maligne-lake-cruise-panoramic.jpg",
+    image: "/media/photos/maligne-lake-cruise-panoramic-card.webp",
     imageAlt: "Four-day journey extending into Jasper National Park and Maligne Lake",
   },
   {
