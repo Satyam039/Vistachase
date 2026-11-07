@@ -179,7 +179,7 @@ export async function bootstrapSeo(userId?: string) {
         contactPhone: "+1-825-734-9456",
         address: "121 Bow Meadows Crescent #110, Canmore, AB T1W 2W8, Canada",
         serviceArea: ["Banff National Park", "Lake Louise", "Moraine Lake", "Canmore", "Yoho National Park", "Icefields Parkway", "Jasper National Park"],
-        llmsEnabled: true,
+        llmsEnabled: false,
         updatedById: userId,
       },
     });
