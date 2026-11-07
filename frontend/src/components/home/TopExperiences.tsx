@@ -9,6 +9,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, MapPin } from "lucide-react";
 import { Rail } from "@/components/motion/Rail";
+import { ACTIVITY_TICKETS_VISIBLE } from "@/lib/activityTickets";
 import { TOUR_CARD_RAIL_ITEM, TourCard } from "@/components/tours/TourCard";
 import { CARD_BADGE, CARD_EYEBROW, CARD_PANEL, CARD_TITLE } from "@/components/cards/MediaCard";
 import { SectionHeading } from "@/components/home/SectionHeading";
@@ -68,7 +69,7 @@ export function TopExperiences({ tours }: { tours: TourWithAvailability[] }) {
           className="vc-rail -mx-page mb-8 flex gap-2.5 overflow-x-auto px-page [&>*:first-child]:ml-auto [&>*:last-child]:mr-auto"
           data-reveal="fade"
         >
-          {FILTERS.map((f) => (
+          {FILTERS.filter((f) => f.id !== "TICKET" || ACTIVITY_TICKETS_VISIBLE).map((f) => (
             <button
               key={f.id}
               type="button"

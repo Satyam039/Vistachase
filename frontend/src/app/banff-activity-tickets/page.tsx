@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { ACTIVITY_TICKETS_VISIBLE } from "@/lib/activityTickets";
 import { getCategoryExtras, getTours } from "@/lib/api/catalog";
 import { TourGallery } from "@/components/tours/TourGallery";
 import { serviceById } from "@/lib/services";
@@ -13,6 +15,8 @@ const baseMetadata: Metadata = {
 };
 
 export default async function BanffActivityTicketsPage() {
+  // Hidden from guests for now (lib/activityTickets.ts): a temporary redirect, so it can come back.
+  if (!ACTIVITY_TICKETS_VISIBLE) redirect("/");
   const tours = await getTours({ category: "TICKET" });
   const { reviews, faqs } = await getCategoryExtras(tours);
   return (

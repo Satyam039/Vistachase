@@ -2,6 +2,7 @@ import type React from "react";
 import { MediaCard } from "@/components/cards/MediaCard";
 import { Compass, Shield, Ticket, Users, Sparkles } from "lucide-react";
 import { SectionHeading } from "@/components/home/SectionHeading";
+import { withoutHiddenTickets } from "@/lib/activityTickets";
 
 interface CategoryCard {
   id: string;
@@ -93,7 +94,7 @@ export function ExperienceCategories() {
         />
 
         <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-6" data-stagger>
-          {CATEGORIES.map((category, idx) => {
+          {withoutHiddenTickets(CATEGORIES).map((category, idx) => {
             const Icon = category.icon;
             return (
               <li key={category.id} className={SPAN[idx]}>

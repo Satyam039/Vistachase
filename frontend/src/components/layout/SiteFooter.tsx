@@ -18,6 +18,7 @@ import Image from "next/image";
 import { AwardMark } from "@/components/brand/AwardSeal";
 import { BrandLogo } from "@/components/brand/BrandMark";
 import Link from "next/link";
+import { isVisibleLink } from "@/lib/activityTickets";
 import { ArrowRight, ArrowUp, ArrowUpRight, CalendarCheck, ChevronDown, Clock, Mail, MapPin, Phone, Search, ShieldCheck, Sparkles, Star } from "lucide-react";
 
 type FooterLink = { label: string; href: string };
@@ -32,7 +33,7 @@ const GROUPS: { heading: string; links: FooterLink[] }[] = [
       { label: "Multi-Day Journeys", href: "/multi-day-tour-package-for-banff" },
       { label: "Banff activity tickets", href: "/banff-activity-tickets" },
       { label: "All experiences", href: "/search" },
-    ],
+    ].filter(isVisibleLink),
   },
   {
     heading: "Destinations",

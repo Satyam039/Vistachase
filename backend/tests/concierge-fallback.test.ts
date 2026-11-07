@@ -6,7 +6,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import request from "supertest";
 import prisma from "@/lib/db/prisma";
 import { createApp } from "@/app";
-import { answerWithoutModel, mentionedDate } from "@/lib/ai/concierge.fallback";
+import { answerWithoutModel, mentionedDate, websiteName } from "@/lib/ai/concierge.fallback";
 import { dateOnly, timeOfDay } from "@/lib/utils/time";
 import type { SessionState } from "@/lib/ai/ai.provider";
 
@@ -37,7 +37,7 @@ describe("concierge without an AI model", () => {
   it("gives a different, data-backed answer to each question", async () => {
     const privateTour = await prisma.tour.findFirstOrThrow({ where: { category: "PRIVATE", basePrice: { gt: 0 }, title: { contains: "Jasper" } } });
     const price = await ask("How much is the private Jasper tour?");
-    expect(price.message).toContain(privateTour.title);
+    expect(price.message).toContain(websiteName(privateTour));
     expect(price.message).toContain(money(privateTour.basePrice));
 
     const pickup = await ask("Do you pick up from the Moxy Banff?");
@@ -65,7 +65,7 @@ describe("concierge without an AI model", () => {
       first.sessionState,
       ctx,
     );
-    expect(followUp.message).toContain(tour.title);
+    expect(followUp.message).toContain(websiteName(tour));
     expect(followUp.message).toContain(money(tour.basePrice));
   });
 
@@ -145,5 +145,45 @@ describe("POST /api/concierge/handoff", () => {
     expect(enquiry.message).toContain("Language chosen: German");
     expect(enquiry.message).toContain("Guest: Can the van take a wheelchair?");
     expect(enquiry.message).not.toContain("4111");
+  });
+
+  it("answers common website questions from the published FAQ, briefly", async () => {
+    const cases: [string, string][] = [
+      ["Is lunch included?", "Lunch isn't included"],
+      ["What should I bring?", "walking shoes"],
+      ["Can I bring my 3 year old kid?", "Infant 0–5"],
+      ["Do you do airport transfers from Calgary?", "airport transfers"],
+      ["Is accommodation included?", "Accommodation isn't included"],
+      ["When is Moraine Lake open?", "June 1"],
+      ["Does the icefield tour go to Jasper town?", "doesn't continue to Jasper town"],
+      ["How many people are in a group?", "maximum of 12"],
+      ["Can I pay a deposit?", "deposit"],
+      ["I didn't get my confirmation email", "spam"],
+      ["What time is pickup?", "7:30 AM in Canmore"],
+      ["Do you run tours in winter?", "all year"],
+      ["Do I need a parks pass?", "Parks Canada pass"],
+    ];
+    for (const [question, expected] of cases) {
+      const res = await ask(question);
+      expect(res.message, question).toContain(expected);
+      expect(res.message.length, question).toBeLessThan(600);
+    }
+  });
+
+  it("describes a whole kind of trip in a short list, and one tour without dumping its description", async () => {
+    const shuttles = await ask("Tell me about your shuttles");
+    expect(shuttles.message).toMatch(/Moraine Lake/);
+    expect(shuttles.message.length).toBeLessThan(600);
+
+    const one = await ask("Tell me about the private Jasper tour");
+    expect(one.message).toMatch(/Full details: \/[\w-]+/);
+    expect(one.message.length).toBeLessThan(700);
+  });
+
+  it("leaves activity tickets out while the website hides them", async () => {
+    const res = await ask("Can I buy Banff Gondola tickets?");
+    expect(res.message).toContain("don't sell separate attraction tickets");
+    const list = await ask("What tours do you offer?");
+    expect(list.message).not.toMatch(/\(ticket\)/);
   });
 });
