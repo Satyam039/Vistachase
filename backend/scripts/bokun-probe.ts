@@ -7,6 +7,7 @@
 //     npx tsx scripts/bokun-probe.ts --all       every mapped product, one summary each
 //     npx tsx scripts/bokun-probe.ts --list      every product in the Bókun account, with categories
 //     npx tsx scripts/bokun-probe.ts 30190 2026-11-15   one product, every start time Bókun has that day
+//     npx tsx scripts/bokun-probe.ts --times     every tour: Bókun's start times vs this site's, month by month
 //
 // Reads backend/.env, so on the server no keys need typing.
 
@@ -76,6 +77,57 @@ async function checkDay(client: BokunApiClient, productId: string, date: string)
   }
 }
 
+/**
+ * Every tour linked to Bókun: the start times Bókun offers each month over the next year, next to
+ * the times this site's departures have that month (read from the database, nothing changed).
+ * "MISMATCH" marks a month where the two lists differ.
+ */
+async function checkTimes(client: BokunApiClient) {
+  const { slotDate, slotTime } = await import("../src/modules/bokun/bokun-booking");
+  const { PRODUCT_MAP } = await import("../src/modules/tours/product-map");
+  const { formatTimeOfDay } = await import("../src/lib/utils/time");
+  const { prisma } = await import("../src/lib/db/prisma");
+  const day = (offset: number) => new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10);
+  const start = day(1);
+  const end = day(365);
+  console.log(`Start times, ${start} → ${end} (Bókun first, then this site)`);
+  for (const product of PRODUCT_MAP.filter((p) => p.bokunId)) {
+    try {
+      const list = ((await client.getAvailabilities(product.bokunId!, start, end)) ?? []) as any[];
+      const bokun = new Map<string, Set<string>>();
+      for (const a of list) {
+        if (a.unavailable) continue;
+        const month = slotDate(a).slice(0, 7);
+        if (!bokun.has(month)) bokun.set(month, new Set());
+        bokun.get(month)!.add(`${slotTime(a)}${a.startTimeId ? `#${a.startTimeId}` : ""}`);
+      }
+      const deps = await prisma.tourDeparture.findMany({
+        where: { tour: { slug: product.slug }, date: { gte: new Date(start), lte: new Date(end) }, status: { not: "CANCELLED" } },
+        select: { date: true, departureTime: true, inventorySource: true },
+      });
+      const site = new Map<string, Set<string>>();
+      for (const d of deps) {
+        const month = d.date.toISOString().slice(0, 7);
+        if (!site.has(month)) site.set(month, new Set());
+        site.get(month)!.add(`${formatTimeOfDay(d.departureTime)}${d.inventorySource === "LOCAL" ? "" : ` (${d.inventorySource})`}`);
+      }
+      console.log(`\n${product.slug} (${product.category}) → Bókun ${product.bokunId}`);
+      const months = [...new Set([...bokun.keys(), ...site.keys()])].sort();
+      if (months.length === 0) console.log("   no dates on either side");
+      for (const month of months) {
+        const b = [...(bokun.get(month) ?? [])].sort();
+        const s = [...(site.get(month) ?? [])].sort();
+        const bTimes = [...new Set(b.map((t) => t.slice(0, 5)))].join(",");
+        const sTimes = [...new Set(s.map((t) => t.slice(0, 5)))].join(",");
+        console.log(`   ${month}  Bókun: ${b.join(" ") || "-"}   site: ${s.join(" ") || "-"}${bTimes === sTimes ? "" : "   MISMATCH"}`);
+      }
+    } catch (error) {
+      console.log(`${product.slug} → Bókun ${product.bokunId}: ERROR ${(error as Error).message.slice(0, 120)}`);
+    }
+  }
+  await prisma.$disconnect();
+}
+
 async function main() {
   const productId = process.argv[2] || "1167962"; // banff-highlights-tour
   const { BOKUN_ACCESS_KEY, BOKUN_SECRET_KEY } = process.env;
@@ -88,6 +140,7 @@ async function main() {
   const end = day(14);
 
   if (productId === "--list") return listProducts(client);
+  if (productId === "--times") return checkTimes(client);
   const onDate = process.argv[3];
   if (onDate && /^\d{4}-\d{2}-\d{2}$/.test(onDate)) return checkDay(client, productId, onDate);
   if (productId === "--all") {
