@@ -24,7 +24,7 @@ import { cancelBooking } from "@/modules/bookings/booking.repository";
 import type { ChatMessage, ConciergeResponse, SessionState } from "@/lib/ai/ai.provider";
 import { formatDateOnly, formatTimeOfDay } from "@/lib/utils/time";
 import { conciergeLanguage } from "@/lib/ai/languages";
-import { ON_SALE } from "@/modules/tours/product-map";
+import { activityTicketsVisible, conciergeTours } from "@/modules/tours/product-map";
 
 export const CARD_NUMBER = /\b(?:\d[ -]*?){13,19}\b/;
 const MAX_STEPS = 8;
@@ -56,7 +56,7 @@ let catalogCache: { at: number; text: string } | null = null;
 async function catalogKnowledge(): Promise<string> {
   if (catalogCache && Date.now() - catalogCache.at < 5 * 60_000) return catalogCache.text;
   const tours = await prisma.tour.findMany({
-    where: ON_SALE,
+    where: conciergeTours(),
     select: { slug: true, title: true, category: true, durationHours: true, basePrice: true, currency: true, priceUnit: true, summary: true, bookingMode: true },
     orderBy: [{ category: "asc" }, { basePrice: "asc" }],
   });
@@ -75,6 +75,12 @@ async function catalogKnowledge(): Promise<string> {
   return text;
 }
 
+// Activity tickets are only mentioned while the website shows them (product-map activityTicketsVisible).
+const TICKETS_LINE = () =>
+  activityTicketsVisible()
+    ? `, Banff activity tickets (Banff Gondola 9:00 AM, Lake Minnewanka cruise 2:00 to 4:00 PM, Columbia Icefield Glacier Adventure with Ice Explorer + Skywalk 3:30 PM, premium Ice Odyssey 3:30 PM, Maligne Lake cruise 9:00 to 10:00 AM; booked online on the operator's site through each ticket's "Book Now" button at /banff-activity-tickets).`
+    : ". Activity tickets (gondola, cruises) are not sold on the website at the moment.";
+
 function companyKnowledge(): string {
   const today = new Date().toLocaleDateString("en-CA", { weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: "America/Edmonton" });
   return `You are the Vista Chase concierge, the AI travel assistant on vistachase.com.
@@ -83,7 +89,7 @@ Today is ${today} (Mountain Time, Canmore/Banff).
 ABOUT VISTA CHASE
 - Canmore-based tour operator for Banff and the Canadian Rockies since 2018. Office: 121 Bow Meadows Crescent #110, Canmore, AB. Phone +1 (825) 734-9456 (lines open 6 a.m. – 9 p.m. Mountain Time), support@vistachase.com.
 - TripAdvisor Travellers' Choice Best of the Best 2026: the shared Banff tour ranked #6 experience in Canada. Rated 5.0 from 1,700+ reviews.
-- Services: shared small-group tours (max 12 guests), private tours (priced per vehicle; Banff & Yoho Discovery and Columbia Icefield Adventure: private, up to 13 guests: Banff & Yoho CAD $1,750 from June 1 to October 10, all-inclusive, and $1,240 from October 11 to May 31; Columbia Icefield CAD $1,750 in summer and $1,240 in winter, when Abraham Lake replaces the Icefield Adventure; private Two-Day Rockies Explorer CAD $1,575 per day in summer and $1,240 per day in winter; Three-Day and Four-Day journeys CAD $1,575 per day, June 1 to October 10 only; airport transfers can be added when booking, with the guest's arrival and departure dates and times and where the transfer is from and to; custom private tours: private, up to 13 guests), Moraine Lake & Lake Louise shuttles, multi-day packages (enquiry), Banff activity tickets (Banff Gondola 9:00 AM, Lake Minnewanka cruise 2:00 to 4:00 PM, Columbia Icefield Glacier Adventure with Ice Explorer + Skywalk 3:30 PM, premium Ice Odyssey 3:30 PM, Maligne Lake cruise 9:00 to 10:00 AM; booked online on the operator's site through each ticket's "Book Now" button at /banff-activity-tickets).
+- Services: shared small-group tours (max 12 guests), private tours (priced per vehicle; Banff & Yoho Discovery and Columbia Icefield Adventure: private, up to 13 guests: Banff & Yoho CAD $1,750 from June 1 to October 10, all-inclusive, and $1,240 from October 11 to May 31; Columbia Icefield CAD $1,750 in summer and $1,240 in winter, when Abraham Lake replaces the Icefield Adventure; private Two-Day Rockies Explorer CAD $1,575 per day in summer and $1,240 per day in winter; Three-Day and Four-Day journeys CAD $1,575 per day, June 1 to October 10 only; airport transfers can be added when booking, with the guest's arrival and departure dates and times and where the transfer is from and to; custom private tours: private, up to 13 guests), Moraine Lake & Lake Louise shuttles, multi-day packages (enquiry)${TICKETS_LINE()}
 - Ages and prices (owner's Pricing table, 2026-11-04; summer = June 1 to October 10): Adult 16–99, Youth 6–15, Infant 0–5; infants pay their fare and take a seat on shared tours and shuttles. Banff & Yoho Discovery (shared) CAD $220 adult and youth, $170 infant, all year. Columbia Icefield Adventure (shared) summer $320 adult, $280 youth, $170 infant; winter $220 / $220 / $170. Shared Two-Day Rockies Explorer is both tours less 10%. Moraine Lake & Lake Louise shuttle (summer only, same price for every age): departures 1–2 (early morning) $130, 3–4 $120, 5–7 $108. Private Calgary airport transfer in summer, price covers both ways (arrival and departure) and is paid with the private tour at checkout: Banff or Canmore $364 (up to 6 guests, 6 bags) or $850 (up to 12 guests, 12 bags); Lake Louise $445 or $895; winter price on request. Use live departure prices when they differ.
 - Moraine Lake Road is closed to private vehicles; Vista Chase shuttles and tours have guaranteed access. Parks Canada licensed commercial operator.
 - Hotel pickup in Banff, Canmore and Lake Louise.

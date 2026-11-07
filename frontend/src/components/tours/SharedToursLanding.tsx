@@ -33,6 +33,7 @@ import { AmbientVideo } from "@/components/cinematic/AmbientVideo";
 import { hasPrice, money } from "@/lib/pricing";
 import { fromPrice } from "@/lib/tours";
 import { serviceById } from "@/lib/services";
+import { ACTIVITY_TICKETS_VISIBLE } from "@/lib/activityTickets";
 import type { CategoryReview } from "@/lib/api/catalog";
 import type { TourWithAvailability } from "@/lib/api/types";
 import {
@@ -69,7 +70,7 @@ export function SharedToursLanding({ tours, reviews }: { tours: TourWithAvailabi
       ? [{ key: "custom", href: BANFF_ELITE_URL, image: pick("multiday").image, title: "Custom Rockies Journeys", description: "A private itinerary shaped around your dates, pace and interests by our sister company, Banff Elite.", cta: "Plan with Banff Elite ↗" }]
       : []),
     { key: "tickets", ...pick("tickets"), title: "Attraction Tickets", description: "Add a gondola ride, lake cruise or another memorable experience to your Rockies visit.", cta: "Explore Attraction Tickets" },
-  ];
+  ].filter((o) => o.key !== "tickets" || ACTIVITY_TICKETS_VISIBLE);
 
   return (
     <div className="min-h-screen bg-obsidian-50 text-obsidian-900">

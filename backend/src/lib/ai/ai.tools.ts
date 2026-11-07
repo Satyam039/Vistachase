@@ -5,7 +5,7 @@ import { createReservationHold } from "@/modules/reservations/reservation.reposi
 import { createBooking } from "@/modules/bookings/booking.repository";
 import { sellableInventoryWhere } from "@/modules/departures/inventory";
 import { dateOnly, formatDateOnly, formatTimeOfDay, todayInMountainTime } from "@/lib/utils/time";
-import { ON_SALE } from "@/modules/tours/product-map";
+import { conciergeTours } from "@/modules/tours/product-map";
 
 export interface ToolExecutionContext {
   isStaff?: boolean;
@@ -27,7 +27,7 @@ export interface ToolResult {
 export async function searchTours(args: { query?: string; category?: string }) {
   const tours = await prisma.tour.findMany({
     where: {
-      ...ON_SALE,
+      ...conciergeTours(),
       ...(args.category ? { category: args.category.toUpperCase() as any } : {}),
       ...(args.query
         ? {
@@ -60,7 +60,7 @@ export async function searchTours(args: { query?: string; category?: string }) {
 export async function getTourDetails(args: { tourSlugOrBokunId: string }) {
   const tour = await prisma.tour.findFirst({
     where: {
-      ...ON_SALE,
+      ...conciergeTours(),
       OR: [
         { slug: args.tourSlugOrBokunId },
         { bokunId: args.tourSlugOrBokunId },

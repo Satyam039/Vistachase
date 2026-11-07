@@ -15,14 +15,13 @@ import { conciergeLanguage } from "@/lib/ai/languages";
 import type { ChatMessage, ConciergeResponse, SessionState } from "@/lib/ai/ai.provider";
 import type { ToolExecutionContext } from "@/lib/ai/ai.tools";
 import { todayInMountainTime } from "@/lib/utils/time";
-import { ON_SALE } from "@/modules/tours/product-map";
+import { conciergeTours } from "@/modules/tours/product-map";
+import { CONTACT, knowledgeAnswer } from "@/lib/ai/concierge.knowledge";
 
 type Topic = "price" | "dates" | "details" | "pickup" | "lookup" | "track";
 type State = SessionState & { topic?: Topic; englishNotice?: boolean };
 type Reply = { message: string; data?: Record<string, unknown>; checkoutUrl?: string; hasSafetyRefusal?: boolean };
 
-const PHONE = "+1 (825) 734-9456";
-const CONTACT = `call us on ${PHONE} (6 a.m. – 9 p.m. Mountain Time) or email support@vistachase.com`;
 const REFERENCE = /\bVC-\d{4}-[A-Z0-9]{4,}\b/i;
 const EMAIL = /[^\s@<>()]+@[^\s@<>()]+\.[a-z]{2,}/i;
 
@@ -60,7 +59,7 @@ export function mentionedDate(text: string, today = todayInMountainTime()): stri
   return `${year}-${String(month).padStart(2, "0")}-${day.padStart(2, "0")}`;
 }
 
-type CatalogTour = { slug: string; title: string; category: string; basePrice: number; currency: string; priceUnit: string; durationHours: number; summary: string; bookingMode: string };
+type CatalogTour = { slug: string; title: string; category: string; basePrice: number; currency: string; priceUnit: string; durationHours: number; summary: string; bookingMode: string; aka?: string };
 
 const CATEGORY_WORDS: [RegExp, string][] = [
   [/\bprivate\b|\bsuv\b/, "PRIVATE"],
@@ -82,7 +81,7 @@ function matchTour(text: string, tours: CatalogTour[]): CatalogTour | null {
   let best: CatalogTour | null = null;
   let bestScore = 0;
   for (const t of tours) {
-    const hay = `${t.title} ${t.slug} ${t.summary}`.toLowerCase();
+    const hay = `${t.title} ${t.aka ?? ""} ${t.slug} ${t.summary}`.toLowerCase();
     let score = places.filter((w) => hay.includes(w)).length * 2;
     if (category) score += t.category === category ? 3 : -3;
     if (score > bestScore) {
@@ -93,12 +92,25 @@ function matchTour(text: string, tours: CatalogTour[]): CatalogTour | null {
   return best;
 }
 
+/** The names the website shows (frontend lib/sharedTours.ts, lib/privateTours.ts) where they differ from the catalog's. */
+const WEBSITE_NAMES: Record<string, string> = {
+  "banff-highlights-tour": "Banff & Yoho Discovery",
+  "shared-tours-icefields-jasper": "Columbia Icefield Adventure",
+  "banff-private-tour": "Banff & Yoho Discovery (private)",
+  "icefields-jasper-private-tour": "Columbia Icefield Adventure (private)",
+};
+
+/** A tour's name as the website shows it. */
+export const websiteName = (t: { slug: string; title: string }) => WEBSITE_NAMES[t.slug] ?? t.title;
+
 async function catalog(): Promise<CatalogTour[]> {
-  return prisma.tour.findMany({
-    where: ON_SALE,
+  const tours = await prisma.tour.findMany({
+    where: conciergeTours(),
     select: { slug: true, title: true, category: true, basePrice: true, currency: true, priceUnit: true, durationHours: true, summary: true, bookingMode: true },
     orderBy: [{ sortOrder: "asc" }, { basePrice: "asc" }],
   });
+  // The catalog title is kept (aka) so guests can still name a tour either way.
+  return tours.map((t) => (WEBSITE_NAMES[t.slug] ? { ...t, title: WEBSITE_NAMES[t.slug], aka: t.title } : t));
 }
 
 const priceLine = (t: CatalogTour) =>
@@ -108,19 +120,39 @@ const priceLine = (t: CatalogTour) =>
 // Answers
 // ---------------------------------------------------------------------------
 
+/** The first sentence of a description, without sales filler ("Book now."), at most ~200 characters. */
+export function firstSentence(text: string): string {
+  const clean = text.replace(/\s+/g, " ").trim();
+  const sentence = clean.match(/^.+?[.!?](?=\s|$)/)?.[0] ?? clean;
+  return sentence.length > 200 ? `${sentence.slice(0, 197).replace(/\s+\S*$/, "")}…` : sentence;
+}
+
+/** A short answer about one tour: price, length, one line on what it is, a few inclusions, the page link. */
 async function tourDetails(tour: CatalogTour, ctx: ToolExecutionContext): Promise<Reply> {
   const { result } = await runConciergeTool("get_tour_details", { slug: tour.slug }, ctx);
-  const d = result as { summary?: string; inclusions?: string[]; highlights?: string[]; durationHours?: number } | null;
+  const d = result as { summary?: string; inclusions?: string[] } | null;
   const lines = [`${tour.title}: ${priceLine(tour)}, about ${tour.durationHours} hours.`];
-  if (d?.summary) lines.push(d.summary);
-  const included = (d?.inclusions ?? []).slice(0, 5);
-  if (included.length) lines.push(`Included:\n${included.map((i) => `• ${i}`).join("\n")}`);
+  const about = firstSentence(tour.summary || d?.summary || "");
+  if (about) lines.push(about);
+  const included = (d?.inclusions ?? []).filter((i) => i.length <= 80).slice(0, 4);
+  if (included.length) lines.push(`Includes: ${included.join(", ")}.`);
+  lines.push(`Full details: /${tour.slug}`);
   lines.push(
     tour.bookingMode === "ENQUIRY"
       ? "This one is arranged on request: use the Request button on the tour page or /contact-us."
-      : "Ask me for available dates, or tell me a date to check.",
+      : "Want me to check dates? Tell me a day.",
   );
-  return { message: lines.join("\n\n"), data: { type: "tour", tour: { slug: tour.slug, title: tour.title, category: tour.category, durationHours: tour.durationHours, basePrice: tour.basePrice / 100, currency: tour.currency, summary: tour.summary } } };
+  return { message: lines.join("\n"), data: { type: "tour", tour: { slug: tour.slug, title: tour.title, category: tour.category, durationHours: tour.durationHours, basePrice: tour.basePrice / 100, currency: tour.currency, summary: tour.summary } } };
+}
+
+/** "Tell me about your shuttles": every product of that kind in one short list. */
+function kindOverview(category: string, tours: CatalogTour[]): Reply | null {
+  const list = tours.filter((t) => t.category === category);
+  if (list.length < 2) return null;
+  const name = { SHARED: "shared tours", PRIVATE: "private tours", SHUTTLE: "lake shuttles", MULTIDAY: "multi-day journeys", TICKET: "activity tickets" }[category] ?? "options";
+  return {
+    message: `Our ${name}:\n${list.slice(0, 8).map((t) => `• ${t.title}: ${priceLine(t)}, about ${t.durationHours} hours`).join("\n")}\n\nAsk about one of them, or tell me a date to check seats.`,
+  };
 }
 
 async function availability(date: string | null, tour: CatalogTour | null, ctx: ToolExecutionContext): Promise<Reply> {
@@ -180,7 +212,7 @@ const POLICY =
   "Shared tours and shuttles: full refund if you cancel at least 24 hours before departure. Private single-day tours: full refund at least 72 hours before. Private packages of two or more days: 80% refund at least 72 hours before the first tour day (20% of the total is non-refundable). After the deadline, and for late arrivals or no-shows, there's no refund. Refunds take 5–10 business days, and activity tickets follow the provider's rules. You can request a cancellation from My trips (/account/trips). Full policy: /privacy-policy-vista-chase.";
 
 const CAN_DO =
-  "I can tell you about our tours and prices, check dates with free seats, find your hotel pickup, explain the cancellation policy, and look up a booking with its reference and email.";
+  "I can tell you about our tours, shuttles and prices, check dates with free seats, find your hotel pickup, answer questions like what's included, what to bring, ages, lunch or airport transfers, explain the cancellation policy, and look up a booking with its reference and email.";
 
 /** Answers the latest message from real data, or says it can't. */
 export async function answerWithoutModel(messages: ChatMessage[], previous: State | undefined, ctx: ToolExecutionContext, language?: string): Promise<ConciergeResponse> {
@@ -233,6 +265,27 @@ export async function answerWithoutModel(messages: ChatMessage[], previous: Stat
       state.tourTitle = named.title;
     }
     const date = mentionedDate(text);
+    const category = CATEGORY_WORDS.find(([re]) => re.test(lower))?.[1];
+    // Named by kind only ("the shuttle"), not by a place: the guest means the kind, not one tour.
+    const onlyKind = !!named && !!category && !PLACE_WORDS.some((w) => lower.includes(w));
+
+    // Questions the website's FAQ and tour pages answer (lunch, what to bring, ages, airport…).
+    const known = knowledgeAnswer(text);
+    // A tour named by place ("the sunrise shuttle") gets its own answer, not the overview of its kind.
+    const kindTopic = known && ["shuttle", "private", "duration"].includes(known.id);
+    if (known && known.score >= 2 && !date && !(kindTopic && named && !onlyKind && known.id !== "duration")) {
+      state.topic = undefined;
+      if (known.id === "duration" && tour && !onlyKind) return { message: `${tour.title} takes about ${tour.durationHours} hours. ${known.answer}` };
+      if (known.id === "duration" && category) {
+        const list = tours.filter((t) => t.category === category);
+        if (list.length) return { message: `${list.map((t) => `• ${t.title}: about ${t.durationHours} hours`).join("\n")}\n\n${known.answer}` };
+      }
+      if (known.id === "shuttle") {
+        const shuttles = tours.filter((t) => t.category === "SHUTTLE");
+        if (shuttles.length) return { message: `${known.answer}\n\n${shuttles.map((t) => `• ${t.title}: ${priceLine(t)}`).join("\n")}` };
+      }
+      return { message: known.answer };
+    }
 
     if (/\b(pick ?up|pick you up|hotel|staying at|where do you (pick|meet)|meeting point)\b/.test(lower)) {
       state.topic = "pickup";
@@ -244,14 +297,12 @@ export async function answerWithoutModel(messages: ChatMessage[], previous: Stat
     }
     if (/\b(price|prices|cost|how much|fare|rate|cheap\w*|expensive|budget)\b/.test(lower)) {
       state.topic = "price";
-      const category = CATEGORY_WORDS.find(([re]) => re.test(lower))?.[1];
       // "How much is the shuttle?" names a kind of trip, not one tour: list them all.
-      const onlyKind = named && category && !PLACE_WORDS.some((w) => lower.includes(w));
       if (tour && !onlyKind) return { message: `${tour.title}: ${priceLine(tour)}. Prices are in CAD and the price shown is the price you pay. Ask me for dates to see the exact fare per departure.` };
       const list = tours.filter((t) => !category || t.category === category).slice(0, 8);
       return { message: `Prices from our catalog:\n${list.map((t) => `• ${t.title}: ${priceLine(t)}`).join("\n")}\n\nTell me which one interests you and I'll check dates.` };
     }
-    if (/\bmoraine\b/.test(lower) && /\b(road|drive|driving|car|park\w*|access|get there|closed)\b/.test(lower)) {
+    if (/\bmoraine\b/.test(lower) && /\b(road|drive|driving|car|park\w*|access|get there|get to|reach|closed)\b/.test(lower)) {
       const shuttles = tours.filter((t) => t.category === "SHUTTLE").slice(0, 4);
       return {
         message: `Moraine Lake Road is closed to private vehicles, so you need a Parks Canada shuttle or a licensed operator like Vista Chase. Our options:\n${shuttles.map((t) => `• ${t.title}: ${priceLine(t)}`).join("\n")}\n\nTell me a date and I'll check seats.`,
@@ -259,6 +310,10 @@ export async function answerWithoutModel(messages: ChatMessage[], previous: Stat
     }
     if (/\b(phone|call|email|contact|office|address)\b/.test(lower)) {
       return { message: `You can ${CONTACT}. Our office is at 121 Bow Meadows Crescent #110, Canmore, AB.` };
+    }
+    if (onlyKind && category) {
+      const overview = kindOverview(category, tours);
+      if (overview) return overview;
     }
     if (named || (tour && /\b(it|this|that|tell me more|details?|included|include|itinerary|how long|duration|what do)\b/.test(lower))) {
       state.topic = "details";
@@ -270,8 +325,9 @@ export async function answerWithoutModel(messages: ChatMessage[], previous: Stat
     }
     if (/\b(tours?|things to do|recommend|suggest|options|what do you (offer|have))\b/.test(lower)) {
       const list = tours.filter((t) => t.category !== "TICKET").slice(0, 8);
-      return { message: `Here's what we run:\n${list.map((t) => `• ${t.title} (${t.category.toLowerCase()}): ${priceLine(t)}`).join("\n")}\n\nAsk about any of them for details or dates.` };
+      return { message: `Here's what we run:\n${list.map((t) => `• ${t.title}${t.title.includes("(") ? "" : ` (${t.category.toLowerCase()})`}: ${priceLine(t)}`).join("\n")}\n\nAsk about any of them for details or dates.` };
     }
+    if (known) return { message: known.answer };
     return {
       message: `I don't have reliable information to answer that here. ${CAN_DO} For anything else, tap "Chat with a live agent" below, or ${CONTACT}.`,
       data: { type: "handoff" },

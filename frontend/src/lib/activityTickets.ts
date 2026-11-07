@@ -3,6 +3,26 @@
 // (2026-10-29). A ticket listed here has no page of its own: its card says "Book Now" and opens the
 // operator's booking page, and its old URL redirects there (app/[slug]/page.tsx).
 
+/**
+ * Activity tickets are hidden from guests for now (owner, 2026-11-07): no menu, footer, home or
+ * search links, and /banff-activity-tickets plus the ticket URLs redirect home. The tickets stay in
+ * the database and admin. To show them again set NEXT_PUBLIC_SHOW_ACTIVITY_TICKETS=true in
+ * frontend/.env.production.local and rebuild the frontend (NEXT_PUBLIC_ values are fixed at build time).
+ */
+export const ACTIVITY_TICKETS_VISIBLE = process.env.NEXT_PUBLIC_SHOW_ACTIVITY_TICKETS === "true";
+
+export const ACTIVITY_TICKETS_PATH = "/banff-activity-tickets";
+
+/** False for a link to the activity tickets page while tickets are hidden (use with .filter). */
+export function isVisibleLink(link: { href?: string }): boolean {
+  return ACTIVITY_TICKETS_VISIBLE || link.href !== ACTIVITY_TICKETS_PATH;
+}
+
+/** Drops links to the activity tickets page while tickets are hidden. */
+export function withoutHiddenTickets<T extends { href?: string }>(links: T[]): T[] {
+  return links.filter(isVisibleLink);
+}
+
 const GLACIER_ADVENTURE_URL =
   "https://bookings.banffjaspercollection.com/RKY/activities/details/1/ICE-BTC-BA-GA/Attraction?WebLink=5JMNSDKc4w3ABB1JC90edA%3d%3d&agencyNumber=5009093&wlid=1812&lob=Glacier+Adventure#/select-ticket/book-adventure";
 

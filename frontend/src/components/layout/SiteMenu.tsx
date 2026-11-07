@@ -12,6 +12,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowRight, ChevronDown, Mail, Menu, Phone, Sparkles, X } from "lucide-react";
 import { BrandMark } from "@/components/brand/BrandMark";
+import { isVisibleLink } from "@/lib/activityTickets";
 
 type MenuLink = { title: string; description?: string; href: string };
 type MenuSection = { id: string; title: string; links: MenuLink[] };
@@ -26,7 +27,7 @@ export const MENU_SECTIONS: MenuSection[] = [
       { title: "Shuttles", description: "Guaranteed Moraine Lake & Lake Louise access", href: "/shuttles" },
       { title: "Multi-Day Journeys", description: "Two, three and four-day Rockies itineraries", href: "/multi-day-tour-package-for-banff" },
       { title: "Banff activity tickets", description: "Gondola, Icefield, lake cruises", href: "/banff-activity-tickets" },
-    ],
+    ].filter(isVisibleLink),
   },
   {
     id: "destinations",
