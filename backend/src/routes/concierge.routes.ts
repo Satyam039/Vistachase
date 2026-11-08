@@ -33,6 +33,8 @@ router.post("/stream", rateLimitMiddleware("concierge", { maxRequests: 30, windo
   res.flushHeaders?.();
   const send = (event: string, data: unknown) => res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
   const language = typeof req.body?.language === "string" ? req.body.language : undefined;
+  const thinkingMode: "standard" | "deep" = req.body?.thinkingMode === "deep" ? "deep" : "standard";
+  const attachments = Array.isArray(req.body?.attachments) ? req.body.attachments : undefined;
 
   try {
     if (isClaudeConfigured()) {
@@ -45,7 +47,7 @@ router.post("/stream", rateLimitMiddleware("concierge", { maxRequests: 30, windo
           else if (e.type === "status") send("status", { text: e.text });
           else send("done", { success: true, ...e.response });
         },
-        { language },
+        { language, thinkingMode, attachments },
       );
     } else {
       // No AI key configured: answers come from the booking system's data only, in one piece.
@@ -69,9 +71,11 @@ router.post("/", rateLimitMiddleware("concierge", { maxRequests: 30, windowSecon
       return res.status(400).json({ error: "Invalid messages array." });
     }
     const language = typeof req.body?.language === "string" ? req.body.language : undefined;
+    const thinkingMode: "standard" | "deep" = req.body?.thinkingMode === "deep" ? "deep" : "standard";
+    const attachments = Array.isArray(req.body?.attachments) ? req.body.attachments : undefined;
     const ctx = await staffContext(req);
     const response = isClaudeConfigured()
-      ? await runConciergeAgent(messages, req.body?.sessionState, ctx, undefined, { language })
+      ? await runConciergeAgent(messages, req.body?.sessionState, ctx, undefined, { language, thinkingMode, attachments })
       : await answerWithoutModel(messages, req.body?.sessionState, ctx, language);
     return res.json({ success: true, ...response });
   } catch (error) {

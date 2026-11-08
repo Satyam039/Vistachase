@@ -43,6 +43,8 @@ export interface SessionState {
   bookingReference?: string;
   voucherCode?: string;
   voucherUrl?: string;
+  userPersona?: import("./user.persona").UserPersona;
+  knowledgeGraph?: import("./user.persona").UserKnowledgeGraph;
 }
 
 export interface ConciergeResponse {

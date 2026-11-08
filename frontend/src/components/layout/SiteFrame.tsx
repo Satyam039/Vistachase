@@ -46,6 +46,19 @@ const styles = stylex.create({
 export function SiteFrame({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isHeroPage = isHeroPath(pathname);
+  const isConcierge = pathname === "/concierge" || pathname?.startsWith("/concierge/");
+
+  // Lock document and body overflow on concierge to enforce full 100vh app shell without page-level scrollbars
+  useEffect(() => {
+    if (isConcierge) {
+      document.documentElement.style.overflow = "hidden";
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.documentElement.style.overflow = "";
+        document.body.style.overflow = "";
+      };
+    }
+  }, [isConcierge]);
 
   // A hero page whose hero didn't render (a 404 under /destinations/…) keeps the solid header.
   useEffect(() => {
@@ -125,9 +138,10 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
   return (
     <>
       {/* Above the sticky header, so it scrolls away instead of staying pinned (AnnouncementBar). */}
-      <AnnouncementBar />
+      {!isConcierge && <AnnouncementBar />}
       <AppShell
-        height="auto"
+        height={isConcierge ? "fill" : "auto"}
+        className={isConcierge ? "h-[100dvh] max-h-[100dvh] overflow-hidden" : undefined}
         variant="section"
         contentPadding={0}
         topNav={
@@ -194,13 +208,15 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
         }
       >
         {/* Reading progress (CSS scroll timeline; hidden where unsupported) */}
-        <span
-          className="vc-scroll-progress pointer-events-none fixed inset-x-0 top-0 z-[60] hidden h-0.5 origin-left bg-summit-500"
-          aria-hidden="true"
-        />
+        {!isConcierge && (
+          <span
+            className="vc-scroll-progress pointer-events-none fixed inset-x-0 top-0 z-[60] hidden h-0.5 origin-left bg-summit-500"
+            aria-hidden="true"
+          />
+        )}
         <MotionRuntime />
         {children}
-        <SiteFooter />
+        {!isConcierge && <SiteFooter />}
         <GlobalVoiceAssistantDrawer />
       </AppShell>
     </>

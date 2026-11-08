@@ -185,5 +185,12 @@ export async function remindUnpaidBalances(now = new Date()) {
 export async function sendT60WhatsApp(now = new Date()) {
   return dispatchT60ScheduledBatch(now);
 }
+
+/** Daily (and on startup): compile and synchronize the AI Master Knowledge Base with live database rows. */
+export async function syncKnowledgeBaseTask() {
+  const { syncMasterKnowledgeBase } = await import("@/lib/ai/knowledge.sync");
+  return syncMasterKnowledgeBase();
+}
+
 export { whatsAppDeliveryConfigured };
 
