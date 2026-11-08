@@ -87,7 +87,7 @@ describe("Deep Thinking Turbo Mode & Security Restrictions", () => {
       for (const toolName of staffTools) {
         const out = await runConciergeTool(toolName, {}, guestContext);
         expect(out.result).toEqual({
-          error: "Security Access Denied: Staff authorization required. This internal operation is strictly restricted to verified operators and dispatchers.",
+          error: "Staff sign-in required.",
         });
       }
     });
