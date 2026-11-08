@@ -1,3 +1,4 @@
+import { withoutHiddenTickets } from "@/lib/activityTickets";
 // The five Vista Chase services, shared by the home hero (ServicesHero), the category pages
 // (TourGallery) and the Experiences section. Reasons come from the live product pages' facts.
 // Media is served by the backend (backend/media): a background clip where one fits, else a photo.
@@ -19,7 +20,7 @@ export interface Service {
   imageAlt: string;
 }
 
-export const SERVICES: Service[] = [
+const ALL_SERVICES: Service[] = [
   {
     id: "shared",
     category: "SHARED",
@@ -119,4 +120,7 @@ export const SERVICES: Service[] = [
   },
 ];
 
-export const serviceById = (id: ServiceId) => SERVICES.find((s) => s.id === id)!;
+/** The services guests see (activity tickets are hidden unless NEXT_PUBLIC_SHOW_ACTIVITY_TICKETS=true). */
+export const SERVICES: Service[] = withoutHiddenTickets(ALL_SERVICES);
+
+export const serviceById = (id: ServiceId) => ALL_SERVICES.find((s) => s.id === id)!;

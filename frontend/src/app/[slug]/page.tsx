@@ -8,7 +8,7 @@ import { getTourBySlug, getTours } from "@/lib/api/catalog";
 import { TourDetailView } from "@/components/tours/TourDetailView";
 import { siteOrigin, withSeo } from "@/lib/seo/server";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
-import { activityTicket } from "@/lib/activityTickets";
+import { ACTIVITY_TICKETS_VISIBLE, activityTicket } from "@/lib/activityTickets";
 import { RETIRED_TOUR_REDIRECTS } from "@/lib/retiredTours";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -37,6 +37,8 @@ export default async function TourPage({ params }: Props) {
   const tour = await loadTour(slug);
   if (!tour) notFound();
   // Activity tickets are booked on the operator's site, so their old pages send guests straight there.
+  // While tickets are hidden from guests (lib/activityTickets.ts), their URLs go to the home page.
+  if (tour.category === "TICKET" && !ACTIVITY_TICKETS_VISIBLE) redirect("/");
   const ticket = activityTicket(tour.slug, tour.category);
   if (ticket) redirect(ticket.url);
 

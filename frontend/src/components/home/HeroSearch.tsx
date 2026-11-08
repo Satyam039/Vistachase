@@ -10,6 +10,7 @@ import { CalendarDays, Compass, Search, Users } from "lucide-react";
 import { Dropdown } from "@/components/forms/Dropdown";
 import { openDatePicker } from "@/lib/utils/datePicker";
 import { guestOptions } from "@/lib/experiences";
+import { ACTIVITY_TICKETS_VISIBLE } from "@/lib/activityTickets";
 
 const SEGMENT = "group relative flex min-w-0 flex-col justify-center rounded-none px-4 py-1.5 transition-colors hover:bg-obsidian-50 focus-within:bg-obsidian-50";
 const LABEL = "flex items-center gap-1.5 text-xs uppercase tracking-[0.14em] text-slate-600";
@@ -47,7 +48,7 @@ export function HeroSearch({ className = "", category }: { className?: string; c
             { value: "PRIVATE", label: "Private tours" },
             { value: "SHUTTLE", label: "Lake shuttles" },
             { value: "MULTIDAY", label: "Multi-Day Journeys" },
-            { value: "TICKET", label: "Activity tickets" },
+            ...(ACTIVITY_TICKETS_VISIBLE ? [{ value: "TICKET", label: "Activity tickets" }] : []),
           ]}
         />
       </div>

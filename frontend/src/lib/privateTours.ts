@@ -1,3 +1,4 @@
+import { isVisibleLink } from "@/lib/activityTickets";
 // Copy and structure for the Private Tours page and multi-day private journeys,
 // from the owner's change-tracking specification (Private Tour Page section).
 
@@ -371,7 +372,7 @@ export const PRIVATE_OTHER_WAYS = [
     href: "/banff-activity-tickets",
     image: "/media/site/banff-gondola-hike.webp",
   },
-];
+].filter(isVisibleLink);
 
 export const PRIVATE_CLOSING = {
   eyebrow: "YOUR PRIVATE ROCKIES EXPERIENCE",

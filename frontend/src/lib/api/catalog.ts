@@ -14,6 +14,7 @@ import type {
   TourWithAvailability,
 } from "@/lib/api/types";
 import { withDocContent } from "@/lib/tourContent";
+import { ACTIVITY_TICKETS_VISIBLE } from "@/lib/activityTickets";
 
 /**
  * The hard-coded catalog (fallback-data.ts) is for local development and CI builds without a
@@ -22,6 +23,11 @@ import { withDocContent } from "@/lib/tourContent";
  */
 function fallbackAllowed() {
   return process.env.NODE_ENV !== "production" || process.env.FEATURE_FALLBACK_CATALOG === "true";
+}
+
+/** Tours guests can see: activity tickets are left out while they're hidden (lib/activityTickets.ts). */
+function visibleTours<T extends { category: string }>(tours: T[]): T[] {
+  return ACTIVITY_TICKETS_VISIBLE ? tours : tours.filter((t) => t.category !== "TICKET");
 }
 
 export async function getTours(options?: {
@@ -35,7 +41,7 @@ export async function getTours(options?: {
       destination: options?.destinationSlug,
       featured: options?.isFeatured === undefined ? undefined : String(options.isFeatured),
     });
-    if (data?.tours && (data.tours.length > 0 || !fallbackAllowed())) return data.tours.map(withDocContent);
+    if (data?.tours && (data.tours.length > 0 || !fallbackAllowed())) return visibleTours(data.tours).map(withDocContent);
   } catch (err) {
     unstable_rethrow(err); // Next.js "render per request" signal, not an outage
     console.warn("[Catalog] Backend unavailable, serving authoritative fallback catalog");
@@ -43,7 +49,7 @@ export async function getTours(options?: {
 }
 
   // Graceful fallback to authoritative catalog
-  return FALLBACK_TOURS.filter((t) => {
+  return visibleTours(FALLBACK_TOURS).filter((t) => {
     if (options?.category && t.category !== options.category) return false;
     if (options?.destinationSlug && t.destination.slug !== options.destinationSlug) return false;
     if (options?.isFeatured !== undefined && t.isFeatured !== options.isFeatured) return false;

@@ -61,6 +61,14 @@ export const RETIRED_TOUR_SLUGS = [
 export const REMOVED_TOUR_SLUGS = ["banff-upper-hot-springs-tickets", "open-top-touring-tickets", ...RETIRED_TOUR_SLUGS];
 export const ON_SALE = { slug: { notIn: REMOVED_TOUR_SLUGS } };
 /**
+ * Activity tickets are hidden from guests on the website for now (owner, 2026-11-07); their rows
+ * stay in the database and admin. The concierge leaves them out too, unless SHOW_ACTIVITY_TICKETS=true
+ * (set it together with the frontend's NEXT_PUBLIC_SHOW_ACTIVITY_TICKETS=true to show them again).
+ */
+export const activityTicketsVisible = () => process.env.SHOW_ACTIVITY_TICKETS === "true";
+/** What the concierge may talk about: products on sale, without tickets while they're hidden. */
+export const conciergeTours = () => (activityTicketsVisible() ? ON_SALE : { ...ON_SALE, category: { not: "TICKET" as const } });
+/**
  * Pages that stay (and stay in the sitemap) but are not listed as a product: the old multi-day
  * enquiry product's URL now shows the Multi-Day Journeys page (frontend app/multi-day-tour-package-for-banff).
  */
