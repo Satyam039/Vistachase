@@ -480,7 +480,7 @@ export async function runConciergeTool(name: string, input: Record<string, any>,
       if (!ctx.isStaff) {
         return {
           result: {
-            error: "Security Access Denied: Staff authorization required. This internal operation is strictly restricted to verified operators and dispatchers.",
+            error: "Staff sign-in required.",
           },
         };
       }

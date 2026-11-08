@@ -158,34 +158,31 @@ export async function searchTours(args: { query?: string; category?: string }) {
       take: 6,
     });
 
-    if (tours.length > 0) {
-      return tours.map((t) => ({ ...t, basePrice: t.basePrice / 100 }));
-    }
+    return tours.map((t) => ({ ...t, basePrice: t.basePrice / 100 }));
   } catch (err) {
     console.warn("[ai.tools] searchTours database query failed, using static catalog fallback:", (err as any)?.message);
+    // Fallback in-memory catalog
+    let list = FALLBACK_TOURS;
+    if (args.category) {
+      list = list.filter((t) => t.category.toLowerCase() === args.category?.toLowerCase());
+    }
+    if (args.query) {
+      const q = args.query.toLowerCase();
+      list = list.filter((t) => t.title.toLowerCase().includes(q) || t.summary.toLowerCase().includes(q) || t.slug.includes(q));
+    }
+    return list.map((t) => ({
+      id: t.id,
+      slug: t.slug,
+      bokunId: t.bokunId,
+      title: t.title,
+      category: t.category,
+      durationHours: t.durationHours,
+      basePrice: t.basePrice,
+      currency: t.currency,
+      rating: t.rating,
+      summary: t.summary,
+    }));
   }
-
-  // Fallback in-memory catalog
-  let list = FALLBACK_TOURS;
-  if (args.category) {
-    list = list.filter((t) => t.category.toLowerCase() === args.category?.toLowerCase());
-  }
-  if (args.query) {
-    const q = args.query.toLowerCase();
-    list = list.filter((t) => t.title.toLowerCase().includes(q) || t.summary.toLowerCase().includes(q) || t.slug.includes(q));
-  }
-  return list.map((t) => ({
-    id: t.id,
-    slug: t.slug,
-    bokunId: t.bokunId,
-    title: t.title,
-    category: t.category,
-    durationHours: t.durationHours,
-    basePrice: t.basePrice,
-    currency: t.currency,
-    rating: t.rating,
-    summary: t.summary,
-  }));
 }
 
 export async function getTourDetails(args: { tourSlugOrBokunId: string }) {
@@ -219,28 +216,28 @@ export async function getTourDetails(args: { tourSlugOrBokunId: string }) {
         whatToBring: (tour.whatToBring as string[]) || [],
       };
     }
+    return null;
   } catch (err) {
     console.warn("[ai.tools] getTourDetails database query failed, using static fallback:", (err as any)?.message);
+    const found =
+      FALLBACK_TOURS.find(
+        (t) => t.slug === args.tourSlugOrBokunId || t.bokunId === args.tourSlugOrBokunId || t.id === args.tourSlugOrBokunId,
+      ) || FALLBACK_TOURS[0];
+
+    return {
+      title: found.title,
+      category: found.category,
+      durationHours: found.durationHours,
+      basePrice: found.basePrice,
+      currency: found.currency,
+      summary: found.summary,
+      description: found.description,
+      inclusions: found.inclusions,
+      exclusions: found.exclusions,
+      highlights: found.highlights,
+      whatToBring: found.whatToBring,
+    };
   }
-
-  const found =
-    FALLBACK_TOURS.find(
-      (t) => t.slug === args.tourSlugOrBokunId || t.bokunId === args.tourSlugOrBokunId || t.id === args.tourSlugOrBokunId,
-    ) || FALLBACK_TOURS[0];
-
-  return {
-    title: found.title,
-    category: found.category,
-    durationHours: found.durationHours,
-    basePrice: found.basePrice,
-    currency: found.currency,
-    summary: found.summary,
-    description: found.description,
-    inclusions: found.inclusions,
-    exclusions: found.exclusions,
-    highlights: found.highlights,
-    whatToBring: found.whatToBring,
-  };
 }
 
 export async function checkAvailability(args: { date: string; tourSlug?: string }) {
@@ -263,41 +260,38 @@ export async function checkAvailability(args: { date: string; tourSlug?: string 
       take: 6,
     });
 
-    if (departures.length > 0) {
-      return departures.map((d) => ({
-        departureId: d.id,
-        date: formatDateOnly(d.date),
-        departureTime: formatTimeOfDay(d.departureTime),
-        tourTitle: d.tour?.title || d.shuttleRoute?.name,
-        capacityTotal: d.capacityTotal,
-        availableSeats: Math.max(0, d.capacityTotal - (d.capacityBooked + d.capacityHeld)),
-        pricePerPerson: d.price / 100,
-        currency: d.currency,
-      }));
-    }
+    return departures.map((d) => ({
+      departureId: d.id,
+      date: formatDateOnly(d.date),
+      departureTime: formatTimeOfDay(d.departureTime),
+      tourTitle: d.tour?.title || d.shuttleRoute?.name,
+      capacityTotal: d.capacityTotal,
+      availableSeats: Math.max(0, d.capacityTotal - (d.capacityBooked + d.capacityHeld)),
+      pricePerPerson: d.price / 100,
+      currency: d.currency,
+    }));
   } catch (err) {
     console.warn("[ai.tools] checkAvailability database query failed, using static schedule fallback:", (err as any)?.message);
+    // Fallback realistic daily departures for the requested date
+    const targetDate = args.date || todayInMountainTime();
+    const matchingTours = args.tourSlug
+      ? FALLBACK_TOURS.filter((t) => t.slug === args.tourSlug)
+      : FALLBACK_TOURS.filter((t) => t.category === "SHARED" || t.category === "SHUTTLE");
+
+    return matchingTours.map((t, idx) => {
+      const time = idx === 0 ? "08:30" : idx === 1 ? "07:30" : idx === 2 ? "09:00" : "05:00";
+      return {
+        departureId: `dep_${t.slug}_${targetDate}_${time.replace(":", "")}`,
+        date: targetDate,
+        departureTime: time,
+        tourTitle: t.title,
+        capacityTotal: 12,
+        availableSeats: 6,
+        pricePerPerson: t.basePrice,
+        currency: "CAD",
+      };
+    });
   }
-
-  // Fallback realistic daily departures for the requested date
-  const targetDate = args.date || todayInMountainTime();
-  const matchingTours = args.tourSlug
-    ? FALLBACK_TOURS.filter((t) => t.slug === args.tourSlug)
-    : FALLBACK_TOURS.filter((t) => t.category === "SHARED" || t.category === "SHUTTLE");
-
-  return matchingTours.map((t, idx) => {
-    const time = idx === 0 ? "08:30" : idx === 1 ? "07:30" : idx === 2 ? "09:00" : "05:00";
-    return {
-      departureId: `dep_${t.slug}_${targetDate}_${time.replace(":", "")}`,
-      date: targetDate,
-      departureTime: time,
-      tourTitle: t.title,
-      capacityTotal: 12,
-      availableSeats: 6,
-      pricePerPerson: t.basePrice,
-      currency: "CAD",
-    };
-  });
 }
 
 export async function getBooking(args: { bookingReference: string; customerEmail?: string }) {
