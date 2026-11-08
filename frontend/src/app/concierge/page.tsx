@@ -7,7 +7,7 @@ import { ConciergeChat } from "@/components/voice/ConciergeChat";
 
 export default function ConciergePage() {
   return (
-    <div className="h-[calc(100svh-var(--vc-header-h,80px))] min-h-[32rem] bg-white">
+    <div className="h-full min-h-0 w-full flex-1 flex flex-col bg-white overflow-hidden">
       <ConciergeChat variant="page" />
     </div>
   );

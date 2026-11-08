@@ -8,9 +8,16 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Calendar, Car, CheckCircle2, Clock, MapPin, ShieldCheck, Ticket } from "lucide-react";
+import { ConciergeSeatMap, type SeatInfo } from "./ConciergeSeatMap";
 
 export interface VoiceCardData {
-  type?: "availability" | "pickups" | "hold" | "confirmed" | "tracking" | "tour";
+  type?: "availability" | "pickups" | "hold" | "confirmed" | "tracking" | "tour" | "seat_map";
+  vehicleType?: "sprinter_12" | "suv_7";
+  vehicleName?: string;
+  capacity?: number;
+  legroom?: string;
+  amenities?: string[];
+  seats?: SeatInfo[];
   tour?: {
     slug?: string;
     title?: string;
@@ -65,6 +72,7 @@ interface VoiceBookingCardStreamProps {
   hasSafetyRefusal?: boolean;
   onSelectDeparture?: (departure: NonNullable<VoiceCardData["departures"]>[number]) => void;
   onSelectPickup?: (stopName: string) => void;
+  onSelectSeats?: (seats: string[]) => void;
 }
 
 const CARD = "rounded-none border border-obsidian-900/10 bg-white p-4";
@@ -78,7 +86,7 @@ const shortDate = (d?: string) => {
   return Number.isNaN(parsed.getTime()) ? d : parsed.toLocaleDateString("en-CA", { weekday: "short", month: "short", day: "numeric" });
 };
 
-export function VoiceBookingCardStream({ data, checkoutUrl, hasSafetyRefusal, onSelectDeparture, onSelectPickup }: VoiceBookingCardStreamProps) {
+export function VoiceBookingCardStream({ data, checkoutUrl, hasSafetyRefusal, onSelectDeparture, onSelectPickup, onSelectSeats }: VoiceBookingCardStreamProps) {
   // Seat holds last 10 minutes.
   const [secondsRemaining, setSecondsRemaining] = useState(600);
   useEffect(() => {
@@ -256,6 +264,20 @@ export function VoiceBookingCardStream({ data, checkoutUrl, hasSafetyRefusal, on
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
           )}
+        </div>
+      )}
+
+      {data?.type === "seat_map" && (
+        <div className="mt-2 w-full">
+          <ConciergeSeatMap
+            vehicleType={data.vehicleType}
+            vehicleName={data.vehicleName}
+            capacity={data.capacity}
+            legroom={data.legroom}
+            amenities={data.amenities}
+            seats={data.seats}
+            onSelectSeats={onSelectSeats}
+          />
         </div>
       )}
     </div>

@@ -3,7 +3,7 @@
 // jobs don't run twice. Nightly emails stay with the worker. A run is skipped while the previous one
 // of the same job is still going.
 
-import { expireHoldsAndUnpaidBookings, maturePartnerCommissions, sendBookingsToBokun, syncSeatsFromBokun, syncFarCalendarFromBokun, publishScheduledSeoPages, remindUnpaidBalances, retryConfirmationEmails, runNightlySeoAudit, sendT60WhatsApp, syncWebflowBlogPosts, whatsAppDeliveryConfigured } from "@/jobs/tasks";
+import { expireHoldsAndUnpaidBookings, maturePartnerCommissions, sendBookingsToBokun, syncSeatsFromBokun, syncFarCalendarFromBokun, publishScheduledSeoPages, remindUnpaidBalances, retryConfirmationEmails, runNightlySeoAudit, sendT60WhatsApp, syncWebflowBlogPosts, whatsAppDeliveryConfigured, syncKnowledgeBaseTask } from "@/jobs/tasks";
 import { isWebflowSyncEnabled, webflowSyncMinutes } from "@/modules/seo/portal/webflow-sync";
 
 type Job = { name: string; everyMs: number; run: () => Promise<unknown> };
@@ -27,6 +27,8 @@ const JOBS: Job[] = [
   { name: "confirmation-email-retry", everyMs: 15 * 60 * 1000, run: () => retryConfirmationEmails() },
   // Reads every public page once a day; the audit itself skips a run while one is in progress.
   { name: "seo-audit", everyMs: 24 * 60 * 60 * 1000, run: () => runNightlySeoAudit() },
+  // Daily Master Knowledge Base synchronization with active catalog, stops, and road closures.
+  { name: "knowledgebase-sync", everyMs: 24 * 60 * 60 * 1000, run: () => syncKnowledgeBaseTask() },
   // Only when switched on (WEBFLOW_SYNC_ENABLED=true and WEBFLOW_API_TOKEN), every WEBFLOW_SYNC_MINUTES.
   ...(isWebflowSyncEnabled() ? [{ name: "webflow-blog-sync", everyMs: webflowSyncMinutes() * 60 * 1000, run: () => syncWebflowBlogPosts() }] : []),
   // Only with a real WhatsApp provider (tasks.ts sendT60WhatsApp).
