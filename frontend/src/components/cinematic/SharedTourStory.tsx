@@ -65,7 +65,7 @@ export function SharedTourStory() {
                   </span>
                   <div className="flex items-baseline justify-between">
                     <div>
-                      <span className="text-2xl font-serif font-light text-white">$189 CAD</span>
+                      <span className="text-2xl font-serif font-light text-white">CAD $189</span>
                       <span className="text-xs text-slate-300 ml-1.5">per guest</span>
                     </div>
                     <span className="text-xs text-emerald-300 flex items-center gap-1 font-medium">

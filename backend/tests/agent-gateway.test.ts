@@ -112,7 +112,10 @@ describe("Vistachase Agentic Platform Architecture & Tool Loop", () => {
       expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("24 hours prior to departure time");
       expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("72 hours prior to departure time");
       expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("Moraine Lake Road and Takakkaw Falls Road are CLOSED");
-      expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("12-seat Modified Mercedes Sprinter");
+      expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("max 12 guests");
+      // Website prices, not invented ones (owner, 2026-11-09)
+      expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("CAD $1,750 per vehicle");
+      expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).not.toMatch(/GST|Escalade|bookings@vistachase\.com|Heart of Banff/);
     });
 
     it("verifies dynamic mountain time context provides MST/MDT zone and seasonal flags", () => {
@@ -128,9 +131,9 @@ describe("Vistachase Agentic Platform Architecture & Tool Loop", () => {
       expect(meta.byteLength).toBeGreaterThan(1000);
 
       const kb = await getMasterKnowledgeBase();
-      expect(kb).toContain("Vistachase");
+      expect(kb).toContain("Vista Chase concierge");
       expect(kb).toContain("Parks Canada");
-      expect(kb).toContain("Free Cancellation");
+      expect(kb).toContain("full refund if cancelled at least 24 hours");
     });
   });
 });

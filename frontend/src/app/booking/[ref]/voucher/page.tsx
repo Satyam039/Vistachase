@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: { params: Promise<{ ref: stri
   };
 }
 
-const money = (n: number) => `$${n.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const money = (n: number) => `CAD $${n.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 /** "08:30" → "8:30 AM" */
 function clock(time?: string | null) {
@@ -371,7 +371,7 @@ export default async function VoucherPage({
                   <div className="flex justify-between gap-4 border-t border-obsidian-900/[0.08] pt-3 text-obsidian-900">
                     <dt>Total</dt>
                     <dd className="shrink-0">
-                      {money(booking.totalAmount)} {booking.currency}
+                      {money(booking.totalAmount)}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-4 text-slate-700">
@@ -380,14 +380,14 @@ export default async function VoucherPage({
                   </div>
                   <div className="flex justify-between gap-4 text-base text-obsidian-900">
                     <dt>{balanceDue > 0 ? "Balance due" : "Balance"}</dt>
-                    <dd className="shrink-0">{balanceDue > 0 ? `${money(balanceDue)} ${booking.currency}` : "Paid in full"}</dd>
+                    <dd className="shrink-0">{balanceDue > 0 ? `${money(balanceDue)}` : "Paid in full"}</dd>
                   </div>
                 </>
               ) : (
                 <div className="flex justify-between gap-4 border-t border-obsidian-900/[0.08] pt-3 text-base text-obsidian-900">
                   <dt>Total paid</dt>
                   <dd className="shrink-0">
-                    {money(booking.totalAmount)} {booking.currency}
+                    {money(booking.totalAmount)}
                   </dd>
                 </div>
               )}

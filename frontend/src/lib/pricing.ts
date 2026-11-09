@@ -22,5 +22,10 @@ export function savingsPercent(offer: number, original: number): number {
   return Math.round((1 - offer / original) * 100);
 }
 
-export const money = (amount: number) =>
-  `$${amount.toLocaleString("en-CA", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+/** A price as the site shows it everywhere (owner, 2026-11-09): "CAD $1,240". */
+export const money = (amount: number, currency = "CAD") =>
+  `${currency} $${amount.toLocaleString("en-CA", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+
+/** Same, with cents when there are any: "CAD $1,240" or "CAD $364.50". Always cents with `cents`. */
+export const moneyExact = (amount: number, cents = false, currency = "CAD") =>
+  `${currency} $${amount.toLocaleString("en-CA", { minimumFractionDigits: cents ? 2 : 0, maximumFractionDigits: 2 })}`;

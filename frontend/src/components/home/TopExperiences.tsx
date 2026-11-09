@@ -109,13 +109,13 @@ export function ExperienceCard({ card }: { card: LinkCard }) {
   const { href, external, image, badge, eyebrow, title, facts, note, price, unit, noPrice } = card;
   const seasonal =
     card.key === "two-day-shared"
-      ? { summer: "$486", winter: "$396" }
+      ? { summer: "CAD $486", winter: "CAD $396" }
       : card.key === "two-day-rockies-private"
-      ? { summer: "$1,575/day", winter: "$1,240/day" }
+      ? { summer: "CAD $1,575/day", winter: "CAD $1,240/day" }
       : card.key === "three-day-rockies-discovery"
-      ? { summer: "$1,575/day", winter: "Summer only" }
+      ? { summer: "CAD $1,575/day", winter: "Summer only" }
       : card.key === "four-day-rockies-jasper"
-      ? { summer: "$1,575/day", winter: "Summer only" }
+      ? { summer: "CAD $1,575/day", winter: "Summer only" }
       : null;
 
   return (

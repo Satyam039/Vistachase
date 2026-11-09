@@ -97,7 +97,6 @@ export class AgentExecutionGateway {
 === DYNAMIC SERVER & SESSION CONTEXT ===
 - Live Server Time: ${mountainTime.timeString}
 - Moraine Lake Road Status: ${moraineStatus}
-- Parks Canada Commercial Access Permit: ACTIVE (Vistachase Commercial #VC-PARKS-2026)
 - Verified Session Role: ${session.role}
 - Verified User ID: ${session.userId || "GUEST"}
 - Authorized PNR Context: ${session.authorizedPnr || "NONE"}

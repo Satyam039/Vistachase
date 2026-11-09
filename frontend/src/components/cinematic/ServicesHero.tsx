@@ -246,7 +246,7 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
               <>
                 <p className="flex flex-wrap items-baseline justify-center gap-x-2.5 text-white">
                   <span>
-                    From <span className="text-lg text-summit-200 sm:text-xl">CAD {money(slide.offer.from)}</span> {slide.offer.unit}
+                    From <span className="text-lg text-summit-200 sm:text-xl">{money(slide.offer.from)}</span> {slide.offer.unit}
                   </span>
                   <span className="text-summit-300/70" aria-hidden="true">·</span>
                   <span className="text-white/80">Taxes included</span>

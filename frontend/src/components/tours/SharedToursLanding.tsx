@@ -314,7 +314,7 @@ function Facts({ duration }: { duration: string }) {
   );
 }
 
-function Price({ price, unit = "CAD/guest", showOriginal = true }: { price: number; unit?: string; showOriginal?: boolean }) {
+function Price({ price, unit = "per guest", showOriginal = true }: { price: number; unit?: string; showOriginal?: boolean }) {
   return (
     <div className="min-w-0">
       {hasPrice(price) ? (
@@ -341,7 +341,7 @@ export function PackagePrice({ price, separate, size = "sm" }: { price: number; 
           {money(separate)}
         </s>
         <span className={`${size === "lg" ? "text-4xl" : "text-xl"} text-white`}>{money(price)}</span>
-        <span className="text-sm text-slate-300">CAD/guest</span>
+        <span className="text-sm text-slate-300">per guest</span>
       </p>
       <p className="mt-0.5 text-xs text-white/55">Both tours, 10% off · Taxes and required fees included</p>
     </div>

@@ -138,7 +138,7 @@ export function VoiceBookingCardStream({ data, checkoutUrl, hasSafetyRefusal, on
                   </span>
                   <span className="shrink-0 text-right">
                     <span className="block text-sm text-obsidian-900">
-                      ${dep.price} <span className="text-xs text-slate-600">{dep.currency}</span>
+                      CAD ${dep.price}
                     </span>
                     <span className="text-xs text-ocean-700">Choose</span>
                   </span>
@@ -196,7 +196,7 @@ export function VoiceBookingCardStream({ data, checkoutUrl, hasSafetyRefusal, on
               </p>
               {data.departure.price != null && (
                 <p className="mt-2 text-right text-base text-obsidian-900">
-                  ${data.departure.price.toFixed(2)} {data.departure.currency || "CAD"}
+                  CAD ${data.departure.price.toFixed(2)}
                 </p>
               )}
             </div>

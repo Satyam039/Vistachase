@@ -199,7 +199,7 @@ export function ManageBooking({
                   <h4 className="text-sm font-semibold text-red-950">Confirm Booking Cancellation</h4>
                   <p className="text-xs leading-relaxed text-red-900">
                     {policyOpen
-                      ? `This booking is within the cancellation window. Cancelling will immediately release your seats and refund ${refundAmount != null ? `$${refundAmount.toFixed(2)} ${currency}` : "your payment"} to your original payment method.`
+                      ? `This booking is within the cancellation window. Cancelling will immediately release your seats and refund ${refundAmount != null ? `CAD $${refundAmount.toFixed(2)}` : "your payment"} to your original payment method.`
                       : "The free cancellation window for this booking has closed. Cancelling will release your reserved seats, but this departure is non-refundable."}
                   </p>
                 </div>

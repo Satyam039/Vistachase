@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import { CheckCircle2, CreditCard } from "lucide-react";
 import { StripeCheckoutForm, stripeConfigured } from "@/components/booking/StripeCheckoutForm";
 
-const money = (n: number) => `$${n.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const money = (n: number) => `CAD $${n.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 type Stage =
   | { kind: "idle" }
@@ -95,7 +95,7 @@ export function BalancePayment({
       {stage.kind === "paying" ? (
         <StripeCheckoutForm
           clientSecret={stage.clientSecret}
-          amountLabel={`${money(stage.amount)} ${stage.currency}`}
+          amountLabel={`${money(stage.amount)}`}
           onPaid={waitForBalance}
         />
       ) : (
@@ -110,7 +110,7 @@ export function BalancePayment({
             ? "Starting secure payment…"
             : stage.kind === "confirming"
             ? "Confirming your payment…"
-            : `Pay balance ${money(balanceDue)} ${currency}`}
+            : `Pay balance ${money(balanceDue)}`}
         </button>
       )}
       {dueLabel && stage.kind !== "confirming" && <p className="text-xs text-slate-600">Due by {dueLabel}.</p>}

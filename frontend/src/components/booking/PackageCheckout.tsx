@@ -28,6 +28,8 @@ import {
   EMPTY_AIRPORT_TRANSFER,
   type AirportTransferValue,
 } from "@/components/booking/AirportTransferFields";
+import { ActivityAddOnToggle } from "@/components/booking/ActivityAddOnFields";
+import { activityAddOnsRequestLine } from "@/lib/activityAddOns";
 import { Dropdown } from "@/components/forms/Dropdown";
 import { PhoneField } from "@/components/forms/PhoneField";
 import { dialCode } from "@/lib/countries";
@@ -147,6 +149,8 @@ export function PackageCheckout({
   const [stopId, setStopId] = useState("");
   const [customPickup, setCustomPickup] = useState("");
   const [requests, setRequests] = useState("");
+  // Private journeys: "Add-on activities" (owner, 2026-11-09), arranged by the team and paid separately.
+  const [activities, setActivities] = useState(false);
   const [airport, setAirport] = useState(false);
   const [airportTransfer, setAirportTransfer] = useState<AirportTransferValue>(EMPTY_AIRPORT_TRANSFER);
   const [attempted, setAttempted] = useState(false);
@@ -236,7 +240,7 @@ export function PackageCheckout({
           adultsCount: adults,
           childrenCount: vehicle ? 0 : children,
           infantsCount: vehicle ? 0 : infants,
-          specialRequests: requests.trim() || undefined,
+          specialRequests: [requests.trim(), vehicle && activities ? activityAddOnsRequestLine([]) : ""].filter(Boolean).join("\n") || undefined,
           airportTransfer: withAirport ? { ...airportTransfer, area: airportTransfer.area || undefined } : undefined,
         }),
       });
@@ -334,6 +338,9 @@ export function PackageCheckout({
                   {airport && <AirportTransferDetails value={airportTransfer} onChange={setAirportTransfer} error={show("airport")} />}
                 </div>
               )}
+              <div className="mt-3">
+                <ActivityAddOnToggle checked={activities} onChange={setActivities} />
+              </div>
             </>
           ) : (
             <>
