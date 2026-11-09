@@ -31,7 +31,7 @@ export default function PageError({ error, reset }: { error: Error & { digest?: 
   return (
     <div className="bg-obsidian-50">
       <section className="relative isolate overflow-hidden bg-obsidian-950">
-        <Image src="/media/photos/moraine-lake-classic.webp" alt="" fill priority sizes="100vw" className="-z-10 object-cover opacity-60" />
+        <Image src="/media/photos/moraine-lake-classic.webp" alt="Moraine Lake in Banff National Park" fill priority sizes="100vw" className="-z-10 object-cover opacity-60" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/40 to-ocean-950/20" aria-hidden="true" />
         <div className="mx-auto flex max-w-5xl flex-col items-center px-page pb-14 pt-20 text-center sm:pb-20 sm:pt-28">
           <h1 className="mx-auto max-w-2xl text-4xl font-light tracking-tight text-white sm:text-5xl">We couldn&apos;t load this page</h1>

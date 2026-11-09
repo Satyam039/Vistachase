@@ -120,6 +120,9 @@ export const BUILT_IN_REDIRECTS: Record<string, string> = {
   "/banff-upper-hot-springs-tickets": "/destinations/banff-national-park",
   // Migration doc, 9 Nov 2026: "Delete this page". The empty guides index goes to the blog.
   "/guides": "/blog",
+  // Owner, 9 Nov 2026: the partner program and travel-trade pages are one page, at /affiliates.
+  // /partners/login and /partners/dashboard are not affected (exact match only).
+  "/partners": "/affiliates",
   // Old cancellation-policy address; the policy lives at the Webflow URL.
   "/cancellation-policy": "/privacy-policy-vista-chase",
 };

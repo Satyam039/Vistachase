@@ -78,7 +78,7 @@ export function SharedToursLanding({ tours, reviews }: { tours: TourWithAvailabi
       <section data-nav-hero className="relative isolate flex min-h-[36rem] flex-col justify-end overflow-hidden bg-obsidian-950 text-white sm:min-h-[42rem] lg:min-h-[82vh]">
         {service && (
           <div className="absolute inset-0 -z-10">
-            <Image src={service.image} alt="" fill priority sizes="100vw" className="object-cover" data-parallax="10" />
+            <Image src={service.image} alt={`${service.title} in the Canadian Rockies`} fill priority sizes="100vw" className="object-cover" data-parallax="10" />
             {service.video && (
               <AmbientVideo src={service.video.src} srcHd={service.video.srcHd} poster={service.video.poster} className="absolute inset-0 h-full w-full object-cover" once />
             )}
@@ -416,7 +416,7 @@ function DayCard({ tour, price, award = false }: { tour: DayTour; price: number;
             className="absolute left-3 top-3 block w-40 rounded-md bg-white px-2.5 py-1.5 shadow-lg sm:w-44"
             aria-label="Tripadvisor Travellers' Choice Best of the Best 2026 (opens in a new tab)"
           >
-            <Image src="/media/badges/tripadvisor-best-of-the-best-2026.png" alt="" width={1000} height={392} className="h-auto w-full" />
+            <Image src="/media/badges/tripadvisor-best-of-the-best-2026.png" alt="Tripadvisor Travelers' Choice Best of the Best 2026" width={1000} height={392} className="h-auto w-full" />
           </a>
         )}
       </div>

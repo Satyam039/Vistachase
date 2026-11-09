@@ -62,7 +62,7 @@ const GROUPS: { heading: string; links: FooterLink[] }[] = [
     links: [
       { label: "About Us", href: "/about-us" },
       { label: "Blog", href: "/blog" },
-      { label: "Affiliate program", href: "/partners" },
+      { label: "Affiliate program", href: "/affiliates" },
       { label: "Terms & Conditions", href: "/terms-and-conditions" },
       { label: "Cancellation Policy", href: "/privacy-policy-vista-chase" },
       { label: "Contact us", href: "/contact-us" },
@@ -200,7 +200,7 @@ export function SiteFooter() {
         >
           <Image
             src="/media/photos/bow-lake-dock-sunrise.webp"
-            alt=""
+            alt="Bow Lake dock at sunrise"
             fill
             sizes="(max-width: 1280px) 100vw, 1280px"
             className="-z-10 object-cover"

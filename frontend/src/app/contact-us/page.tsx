@@ -98,7 +98,7 @@ export default async function ContactUsPage({ searchParams }: { searchParams: Pr
     <div className="bg-obsidian-50 text-obsidian-900">
       {/* Hero */}
       <section data-nav-hero className="relative isolate flex min-h-[52vh] items-end overflow-hidden bg-obsidian-950 text-white">
-        <Image src="/media/photos/bow-lake-reflection.webp" alt="" fill priority sizes="100vw" className="-z-10 object-cover" data-parallax="10" />
+        <Image src="/media/photos/bow-lake-reflection.webp" alt="Bow Lake reflection on the Icefields Parkway" fill priority sizes="100vw" className="-z-10 object-cover" data-parallax="10" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/45 to-ocean-950/20" />
         <div className="mx-auto flex w-full flex-col items-center text-center max-w-7xl px-page pb-12 pt-[calc(var(--vc-nav-open-h,100px)+1.5rem)]" data-scroll-fade>
           <nav aria-label="Breadcrumb" className="mb-6">

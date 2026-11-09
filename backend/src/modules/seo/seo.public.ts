@@ -81,7 +81,7 @@ export async function publicGuide(slug: string, prefix: CmsPrefix = GUIDE_PREFIX
   const schema = await publishedPageSchema(id);
   // Related links: only pages that are published here or are known site routes.
   const related = await prisma.seoPage.findMany({ where: { path: { in: page.relatedPaths }, status: "PUBLISHED" }, select: { path: true, label: true, seoTitle: true } });
-  return { ...content, body: cleanBody(content.body, redirects, webflowLocalMap()), schema, related: related.map((r) => ({ path: r.path, label: r.label })) };
+  return { ...content, body: cleanBody(content.body, redirects, webflowLocalMap(), content.label), schema, related: related.map((r) => ({ path: r.path, label: r.label })) };
 }
 
 const SITE_LINK = /\]\((?:https?:\/\/(?:www\.)?vistachase\.com)?(\/[^)\s?#]*)([^)\s]*)((?:\s+"[^"]*")?)\)/gi;
@@ -94,11 +94,13 @@ const SITE_LINK = /\]\((?:https?:\/\/(?:www\.)?vistachase\.com)?(\/[^)\s?#]*)([^
  *   and crawlers don't go through a hop (or used to land on a 404).
  * - Images still addressed on the Webflow CDN are served from their copy in backend/media (listed
  *   in media/manifest.json), and an alt text that is only a web address gets the copy's alt text.
+ * - An image with no alt text (or only a web address) gets the copy's alt text, else the post's name.
  */
 export function cleanBody(
   body: string | null,
   redirects: Record<string, [string, number]>,
   localImages: Map<string, { src: string; alt: string }> = new Map(),
+  fallbackAlt = "",
 ): string | null {
   if (!body) return body;
   const text = body
@@ -110,8 +112,9 @@ export function cleanBody(
   return text
     .replace(BODY_IMAGE, (all, alt: string, src: string, title: string) => {
       const local = localImages.get(src);
-      if (!local) return all;
-      return `![${/^(https?:)?\/\//i.test(alt.trim()) ? local.alt : alt}](${local.src}${title})`;
+      const urlAlt = /^(https?:)?\/\//i.test(alt.trim());
+      if (!local) return alt.trim() && !urlAlt ? all : `![${fallbackAlt.replace(/[[\]]/g, "")}](${src}${title})`;
+      return `![${urlAlt || !alt.trim() ? local.alt || fallbackAlt.replace(/[[\]]/g, "") : alt}](${local.src}${title})`;
     })
     .replace(SITE_LINK, (all, path: string, rest: string, title: string) => {
       const key = path.length > 1 ? path.replace(/\/+$/, "") : path;

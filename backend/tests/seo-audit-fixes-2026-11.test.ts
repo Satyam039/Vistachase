@@ -19,6 +19,12 @@ describe("migration redirects", () => {
     expect(chains.filter((c) => c.loop || c.hops > 1)).toEqual([]);
   });
 
+  it("send /partners to the merged affiliate page, and leave the partner portal alone", () => {
+    expect(BUILT_IN_REDIRECTS["/partners"]).toBe("/affiliates");
+    expect(BUILT_IN_REDIRECTS["/partners/login"]).toBeUndefined();
+    expect(BUILT_IN_REDIRECTS["/partners/dashboard"]).toBeUndefined();
+  });
+
   it("send the empty guides index to the blog", () => {
     expect(BUILT_IN_REDIRECTS["/guides"]).toBe("/blog");
   });
@@ -39,6 +45,16 @@ describe("Webflow images in blog posts", () => {
     expect(out[0]).toMatch(/^!\[Fairmont Chateau Lake Louise[^\]]*\]\(\/media\/blog\/banff-february-lake-louise-chateau\.webp\)$/);
     expect(out[1]).toBe('![Lake Louise in winter](/media/blog/banff-february-lake-louise-chateau.webp "Winter")');
     expect(out[2]).toBe("![kept](https://example.com/a.jpg)");
+  });
+});
+
+describe("image alt text in post bodies", () => {
+  it("gives an image with no alt (or only a web address) the post's name, and keeps real alts", () => {
+    const body = "![](/media/uploads/a.png)\n\n![https://x.test/b.png](/media/b.png \"t\")\n\n![Moraine Lake](/media/c.png)";
+    const out = cleanBody(body, {}, new Map(), "Banff [in] Winter")!.split("\n\n");
+    expect(out[0]).toBe("![Banff in Winter](/media/uploads/a.png)");
+    expect(out[1]).toBe('![Banff in Winter](/media/b.png "t")');
+    expect(out[2]).toBe("![Moraine Lake](/media/c.png)");
   });
 });
 
