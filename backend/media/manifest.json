@@ -1,6 +1,6 @@
 {
  "generatedBy": "scripts/media/build-media.mjs",
- "count": 396,
+ "count": 398,
  "assets": [
   {
    "id": "badges/civitatis-logo",
@@ -8197,6 +8197,54 @@
     "pages": [
      "blog-post/what-to-do-in-banff-in-february"
     ]
+   }
+  },
+  {
+   "id": "videos/columbia-icefield-ice-explorer",
+   "src": "/media/videos/columbia-icefield-ice-explorer.mp4",
+   "poster": "/media/videos/columbia-icefield-ice-explorer-poster.webp",
+   "width": 1280,
+   "height": 720,
+   "duration": 15,
+   "title": "Ice Explorer on the Athabasca Glacier",
+   "alt": "Red Ice Explorer vehicles and guests walking on the Athabasca Glacier at the Columbia Icefield",
+   "collection": "videos",
+   "kind": "video",
+   "places": [
+    "athabasca-glacier",
+    "icefields-parkway"
+   ],
+   "tags": [
+    "summer",
+    "glacier"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "Columbia_Icefield.mp4 (7s to 22s)"
+   }
+  },
+  {
+   "id": "videos/columbia-icefield-skywalk",
+   "src": "/media/videos/columbia-icefield-skywalk.mp4",
+   "poster": "/media/videos/columbia-icefield-skywalk-poster.webp",
+   "width": 1280,
+   "height": 720,
+   "duration": 14,
+   "title": "Columbia Icefield Skywalk",
+   "alt": "Guests on the glass-floored Columbia Icefield Skywalk above the Sunwapta Valley",
+   "collection": "videos",
+   "kind": "video",
+   "places": [
+    "columbia-icefield",
+    "icefields-parkway"
+   ],
+   "tags": [
+    "summer",
+    "glacier"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "Glacier_Skywalk.mp4 (5s to 19s)"
    }
   }
  ]
