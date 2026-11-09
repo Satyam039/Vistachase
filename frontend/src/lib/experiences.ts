@@ -230,30 +230,58 @@ export function buildExperienceTabs(tours: TourWithAvailability[]): ExperienceTa
  * Tours trimmed for card lists, so a year of dates (seed-departures.ts) stays small in the page:
  * each departure keeps only what cards, prices and availability read. With `days`, only the
  * departures in the next `days` days are kept (or a tour's first 30, e.g. summer shuttles in
- * winter), which is enough for "from" prices; the search keeps every date.
+ * winter), which is enough for "from" prices; the first departure with seats after the window is
+ * kept too, so a card never says "no dates" when there is one later. The search keeps every date.
  */
 export function toursForCards(tours: TourWithAvailability[], days?: number): TourWithAvailability[] {
   const until = days ? new Date(Date.now() + days * DAY_MS).toISOString().slice(0, 10) : null;
   return tours.map((tour) => {
     const all = Array.isArray(tour.departures) ? tour.departures : [];
     const inWindow = until ? all.filter((d) => d.date <= until) : all;
-    const kept = until && inWindow.length === 0 ? all.slice(0, 30) : inWindow;
+    let kept = until && inWindow.length === 0 ? all.slice(0, 30) : inWindow;
+    if (until && !kept.some((d) => d.seatsAvailable > 0)) {
+      const later = all.find((d) => d.date > until && d.seatsAvailable > 0);
+      if (later) kept = [...kept, later];
+    }
     return {
       ...tour,
-      // Cards read the date, time, seats and prices only (lib/tours.ts, TourCard).
-      departures: kept.map(
-        (d) =>
-          ({
-            id: d.id,
-            date: d.date,
-            departureTime: d.departureTime,
-            capacityTotal: d.capacityTotal,
-            seatsAvailable: d.seatsAvailable,
-            price: d.price,
-            childPrice: d.childPrice,
-            infantPrice: d.infantPrice,
-          }) as DepartureAvailability,
-      ),
+      departures: kept.map(slimDeparture),
     };
   });
+}
+
+/**
+ * A departure with only what cards, the tour page's calendar and its price panel read: date, time,
+ * seats and prices. Booking checks every departure again on the server, so nothing here decides a
+ * sale; dropping the bookkeeping fields (booked, held, status, source) roughly halves the page.
+ */
+export function slimDeparture(d: DepartureAvailability): DepartureAvailability {
+  return {
+    id: d.id,
+    date: d.date,
+    departureTime: d.departureTime,
+    capacityTotal: d.capacityTotal,
+    seatsAvailable: d.seatsAvailable,
+    price: d.price,
+    childPrice: d.childPrice,
+    infantPrice: d.infantPrice,
+  } as DepartureAvailability;
+}
+
+/**
+ * Tours for pages that only draw TourCards (destination pages, "You might also like"): the card
+ * trim above, minus the long text and media lists a card never reads, so the page doesn't ship
+ * every tour's full description, itinerary tabs and FAQs to the browser.
+ */
+export function toursForTourCards(tours: TourWithAvailability[], days = 60): TourWithAvailability[] {
+  return toursForCards(tours, days).map((tour) => ({
+    ...tour,
+    description: "",
+    exclusions: [],
+    whatToBring: [],
+    galleryImages: [],
+    videos: [],
+    tabs: [],
+    faqs: [],
+  }));
 }

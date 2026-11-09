@@ -345,7 +345,7 @@ export const PRIVATE_OTHER_WAYS = [
     description: "Explore with passionate guides and no more than 12 guests. Choose one day or combine both adventures.",
     cta: "Explore Small-Group Tours",
     href: "/shared-tours",
-    image: "/media/site/image-2025-11-04t210434-975.webp",
+    image: "/media/site/bow-river-train-canadian-rockies.webp",
   },
   {
     key: "shuttles",

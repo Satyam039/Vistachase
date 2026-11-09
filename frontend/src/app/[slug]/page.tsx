@@ -6,6 +6,7 @@ import { notFound, permanentRedirect, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getTourBySlug, getTours } from "@/lib/api/catalog";
 import { TourDetailView } from "@/components/tours/TourDetailView";
+import { slimDeparture, toursForTourCards } from "@/lib/experiences";
 import { siteOrigin, withSeo } from "@/lib/seo/server";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 import { ACTIVITY_TICKETS_VISIBLE, activityTicket } from "@/lib/activityTickets";
@@ -44,12 +45,12 @@ export default async function TourPage({ params }: Props) {
 
   const related = tour.crossSells.length > 0 ? await getTours() : [];
   const bySlug = new Map(related.map((t) => [t.slug, t]));
-  const crossSells = tour.crossSells.flatMap((s) => bySlug.get(s) ?? []);
+  const crossSells = toursForTourCards(tour.crossSells.flatMap((s) => bySlug.get(s) ?? []));
 
   return (
     <>
       <PageSeoExtras path={`/${tour.slug}`} />
-      <TourDetailView tour={tour} related={crossSells} siteOrigin={siteOrigin()} />
+      <TourDetailView tour={{ ...tour, departures: tour.departures.map(slimDeparture) }} related={crossSells} siteOrigin={siteOrigin()} />
     </>
   );
 }

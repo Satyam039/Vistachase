@@ -54,6 +54,14 @@ const loadPost = cache(async (slug: string) => {
   return body?.post ?? null;
 });
 
+// Posts have no live seats or prices, so each one is rendered once and served from cache, then
+// refreshed in the background at most every 5 minutes (technical audit N2). Posts are rendered on
+// their first visit, not at build time, so a new post published in the SEO portal shows up as usual.
+export const revalidate = 300;
+export function generateStaticParams() {
+  return [];
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const post = await loadPost(slug);
