@@ -8,6 +8,7 @@ import { activeRedirectMap } from "@/modules/seo/seo.redirects";
 import { publishedPageSchema } from "@/modules/seo/portal/schema";
 import { BLOG_PREFIX, GUIDE_PREFIX, NON_INDEXABLE_PATHS, STATIC_ROUTES, type CmsPrefix } from "@/modules/seo/static-routes";
 import { ON_SALE, REMOVED_TOUR_SLUGS } from "@/modules/tours/product-map";
+import { webflowLocalMap } from "@/modules/seo/portal/images";
 
 const PUBLIC_FIELDS = {
   path: true,
@@ -80,7 +81,7 @@ export async function publicGuide(slug: string, prefix: CmsPrefix = GUIDE_PREFIX
   const schema = await publishedPageSchema(id);
   // Related links: only pages that are published here or are known site routes.
   const related = await prisma.seoPage.findMany({ where: { path: { in: page.relatedPaths }, status: "PUBLISHED" }, select: { path: true, label: true, seoTitle: true } });
-  return { ...content, body: cleanBody(content.body, redirects), schema, related: related.map((r) => ({ path: r.path, label: r.label })) };
+  return { ...content, body: cleanBody(content.body, redirects, webflowLocalMap()), schema, related: related.map((r) => ({ path: r.path, label: r.label })) };
 }
 
 const SITE_LINK = /\]\((?:https?:\/\/(?:www\.)?vistachase\.com)?(\/[^)\s?#]*)([^)\s]*)((?:\s+"[^"]*")?)\)/gi;
@@ -91,8 +92,14 @@ const SITE_LINK = /\]\((?:https?:\/\/(?:www\.)?vistachase\.com)?(\/[^)\s?#]*)([^
  *   are removed; joiners inside emoji sequences are kept.
  * - Links to this site that hit a redirect point straight at the redirect's target, so readers
  *   and crawlers don't go through a hop (or used to land on a 404).
+ * - Images still addressed on the Webflow CDN are served from their copy in backend/media (listed
+ *   in media/manifest.json), and an alt text that is only a web address gets the copy's alt text.
  */
-export function cleanBody(body: string | null, redirects: Record<string, [string, number]>): string | null {
+export function cleanBody(
+  body: string | null,
+  redirects: Record<string, [string, number]>,
+  localImages: Map<string, { src: string; alt: string }> = new Map(),
+): string | null {
   if (!body) return body;
   const text = body
     .split("\n")
@@ -100,12 +107,20 @@ export function cleanBody(body: string | null, redirects: Record<string, [string
     .join("\n")
     .replace(/(?<!\p{Extended_Pictographic}\ufe0f?)\u200d/gu, "")
     .replace(/\n{3,}/g, "\n\n");
-  return text.replace(SITE_LINK, (all, path: string, rest: string, title: string) => {
-    const key = path.length > 1 ? path.replace(/\/+$/, "") : path;
-    const to = redirects[key]?.[0];
-    return to ? `](${to}${rest}${title})` : all;
-  });
+  return text
+    .replace(BODY_IMAGE, (all, alt: string, src: string, title: string) => {
+      const local = localImages.get(src);
+      if (!local) return all;
+      return `![${/^(https?:)?\/\//i.test(alt.trim()) ? local.alt : alt}](${local.src}${title})`;
+    })
+    .replace(SITE_LINK, (all, path: string, rest: string, title: string) => {
+      const key = path.length > 1 ? path.replace(/\/+$/, "") : path;
+      const to = redirects[key]?.[0];
+      return to ? `](${to}${rest}${title})` : all;
+    });
 }
+
+const BODY_IMAGE = /!\[([^\]]*)\]\(([^)\s]+)((?:\s+"[^"]*")?)\)/g;
 
 export async function publicGuides() {
   return prisma.seoPage.findMany({

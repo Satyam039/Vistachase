@@ -177,7 +177,7 @@ export default async function ContactUsPage({ searchParams }: { searchParams: Pr
         <ul className="grid gap-3 sm:grid-cols-3" data-stagger>
           {SELF_SERVE.map(({ icon: Icon, label, href }) => (
             <li key={href}>
-              <Link href={href} className="group flex items-center justify-between rounded-none bg-white px-5 py-4 ring-1 ring-obsidian-900/[0.07] transition-colors hover:ring-ocean-600/40">
+              <Link href={href} rel={href.startsWith("/account") ? "nofollow" : undefined} className="group flex items-center justify-between rounded-none bg-white px-5 py-4 ring-1 ring-obsidian-900/[0.07] transition-colors hover:ring-ocean-600/40">
                 <span className="flex items-center gap-3 text-base text-obsidian-900">
                   <Icon className="h-5 w-5 text-ocean-600" aria-hidden="true" />
                   {label}

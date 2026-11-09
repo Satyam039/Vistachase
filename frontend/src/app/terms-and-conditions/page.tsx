@@ -10,7 +10,7 @@ import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 const baseMetadata: Metadata = {
   title: "Terms & Conditions | Vista Chase",
-  description: "The terms that apply to bookings made directly with Vista Chase and to use of our website: bookings, payments, pickups, private and multi-day tours, cancellations and privacy.",
+  description: "Terms for bookings made directly with Vista Chase and use of our website: bookings, payments, pickups, private and multi-day tours, cancellations, privacy.",
   alternates: { canonical: "/terms-and-conditions" },
 };
 

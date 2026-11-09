@@ -10,7 +10,7 @@ import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 const baseMetadata: Metadata = {
   title: "Small-Group Tours in Banff & the Rockies | Vista Chase",
   description:
-    "Banff & Yoho Discovery, Columbia Icefield Adventure or both in the Two-Day Rockies Explorer. Maximum 12 guests, passionate local guides, park admission included, pickup in Banff & Canmore.",
+    "Banff & Yoho Discovery, Columbia Icefield Adventure or both over two days. Max 12 guests, local guides, park admission included, Banff & Canmore pickup.",
   alternates: {
     canonical: "/shared-tours",
   },

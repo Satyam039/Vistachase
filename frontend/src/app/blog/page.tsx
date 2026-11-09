@@ -48,9 +48,9 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     alternates: { canonical: "/blog" },
   });
   if (page === 1) return meta;
-  // Later pages list different posts, so each is its own canonical page with its own title.
-  const title = typeof meta.title === "string" ? meta.title : "Banff Blog: Travel Tips & Rockies Guides | Vista Chase";
-  return { ...meta, title: `${title} (page ${page})`, alternates: { ...meta.alternates, canonical: `/blog?page=${page}` } };
+  // Later pages list different posts, so each is its own canonical page with its own title, kept
+  // under 60 characters (technical audit spreadsheet, 9 Nov 2026: "Banff Travel Blog & Rockies Guides | Page 2").
+  return { ...meta, title: { absolute: `Banff Travel Blog & Rockies Guides | Page ${page}` }, alternates: { ...meta.alternates, canonical: `/blog?page=${page}` } };
 }
 
 export default async function BlogPage({ searchParams }: Props) {

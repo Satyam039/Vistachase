@@ -5,19 +5,22 @@ import type { SeoIssueSeverity } from "@prisma/client";
 import prisma from "@/lib/db/prisma";
 import { listClusters } from "@/modules/seo/seo.keywords";
 import { liveOf } from "@/modules/seo/seo.pages";
-import { SEVERITY_WEIGHT } from "@/modules/seo/seo.audit";
+import { redirectedOnPurpose, SEVERITY_WEIGHT } from "@/modules/seo/seo.audit";
+import { activeRedirectMap } from "@/modules/seo/seo.redirects";
 import { integrationStatus } from "@/modules/seo/search-console";
 
 export async function overview() {
-  const [pages, keywords, openIssues, runs, clusters, integrations, redirects] = await Promise.all([
+  const [pages, keywords, openIssues, runs, clusters, integrations, redirected] = await Promise.all([
     prisma.seoPage.findMany({ include: { _count: { select: { mappings: true } } } }),
     prisma.seoKeyword.findMany({ where: { archivedAt: null }, select: { track: true, validationStatus: true, volumeBasis: true, targetPath: true, priority: true, mappings: { select: { role: true, pageId: true } } } }),
     prisma.seoIssue.findMany({ where: { status: "OPEN" }, include: { page: { select: { important: true, label: true } } } }),
     prisma.seoAuditRun.findMany({ orderBy: { startedAt: "desc" }, take: 10 }),
     listClusters(),
     integrationStatus(),
-    prisma.seoRedirect.count({ where: { active: true } }),
+    // Addresses that redirect on purpose: saved and built-in redirects, hidden ticket pages.
+    redirectedOnPurpose(),
   ]);
+  const redirects = Object.keys(await activeRedirectMap()).length;
 
   const status = { PUBLISHED: 0, DRAFT: 0, SCHEDULED: 0, ARCHIVED: 0 };
   const missing = { title: 0, description: 0, h1: 0, canonical: 0, focusKeyword: 0 };
@@ -28,7 +31,7 @@ export async function overview() {
     const live = liveOf(p);
     if (!p.lastCrawledAt) neverCrawled++;
     if (!p.robotsIndex || /noindex/i.test(live?.robots ?? "")) noindex++;
-    if (p.status === "ARCHIVED") continue;
+    if (p.status === "ARCHIVED" || redirected.has(p.path)) continue;
     if (!p.focusKeyword && p.pageType !== "LEGAL" && p.pageType !== "STATIC") missing.focusKeyword++;
     // Without a crawl the page's own (coded) title is unknown, so it isn't counted as missing;
     // neverCrawled says how many pages that leaves out.

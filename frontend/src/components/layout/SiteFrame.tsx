@@ -181,8 +181,10 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
             endContent={
               <>
                 {/* Phones and tablets: My trips as an icon on the right, where it is easy to reach. */}
+              {/* rel="nofollow": a signed-in page that robots.txt blocks (technical audit, 9 Nov 2026). */}
               <Link
                 href="/account/trips"
+                rel="nofollow"
                 aria-label="MY TRIPS"
                 className="vc-trips-mobile inline-flex h-11 w-11 items-center justify-center rounded-full text-obsidian-900 hover:bg-obsidian-900/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-600 lg:hidden"
               >
@@ -192,6 +194,7 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
                   label="MY TRIPS"
                   variant="ghost"
                   href="/account/trips"
+                  rel="nofollow"
                   icon={<Icon icon={User} size="sm" />}
                   className="vc-trips-desktop max-lg:hidden"
                 />

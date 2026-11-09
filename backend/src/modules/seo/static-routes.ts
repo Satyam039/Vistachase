@@ -36,6 +36,8 @@ export const STATIC_ROUTES: StaticRoute[] = [
   { path: "/concierge", label: "Concierge", pageType: "STATIC", indexable: true, sitemapPriority: 0.3 },
   { path: "/partners", label: "Partner program", pageType: "STATIC", indexable: true, sitemapPriority: 0.3 },
   { path: "/affiliates", label: "Travel trade & agents", pageType: "STATIC", indexable: true, sitemapPriority: 0.3 },
+  // Migration doc, 9 Nov 2026: the partner portal's landing page is indexable and in the sitemap.
+  { path: "/affiliate", label: "Affiliate portal", pageType: "STATIC", indexable: true, sitemapPriority: 0.3 },
   { path: "/privacy-policy-vista-chase", label: "Cancellation policy", pageType: "LEGAL", indexable: true, sitemapPriority: 0.2 },
   { path: "/privacy-policy", label: "Privacy policy", pageType: "LEGAL", indexable: true, sitemapPriority: 0.2 },
   { path: "/terms-and-conditions", label: "Terms and conditions", pageType: "LEGAL", indexable: true, sitemapPriority: 0.2 },

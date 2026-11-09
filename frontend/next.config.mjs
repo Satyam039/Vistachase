@@ -23,6 +23,10 @@ const nextConfig = {
   reactStrictMode: true,
   // Don't advertise the framework in every response (X-Powered-By: Next.js).
   poweredByHeader: false,
+  // Next streams <title> and meta tags into <body> for visitors it doesn't recognise as limited bots,
+  // so crawlers such as Screaming Frog saw /blog's title and description outside <head> (technical
+  // audit spreadsheet, 9 Nov 2026). Every request now gets them in <head>.
+  htmlLimitedBots: /.*/,
   eslint: {
     ignoreDuringBuilds: true,
   },

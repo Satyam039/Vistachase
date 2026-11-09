@@ -13,11 +13,12 @@ import type { TourWithAvailability } from "@/lib/api/types";
 import { PackagePrice } from "@/components/tours/SharedToursLanding";
 import { fromPrice } from "@/lib/tours";
 import { PICKUP_TIMES, TWO_DAY_PACKAGE, packagePrice } from "@/lib/sharedTours";
+import { PackageTripJsonLd } from "@/components/seo/PackageTripJsonLd";
 
 export const metadata: Metadata = {
   title: "Two-Day Rockies Explorer: Banff & Icefield | Vista Chase",
   description:
-    "Both small-group day tours in one booking: Banff & Yoho Discovery and the Columbia Icefield Adventure. Save 10%, maximum 12 guests each day, pickup in Banff & Canmore. Accommodation not included.",
+    "Both small-group day tours in one booking: Banff & Yoho Discovery and Columbia Icefield Adventure. Save 10%, max 12 guests, pickup in Banff & Canmore.",
   alternates: { canonical: "/two-day-rockies-explorer" },
 };
 
@@ -37,6 +38,15 @@ export default async function TwoDayRockiesExplorerPage() {
 
   return (
     <div className="bg-obsidian-50 text-obsidian-900">
+      <PackageTripJsonLd
+        path={TWO_DAY_PACKAGE.href}
+        name={TWO_DAY_PACKAGE.title}
+        description={String(metadata.description)}
+        image={TWO_DAY_PACKAGE.images[0].src}
+        days={TWO_DAY_PACKAGE.days.map((d) => d.title)}
+        touristType="Small Group"
+        crumbs={[{ name: "Home", path: "/" }, { name: "Small-group tours", path: "/shared-tours" }, { name: TWO_DAY_PACKAGE.title }]}
+      />
       <section data-nav-hero className="relative isolate flex min-h-[34rem] items-end overflow-hidden bg-obsidian-950 text-white sm:min-h-[40rem] lg:min-h-[72vh]">
         <div className="absolute inset-0 -z-10 grid grid-cols-2 gap-0.5">
           {TWO_DAY_PACKAGE.images.map((img, i) => (

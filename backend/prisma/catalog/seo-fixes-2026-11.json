@@ -1,0 +1,191 @@
+{
+  "source": "Technical audit : Vista Chase (After Migration) spreadsheet (titles) and the 9 Nov 2026 fix recheck N7 (descriptions)",
+  "titles": {
+    "/": {
+      "from": "Vista Chase | Luxury Private Tours & Shuttles • Banff & Lake Louise",
+      "to": "Vista Chase | Luxury Private Tours & Shuttles in Banff"
+    },
+    "/partners": {
+      "from": "Partner Program | Earn on Banff Tours & Shuttles | Vista Chase",
+      "to": "Partner Program | Earn on Banff Tours | Vista Chase"
+    },
+    "/destinations/moraine-lake": {
+      "from": "Moraine Lake & Valley of the Ten Peaks Tours & Shuttles | Vista Chase",
+      "to": "Moraine Lake Tours & Shuttles from Banff | Vista Chase"
+    },
+    "/icefields-jasper-private-tour": {
+      "from": "Icefields Parkway – Jasper Private Tour | Luxury SUV Day Trip",
+      "to": "Icefields Parkway & Jasper Private Tour | Luxury SUV Trip"
+    },
+    "/banff-private-tour": {
+      "from": "Banff Bestseller Private Tour | Luxury SUV Day Trip with Local Guide",
+      "to": "Banff Private Tour | Luxury SUV Day Trip with Local Guide"
+    },
+    "/shared-tours-icefields-jasper": {
+      "from": "Icefields Parkway & Jasper Shared Tour | Banff to Jasper Day Trip",
+      "to": "Icefields Parkway & Jasper Shared Tour from Banff"
+    },
+    "/destinations/jasper-national-park": {
+      "from": "Jasper National Park & Icefields Tours & Shuttles | Vista Chase",
+      "to": "Jasper National Park Tours & Shuttles | Vista Chase"
+    },
+    "/about-us": {
+      "from": "About Vista Chase | Banff's Top-Rated Tour & Shuttle Operator",
+      "to": "About Vista Chase | Banff's Top-Rated Tour Operator"
+    },
+    "/blog-post/lake-louise-hiking-guide": {
+      "from": "Lake Louise Hiking Guide 2026: Best Trails, Tips & When to Go",
+      "to": "Lake Louise Hiking Guide 2026: Best Trails & Tips"
+    },
+    "/blog-post/plain-of-six-glaciers-teahouse-hike-local-guide": {
+      "from": "Plain of Six Glaciers Teahouse Hike: Local Guide from Lake Louise",
+      "to": "Plain of Six Glaciers Teahouse Hike: Local Guide"
+    },
+    "/blog-post/luxury-banff-itinerary-for-first-time-visitors": {
+      "from": "The Ultimate 3-Day Luxury Banff Itinerary for First-Time Visitors (2026)",
+      "to": "3-Day Luxury Banff Itinerary for First-Time Visitors"
+    },
+    "/blog-post/best-luxury-hotels-in-banff": {
+      "from": "Best Luxury Hotels in Banff and the Experiences Worth Booking Nearby",
+      "to": "Best Luxury Hotels in Banff & Experiences Nearby"
+    },
+    "/blog-post/banff-without-the-crowds-luxury-travel-strategies": {
+      "from": "Banff Without the Crowds: Luxury Travel Strategies That Actually Work",
+      "to": "Banff Without the Crowds: Luxury Travel Strategies"
+    },
+    "/blog-post/executive-corporate-retreats-in-banff": {
+      "from": "Executive & Corporate Retreats in Banff: Premium Group Experiences",
+      "to": "Executive & Corporate Retreats in Banff | Vista Chase"
+    },
+    "/blog-post/lake-louise-parking-fees-hours-rules": {
+      "from": "Lake Louise Parking 2026: Fees, Hours, Rules and Best Options",
+      "to": "Lake Louise Parking 2026: Fees, Hours & Best Options"
+    },
+    "/blog-post/private-tours-in-banff-for-families": {
+      "from": "Best Private Tours in Banff for Families Who Want Comfort & Flexibility",
+      "to": "Best Private Tours in Banff for Families (2026)"
+    },
+    "/blog-post/private-tours-in-banff-over-self-driving": {
+      "from": "Why Affluent Travelers Choose Private Tours in Banff Over Self-Driving (2026)",
+      "to": "Why Choose a Private Banff Tour Over Self-Driving"
+    },
+    "/blog-post/what-to-do-in-banff-after-your-alaska-cruise-ends": {
+      "from": "What to Do in Banff After Your Alaska Cruise Ends (2026 Guide)",
+      "to": "What to Do in Banff After Your Alaska Cruise (2026)"
+    },
+    "/blog-post/luxury-icefields-parkway-tours": {
+      "from": "Luxury Icefields Parkway Tours | Banff to Jasper Private Tour",
+      "to": "Luxury Icefields Parkway Tours: Banff to Jasper"
+    },
+    "/blog-post/banff-luxury-travel-guide": {
+      "from": "Banff Luxury Travel Guide 2026: Where to Stay, Eat & Explore in Style",
+      "to": "Banff Luxury Travel Guide 2026: Stay, Eat & Explore"
+    },
+    "/blog-post/best-way-to-travel-from-banff-to-jasper": {
+      "from": "Best Way to Travel from Banff to Jasper: Bus vs Car vs Tour (2026)",
+      "to": "Banff to Jasper: Bus vs Car vs Tour (2026 Guide)"
+    },
+    "/blog-post/banff-travel-guide-for-us-travelers": {
+      "from": "Banff Travel Guide for US Travelers: Everything You Need to Know",
+      "to": "Banff Travel Guide for US Travelers (2026)"
+    },
+    "/blog-post/how-to-plan-a-stress-free-trip-to-banff": {
+      "from": "Banff Trip Planning Guide: How to Plan a Stress-Free Trip to Banff National Park",
+      "to": "How to Plan a Stress-Free Trip to Banff National Park"
+    },
+    "/blog-post/canmore-vs-banff-where-should-you-stay": {
+      "from": "Canmore vs Banff: Where Should You Stay? (A Honest 2026 Guide)",
+      "to": "Canmore vs Banff: Where Should You Stay? (2026 Guide)"
+    },
+    "/blog-post/banff-canadian-rockies-tour-tips-for-uk-tourists": {
+      "from": "Banff & Canadian Rockies Tour Tips for UK Tourists (2026 Guide)",
+      "to": "Banff & Rockies Tour Tips for UK Travelers (2026)"
+    },
+    "/blog-post/banff-private-tours-vs-group-tours": {
+      "from": "Banff Private Tours vs Group Tours: Which One Is Actually Worth It?",
+      "to": "Banff Private vs Group Tours: Which Is Worth It?"
+    },
+    "/blog-post/best-private-tour-operators-in-banff": {
+      "from": "Best Private Tour Operator in Banff: The VistaChase Guide (2026)",
+      "to": "Best Private Tour Operators in Banff (2026 Guide)"
+    },
+    "/blog-post/banff-tour-booking-tips": {
+      "from": "Banff Tour Booking Tips: How to Book During Peak Season (2026 Guide)",
+      "to": "Banff Tour Booking Tips for Peak Season (2026)"
+    },
+    "/blog-post/banff-moraine-lake-shuttle-alternatives": {
+      "from": "Banff & Moraine Lake Shuttle Alternatives 2026 | Best Options",
+      "to": "Moraine Lake Shuttle Alternatives 2026: Best Options"
+    },
+    "/blog-post/private-banff-tours-vs-group-tours": {
+      "from": "Private Banff Tours vs Group Tours: Which Is Actually Worth It? (2026 Guide)",
+      "to": "Private vs Group Tours in Banff: Cost & Value (2026)"
+    },
+    "/blog-post/private-tour-vs-public-shuttle-banff": {
+      "from": "Private Tour vs Public Shuttle in Banff: Which One Should You Book? (2026 Guide)",
+      "to": "Private Tour vs Public Shuttle in Banff: Which to Book?"
+    },
+    "/blog-post/what-to-pack-for-a-banff-tour-season-wise": {
+      "from": "What to Pack for a Banff Tour: Season-Wise Packing List (2026)",
+      "to": "What to Pack for a Banff Tour: Packing List by Season"
+    },
+    "/blog-post/best-time-to-visit-moraine-lake-for-photos": {
+      "from": "Best Time to Visit Moraine Lake for Photography: A Seasonal Guide",
+      "to": "Best Time to Visit Moraine Lake for Photos (Seasonal)"
+    }
+  },
+  "descriptions": {
+    "/four-day-rockies-and-jasper": {
+      "from": "Explore further across four days of lakes, waterfalls, mountain roads and glacier scenery. Travel privately with your own driver-guide, continue to Jasper after day three, and finish in Banff, Lake Louise, Canmore or Calgary.",
+      "to": "Four private days of lakes, waterfalls and glaciers with your own driver-guide, on to Jasper, finishing in Banff, Lake Louise, Canmore or Calgary."
+    },
+    "/three-day-rockies-discovery": {
+      "from": "Three remarkable days exploring mountain towns, iconic lakes, waterfalls and glacier landscapes with your own driver-guide, private vehicle and doorstep pickup. Accommodation booked directly by guests.",
+      "to": "Three days of mountain towns, iconic lakes, waterfalls and glaciers with your own driver-guide, private vehicle and doorstep pickup. Hotels booked by guests."
+    },
+    "/two-day-rockies-explorer": {
+      "from": "Both small-group day tours in one booking: Banff & Yoho Discovery and the Columbia Icefield Adventure. Save 10%, maximum 12 guests each day, pickup in Banff & Canmore. Accommodation not included.",
+      "to": "Both small-group day tours in one booking: Banff & Yoho Discovery and Columbia Icefield Adventure. Save 10%, max 12 guests, pickup in Banff & Canmore."
+    },
+    "/shared-tours": {
+      "from": "Banff & Yoho Discovery, Columbia Icefield Adventure or both in the Two-Day Rockies Explorer. Maximum 12 guests, passionate local guides, park admission included, pickup in Banff & Canmore.",
+      "to": "Banff & Yoho Discovery, Columbia Icefield Adventure or both over two days. Max 12 guests, local guides, park admission included, Banff & Canmore pickup."
+    },
+    "/multi-day-tour-package-for-banff": {
+      "from": "Two-, three- and four-day journeys through Banff, Yoho, the Icefields Parkway and Jasper, with a small group or in your own private vehicle. Hotel pickup in Banff and Canmore.",
+      "to": "Two-, three- and four-day journeys through Banff, Yoho, the Icefields Parkway and Jasper, small-group or private, with hotel pickup in Banff and Canmore."
+    },
+    "/terms-and-conditions": {
+      "from": "The terms that apply to bookings made directly with Vista Chase and to use of our website: bookings, payments, pickups, private and multi-day tours, cancellations and privacy.",
+      "to": "Terms for bookings made directly with Vista Chase and use of our website: bookings, payments, pickups, private and multi-day tours, cancellations, privacy."
+    },
+    "/privacy-policy-vista-chase": {
+      "from": "Vista Chase cancellation deadlines and refunds: shared tours and shuttles, private single-day tours and private multi-day packages, changes, no-shows and refund processing.",
+      "to": "Vista Chase cancellation deadlines and refunds for shared tours, shuttles, private tours and multi-day packages, plus changes, no-shows and refunds."
+    },
+    "/private-tours": {
+      "from": "Explore the Canadian Rockies with your own guide, private vehicle and doorstep pickup. Explore for 1 to 5 days, doorstep pickup, optional activities and airport transfers.",
+      "to": "Explore the Canadian Rockies with your own guide and private vehicle for 1 to 5 days, with doorstep pickup, optional activities and airport transfers."
+    },
+    "/banff-private-tour": {
+      "from": "Explore Banff your way with a private luxury SUV tour. Visit Lake Louise, Moraine Lake, Bow Lake & hidden lookouts with a local guide. Flexible, crowd-free & customizable.",
+      "to": "Explore Banff your way on a private luxury SUV tour: Lake Louise, Moraine Lake, Bow Lake and hidden lookouts with a local guide. Flexible and customizable."
+    },
+    "/shared-tours-icefields-jasper": {
+      "from": "Explore glaciers, waterfalls & top Jasper attractions on this Icefields Parkway shared tour. Bow Lake, Peyto Lake, Athabasca Glacier & more. Small groups, expert guides.",
+      "to": "Glaciers, waterfalls and Jasper sights on an Icefields Parkway shared tour: Bow Lake, Peyto Lake, Athabasca Glacier and more. Small groups, expert guides."
+    },
+    "/": {
+      "from": "Banff's premier tour operator. Ranked #6 Experience in Canada by TripAdvisor Best of the Best 2026. Guaranteed Moraine Lake access, luxury private SUV tours & shuttles.",
+      "to": "Banff tour operator ranked #6 Experience in Canada, Tripadvisor Best of the Best 2026. Guaranteed Moraine Lake access, private SUV tours and shuttles."
+    },
+    "/full-day-at-lake-louise-and-moraine-lake": {
+      "from": "Enjoy 3–4 hours at both Moraine Lake and Lake Louise with our full-day shuttle. Plenty of time to hike, canoe, and explore at your own pace. Reserve your seat today.",
+      "to": "Spend 3–4 hours at both Moraine Lake and Lake Louise on our full-day shuttle, with time to hike, canoe and explore at your own pace. Reserve your seat."
+    },
+    "/affiliates": {
+      "from": "For travel agents, hotel concierge desks and tour operators: small-group and private Canadian Rockies tours with hotel pickup and commercial access to Moraine Lake.",
+      "to": "For travel agents, hotel concierges and tour operators: small-group and private Canadian Rockies tours with hotel pickup and commercial Moraine Lake access."
+    }
+  }
+}
