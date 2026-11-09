@@ -33,7 +33,7 @@ export function WhyTravelersLove() {
           <div className="lg:col-span-5">
             <div className="relative overflow-hidden rounded-none" data-reveal="clip">
               <div className="relative h-[28rem] sm:h-[34rem]">
-                <Image src="/media/site/feature-image-1.webp" alt="A Vista Chase guide with guests in the Rockies" fill sizes="(max-width: 1024px) 100vw, 40vw" className="object-cover" data-parallax="10" />
+                <Image src="/media/site/vista-chase-guide-with-guests.webp" alt="A Vista Chase guide with guests in the Rockies" fill sizes="(max-width: 1024px) 100vw, 40vw" className="object-cover" data-parallax="10" />
                 <div className="vc-scrim" aria-hidden="true" />
               </div>
               <p className="absolute inset-x-6 bottom-6 text-lg font-light text-white">Small-group, private and shuttle tours, run from Canmore.</p>

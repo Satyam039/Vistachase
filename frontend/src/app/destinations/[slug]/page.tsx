@@ -13,6 +13,7 @@ import { TourCard } from "@/components/tours/TourCard";
 import { TrustRow } from "@/components/home/TrustRow";
 import { Rail } from "@/components/motion/Rail";
 import { getDestinationBySlug, getDestinations, getTours } from "@/lib/api/catalog";
+import { toursForTourCards } from "@/lib/experiences";
 import { siteOrigin, withSeo } from "@/lib/seo/server";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
@@ -102,9 +103,12 @@ export default async function DestinationDetailPage({ params }: { params: Promis
 
   const story = STORIES[dest.slug] ?? { tagline: dest.name, match: [dest.name.toLowerCase()], highlights: [] };
   const visits = (text: string) => story.match.some((m) => text.toLowerCase().includes(m));
-  const tours = allTours
-    .filter((t) => t.destination.slug === dest.slug || visits(`${t.title} ${t.summary} ${t.description}`))
-    .sort((a, b) => Number(b.destination.slug === dest.slug) - Number(a.destination.slug === dest.slug) || b.reviewCount - a.reviewCount);
+  // Pick the tours on their full text, then send the cards only what they draw.
+  const tours = toursForTourCards(
+    allTours
+      .filter((t) => t.destination.slug === dest.slug || visits(`${t.title} ${t.summary} ${t.description}`))
+      .sort((a, b) => Number(b.destination.slug === dest.slug) - Number(a.destination.slug === dest.slug) || b.reviewCount - a.reviewCount),
+  );
   const others = destinations.filter((d) => d.slug !== dest.slug);
 
   return (
