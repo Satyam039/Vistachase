@@ -65,7 +65,7 @@ export default function PickupFinderPage() {
       <section data-nav-hero className="relative isolate flex min-h-[46vh] items-end overflow-hidden bg-obsidian-950 text-white">
         <Image
           src="/media/photos/fairmont-banff-springs.webp"
-          alt=""
+          alt="Fairmont Banff Springs hotel"
           fill
           priority
           sizes="100vw"

@@ -30,7 +30,7 @@ export default async function DestinationsPage() {
       <PageSeoExtras path="/destinations" />
     <div className="bg-obsidian-50 text-obsidian-900">
       <section data-nav-hero className="relative isolate flex min-h-[56vh] items-end overflow-hidden bg-obsidian-950 text-white">
-        <Image src="/media/photos/peyto-lake.webp" alt="" fill priority sizes="100vw" className="-z-10 object-cover" data-parallax="10" />
+        <Image src="/media/photos/peyto-lake.webp" alt="Peyto Lake on the Icefields Parkway" fill priority sizes="100vw" className="-z-10 object-cover" data-parallax="10" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/40 to-ocean-950/10" />
         <div className="mx-auto flex w-full flex-col items-center text-center max-w-7xl px-page pb-12 pt-[calc(var(--vc-nav-open-h,100px)+1.5rem)]" data-scroll-fade>
           <nav aria-label="Breadcrumb" className="mb-6">

@@ -51,7 +51,7 @@ export default async function TwoDayRockiesExplorerPage() {
         <div className="absolute inset-0 -z-10 grid grid-cols-2 gap-0.5">
           {TWO_DAY_PACKAGE.images.map((img, i) => (
             <div key={img.src} className="relative">
-              <Image src={img.src} alt="" fill priority={i === 0} sizes="50vw" className="object-cover" />
+              <Image src={img.src} alt={img.alt} fill priority={i === 0} sizes="50vw" className="object-cover" />
             </div>
           ))}
         </div>

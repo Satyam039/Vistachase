@@ -92,7 +92,7 @@ function Meta({ post, tone = "light" }: { post: PostSummary; tone?: "light" | "d
 
 /** The lead story on /blog: large image beside the headline, on the dark band. */
 export function LeadStory({ post }: { post: PostSummary }) {
-  const img = leadImageOf(post) ?? { src: FALLBACK_IMAGE, alt: "" };
+  const img = leadImageOf(post) ?? { src: FALLBACK_IMAGE, alt: withoutBrand(post.label) };
   return (
     <article className="group relative grid gap-8 lg:grid-cols-12 lg:items-center lg:gap-12">
       <div className="relative aspect-[16/10] overflow-hidden bg-obsidian-900 lg:col-span-7">
@@ -119,7 +119,7 @@ export function LeadStory({ post }: { post: PostSummary }) {
 
 /** A story card: image on top, date, headline and summary below. "large" for the featured row. */
 export function PostCard({ post, size = "regular", headingLevel = 3 }: { post: PostSummary; size?: "regular" | "large"; headingLevel?: 2 | 3 }) {
-  const img = cardImageOf(post) ?? { src: FALLBACK_IMAGE, alt: "" };
+  const img = cardImageOf(post) ?? { src: FALLBACK_IMAGE, alt: withoutBrand(post.label) };
   const H = headingLevel === 2 ? "h2" : "h3";
   return (
     <article className="group relative flex h-full flex-col">

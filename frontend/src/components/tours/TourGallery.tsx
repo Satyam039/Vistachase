@@ -138,7 +138,7 @@ export function TourGallery({
       <section data-nav-hero className="relative isolate flex min-h-[34rem] flex-col justify-end overflow-hidden bg-obsidian-950 text-white sm:min-h-[40rem] lg:min-h-[78vh]">
         {service && (
           <div className="absolute inset-0 -z-10">
-            <Image src={service.image} alt="" fill priority sizes="100vw" className="object-cover" data-parallax="10" />
+            <Image src={service.image} alt={`${service.title} in the Canadian Rockies`} fill priority sizes="100vw" className="object-cover" data-parallax="10" />
             {service.video && (
               <AmbientVideo src={service.video.src} srcHd={service.video.srcHd} poster={service.video.poster} className="absolute inset-0 h-full w-full object-cover" once />
             )}

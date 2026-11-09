@@ -23,11 +23,11 @@ const EMBLEM_SRC = {
   gold: "/media/brand/emblem-gold.svg",
 } as const;
 
-export function BrandMark({ size = 36, variant = "default" }: { size?: number; variant?: keyof typeof EMBLEM_SRC }) {
+export function BrandMark({ size = 36, variant = "default", alt = "Vista Chase" }: { size?: number; variant?: keyof typeof EMBLEM_SRC; alt?: string }) {
   return (
     <Image
       src={EMBLEM_SRC[variant]}
-      alt=""
+      alt={alt}
       width={Math.round(size * EMBLEM_RATIO)}
       height={size}
       className="shrink-0 object-contain"
@@ -44,11 +44,11 @@ export function BrandMark({ size = 36, variant = "default" }: { size?: number; v
  */
 const WORDMARK_RATIO = 967 / 112;
 
-export function BrandWordmark({ size = 14, variant = "ink" }: { size?: number; variant?: "ink" | "white" }) {
+export function BrandWordmark({ size = 14, variant = "ink", alt = "Vista Chase" }: { size?: number; variant?: "ink" | "white"; alt?: string }) {
   return (
     <Image
       src={`/media/brand/wordmark-${variant}.svg`}
-      alt=""
+      alt={alt}
       width={Math.round(size * WORDMARK_RATIO)}
       height={size}
       className="shrink-0 object-contain"

@@ -18,7 +18,7 @@ export function TrustBar() {
     <ul className="flex shrink-0 items-center gap-16 pr-16 sm:gap-24 sm:pr-24" aria-hidden={hidden || undefined}>
       {[...PARTNER_LOGOS, ...PARTNER_LOGOS].map((logo, i) => (
         <li key={`${logo.name}-${i}`} className="relative flex h-10 w-32 items-center justify-center sm:w-40">
-          <Image src={logo.src} alt={hidden || i >= PARTNER_LOGOS.length ? "" : logo.name} width={160} height={40} className="max-h-9 object-contain opacity-70 grayscale" />
+          <Image src={logo.src} alt={logo.name} width={160} height={40} className="max-h-9 object-contain opacity-70 grayscale" />
         </li>
       ))}
     </ul>

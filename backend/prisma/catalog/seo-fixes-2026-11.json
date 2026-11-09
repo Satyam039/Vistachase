@@ -132,6 +132,10 @@
     "/blog-post/best-time-to-visit-moraine-lake-for-photos": {
       "from": "Best Time to Visit Moraine Lake for Photography: A Seasonal Guide",
       "to": "Best Time to Visit Moraine Lake for Photos (Seasonal)"
+    },
+    "/affiliates": {
+      "from": "Travel Trade & Agents | Vista Chase",
+      "to": "Affiliate & Partner Program | Vista Chase"
     }
   },
   "descriptions": {
@@ -184,8 +188,8 @@
       "to": "Spend 3–4 hours at both Moraine Lake and Lake Louise on our full-day shuttle, with time to hike, canoe and explore at your own pace. Reserve your seat."
     },
     "/affiliates": {
-      "from": "For travel agents, hotel concierge desks and tour operators: small-group and private Canadian Rockies tours with hotel pickup and commercial access to Moraine Lake.",
-      "to": "For travel agents, hotel concierges and tour operators: small-group and private Canadian Rockies tours with hotel pickup and commercial Moraine Lake access."
+      "from": "For travel agents, hotel concierges and tour operators: small-group and private Canadian Rockies tours with hotel pickup and commercial Moraine Lake access.",
+      "to": "Hotels, travel agents, tour operators and creators earn commission on Vista Chase tours and shuttles in Banff. Apply in minutes and get your referral link."
     }
   }
 }

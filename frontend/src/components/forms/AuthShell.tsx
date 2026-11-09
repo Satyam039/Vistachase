@@ -29,10 +29,10 @@ export function AuthShell({
     <div className="grid min-h-[calc(100svh-var(--vc-header-h,80px))] bg-obsidian-50 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
       {/* Brand panel */}
       <aside className="relative isolate flex min-h-[14rem] flex-col justify-end overflow-hidden bg-obsidian-950 p-8 text-white sm:p-12">
-        <Image src="/media/photos/moraine-lake-rockpile-couple.webp" alt="" fill priority sizes="(max-width: 1024px) 100vw, 50vw" className="-z-10 object-cover" />
+        <Image src="/media/photos/moraine-lake-rockpile-couple.webp" alt="Couple at the Moraine Lake Rockpile" fill priority sizes="(max-width: 1024px) 100vw, 50vw" className="-z-10 object-cover" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/40 to-ocean-950/70" />
         <span className="mb-auto">
-          <BrandLogo variant="white" height={64} alt="" />
+          <BrandLogo variant="white" height={64} alt="Vista Chase" />
         </span>
         <div className="hidden lg:block">
           <p className="text-3xl font-light leading-tight text-white">{panelTitle}</p>
