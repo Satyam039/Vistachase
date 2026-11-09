@@ -24,6 +24,7 @@ import {
   X,
 } from "lucide-react";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
+import { PackageTripJsonLd } from "@/components/seo/PackageTripJsonLd";
 import { PACKAGE_DAY_PRICE, PRIVATE_MAX_GUESTS, PRIVATE_PACKAGES } from "@/lib/privateTours";
 import { PackageBookingSection } from "@/components/booking/PackageBookingSection";
 import { cancellationShort } from "@/lib/policy";
@@ -31,7 +32,7 @@ import { cancellationShort } from "@/lib/policy";
 export const metadata: Metadata = {
   title: "Three-Day Rockies Discovery Private Tour | Vista Chase",
   description:
-    "Three remarkable days exploring mountain towns, iconic lakes, waterfalls and glacier landscapes with your own driver-guide, private vehicle and doorstep pickup. Accommodation booked directly by guests.",
+    "Three days of mountain towns, iconic lakes, waterfalls and glaciers with your own driver-guide, private vehicle and doorstep pickup. Hotels booked by guests.",
   alternates: { canonical: "/three-day-rockies-discovery" },
 };
 
@@ -212,6 +213,15 @@ export default function ThreeDayRockiesDiscoveryPage() {
   return (
     <>
       <PageSeoExtras path="/three-day-rockies-discovery" />
+      <PackageTripJsonLd
+        path="/three-day-rockies-discovery"
+        name={PRIVATE_PACKAGES.three.title}
+        description={String(metadata.description)}
+        image="/media/photos/bow-lake-dock-sunrise.webp"
+        days={PRIVATE_PACKAGES.three.days.map((d) => d.title)}
+        touristType="Private Group"
+        crumbs={[{ name: "Home", path: "/" }, { name: "Multi-day tours", path: "/multi-day-tour-package-for-banff" }, { name: PRIVATE_PACKAGES.three.title }]}
+      />
       <div className="bg-obsidian-50 text-obsidian-900">
         {/* Hero */}
         <section

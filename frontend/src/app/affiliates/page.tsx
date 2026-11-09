@@ -13,7 +13,7 @@ import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 const baseMetadata: Metadata = {
   title: "Travel Trade & Agents | Vista Chase",
   description:
-    "For travel agents, hotel concierge desks and tour operators: small-group and private Canadian Rockies tours with hotel pickup and commercial access to Moraine Lake.",
+    "For travel agents, hotel concierges and tour operators: small-group and private Canadian Rockies tours with hotel pickup and commercial Moraine Lake access.",
   alternates: { canonical: "/affiliates" },
 };
 

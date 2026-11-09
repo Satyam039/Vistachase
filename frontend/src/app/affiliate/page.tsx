@@ -7,8 +7,19 @@ export const metadata: Metadata = {
   title: "Affiliate Portal | Vista Chase",
   description: "Independent partner and affiliate portal for hotels, travel advisors and content creators.",
   alternates: { canonical: "/affiliate" },
-  robots: { index: false, follow: true },
+  // Migration doc, 9 Nov 2026: the partner landing page is indexable (sign-in pages stay noindex).
+  robots: { index: true, follow: true },
 };
+
+// The main site's pages, so a partner who lands here can reach the tours (migration doc: "fix menu").
+const SITE_LINKS = [
+  { label: "Home", href: "/" },
+  { label: "Private tours", href: "/private-tours" },
+  { label: "Shared tours", href: "/shared-tours" },
+  { label: "Shuttles", href: "/shuttles" },
+  { label: "Multi-day", href: "/multi-day-tour-package-for-banff" },
+  { label: "Contact", href: "/contact-us" },
+];
 
 const BENEFITS = [
   {
@@ -51,29 +62,49 @@ export default function AffiliatePortalLanding() {
     <div className="min-h-screen bg-slate-50 text-slate-900">
       {/* Top Navigation */}
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-page py-4">
-          <Link href="/affiliate" className="flex items-center gap-3">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-page py-4">
+          <Link href="/affiliate" className="flex min-w-0 items-center gap-3">
             <BrandMark size={38} variant="dark" />
             <div className="flex flex-col">
-              <span className="font-serif text-lg font-light tracking-wide text-slate-900">Vista Chase</span>
-              <span className="text-[10px] font-semibold uppercase tracking-widest text-ocean-700">Affiliate Portal</span>
+              <span className="whitespace-nowrap font-serif text-lg font-light tracking-wide text-slate-900">Vista Chase</span>
+              <span className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-widest text-ocean-700">Affiliate Portal</span>
             </div>
           </Link>
-          <div className="flex items-center gap-3">
+          <nav aria-label="Vista Chase website" className="hidden items-center gap-5 text-sm text-slate-600 xl:flex">
+            {SITE_LINKS.map((l) => (
+              <Link key={l.href} href={l.href} className="hover:text-obsidian-900 hover:underline">
+                {l.label}
+              </Link>
+            ))}
+          </nav>
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <Link
               href="/affiliate/login"
-              className="inline-flex h-10 items-center justify-center rounded-full border border-slate-300 bg-white px-5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="inline-flex h-10 items-center justify-center whitespace-nowrap rounded-full border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:bg-slate-50 sm:px-5"
             >
-              Partner Sign In
+              <span className="sm:hidden">Sign in</span>
+              <span className="hidden sm:inline">Partner Sign In</span>
             </Link>
             <Link
               href="/affiliate/register"
-              className="golden-summit-btn inline-flex h-10 items-center justify-center rounded-full px-5 text-sm font-medium"
+              className="golden-summit-btn inline-flex h-10 items-center justify-center whitespace-nowrap rounded-full px-4 text-sm font-medium sm:px-5"
             >
-              Apply to Partner
+              <span className="sm:hidden">Apply</span>
+              <span className="hidden sm:inline">Apply to Partner</span>
             </Link>
           </div>
         </div>
+        <nav aria-label="Vista Chase website" className="border-t border-slate-100 xl:hidden">
+          <ul className="mx-auto flex max-w-7xl flex-wrap gap-x-5 gap-y-1 px-page py-2 text-sm text-slate-600">
+            {SITE_LINKS.map((l) => (
+              <li key={l.href}>
+                <Link href={l.href} className="inline-block py-1.5 hover:text-obsidian-900 hover:underline">
+                  {l.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
       </header>
 
       {/* Hero */}

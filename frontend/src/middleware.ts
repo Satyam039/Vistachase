@@ -51,7 +51,9 @@ async function findRedirect(pathname: string, event: NextFetchEvent) {
   if (!redirectCache) await loadRedirects();
   else if (Date.now() - redirectCache.at > REDIRECT_TTL_MS) event.waitUntil(loadRedirects());
   const path = pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
-  return redirectCache?.map[path] ?? null;
+  // A mixed-case old address (/Winter-Special) goes straight to the final page, not via the
+  // lower-case address first (one hop instead of a chain).
+  return redirectCache?.map[path] ?? (CASE_SENSITIVE.test(path) ? null : redirectCache?.map[path.toLowerCase()]) ?? null;
 }
 
 // Admin (/admin), SEO (/seo) and partner (/partners/dashboard) pages are only drawn for their own

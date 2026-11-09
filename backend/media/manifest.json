@@ -1,6 +1,6 @@
 {
  "generatedBy": "scripts/media/build-media.mjs",
- "count": 391,
+ "count": 396,
  "assets": [
   {
    "id": "badges/civitatis-logo",
@@ -8102,6 +8102,101 @@
    "source": {
     "origin": "repository",
     "file": "vermilion-lakes-poster.webp"
+   }
+  },
+  {
+   "id": "blog/banff-february-snowy-highway",
+   "src": "/media/blog/banff-february-snowy-highway.webp",
+   "width": 1600,
+   "height": 1280,
+   "title": "Snow-covered highway through pine forest towards",
+   "alt": "Snow-covered highway through pine forest towards white peaks in Banff National Park in February",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/698db8c504b90fcf48129e51_9be4d205.jpeg",
+    "pages": [
+     "blog-post/what-to-do-in-banff-in-february"
+    ]
+   }
+  },
+  {
+   "id": "blog/banff-february-banff-avenue-evening",
+   "src": "/media/blog/banff-february-banff-avenue-evening.webp",
+   "width": 1600,
+   "height": 1068,
+   "title": "Banff Avenue at dusk in winter",
+   "alt": "Banff Avenue at dusk in winter with lit shopfronts and snowy Cascade Mountain behind",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/698db8c504b90fcf48129e5a_a49737b1.jpeg",
+    "pages": [
+     "blog-post/what-to-do-in-banff-in-february"
+    ]
+   }
+  },
+  {
+   "id": "blog/banff-february-lake-louise-chateau",
+   "src": "/media/blog/banff-february-lake-louise-chateau.webp",
+   "width": 1600,
+   "height": 1021,
+   "title": "Fairmont Chateau Lake Louise beside the",
+   "alt": "Fairmont Chateau Lake Louise beside the partly frozen turquoise lake under snowy peaks in winter",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/698db8c504b90fcf48129e60_0a53995c.jpeg",
+    "pages": [
+     "blog-post/what-to-do-in-banff-in-february"
+    ]
+   }
+  },
+  {
+   "id": "blog/banff-february-lake-louise-winter-panorama",
+   "src": "/media/blog/banff-february-lake-louise-winter-panorama.webp",
+   "width": 940,
+   "height": 498,
+   "title": "Wide winter view of Lake Louise,",
+   "alt": "Wide winter view of Lake Louise, snow-covered forest and the Chateau Lake Louise hotel",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/698db8c504b90fcf48129e66_558205df.jpeg",
+    "pages": [
+     "blog-post/what-to-do-in-banff-in-february"
+    ]
+   }
+  },
+  {
+   "id": "blog/banff-february-snowboarders-banff-avenue",
+   "src": "/media/blog/banff-february-snowboarders-banff-avenue.webp",
+   "width": 1000,
+   "height": 1080,
+   "title": "Snowboarders crossing snowy Banff Avenue with",
+   "alt": "Snowboarders crossing snowy Banff Avenue with Cascade Mountain in the background",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/698db8c504b90fcf48129e6c_76599c47.jpeg",
+    "pages": [
+     "blog-post/what-to-do-in-banff-in-february"
+    ]
    }
   }
  ]

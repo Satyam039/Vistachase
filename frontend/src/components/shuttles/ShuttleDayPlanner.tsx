@@ -95,10 +95,13 @@ export function ShuttleDayPlanner({ today, live, fromPrice }: { today: string; l
         <label className="block">
           <span className="mb-1.5 flex items-center gap-1.5 text-sm text-slate-600">
             <Clock className="h-4 w-4 text-ocean-600" aria-hidden="true" />
-            Available departures
+            {/* The count sits up here, not as a choice in the list (migration doc, 9 Nov 2026). */}
+            Available departures{departures.length ? ` (${departures.length})` : ""}
           </span>
           <select value={chosen ?? ""} onChange={(e) => choose(e.target.value)} disabled={departures.length === 0} className={`${fieldClass} disabled:bg-obsidian-50 disabled:text-slate-500`}>
-            <option value="">{departures.length ? `${departures.length} departures` : "No departures"}</option>
+            <option value="" disabled>
+              {departures.length ? "Choose a time" : "No departures"}
+            </option>
             {departures.map((d) => (
               <option key={d.number} value={d.number}>
                 {d.name}

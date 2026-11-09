@@ -106,6 +106,22 @@ export const BUILT_IN_REDIRECTS: Record<string, string> = {
   "/blog-post/luxury-alaska-cruise-and-banff-tour": "/blog-post/what-to-do-in-banff-after-your-alaska-cruise-ends",
   // Test post ("lake lousie", subtitle "NA"): never meant to be public.
   "/blog-post/lake-lousie": "/blog-post/lake-louise-hiking-guide",
+  // Old Webflow tour pages no longer sold (RETIRED_TOUR_SLUGS in tours/product-map.ts). Technical
+  // SEO recheck, 9 Nov 2026 (N3): each goes to the closest single tour, not a category page, so its
+  // rankings carry over. Keep frontend/src/lib/retiredTours.ts in step.
+  "/shared-tours-heart-of-banff": "/banff-highlights-tour",
+  "/shared-tours-banff-yoho": "/banff-highlights-tour",
+  "/winter-special": "/banff-highlights-tour",
+  "/winter-signature-private-tour": "/banff-private-tour",
+  "/banff-yoho-custom-private-tour": "/banff-private-tour",
+  "/jasper-custom-private-tour": "/icefields-jasper-private-tour",
+  // Tickets taken off sale (owner, 2026-10-28). Their old URLs answered 404 (two critical audit issues).
+  "/open-top-touring-tickets": "/banff-highlights-tour",
+  "/banff-upper-hot-springs-tickets": "/destinations/banff-national-park",
+  // Migration doc, 9 Nov 2026: "Delete this page". The empty guides index goes to the blog.
+  "/guides": "/blog",
+  // Old cancellation-policy address; the policy lives at the Webflow URL.
+  "/cancellation-policy": "/privacy-policy-vista-chase",
 };
 
 export async function activeRedirectMap() {

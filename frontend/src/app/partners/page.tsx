@@ -11,7 +11,7 @@ import { withSeo } from "@/lib/seo/server";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 const baseMetadata: Metadata = {
-  title: "Partner Program | Earn on Banff Tours & Shuttles | Vista Chase",
+  title: "Partner Program | Earn on Banff Tours | Vista Chase",
   description: "Affiliates and associates (hotels, travel agents and creators) earn commission on Vista Chase tours, shuttles and tickets booked through their link.",
   alternates: { canonical: "/partners" },
 };

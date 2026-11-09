@@ -21,9 +21,9 @@ import { getSiteConfig, withSeo } from "@/lib/seo/server";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 const baseMetadata: Metadata = {
-  title: "Vista Chase | Luxury Private Tours & Shuttles • Banff & Lake Louise",
+  title: "Vista Chase | Luxury Private Tours & Shuttles in Banff",
   description:
-    "Banff's premier tour operator. Ranked #6 Experience in Canada by TripAdvisor Best of the Best 2026. Guaranteed Moraine Lake access, luxury private SUV tours & shuttles.",
+    "Banff tour operator ranked #6 Experience in Canada, Tripadvisor Best of the Best 2026. Guaranteed Moraine Lake access, private SUV tours and shuttles.",
   alternates: { canonical: "/" },
   openGraph: {
     title: "Vista Chase | Canadian Rockies Luxury Tours & Shuttles",

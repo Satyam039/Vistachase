@@ -235,12 +235,15 @@ function PartySizeStepper({
  */
 function MobileBookingBar({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
+  // While the booking panel itself is on screen the bar (and the concierge button, globals.css
+  // html[data-booking-in-view]) step aside, so neither covers the calendar or "Book now" on a phone.
+  const [panelInView, setPanelInView] = useState(false);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     const root = document.documentElement;
     // globals.css adds it to the page's bottom scroll padding (focused elements stay clear of it).
-    const update = () => root.style.setProperty("--vc-bottom-bar-h", `${Math.ceil(el.getBoundingClientRect().height)}px`);
+    const update = () => root.style.setProperty("--vc-bottom-bar-h", panelInView ? "0px" : `${Math.ceil(el.getBoundingClientRect().height)}px`);
     update();
     const observer = new ResizeObserver(update);
     observer.observe(el);
@@ -248,9 +251,28 @@ function MobileBookingBar({ children }: { children: React.ReactNode }) {
       observer.disconnect();
       root.style.removeProperty("--vc-bottom-bar-h");
     };
+  }, [panelInView]);
+  useEffect(() => {
+    const panel = document.getElementById("booking");
+    if (!panel || typeof IntersectionObserver === "undefined") return;
+    const root = document.documentElement;
+    const io = new IntersectionObserver(([entry]) => setPanelInView(entry.isIntersecting), { rootMargin: "0px 0px -15% 0px" });
+    io.observe(panel);
+    return () => {
+      io.disconnect();
+      root.removeAttribute("data-booking-in-view");
+    };
   }, []);
+  useEffect(() => {
+    document.documentElement.toggleAttribute("data-booking-in-view", panelInView);
+  }, [panelInView]);
   return (
-    <div ref={ref} className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur-md lg:hidden">
+    <div
+      ref={ref}
+      className={`fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur-md transition-transform duration-300 lg:hidden ${
+        panelInView ? "pointer-events-none translate-y-full" : ""
+      }`}
+    >
       {children}
     </div>
   );
@@ -336,11 +358,8 @@ export function TourDetailView({
         name: "Vista Chase",
         url: "https://www.vistachase.com",
       },
-      aggregateRating: {
-        "@type": "AggregateRating",
-        ratingValue: tour.rating.toString(),
-        reviewCount: tour.reviewCount.toString(),
-      },
+      // No aggregateRating: every tour carried the company's 1,700 reviews, and Google's review
+      // snippet rules need reviews of this tour itself (fix recheck, 9 Nov 2026: N4 / doc D10).
     },
     ...(tour.faqs.length > 0
       ? [

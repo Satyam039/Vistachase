@@ -29,6 +29,7 @@ export function CardMedia({
   aspect = "aspect-[5/4]",
   parallax = false,
   priority = false,
+  blurDataURL,
   children,
 }: {
   src: string;
@@ -37,13 +38,15 @@ export function CardMedia({
   aspect?: string;
   parallax?: boolean;
   priority?: boolean;
+  /** Tiny preview (data: URL) shown while the photo loads, instead of an empty dark frame. */
+  blurDataURL?: string;
   /** Overlays: badges, labels. */
   children?: React.ReactNode;
 }) {
   return (
     <span className={`relative block w-full shrink-0 overflow-hidden bg-obsidian-900 ${aspect}`}>
       <span className="absolute inset-0 block transition-transform duration-[1.4s] ease-out group-hover:scale-[1.04]">
-        <Image src={src} alt={alt} fill sizes={sizes} priority={priority} className="object-cover" data-parallax={parallax ? "6" : undefined} />
+        <Image src={src} alt={alt} fill sizes={sizes} priority={priority} className="object-cover" data-parallax={parallax ? "6" : undefined} {...(blurDataURL ? { placeholder: "blur" as const, blurDataURL } : {})} />
       </span>
       {children}
     </span>

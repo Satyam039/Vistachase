@@ -12,7 +12,7 @@ import { withSeo } from "@/lib/seo/server";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 const baseMetadata: Metadata = {
-  title: "About Vista Chase | Banff's Top-Rated Tour & Shuttle Operator",
+  title: "About Vista Chase | Banff's Top-Rated Tour Operator",
   description:
     "Founded in 2018 in Canmore. TripAdvisor Best of the Best 2026 (#6 experience in Canada). Our story, local guides and fleet for the Canadian Rockies.",
   alternates: { canonical: "/about-us" },
