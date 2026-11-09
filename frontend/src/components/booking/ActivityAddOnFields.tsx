@@ -5,7 +5,25 @@
 // and ages chosen above (lib/activityAddOns.ts).
 
 import { Ticket } from "lucide-react";
-import { ACTIVITY_ADD_ONS, ACTIVITY_ADD_ON_PRICE_NOTE, type ActivityAddOnId } from "@/lib/activityAddOns";
+import { ACTIVITY_ADD_ONS, ACTIVITY_ADD_ON_PRICE_NOTE, ACTIVITY_ADD_ONS_NOTE, type ActivityAddOnId } from "@/lib/activityAddOns";
+
+/** "Add-on activities" tick box for private tours (owner, 2026-11-09), styled like the airport transfer one. */
+export function ActivityAddOnToggle({ checked, onChange }: { checked: boolean; onChange: (checked: boolean) => void }) {
+  return (
+    <label
+      className={`flex cursor-pointer items-start gap-3 rounded-2xl border bg-white p-4 text-sm ${checked ? "border-ocean-500 ring-1 ring-ocean-500" : "border-slate-200"}`}
+    >
+      <input type="checkbox" className="mt-0.5 h-4 w-4 shrink-0 accent-ocean-700" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      <span className="min-w-0">
+        <span className="flex items-center gap-1.5 font-medium text-obsidian-900">
+          <Ticket className="h-4 w-4 text-ocean-700" aria-hidden="true" />
+          Add-on activities
+        </span>
+        <span className="mt-0.5 block text-xs text-slate-600">{ACTIVITY_ADD_ONS_NOTE}</span>
+      </span>
+    </label>
+  );
+}
 
 export function ActivityAddOnFields({
   offered,

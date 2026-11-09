@@ -319,10 +319,46 @@ export function docQuickFacts(slug: string): { label: string; value: string }[] 
 export const PRIVATE_GROUP_TEXT = "Private, up to 13 guests";
 const OLD_PRIVATE_GROUP = /up to (6 or 13|13|14) guests/i;
 
+/**
+ * Photos for the four day tours, each one a stop the tour really visits (owner, 2026-11-09: "saare
+ * tours ke andar joh bhi photos and videos ushi tours ke according honi chahiye"). They replace the
+ * database gallery, which still had Peyto Lake on the Banff & Yoho tours and Jasper's Spirit Island
+ * on the Icefield ones. Ice Explorer, Skywalk and glacier photos are from the owner's Drive folder.
+ */
+const BANFF_YOHO_PHOTOS = [
+  "/media/photos/lake-louise-boathouse.webp",
+  "/media/photos/johnston-canyon.webp",
+  "/media/photos/emerald-lake-island.webp",
+  "/media/photos/natural-bridge.webp",
+  "/media/photos/morants-curve-summer.webp",
+  "/media/photos/lake-louise-sunrise.webp",
+  "/media/photos/emerald-lake-misty.webp",
+  "/media/site/lake-minnewanka-icy.webp",
+];
+const ICEFIELD_PHOTOS = [
+  "/media/photos/columbia-icefield-skywalk-guests-card.webp",
+  "/media/photos/bow-lake-crowfoot-mountain.webp",
+  "/media/photos/peyto-lake.webp",
+  "/media/photos/columbia-icefield-athabasca-glacier-card.webp",
+  "/media/photos/bow-lake-reflection.webp",
+  "/media/site/peyto-lake-torqoise-blue-water.webp",
+  "/media/site/icefields-parkway-winters.webp",
+  "/media/site/abraham-lake-with-frozen-bubbles.webp",
+];
+const TOUR_PHOTOS: Record<string, string[]> = {
+  [BANFF_YOHO.slug]: ["/media/photos/moraine-lake-red-canoes.webp", ...BANFF_YOHO_PHOTOS],
+  [PRIVATE_BANFF_YOHO.slug!]: ["/media/photos/moraine-lake-perfect-reflection.webp", ...BANFF_YOHO_PHOTOS],
+  [ICEFIELD.slug]: ["/media/photos/columbia-icefield-ice-explorer-card.webp", ...ICEFIELD_PHOTOS],
+  // Private: the glacier activities are optional, so the parkway leads.
+  [PRIVATE_ICEFIELD.slug!]: ["/media/photos/bow-lake-crowfoot-mountain.webp", "/media/photos/columbia-icefield-ice-explorer-card.webp", ...ICEFIELD_PHOTOS.filter((p) => !p.includes("bow-lake-crowfoot"))],
+};
+
 export function withDocContent(tour: TourWithAvailability): TourWithAvailability {
   // Activity tickets show the operator's own photo (owner, 2026-10-30) over the catalog image.
   const ticketImage = activityTicket(tour.slug, tour.category)?.image;
   if (ticketImage) tour = { ...tour, featuredImage: ticketImage };
+  const photos = TOUR_PHOTOS[tour.slug];
+  if (photos) tour = { ...tour, featuredImage: photos[0], galleryImages: photos.slice(1) };
   if ((tour.category === "PRIVATE" || tour.category === "MULTIDAY") && tour.facts?.some((f) => OLD_PRIVATE_GROUP.test(f.value))) {
     tour = { ...tour, facts: tour.facts.map((f) => (OLD_PRIVATE_GROUP.test(f.value) ? { ...f, value: PRIVATE_GROUP_TEXT } : f)) };
   }

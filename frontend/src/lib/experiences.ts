@@ -58,7 +58,7 @@ export interface LinkCard {
   facts: { icon: LucideIcon; text: string }[];
   note?: string;
   price: number;
-  /** "CAD/guest", "CAD/vehicle"... */
+  /** "per guest", "per vehicle"... (the price itself reads "CAD $189") */
   unit: string;
   /** Shown instead of a price when there is none. */
   noPrice: string;
@@ -137,7 +137,7 @@ export function buildExperienceTabs(tours: TourWithAvailability[]): ExperienceTa
         ],
         note: "Accommodation not included",
         price: sharedPackage.price,
-        unit: "CAD/guest",
+        unit: "per guest",
         noPrice: "Price on request",
       },
       // Day 1 Banff & Yoho on the date, day 2 the Icefield within the following week.
@@ -176,7 +176,7 @@ export function buildExperienceTabs(tours: TourWithAvailability[]): ExperienceTa
         ],
         note: opt.isCustomPartner ? opt.activities : undefined,
         price: opt.priceFrom,
-        unit: "CAD/vehicle",
+        unit: "per vehicle",
         noPrice: opt.isCustomPartner ? "Personalised quote" : "Price on request",
       },
       fits,
@@ -203,7 +203,7 @@ export function buildExperienceTabs(tours: TourWithAvailability[]): ExperienceTa
         ],
         note: `Moraine Lake ${clockRange(d.moraine)} · Lake Louise ${clockRange(d.louise)}`,
         price: price(d.number <= 2 ? SUNRISE_SHUTTLE : DAY_SHUTTLE),
-        unit: "CAD/guest",
+        unit: "per guest",
         noPrice: "Price on request",
       },
       // This departure's own time on the date (or on any date).

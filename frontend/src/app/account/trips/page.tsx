@@ -476,7 +476,7 @@ export default function MyTripsPage() {
                         <div>
                           <p className="text-sm text-slate-600">{b.paymentPlan === "DEPOSIT" ? "Total" : "Total paid"}</p>
                           <p className="text-2xl font-light text-obsidian-900">
-                            ${b.totalAmount.toFixed(2)} <span className="text-sm text-slate-600">{b.currency}</span>
+                            CAD ${b.totalAmount.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </p>
                           {b.paymentPlan === "DEPOSIT" && b.status !== "CANCELLED" && (b.balanceDue ?? 0) > 0 && (
                             <p className="mt-2 rounded-2xl bg-summit-100 px-3 py-2 text-sm text-obsidian-900">

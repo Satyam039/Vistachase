@@ -1,5 +1,5 @@
 // Offer price with the struck-through original price and the saving, as on Viator / GetYourGuide.
-// Screen readers hear "Original price $239, offer price $199 CAD per guest".
+// Screen readers hear "Original price CAD $239, offer price CAD $199 per guest".
 
 import { hasPrice, money, originalPrice, savingsPercent } from "@/lib/pricing";
 
@@ -47,14 +47,14 @@ export function PriceTag({
         {original && (
           <del>
             <span className="sr-only">Original price </span>
-            {money(original)}
+            {money(original, currency)}
           </del>
         )}
         <ins className={`no-underline text-xl font-light ${strong}`}>
           {original && <span className="sr-only">Offer price </span>}
-          {money(price)}
+          {money(price, currency)}
         </ins>
-        <span className="whitespace-nowrap">{unit ?? currency}</span>
+        {unit && <span className="whitespace-nowrap">{unit}</span>}
       </p>
     );
   }
@@ -65,19 +65,16 @@ export function PriceTag({
         {original && (
           <del className="decoration-1">
             <span className="sr-only">Original price </span>
-            {money(original)}
+            {money(original, currency)}
           </del>
         )}
       </p>
       <p className="flex flex-wrap items-baseline gap-x-2">
         <ins className={`no-underline ${priceSize} font-light ${strong}`}>
           {original && <span className="sr-only">Offer price </span>}
-          {money(price)}
+          {money(price, currency)}
         </ins>
-        <span className={`text-sm ${muted}`}>
-          {currency}
-          {unit ? ` ${unit}` : ""}
-        </span>
+        {unit && <span className={`text-sm ${muted}`}>{unit}</span>}
         {original && (
           <span className={`ml-1 inline-flex self-center rounded-full px-2.5 py-0.5 text-xs ${tone === "dark" ? "bg-white/10 text-white/80" : "bg-emerald-50 text-emerald-800"}`}>
             Save {savingsPercent(price, original)}%

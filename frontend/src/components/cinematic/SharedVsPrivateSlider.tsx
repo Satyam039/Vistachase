@@ -123,7 +123,7 @@ export function SharedVsPrivateSlider() {
                 <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
                     <span className="text-xs uppercase text-slate-400 block">Pricing from</span>
-                    <span className="text-3xl font-serif font-light text-white">$189 CAD</span>
+                    <span className="text-3xl font-serif font-light text-white">CAD $189</span>
                     <span className="text-xs text-slate-400 ml-1">/ guest</span>
                   </div>
 

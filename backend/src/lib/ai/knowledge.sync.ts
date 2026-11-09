@@ -2,10 +2,13 @@ import crypto from "node:crypto";
 import prisma from "@/lib/db/prisma";
 import { getCacheProvider } from "@/lib/cache/cache.provider";
 import { VISTACHASE_STATIC_KNOWLEDGE_BASE } from "./knowledge.base";
-import { ON_SALE } from "@/modules/tours/product-map";
+import { conciergeTours } from "@/modules/tours/product-map";
 
-const CACHE_KEY = "vistachase:master_knowledge_base";
-const CACHE_META_KEY = "vistachase:master_knowledge_base_meta";
+// Keyed by the static text's hash, so a deploy that changes knowledge.base.ts never serves the
+// previous version from Redis.
+const STATIC_HASH = crypto.createHash("sha256").update(VISTACHASE_STATIC_KNOWLEDGE_BASE).digest("hex").slice(0, 12);
+const CACHE_KEY = `vistachase:master_knowledge_base:${STATIC_HASH}`;
+const CACHE_META_KEY = `vistachase:master_knowledge_base_meta:${STATIC_HASH}`;
 const IN_MEMORY_TTL_MS = 60 * 60 * 1000; // 1 hour memory cache
 
 interface KnowledgeBaseMetadata {
@@ -44,7 +47,7 @@ export async function syncMasterKnowledgeBase(): Promise<KnowledgeBaseMetadata> 
 
   try {
     const tours = await prisma.tour.findMany({
-      where: ON_SALE,
+      where: conciergeTours(),
       select: {
         id: true,
         slug: true,
@@ -72,24 +75,20 @@ export async function syncMasterKnowledgeBase(): Promise<KnowledgeBaseMetadata> 
     const tourLines = tours.map((t) => {
       const priceFormatted =
         t.basePrice > 0
-          ? `CAD $${(t.basePrice / 100).toFixed(2)} ${t.priceUnit === "GROUP" ? "per vehicle" : "per guest"}`
+          ? `from CAD $${(t.basePrice / 100).toLocaleString("en-CA")} ${t.priceUnit === "GROUP" ? "per vehicle" : "per guest"}`
           : "Price on request";
-      return `- **${t.title}** (Slug: \`${t.slug}\`) · ${t.category} · Duration: ~${t.durationHours}h · ${priceFormatted} · Mode: ${t.bookingMode}. ${t.summary}`;
+      const mode = t.bookingMode === "ENQUIRY" ? " · enquiry only (custom quote)" : "";
+      return `- ${t.title} [slug: ${t.slug}] · ${t.category} · ~${t.durationHours}h · ${priceFormatted}${mode}`;
     });
 
     const towns = [...new Set(stops.map((s) => s.town))];
     const stopSample = stops.slice(0, 8).map((s) => `${s.name} (${s.town})`).join("; ");
 
     liveTourCatalog = `
----
-
-## 8. Live Synchronized Catalog & Verified Stops (Updated Daily)
-- **Active Bookable Tours (${tourCount} Live Products):**
+## Live catalog (slugs for the tools; some database titles differ from the website names above, so use the website names with guests)
 ${tourLines.join("\n")}
 
-- **Verified Hotel & Hub Pickup Stops (${stopCount} Active Stops in ${towns.join(", ")}):**
-  - Key Hubs: ${stopSample}
-  - Doorstep hotel pickups operate for all major hotels across Banff, Canmore, and Lake Louise.
+Pickup stops: ${stopCount} in ${towns.join(", ")} (e.g. ${stopSample}). Use find_pickup for exact stops and times.
 `;
   } catch (dbErr) {
     console.warn(
@@ -100,7 +99,7 @@ ${tourLines.join("\n")}
 
   const isWinter = isMoraineLakeRoadSeasonallyClosed();
   const roadStatusNote = isWinter
-    ? "\n> [!NOTE] Current Parks Canada Status: Moraine Lake Road and Takakkaw Falls are CLOSED for the winter season (mid-October to late May). Tours operate winter itineraries including Johnston Canyon Icewalk and Abraham Lake ice bubbles.\n"
+    ? "\n> [!NOTE] Current Parks Canada Status: Moraine Lake Road and Takakkaw Falls are CLOSED for the winter season (mid-October to late May). Tours run their winter itineraries (Columbia Icefield Adventure visits Abraham Lake instead of the glacier activities).\n"
     : "\n> [!NOTE] Current Parks Canada Status: Moraine Lake Road is OPEN for licensed commercial tour operators.\n";
 
   // Build the complete master knowledge text

@@ -471,7 +471,7 @@ function PrivateTourCard({
               <div>
                 <div className="flex items-baseline gap-1.5">
                   <span className="text-xs text-white/55">From</span>
-                  <span className="text-2xl font-light tabular-nums text-white">CAD {money(calculatedPrice)}</span>
+                  <span className="text-2xl font-light tabular-nums text-white">{money(calculatedPrice)}</span>
                   <span className="text-xs text-white/70">per vehicle</span>
                 </div>
                 <p className="mt-0.5 text-xs text-white/55">Taxes and required fees included</p>

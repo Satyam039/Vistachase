@@ -26,3 +26,14 @@ export function activityAddOnsFor(tourSlug: string | null | undefined, date: str
 }
 
 export const ACTIVITY_ADD_ON_PRICE_NOTE = "Price varies; our team confirms it with you before your tour";
+
+/** Owner's wording (2026-11-09) under the "Add-on activities" tick box on private tours. */
+export const ACTIVITY_ADD_ONS_NOTE =
+  "Add-on activities are not included in your tour price. We\u2019ll arrange tickets on your behalf and collect payment separately once confirmed. Prices are subject to change, and activity timings will be coordinated with your tour itinerary.";
+
+/** The line added to a booking's special requests when the guest ticks "Add-on activities". */
+export function activityAddOnsRequestLine(names: string[]): string {
+  return names.length > 0
+    ? `Add-on activities requested: ${names.join(", ")} (tickets arranged by our team, paid separately).`
+    : "Add-on activities requested (tickets arranged by our team, paid separately).";
+}

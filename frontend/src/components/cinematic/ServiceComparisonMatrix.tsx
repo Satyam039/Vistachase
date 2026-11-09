@@ -50,9 +50,9 @@ const COMPARISON_DATA = [
   },
   {
     feature: "Pricing Model",
-    shared: "From $189 CAD per guest",
+    shared: "From CAD $189 per guest",
     private: "From $1,149 – $1,250 CAD flat vehicle rate",
-    shuttle: "From $89 – $95 CAD return per guest",
+    shuttle: "From CAD $89 – $95 return per guest",
     activity: "Partner rate / Concierge add-on",
   },
   {
