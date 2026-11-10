@@ -20,7 +20,7 @@ export interface HandoffInput {
 
 const escape = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
-export const supportInbox = () => process.env.SUPPORT_HANDOFF_TO || process.env.ENQUIRIES_TO || "info@vistachase.com";
+export const supportInbox = () => process.env.SUPPORT_HANDOFF_TO || process.env.ENQUIRIES_TO || "support@vistachase.com";
 
 export async function createSupportHandoff(input: HandoffInput) {
   const lang = conciergeLanguage(input.language);

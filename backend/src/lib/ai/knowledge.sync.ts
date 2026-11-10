@@ -100,7 +100,7 @@ ${tourLines.join("\n")}
 
   const isWinter = isMoraineLakeRoadSeasonallyClosed();
   const roadStatusNote = isWinter
-    ? "\n> [!NOTE] Current Parks Canada Status: Moraine Lake Road and Takakkaw Falls are CLOSED for the winter season (mid-October to late May). Tours operate winter itineraries including Johnston Canyon Icewalk and Abraham Lake ice bubbles.\n"
+    ? "\n> [!NOTE] Current Parks Canada Status: Moraine Lake Road and Takakkaw Falls are CLOSED for the winter season (mid-October to late May). Tours operate winter itineraries including Johnston Canyon Icewalk and Lake Louise winter sightseeing.\n"
     : "\n> [!NOTE] Current Parks Canada Status: Moraine Lake Road is OPEN for licensed commercial tour operators.\n";
 
   // Build the complete master knowledge text

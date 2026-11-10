@@ -8,6 +8,7 @@ import crypto from "node:crypto";
 import { getEmailProvider } from "@/lib/email/email.provider";
 import { siteUrl } from "@/lib/security/signed-links";
 import { emailSchema, parseOr400, z } from "@/lib/security/validate";
+import { isSyntheticBotName } from "@/lib/security/spam-detector";
 
 const router = Router();
 
@@ -132,6 +133,9 @@ router.post("/register", rateLimitMiddleware("register", { maxRequests: 3, windo
 
     if (!name || !email || !password) {
       return res.status(400).json({ success: false, error: "Name, email, and password are required" });
+    }
+    if (isSyntheticBotName(name)) {
+      return res.status(400).json({ success: false, error: "Please enter your real full name" });
     }
     if (typeof password !== "string" || password.length < 8) {
       return res.status(400).json({ success: false, error: "Use a password of at least 8 characters" });

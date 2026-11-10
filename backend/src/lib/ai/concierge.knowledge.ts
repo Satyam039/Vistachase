@@ -187,7 +187,7 @@ const TOPICS: Topic[] = [
     id: "winter",
     patterns: [[/\b(winter|december|january|february|march|christmas|ski\w*)\b/, 2]],
     answer: () =>
-      "Yes, we run tours in winter. Banff & Yoho Discovery runs all year, visiting Emerald Lake and the Natural Bridge while Moraine Lake is closed (about October 10 to June 1). In winter the Columbia Icefield Adventure visits Abraham Lake instead of the Ice Explorer. The lake shuttles run in summer only. Ask me for dates to see what's available.",
+      "Yes, we run tours in winter. Banff & Yoho Discovery runs all year, visiting Emerald Lake and the Natural Bridge while Moraine Lake is closed (about October 10 to June 1). In winter the Columbia Icefield Adventure follows an adjusted winter sightseeing route. The lake shuttles run in summer only. Ask me for dates to see what's available.",
   },
   {
     id: "about",

@@ -30,7 +30,6 @@ const INCLUDED = [
   "A professional local guide",
   "Bottled water and a hot drink",
   "Round trip from Canmore, Banff or Lake Louise",
-  "Small groups, up to 12 guests",
 ];
 
 const STEPS = [
@@ -55,11 +54,15 @@ const SHUTTLE_FAQS = [
   },
   {
     q: "What time do sunrise shuttles depart?",
-    a: "Sunrise departures leave early in the morning (typically between 4:30 a.m. and 5:15 a.m., depending on the month and hotel location) so that you arrive at Moraine Lake's Rockpile well before first light strikes the Ten Peaks. Exact pickup times are re-confirmed the day before your trip.",
+    a: "Sunrise departures leave early in the morning (Departure 1: Canmore 2:45 AM / Banff 3:15 AM / Lake Louise Village 3:55 AM for 4:30–6:00 AM at Moraine Lake; Departure 2: Canmore 3:45 AM / Banff 4:15 AM / Lake Louise Village 4:55 AM for 5:30–7:00 AM at Moraine Lake) so you arrive well before first light strikes the Ten Peaks. Please refer to our departure schedule for exact timings.",
   },
   {
     q: "How much time do we spend at Moraine Lake and Lake Louise?",
-    a: "Our shuttles allow generous, unhurried time at each lake—typically 1.5 to 2 hours at Moraine Lake and 1.5 to 2 hours at Lake Louise. You will have plenty of time to hike the Rockpile trail, stroll the lakeshore paths, visit the gift shops/cafés, and take stunning photos.",
+    a: "Visit durations follow your selected departure schedule—typically 1.5 to 2.5 hours at Moraine Lake and 1.5 to 2.5 hours at Lake Louise. Please review our detailed departure timetable for each departure's specific lake visit and return times.",
+  },
+  {
+    q: "How many guests travel on each shuttle vehicle?",
+    a: "Our lake shuttles carry up to 24 guests per vehicle, subject to the assigned configuration, providing spacious and comfortable transportation for independent lake exploration.",
   },
   {
     q: "Can I bring luggage, strollers, or outdoor gear?",

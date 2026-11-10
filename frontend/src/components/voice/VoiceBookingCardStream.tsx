@@ -8,16 +8,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Calendar, Car, CheckCircle2, Clock, MapPin, ShieldCheck, Ticket } from "lucide-react";
-import { ConciergeSeatMap, type SeatInfo } from "./ConciergeSeatMap";
 
 export interface VoiceCardData {
-  type?: "availability" | "pickups" | "hold" | "confirmed" | "tracking" | "tour" | "seat_map";
-  vehicleType?: "sprinter_12" | "suv_7";
-  vehicleName?: string;
-  capacity?: number;
-  legroom?: string;
-  amenities?: string[];
-  seats?: SeatInfo[];
+  type?: "availability" | "pickups" | "hold" | "confirmed" | "tracking" | "tour";
   tour?: {
     slug?: string;
     title?: string;
@@ -264,20 +257,6 @@ export function VoiceBookingCardStream({ data, checkoutUrl, hasSafetyRefusal, on
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
           )}
-        </div>
-      )}
-
-      {data?.type === "seat_map" && (
-        <div className="mt-2 w-full">
-          <ConciergeSeatMap
-            vehicleType={data.vehicleType}
-            vehicleName={data.vehicleName}
-            capacity={data.capacity}
-            legroom={data.legroom}
-            amenities={data.amenities}
-            seats={data.seats}
-            onSelectSeats={onSelectSeats}
-          />
         </div>
       )}
     </div>

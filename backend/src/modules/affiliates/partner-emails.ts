@@ -15,7 +15,7 @@ function send(to: string, subject: string, lines: string[]) {
     .catch((e) => console.error(`Partner email "${subject}" failed:`, (e as Error).message));
 }
 
-const staffInbox = () => process.env.PARTNERS_TO || process.env.ENQUIRIES_TO || "info@vistachase.com";
+const staffInbox = () => process.env.PARTNERS_TO || process.env.ENQUIRIES_TO || "support@vistachase.com";
 
 export function sendApplicationEmails(p: { name: string; contactName: string; email: string; code: string; type: string }) {
   send(p.email, "We received your Vista Chase partner application", [

@@ -107,7 +107,7 @@ Each app has its own `.env`: `backend/.env` (template: `backend/.env.example`) h
 | `EMAIL_FROM` | Yes | Default sender email header | `Vista Chase Bookings <bookings@vistachase.com>` | Yes |
 | `PAYMENT_PROVIDER` | Yes | Checkout payment gateway | `mock` | Yes (`stripe`) |
 | `ANTHROPIC_API_KEY`| No | AI concierge (Claude agent, all chat languages). Without it the concierge answers from booking data only, in English | (empty) | Yes, for the full concierge |
-| `SUPPORT_HANDOFF_TO`| No | Inbox for "Chat with a live agent" requests (falls back to `ENQUIRIES_TO`) | `info@vistachase.com` | Yes |
+| `SUPPORT_HANDOFF_TO`| No | Inbox for "Chat with a live agent" requests (falls back to `ENQUIRIES_TO`) | `support@vistachase.com` | Yes |
 | `MAPS_PROVIDER` | Yes | Hotel pickup coordinate locator | `mock` | Yes (`google` or `mapbox`) |
 | `ADMIN_EMAIL` | No | Initial admin email for seed | `admin@vistachase.com` | Optional |
 | `ADMIN_PASSWORD` | No | Initial admin password for seed | `VistaChaseAdmin2026!` | Optional |

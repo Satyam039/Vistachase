@@ -146,6 +146,8 @@ export function PackageCheckout({
   const [phoneLocal, setPhoneLocal] = useState("");
   const [stopId, setStopId] = useState("");
   const [customPickup, setCustomPickup] = useState("");
+  const isFourDay = days.length === 4 || packageSlug.includes("four-day");
+  const [day4JasperPickup, setDay4JasperPickup] = useState("");
   const [requests, setRequests] = useState("");
   const [airport, setAirport] = useState(false);
   const [airportTransfer, setAirportTransfer] = useState<AirportTransferValue>(EMPTY_AIRPORT_TRANSFER);
@@ -203,11 +205,12 @@ export function PackageCheckout({
     if (name.trim().length < 2) e.name = "Enter the lead guest's full name.";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) e.email = "Enter a valid email address.";
     if (phoneLocal.replace(/\D/g, "").length < 6) e.phone = "Enter a mobile number for pickup-day updates.";
-    if (!stopId && !customPickup.trim()) e.stop = "Choose your pickup hotel, or tell us where you're staying.";
+    if (!stopId && !customPickup.trim()) e.stop = isFourDay ? "Choose your pickup hotel for Days 1–3, or enter your accommodation." : "Choose your pickup hotel, or tell us where you're staying.";
+    if (isFourDay && !day4JasperPickup.trim()) e.jasperPickup = "Enter your Day 4 Jasper hotel or accommodation address.";
     const transfer = withAirport ? airportTransferError(airportTransfer) : null;
     if (transfer) e.airport = transfer;
     return e;
-  }, [days, picks, name, email, phoneLocal, stopId, customPickup, withAirport, airportTransfer]);
+  }, [days, picks, name, email, phoneLocal, stopId, customPickup, isFourDay, day4JasperPickup, withAirport, airportTransfer]);
   const show = (k: string) => (attempted ? errors[k] : undefined);
   const status = (k: string) => (show(k) ? { type: "error" as const, message: errors[k] } : undefined);
 
@@ -233,6 +236,15 @@ export function PackageCheckout({
           customerCountry: phoneCountry,
           pickupStopId: stopId || undefined,
           pickupCustomText: customPickup.trim() || undefined,
+          day4JasperPickup: isFourDay ? day4JasperPickup.trim() : undefined,
+          dayPickups: isFourDay
+            ? [
+                { pickupStopId: stopId || undefined, pickupCustomText: customPickup.trim() || undefined },
+                { pickupStopId: stopId || undefined, pickupCustomText: customPickup.trim() || undefined },
+                { pickupStopId: stopId || undefined, pickupCustomText: customPickup.trim() || undefined },
+                { pickupCustomText: day4JasperPickup.trim() },
+              ]
+            : undefined,
           adultsCount: adults,
           childrenCount: vehicle ? 0 : children,
           infantsCount: vehicle ? 0 : infants,
@@ -419,10 +431,10 @@ export function PackageCheckout({
         </Section>
 
         <Section icon={MapPin} title="Pickup">
-          <div className="space-y-4" {...(show("stop") ? { "data-first-error": true } : {})}>
+          <div className="space-y-4" {...(show("stop") || show("jasperPickup") ? { "data-first-error": true } : {})}>
             {stops.length > 0 && (
               <Dropdown
-                label={`Pickup hotel (same for ${dayWord})`}
+                label={isFourDay ? "Pickup hotel for Days 1–3 (Banff, Canmore, Lake Louise)" : `Pickup hotel (same for ${dayWord})`}
                 labelClassName="mb-1.5 block text-sm text-obsidian-900"
                 options={stops.map((s) => ({ value: s.id, label: s.name, description: `${s.town} · ${s.address}` }))}
                 value={stopId}
@@ -433,12 +445,36 @@ export function PackageCheckout({
                 invalid={Boolean(show("stop"))}
               />
             )}
-            <TextInput label="Staying somewhere else?" isOptional value={customPickup} onChange={setCustomPickup} placeholder="Hotel name or address in Banff or Canmore" />
+            <TextInput
+              label={isFourDay ? "Staying somewhere else for Days 1–3?" : "Staying somewhere else?"}
+              isOptional
+              value={customPickup}
+              onChange={setCustomPickup}
+              placeholder="Hotel name or address in Banff, Canmore, or Lake Louise"
+            />
             {show("stop") && (
               <p role="alert" className="text-sm text-red-700">
                 {errors.stop}
               </p>
             )}
+
+            {isFourDay && (
+              <div className="mt-4 border-t border-obsidian-900/10 pt-4 space-y-2">
+                <TextInput
+                  label="Day 4 pickup in Jasper"
+                  value={day4JasperPickup}
+                  onChange={setDay4JasperPickup}
+                  placeholder="Jasper hotel name or address (where you stay after Day 3)"
+                  description="After Day 3 you stay overnight in Jasper town. Where should your driver pick you up on Day 4?"
+                />
+                {show("jasperPickup") && (
+                  <p role="alert" className="text-sm text-red-700">
+                    {errors.jasperPickup}
+                  </p>
+                )}
+              </div>
+            )}
+
             <p className="text-sm text-slate-600">Pickups start at 7:30 AM in Canmore and 8:00 AM in Banff. We confirm your exact pickup time before each tour.</p>
             <TextArea label="Special requests" isOptional rows={3} maxLength={500} value={requests} onChange={setRequests} placeholder="Dietary needs, mobility, celebrations…" />
           </div>

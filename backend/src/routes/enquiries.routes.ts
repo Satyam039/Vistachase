@@ -2,6 +2,7 @@ import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
 import { Router } from "express";
 import { z } from "zod";
 import { createEnquiry } from "@/modules/enquiries/enquiry.repository";
+import { isSpamBotEnquiry } from "@/lib/security/spam-detector";
 
 const router = Router();
 
@@ -34,6 +35,12 @@ router.post("/", rateLimitMiddleware("enquiry_create", { maxRequests: 5, windowS
     return res.status(400).json({ success: false, error: "Please check the highlighted fields.", fields: parsed.error.flatten().fieldErrors });
   }
   if (parsed.data.website) return res.json({ success: true }); // bot: pretend it worked
+
+  // Anti-bot & spam filter: silently discard bot probes without writing to DB or emailing staff
+  if (isSpamBotEnquiry(parsed.data)) {
+    console.log(`[Enquiries] Discarded spam bot enquiry from name "${parsed.data.name}", email "${parsed.data.email}"`);
+    return res.status(201).json({ success: true, id: "filtered" });
+  }
 
   recent.push(now);
   hits.set(key, recent);

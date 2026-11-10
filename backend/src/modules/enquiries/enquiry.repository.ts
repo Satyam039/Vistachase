@@ -42,7 +42,7 @@ export async function createEnquiry({ toDate, ...input }: EnquiryInput) {
 
   const emailResult = await getEmailProvider()
     .sendEmail({
-      to: process.env.ENQUIRIES_TO || "info@vistachase.com",
+      to: process.env.ENQUIRIES_TO || "support@vistachase.com",
       subject: `${tour ? `Tour request: ${tour.title}` : "Website enquiry"} from ${input.name}`,
       text: lines.join("\n"),
       html: `<p>${lines.map(escape).join("<br>")}</p>`,

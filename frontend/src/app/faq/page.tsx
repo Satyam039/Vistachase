@@ -35,7 +35,7 @@ const FAQS: FaqItem[] = [
   { topic: "Parks & seasons", q: "When is Moraine Lake open?", a: "Usually from June 1 to around October 10, depending on road and weather conditions. Outside those dates, tours visit Emerald Lake and the Natural Bridge instead." },
   { topic: "Parks & seasons", q: "Do I need a Parks Canada pass?", a: "Every visitor to Banff National Park needs a valid Parks Canada pass. Several of our tours include park entry (see What's included on the tour page); otherwise buy one online from Parks Canada or at the park gate." },
   { topic: "Parks & seasons", q: "What wildlife might we see?", a: "Elk, deer, bighorn sheep and mountain goats are common, and sometimes bears. Spring and fall mornings are often best. Sightings can't be guaranteed." },
-  { topic: "Parks & seasons", q: "Can I tour in winter?", a: "Yes. From December to April our Winter Special visits frozen lakes, waterfalls and Abraham Lake's ice bubbles, with ice cleats and a heated vehicle." },
+  { topic: "Parks & seasons", q: "Can I tour in winter?", a: "Yes. From December to April our winter sightseeing visits frozen lakes, canyon ice features, waterfalls and scenic viewpoints, with ice cleats and a heated vehicle." },
 ];
 
 const jsonLd = {

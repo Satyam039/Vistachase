@@ -93,6 +93,8 @@ export interface CreatePackageInput extends Omit<CreateBookingInput, "departureI
   /** One departure per tour in the package, in the package's order. */
   departureIds: string[];
   idempotencyKey?: string;
+  day4JasperPickup?: string;
+  dayPickups?: { pickupStopId?: string; pickupCustomText?: string }[];
 }
 
 export interface PackageResult {
@@ -185,6 +187,10 @@ export async function createPackageBooking(input: CreatePackageInput): Promise<P
     for (const b of made) await failPendingBooking(b.bookingReference, reason);
   };
   for (const [i, departureId] of input.departureIds.entries()) {
+    const dayPickup = input.dayPickups?.[i];
+    const pickupStopId = dayPickup?.pickupStopId ?? (i === 3 && input.day4JasperPickup ? undefined : input.pickupStopId);
+    const pickupCustomText = dayPickup?.pickupCustomText ?? (i === 3 && input.day4JasperPickup ? input.day4JasperPickup : input.pickupCustomText);
+
     const result = await createBooking(
       {
         customerId: input.customerId,
@@ -192,8 +198,8 @@ export async function createPackageBooking(input: CreatePackageInput): Promise<P
         customerEmail: input.customerEmail,
         customerPhone: input.customerPhone,
         customerCountry: input.customerCountry,
-        pickupStopId: input.pickupStopId,
-        pickupCustomText: input.pickupCustomText,
+        pickupStopId,
+        pickupCustomText,
         adultsCount: input.adultsCount,
         childrenCount: input.childrenCount,
         infantsCount: input.infantsCount,
