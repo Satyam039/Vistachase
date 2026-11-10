@@ -27,7 +27,6 @@ import { Dropdown } from "@/components/forms/Dropdown";
 import { DepartureCalendar } from "@/components/booking/DepartureCalendar";
 import { docQuickFacts } from "@/lib/tourContent";
 import { PriceTag } from "@/components/pricing/PriceTag";
-import { AIRPORT_TRANSFER_PRICES, AirportTransferToggle } from "@/components/booking/AirportTransferFields";
 import { ActivityAddOnToggle } from "@/components/booking/ActivityAddOnFields";
 import { groupEnquiryHref } from "@/lib/experiences";
 import { cancellationShort, SEATS_MESSAGE } from "@/lib/policy";
@@ -330,9 +329,8 @@ export function TourDetailView({
   const seatedInfants = infantsPay ? infants : 0;
   const childFare = currentDeparture?.childPrice ?? currentDeparture?.price ?? price;
   const infantFare = currentDeparture?.infantPrice ?? 0;
-  // Private tours: optional airport transfer (available only for bookings with 2 or more guests)
-  const offersAirport = tour.category === "PRIVATE" && partySize >= 2;
-  const [airport, setAirport] = useState(false);
+  // No airport transfer on a single private day: the owner's approved rules (2026-11-10) offer it
+  // only with private bookings of two or more tour days (the package checkouts).
   // Private tours: "Add-on activities" (owner, 2026-11-09); arranged by the team and paid separately.
   const offersActivities = tour.category === "PRIVATE";
   const [activities, setActivities] = useState(false);
@@ -642,7 +640,6 @@ export function TourDetailView({
                         onChange={setPartySize}
                         hint={`Vehicle seats up to ${maxPartySize}`}
                       />
-                      {offersAirport && <AirportTransferToggle checked={airport} onChange={setAirport} />}
                       {offersActivities && <ActivityAddOnToggle checked={activities} onChange={setActivities} />}
                     </>
                   ) : (
@@ -694,12 +691,6 @@ export function TourDetailView({
                           <span>Private vehicle flat rate</span>
                           <span>{money(calculatedTotal)}</span>
                         </div>
-                        {offersAirport && airport && (
-                          <div className="flex items-center justify-between gap-3 text-slate-600">
-                            <span>Airport transfer</span>
-                            <span className="text-right">{`From CAD $${AIRPORT_TRANSFER_PRICES[0].small} both ways, priced at checkout`}</span>
-                          </div>
-                        )}
                         {offersActivities && activities && (
                           <div className="flex items-center justify-between gap-3 text-slate-600">
                             <span>Add-on activities</span>
@@ -739,7 +730,7 @@ export function TourDetailView({
                       href={`/book?${new URLSearchParams({
                         departureId: selectedDepartureId || tour.departures[0]?.id || "",
                         ...(isVehicle
-                          ? { guests: String(partySize), ...(offersAirport && airport ? { airport: "1" } : {}), ...(offersActivities && activities ? { activities: "1" } : {}) }
+                          ? { guests: String(partySize), ...(offersActivities && activities ? { activities: "1" } : {}) }
                           : { guests: String(adults + children), adults: String(adults), children: String(children), ...(infants > 0 ? { infants: String(infants) } : {}) }),
                       }).toString()}`}
                       className="w-full h-13 py-4 rounded-full text-base font-medium text-obsidian-900 golden-summit-btn flex items-center justify-center gap-2 shadow-lg transition-all hover:scale-[1.01]"

@@ -61,7 +61,6 @@ export default async function BookPage({
       initialAdults={Number.parseInt(searchParams.adults ?? "", 10) || undefined}
       initialChildren={Number.parseInt(searchParams.children ?? "", 10) || undefined}
       initialInfants={Number.parseInt(searchParams.infants ?? "", 10) || undefined}
-      initialAirport={searchParams.airport === "1"}
       initialActivities={searchParams.activities === "1"}
     />
   );

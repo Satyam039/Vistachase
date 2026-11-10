@@ -55,6 +55,11 @@ router.post("/", rateLimitMiddleware("booking_create", { maxRequests: 5, windowS
     if (rawKey !== undefined && !IDEMPOTENCY_KEY.test(rawKey)) {
       return res.status(400).json({ success: false, error: "Invalid Idempotency-Key header." });
     }
+    // Airport transfers come only with private bookings of two or more tour days (owner's approved
+    // rules, 2026-11-10): the package route takes them, a single day doesn't.
+    if (body.airportTransfer) {
+      return res.status(400).json({ success: false, error: "Airport transfers are available with private bookings of two or more tour days." });
+    }
     const user = getAuthenticatedUser(req);
     const result = await createBooking({
       ...body,
