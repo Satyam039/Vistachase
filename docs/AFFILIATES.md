@@ -57,7 +57,7 @@ The app never moves money. Staff draft a payout, pay the partner outside the app
 
 Sent fire-and-forget through the existing email provider; a failure never blocks the action.
 
-- Application received: to the applicant, and to staff at `PARTNERS_TO` (falls back to `ENQUIRIES_TO`, then info@vistachase.com).
+- Application received: to the applicant, and to staff at `PARTNERS_TO` (falls back to `ENQUIRIES_TO`, then support@vistachase.com).
 - Account active or paused: when staff change the status.
 - Commission earned: when a referred booking is paid.
 - Payout sent: when a payout is marked paid.

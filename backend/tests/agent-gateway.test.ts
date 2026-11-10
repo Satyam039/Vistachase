@@ -109,12 +109,12 @@ describe("Vistachase Agentic Platform Architecture & Tool Loop", () => {
 
   describe("Anthropic Prompt Caching & Knowledge Base Integrity", () => {
     it("verifies static knowledge base contains exact cancellation policies and seasonal windows", () => {
-      expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("24 hours prior to departure time");
-      expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("72 hours prior to departure time");
-      expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("Moraine Lake Road and Takakkaw Falls Road are CLOSED");
-      expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("max 12 guests");
-      // Website prices, not invented ones (owner, 2026-11-09)
-      expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("CAD $1,750 per vehicle");
+      // The owner's approved System Prompt and Knowledge Base v1.1 (2026-11-10), word for word.
+      expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("Shared tours and shuttles: full refund at least 24 hours before departure.");
+      expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("Private single-day tours: full refund at least 72 hours before departure.");
+      expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("Shared tours carry a maximum of 12 guests in a 15-passenger van.");
+      expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("Never use blog posts as a factual source.");
+      expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("about 80 words");
       expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).not.toMatch(/GST|Escalade|bookings@vistachase\.com|Heart of Banff/);
     });
 
@@ -133,7 +133,7 @@ describe("Vistachase Agentic Platform Architecture & Tool Loop", () => {
       const kb = await getMasterKnowledgeBase();
       expect(kb).toContain("Vista Chase concierge");
       expect(kb).toContain("Parks Canada");
-      expect(kb).toContain("full refund if cancelled at least 24 hours");
+      expect(kb).toContain("full refund at least 24 hours before departure");
     });
   });
 });
