@@ -18,7 +18,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 import { ChevronRight } from "lucide-react";
-import { mergeSeo, seoFetch, siteOrigin, type SeoMeta } from "@/lib/seo/server";
+import { mergeSeo, seoFetch, seoFetchOrThrow, siteOrigin, type SeoMeta } from "@/lib/seo/server";
 import { BreadcrumbJsonLd, JsonLd } from "@/components/seo/JsonLd";
 import { GuideBlock, guideRootClass, inline, parseGuide, plainText, safeHref, type Block } from "@/components/seo/GuideMarkdown";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
@@ -50,7 +50,8 @@ type Props = { params: Promise<{ slug: string }> };
 
 const loadPost = cache(async (slug: string) => {
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) return null;
-  const body = await seoFetch<{ post: Post }>(`/blog/${slug}`, 5000);
+  // 404 only when the backend says the post doesn't exist; a slow or failed call throws (R1).
+  const body = await seoFetchOrThrow<{ post: Post }>(`/blog/${slug}`);
   return body?.post ?? null;
 });
 

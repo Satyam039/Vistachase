@@ -13,7 +13,7 @@ import { SiteFrame } from "@/components/layout/SiteFrame";
 import { TrackingTags } from "@/components/seo/TrackingTags";
 import { getSiteConfig } from "@/lib/seo/server";
 import { HERO_PATH_PATTERN } from "@/lib/heroPages";
-import { BUSINESS_ADDRESS, BUSINESS_TELEPHONE, ORGANIZATION_ID } from "@/lib/seo/business";
+import { BUSINESS_ADDRESS, BUSINESS_TELEPHONE, DEFAULT_SHARE_IMAGE, ORGANIZATION_ID } from "@/lib/seo/business";
 
 export const metadata: Metadata = {
   title: "Vista Chase | Luxury Private Tours & Shuttles in Banff & Rockies",
@@ -36,14 +36,7 @@ export const metadata: Metadata = {
     url: "https://www.vistachase.com",
     siteName: "Vista Chase",
     type: "website",
-    images: [
-      {
-        url: "/media/photos/moraine-lake-perfect-reflection.webp",
-        width: 1200,
-        height: 630,
-        alt: "Moraine Lake Valley of the Ten Peaks",
-      },
-    ],
+    images: [DEFAULT_SHARE_IMAGE],
   },
 };
 

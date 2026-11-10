@@ -94,7 +94,19 @@ const id = (req: Request) => {
 // Public (read-only, cacheable for a minute)
 
 const publicCache = (res: Response) => res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
-const publicLimit = rateLimitMiddleware("seo_public", { maxRequests: 600, windowSeconds: 60 });
+const publicRateLimit = rateLimitMiddleware("seo_public", { maxRequests: 600, windowSeconds: 60 });
+/**
+ * The website's own server renders every page with a few of these calls, all from 127.0.0.1, so
+ * under a crawl it used up the shared 600/min budget and got 429s, which pages showed as "Page not
+ * found" (fix recheck, 10 Nov 2026, R1). Calls straight from this machine with no forwarding header
+ * (the Next.js server, not a browser: nginx and the Next proxy both add X-Forwarded-For) skip it.
+ */
+function isLocalServerCall(req: Request): boolean {
+  const remote = req.socket.remoteAddress ?? "";
+  const loopback = remote === "127.0.0.1" || remote === "::1" || remote === "::ffff:127.0.0.1";
+  return loopback && !req.headers["x-forwarded-for"] && !req.headers["x-real-ip"];
+}
+const publicLimit = (req: Request, res: Response, next: NextFunction) => (isLocalServerCall(req) ? next() : publicRateLimit(req, res, next));
 
 router.get("/public/meta", publicLimit, wrap(async (req, res) => {
   const path = z.string().max(300).parse(req.query.path ?? "");

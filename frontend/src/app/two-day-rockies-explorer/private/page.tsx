@@ -9,8 +9,9 @@ import { PackageBookingSection } from "@/components/booking/PackageBookingSectio
 import { PACKAGE_DAY_PRICE, PRIVATE_MAX_GUESTS, PRIVATE_PACKAGES } from "@/lib/privateTours";
 
 export const metadata: Metadata = {
-  // Technical audit spreadsheet (9 Nov 2026, Directives: Noindex): index, follow.
-  robots: { index: true, follow: true },
+  // Checkout step: noindex, follow (fix recheck, 10 Nov 2026, R3; replaces the 9 Nov "index, follow").
+  // It has nothing for search and would show stale dates and prices in results.
+  robots: { index: false, follow: true },
   title: "Book the Private Two-Day Rockies Explorer | Vista Chase",
   description: "Both private day tours with your own vehicle and guide: choose a date for each day and book in one secure payment.",
   alternates: { canonical: "/two-day-rockies-explorer/private" },

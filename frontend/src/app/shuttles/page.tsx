@@ -16,6 +16,12 @@ import { FaqBrowser } from "@/components/faq/FaqBrowser";
 import { getShuttleRoutes, getTours } from "@/lib/api/catalog";
 import { withSeo } from "@/lib/seo/server";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
+import { cachePublicData } from "@/lib/api/cachePolicy";
+
+// Rendered once and served from cache, refreshed in the background at most every minute, instead of
+// on every request (fix recheck, 10 Nov 2026, N2/R2: 2.7-10 s responses and 5xx under a crawl).
+// Seats and prices on this page can be up to a minute old; checkout (/book) always reads them live.
+export const revalidate = 60;
 
 const baseMetadata: Metadata = {
   title: "Moraine Lake & Lake Louise Shuttles | Vista Chase",
@@ -81,6 +87,7 @@ const shortDate = (d: string) => {
 };
 
 export default async function ShuttlesPage() {
+  cachePublicData();
   const [routes, shuttles] = await Promise.all([getShuttleRoutes(), getTours({ category: "SHUTTLE" })]);
   // Departures sold online: the two shuttle products' (seeded from the doc's timetable) and any routes'.
   const live: LiveShuttleDeparture[] = [...shuttles.flatMap((t) => t.departures), ...routes.flatMap((r) => r.departures)].map((d) => ({
@@ -293,5 +300,6 @@ export default async function ShuttlesPage() {
 }
 
 export function generateMetadata(): Promise<Metadata> {
+  cachePublicData();
   return withSeo("/shuttles", baseMetadata);
 }
