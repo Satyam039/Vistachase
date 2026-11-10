@@ -104,6 +104,10 @@ export const BUILT_IN_REDIRECTS: Record<string, string> = {
   "/blog-post/canadian-rockies-private-road-trip-itinerary-guide": "/multi-day-tour-package-for-banff",
   "/blog-post/how-many-days-in-banff-and-jasper": "/blog-post/5-day-banff-itinerary",
   "/blog-post/luxury-alaska-cruise-and-banff-tour": "/blog-post/what-to-do-in-banff-after-your-alaska-cruise-ends",
+  // Live on Webflow but its published text isn't in the export (the draft there was overwritten with
+  // the sunrise/golden-hour article), so it goes to the page it was about until the owner restores it.
+  // Owner, 10 Nov 2026: it answered 404.
+  "/blog-post/private-tours-banff-jasper-yoho-custom": "/private-tours",
   // Test post ("lake lousie", subtitle "NA"): never meant to be public.
   "/blog-post/lake-lousie": "/blog-post/lake-louise-hiking-guide",
   // Old Webflow tour pages no longer sold (RETIRED_TOUR_SLUGS in tours/product-map.ts). Technical

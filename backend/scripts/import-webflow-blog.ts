@@ -4,7 +4,8 @@
 //
 // Only posts missing here are created. A post that already exists at its address, in any state
 // (including ones staff edited, unpublished or archived in the SEO portal), is left as it is, so
-// this is safe to run on every deploy. Posts that are drafts or archived in Webflow are skipped.
+// this is safe to run on every deploy. Posts that are drafts or archived in Webflow are skipped,
+// except the ones in PUBLISH_WEBFLOW_DRAFTS.
 //
 // Images still on the Webflow CDN (no copy in media/manifest.json) are downloaded to
 // media/uploads/blog-import/ and served from /media/uploads/blog-import/, so the posts keep their
@@ -81,9 +82,15 @@ async function localiseText(text: string | null): Promise<string | null> {
   return out;
 }
 
+/**
+ * Webflow drafts that are imported as published anyway. Owner, 10 Nov 2026: "fix every blog that
+ * 404s". This one is a finished article (1,500 words) whose address answered 404.
+ */
+const PUBLISH_WEBFLOW_DRAFTS = new Set(["why-timing-matters-in-banff-sunrise-golden-hour"]);
+
 async function main() {
   const csv = fs.readFileSync(file, "utf8");
-  const posts = postsFromCsv(csv);
+  const posts = postsFromCsv(csv).map((p) => (p.state === "draft" && p.slug && PUBLISH_WEBFLOW_DRAFTS.has(p.slug) ? { ...p, state: "unknown" as const } : p));
   const preview = await previewPosts(posts, { dateSource: "created", mapLocalImages: true, useBaseline: true });
   const toCreate = preview.rows.filter((r) => r.action === "create");
   const existing = preview.rows.filter((r) => r.action === "update-draft").length;
