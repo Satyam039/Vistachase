@@ -598,7 +598,9 @@ The traveler has shared one or more photos or documents (e.g. itinerary screensh
   ];
 
   const tools: Anthropic.ToolUnion[] = [
-    ...CUSTOMER_TOOLS.filter(t => process.env.NODE_ENV !== "production" || !["hold_seats", "cancel_booking"].includes(t.name)),
+    // No seat selection for guests (owner's "AI Training for Vista Chase", 10 Nov 2026): the seat map
+    // tool is never offered.
+    ...CUSTOMER_TOOLS.filter(t => t.name !== "get_seat_map" && (process.env.NODE_ENV !== "production" || !["hold_seats", "cancel_booking"].includes(t.name))),
     ...(ctx.isStaff ? STAFF_TOOLS : []),
     { type: "web_search_20260318", name: "web_search", max_uses: 2, user_location: { type: "approximate", city: "Banff", region: "Alberta", country: "CA", timezone: "America/Edmonton" } },
     { type: "web_fetch_20260318", name: "web_fetch", max_uses: 1 },
