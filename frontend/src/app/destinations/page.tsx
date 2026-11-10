@@ -10,6 +10,12 @@ import { MediaCard } from "@/components/cards/MediaCard";
 import { getDestinations } from "@/lib/api/catalog";
 import { withSeo } from "@/lib/seo/server";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
+import { cachePublicData } from "@/lib/api/cachePolicy";
+
+// Rendered once and served from cache, refreshed in the background at most every minute, instead of
+// on every request (fix recheck, 10 Nov 2026, N2/R2: 2.7-10 s responses and 5xx under a crawl).
+// Seats and prices on this page can be up to a minute old; checkout (/book) always reads them live.
+export const revalidate = 60;
 
 const baseMetadata: Metadata = {
   title: "Canadian Rockies Destinations | Vista Chase",
@@ -23,6 +29,7 @@ const SPAN = ["lg:col-span-3", "lg:col-span-3", "lg:col-span-2", "lg:col-span-2"
 const ASPECT = ["aspect-[5/4] sm:aspect-[21/9] lg:aspect-[16/9]", "aspect-[5/4] lg:aspect-[16/9]", "aspect-[5/4]", "aspect-[5/4]", "aspect-[5/4]"];
 
 export default async function DestinationsPage() {
+  cachePublicData();
   const destinations = await getDestinations();
 
   return (
@@ -87,5 +94,6 @@ export default async function DestinationsPage() {
 }
 
 export function generateMetadata(): Promise<Metadata> {
+  cachePublicData();
   return withSeo("/destinations", baseMetadata);
 }

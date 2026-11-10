@@ -2,14 +2,17 @@ import prisma from "@/lib/db/prisma";
 import { getExpiredHeldSeats, liveCapacity } from "@/modules/reservations/reservation.repository";
 import { inventoryError, sellableInventoryWhere } from "@/modules/departures/inventory";
 import { bookingClosedError } from "@/modules/departures/booking-window";
+import { dateOnly, todayInMountainTime } from "@/lib/utils/time";
 
 export async function getCheckoutDeparture(departureId?: string) {
   let id = departureId;
 
-  // If no departure specified, pick first active scheduled departure
+  // If no departure specified, pick the next active departure from tomorrow on (Mountain Time), so
+  // a bare /book never opens on a past or same-day date that says "booking closed" (fix recheck,
+  // 10 Nov 2026, R6).
   if (!id) {
     const firstActive = await prisma.tourDeparture.findFirst({
-      where: { status: "ACTIVE", ...sellableInventoryWhere },
+      where: { status: "ACTIVE", ...sellableInventoryWhere, date: { gt: dateOnly(todayInMountainTime()) } },
       orderBy: [{ date: "asc" }, { departureTime: "asc" }],
     });
     id = firstActive?.id;

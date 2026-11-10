@@ -33,7 +33,8 @@ export const STATIC_ROUTES: StaticRoute[] = [
   { path: "/blog", label: "Blog", pageType: "LANDING", indexable: true, sitemapPriority: 0.6 },
   { path: "/gallery", label: "Gallery", pageType: "STATIC", indexable: true, sitemapPriority: 0.4 },
   { path: "/pickup-finder", label: "Pickup finder", pageType: "STATIC", indexable: true, sitemapPriority: 0.4 },
-  { path: "/concierge", label: "Concierge", pageType: "STATIC", indexable: true, sitemapPriority: 0.3 },
+  // A chat tool with little text of its own: noindex, follow and out of the sitemap (fix recheck, 10 Nov 2026, N11).
+  { path: "/concierge", label: "Concierge", pageType: "STATIC", indexable: false },
   // /partners redirects here since 9 Nov 2026 (BUILT_IN_REDIRECTS).
   { path: "/affiliates", label: "Affiliate & partner program", pageType: "STATIC", indexable: true, sitemapPriority: 0.3 },
   // Migration doc, 9 Nov 2026: the partner portal's landing page is indexable and in the sitemap.

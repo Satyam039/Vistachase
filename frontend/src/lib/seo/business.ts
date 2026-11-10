@@ -25,3 +25,15 @@ export const TOUR_PROVIDER = {
   telephone: BUSINESS_TELEPHONE,
   address: BUSINESS_ADDRESS,
 } as const;
+
+/**
+ * The share picture for a page that has none of its own. Next.js replaces the root layout's
+ * openGraph as a whole when a page sets one, so a page's own og:title used to drop this image
+ * (fix recheck, 10 Nov 2026, R4: 8 pages had no og:image).
+ */
+export const DEFAULT_SHARE_IMAGE = {
+  url: "/media/photos/moraine-lake-perfect-reflection.webp",
+  width: 1200,
+  height: 630,
+  alt: "Moraine Lake Valley of the Ten Peaks",
+};

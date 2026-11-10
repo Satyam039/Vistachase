@@ -27,6 +27,12 @@ import { PackageTripJsonLd } from "@/components/seo/PackageTripJsonLd";
 import { PACKAGE_DAY_PRICE, PRIVATE_MAX_GUESTS, PRIVATE_PACKAGES } from "@/lib/privateTours";
 import { PackageBookingSection } from "@/components/booking/PackageBookingSection";
 import { cancellationShort } from "@/lib/policy";
+import { cachePublicData } from "@/lib/api/cachePolicy";
+
+// Rendered once and served from cache, refreshed in the background at most every minute, instead of
+// on every request (fix recheck, 10 Nov 2026, N2/R2: 2.7-10 s responses and 5xx under a crawl).
+// Seats and prices on this page can be up to a minute old; checkout (/book) always reads them live.
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Four-Day Rockies & Jasper Private Tour | Vista Chase",
@@ -258,6 +264,7 @@ const IMPORTANT_INFO = [
 ];
 
 export default function FourDayRockiesAndJasperPage() {
+  cachePublicData();
 
   return (
     <>

@@ -13,6 +13,9 @@
 //    title the audit reported; the same rule for the 13 descriptions over 160 characters.
 // 3. Blog posts: empty SEO title, meta description and social image are filled from the post's own
 //    Webflow fields (Name, Post Summary, Thumbnail Image), the way the Webflow template used them.
+// 4. Renamed images (RENAMED_MEDIA, 10 Nov 2026: "ChatGPT Image <date>" blog files named after their
+//    post): every saved page that still points at an old /media path is pointed at the new one, in
+//    its text, image fields and unpublished draft. The old paths also 301 (modules/media/renamed-media.ts).
 //
 // Usage:
 //   npm run seed:seo-fixes
@@ -26,6 +29,7 @@ import { isReservedPath } from "../src/modules/seo/paths";
 import { isWebflowUrl } from "../src/modules/seo/seo.audit";
 import { webflowLocalMap } from "../src/modules/seo/portal/images";
 import { BLOG_PREFIX } from "../src/modules/seo/static-routes";
+import { RENAMED_MEDIA } from "../src/modules/media/renamed-media";
 
 const dryRun = process.argv.includes("--dry-run");
 
@@ -111,11 +115,40 @@ async function blogMetadata() {
   console.log(`Blog posts: SEO fields filled on ${changed} of ${posts.length}.`);
 }
 
+const IMAGE_TEXT_FIELDS = ["body", "featuredImage", "thumbnailImage", "ogImage", "twitterImage", "searchImage"] as const;
+
+async function renamedImages() {
+  const pairs = Object.entries(RENAMED_MEDIA);
+  const pages = await prisma.seoPage.findMany({
+    where: { OR: pairs.flatMap(([from]) => [...IMAGE_TEXT_FIELDS.map((f) => ({ [f]: { contains: from } })), { draft: { string_contains: from } }]) },
+    select: { id: true, path: true, body: true, featuredImage: true, thumbnailImage: true, ogImage: true, twitterImage: true, searchImage: true, draft: true },
+  });
+  const swap = (text: string) => pairs.reduce((out, [from, to]) => out.split(from).join(to), text);
+  let changed = 0;
+  for (const p of pages) {
+    const data: Record<string, unknown> = {};
+    for (const f of IMAGE_TEXT_FIELDS) {
+      const v = p[f];
+      if (v && swap(v) !== v) data[f] = swap(v);
+    }
+    if (p.draft) {
+      const raw = JSON.stringify(p.draft);
+      if (swap(raw) !== raw) data.draft = JSON.parse(swap(raw));
+    }
+    if (!Object.keys(data).length) continue;
+    if (dryRun) console.log(`  would point ${p.path} at renamed images: ${Object.keys(data).join(", ")}`);
+    else await prisma.seoPage.update({ where: { id: p.id }, data });
+    changed++;
+  }
+  console.log(`Renamed images: ${changed} pages updated.`);
+}
+
 async function main() {
   await redirects();
   await metaFixes("seoTitle", fixes.titles);
   await metaFixes("metaDescription", fixes.descriptions);
   await blogMetadata();
+  await renamedImages();
 }
 
 main()

@@ -11,10 +11,17 @@ import { PackageListJsonLd } from "@/components/seo/PackageTripJsonLd";
 import { TWO_DAY_PACKAGE } from "@/lib/sharedTours";
 import { PRIVATE_PACKAGES } from "@/lib/privateTours";
 import type { TourWithAvailability } from "@/lib/api/types";
+import { cachePublicData } from "@/lib/api/cachePolicy";
+
+// Rendered once and served from cache, refreshed in the background at most every minute, instead of
+// on every request (fix recheck, 10 Nov 2026, N2/R2: 2.7-10 s responses and 5xx under a crawl).
+// Seats and prices on this page can be up to a minute old; checkout (/book) always reads them live.
+export const revalidate = 60;
 
 const PATH = "/multi-day-tour-package-for-banff";
 
 export async function generateMetadata(): Promise<Metadata> {
+  cachePublicData();
   return withSeo(PATH, {
     title: "Multi-Day Canadian Rockies Tours from Banff | Vista Chase",
     description:
@@ -24,6 +31,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function MultiDayPage() {
+  cachePublicData();
   let tours: TourWithAvailability[] = [];
   try {
     tours = await getTours();

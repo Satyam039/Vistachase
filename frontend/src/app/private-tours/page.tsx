@@ -6,6 +6,12 @@ import type { TourWithAvailability } from "@/lib/api/types";
 import type { Metadata } from "next";
 import { withSeo } from "@/lib/seo/server";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
+import { cachePublicData } from "@/lib/api/cachePolicy";
+
+// Rendered once and served from cache, refreshed in the background at most every minute, instead of
+// on every request (fix recheck, 10 Nov 2026, N2/R2: 2.7-10 s responses and 5xx under a crawl).
+// Seats and prices on this page can be up to a minute old; checkout (/book) always reads them live.
+export const revalidate = 60;
 
 const baseMetadata: Metadata = {
   title: "Private Tours in Banff & the Canadian Rockies | Vista Chase",
@@ -17,6 +23,7 @@ const baseMetadata: Metadata = {
 };
 
 export default async function PrivateToursPage() {
+  cachePublicData();
   let tours: TourWithAvailability[] = [];
   try {
     tours = await getTours({ category: "PRIVATE" });
@@ -42,5 +49,6 @@ export default async function PrivateToursPage() {
 }
 
 export function generateMetadata(): Promise<Metadata> {
+  cachePublicData();
   return withSeo("/private-tours", baseMetadata);
 }

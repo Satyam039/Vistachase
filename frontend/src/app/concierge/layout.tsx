@@ -4,6 +4,8 @@ import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 // The page is a client component, so its title and description are set here (WCAG 2.4.2).
 const baseMetadata: Metadata = {
+  // A chat tool with little text of its own: kept out of search (fix recheck, 10 Nov 2026, N11).
+  robots: { index: false, follow: true },
   // Without this the page inherits the root layout's canonical ("/") and asks search engines to index the home page instead.
   alternates: { canonical: "/concierge" },
   title: "AI Travel Concierge | Vista Chase",

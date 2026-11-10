@@ -17,6 +17,16 @@ import { toursForTourCards } from "@/lib/experiences";
 import { siteOrigin, withSeo } from "@/lib/seo/server";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
+import { cachePublicData } from "@/lib/api/cachePolicy";
+
+// Rendered once and served from cache, refreshed in the background at most every minute, instead of
+// on every request (fix recheck, 10 Nov 2026, N2/R2: 2.7-10 s responses and 5xx under a crawl).
+// Seats and prices on this page can be up to a minute old; checkout (/book) always reads them live.
+export const revalidate = 60;
+// Pages are rendered on their first visit (not at build time), then cached as above.
+export function generateStaticParams() {
+  return [];
+}
 
 type Highlight = { name: string; body: string; image: string };
 
@@ -86,6 +96,7 @@ const META_DESCRIPTION: Record<string, string> = {
 };
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  cachePublicData();
   const { slug } = await params;
   const dest = await getDestinationBySlug(slug);
   if (!dest) return { title: "Destination not found | Vista Chase" };
@@ -97,6 +108,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 export default async function DestinationDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  cachePublicData();
   const { slug } = await params;
   const [dest, allTours, destinations] = await Promise.all([getDestinationBySlug(slug), getTours(), getDestinations()]);
   if (!dest) notFound();
