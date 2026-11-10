@@ -2,6 +2,7 @@ import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
 import { Router } from "express";
 import { z } from "zod";
 import { createEnquiry } from "@/modules/enquiries/enquiry.repository";
+import { looksLikeBotName } from "@/modules/enquiries/spam";
 
 const router = Router();
 
@@ -34,6 +35,7 @@ router.post("/", rateLimitMiddleware("enquiry_create", { maxRequests: 5, windowS
     return res.status(400).json({ success: false, error: "Please check the highlighted fields.", fields: parsed.error.flatten().fieldErrors });
   }
   if (parsed.data.website) return res.json({ success: true }); // bot: pretend it worked
+  if (looksLikeBotName(parsed.data.name)) return res.status(201).json({ success: true }); // random-string bot name: not saved or emailed
 
   recent.push(now);
   hits.set(key, recent);

@@ -85,7 +85,7 @@ export async function syncMasterKnowledgeBase(): Promise<KnowledgeBaseMetadata> 
     const stopSample = stops.slice(0, 8).map((s) => `${s.name} (${s.town})`).join("; ");
 
     liveTourCatalog = `
-## Live catalog (slugs for the tools; some database titles differ from the website names above, so use the website names with guests)
+## Live catalog (slugs for the tools. Database titles can differ from the approved product names above: use the approved names with guests. "from" prices are listing prices, not quotes; use the departure tools for a date's price)
 ${tourLines.join("\n")}
 
 Pickup stops: ${stopCount} in ${towns.join(", ")} (e.g. ${stopSample}). Use find_pickup for exact stops and times.
@@ -99,8 +99,8 @@ Pickup stops: ${stopCount} in ${towns.join(", ")} (e.g. ${stopSample}). Use find
 
   const isWinter = isMoraineLakeRoadSeasonallyClosed();
   const roadStatusNote = isWinter
-    ? "\n> [!NOTE] Current Parks Canada Status: Moraine Lake Road and Takakkaw Falls are CLOSED for the winter season (mid-October to late May). Tours run their winter itineraries (Columbia Icefield Adventure visits Abraham Lake instead of the glacier activities).\n"
-    : "\n> [!NOTE] Current Parks Canada Status: Moraine Lake Road is OPEN for licensed commercial tour operators.\n";
+    ? "\n> [!NOTE] Season: winter (outside the June 1 to October 10 programme). Moraine Lake and the Icefield attractions are not operating; routes are adjusted, so the selected date's route needs team confirmation.\n"
+    : "\n> [!NOTE] Season: summer programme (June 1 to October 10). Seasonal access still depends on official openings and conditions.\n";
 
   // Build the complete master knowledge text
   const masterContent = `${VISTACHASE_STATIC_KNOWLEDGE_BASE}\n${roadStatusNote}\n${liveTourCatalog}`.trim();

@@ -4,6 +4,7 @@
 // gets an email saying the team has it. When a live chat service is connected (the frontend's
 // NEXT_PUBLIC_CRISP_WEBSITE_ID), the chat opens there as well, and this record is the backup.
 
+import { staffInbox } from "@/lib/email/staff-inbox";
 import prisma from "@/lib/db/prisma";
 import { getEmailProvider } from "@/lib/email/email.provider";
 import { conciergeLanguage } from "@/lib/ai/languages";
@@ -20,7 +21,7 @@ export interface HandoffInput {
 
 const escape = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
-export const supportInbox = () => process.env.SUPPORT_HANDOFF_TO || process.env.ENQUIRIES_TO || "info@vistachase.com";
+export const supportInbox = () => staffInbox(process.env.SUPPORT_HANDOFF_TO, process.env.ENQUIRIES_TO);
 
 export async function createSupportHandoff(input: HandoffInput) {
   const lang = conciergeLanguage(input.language);
