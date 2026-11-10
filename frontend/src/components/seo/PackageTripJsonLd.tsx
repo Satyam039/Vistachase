@@ -4,6 +4,7 @@
 
 import { JsonLd, BreadcrumbJsonLd, type Crumb } from "@/components/seo/JsonLd";
 import { siteOrigin } from "@/lib/seo/server";
+import { TOUR_PROVIDER } from "@/lib/seo/business";
 
 export function PackageTripJsonLd({
   path,
@@ -34,7 +35,7 @@ export function PackageTripJsonLd({
           url: `${origin}${path}`,
           image: image.startsWith("/") ? `${origin}${image}` : image,
           touristType,
-          provider: { "@type": "TouristInformationCenter", name: "Vista Chase", url: origin },
+          provider: TOUR_PROVIDER,
           itinerary: {
             "@type": "ItemList",
             numberOfItems: days.length,

@@ -47,6 +47,7 @@ import {
   reviewsLabel,
 } from "@/components/tours/TourCard";
 import type { DepartureAvailability, TourSection, TourWithAvailability } from "@/lib/api/types";
+import { TOUR_PROVIDER } from "@/lib/seo/business";
 
 const CATEGORY = {
   SHARED: { label: "Shared tours", href: "/shared-tours", sub: "Small group · max 12 guests" },
@@ -357,11 +358,7 @@ export function TourDetailView({
           priceSpecification: { "@type": "UnitPriceSpecification", price, priceCurrency: tour.currency, unitText: "group" },
         }),
       },
-      provider: {
-        "@type": "TouristInformationCenter",
-        name: "Vista Chase",
-        url: "https://www.vistachase.com",
-      },
+      provider: TOUR_PROVIDER,
       // No aggregateRating: every tour carried the company's 1,700 reviews, and Google's review
       // snippet rules need reviews of this tour itself (fix recheck, 9 Nov 2026: N4 / doc D10).
     },
