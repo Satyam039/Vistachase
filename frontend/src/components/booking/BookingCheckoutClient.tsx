@@ -222,7 +222,6 @@ export function BookingCheckoutClient({
   initialAdults,
   initialChildren,
   initialInfants,
-  initialAirport = false,
   initialActivities = false,
 }: {
   departure: DepartureData;
@@ -235,8 +234,6 @@ export function BookingCheckoutClient({
   initialChildren?: number;
   /** Infants chosen on the tour page (?infants=). */
   initialInfants?: number;
-  /** Airport transfer ticked on a private tour's page (?airport=1). */
-  initialAirport?: boolean;
   /** "Add-on activities" ticked on a private tour's page (?activities=1). */
   initialActivities?: boolean;
 }) {
@@ -273,7 +270,9 @@ export function BookingCheckoutClient({
   );
   const [infants, setInfants] = useState(() => Math.max(0, Math.min(initialInfants ?? 0, MAX_INFANTS)));
   // Airport transfer (private tours only): no price yet, so it doesn't change the total.
-  const [airport, setAirport] = useState(initialAirport && departure.tour?.category === "PRIVATE");
+  // Single private days don't offer the airport transfer (owner's approved rules, 2026-11-10: two or
+  // more tour days only), so this stays off; the package checkout has its own.
+  const [airport, setAirport] = useState(false);
   const [airportTransfer, setAirportTransfer] = useState<AirportTransferValue>(EMPTY_AIRPORT_TRANSFER);
   // Activity add-ons on this tour's itinerary (summer only): requested now, priced by the team.
   const offeredAddOns = activityAddOnsFor(departure.tour?.slug, departure.date);
@@ -1258,18 +1257,6 @@ export function BookingCheckoutClient({
                               variant="detached"
                               message={currentErrors.seats}
                             />
-                          )}
-                          {departure.tour?.category === "PRIVATE" && totalSeats >= 2 && (
-                            <>
-                              <AirportTransferToggle checked={airport} onChange={setAirport} />
-                              {airport && (
-                                <AirportTransferDetails
-                                  value={airportTransfer}
-                                  onChange={setAirportTransfer}
-                                  error={currentErrors.airport}
-                                />
-                              )}
-                            </>
                           )}
                           {isPrivate ? (
                             <>

@@ -421,7 +421,7 @@ export class AgentToolExecutor {
               seats_remaining: remainingSeats,
               origin_hub: origin_hub || "Banff / Canmore",
               seasonal_notice: isMoraineRoadClosed && dep.tour?.title?.includes("Moraine")
-                ? "Moraine Lake Road is closed for the winter season. Tour features Johnston Canyon Icewalk or Abraham Lake alternative."
+                ? "Moraine Lake Road is closed for the winter season. The route is adjusted; confirm it with the team."
                 : null,
             };
           })

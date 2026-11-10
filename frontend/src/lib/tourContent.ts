@@ -84,7 +84,7 @@ const CONTENT: Record<string, DocContent> = {
       "Admission fees for itinerary stops",
       "Moraine Lake access (June 1 to October 10)",
       "Pickup and drop-off in Banff and Canmore",
-      "Gratuities",
+      // "Gratuities" removed (owner, 2026-11-10): gratuity inclusion awaits the owner's confirmation.
       "Taxes and required fees",
     ],
     exclusions: ["Lunch (stop in Lake Louise Village)", "Personal expenses"],
@@ -175,7 +175,7 @@ const CONTENT: Record<string, DocContent> = {
     ],
     // "Important Information" from the owner's doc (2026-11-04).
     seasonal: [
-      "Seasonal activities: The Columbia Icefield Ice Explorer and Skywalk are included on departures operating from June 1 to October 10. Outside these dates, these activities are unavailable and the sightseeing itinerary is adjusted. Abraham Lake, known for its frozen bubbles, is added to the itinerary in winter.",
+      "Seasonal activities: The Columbia Icefield Ice Explorer and Skywalk are included on departures operating from June 1 to October 10. Outside these dates, these activities are unavailable and the sightseeing itinerary is adjusted. Our team confirms the winter route for your date.",
       "Weather and road conditions: Stops, routes and their order may change due to weather, road closures or operational requirements.",
       "What to bring: Dress in layers and bring a warm jacket, comfortable walking shoes and water. Temperatures at the Columbia Icefield can be significantly colder than in Banff.",
       "Wildlife: Wildlife sightings are possible but cannot be guaranteed.",
@@ -278,7 +278,7 @@ CONTENT[PRIVATE_ICEFIELD.slug!] = {
   seasonal: [
     "Price per vehicle, up to 13 guests: CAD $1,750 from June 1 to October 10; CAD $1,240 from October 11 to May 31.",
     "Ice Explorer and Skywalk: June 1 to October 10, optional and at extra cost.",
-    "From October 11 to May 31 the glacier activities don't run, and the day visits Abraham Lake instead.",
+    "From October 11 to May 31 the glacier activities don't run and the route is adjusted; our team confirms the route for your date.",
     "Pack an extra warm layer for the Columbia Icefield.",
     "Wildlife sightings are possible but can't be guaranteed.",
   ],

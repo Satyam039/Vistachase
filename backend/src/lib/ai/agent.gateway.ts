@@ -89,7 +89,7 @@ export class AgentExecutionGateway {
     // BLOCK 2: Static Knowledge Base with cache_control: {"type": "ephemeral"}
     const mountainTime = getMountainTimeContext();
     const moraineStatus = mountainTime.isWinterSeason
-      ? "CLOSED for winter season (mid-October through late May). Recommend Abraham Lake ice bubbles or Johnston Canyon ice walks."
+      ? "CLOSED for winter season (mid-October through late May)."
       : "OPEN for summer commercial access.";
 
     // BLOCK 3: Dynamic Session Context (Uncached Tail ~50 tokens)

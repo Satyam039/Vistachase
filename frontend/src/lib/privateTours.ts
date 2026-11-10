@@ -166,7 +166,7 @@ export const PRIVATE_OPTIONS: PrivateTourOption[] = [
     airportTransfers: "Available with 2+ Tour Days",
     priceFrom: 0,
     priceUnit: "per vehicle",
-    priceNote: "Jun 1–Oct 10: CAD $1,750. Oct 11–May 31: CAD $1,240, with Abraham Lake in place of the Icefield Adventure. Private, up to 13 guests.",
+    priceNote: "Jun 1–Oct 10: CAD $1,750. Oct 11–May 31: CAD $1,240, on an adjusted winter route. Private, up to 13 guests.",
     seasonalPricing: {
       summer: "CAD $1,750 per vehicle",
       winter: "CAD $1,240 per vehicle",
