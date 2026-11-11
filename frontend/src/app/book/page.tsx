@@ -58,6 +58,7 @@ export default async function BookPage({
         instructions: s.instructions,
       }))}
       initialHoldToken={searchParams.holdToken}
+      initialPickupStopId={searchParams.pickupStopId}
       initialGuests={Number.parseInt(searchParams.guests ?? "", 10) || undefined}
       initialAdults={Number.parseInt(searchParams.adults ?? "", 10) || undefined}
       initialChildren={Number.parseInt(searchParams.children ?? "", 10) || undefined}

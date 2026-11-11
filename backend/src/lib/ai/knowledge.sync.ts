@@ -3,6 +3,7 @@ import prisma from "@/lib/db/prisma";
 import { getCacheProvider } from "@/lib/cache/cache.provider";
 import { VISTACHASE_STATIC_KNOWLEDGE_BASE } from "./knowledge.base";
 import { conciergeTours } from "@/modules/tours/product-map";
+import { websiteName } from "./concierge.catalog";
 
 // Keyed by the static text's hash, so a deploy that changes knowledge.base.ts never serves the
 // previous version from Redis.
@@ -78,14 +79,14 @@ export async function syncMasterKnowledgeBase(): Promise<KnowledgeBaseMetadata> 
           ? `from CAD $${(t.basePrice / 100).toLocaleString("en-CA")} ${t.priceUnit === "GROUP" ? "per vehicle" : "per guest"}`
           : "Price on request";
       const mode = t.bookingMode === "ENQUIRY" ? " · enquiry only (custom quote)" : "";
-      return `- ${t.title} [slug: ${t.slug}] · ${t.category} · ~${t.durationHours}h · ${priceFormatted}${mode}`;
+      return `- ${websiteName(t)} [slug: ${t.slug}, page /${t.slug}] · ${t.category} · ~${t.durationHours}h · ${priceFormatted}${mode}`;
     });
 
     const towns = [...new Set(stops.map((s) => s.town))];
     const stopSample = stops.slice(0, 8).map((s) => `${s.name} (${s.town})`).join("; ");
 
     liveTourCatalog = `
-## Live catalog (slugs for the tools. Database titles can differ from the approved product names above: use the approved names with guests. "from" prices are listing prices, not quotes; use the departure tools for a date's price)
+## Live catalog (current website products; slugs for the tools. "from" prices are listing prices, not quotes; use the departure tools for a date's price)
 ${tourLines.join("\n")}
 
 Pickup stops: ${stopCount} in ${towns.join(", ")} (e.g. ${stopSample}). Use find_pickup for exact stops and times.

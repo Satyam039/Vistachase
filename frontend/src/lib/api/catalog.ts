@@ -14,7 +14,7 @@ import type {
   ShuttleWithDepartures,
   TourWithAvailability,
 } from "@/lib/api/types";
-import { withDocContent } from "@/lib/tourContent";
+import { docTitleAndSummary, withDocContent } from "@/lib/tourContent";
 import { ACTIVITY_TICKETS_VISIBLE } from "@/lib/activityTickets";
 
 /**
@@ -162,6 +162,9 @@ export async function getDestinationBySlug(slug: string): Promise<DestinationDet
 export async function getCheckoutData(departureId?: string): Promise<CheckoutData | null> {
   try {
     const data = await apiGetOrNull<CheckoutData>("/api/departures/checkout", { departureId });
+    // Checkout names the tour as its page does, not with the old Webflow title from the database.
+    const doc = data?.departure.tour ? docTitleAndSummary(data.departure.tour.slug) : null;
+    if (data && doc && data.departure.tour) return { ...data, departure: { ...data.departure, tour: { ...data.departure.tour, ...doc } } };
     if (data) return data;
   } catch (err) {
     unstable_rethrow(err); // Next.js "render per request" signal, not an outage

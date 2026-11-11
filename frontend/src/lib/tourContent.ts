@@ -310,6 +310,12 @@ function withPolicyFaq(tour: TourWithAvailability): TourWithAvailability {
 }
 
 /** The quick facts the owner's doc sets for a tour's page, if it sets any. */
+/** The website's title and summary for a doc tour (the database still has old Webflow copy), else null. */
+export function docTitleAndSummary(slug: string): { title: string; summary: string } | null {
+  const c = CONTENT[slug];
+  return c ? { title: c.title, summary: c.summary } : null;
+}
+
 export function docQuickFacts(slug: string): { label: string; value: string }[] | null {
   return CONTENT[slug]?.quickFacts ?? null;
 }

@@ -7,6 +7,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { moneyExact } from "@/lib/pricing";
 import { ArrowRight, Calendar, Car, CheckCircle2, Clock, MapPin, ShieldCheck, Ticket } from "lucide-react";
 import { ConciergeSeatMap, type SeatInfo } from "./ConciergeSeatMap";
 
@@ -138,7 +139,7 @@ export function VoiceBookingCardStream({ data, checkoutUrl, hasSafetyRefusal, on
                   </span>
                   <span className="shrink-0 text-right">
                     <span className="block text-sm text-obsidian-900">
-                      CAD ${dep.price}
+                      {moneyExact(dep.price)}
                     </span>
                     <span className="text-xs text-ocean-700">Choose</span>
                   </span>
@@ -196,7 +197,8 @@ export function VoiceBookingCardStream({ data, checkoutUrl, hasSafetyRefusal, on
               </p>
               {data.departure.price != null && (
                 <p className="mt-2 text-right text-base text-obsidian-900">
-                  CAD ${data.departure.price.toFixed(2)}
+                  {moneyExact(data.departure.price)}
+                  <span className="block text-xs text-slate-600">Final total confirmed at checkout</span>
                 </p>
               )}
             </div>

@@ -70,8 +70,15 @@ export const ON_SALE = { slug: { notIn: REMOVED_TOUR_SLUGS } };
  * (set it together with the frontend's NEXT_PUBLIC_SHOW_ACTIVITY_TICKETS=true to show them again).
  */
 export const activityTicketsVisible = () => process.env.SHOW_ACTIVITY_TICKETS === "true";
-/** What the concierge may talk about: products on sale, without tickets while they're hidden. */
-export const conciergeTours = () => (activityTicketsVisible() ? ON_SALE : { ...ON_SALE, category: { not: "TICKET" as const } });
+/**
+ * What the concierge may talk about: products listed on the website, without tickets while they're
+ * hidden. The unlisted multi-day enquiry row (old Webflow "Multi-Day Canadian Rockies Experience")
+ * is left out: the knowledge base describes the current multi-day packages and their pages.
+ */
+export const conciergeTours = () => {
+  const listed = { slug: { notIn: [...REMOVED_TOUR_SLUGS, ...UNLISTED_TOUR_SLUGS] } };
+  return activityTicketsVisible() ? listed : { ...listed, category: { not: "TICKET" as const } };
+};
 /**
  * Pages that stay (and stay in the sitemap) but are not listed as a product: the old multi-day
  * enquiry product's URL now shows the Multi-Day Journeys page (frontend app/multi-day-tour-package-for-banff).

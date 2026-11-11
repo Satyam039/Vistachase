@@ -218,6 +218,7 @@ export function BookingCheckoutClient({
   departure,
   stops,
   initialHoldToken,
+  initialPickupStopId,
   initialGuests,
   initialAdults,
   initialChildren,
@@ -228,6 +229,8 @@ export function BookingCheckoutClient({
   departure: DepartureData;
   stops: StopData[];
   initialHoldToken?: string;
+  /** Pickup stop the guest chose with the AI concierge (?pickupStopId=). */
+  initialPickupStopId?: string;
   /** Party size chosen on the tour page (?guests=); a concierge hold overrides it. */
   initialGuests?: number;
   /** Adults and children chosen on the tour page (?adults=&children=); take precedence over ?guests=. */
@@ -297,7 +300,9 @@ export function BookingCheckoutClient({
   const customerPhone = phoneLocal.trim() ? `+${dialCode(phoneCountry)} ${phoneLocal.trim()}` : "";
 
   // Pickup & extras
-  const [pickupStopId, setPickupStopId] = useState(stops[0]?.id ?? "");
+  const [pickupStopId, setPickupStopId] = useState(
+    (initialPickupStopId && stops.some((s) => s.id === initialPickupStopId) ? initialPickupStopId : stops[0]?.id) ?? "",
+  );
   const [customPickup, setCustomPickup] = useState("");
   const [specialRequests, setSpecialRequests] = useState("");
 
@@ -470,6 +475,9 @@ export function BookingCheckoutClient({
           setHoldToken(data.hold.holdToken);
           setHoldSeats(data.hold.seatsCount);
           setHoldExpiresAt(Date.parse(data.hold.expiresAt));
+          // Name and email the guest gave the concierge (still editable).
+          if (data.hold.customerName) setCustomerName((v) => v || data.hold.customerName);
+          if (data.hold.customerEmail) setCustomerEmail((v) => v || data.hold.customerEmail);
           // A seat hold fixes the party size; a vehicle hold covers any party that fits.
           if (!data.hold.isVehicle) {
             setAdults(Math.max(1, data.hold.seatsCount));

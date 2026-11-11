@@ -4,7 +4,7 @@
 // to shared tours, the Moraine Lake shuttle to the Moraine Lake tours. Cancellation terms stay on
 // each tour page, because they differ for multi-day trips and larger groups.
 
-import { BadgeCheck, Compass, MountainSnow, Users } from "lucide-react";
+import { BadgeCheck, Clock, Compass, MountainSnow, Users } from "lucide-react";
 
 const PROPS = [
   {
@@ -29,17 +29,42 @@ const PROPS = [
   },
 ];
 
-export function TrustRow() {
+// Shuttle page (owner's wording, 2026-11-11): the lake shuttle has no guide, so it gets its own four.
+const SHUTTLE_PROPS = [
+  {
+    icon: Users,
+    title: "Small-Group Travel",
+    body: "Enjoy a comfortable shared ride to two of the Rockies’ most memorable lakes.",
+  },
+  {
+    icon: MountainSnow,
+    title: "Both Lakes Included",
+    body: "Visit Moraine Lake and Lake Louise, with transportation between them arranged.",
+  },
+  {
+    icon: Clock,
+    title: "Departures That Fit",
+    body: "Choose from multiple daily departures, with pickups in Canmore, Banff and Lake Louise Village.",
+  },
+  {
+    icon: BadgeCheck,
+    title: "Clear, Upfront Pricing",
+    body: "See your total before booking, with taxes and required shuttle fees included.",
+  },
+];
+
+export function TrustRow({ variant = "tours" }: { variant?: "tours" | "shuttles" } = {}) {
+  const items = variant === "shuttles" ? SHUTTLE_PROPS : PROPS;
   return (
     <section aria-label="Why book with Vista Chase" className="border-b border-obsidian-900/[0.06] bg-white">
       <ul
         className="mx-auto grid max-w-7xl grid-cols-1 gap-x-8 gap-y-6 px-page py-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-0 lg:py-10"
         data-stagger
       >
-        {PROPS.map(({ icon: Icon, title, body }, i) => (
+        {items.map(({ icon: Icon, title, body }, i) => (
           <li
             key={title}
-            className={`flex items-start gap-4 ${i > 0 ? "lg:border-l lg:border-obsidian-900/[0.08] lg:pl-8" : ""} ${i < PROPS.length - 1 ? "lg:pr-6" : ""}`}
+            className={`flex items-start gap-4 ${i > 0 ? "lg:border-l lg:border-obsidian-900/[0.08] lg:pl-8" : ""} ${i < items.length - 1 ? "lg:pr-6" : ""}`}
           >
             <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-ocean-50 text-ocean-700">
               <Icon className="h-5 w-5" aria-hidden="true" />
