@@ -16,7 +16,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { ArrowUp, Brain, Clock, FileText, Globe, Headset, Image as ImageIcon, LayoutGrid, Maximize2, Mic, Navigation, Paperclip, RotateCcw, Smile, Sparkles, Square, Sunrise, Ticket, Volume2, VolumeX, X, MapPin } from "lucide-react";
+import { ArrowUp, Award, Brain, Clock, FileText, Globe, Headset, Image as ImageIcon, LayoutGrid, Maximize2, Mic, Navigation, Paperclip, Percent, RotateCcw, Smile, Sparkles, Square, Sunrise, Ticket, Volume2, VolumeX, X, MapPin } from "lucide-react";
 import { VoiceBookingCardStream, type VoiceCardData } from "./VoiceBookingCardStream";
 import { ConciergeMarkdownRenderer } from "./ConciergeMarkdownRenderer";
 import { ConciergeHistoryDrawer, type ChatSessionMeta } from "./ConciergeHistoryDrawer";
@@ -65,11 +65,15 @@ interface Message {
 
 type VoiceState = "idle" | "listening" | "thinking" | "speaking";
 
+// Starter questions (owner's "AI Training for Vista Chase", 2026-11-11): help guests choose a
+// service and move towards booking.
 const SUGGESTIONS = [
   { icon: Navigation, text: "Which tour is right for my trip?" },
-  { icon: Sunrise, text: "How can I visit Moraine Lake and Lake Louise?" },
-  { icon: Sparkles, text: "What private tours can I book?" },
-  { icon: MapPin, text: "Can you help me plan a multi-day trip?" },
+  { icon: Award, text: "What makes your award-winning Banff & Yoho tour special?" },
+  { icon: Ticket, text: "Which shared tour includes Ice Explorer and Skywalk tickets?" },
+  { icon: Percent, text: "Can I book both shared tours and save 10%?" },
+  { icon: Sunrise, text: "How can I visit Moraine Lake and Lake Louise by shuttle?" },
+  { icon: MapPin, text: "Can you help me plan a private or multi-day tour?" },
 ];
 
 type SpeechRecognitionLike = {
