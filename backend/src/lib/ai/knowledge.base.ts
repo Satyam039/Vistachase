@@ -35,7 +35,7 @@ Offer only approved, enabled Vista Chase products. Do not create a sixth private
 Sightseeing scope is Banff, Jasper and Yoho national parks. Canmore pickups and eligible Calgary airport transfers are supported separately.
 Shared tours: maximum 12 guests in a 15-passenger van. Shuttles: up to 24 per vehicle, subject to actual configuration. Private tours: per vehicle, exclusive to the party, subject to the product’s passenger and luggage limits. Every infant counts towards capacity. Pickup towns on one shuttle departure share inventory; they are not separate allocations.
 Explain that the shared Icefield activity is included on applicable seasonal departures, including that day of the shared two-day package. Private activities are optional, team-arranged and billed separately. Interest is not a confirmed attraction ticket.
-Airport transfers require two or more private tour days, a confirmed quote and suitable passenger/luggage capacity. Never describe them as automatically free. No standalone transfers or one-day eligibility.
+Airport transfers require two or more private tour days and suitable passenger/luggage capacity. The price is CAD $364 per transfer, added to the booking total at checkout. Never describe them as free. No standalone transfers or one-day eligibility.
 
 ## Using itineraries and schedules
 Identify the exact product, shared or private service, travel date and package day before answering. Do not combine stops or inclusions from different products. The three- and four-day routes have their own itineraries; they are not simply repetitions of the two-day package.
@@ -328,7 +328,7 @@ No. You are responsible for making your own hotel reservations. Confirm your tou
 ### 18. Can you provide airport transfers?
 Yes. Airport transfers are available to guests booking private tours with Vista Chase for two or more days. They can help you plan your visit without renting a car.
 
-Request the transfer when booking and provide your flight details, accommodation, passenger count and luggage requirements. Transfer availability, vehicle arrangements and the applicable price must be confirmed. Airport transfers are not automatically included in the listed tour price.
+The transfer is CAD $364 per transfer. Tick the airport transfer box when you book and provide your flight details, accommodation, passenger count and luggage requirements: the price is added to your total and paid with your tour.
 
 ### 19. Are airport transfers available with a one-day tour or as a standalone booking?
 Not currently. Vista Chase offers airport transfers with private tour bookings of two or more days. We do not currently accept standalone airport transfers or airport-transfer bookings attached only to a one-day tour.

@@ -29,11 +29,12 @@ import {
   type AirportTransferValue,
 } from "@/components/booking/AirportTransferFields";
 import { ActivityAddOnToggle } from "@/components/booking/ActivityAddOnFields";
-import { activityAddOnsRequestLine } from "@/lib/activityAddOns";
+import { activityAddOnsRequestLine, activityGuestsFor, type ActivityGuests } from "@/lib/activityAddOns";
 import { Dropdown } from "@/components/forms/Dropdown";
 import { PhoneField } from "@/components/forms/PhoneField";
 import { dialCode } from "@/lib/countries";
 import { StripeCheckoutForm, stripeConfigured } from "@/components/booking/StripeCheckoutForm";
+import { balanceDueDate, DEPOSIT_PERCENT, depositAvailable, depositFor, formatRockiesDate } from "@/lib/policy";
 
 export interface PackageDeparture {
   id: string;
@@ -121,6 +122,7 @@ export function PackageCheckout({
   maxGuests,
   requestHref = `/contact-us?package=${packageSlug}`,
   cancellationNote = "Each day can be cancelled for a full refund up to 24 hours before it starts.",
+  depositAllowed = false,
 }: {
   packageSlug: string;
   title: string;
@@ -135,6 +137,8 @@ export function PackageCheckout({
   /** Where to ask about other dates when none are free. */
   requestHref?: string;
   cancellationNote?: string;
+  /** Private journeys: offer "continue with a 20% deposit" beside full payment (owner, 2026-11-11). */
+  depositAllowed?: boolean;
 }) {
   const MAX_GUESTS = maxGuests ?? SHARED_MAX_GUESTS;
   const discountOn = (date: string | undefined) => (date && !inSummer(date) && winterDiscountPercent != null ? winterDiscountPercent : discountPercent);
@@ -151,8 +155,11 @@ export function PackageCheckout({
   const [requests, setRequests] = useState("");
   // Private journeys: "Add-on activities" (owner, 2026-11-09), arranged by the team and paid separately.
   const [activities, setActivities] = useState(false);
+  // Who joins the activities, with ages (owner, 2026-11-11); null until the guest changes it.
+  const [activityGuestsPicked, setActivityGuests] = useState<ActivityGuests | null>(null);
   const [airport, setAirport] = useState(false);
   const [airportTransfer, setAirportTransfer] = useState<AirportTransferValue>(EMPTY_AIRPORT_TRANSFER);
+  const [paymentPlan, setPaymentPlan] = useState<"FULL" | "DEPOSIT">("FULL");
   const [attempted, setAttempted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -162,6 +169,7 @@ export function PackageCheckout({
   const keyRef = useRef("");
 
   const guests = vehicle ? adults : adults + children + infants;
+  const activityGuests = activityGuestsPicked ?? activityGuestsFor(adults);
   // Seats a departure needs for the party: infants take one where they pay (same rule as the server);
   // a private day needs the whole vehicle.
   const seatsFor = (d: PackageDeparture) => (vehicle ? d.capacityTotal : adults + children + (d.infantPrice != null ? infants : 0));
@@ -192,10 +200,17 @@ export function PackageCheckout({
   const lines = chosen.map((d) => dayCents(d, adults, children, infants, discountOn(d?.date), vehicle));
   const fare = lines.reduce((n, l) => n + l.fare, 0);
   const saving = lines.reduce((n, l) => n + l.discount, 0);
-  // The transfer is priced as for a private tour (both ways, summer arrivals); never discounted.
+  // The transfer: CAD 364 per transfer (owner, 2026-11-11), added to Day 1; never discounted.
   const transferDollars = withAirport ? airportTransferPrice(airportTransfer, guests) : null;
   const total = lines.reduce((n, l) => n + l.total, 0) + (transferDollars ?? 0) * 100;
   const allPicked = chosen.every(Boolean);
+  // 20% deposit: each day's own deposit (the server rounds per day), when every day is 15+ days away.
+  const canDeposit = depositAllowed && allPicked && total > 0 && chosen.every((d) => d && depositAvailable(d.date.slice(0, 10), d.departureTime));
+  const plan = canDeposit ? paymentPlan : "FULL";
+  const dayTotals = lines.map((l, i) => l.total / 100 + (i === 0 ? (transferDollars ?? 0) : 0));
+  const depositNow = Math.round(dayTotals.reduce((n, t) => n + depositFor(t), 0) * 100) / 100;
+  const firstDay = chosen.filter(Boolean).map((d) => d!).sort((a, b) => a.date.localeCompare(b.date))[0];
+  const balanceDueLabel = firstDay ? formatRockiesDate(balanceDueDate(firstDay.date.slice(0, 10), firstDay.departureTime)) : "";
   const dayWord = days.length === 2 ? "both days" : `all ${days.length} days`;
 
   const phone = phoneLocal.trim() ? `+${dialCode(phoneCountry)} ${phoneLocal.trim()}` : "";
@@ -210,8 +225,10 @@ export function PackageCheckout({
     if (!stopId && !customPickup.trim()) e.stop = "Choose your pickup hotel, or tell us where you're staying.";
     const transfer = withAirport ? airportTransferError(airportTransfer) : null;
     if (transfer) e.airport = transfer;
+    const activityCount = activityGuests.adults + activityGuests.children + activityGuests.infants;
+    if (vehicle && activities && (activityCount < 1 || activityCount > adults)) e.activities = `Choose 1 to ${adults} guests for the add-on activities.`;
     return e;
-  }, [days, picks, name, email, phoneLocal, stopId, customPickup, withAirport, airportTransfer]);
+  }, [days, picks, name, email, phoneLocal, stopId, customPickup, withAirport, airportTransfer, vehicle, activities, activityGuests, adults]);
   const show = (k: string) => (attempted ? errors[k] : undefined);
   const status = (k: string) => (show(k) ? { type: "error" as const, message: errors[k] } : undefined);
 
@@ -240,8 +257,9 @@ export function PackageCheckout({
           adultsCount: adults,
           childrenCount: vehicle ? 0 : children,
           infantsCount: vehicle ? 0 : infants,
-          specialRequests: [requests.trim(), vehicle && activities ? activityAddOnsRequestLine([]) : ""].filter(Boolean).join("\n") || undefined,
+          specialRequests: [requests.trim(), vehicle && activities ? activityAddOnsRequestLine([], activityGuests) : ""].filter(Boolean).join("\n") || undefined,
           airportTransfer: withAirport ? { ...airportTransfer, area: airportTransfer.area || undefined } : undefined,
+          paymentPlan: plan,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -338,8 +356,13 @@ export function PackageCheckout({
                   {airport && <AirportTransferDetails value={airportTransfer} onChange={setAirportTransfer} error={show("airport")} />}
                 </div>
               )}
-              <div className="mt-3">
-                <ActivityAddOnToggle checked={activities} onChange={setActivities} />
+              <div className="mt-3" {...(show("activities") ? { "data-first-error": true } : {})}>
+                <ActivityAddOnToggle checked={activities} onChange={setActivities} guests={activityGuests} onGuestsChange={setActivityGuests} maxGuests={adults} />
+                {show("activities") && (
+                  <p role="alert" className="mt-1.5 text-sm text-red-700">
+                    {errors.activities}
+                  </p>
+                )}
               </div>
             </>
           ) : (
@@ -483,7 +506,7 @@ export function PackageCheckout({
             )}
             {withAirport && (
               <div className="flex justify-between text-white/80">
-                <dt>Calgary airport transfer (both ways)</dt>
+                <dt>Calgary airport transfer</dt>
                 <dd>{transferDollars != null ? cad(transferDollars) : "Confirmed by our team"}</dd>
               </div>
             )}
@@ -491,12 +514,60 @@ export function PackageCheckout({
               <dt>Total</dt>
               <dd>{cad(total / 100)}</dd>
             </div>
+            {plan === "DEPOSIT" && (
+              <>
+                <div className="flex justify-between text-summit-200">
+                  <dt>Due today ({DEPOSIT_PERCENT}% deposit)</dt>
+                  <dd>{cad(depositNow)}</dd>
+                </div>
+                <div className="flex justify-between text-white/80">
+                  <dt>Balance, by {balanceDueLabel}</dt>
+                  <dd>{cad(total / 100 - depositNow)}</dd>
+                </div>
+              </>
+            )}
             <p className="text-sm text-white/60">Taxes and park admission included.</p>
           </dl>
         ) : (
           <p className="mt-4 text-sm text-white/70">
             {vehicle ? `Choose a date for each day to see your total.` : `Choose both dates to see your total with ${discountPercent}% off.`}
           </p>
+        )}
+
+        {canDeposit && !awaiting && (
+          <fieldset className="mt-6">
+            <legend className="text-sm uppercase tracking-[0.18em] text-summit-300">How would you like to pay?</legend>
+            <div className="mt-3 grid gap-3">
+              {(
+                [
+                  { value: "FULL", title: `Pay in full · ${cad(total / 100)}`, detail: "Nothing more to pay before your trip." },
+                  {
+                    value: "DEPOSIT",
+                    title: `Continue with ${DEPOSIT_PERCENT}% payment · ${cad(depositNow)}`,
+                    detail: `Pay the rest, ${cad(total / 100 - depositNow)}, by ${balanceDueLabel} (14 days before each day) from your vouchers. We email you a reminder.`,
+                  },
+                ] as const
+              ).map((option) => (
+                <label
+                  key={option.value}
+                  className={`flex cursor-pointer gap-3 p-3 ring-1 transition-colors ${plan === option.value ? "bg-white/10 ring-summit-300" : "ring-white/20 hover:bg-white/5"}`}
+                >
+                  <input
+                    type="radio"
+                    name="package-payment-plan"
+                    value={option.value}
+                    checked={plan === option.value}
+                    onChange={() => setPaymentPlan(option.value)}
+                    className="mt-1 h-4 w-4 shrink-0 accent-summit-500"
+                  />
+                  <span className="flex flex-col gap-1">
+                    <span className="text-sm text-white">{option.title}</span>
+                    <span className="text-sm text-white/70">{option.detail}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
         )}
 
         <div className="mt-6">
@@ -526,7 +597,7 @@ export function PackageCheckout({
           )}
           <p className="mt-4 flex items-start gap-2 text-sm text-white/60">
             <Lock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-            One secure payment for {dayWord}. {cancellationNote}
+            {plan === "DEPOSIT" ? `One secure ${DEPOSIT_PERCENT}% deposit payment for ${dayWord}.` : `One secure payment for ${dayWord}.`} {cancellationNote}
           </p>
         </div>
       </aside>

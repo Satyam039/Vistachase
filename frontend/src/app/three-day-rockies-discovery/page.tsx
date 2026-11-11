@@ -50,7 +50,7 @@ const SPECS = [
   { label: "Park admission", value: "Included", icon: Check },
   { label: "Activities", value: "Optional extras selected at checkout", icon: Sparkles },
   { label: "Accommodation", value: "Booked directly by guests", icon: BedDouble },
-  { label: "Airport transfers", value: "Available to add", icon: Plane },
+  { label: "Airport transfers", value: "CAD $364 per transfer", icon: Plane },
   { label: "Availability", value: "Seasonal; available dates shown when booking", icon: Calendar },
 ];
 
@@ -444,7 +444,7 @@ export default function ThreeDayRockiesDiscoveryPage() {
                   Your guide will be assigned the day before your tour, and their contact information will be shared once confirmed. We aim to retain the same guide throughout multi-day bookings, subject to availability and operational requirements.
                 </p>
                 <p className="mt-2 text-sm text-ocean-700 font-medium">
-                  Airport transfers are available with this package. Share your flight details when arranging the transfer.
+                  Airport transfers are available with this package for CAD $364 per transfer, added to your total when you tick the airport transfer box. Share your flight details at checkout.
                 </p>
               </div>
 
@@ -520,7 +520,7 @@ export default function ThreeDayRockiesDiscoveryPage() {
               </li>
               <li className="flex items-center gap-3">
                 <Plane className="h-4 w-4 text-summit-300 shrink-0" aria-hidden="true" />
-                <span>Airport transfer can be added (2+ guests)</span>
+                <span>Airport transfer CAD $364 per transfer (2+ guests)</span>
               </li>
               <li className="flex items-center gap-3">
                 <BedDouble className="h-4 w-4 text-summit-300 shrink-0" aria-hidden="true" />

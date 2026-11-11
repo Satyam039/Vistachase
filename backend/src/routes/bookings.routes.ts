@@ -18,7 +18,7 @@ import { tripBookings, tripOf, tripSummary } from "@/modules/bookings/trip";
 import { bookingIcs } from "@/modules/bookings/calendar-event";
 import { emailSchema, parseOr400, referenceSchema, z } from "@/lib/security/validate";
 import { airportTransferSchema } from "@/modules/bookings/airport-transfer";
-import { activityAddOnsSchema } from "@/modules/bookings/activity-add-ons";
+import { activityAddOnsSchema, activityGuestsSchema } from "@/modules/bookings/activity-add-ons";
 
 const router = Router();
 
@@ -44,6 +44,7 @@ const createSchema = z.object({
   paymentPlan: z.enum(["FULL", "DEPOSIT"]).default("FULL"),
   airportTransfer: airportTransferSchema.optional(),
   activityAddOns: activityAddOnsSchema.default([]),
+  activityGuests: activityGuestsSchema.optional(),
 });
 
 router.post("/", rateLimitMiddleware("booking_create", { maxRequests: 5, windowSeconds: 60 }), async (req, res, next) => {
@@ -94,6 +95,8 @@ const packageSchema = z.object({
   specialRequests: z.string().trim().max(1000).optional(),
   // Private journeys: Calgary airport transfer, booked with Day 1 (2+ guests, as for a private tour).
   airportTransfer: airportTransferSchema.optional(),
+  // Private journeys: pay everything, or a 20% deposit now (owner, 2026-11-11).
+  paymentPlan: z.enum(["FULL", "DEPOSIT"]).default("FULL"),
 });
 
 // A package (modules/bookings/package-booking.ts): one booking per day, one payment for all of them.
@@ -113,7 +116,7 @@ router.post("/package", rateLimitMiddleware("booking_create", { maxRequests: 5, 
       affiliateCode: typeof req.cookies?.vc_ref === "string" ? req.cookies.vc_ref : undefined,
     });
     if (!result.success) return res.status(409).json({ success: false, error: result.error });
-    return res.json({ success: true, bookings: result.bookings, totalAmount: result.totalAmount, currency: result.currency, payment: result.payment ?? null, nextStep: result.nextStep, replayed: result.replayed ?? false });
+    return res.json({ success: true, bookings: result.bookings, totalAmount: result.totalAmount, amountDueNow: result.amountDueNow, currency: result.currency, payment: result.payment ?? null, nextStep: result.nextStep, replayed: result.replayed ?? false });
   } catch (error) {
     next(error);
   }

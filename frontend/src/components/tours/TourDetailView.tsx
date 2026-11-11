@@ -28,6 +28,7 @@ import { DepartureCalendar } from "@/components/booking/DepartureCalendar";
 import { docQuickFacts } from "@/lib/tourContent";
 import { PriceTag } from "@/components/pricing/PriceTag";
 import { ActivityAddOnToggle } from "@/components/booking/ActivityAddOnFields";
+import { activityGuestsFor, type ActivityGuests } from "@/lib/activityAddOns";
 import { groupEnquiryHref } from "@/lib/experiences";
 import { cancellationShort, SEATS_MESSAGE } from "@/lib/policy";
 import { Rail } from "@/components/motion/Rail";
@@ -334,6 +335,8 @@ export function TourDetailView({
   // Private tours: "Add-on activities" (owner, 2026-11-09); arranged by the team and paid separately.
   const offersActivities = tour.category === "PRIVATE";
   const [activities, setActivities] = useState(false);
+  // Who joins the activities, with ages (owner, 2026-11-11); null until the guest changes it.
+  const [activityGuests, setActivityGuests] = useState<ActivityGuests | null>(null);
 
   // FAQ accordion state
 
@@ -640,7 +643,15 @@ export function TourDetailView({
                         onChange={setPartySize}
                         hint={`Vehicle seats up to ${maxPartySize}`}
                       />
-                      {offersActivities && <ActivityAddOnToggle checked={activities} onChange={setActivities} />}
+                      {offersActivities && (
+                        <ActivityAddOnToggle
+                          checked={activities}
+                          onChange={setActivities}
+                          guests={activityGuests ?? activityGuestsFor(partySize)}
+                          onGuestsChange={setActivityGuests}
+                          maxGuests={partySize}
+                        />
+                      )}
                     </>
                   ) : (
                     <>
@@ -730,7 +741,15 @@ export function TourDetailView({
                       href={`/book?${new URLSearchParams({
                         departureId: selectedDepartureId || tour.departures[0]?.id || "",
                         ...(isVehicle
-                          ? { guests: String(partySize), ...(offersActivities && activities ? { activities: "1" } : {}) }
+                          ? {
+                              guests: String(partySize),
+                              ...(offersActivities && activities
+                                ? (() => {
+                                    const g = activityGuests ?? activityGuestsFor(partySize);
+                                    return { activities: "1", actAdults: String(g.adults), actChildren: String(g.children), actInfants: String(g.infants) };
+                                  })()
+                                : {}),
+                            }
                           : { guests: String(adults + children), adults: String(adults), children: String(children), ...(infants > 0 ? { infants: String(infants) } : {}) }),
                       }).toString()}`}
                       className="w-full h-13 py-4 rounded-full text-base font-medium text-obsidian-900 golden-summit-btn flex items-center justify-center gap-2 shadow-lg transition-all hover:scale-[1.01]"
