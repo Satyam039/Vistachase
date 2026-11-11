@@ -56,7 +56,7 @@ import {
   type AirportTransferValue,
 } from "@/components/booking/AirportTransferFields";
 import { ActivityAddOnFields, ActivityAddOnToggle } from "@/components/booking/ActivityAddOnFields";
-import { ACTIVITY_ADD_ONS, activityAddOnsFor, activityAddOnsRequestLine, type ActivityAddOnId } from "@/lib/activityAddOns";
+import { ACTIVITY_ADD_ONS, activityAddOnsFor, activityAddOnsRequestLine, activityGuestsFor, type ActivityAddOnId, type ActivityGuests } from "@/lib/activityAddOns";
 import { Dropdown } from "@/components/forms/Dropdown";
 import { PhoneField } from "@/components/forms/PhoneField";
 import { dialCode } from "@/lib/countries";
@@ -223,6 +223,7 @@ export function BookingCheckoutClient({
   initialChildren,
   initialInfants,
   initialActivities = false,
+  initialActivityGuests,
 }: {
   departure: DepartureData;
   stops: StopData[];
@@ -236,6 +237,8 @@ export function BookingCheckoutClient({
   initialInfants?: number;
   /** "Add-on activities" ticked on a private tour's page (?activities=1). */
   initialActivities?: boolean;
+  /** Who joins the add-on activities, chosen on the tour page (?actAdults=&actChildren=&actInfants=). */
+  initialActivityGuests?: ActivityGuests | null;
 }) {
   // The responsive variant changes rendered order, so measure the host rather than the viewport.
   const hostRef = useRef<HTMLElement | null>(null);
@@ -282,6 +285,8 @@ export function BookingCheckoutClient({
   const isPrivate = departure.tour?.category === "PRIVATE";
   const [wantsActivities, setWantsActivities] = useState(initialActivities && isPrivate);
   const chosenAddOns = activityAddOns.filter((id) => offeredAddOns.includes(id) && (!isPrivate || wantsActivities));
+  // Who joins the activities, with ages (owner, 2026-11-11). Starts as the whole party, as adults.
+  const [activityGuests, setActivityGuests] = useState<ActivityGuests>(() => initialActivityGuests ?? activityGuestsFor(adults));
 
   // Contact
   const [customerName, setCustomerName] = useState("");
@@ -627,6 +632,11 @@ export function BookingCheckoutClient({
     }
     const airportError = airport && totalSeats >= 2 ? airportTransferError(airportTransfer) : null;
     if (airportError) party.airport = airportError;
+    if (isPrivate && wantsActivities && activityGuests.adults + activityGuests.children + activityGuests.infants < 1) {
+      party.activities = "Add at least one guest for the add-on activities.";
+    } else if (isPrivate && wantsActivities && activityGuests.adults + activityGuests.children + activityGuests.infants > totalSeats) {
+      party.activities = `The add-on activities can be for up to ${totalSeats} ${totalSeats === 1 ? "guest" : "guests"}, your party size.`;
+    }
 
     const contact: Record<string, string> = {};
     if (!customerName.trim())
@@ -647,6 +657,9 @@ export function BookingCheckoutClient({
     isVehicle,
     airport,
     airportTransfer,
+    isPrivate,
+    wantsActivities,
+    activityGuests,
     customerName,
     customerEmail,
     phoneLocal,
@@ -707,11 +720,12 @@ export function BookingCheckoutClient({
           childrenCount: children,
           infantsCount: infants,
           specialRequests:
-            [specialRequests.trim(), isPrivate && wantsActivities ? activityAddOnsRequestLine(chosenAddOns.map((id) => ACTIVITY_ADD_ONS[id])) : ""]
+            [specialRequests.trim(), isPrivate && wantsActivities ? activityAddOnsRequestLine(chosenAddOns.map((id) => ACTIVITY_ADD_ONS[id]), activityGuests) : ""]
               .filter(Boolean)
               .join("\n") || undefined,
           airportTransfer: airport ? { ...airportTransfer, area: airportTransfer.area || undefined } : undefined,
           activityAddOns: chosenAddOns,
+          activityGuests: isPrivate && wantsActivities ? activityGuests : undefined,
           promoCode: appliedPromo?.code,
           paymentPlan: plan,
         }),
@@ -918,7 +932,7 @@ export function BookingCheckoutClient({
         {appliedPromo && discount > 0 && (
           <SummaryRow label={`Promo ${appliedPromo.code} (−${appliedPromo.percent}%)`} value={`−${money(discount)}`} />
         )}
-        {transferPrice != null && <SummaryRow label="Airport transfer, both ways" value={money(transferPrice)} />}
+        {transferPrice != null && <SummaryRow label="Airport transfer" value={money(transferPrice)} />}
         <Divider />
         <HStack hAlign="between" vAlign="center">
           <Text type="large" weight="bold">
@@ -1260,7 +1274,14 @@ export function BookingCheckoutClient({
                           )}
                           {isPrivate ? (
                             <>
-                              <ActivityAddOnToggle checked={wantsActivities} onChange={setWantsActivities} />
+                              <ActivityAddOnToggle
+                                checked={wantsActivities}
+                                onChange={setWantsActivities}
+                                guests={activityGuests}
+                                onGuestsChange={setActivityGuests}
+                                maxGuests={totalSeats}
+                              />
+                              {currentErrors.activities && <FieldStatus type="error" variant="detached" message={currentErrors.activities} />}
                               {wantsActivities && <ActivityAddOnFields offered={offeredAddOns} value={activityAddOns} onChange={setActivityAddOns} />}
                             </>
                           ) : (

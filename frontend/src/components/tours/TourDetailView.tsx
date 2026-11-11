@@ -28,6 +28,7 @@ import { DepartureCalendar } from "@/components/booking/DepartureCalendar";
 import { docQuickFacts } from "@/lib/tourContent";
 import { PriceTag } from "@/components/pricing/PriceTag";
 import { ActivityAddOnToggle } from "@/components/booking/ActivityAddOnFields";
+import { activityGuestsFor, type ActivityGuests } from "@/lib/activityAddOns";
 import { groupEnquiryHref } from "@/lib/experiences";
 import { cancellationShort, SEATS_MESSAGE } from "@/lib/policy";
 import { Rail } from "@/components/motion/Rail";
@@ -49,7 +50,7 @@ import type { DepartureAvailability, TourSection, TourWithAvailability } from "@
 import { TOUR_PROVIDER } from "@/lib/seo/business";
 
 const CATEGORY = {
-  SHARED: { label: "Shared tours", href: "/shared-tours", sub: "Small group · max 12 guests" },
+  SHARED: { label: "Shared tours", href: "/shared-tours", sub: "Small-group tours" },
   PRIVATE: { label: "Private tours", href: "/private-tours", sub: "Private, up to 13 guests" },
   MULTIDAY: { label: "Multi-Day Journeys", href: "/search?category=MULTIDAY" },
   SHUTTLE: { label: "Lake shuttles", href: "/shuttles", sub: "Guaranteed lake access · hotel pickup" },
@@ -334,6 +335,8 @@ export function TourDetailView({
   // Private tours: "Add-on activities" (owner, 2026-11-09); arranged by the team and paid separately.
   const offersActivities = tour.category === "PRIVATE";
   const [activities, setActivities] = useState(false);
+  // Who joins the activities, with ages (owner, 2026-11-11); null until the guest changes it.
+  const [activityGuests, setActivityGuests] = useState<ActivityGuests | null>(null);
 
   // FAQ accordion state
 
@@ -640,7 +643,15 @@ export function TourDetailView({
                         onChange={setPartySize}
                         hint={`Vehicle seats up to ${maxPartySize}`}
                       />
-                      {offersActivities && <ActivityAddOnToggle checked={activities} onChange={setActivities} />}
+                      {offersActivities && (
+                        <ActivityAddOnToggle
+                          checked={activities}
+                          onChange={setActivities}
+                          guests={activityGuests ?? activityGuestsFor(partySize)}
+                          onGuestsChange={setActivityGuests}
+                          maxGuests={partySize}
+                        />
+                      )}
                     </>
                   ) : (
                     <>
@@ -675,7 +686,7 @@ export function TourDetailView({
                       />
                       {/* More than 12: the team plans it (owner's doc, 2026-11-05). */}
                       <p className="text-xs text-slate-600">
-                        More than 12 guests?{" "}
+                        Travelling with a larger group?{" "}
                         <Link href={groupEnquiryHref(currentDeparture?.date)} className="text-ocean-700 underline underline-offset-2 hover:text-ocean-800">
                           Plan a group trip with our team
                         </Link>
@@ -730,7 +741,15 @@ export function TourDetailView({
                       href={`/book?${new URLSearchParams({
                         departureId: selectedDepartureId || tour.departures[0]?.id || "",
                         ...(isVehicle
-                          ? { guests: String(partySize), ...(offersActivities && activities ? { activities: "1" } : {}) }
+                          ? {
+                              guests: String(partySize),
+                              ...(offersActivities && activities
+                                ? (() => {
+                                    const g = activityGuests ?? activityGuestsFor(partySize);
+                                    return { activities: "1", actAdults: String(g.adults), actChildren: String(g.children), actInfants: String(g.infants) };
+                                  })()
+                                : {}),
+                            }
                           : { guests: String(adults + children), adults: String(adults), children: String(children), ...(infants > 0 ? { infants: String(infants) } : {}) }),
                       }).toString()}`}
                       className="w-full h-13 py-4 rounded-full text-base font-medium text-obsidian-900 golden-summit-btn flex items-center justify-center gap-2 shadow-lg transition-all hover:scale-[1.01]"

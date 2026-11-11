@@ -18,9 +18,10 @@ describe("enquiry bot names", () => {
   it("flags random mixed-case strings from the bounced enquiries", () => {
     expect(looksLikeBotName("SpvViyvvcPmWsQsxlpooZFKu")).toBe(true);
     expect(looksLikeBotName("CaofZYGaiXmTqWb")).toBe(true);
+    expect(looksLikeBotName("cHXwtVPyDCAWVGSEFGhh")).toBe(true);
   });
   it("lets real names through", () => {
-    for (const name of ["Alyssa Beck", "McDonald", "DeShawn", "Jean-Luc Picard", "Nishika", "MacKenzieMcLeod", "O'Brien"]) {
+    for (const name of ["Alyssa Beck", "McDonald", "DeShawn", "Jean-Luc Picard", "Nishika", "MacKenzieMcLeod", "O'Brien", "Christopher", "Satyanarayana", "VanDerBerg", "ALEXANDERSON"]) {
       expect(looksLikeBotName(name)).toBe(false);
     }
   });

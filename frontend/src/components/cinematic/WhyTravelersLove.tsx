@@ -6,7 +6,7 @@ import { CarFront, ClipboardCheck, HandHeart, MapPin, Receipt, Users } from "luc
 
 const REASONS = [
   { icon: HandHeart, title: "Passionate Local Guides", body: "Enjoy local stories, insights and a welcoming guide who makes your day memorable." },
-  { icon: Users, title: "Small Groups, Personal Attention", body: "No more than 12 guests on shared tours for a friendly, more personal experience." },
+  { icon: Users, title: "Small Groups, Personal Attention", body: "Shared tours stay small for a friendly, more personal experience." },
   { icon: CarFront, title: "Your Own Private Tour", body: "Enjoy a dedicated guide and vehicle, with flexibility to shape the day around your interests." },
   { icon: MapPin, title: "Convenient Pickup Options", body: "Depart from Banff or Canmore, with hotel pickup available on selected experiences." },
   { icon: ClipboardCheck, title: "We Handle the Details", body: "Enjoy thoughtfully planned routes and included Moraine Lake transportation on applicable tours." },

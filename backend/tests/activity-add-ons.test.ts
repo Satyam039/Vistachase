@@ -18,7 +18,13 @@ describe("activity add-ons", () => {
 
   it("tells staff what was asked for and who is coming", () => {
     expect(activityAddOnsNote(["lake-minnewanka-cruise"], { adults: 2, children: 1, infants: 1 })).toBe(
-      "Activity add-ons requested: Lake Minnewanka Cruise for 2 adults (16–99), 1 youth (6–15), 1 infant (0–5) (price varies, to be confirmed by Vista Chase).",
+      "Activity add-ons requested: Lake Minnewanka Cruise for 2 adults (16–99), 1 child (6–15), 1 infant (0–5) (price varies, to be confirmed by Vista Chase).",
+    );
+  });
+
+  it("lists only the age groups that join the activities (owner, 2026-11-11)", () => {
+    expect(activityAddOnsNote(["ice-explorer"], { adults: 0, children: 2, infants: 0 })).toBe(
+      "Activity add-ons requested: Ice Explorer Experience for 2 children (6–15) (price varies, to be confirmed by Vista Chase).",
     );
   });
 });

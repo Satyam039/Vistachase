@@ -17,6 +17,7 @@
 import prisma from "@/lib/db/prisma";
 import { getPaymentProvider } from "@/lib/payment/payment.provider";
 import { bookingClosedError } from "@/modules/departures/booking-window";
+import { firstChargeCents } from "@/modules/bookings/deposit";
 import {
   bookingDto,
   confirmPaidBooking,
@@ -39,6 +40,12 @@ export interface TourPackage {
   winterDiscountPercent?: number;
   /** Every day must be June 1 to October 10. */
   summerOnly?: boolean;
+  /**
+   * The guest may pay a 20% deposit now and the rest later (owner, 2026-11-11: private tours of two
+   * or more days get "continue booking with 20% payment" beside full payment). Each day keeps its
+   * own deposit and balance (deposit.ts), due 14 days before that day, as for a single tour.
+   */
+  depositAllowed?: boolean;
 }
 
 export const PACKAGES: TourPackage[] = [
@@ -55,6 +62,7 @@ export const PACKAGES: TourPackage[] = [
     title: "Private Two-Day Rockies Explorer",
     tourSlugs: ["banff-private-tour", "icefields-jasper-private-tour"],
     discountPercent: 10,
+    depositAllowed: true,
     winterDiscountPercent: 0,
   },
   {
@@ -63,6 +71,7 @@ export const PACKAGES: TourPackage[] = [
     // Day 1 Banff, Day 2 Lake Louise, Moraine Lake & Yoho, Day 3 Icefields Parkway.
     tourSlugs: ["banff-private-tour", "banff-private-tour", "icefields-jasper-private-tour"],
     discountPercent: 10,
+    depositAllowed: true,
     summerOnly: true,
   },
   {
@@ -71,6 +80,7 @@ export const PACKAGES: TourPackage[] = [
     // Day 1 Banff, Day 2 Lake Louise, Moraine Lake & Yoho, Day 3 Icefields Parkway to Jasper, Day 4 Jasper and return.
     tourSlugs: ["banff-private-tour", "banff-private-tour", "icefields-jasper-private-tour", "icefields-jasper-private-tour"],
     discountPercent: 10,
+    depositAllowed: true,
     summerOnly: true,
   },
 ];
@@ -90,6 +100,8 @@ export function packageDiscountFor(pkg: TourPackage, date: string) {
 
 export interface CreatePackageInput extends Omit<CreateBookingInput, "departureId" | "holdToken" | "promoCode" | "paymentPlan" | "addOns" | "idempotencyKey" | "activityAddOns"> {
   packageSlug: string;
+  /** FULL (default) or a 20% DEPOSIT, for packages with `depositAllowed`. */
+  paymentPlan?: "FULL" | "DEPOSIT";
   /** One departure per tour in the package, in the package's order. */
   departureIds: string[];
   idempotencyKey?: string;
@@ -98,8 +110,10 @@ export interface CreatePackageInput extends Omit<CreateBookingInput, "departureI
 export interface PackageResult {
   success: boolean;
   bookings?: NonNullable<BookingResult["booking"]>[];
-  /** What the guest pays for the whole package (dollars). */
+  /** What the package costs in all (dollars). */
   totalAmount?: number;
+  /** What the guest pays now (dollars): the total, or the deposits of every day. */
+  amountDueNow?: number;
   currency?: string;
   payment?: { provider: string; clientSecret: string; amount: number; currency: string };
   nextStep?: NextStep;
@@ -123,20 +137,22 @@ async function replayPackage(input: CreatePackageInput): Promise<PackageResult |
   if (!same) return { success: false, error: "This checkout was already used for a different booking. Please reload the page and try again." };
   const all = bookings as NonNullable<(typeof bookings)[number]>[];
   const total = all.reduce((n, b) => n + b.totalAmount, 0);
+  const dueNow = all.reduce((n, b) => n + firstChargeCents(b), 0);
   const status = all.every((b) => b.status === all[0].status) ? all[0].status : "MIXED";
 
   let payment: PackageResult["payment"];
-  if (status === "PENDING_PAYMENT" && total > 0) {
+  if (status === "PENDING_PAYMENT" && dueNow > 0) {
     const pending = all[0].payments.find((p) => p.status === "PENDING");
     const provider = getPaymentProvider();
     const intent = pending && provider.retrievePaymentIntent ? await provider.retrievePaymentIntent(pending.transactionId).catch(() => null) : null;
     if (!intent?.clientSecret || intent.paid) return { success: false, error: "Your booking is still being set up. Please wait a moment and try again." };
-    payment = { provider: provider.name, clientSecret: intent.clientSecret, amount: total / 100, currency: all[0].currency };
+    payment = { provider: provider.name, clientSecret: intent.clientSecret, amount: dueNow / 100, currency: all[0].currency };
   }
   return {
     success: true,
     bookings: all.map((b) => bookingDto(b, b.payments)),
     totalAmount: total / 100,
+    amountDueNow: dueNow / 100,
     currency: all[0].currency,
     payment,
     nextStep: status === "MIXED" ? "START_AGAIN" : nextStepFor(status),
@@ -176,6 +192,8 @@ export async function createPackageBooking(input: CreatePackageInput): Promise<P
 
   const invalid = await packageError(pkg, input.departureIds);
   if (invalid) return { success: false, error: invalid };
+  const plan = input.paymentPlan === "DEPOSIT" ? "DEPOSIT" : "FULL";
+  if (plan === "DEPOSIT" && !pkg.depositAllowed) return { success: false, error: `The ${pkg.title} is paid in full at booking.` };
   const departureDates = new Map(
     (await prisma.tourDeparture.findMany({ where: { id: { in: input.departureIds } }, select: { id: true, date: true } })).map((d) => [d.id, d.date.toISOString().slice(0, 10)]),
   );
@@ -201,7 +219,7 @@ export async function createPackageBooking(input: CreatePackageInput): Promise<P
         affiliateCode: input.affiliateCode,
         departureId,
         idempotencyKey: dayKey(input.idempotencyKey, i + 1),
-        paymentPlan: "FULL",
+        paymentPlan: plan,
         // A private journey's airport transfer (both ways) is booked once, with Day 1.
         airportTransfer: i === 0 ? input.airportTransfer : undefined,
       },
@@ -231,18 +249,20 @@ export async function createPackageBooking(input: CreatePackageInput): Promise<P
 
   const ordered = references.map((ref) => stored.find((x) => x.bookingReference === ref)!);
   const totalCents = ordered.reduce((n, b) => n + b.totalAmount, 0);
+  // With a deposit, each day is charged its deposit now (firstChargeCents) and its balance later.
+  const dueNowCents = ordered.reduce((n, b) => n + firstChargeCents(b), 0);
   const currency = ordered[0].currency;
   const provider = getPaymentProvider();
 
   let intent: Awaited<ReturnType<typeof provider.createPaymentIntent>> | null = null;
-  if (totalCents > 0) {
+  if (dueNowCents > 0) {
     try {
       intent = await provider.createPaymentIntent({
-        amount: totalCents,
+        amount: dueNowCents,
         currency,
         bookingReference: references[0],
         customerEmail: input.customerEmail,
-        metadata: { kind: "PACKAGE", package: pkg.slug, packageRefs: references.join(",") },
+        metadata: { kind: "PACKAGE", package: pkg.slug, packageRefs: references.join(","), plan },
         idempotencyKey: `package-${references.join("-")}`,
       });
     } catch (error) {
@@ -251,9 +271,10 @@ export async function createPackageBooking(input: CreatePackageInput): Promise<P
       return { success: false, error: "We couldn't start the payment. Please try again." };
     }
     for (const [i, b] of ordered.entries()) {
-      if (b.totalAmount <= 0) continue;
+      const charge = firstChargeCents(b);
+      if (charge <= 0) continue;
       await prisma.payment.create({
-        data: { bookingId: b.id, amount: b.totalAmount, currency, provider: provider.name, transactionId: packageTransactionId(intent.intentId, i), kind: "FULL", status: "PENDING" },
+        data: { bookingId: b.id, amount: charge, currency, provider: provider.name, transactionId: packageTransactionId(intent.intentId, i), kind: b.paymentPlan === "DEPOSIT" ? "DEPOSIT" : "FULL", status: "PENDING" },
       });
     }
   }
@@ -266,22 +287,23 @@ export async function createPackageBooking(input: CreatePackageInput): Promise<P
     success: true,
     bookings: finalOrdered.map((b) => bookingDto(b, b.payments)),
     totalAmount: totalCents / 100,
+    amountDueNow: dueNowCents / 100,
     currency,
-    payment: intent && !paidNow ? { provider: provider.name, clientSecret: intent.clientSecret, amount: totalCents / 100, currency } : undefined,
+    payment: intent && !paidNow ? { provider: provider.name, clientSecret: intent.clientSecret, amount: dueNowCents / 100, currency } : undefined,
     nextStep: nextStepFor(finalOrdered[0].status),
   };
 }
 
 /**
  * Confirms every booking of a paid package. With `verified` (the Stripe webhook), Stripe's amount
- * must equal the bookings' combined total; otherwise nothing is confirmed and each booking is
+ * must equal what the bookings charge at checkout together (totals, or deposits); otherwise nothing is confirmed and each booking is
  * flagged for staff, as for a single booking whose payment doesn't match.
  */
 export async function confirmPackagePayment(references: string[], verified?: { amount: number; currency: string; transactionId: string }) {
   const found = await prisma.booking.findMany({ where: { bookingReference: { in: references } } });
   const bookings = references.map((ref) => found.find((b) => b.bookingReference === ref)).filter((b): b is NonNullable<typeof b> => Boolean(b));
   if (bookings.length === 0) return;
-  const expected = bookings.reduce((n, b) => n + b.totalAmount, 0);
+  const expected = bookings.reduce((n, b) => n + firstChargeCents(b), 0);
   if (verified && (bookings.length !== references.length || verified.amount !== expected || verified.currency.toUpperCase() !== bookings[0].currency.toUpperCase())) {
     for (const b of bookings) {
       if (b.status !== "PENDING_PAYMENT") continue;
@@ -297,7 +319,7 @@ export async function confirmPackagePayment(references: string[], verified?: { a
   for (const [i, b] of bookings.entries()) {
     await confirmPaidBooking(
       b.bookingReference,
-      verified ? { amount: b.totalAmount, currency: verified.currency, transactionId: packageTransactionId(verified.transactionId, i) } : undefined,
+      verified ? { amount: firstChargeCents(b), currency: verified.currency, transactionId: packageTransactionId(verified.transactionId, i) } : undefined,
     );
   }
 }

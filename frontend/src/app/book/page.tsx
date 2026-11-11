@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { activityGuestsFromQuery } from "@/lib/activityAddOns";
 import { getCheckoutData } from "@/lib/api/catalog";
 import { BookingCheckoutClient } from "@/components/booking/BookingCheckoutClient";
 import type { Metadata } from "next";
@@ -18,7 +19,7 @@ export const metadata: Metadata = {
 export default async function BookPage({
   searchParams: searchParamsPromise,
 }: {
-  searchParams: Promise<{ departureId?: string; holdToken?: string; pickupStopId?: string; guests?: string; adults?: string; children?: string; infants?: string; airport?: string; activities?: string }>;
+  searchParams: Promise<{ departureId?: string; holdToken?: string; pickupStopId?: string; guests?: string; adults?: string; children?: string; infants?: string; airport?: string; activities?: string; actAdults?: string; actChildren?: string; actInfants?: string }>;
 }) {
   const searchParams = await searchParamsPromise;
   const checkout = await getCheckoutData(searchParams.departureId);
@@ -62,6 +63,7 @@ export default async function BookPage({
       initialChildren={Number.parseInt(searchParams.children ?? "", 10) || undefined}
       initialInfants={Number.parseInt(searchParams.infants ?? "", 10) || undefined}
       initialActivities={searchParams.activities === "1"}
+      initialActivityGuests={activityGuestsFromQuery(searchParams)}
     />
   );
 }

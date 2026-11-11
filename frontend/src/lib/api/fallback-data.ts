@@ -52,7 +52,7 @@ export const FALLBACK_TOURS: TourWithAvailability[] = ([
     category: "SHARED",
     durationHours: 10,
     summary:
-      "TripAdvisor #6 Best Experience in Canada. Guaranteed Moraine Lake access, small group (max 12), complimentary hot drinks, and local expert guide.",
+      "TripAdvisor #6 Best Experience in Canada. Guaranteed Moraine Lake access, small group, complimentary hot drinks, and local expert guide.",
     description:
       "Experience the Canadian Rockies in an intimate small-group setting. Bypass the 3:00 AM personal vehicle parking ban with certified commercial access directly to the Moraine Lake shoreline. Marvel at the Valley of the Ten Peaks, explore Lake Louise, Bow Falls, Castle Mountain, and Johnston Canyon.",
     inclusions: [

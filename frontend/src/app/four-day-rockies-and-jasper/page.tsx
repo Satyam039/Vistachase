@@ -50,7 +50,7 @@ const SPECS = [
   { label: "Park admission", value: "Included", icon: Check },
   { label: "Activities", value: "Optional extras selected at checkout", icon: Sparkles },
   { label: "Accommodation", value: "Booked directly by guests; Jasper stay required after day three", icon: BedDouble },
-  { label: "Airport transfers", value: "Available to add", icon: Plane },
+  { label: "Airport transfers", value: "CAD $364 per transfer", icon: Plane },
   { label: "Availability", value: "Seasonal; available dates shown when booking", icon: Calendar },
 ];
 
@@ -586,7 +586,7 @@ export default function FourDayRockiesAndJasperPage() {
               </li>
               <li className="flex items-center gap-3">
                 <Plane className="h-4 w-4 text-summit-300 shrink-0" aria-hidden="true" />
-                <span>Airport transfer can be added (2+ guests)</span>
+                <span>Airport transfer CAD $364 per transfer (2+ guests)</span>
               </li>
               <li className="flex items-center gap-3">
                 <BedDouble className="h-4 w-4 text-summit-300 shrink-0" aria-hidden="true" />

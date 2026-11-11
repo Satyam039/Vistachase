@@ -68,7 +68,7 @@ const TOPICS: Topic[] = [
       [/\b(group size|how many (people|guests|persons|passengers)|maximum|max|capacity|large group|big group|groups? of \d+|\d+ (people|guests|persons))\b/, 2],
     ],
     answer: () =>
-      "Shared tours carry a maximum of 12 guests. Private tours are priced per vehicle, for up to 13 guests. For a bigger group, send us a request at /contact-us?group=1 and the team will plan it.",
+      "Shared tours are small-group tours. Private tours are priced per vehicle, for up to 13 guests. For a bigger group, send us a request at /contact-us?group=1 and the team will plan it.",
   },
   {
     id: "private",
@@ -83,7 +83,7 @@ const TOPICS: Topic[] = [
     id: "airport",
     patterns: [[/\b(airport|yyc|calgary|transfers?|arrival|flight)\b/, 2]],
     answer: () =>
-      "We arrange Calgary airport transfers with private bookings of two or more tour days (not with a one-day tour or on their own): tick the airport transfer box when you book the package and add your flight, accommodation, guests and luggage. The team confirms the arrangements. Summer prices (June 1 to October 10) cover both ways: Banff or Canmore CAD $364 for up to 6 guests or $850 for up to 12; Lake Louise $445 or $895. Winter transfers are priced on request.",
+      "We arrange Calgary airport transfers with private bookings of two or more tour days (not with a one-day tour or on their own): tick the airport transfer box when you book the package and add your flight, accommodation, guests and luggage. The price is CAD $364 per transfer, added to the total at checkout and paid with the tour; the team confirms the arrangements.",
   },
   {
     id: "accommodation",

@@ -2,11 +2,11 @@
 // airport transfer, and checkout asks for their airport arrival and departure dates and times, and
 // (owner, 2026-10-31) where the transfer is from and where it goes.
 //
-// Price (owner's doc, Pricing, 2026-11-04; owner 2026-11-04: the price covers both ways, arrival
-// and departure): Calgary Airport to/from Banff or Canmore CAD 364 for up to 6 guests (6 checked
-// bags) or CAD 850 for up to 12 (12 bags); Lake Louise CAD 445 / 895. Charged with the tour when
-// the guest arrives June 1 to October 10 with up to 12 guests. In winter ("varies") or for 13+
-// guests the price is confirmed by the team and nothing is charged online.
+// Price (owner, 2026-11-11: "jahan bhi airport wala hai CAD $364 /transfer karde, aur uska price
+// final price mein add ho jaye"): one flat CAD 364 for the transfer (arrival and departure, as the
+// owner set on 2026-11-04), whatever the area, season or group size, added to the total when the
+// guest ticks the box. Replaces the 2026-11-04 table (Banff/Canmore 364/850, Lake Louise 445/895,
+// summer only).
 // The details are kept in the booking's price snapshot and as the first line of its special
 // requests, so staff see them in the booking, the manifest, the voucher and the Bókun booking note.
 // Frontend mirror: frontend/src/components/booking/AirportTransferFields.tsx.
@@ -36,32 +36,24 @@ export type AirportTransfer = z.infer<typeof airportTransferSchema>;
 
 const AREA_LABEL = { BANFF: "Banff", CANMORE: "Canmore", LAKE_LOUISE: "Lake Louise" } as const;
 
-/** Both ways, cents: up to 6 guests, up to 12 guests. */
-export const AIRPORT_TRANSFER_PRICES = {
-  BANFF: { small: 36400, large: 85000 },
-  CANMORE: { small: 36400, large: 85000 },
-  LAKE_LOUISE: { small: 44500, large: 89500 },
-} as const;
+/** CAD 364 per transfer, in cents (owner, 2026-11-11). */
+export const AIRPORT_TRANSFER_PRICE_CENTS = 36400;
 
-/** The transfer's price in cents (both ways), or null when the team confirms it (winter, 13+ guests, no area). Available only for 2+ guests. */
-export function airportTransferPriceCents(t: Pick<AirportTransfer, "area" | "arrivalDate">, guests: number): number | null {
+/** The transfer's price in cents. Available only for 2+ guests (null below that). */
+export function airportTransferPriceCents(_t: Pick<AirportTransfer, "area" | "arrivalDate">, guests: number): number | null {
   if (guests < 2) return null;
-  if (!t.area) return null;
-  const md = t.arrivalDate.slice(5, 10);
-  if (md < "06-01" || md > "10-10") return null;
-  if (guests <= 6) return AIRPORT_TRANSFER_PRICES[t.area].small;
-  if (guests <= 12) return AIRPORT_TRANSFER_PRICES[t.area].large;
-  return null;
+  return AIRPORT_TRANSFER_PRICE_CENTS;
 }
 
 /** The checkout line for a priced transfer. */
 export function airportTransferLabel(t: Pick<AirportTransfer, "area">, guests: number): string {
-  return `Calgary Airport transfer, both ways (${t.area ? AREA_LABEL[t.area] : "Banff"}, up to ${guests <= 6 ? 6 : 12} guests)`;
+  void guests;
+  return `Calgary Airport transfer${t.area ? ` (${AREA_LABEL[t.area]})` : ""}`;
 }
 
 /** The line staff read in the booking's special requests. */
 export function airportTransferNote(t: AirportTransfer, priceCents: number | null = null): string {
   const area = t.area ? `, staying in ${AREA_LABEL[t.area]}` : "";
-  const price = priceCents != null ? `CAD ${(priceCents / 100).toFixed(2)} both ways, paid with the tour` : "price to be confirmed by Vista Chase";
+  const price = priceCents != null ? `CAD ${(priceCents / 100).toFixed(2)}, paid with the tour` : "price to be confirmed by Vista Chase";
   return `Airport transfer requested: from ${t.from} to ${t.to}${area}, arrival ${t.arrivalDate} ${t.arrivalTime}, departure ${t.departureDate} ${t.departureTime} (${price}).`;
 }

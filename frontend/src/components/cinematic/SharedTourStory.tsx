@@ -9,7 +9,7 @@ import { ScrollReveal } from "./ScrollReveal";
 const SHARED_BENEFITS = [
   {
     icon: Users,
-    title: "Small Groups (Max 12)",
+    title: "Small Groups",
     description: "Travel with an intimate party of fellow explorers. No 50-passenger buses or waiting in crowded lines.",
   },
   {
@@ -95,7 +95,7 @@ export function SharedTourStory() {
               <ScrollReveal delay={300} yOffset={16}>
                 <p className="text-slate-600 text-base sm:text-lg leading-relaxed font-sans font-light">
                   Designed for travelers who want the rich storytelling and personalized attention of a local guide,
-                  without the cost of chartering a private vehicle. Capped at 12 guests, every stop feels relaxed and unhurried.
+                  without the cost of chartering a private vehicle. In a small group, every stop feels relaxed and unhurried.
                 </p>
               </ScrollReveal>
             </div>

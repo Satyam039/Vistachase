@@ -178,8 +178,8 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
           </span>
         </h1>
         <p className="mt-5 max-w-2xl text-pretty text-sm font-light leading-relaxed text-white/80 sm:text-base [text-shadow:0_1px_12px_rgba(0,0,0,0.5)] motion-safe:animate-[fadeUp_1100ms_ease-out]">
-          Discover Banff, Lake Louise, Moraine Lake and beyond with passionate local guides. Join a small-group tour with no
-          more than 12 guests, enjoy a private journey, or explore the lakes with our convenient shuttles.
+          Discover Banff, Lake Louise, Moraine Lake and beyond with passionate local guides. Join a small-group tour, enjoy a
+          private journey, or explore the lakes with our convenient shuttles.
         </p>
 
         {/* 2 · Booking panel: experience tabs on its top edge, the search below them */}

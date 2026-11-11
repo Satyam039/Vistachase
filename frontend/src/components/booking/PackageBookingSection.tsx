@@ -5,7 +5,7 @@
 
 import { getCheckoutData, getTourBySlug } from "@/lib/api/catalog";
 import { PackageCheckout, type PackageDay } from "@/components/booking/PackageCheckout";
-import { cancellationSentence } from "@/lib/policy";
+import { cancellationSentence, DEPOSIT_PERCENT } from "@/lib/policy";
 import type { PackageConfig } from "@/lib/privateTours";
 
 const inSummer = (date: string) => {
@@ -49,7 +49,8 @@ export async function PackageBookingSection({ config, heading = "Book your dates
         </h2>
         <p className="mt-3 max-w-2xl text-base text-slate-600">
           {config.vehicle ? "One private vehicle and guide for your group each day. " : ""}
-          Choose the date you want for each day, then pay once for the whole {config.title}.
+          Choose the date you want for each day, then pay once for the whole {config.title}
+          {config.vehicle ? `, in full or with a ${DEPOSIT_PERCENT}% deposit now` : ""}.
         </p>
         <div className="mt-8">
           <PackageCheckout
@@ -60,6 +61,7 @@ export async function PackageBookingSection({ config, heading = "Book your dates
             days={days}
             stops={stops}
             vehicle={config.vehicle}
+            depositAllowed={config.vehicle}
             maxGuests={config.maxGuests}
             requestHref={`/contact-us?package=${config.slug}`}
             cancellationNote={cancellationSentence(config.vehicle ? "MULTIDAY" : "SHARED")}

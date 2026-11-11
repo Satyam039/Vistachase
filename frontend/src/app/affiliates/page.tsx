@@ -40,7 +40,7 @@ const AUDIENCES = [
     icon: Route,
     title: "Tour operators",
     text: "Add Vista Chase days to Western Canada itineraries: Banff, Yoho, Jasper and the Icefields Parkway.",
-    points: ["Shared tours capped at 12 guests", "Private departures for groups", "Group requests handled by our team"],
+    points: ["Small-group shared tours", "Private departures for groups", "Group requests handled by our team"],
   },
   {
     icon: Megaphone,

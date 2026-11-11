@@ -73,16 +73,22 @@ export function FaqBrowser({ items, topics, compact = false }: { items: FaqItem[
           </div>
         </div>
       ) : (
-        <ul className="space-y-3">
+        // Compact (tour landing pages; owner, 2026-11-11: the boxed cards "looked bad"): an editorial
+        // list of hairline-divided rows, square like the rest of the site, no boxes or circles.
+        <ul className={compact ? "divide-y divide-obsidian-900/10 border-y border-obsidian-900/10" : "space-y-3"}>
           {shown.map((item, idx) => {
             const isOpen = open === item.q;
             const id = `faq-${idx}`;
             return (
               <li
                 key={item.q}
-                className={`rounded-2xl border bg-white transition-[border-color,box-shadow] duration-300 ${
-                  isOpen ? "border-ocean-600/40 shadow-[0_18px_40px_-28px_rgba(12,31,33,0.45)]" : "border-obsidian-900/10 hover:border-obsidian-900/15"
-                }`}
+                className={
+                  compact
+                    ? ""
+                    : `rounded-2xl border bg-white transition-[border-color,box-shadow] duration-300 ${
+                        isOpen ? "border-ocean-600/40 shadow-[0_18px_40px_-28px_rgba(12,31,33,0.45)]" : "border-obsidian-900/10 hover:border-obsidian-900/15"
+                      }`
+                }
               >
                 <h3>
                   <button
@@ -90,19 +96,27 @@ export function FaqBrowser({ items, topics, compact = false }: { items: FaqItem[
                     aria-expanded={isOpen}
                     aria-controls={id}
                     onClick={() => setOpen(isOpen ? null : item.q)}
-                    className="group flex w-full items-center justify-between gap-4 rounded-2xl px-5 py-4 text-left sm:px-6 sm:py-5 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ocean-600"
+                    className={`group flex w-full items-center justify-between gap-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ocean-600 ${
+                      compact ? "py-5 sm:py-6" : "rounded-2xl px-5 py-4 sm:px-6 sm:py-5"
+                    }`}
                   >
                     <span>
                       {item.topic && <span className="mb-1 block text-xs uppercase tracking-[0.16em] text-ocean-700">{item.topic}</span>}
-                      <span className="block text-base text-obsidian-900 sm:text-lg">{item.q}</span>
+                      <span className={`block text-base sm:text-lg ${compact ? `font-light transition-colors ${isOpen ? "text-ocean-700" : "text-obsidian-900 group-hover:text-ocean-700"}` : "text-obsidian-900"}`}>
+                        {item.q}
+                      </span>
                     </span>
                     <span
-                      className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-[background-color,color,transform] duration-300 ${
-                        isOpen ? "rotate-45 bg-obsidian-900 text-white" : "bg-obsidian-900/[0.05] text-obsidian-900 group-hover:bg-obsidian-900/10"
-                      }`}
+                      className={
+                        compact
+                          ? `inline-flex h-8 w-8 shrink-0 items-center justify-center text-obsidian-900 transition-transform duration-300 ${isOpen ? "rotate-45 text-ocean-700" : ""}`
+                          : `inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-[background-color,color,transform] duration-300 ${
+                              isOpen ? "rotate-45 bg-obsidian-900 text-white" : "bg-obsidian-900/[0.05] text-obsidian-900 group-hover:bg-obsidian-900/10"
+                            }`
+                      }
                       aria-hidden="true"
                     >
-                      <Plus className="h-4 w-4" />
+                      <Plus className={compact ? "h-5 w-5 stroke-[1.25]" : "h-4 w-4"} />
                     </span>
                   </button>
                 </h3>
@@ -114,7 +128,7 @@ export function FaqBrowser({ items, topics, compact = false }: { items: FaqItem[
                   className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
                 >
                   <div className="overflow-hidden">
-                    <p className="whitespace-pre-line px-5 pb-5 text-base leading-relaxed text-slate-700 sm:px-6 sm:pb-6">{item.a}</p>
+                    <p className={`whitespace-pre-line text-base leading-relaxed text-slate-700 ${compact ? "max-w-2xl pb-6 pr-12" : "px-5 pb-5 sm:px-6 sm:pb-6"}`}>{item.a}</p>
                   </div>
                 </div>
               </li>

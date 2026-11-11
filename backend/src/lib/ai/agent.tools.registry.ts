@@ -24,7 +24,7 @@ export const AGENT_TOOL_DEFINITIONS: ToolDefinitionMetadata[] = [
     name: "search_live_inventory",
     scope: "SUITE_A",
     description:
-      "Queries real-time capacity and pricing for Shared Tours (max 12 guests), Lake Shuttles, and Private Vehicles. Automatically flags seasonal road closures (Moraine Lake mid-Oct–May) and provides side-by-side private charter comparisons for groups of 4+.",
+      "Queries real-time capacity and pricing for Shared Tours (small groups), Lake Shuttles, and Private Vehicles. Automatically flags seasonal road closures (Moraine Lake mid-Oct–May) and provides side-by-side private charter comparisons for groups of 4+.",
     inputSchema: {
       type: "object",
       properties: {

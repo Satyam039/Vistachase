@@ -4,13 +4,71 @@
 // Prefilled from the product page's Request link (?tour=slug&guests=n). Errors are announced and
 // tied to their fields; success replaces the form with a confirmation.
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CheckCircle2, Send } from "lucide-react";
 import { Dropdown } from "@/components/forms/Dropdown";
 import { PhoneField } from "@/components/forms/PhoneField";
 import { dialCode } from "@/lib/countries";
 import { openDatePicker } from "@/lib/utils/datePicker";
 import { RequestDateCalendar, shortDate, tripDays } from "@/components/forms/RequestDateCalendar";
+
+/** Largest group the form takes (owner, 2026-11-11); bigger groups are planned with the team by email. */
+const MAX_GUESTS = 28;
+/** Optional Cloudflare Turnstile (spam check); the backend needs TURNSTILE_SECRET_KEY to match. */
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
+
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (el: HTMLElement, opts: { sitekey: string; callback: (token: string) => void; "expired-callback"?: () => void }) => string;
+      reset: (id?: string) => void;
+    };
+  }
+}
+
+/** Fetches the signed form token (spam check: a person had the form open for a few seconds). */
+function useFormToken() {
+  const [token, setToken] = useState("");
+  const load = () =>
+    fetch("/api/enquiries/form-token", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((j: { token?: string }) => setToken(j.token ?? ""))
+      .catch(() => setToken(""));
+  useEffect(() => {
+    load();
+    // A token lasts a day: refresh it while the page stays open.
+    const timer = window.setInterval(load, 6 * 60 * 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+  return { token, reload: load };
+}
+
+/** Renders the Turnstile widget when a site key is set; gives back its token. */
+function useTurnstile(ref: React.RefObject<HTMLDivElement | null>) {
+  const [token, setToken] = useState("");
+  const widget = useRef<string | null>(null);
+  useEffect(() => {
+    if (!TURNSTILE_SITE_KEY || !ref.current) return;
+    const el = ref.current;
+    const render = () => {
+      if (!window.turnstile || widget.current) return;
+      widget.current = window.turnstile.render(el, { sitekey: TURNSTILE_SITE_KEY, callback: setToken, "expired-callback": () => setToken("") });
+    };
+    if (window.turnstile) return render();
+    const script = document.createElement("script");
+    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+    script.async = true;
+    script.onload = render;
+    document.head.appendChild(script);
+  }, [ref]);
+  return {
+    token,
+    reset: () => {
+      setToken("");
+      if (widget.current) window.turnstile?.reset(widget.current);
+    },
+  };
+}
 
 type Fields = "name" | "email" | "phone" | "message" | "date" | "fromDate" | "toDate" | "guests" | "tour";
 const FIELD =
@@ -54,7 +112,11 @@ export function ContactForm({
   const [state, setState] = useState<"idle" | "sending" | "sent">("idle");
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<Fields, string>>>({});
-  const today = new Date().toISOString().slice(0, 10);
+  // Today on the guest's own calendar (the server checks it again in Mountain Time).
+  const today = new Date(Date.now() - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
+  const formToken = useFormToken();
+  const turnstileBox = useRef<HTMLDivElement>(null);
+  const turnstile = useTurnstile(turnstileBox);
 
   const initialCategory =
     defaultCategory ??
@@ -94,12 +156,16 @@ export function ContactForm({
     }
     if (!fromDate) {
       errs.fromDate = "Please select your trip start date (From Date).";
+    } else if (fromDate < today) {
+      errs.fromDate = "Choose today or a later date.";
     }
     if (toDate && toDate < fromDate) {
       errs.toDate = "To Date must be on or after From Date.";
     }
     if (!guests || Number(guests) < 1) {
       errs.guests = "Enter the number of guests.";
+    } else if (!Number.isInteger(Number(guests)) || Number(guests) > MAX_GUESTS) {
+      errs.guests = `Enter 1 to ${MAX_GUESTS} guests. For a bigger group, email support@vistachase.com.`;
     }
     if (!message.trim() || message.trim().length < 5) {
       errs.message = "Please write a message (at least 5 characters).";
@@ -108,6 +174,15 @@ export function ContactForm({
     if (Object.keys(errs).length > 0) {
       setFieldErrors(errs);
       setError("Please fill in all required fields.");
+      return;
+    }
+    if (!formToken.token) {
+      formToken.reload();
+      setError("We couldn't send that just now. Please wait a moment and try again.");
+      return;
+    }
+    if (TURNSTILE_SITE_KEY && !turnstile.token) {
+      setError("Please complete the security check below.");
       return;
     }
 
@@ -122,6 +197,9 @@ export function ContactForm({
       toDate: requestDays ? "" : toDate,
       guests: Number(guests),
       message: message.trim(),
+      website: (e.currentTarget.elements.namedItem("website") as HTMLInputElement | null)?.value ?? "",
+      formToken: formToken.token,
+      turnstileToken: turnstile.token || undefined,
     };
 
     try {
@@ -136,9 +214,13 @@ export function ContactForm({
         setFieldErrors(
           Object.fromEntries(
             Object.entries(f).map(([k]) => [
-              k,
+              k === "date" ? "fromDate" : k,
               k === "email"
                 ? "Enter a valid email address."
+                : k === "date" || k === "toDate"
+                ? (f[k]?.[0] ?? "Choose today or a later date.")
+                : k === "guests"
+                ? `Enter 1 to ${MAX_GUESTS} guests.`
                 : k === "message"
                 ? "Please write a short message."
                 : k === "name"
@@ -149,6 +231,7 @@ export function ContactForm({
         );
         setError(json.error ?? "Something went wrong. Please try again.");
         setState("idle");
+        turnstile.reset();
         return;
       }
       setState("sent");
@@ -286,7 +369,7 @@ export function ContactForm({
           type="number"
           required
           min={1}
-          max={60}
+          max={MAX_GUESTS}
           inputMode="numeric"
           value={guests}
           onChange={(e) => setGuests(e.target.value)}
@@ -334,6 +417,8 @@ export function ContactForm({
           <input name="website" tabIndex={-1} autoComplete="off" />
         </label>
       </div>
+
+      {TURNSTILE_SITE_KEY && <div ref={turnstileBox} className="sm:col-span-2" />}
 
       {error && (
         <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-800 sm:col-span-2">

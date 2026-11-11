@@ -15,7 +15,7 @@ export const PRIVATE_HERO = {
     "Optional Activities",
     "Priced Per Vehicle not Per Person",
   ],
-  note: "Airport transfers available with bookings of 2+ tour days",
+  note: "Airport transfers CAD $364 per transfer, with bookings of 2+ tour days",
 };
 
 export const PRIVATE_INTRO = {
@@ -140,7 +140,7 @@ export const PRIVATE_OPTIONS: PrivateTourOption[] = [
     suggestedStay: "Canmore/Banff/Lake Louise",
     pickup: "Doorstep Pickup Included",
     activities: "Optional Activities at Checkout",
-    airportTransfers: "Available with 2+ Tour Days",
+    airportTransfers: "CAD $364 per transfer, with 2+ tour days",
     priceFrom: 0,
     priceUnit: "per vehicle",
     priceNote: "Jun 1–Oct 10: CAD $1,750, all-inclusive (tax, park and Moraine Lake entry). Oct 11–May 31: CAD $1,240. Private, up to 13 guests.",
@@ -163,7 +163,7 @@ export const PRIVATE_OPTIONS: PrivateTourOption[] = [
     suggestedStay: "Canmore/Banff/Lake Louise",
     pickup: "Doorstep Pickup Included",
     activities: "Optional Activities at Checkout",
-    airportTransfers: "Available with 2+ Tour Days",
+    airportTransfers: "CAD $364 per transfer, with 2+ tour days",
     priceFrom: 0,
     priceUnit: "per vehicle",
     priceNote: "Jun 1–Oct 10: CAD $1,750. Oct 11–May 31: CAD $1,240, on an adjusted winter route. Private, up to 13 guests.",
@@ -185,7 +185,7 @@ export const PRIVATE_OPTIONS: PrivateTourOption[] = [
     suggestedStay: "Canmore/Banff/Lake Louise",
     pickup: "Doorstep Pickup Included",
     activities: "Optional Activities at Checkout",
-    airportTransfers: "Available with 2+ Tour Days",
+    airportTransfers: "CAD $364 per transfer, with 2+ tour days",
     accommodation: "Booked Separately by customers on multi-day cards",
     priceFrom: PACKAGE_DAY_PRICE.winter * 2,
     priceUnit: "per vehicle",
@@ -209,7 +209,7 @@ export const PRIVATE_OPTIONS: PrivateTourOption[] = [
     suggestedStay: "Canmore/Banff/Lake Louise",
     pickup: "Doorstep Pickup Included",
     activities: "Optional Activities at Checkout",
-    airportTransfers: "Available with 2+ Tour Days",
+    airportTransfers: "CAD $364 per transfer, with 2+ tour days",
     accommodation: "Booked Separately by customers on multi-day cards",
     priceFrom: PACKAGE_DAY_PRICE.summer * 3,
     priceUnit: "per vehicle",
@@ -233,7 +233,7 @@ export const PRIVATE_OPTIONS: PrivateTourOption[] = [
     suggestedStay: "Canmore/Banff/Lake Louise (Jasper stay after day 3)",
     pickup: "Doorstep Pickup Included",
     activities: "Optional Activities at Checkout",
-    airportTransfers: "Available with 2+ Tour Days",
+    airportTransfers: "CAD $364 per transfer, with 2+ tour days",
     accommodation: "Booked Separately by customers on multi-day cards",
     priceFrom: PACKAGE_DAY_PRICE.summer * 4,
     priceUnit: "per vehicle",
@@ -279,7 +279,7 @@ export const PRIVATE_BENEFITS = [
   },
   {
     title: "Airport Transfers Available",
-    body: "Add airport transportation when booking two or more tour days.",
+    body: "Add airport transportation for CAD $364 per transfer when booking two or more tour days.",
   },
   {
     title: "Priced Per Vehicle",
@@ -298,7 +298,7 @@ export const PRIVATE_FAQS = [
   },
   {
     q: "Can you arrange airport transfers?",
-    a: "Yes. Airport transfers are available when booking two or more tour days. Arrange them alongside your tours so you can explore without renting a car.",
+    a: "Yes. Airport transfers are available when booking two or more tour days, for CAD $364 per transfer, added to your total at checkout. Arrange them alongside your tours so you can explore without renting a car.",
   },
   {
     q: "Do you book our accommodation?",
@@ -342,7 +342,7 @@ export const PRIVATE_OTHER_WAYS = [
   {
     key: "shared",
     title: "Small-Group Tours",
-    description: "Explore with passionate guides and no more than 12 guests. Choose one day or combine both adventures.",
+    description: "Explore in small groups with passionate local guides. Choose one day or combine both adventures.",
     cta: "Explore Small-Group Tours",
     href: "/shared-tours",
     image: "/media/site/bow-river-train-canadian-rockies.webp",
