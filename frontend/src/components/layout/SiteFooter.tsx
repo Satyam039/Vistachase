@@ -21,7 +21,8 @@ import Link from "next/link";
 import { isVisibleLink } from "@/lib/activityTickets";
 import { ArrowRight, ArrowUp, ArrowUpRight, CalendarCheck, ChevronDown, Clock, Mail, MapPin, Phone, Search, ShieldCheck, Sparkles, Star } from "lucide-react";
 
-type FooterLink = { label: string; href: string };
+// nofollow: signed-in pages robots.txt blocks (My trips), so crawlers aren't sent there.
+type FooterLink = { label: string; href: string; nofollow?: boolean };
 
 const GROUPS: { heading: string; links: FooterLink[] }[] = [
   {
@@ -49,7 +50,7 @@ const GROUPS: { heading: string; links: FooterLink[] }[] = [
     heading: "Plan your trip",
     links: [
       { label: "Hotel pickup finder", href: "/pickup-finder" },
-      { label: "My trips & vouchers", href: "/account/trips" },
+      { label: "My trips & vouchers", href: "/account/trips", nofollow: true },
       { label: "FAQ & cancellation", href: "/faq" },
       // "Travel guides" (/guides) comes back here once guides are published; an empty page isn't linked.
       { label: "AI concierge", href: "/concierge" },
@@ -61,7 +62,7 @@ const GROUPS: { heading: string; links: FooterLink[] }[] = [
     links: [
       { label: "About Us", href: "/about-us" },
       { label: "Blog", href: "/blog" },
-      { label: "Affiliate program", href: "/partners" },
+      { label: "Affiliate program", href: "/affiliates" },
       { label: "Terms & Conditions", href: "/terms-and-conditions" },
       { label: "Cancellation Policy", href: "/privacy-policy-vista-chase" },
       { label: "Contact us", href: "/contact-us" },
@@ -157,6 +158,7 @@ function LinkGroup({ heading, links }: { heading: string; links: FooterLink[] })
           <li key={link.href}>
             <Link
               href={link.href}
+              rel={link.nofollow ? "nofollow" : undefined}
               className="group inline-flex items-center gap-1.5 py-1 text-base font-light text-white/75 transition-colors hover:text-white"
             >
               {link.label}
@@ -198,7 +200,7 @@ export function SiteFooter() {
         >
           <Image
             src="/media/photos/bow-lake-dock-sunrise.webp"
-            alt=""
+            alt="Bow Lake dock at sunrise"
             fill
             sizes="(max-width: 1280px) 100vw, 1280px"
             className="-z-10 object-cover"

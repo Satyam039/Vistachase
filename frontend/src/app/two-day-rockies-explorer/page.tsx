@@ -13,15 +13,23 @@ import type { TourWithAvailability } from "@/lib/api/types";
 import { PackagePrice } from "@/components/tours/SharedToursLanding";
 import { fromPrice } from "@/lib/tours";
 import { PICKUP_TIMES, TWO_DAY_PACKAGE, packagePrice } from "@/lib/sharedTours";
+import { PackageTripJsonLd } from "@/components/seo/PackageTripJsonLd";
+import { cachePublicData } from "@/lib/api/cachePolicy";
+
+// Rendered once and served from cache, refreshed in the background at most every minute, instead of
+// on every request (fix recheck, 10 Nov 2026, N2/R2: 2.7-10 s responses and 5xx under a crawl).
+// Seats and prices on this page can be up to a minute old; checkout (/book) always reads them live.
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Two-Day Rockies Explorer: Banff & Icefield | Vista Chase",
   description:
-    "Both small-group day tours in one booking: Banff & Yoho Discovery and the Columbia Icefield Adventure. Save 10%, maximum 12 guests each day, pickup in Banff & Canmore. Accommodation not included.",
+    "Both small-group day tours in one booking: Banff & Yoho Discovery and Columbia Icefield Adventure. Save 10%, small groups, pickup in Banff & Canmore.",
   alternates: { canonical: "/two-day-rockies-explorer" },
 };
 
 export default async function TwoDayRockiesExplorerPage() {
+  cachePublicData();
   let tours: TourWithAvailability[] = [];
   try {
     tours = await getTours({ category: "SHARED" });
@@ -37,11 +45,20 @@ export default async function TwoDayRockiesExplorerPage() {
 
   return (
     <div className="bg-obsidian-50 text-obsidian-900">
+      <PackageTripJsonLd
+        path={TWO_DAY_PACKAGE.href}
+        name={TWO_DAY_PACKAGE.title}
+        description={String(metadata.description)}
+        image={TWO_DAY_PACKAGE.images[0].src}
+        days={TWO_DAY_PACKAGE.days.map((d) => d.title)}
+        touristType="Small Group"
+        crumbs={[{ name: "Home", path: "/" }, { name: "Small-group tours", path: "/shared-tours" }, { name: TWO_DAY_PACKAGE.title }]}
+      />
       <section data-nav-hero className="relative isolate flex min-h-[34rem] items-end overflow-hidden bg-obsidian-950 text-white sm:min-h-[40rem] lg:min-h-[72vh]">
         <div className="absolute inset-0 -z-10 grid grid-cols-2 gap-0.5">
           {TWO_DAY_PACKAGE.images.map((img, i) => (
             <div key={img.src} className="relative">
-              <Image src={img.src} alt="" fill priority={i === 0} sizes="50vw" className="object-cover" />
+              <Image src={img.src} alt={img.alt} fill priority={i === 0} sizes="50vw" className="object-cover" />
             </div>
           ))}
         </div>
@@ -124,7 +141,7 @@ export default async function TwoDayRockiesExplorerPage() {
             </li>
             <li className="flex gap-3">
               <Users className="mt-1 h-4 w-4 shrink-0 text-summit-300" aria-hidden="true" />
-              Maximum 12 guests each day
+              Small groups each day
             </li>
             <li className="flex gap-3">
               <MapPin className="mt-1 h-4 w-4 shrink-0 text-summit-300" aria-hidden="true" />

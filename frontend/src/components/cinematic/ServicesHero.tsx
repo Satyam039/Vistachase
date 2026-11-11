@@ -178,8 +178,8 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
           </span>
         </h1>
         <p className="mt-5 max-w-2xl text-pretty text-sm font-light leading-relaxed text-white/80 sm:text-base [text-shadow:0_1px_12px_rgba(0,0,0,0.5)] motion-safe:animate-[fadeUp_1100ms_ease-out]">
-          Discover Banff, Lake Louise, Moraine Lake and beyond with passionate local guides. Join a small-group tour with no
-          more than 12 guests, enjoy a private journey, or explore the lakes with our convenient shuttles.
+          Discover Banff, Lake Louise, Moraine Lake and beyond with passionate local guides. Join a small-group tour, enjoy a
+          private journey, or explore the lakes with our convenient shuttles.
         </p>
 
         {/* 2 · Booking panel: experience tabs on its top edge, the search below them */}
@@ -246,7 +246,7 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
               <>
                 <p className="flex flex-wrap items-baseline justify-center gap-x-2.5 text-white">
                   <span>
-                    From <span className="text-lg text-summit-200 sm:text-xl">CAD {money(slide.offer.from)}</span> {slide.offer.unit}
+                    From <span className="text-lg text-summit-200 sm:text-xl">{money(slide.offer.from)}</span> {slide.offer.unit}
                   </span>
                   <span className="text-summit-300/70" aria-hidden="true">·</span>
                   <span className="text-white/80">Taxes included</span>

@@ -30,6 +30,7 @@ import seoPortalRoutes, { IMAGE_UPLOAD_PATH, LARGE_BODY_PATHS, largeBodyForImage
 import contentRoutes from "@/routes/content.routes";
 import { apiJsonReplacer } from "@/lib/utils/time";
 import { isAllowedOrigin } from "@/lib/security/origin-check";
+import { renamedMediaRedirect } from "@/modules/media/renamed-media";
 
 export function createApp() {
   const app = express();
@@ -96,6 +97,7 @@ export function createApp() {
 
   // Site images (backend/media). The frontend proxies /media/* here like /api/*.
   // File names aren't content-hashed, so cache for a day and revalidate in the background.
+  app.use("/media", renamedMediaRedirect);
   app.use(
     "/media",
     express.static(MEDIA_DIR, {

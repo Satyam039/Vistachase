@@ -16,6 +16,12 @@ import { FaqBrowser } from "@/components/faq/FaqBrowser";
 import { getShuttleRoutes, getTours } from "@/lib/api/catalog";
 import { withSeo } from "@/lib/seo/server";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
+import { cachePublicData } from "@/lib/api/cachePolicy";
+
+// Rendered once and served from cache, refreshed in the background at most every minute, instead of
+// on every request (fix recheck, 10 Nov 2026, N2/R2: 2.7-10 s responses and 5xx under a crawl).
+// Seats and prices on this page can be up to a minute old; checkout (/book) always reads them live.
+export const revalidate = 60;
 
 const baseMetadata: Metadata = {
   title: "Moraine Lake & Lake Louise Shuttles | Vista Chase",
@@ -84,6 +90,7 @@ const shortDate = (d: string) => {
 };
 
 export default async function ShuttlesPage() {
+  cachePublicData();
   const [routes, shuttles] = await Promise.all([getShuttleRoutes(), getTours({ category: "SHUTTLE" })]);
   // Departures sold online: the two shuttle products' (seeded from the doc's timetable) and any routes'.
   const live: LiveShuttleDeparture[] = [...shuttles.flatMap((t) => t.departures), ...routes.flatMap((r) => r.departures)].map((d) => ({
@@ -102,7 +109,7 @@ export default async function ShuttlesPage() {
     <div className="bg-obsidian-50 text-obsidian-900">
       {/* Hero */}
       <section data-nav-hero className="relative isolate flex min-h-[78vh] items-end overflow-hidden bg-obsidian-950 text-white">
-        <Image src="/media/photos/moraine-lake-perfect-reflection.webp" alt="" fill priority sizes="100vw" className="-z-10 object-cover" />
+        <Image src="/media/photos/moraine-lake-perfect-reflection.webp" alt="Moraine Lake reflection in the Valley of the Ten Peaks" fill priority sizes="100vw" className="-z-10 object-cover" />
         <AmbientVideo
           src="/media/videos/lake-louise-summer.mp4"
           srcHd="/media/videos/lake-louise-summer-1080.mp4"
@@ -200,7 +207,7 @@ export default async function ShuttlesPage() {
                           <span className="block text-sm text-slate-600">{day}</span>
                           <span className="block text-lg text-obsidian-900">{date}</span>
                           <span className="block text-sm text-slate-600">{dep.departureTime}</span>
-                          <span className="mt-2 block text-base text-obsidian-900">${dep.price}</span>
+                          <span className="mt-2 block text-base text-obsidian-900">CAD ${dep.price}</span>
                           <span className={`mt-1 block text-xs ${open ? "text-emerald-800" : "text-red-700"}`}>
                             {open ? "Available" : "Sold out"}
                           </span>
@@ -211,7 +218,7 @@ export default async function ShuttlesPage() {
                           {open ? (
                             <Link
                               href={`/book?departureId=${dep.id}`}
-                              aria-label={`Book ${route.name}, ${day} ${date} at ${dep.departureTime}, $${dep.price}, available`}
+                              aria-label={`Book ${route.name}, ${day} ${date} at ${dep.departureTime}, CAD $${dep.price}, available`}
                               className="block w-32 rounded-none border border-obsidian-900/10 bg-white px-4 py-3.5 text-center transition-[border-color,box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:border-ocean-600/50 hover:shadow-[0_16px_30px_-22px_rgba(12,31,33,0.5)]"
                             >
                               {body}
@@ -296,5 +303,6 @@ export default async function ShuttlesPage() {
 }
 
 export function generateMetadata(): Promise<Metadata> {
+  cachePublicData();
   return withSeo("/shuttles", baseMetadata);
 }

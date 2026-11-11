@@ -221,10 +221,13 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
     startNewChat();
   };
 
-  // Keep the newest message in view.
+  // Keep the newest message in view. Before the first message the welcome starts at its top, so a
+  // phone's short screen doesn't hide the greeting under the header (mobile check, 9 Nov 2026).
   useEffect(() => {
     const el = scroller.current;
-    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    if (!el) return;
+    if (messages.length === 0) el.scrollTo({ top: 0 });
+    else el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [messages, voice]);
 
   // Auto-grow the composer (up to ~8 lines).

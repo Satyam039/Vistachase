@@ -11,7 +11,7 @@ import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 const baseMetadata: Metadata = {
   title: "Booking & Cancellation Policy | Vista Chase",
   description:
-    "Vista Chase cancellation deadlines and refunds: shared tours and shuttles, private single-day tours and private multi-day packages, changes, no-shows and refund processing.",
+    "Vista Chase cancellation deadlines and refunds for shared tours, shuttles, private tours and multi-day packages, plus changes, no-shows and refunds.",
   alternates: { canonical: "/privacy-policy-vista-chase" },
 };
 

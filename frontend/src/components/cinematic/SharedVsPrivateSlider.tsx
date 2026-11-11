@@ -96,7 +96,7 @@ export function SharedVsPrivateSlider() {
                     Shared Small-Group Tour Experience
                   </h3>
                   <p className="mt-2 text-sm text-slate-300 font-light leading-relaxed">
-                    Social and intimate atmosphere capped at 12 guests. See Banff&apos;s iconic 8–9 landmarks in one comfortable day
+                    A friendly small-group atmosphere. See Banff&apos;s iconic 8–9 landmarks in one comfortable day
                     with a dedicated interpretive guide, doorstep hotel pickup, and commercial lake access.
                   </p>
                 </div>
@@ -104,7 +104,7 @@ export function SharedVsPrivateSlider() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-200">
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-summit-500 shrink-0" />
-                    <span>Max 12 Guests per vehicle</span>
+                    <span>Small groups, never big buses</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-summit-500 shrink-0" />
@@ -123,7 +123,7 @@ export function SharedVsPrivateSlider() {
                 <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
                     <span className="text-xs uppercase text-slate-400 block">Pricing from</span>
-                    <span className="text-3xl font-serif font-light text-white">$189 CAD</span>
+                    <span className="text-3xl font-serif font-light text-white">CAD $189</span>
                     <span className="text-xs text-slate-400 ml-1">/ guest</span>
                   </div>
 

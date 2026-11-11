@@ -31,7 +31,7 @@ export function PlanAheadGuaranteedAccess() {
         <div className="relative lg:col-span-6">
           <div className="relative h-[26rem] overflow-hidden rounded-none sm:h-[36rem]" data-reveal="clip">
             <Image
-              src="/media/site/about-image-1.webp"
+              src="/media/site/moraine-lake-red-canoes-shoreline.webp"
               alt="Red canoes docked at Moraine Lake shoreline"
               fill
               sizes="(max-width: 1024px) 100vw, 50vw"

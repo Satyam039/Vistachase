@@ -23,13 +23,16 @@
    "mornbyTour": "Banff Shared DAY TOUR",
    "mornbyMatch": "proposed",
    "places": [
-    "moraine-lake",
     "lake-louise",
-    "bow-lake",
-    "peyto-lake",
+    "moraine-lake",
+    "emerald-lake",
     "johnston-canyon",
-    "castle-mountain",
-    "morants-curve"
+    "natural-bridge",
+    "lake-minnewanka",
+    "two-jack-lake",
+    "spiral-tunnels",
+    "morants-curve",
+    "yoho"
    ],
    "season": "all"
   },
@@ -81,13 +84,13 @@
    "mornbyTour": "Jasper Shared Tour",
    "mornbyMatch": "proposed",
    "places": [
-    "icefields-parkway",
+    "columbia-icefield",
+    "athabasca-glacier",
     "bow-lake",
     "peyto-lake",
-    "athabasca-glacier",
-    "columbia-icefield",
-    "athabasca-falls",
-    "sunwapta-falls"
+    "crowfoot-glacier",
+    "waterfowl-lakes",
+    "icefields-parkway"
    ],
    "season": "summer"
   },
@@ -123,11 +126,14 @@
    "places": [
     "lake-louise",
     "moraine-lake",
-    "bow-lake",
-    "peyto-lake",
+    "emerald-lake",
     "johnston-canyon",
+    "natural-bridge",
+    "lake-minnewanka",
+    "two-jack-lake",
+    "spiral-tunnels",
     "morants-curve",
-    "castle-mountain"
+    "yoho"
    ],
    "season": "all"
   },
@@ -142,13 +148,13 @@
    "mornbyTour": "Jasper & Columbia Icefield Private Day Tour (Private)",
    "mornbyMatch": "proposed",
    "places": [
-    "icefields-parkway",
-    "bow-lake",
-    "peyto-lake",
     "columbia-icefield",
     "athabasca-glacier",
-    "athabasca-falls",
-    "sunwapta-falls"
+    "bow-lake",
+    "peyto-lake",
+    "crowfoot-glacier",
+    "waterfowl-lakes",
+    "icefields-parkway"
    ],
    "season": "summer"
   },

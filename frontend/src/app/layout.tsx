@@ -13,6 +13,7 @@ import { SiteFrame } from "@/components/layout/SiteFrame";
 import { TrackingTags } from "@/components/seo/TrackingTags";
 import { getSiteConfig } from "@/lib/seo/server";
 import { HERO_PATH_PATTERN } from "@/lib/heroPages";
+import { BUSINESS_ADDRESS, BUSINESS_TELEPHONE, DEFAULT_SHARE_IMAGE, ORGANIZATION_ID } from "@/lib/seo/business";
 
 export const metadata: Metadata = {
   title: "Vista Chase | Luxury Private Tours & Shuttles in Banff & Rockies",
@@ -35,34 +36,20 @@ export const metadata: Metadata = {
     url: "https://www.vistachase.com",
     siteName: "Vista Chase",
     type: "website",
-    images: [
-      {
-        url: "/media/photos/moraine-lake-perfect-reflection.webp",
-        width: 1200,
-        height: 630,
-        alt: "Moraine Lake Valley of the Ten Peaks",
-      },
-    ],
+    images: [DEFAULT_SHARE_IMAGE],
   },
 };
 
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "TouristInformationCenter",
-  "@id": "https://www.vistachase.com/#organization",
+  "@id": ORGANIZATION_ID,
   "name": "Vista Chase",
   "description": "Explore Banff, Moraine Lake & Lake Louise with Vista Chase. Luxury private tours, small groups & guaranteed shuttles.",
   "url": "https://www.vistachase.com",
-  "telephone": "+1-825-734-9456",
+  "telephone": BUSINESS_TELEPHONE,
   "priceRange": "$$",
-  "address": {
-    "@type": "PostalAddress",
-    "streetAddress": "121 Bow Meadows Crescent #110",
-    "addressLocality": "Canmore",
-    "addressRegion": "AB",
-    "postalCode": "T1W 2W8",
-    "addressCountry": "CA",
-  },
+  "address": BUSINESS_ADDRESS,
   "geo": {
     "@type": "GeoCoordinates",
     "latitude": 51.0858,

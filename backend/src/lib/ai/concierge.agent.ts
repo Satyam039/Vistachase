@@ -24,7 +24,7 @@ import { cancelBooking } from "@/modules/bookings/booking.repository";
 import type { ChatMessage, ConciergeResponse, SessionState } from "@/lib/ai/ai.provider";
 import { formatDateOnly, formatTimeOfDay } from "@/lib/utils/time";
 import { conciergeLanguage } from "@/lib/ai/languages";
-import { activityTicketsVisible, conciergeTours } from "@/modules/tours/product-map";
+import { activityTicketsVisible } from "@/modules/tours/product-map";
 import { getMasterKnowledgeBase } from "./knowledge.sync";
 import { extractAndEvolvePersona, formatPersonaContextForPrompt, type UserPersona, type UserKnowledgeGraph } from "./user.persona";
 
@@ -59,101 +59,14 @@ function anthropic() {
 // Knowledge (system prompt)
 // ---------------------------------------------------------------------------
 
-let catalogCache: { at: number; text: string } | null = null;
-
-async function catalogKnowledge(): Promise<string> {
-  if (catalogCache && Date.now() - catalogCache.at < 5 * 60_000) return catalogCache.text;
-  try {
-    const tours = await prisma.tour.findMany({
-      where: conciergeTours(),
-      select: { slug: true, title: true, category: true, durationHours: true, basePrice: true, currency: true, priceUnit: true, summary: true, bookingMode: true },
-      orderBy: [{ category: "asc" }, { basePrice: "asc" }],
-    });
-    const stops = await prisma.shuttleStop.findMany({ where: { isActive: true }, select: { name: true, town: true }, orderBy: { sortOrder: "asc" } });
-    const lines = tours.map((t) => {
-      const price = t.basePrice > 0 ? `from $${t.basePrice / 100} ${t.currency} ${t.priceUnit === "GROUP" ? "per vehicle" : "per guest"}` : "price on request";
-      const mode = t.bookingMode === "ENQUIRY" ? "enquiry only (custom quote)" : "bookable departures";
-      return `- ${t.title} [slug: ${t.slug}] · ${t.category} · ~${t.durationHours}h · ${price} · ${mode}. ${t.summary}`;
-    });
-    const towns = [...new Set(stops.map((s) => s.town))];
-    const text = `CATALOG (live)\n${lines.join("\n")}\n\nPICKUP STOPS: ${stops.length} stops in ${towns.join(", ")} (e.g. ${stops
-      .slice(0, 8)
-      .map((s) => s.name)
-      .join(", ")}). Use the find_pickup tool for exact stops and times.`;
-    catalogCache = { at: Date.now(), text };
-    return text;
-  } catch (err) {
-    console.warn("[concierge.agent] Database lookup failed, using static knowledge base fallback:", (err as any)?.message);
-    const text = `CATALOG (fallback):
-- Heart of Banff Tour · SHARED · ~4.5h · from $99 CAD per guest · bookable departures. Highlights: Surprise Corner, Bow Falls, Mt Norquay, Minnewanka.
-- Banff + Yoho National Parks Tour · SHARED · ~8h · from $175 CAD per guest · bookable departures. Highlights: Lake Louise, Moraine Lake (seasonal), Emerald Lake, Natural Bridge.
-- Icefields Parkway & Jasper Gateway · SHARED · ~10.5h · from $249 CAD per guest · bookable departures. Highlights: Peyto Lake, Bow Lake, Columbia Icefield, Athabasca Glacier.
-- Lake Louise & Moraine Lake Shuttles · SHUTTLE · from $45 CAD per guest · High frequency departures.
-- Custom Private Charters · PRIVATE · from $750 CAD per vehicle (SUV) or $1,450 CAD (12-seat Sprinter).`;
-    catalogCache = { at: Date.now(), text };
-    return text;
-  }
-}
+// The concierge's knowledge (company, tours, prices, policies, voice, answer rules) is
+// knowledge.base.ts, compiled with the live catalog by knowledge.sync.ts.
 
 // Activity tickets are only mentioned while the website shows them (product-map activityTicketsVisible).
 const TICKETS_LINE = () =>
   activityTicketsVisible()
-    ? `, Banff activity tickets (Banff Gondola 9:00 AM, Lake Minnewanka cruise 2:00 to 4:00 PM, Columbia Icefield Glacier Adventure with Ice Explorer + Skywalk 3:30 PM, premium Ice Odyssey 3:30 PM, Maligne Lake cruise 9:00 to 10:00 AM; booked online on the operator's site through each ticket's "Book Now" button at /banff-activity-tickets).`
-    : ". Activity tickets (gondola, cruises) are not sold on the website at the moment.";
-
-function companyKnowledge(): string {
-  const today = new Date().toLocaleDateString("en-CA", { weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: "America/Edmonton" });
-  return `You are Vista Chase's AI sales and booking advisor on vistachase.com.
-Today is ${today} (Mountain Time, Canmore/Banff).
-
-## Voice and sales approach
-Be warm, confident, practical and concise, like a knowledgeable local advisor. Answer the guest's question first. Ask one or two focused questions at a time and reuse details already supplied. Lead with a relevant benefit, then ask one useful choice question. Collect travel dates, party size and pickup town naturally once interest is established; clarify other needs when relevant. Do not delay a direct booking request with a sales pitch.
-Recommend one suitable product with a clear reason. Offer a second option when it represents a meaningful choice. Once the guest selects a product, progress through that product's booking flow rather than continuing to upsell. Do not pressure, invent scarcity, fabricate reviews or claim everyone chooses an option. Never guarantee wildlife, sunshine, empty attractions or a particular guide.
-Handle complaints with empathy and practical support, not sales pitches.
-
-## Sales priorities and opening questions
-Lead with benefits relevant to the guest, not a list of vehicle specifications. Do not display seat maps or use general sightseeing trivia, such as why Lake Louise is blue, as opening suggestions. Answer factual questions when guests actually ask them.
-No Seat Selection options for Customers: Vista Chase does not offer individual seat selection. All vehicles feature comfortable, spacious seating with panoramic windows and USB-C charging; guests simply reserve their required number of seats and follow whatever checkout steps are available.
-
-Four core starter questions that help guests choose a service and move towards booking:
-1. Which tour is right for my trip?
-2. How can I visit Moraine Lake and Lake Louise?
-3. What private tours can I book?
-4. Can you help me plan a multi-day trip?
-
-Explain the award-winning Banff & Yoho experience using approved product highlights. Never invent an award title, year or ranking. Explain that eligible shared Icefield departures include the Ice Explorer and Skywalk, avoiding separate ticket arrangements; private activities remain optional and separately billed.
-Offer the eligible shared Two-Day Rockies Explorer with the owner-approved 10% saving when two sightseeing days fit. Describe famous sights across Banff, Yoho and Jasper national parks, not comprehensive Jasper coverage or a visit to Jasper town. Tie the saving to the eligible combined package; do not apply it to separate purchases, private tours, shuttles or other discounts without confirmation.
-When guests mention several sightseeing days, Calgary flights, rental cars or transport coordination, introduce multi-day private touring with airport transfers available for bookings of two or more private tour days. Emphasise reduced driving, parking and transport-planning effort. Guests book their own hotels; transfer scope and price need confirmation.
-
-## Shuttle sales and parking rules
-Position the shuttle as both lakes in one dedicated outing, with pickups from Canmore, Banff and Lake Louise Village, round-trip transportation and independent exploration within booked lake visit times.
-Lead with avoiding the drive and parking problems. Lake Louise lakeshore parking is extremely limited; ordinary personal vehicles cannot access Moraine Lake Road. Never direct shuttle customers to village public parking, day-use areas or Samson Mall to leave their cars during the excursion. Samson Mall short-stay parking is for shopping/dining customers, with a two-hour maximum under owner-approved guidance; it is not shuttle parking.
-Recommend Banff pickup for guests staying in Banff and Canmore pickup for guests staying in Canmore. Do not recommend driving from either town to Lake Louise Village to board. Village pickup is for locally staying guests or those arriving without needing public parking.
-Shuttles carry up to 24 guests per vehicle. For guests seeking quieter visits, compare early-morning (departures 1–2) and late-afternoon (departures 6–7) options.
-
-## Product boundaries & multi-day journeys
-- Shared tours: maximum 12 guests in a 15-passenger van.
-- Shuttles: up to 24 per vehicle.
-- Private tours: priced per vehicle, exclusive to the party (up to 13 guests).
-- Sixth private product: the sixth card on the private tours page links to our sister company Banff Elite (https://banffelite.com); there is no separate Vista Chase itinerary to add. Refer custom or luxury charter requests to Banff Elite.
-- Shared Icefield pickup: supported Banff and Canmore locations. A Lake Louise pickup request requires advance team confirmation.
-- Winter Icefield route: glacier activities do not operate in winter (October 11 to May 31); the route follows an adjusted winter sightseeing itinerary (do not offer Abraham Lake under current approved scope).
-- Four-Day Rockies & Jasper journey: Days 1–3 start in Banff, Canmore or Lake Louise. After Day 3, guests travel to Jasper and stay overnight in Jasper (guest-booked and guest-paid). Day 4 pickup is at the guest's Jasper accommodation, returning south to Banff, Canmore or Calgary.
-
-ABOUT VISTA CHASE
-- Operated by D Tourist Inc. Canmore-based operator for Banff, Jasper and Yoho national parks since 2018. Office: 121 Bow Meadows Crescent #110, Canmore, AB. Phone +1 (825) 734-9456, support@vistachase.com.
-- TripAdvisor Travellers' Choice Best of the Best 2026: shared Banff & Yoho tour ranked #6 experience in Canada. Rated 5.0 from 1,700+ reviews.
-- Prices in CAD; price shown is price paid. Full policy: /privacy-policy-vista-chase.
-
-POLICIES
-- Cancellation: shared tours and shuttles, full refund at least 24 hours before departure; private single-day tours, full refund at least 72 hours before; private packages of two or more days, 80% refund at least 72 hours before the first tour day (20% is non-refundable). After deadline: no refund.
-
-CONVERSATIONAL PROFESSIONALISM & ZERO META-APOLOGY DIRECTIVE
-- STRICT RULE: NEVER say "I need to correct my earlier messages", "I said I ran a search when I hadn't", "disregard my earlier claims", "I lied earlier", or "those statements were false". Never talk about previous turns, self-correct previous replies, or second-guess yourself in front of the traveler.
-- NEVER discuss internal AI tool mechanics, whether you "actually ran" a search, or backend system errors (e.g. NEVER say "it returned a real error: 'That request couldn't be completed'", "the booking system isn't responding", or "the company built me for booking and not support").
-- If a guest asks for a phone callback or wants to talk to a human, say warmly and helpfully: "Our team is available directly at +1 (825) 734-9456 (lines open 6 a.m. – 9 p.m. Mountain Time) or support@vistachase.com. You can also tap 'Chat with a live agent' directly under this chat to forward this conversation to our support desk!"
-- Never ask for or repeat card numbers, CVV or expiry. Payment is made exclusively online through the encrypted checkout page.`;
-}
+    ? "ACTIVITY TICKETS: Banff activity tickets (gondola, cruises, Columbia Icefield) are booked on the operator's site through each ticket's \"Book Now\" button at /banff-activity-tickets."
+    : "ACTIVITY TICKETS: not sold on the website at the moment (private tours can request add-on activities instead).";
 
 /** The guest picked a language in the chat, or left it on Auto (reply in theirs). */
 function languageInstruction(code?: string): string {
@@ -257,6 +170,17 @@ const CUSTOMER_TOOLS: Anthropic.Tool[] = [
         guestConfirmed: { type: "boolean", description: "true only if the guest clearly said yes to cancelling" },
       },
       required: ["bookingReference", "customerEmail", "guestConfirmed"],
+    },
+  },
+  {
+    name: "get_seat_map",
+    description: "Returns an interactive visual vehicle seat map and layout (12-seat luxury Mercedes Sprinter or private 7-seat SUV) with live free/occupied seats, window vs aisle positions, USB chargers, and legroom specifications.",
+    input_schema: {
+      type: "object",
+      properties: {
+        vehicleType: { type: "string", enum: ["sprinter_12", "suv_7"], description: "Type of vehicle: sprinter_12 (Mercedes Sprinter 12-seater) or suv_7 (Luxury 7-seat SUV)." },
+        departureId: { type: "string", description: "Optional specific departure ID to query actual booked seats." },
+      },
     },
   },
 ];
@@ -599,10 +523,10 @@ export async function runConciergeAgent(
   const dateIso = now.toLocaleDateString("en-CA", { timeZone: "America/Edmonton" });
 
   const system: Anthropic.TextBlockParam[] = [
-    { type: "text", text: `${masterKb}\n\n${await catalogKnowledge()}`, cache_control: { type: "ephemeral" } },
+    { type: "text", text: `${masterKb}\n\n${TICKETS_LINE()}`, cache_control: { type: "ephemeral" } },
     {
       type: "text",
-      text: `CURRENT LIVE MOUNTAIN TIME (Banff, Canmore, Lake Louise):\n- Today's Date: ${todayStr} (${dateIso})\n- Current Time: ${timeStr} Mountain Time\n- Season: ${now.getMonth() >= 5 && now.getMonth() <= 9 ? "Summer (All roads open)" : "Winter (Moraine Lake Road closed; Abraham Lake Ice Bubbles & Johnston Canyon active)"}`,
+      text: `CURRENT LIVE MOUNTAIN TIME (Banff, Canmore, Lake Louise):\n- Today's Date: ${todayStr} (${dateIso})\n- Current Time: ${timeStr} Mountain Time\n- Season: ${dateIso.slice(5) >= "06-01" && dateIso.slice(5) <= "10-10" ? "Summer (June 1 to October 10): summer prices and itineraries" : "Winter (October 11 to May 31): winter prices; Moraine Lake Road closed; no Ice Explorer or Skywalk"}`,
     },
     ...(ctx.isStaff ? [{ type: "text" as const, text: `The user is signed in as staff (${ctx.role}). Staff tools are available.` }] : []),
     ...(personaContext ? [{ type: "text" as const, text: personaContext }] : []),
@@ -612,14 +536,15 @@ export async function runConciergeAgent(
           {
             type: "text" as const,
             text: `DEEP THINKING TURBO MODE — MAXIMUM IN-DEPTH DESCRIPTIVE POWER:
-The traveler has engaged Deep Thinking Turbo Mode. Deliver an exhaustive, deeply descriptive, master-class Rockies travel guide and itinerary without artificial brevity or length restrictions:
+The traveler has engaged Deep Thinking Turbo Mode. Deliver an exhaustive, deeply descriptive, master-class Rockies travel guide and itinerary:
 - Complete hour-by-hour schedules with realistic mountain driving times, buffer windows, and scenic stops.
 - Specific viewpoints, photo-spot lighting windows (golden hour, sunrise alpenglow angles, midday glacial illumination).
 - Detailed gear recommendations, layers, footwear, and alpine weather contingencies.
 - Elevation profiles, hike difficulty levels, and Parks Canada regulations (Discovery Pass, wildlife distance laws).
 - Curated local food, pastry, and coffee recommendations in Banff, Canmore, and Lake Louise Village.
 - Contrast shared tours, private excursions, and shuttles with thorough price breakdowns in CAD.
-- Use rich, clean Markdown with headers (###), bullet points, bold key details, and callout sections for effortless scanning.`,
+- Use rich, clean Markdown with headers (###), bullet points, bold key details, and callout sections for effortless scanning.
+- Only state Vista Chase prices, times and inclusions from this prompt or a tool result.`,
           },
         ]
       : []),
@@ -653,10 +578,12 @@ The traveler has shared one or more photos or documents (e.g. itinerary screensh
   ];
 
   const tools: Anthropic.ToolUnion[] = [
-    ...CUSTOMER_TOOLS.filter(t => process.env.NODE_ENV !== "production" || !["hold_seats", "cancel_booking"].includes(t.name)),
+    // No seat selection for guests (owner's "AI Training for Vista Chase", 10 Nov 2026): the seat map
+    // tool is never offered.
+    ...CUSTOMER_TOOLS.filter(t => t.name !== "get_seat_map" && (process.env.NODE_ENV !== "production" || !["hold_seats", "cancel_booking"].includes(t.name))),
     ...(ctx.isStaff ? STAFF_TOOLS : []),
-    { type: "web_search_20260318", name: "web_search", max_uses: 4, user_location: { type: "approximate", city: "Banff", region: "Alberta", country: "CA", timezone: "America/Edmonton" } },
-    { type: "web_fetch_20260318", name: "web_fetch", max_uses: 3 },
+    { type: "web_search_20260318", name: "web_search", max_uses: 2, user_location: { type: "approximate", city: "Banff", region: "Alberta", country: "CA", timezone: "America/Edmonton" } },
+    { type: "web_fetch_20260318", name: "web_fetch", max_uses: 1 },
   ];
 
   const model = process.env.ANTHROPIC_MODEL || "claude-sonnet-5-5";
@@ -664,7 +591,7 @@ The traveler has shared one or more photos or documents (e.g. itinerary screensh
   let card: Card = {};
   const sources = new Map<string, string>();
   const maxSteps = isDeepThinking ? 12 : MAX_STEPS;
-  const maxTokens = isDeepThinking ? 8192 : 2048;
+  const maxTokens = isDeepThinking ? 8192 : 800;
 
   for (let step = 0; step < maxSteps; step++) {
     if (isDeepThinking && step === 0) {

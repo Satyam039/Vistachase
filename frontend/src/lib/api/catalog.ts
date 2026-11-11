@@ -1,4 +1,5 @@
 import { unstable_rethrow } from "next/navigation";
+import { connection } from "next/server";
 import { ApiError, apiGet, apiGetOrNull } from "@/lib/api/server";
 import {
   FALLBACK_TOURS,
@@ -21,6 +22,16 @@ import { ACTIVITY_TICKETS_VISIBLE } from "@/lib/activityTickets";
  * backend. In production it is used only with FEATURE_FALLBACK_CATALOG=true: otherwise the site
  * shows what the API returns, or an error, never possibly stale tours and prices.
  */
+/**
+ * The backend can't be reached. During `next build` (a CI build with no backend) the page is left to
+ * render per request instead of failing the build; cached pages (revalidate) otherwise prerender with
+ * live data on the server. At run time this throws, so a cached page keeps its last good version.
+ */
+async function backendUnavailable(): Promise<never> {
+  if (process.env.NEXT_PHASE === "phase-production-build") await connection();
+  throw new Error("Backend unavailable");
+}
+
 function fallbackAllowed() {
   return process.env.NODE_ENV !== "production" || process.env.FEATURE_FALLBACK_CATALOG === "true";
 }
@@ -45,7 +56,7 @@ export async function getTours(options?: {
   } catch (err) {
     unstable_rethrow(err); // Next.js "render per request" signal, not an outage
     console.warn("[Catalog] Backend unavailable, serving authoritative fallback catalog");
-    if (!fallbackAllowed()) throw new Error("Backend unavailable");
+    if (!fallbackAllowed()) await backendUnavailable();
 }
 
   // Graceful fallback to authoritative catalog
@@ -66,7 +77,7 @@ export async function getTourBySlug(slug: string): Promise<TourWithAvailability 
     if (err instanceof ApiError && err.status === 404) return null; // no such tour: the page 404s
     console.warn(`[Catalog] Backend unavailable for slug ${slug}`);
     // An outage is not "page not found": show the error page (search engines keep the URL).
-    if (!fallbackAllowed()) throw new Error("Backend unavailable");
+    if (!fallbackAllowed()) await backendUnavailable();
   }
 
   // Only a matching tour: product pages live at top-level URLs, so an unknown slug must 404.
@@ -81,7 +92,7 @@ export async function getShuttleRoutes(): Promise<ShuttleWithDepartures[]> {
   } catch (err) {
     unstable_rethrow(err); // Next.js "render per request" signal, not an outage
     console.warn("[Catalog] Backend unavailable for shuttles, serving authoritative fallback");
-    if (!fallbackAllowed()) throw new Error("Backend unavailable");
+    if (!fallbackAllowed()) await backendUnavailable();
 }
 
   return FALLBACK_SHUTTLES;
@@ -94,7 +105,7 @@ export async function getDestinations(): Promise<DestinationSummary[]> {
   } catch (err) {
     unstable_rethrow(err); // Next.js "render per request" signal, not an outage
     console.warn("[Catalog] Backend unavailable for destinations, serving authoritative fallback");
-    if (!fallbackAllowed()) throw new Error("Backend unavailable");
+    if (!fallbackAllowed()) await backendUnavailable();
 }
 
   return FALLBACK_DESTINATIONS;
@@ -102,14 +113,14 @@ export async function getDestinations(): Promise<DestinationSummary[]> {
 
 export async function getDestinationBySlug(slug: string): Promise<DestinationDetail | null> {
   try {
-    const data = await apiGetOrNull<{ destination: DestinationDetail }>(
-      `/api/destinations/${encodeURIComponent(slug)}`
-    );
+    const data = await apiGet<{ destination: DestinationDetail }>(`/api/destinations/${encodeURIComponent(slug)}`);
     if (data?.destination) return data.destination;
   } catch (err) {
     unstable_rethrow(err); // Next.js "render per request" signal, not an outage
+    if (err instanceof ApiError && err.status === 404) return null; // no such destination: the page 404s
+    // An outage is not "page not found": a cached page keeps its last good version (R1).
     console.warn(`[Catalog] Backend unavailable for destination ${slug}, serving authoritative fallback`);
-    if (!fallbackAllowed()) throw new Error("Backend unavailable");
+    if (!fallbackAllowed()) await backendUnavailable();
 }
 
   if (!fallbackAllowed()) return null;
@@ -155,7 +166,7 @@ export async function getCheckoutData(departureId?: string): Promise<CheckoutDat
   } catch (err) {
     unstable_rethrow(err); // Next.js "render per request" signal, not an outage
     console.warn("[Catalog] Backend unavailable for checkout, serving authoritative fallback");
-    if (!fallbackAllowed()) throw new Error("Backend unavailable");
+    if (!fallbackAllowed()) await backendUnavailable();
 }
 
   // Never a made-up departure in production: checkout shows its "not available" state instead.

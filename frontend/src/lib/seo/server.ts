@@ -1,6 +1,7 @@
 import "server-only";
 import type { Metadata } from "next";
 import { BACKEND_URL } from "@/lib/api/server";
+import { DEFAULT_SHARE_IMAGE } from "@/lib/seo/business";
 
 // Published SEO overrides from the SEO portal (/seo). Each public page keeps its
 // metadata in code as the default; a published override replaces only the fields it sets. When
@@ -51,6 +52,31 @@ export async function seoFetch<T>(path: string, timeoutMs = 3000): Promise<T | n
   }
 }
 
+/**
+ * GET a public SEO endpoint for a page that must not be cached as "not found" by mistake: null only
+ * when the backend answers 404 (the item really doesn't exist). A timeout, network error or 5xx is
+ * retried once and then thrown, so an ISR page keeps serving its last good version instead of
+ * caching the not-found page (fix recheck, 10 Nov 2026, R1: live blog posts showed "Page not found"
+ * at random under load).
+ */
+export async function seoFetchOrThrow<T>(path: string, timeoutMs = 8000): Promise<T | null> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/seo/public${path}`, {
+        next: { revalidate: 60, tags: ["seo"] },
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+      if (res.status === 404) return null;
+      if (!res.ok) throw new Error(`SEO API ${path} answered ${res.status}`);
+      return (await res.json()) as T;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error(`SEO API ${path} failed`);
+}
+
 export async function getSeoMeta(path: string): Promise<SeoMeta | null> {
   const body = await seoFetch<{ meta: SeoMeta | null }>(`/meta?path=${encodeURIComponent(path)}`);
   return body?.meta ?? null;
@@ -63,7 +89,7 @@ export async function withSeo(path: string, defaults: Metadata): Promise<Metadat
 }
 
 export function mergeSeo(defaults: Metadata, meta: SeoMeta | null): Metadata {
-  if (!meta) return defaults;
+  if (!meta) return withShareImage(defaults);
   const title = meta.seoTitle ?? undefined;
   const description = meta.metaDescription ?? undefined;
   const merged: Metadata = { ...defaults };
@@ -97,7 +123,15 @@ export function mergeSeo(defaults: Metadata, meta: SeoMeta | null): Metadata {
       ...(twImage ? { images: [twImage] } : {}),
     };
   }
-  return merged;
+  return withShareImage(merged);
+}
+
+/** Puts the default share picture on a page's own openGraph/twitter blocks that have none (R4). */
+export function withShareImage(metadata: Metadata): Metadata {
+  const out: Metadata = { ...metadata };
+  if (out.openGraph && !out.openGraph.images) out.openGraph = { ...out.openGraph, images: [DEFAULT_SHARE_IMAGE] };
+  if (out.twitter && !out.twitter.images) out.twitter = { ...out.twitter, images: [DEFAULT_SHARE_IMAGE.url] };
+  return out;
 }
 
 /**

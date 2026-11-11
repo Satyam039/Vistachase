@@ -56,7 +56,7 @@ export const MENU_SECTIONS: MenuSection[] = [
     id: "partners",
     title: "Partners",
     links: [
-      { title: "Affiliate & Partner Program", description: "Hotels, agents and creators earn with Vista Chase", href: "/partners" },
+      { title: "Affiliate & Partner Program", description: "Hotels, agents and creators earn with Vista Chase", href: "/affiliates" },
     ],
   },
 ];

@@ -19,11 +19,11 @@ interface CategoryCard {
 const CATEGORIES: CategoryCard[] = [
   {
     id: "shared",
-    eyebrow: "MAX 12 GUESTS",
+    eyebrow: "SMALL GROUPS",
     title: "Small-Group Tours",
     tagline: "Small groups, big days out",
-    description: "Share the adventure with no more than 12 guests, led by a passionate guide.",
-    image: "/media/site/image-2025-11-04t210434-975.webp",
+    description: "Share the adventure in a small group, led by a passionate guide.",
+    image: "/media/site/bow-river-train-canadian-rockies.webp",
     href: "/shared-tours",
     icon: Users,
     badge: "#6 experience in Canada",
@@ -76,33 +76,46 @@ const CATEGORIES: CategoryCard[] = [
   },
 ];
 
-// The two tour styles (small-group, private) get the wide cards in the first row, the rest share the second row. Every
-// card is a MediaCard (photo on top, content panel below); photos drift slowly against the scroll
-// (data-parallax) and zoom on hover. Cards in the same row share an aspect so their heights match.
-const SPAN = ["lg:col-span-3", "lg:col-span-3", "lg:col-span-2", "lg:col-span-2", "sm:col-span-2 lg:col-span-2"];
-const ASPECT = ["aspect-[5/4] lg:aspect-[16/9]", "aspect-[5/4] lg:aspect-[16/9]", "aspect-[5/4]", "aspect-[5/4]", "aspect-[5/4] sm:aspect-[21/9] lg:aspect-[5/4]"];
+// Owner, 2026-11-11 ("Please fix all designs"): with tickets hidden there are four cards, which the old
+// 3+3 / 2+2 layout left uneven with a gap. Four cards sit in one full-width row of equal cards (two
+// by two on tablets); with tickets shown, the two tour styles take the wide first row and the other
+// three share the second. Cards in a row share an aspect and stretch to the same height.
+const LAYOUT: Record<number, { grid: string; span: string[]; aspect: string[] }> = {
+  4: {
+    grid: "sm:grid-cols-2 lg:grid-cols-4",
+    span: ["", "", "", ""],
+    aspect: Array(4).fill("aspect-[4/3] lg:aspect-[4/5]"),
+  },
+  5: {
+    grid: "sm:grid-cols-2 lg:grid-cols-6",
+    span: ["lg:col-span-3", "lg:col-span-3", "lg:col-span-2", "lg:col-span-2", "sm:col-span-2 lg:col-span-2"],
+    aspect: ["aspect-[5/4] lg:aspect-[16/9]", "aspect-[5/4] lg:aspect-[16/9]", "aspect-[5/4]", "aspect-[5/4]", "aspect-[5/4] sm:aspect-[21/9] lg:aspect-[5/4]"],
+  },
+};
 
 export function ExperienceCategories() {
+  const cards = withoutHiddenTickets(CATEGORIES);
+  const layout = LAYOUT[cards.length] ?? LAYOUT[4];
   return (
     <section id="experiences" aria-labelledby="experiences-heading" className="bg-white py-20 text-obsidian-900 sm:py-28">
-      <div className="mx-auto max-w-7xl px-page">
+      <div className="mx-auto max-w-[110rem] px-page">
         <SectionHeading
           id="experiences-heading"
-          eyebrow="Five ways to explore"
+          eyebrow={`${cards.length === 4 ? "Four" : "Five"} ways to explore`}
           title="Choose How You See the Rockies"
           intro="Join a small group, enjoy a private tour, take a lake shuttle or explore further on a multi-day journey. Complete your visit with unforgettable attractions."
         />
 
-        <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-6" data-stagger>
-          {withoutHiddenTickets(CATEGORIES).map((category, idx) => {
+        <ul className={`grid grid-cols-1 gap-5 ${layout.grid}`} data-stagger>
+          {cards.map((category, idx) => {
             const Icon = category.icon;
             return (
-              <li key={category.id} className={SPAN[idx]}>
+              <li key={category.id} className={`flex ${layout.span[idx] ?? ""}`}>
                 <MediaCard
                   href={category.href}
                   image={category.image}
-                  sizes={idx < 2 ? "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 640px" : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 420px"}
-                  aspect={ASPECT[idx]}
+                  sizes={cards.length === 4 ? "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 440px" : idx < 2 ? "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 640px" : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 420px"}
+                  aspect={layout.aspect[idx]}
                   badge={category.badge}
                   eyebrow={category.tagline}
                   eyebrowIcon={Icon}

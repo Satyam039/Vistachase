@@ -1,3 +1,4 @@
+import { looksLikeBotName } from "@/modules/enquiries/spam";
 import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
 import { Router, type Request, type Response } from "express";
 import prisma from "@/lib/db/prisma";
@@ -139,6 +140,10 @@ router.post("/register", rateLimitMiddleware("register", { maxRequests: 3, windo
     }
     if (typeof password !== "string" || password.length < 8) {
       return res.status(400).json({ success: false, error: "Use a password of at least 8 characters" });
+    }
+    // Spam bots sign up with random names and fake emails; their verification emails bounce.
+    if (typeof name !== "string" || looksLikeBotName(name)) {
+      return res.status(400).json({ success: false, error: "Please enter your full name" });
     }
     if (typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       return res.status(400).json({ success: false, error: "Enter a valid email address" });

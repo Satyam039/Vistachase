@@ -19,11 +19,17 @@ import { TrustBar } from "@/components/cinematic/TrustBar";
 import type { Metadata } from "next";
 import { getSiteConfig, withSeo } from "@/lib/seo/server";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
+import { cachePublicData } from "@/lib/api/cachePolicy";
+
+// Rendered once and served from cache, refreshed in the background at most every minute, instead of
+// on every request (fix recheck, 10 Nov 2026, N2/R2: 2.7-10 s responses and 5xx under a crawl).
+// Seats and prices on this page can be up to a minute old; checkout (/book) always reads them live.
+export const revalidate = 60;
 
 const baseMetadata: Metadata = {
-  title: "Vista Chase | Luxury Private Tours & Shuttles • Banff & Lake Louise",
+  title: "Vista Chase | Luxury Private Tours & Shuttles in Banff",
   description:
-    "Banff's premier tour operator. Ranked #6 Experience in Canada by TripAdvisor Best of the Best 2026. Guaranteed Moraine Lake access, luxury private SUV tours & shuttles.",
+    "Banff tour operator ranked #6 Experience in Canada, Tripadvisor Best of the Best 2026. Guaranteed Moraine Lake access, private SUV tours and shuttles.",
   alternates: { canonical: "/" },
   openGraph: {
     title: "Vista Chase | Canadian Rockies Luxury Tours & Shuttles",
@@ -41,6 +47,7 @@ const baseMetadata: Metadata = {
 };
 
 export default async function HomePage() {
+  cachePublicData();
   let tours: TourWithAvailability[] = [];
   try {
     tours = await getTours();
@@ -105,6 +112,7 @@ export default async function HomePage() {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
+  cachePublicData();
   // The Google site verification tag sits on the home page only (approved in the SEO portal).
   const [metadata, config] = await Promise.all([withSeo("/", baseMetadata), getSiteConfig()]);
   return config?.verification ? { ...metadata, verification: { google: config.verification } } : metadata;

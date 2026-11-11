@@ -64,7 +64,7 @@ export function GlobalVoiceAssistantDrawer() {
         onClick={() => setOpen(true)}
         aria-haspopup="dialog"
         aria-expanded={open}
-        className={`fixed bottom-[calc(1.5rem+var(--vc-bottom-bar-h,0px))] right-6 z-40 inline-flex h-14 items-center gap-2.5 rounded-full bg-obsidian-900 pl-2 pr-5 text-white shadow-[0_18px_40px_-16px_rgba(12,31,33,0.7)] ring-1 ring-white/10 transition-transform duration-300 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-summit-500 ${
+        className={`vc-concierge-fab fixed bottom-[calc(1.5rem+var(--vc-bottom-bar-h,0px))] right-6 z-40 inline-flex h-14 items-center gap-2.5 rounded-full bg-obsidian-900 pl-2 pr-5 text-white shadow-[0_18px_40px_-16px_rgba(12,31,33,0.7)] ring-1 ring-white/10 transition-transform duration-300 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-summit-500 ${
           open ? "pointer-events-none opacity-0" : ""
         }`}
       >

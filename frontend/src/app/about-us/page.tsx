@@ -12,7 +12,7 @@ import { withSeo } from "@/lib/seo/server";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 const baseMetadata: Metadata = {
-  title: "About Vista Chase | Banff's Top-Rated Tour & Shuttle Operator",
+  title: "About Vista Chase | Banff's Top-Rated Tour Operator",
   description:
     "Founded in 2018 in Canmore. TripAdvisor Best of the Best 2026 (#6 experience in Canada). Our story, local guides and fleet for the Canadian Rockies.",
   alternates: { canonical: "/about-us" },
@@ -34,7 +34,7 @@ const VALUES = [
   {
     icon: Users,
     title: "Small groups, never coaches",
-    body: "Shared tours stop at 12 guests, so there's time with your guide, unhurried photo stops and a lighter footprint.",
+    body: "Shared tours stay small, so there's time with your guide, unhurried photo stops and a lighter footprint.",
   },
   {
     icon: HeartHandshake,
@@ -53,7 +53,7 @@ export default function AboutUsPage() {
     <div className="bg-obsidian-50 text-obsidian-900">
       {/* Hero */}
       <section data-nav-hero className="relative isolate flex min-h-[70vh] items-end overflow-hidden bg-obsidian-950 text-white">
-        <Image src="/media/photos/three-sisters-canmore.webp" alt="" fill priority sizes="100vw" className="-z-10 object-cover" data-parallax="10" />
+        <Image src="/media/photos/three-sisters-canmore.webp" alt="The Three Sisters peaks above Canmore" fill priority sizes="100vw" className="-z-10 object-cover" data-parallax="10" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/40 to-ocean-950/10" />
         <div className="mx-auto flex w-full flex-col items-center text-center max-w-7xl px-page pb-14 pt-[calc(var(--vc-nav-open-h,100px)+1.5rem)]" data-scroll-fade>
           <nav aria-label="Breadcrumb" className="mb-6">

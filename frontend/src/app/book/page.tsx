@@ -1,10 +1,12 @@
 import { notFound } from "next/navigation";
+import { activityGuestsFromQuery } from "@/lib/activityAddOns";
 import { getCheckoutData } from "@/lib/api/catalog";
 import { BookingCheckoutClient } from "@/components/booking/BookingCheckoutClient";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  // Checkout and search results have no search value of their own; keep them out of the index.
+  // Checkout step: noindex, follow (fix recheck, 10 Nov 2026, R3; replaces the 9 Nov "index, follow").
+  // It has nothing for search and would show stale dates and prices in results.
   robots: { index: false, follow: true },
   title: "Secure Booking & Checkout | Vista Chase Canadian Rockies",
   description:
@@ -17,7 +19,7 @@ export const metadata: Metadata = {
 export default async function BookPage({
   searchParams: searchParamsPromise,
 }: {
-  searchParams: Promise<{ departureId?: string; holdToken?: string; pickupStopId?: string; guests?: string; adults?: string; children?: string; infants?: string; airport?: string }>;
+  searchParams: Promise<{ departureId?: string; holdToken?: string; pickupStopId?: string; guests?: string; adults?: string; children?: string; infants?: string; airport?: string; activities?: string; actAdults?: string; actChildren?: string; actInfants?: string }>;
 }) {
   const searchParams = await searchParamsPromise;
   const checkout = await getCheckoutData(searchParams.departureId);
@@ -60,7 +62,8 @@ export default async function BookPage({
       initialAdults={Number.parseInt(searchParams.adults ?? "", 10) || undefined}
       initialChildren={Number.parseInt(searchParams.children ?? "", 10) || undefined}
       initialInfants={Number.parseInt(searchParams.infants ?? "", 10) || undefined}
-      initialAirport={searchParams.airport === "1"}
+      initialActivities={searchParams.activities === "1"}
+      initialActivityGuests={activityGuestsFromQuery(searchParams)}
     />
   );
 }

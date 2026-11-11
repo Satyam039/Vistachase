@@ -28,6 +28,14 @@ export const ADD_ONS_BY_TOUR: Record<string, ActivityAddOnId[]> = {
 const IDS = Object.keys(ACTIVITY_ADD_ONS) as [ActivityAddOnId, ...ActivityAddOnId[]];
 export const activityAddOnsSchema = z.array(z.enum(IDS)).max(IDS.length);
 
+/** Who joins the activities, with ages (owner, 2026-11-11): adults 16–99, children 6–15, infants 0–5. */
+export const activityGuestsSchema = z.object({
+  adults: z.number().int().min(0).max(30),
+  children: z.number().int().min(0).max(30),
+  infants: z.number().int().min(0).max(30),
+});
+export type ActivityGuests = z.infer<typeof activityGuestsSchema>;
+
 /** June 1 to October 10, for a YYYY-MM-DD date. */
 function inSeason(date: string) {
   const md = date.slice(5, 10);
@@ -51,8 +59,8 @@ export function activityAddOnsError(ids: ActivityAddOnId[], tourSlug: string | n
 /** The line staff read in the booking's special requests. */
 export function activityAddOnsNote(ids: ActivityAddOnId[], party: { adults: number; children: number; infants: number }): string {
   const guests = [
-    `${party.adults} adult${party.adults === 1 ? "" : "s"} (16–99)`,
-    party.children ? `${party.children} youth (6–15)` : null,
+    party.adults ? `${party.adults} adult${party.adults === 1 ? "" : "s"} (16–99)` : null,
+    party.children ? `${party.children} ${party.children === 1 ? "child" : "children"} (6–15)` : null,
     party.infants ? `${party.infants} infant${party.infants === 1 ? "" : "s"} (0–5)` : null,
   ]
     .filter(Boolean)

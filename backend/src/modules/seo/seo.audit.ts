@@ -8,7 +8,8 @@
 import type { Prisma, SeoIssueSeverity, SeoPage } from "@prisma/client";
 import prisma from "@/lib/db/prisma";
 import { normalizeKeyword, normalizePath } from "@/modules/seo/paths";
-import { resolveChains } from "@/modules/seo/seo.redirects";
+import { activeRedirectMap, resolveChains } from "@/modules/seo/seo.redirects";
+import { activityTicketsVisible } from "@/modules/tours/product-map";
 import { intentMismatch } from "@/modules/seo/seo.keywords";
 import { checksFor, type CrawledImage, type CrawledJsonLd, type LiveCrawl } from "@/modules/seo/seo.pages";
 import { LIMITS } from "@/modules/seo/seo.validation";
@@ -66,6 +67,8 @@ export function parseHtml(html: string, pageUrl: string): ParsedPage {
   const base = new URL(pageUrl);
   const links = new Set<string>();
   for (const tag of body.match(/<a\b[^>]*>/gi) ?? []) {
+    // rel="nofollow" links (e.g. My trips, a signed-in page) aren't followed, as by search engines.
+    if ((attr(tag, "rel") ?? "").toLowerCase().split(/\s+/).includes("nofollow")) continue;
     const href = attr(tag, "href");
     if (!href || /^(mailto:|tel:|javascript:|#|data:)/i.test(href)) continue;
     let url: URL;
@@ -385,12 +388,27 @@ export async function runAudit(opts: AuditOptions) {
   }
 }
 
+/**
+ * Addresses that answer a redirect on purpose, so they aren't audited as pages: every active
+ * redirect (saved in the portal or built in), and the activity-ticket pages while tickets are hidden
+ * from guests (SHOW_ACTIVITY_TICKETS; their pages send visitors to the home page until then).
+ */
+export async function redirectedOnPurpose(): Promise<Set<string>> {
+  const out = new Set(Object.keys(await activeRedirectMap()));
+  if (!activityTicketsVisible()) {
+    out.add("/banff-activity-tickets");
+    for (const t of await prisma.tour.findMany({ where: { category: "TICKET" }, select: { slug: true } })) out.add(`/${t.slug}`);
+  }
+  return out;
+}
+
 async function audit(runId: string, baseUrl: string, opts: AuditOptions) {
   const fetchImpl: FetchLike = opts.fetchImpl ?? ((url, init) => fetch(url, init));
   const findings: Finding[] = [];
+  const redirected = await redirectedOnPurpose();
   const pages = (await prisma.seoPage.findMany({ where: { status: { not: "ARCHIVED" } }, orderBy: { path: "asc" }, take: MAX_PAGES })).filter(
-    // Unpublished guides aren't on the site yet.
-    (p) => p.source !== "CMS" || p.status === "PUBLISHED",
+    // Unpublished guides aren't on the site yet; redirected addresses are checked as redirects.
+    (p) => (p.source !== "CMS" || p.status === "PUBLISHED") && !redirected.has(p.path),
   );
 
   // 1. Crawl the pages.

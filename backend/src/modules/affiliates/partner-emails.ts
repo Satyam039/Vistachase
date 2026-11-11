@@ -1,6 +1,7 @@
 // Partner notifications. Sent fire-and-forget: a failed email never blocks an application or an
 // admin action. Bodies carry no guest details.
 
+import { staffInbox } from "@/lib/email/staff-inbox";
 import { getEmailProvider } from "@/lib/email/email.provider";
 import { siteUrl } from "@/lib/security/signed-links";
 
@@ -15,7 +16,7 @@ function send(to: string, subject: string, lines: string[]) {
     .catch((e) => console.error(`Partner email "${subject}" failed:`, (e as Error).message));
 }
 
-const staffInbox = () => process.env.PARTNERS_TO || process.env.ENQUIRIES_TO || "support@vistachase.com";
+const partnersInbox = () => staffInbox(process.env.PARTNERS_TO, process.env.ENQUIRIES_TO);
 
 export function sendApplicationEmails(p: { name: string; contactName: string; email: string; code: string; type: string }) {
   send(p.email, "We received your Vista Chase partner application", [
@@ -23,7 +24,7 @@ export function sendApplicationEmails(p: { name: string; contactName: string; em
     `Thank you for applying to the Vista Chase partner program for <strong>${escapeHtml(p.name)}</strong>. We review every application by hand and will email you once your account is approved.`,
     `Your referral code will be <strong>${p.code}</strong>. You can sign in at <a href="${siteUrl()}/partners/login">${siteUrl()}/partners/login</a>.`,
   ]);
-  send(staffInbox(), `New partner application: ${p.name}`, [
+  send(partnersInbox(), `New partner application: ${p.name}`, [
     `<strong>${escapeHtml(p.name)}</strong> (${escapeHtml(p.type)}) applied to the partner program.`,
     `Contact: ${escapeHtml(p.contactName)}, ${escapeHtml(p.email)}. Code: ${p.code}.`,
     `Review it at <a href="${siteUrl()}/admin/partners">${siteUrl()}/admin/partners</a>.`,

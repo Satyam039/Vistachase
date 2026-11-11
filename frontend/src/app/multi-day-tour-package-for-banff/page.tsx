@@ -7,20 +7,31 @@ import { MultiDayLanding } from "@/components/tours/MultiDayLanding";
 import { toursForCards } from "@/lib/experiences";
 import { withSeo } from "@/lib/seo/server";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
+import { PackageListJsonLd } from "@/components/seo/PackageTripJsonLd";
+import { TWO_DAY_PACKAGE } from "@/lib/sharedTours";
+import { PRIVATE_PACKAGES } from "@/lib/privateTours";
 import type { TourWithAvailability } from "@/lib/api/types";
+import { cachePublicData } from "@/lib/api/cachePolicy";
+
+// Rendered once and served from cache, refreshed in the background at most every minute, instead of
+// on every request (fix recheck, 10 Nov 2026, N2/R2: 2.7-10 s responses and 5xx under a crawl).
+// Seats and prices on this page can be up to a minute old; checkout (/book) always reads them live.
+export const revalidate = 60;
 
 const PATH = "/multi-day-tour-package-for-banff";
 
 export async function generateMetadata(): Promise<Metadata> {
+  cachePublicData();
   return withSeo(PATH, {
     title: "Multi-Day Canadian Rockies Tours from Banff | Vista Chase",
     description:
-      "Two-, three- and four-day journeys through Banff, Yoho, the Icefields Parkway and Jasper, with a small group or in your own private vehicle. Hotel pickup in Banff and Canmore.",
+      "Two-, three- and four-day journeys through Banff, Yoho, the Icefields Parkway and Jasper, small-group or private, with hotel pickup in Banff and Canmore.",
     alternates: { canonical: PATH },
   });
 }
 
 export default async function MultiDayPage() {
+  cachePublicData();
   let tours: TourWithAvailability[] = [];
   try {
     tours = await getTours();
@@ -30,6 +41,13 @@ export default async function MultiDayPage() {
   return (
     <>
       <PageSeoExtras path={PATH} />
+      <PackageListJsonLd
+        items={[
+          { name: TWO_DAY_PACKAGE.title, path: TWO_DAY_PACKAGE.href },
+          { name: PRIVATE_PACKAGES.three.title, path: "/three-day-rockies-discovery" },
+          { name: PRIVATE_PACKAGES.four.title, path: "/four-day-rockies-and-jasper" },
+        ]}
+      />
       <MultiDayLanding tours={toursForCards(tours, 60)} />
     </>
   );

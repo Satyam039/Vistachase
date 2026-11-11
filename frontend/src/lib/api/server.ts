@@ -1,5 +1,6 @@
 import "server-only";
 import { unstable_rethrow } from "next/navigation";
+import { publicDataRevalidate } from "@/lib/api/cachePolicy";
 
 // Server-side calls from React Server Components go straight to the backend.
 // Browser calls use relative /api/* paths, which next.config.mjs rewrites to the backend.
@@ -24,8 +25,11 @@ export async function apiGet<T>(path: string, params?: Record<string, string | u
   // try once more on a timeout, network error or 5xx, instead of failing the whole page.
   for (let attempt = 1; ; attempt++) {
     try {
+      // Live by default; cached for a while on public pages that ask for it (lib/api/cachePolicy.ts),
+      // never when the request carries headers (a signed-in or per-visitor read).
+      const revalidate = headers ? 0 : publicDataRevalidate();
       const res = await fetch(url, {
-        cache: "no-store",
+        ...(revalidate > 0 ? { next: { revalidate } } : { cache: "no-store" as const }),
         signal: AbortSignal.timeout(10_000),
         headers,
       });

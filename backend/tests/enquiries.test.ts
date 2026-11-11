@@ -5,6 +5,7 @@ import type { Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { createApp } from "@/app";
 import prisma from "@/lib/db/prisma";
+import { issueFormToken } from "@/modules/enquiries/spam";
 
 let server: Server;
 let base = "";
@@ -16,8 +17,16 @@ beforeAll(async () => {
 });
 afterAll(() => new Promise<void>((resolve) => server.close(() => resolve())));
 
-const post = (body: unknown) =>
-  fetch(`${base}/api/enquiries`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+// A form opened 10 seconds ago, as the contact form sends it.
+const ip = () => [0, 0, 0].map(() => Math.floor(Math.random() * 250) + 1).join(".");
+const formToken = () => issueFormToken(Date.now() - 10_000);
+const post = (body: Record<string, unknown>, withToken = true) =>
+  fetch(`${base}/api/enquiries`, {
+    method: "POST",
+    // Each call from its own address, so the per-IP limit (5 per 10 minutes) doesn't interfere.
+    headers: { "Content-Type": "application/json", "X-Forwarded-For": `10.${ip()}` },
+    body: JSON.stringify(withToken ? { formToken: formToken(), ...body } : body),
+  });
 
 describe("POST /api/enquiries", () => {
   it("rejects incomplete messages", async () => {
@@ -55,10 +64,43 @@ describe("POST /api/enquiries", () => {
     expect(((await backwards.json()) as { fields: Record<string, unknown> }).fields).toHaveProperty("toDate");
   });
 
+  it("refuses past trip dates and more than 28 guests (owner 2026-11-11)", async () => {
+    const past = await post({ name: "Test Guest", email: "past@example.com", guests: 2, date: "1970-05-31", toDate: "1970-05-31", message: "Old dates please." });
+    expect(past.status).toBe(400);
+    expect(((await past.json()) as { fields: Record<string, unknown> }).fields).toHaveProperty("date");
+    const big = await post({ name: "Test Guest", email: "big@example.com", guests: 49, date: "2027-07-14", message: "A very big group." });
+    expect(big.status).toBe(400);
+    expect(((await big.json()) as { fields: Record<string, unknown> }).fields).toHaveProperty("guests");
+    const ok = await post({ name: "Test Guest", email: "group@example.com", guests: 28, date: "2027-07-14", message: "A group of 28." });
+    expect(ok.status).toBe(201);
+  });
+
+  it("quietly drops the 11 Nov fake enquiry and form-less posts", async () => {
+    const before = await prisma.enquiry.count();
+    const fake = await post({ name: "cHXwtVPyDCAWVGSEFGhh", email: "spat2016@aol.com", phone: "+1 4370445537", guests: 20, date: "2027-05-31", message: "8054958299" });
+    expect(fake.status).toBe(201);
+    const digitsOnly = await post({ name: "Real Person", email: "digits@example.com", guests: 2, date: "2027-05-31", message: "8054958299" });
+    expect(digitsOnly.status).toBe(201);
+    const noToken = await post({ name: "Real Person", email: "notoken@example.com", guests: 2, date: "2027-05-31", message: "Hello there, a question." }, false);
+    expect(noToken.status).toBe(201);
+    const tooFast = await post({ formToken: issueFormToken(Date.now()), name: "Real Person", email: "fast@example.com", guests: 2, date: "2027-05-31", message: "Hello there, a question." });
+    expect(tooFast.status).toBe(201);
+    const forged = await post({ formToken: `${Date.now() - 10_000}.AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA`, name: "Real Person", email: "forged@example.com", message: "Hello there, a question." });
+    expect(forged.status).toBe(201);
+    expect(await prisma.enquiry.count()).toBe(before);
+  });
+
+  it("hands out a form token", async () => {
+    const res = await fetch(`${base}/api/enquiries/form-token`);
+    const json = (await res.json()) as { token: string; turnstile: boolean };
+    expect(json.token).toMatch(/^\d+\.[\w-]{32}$/);
+    expect(json.turnstile).toBe(false);
+  });
+
   it("quietly drops bot submissions (honeypot)", async () => {
     const before = await prisma.enquiry.count();
     const res = await post({ name: "Bot", email: "bot@example.com", message: "spam spam", website: "http://spam" });
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(201);
     expect(await prisma.enquiry.count()).toBe(before);
   });
 });

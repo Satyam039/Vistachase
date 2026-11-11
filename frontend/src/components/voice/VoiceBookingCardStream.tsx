@@ -8,9 +8,16 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Calendar, Car, CheckCircle2, Clock, MapPin, ShieldCheck, Ticket } from "lucide-react";
+import { ConciergeSeatMap, type SeatInfo } from "./ConciergeSeatMap";
 
 export interface VoiceCardData {
-  type?: "availability" | "pickups" | "hold" | "confirmed" | "tracking" | "tour";
+  type?: "availability" | "pickups" | "hold" | "confirmed" | "tracking" | "tour" | "seat_map";
+  vehicleType?: "sprinter_12" | "suv_7";
+  vehicleName?: string;
+  capacity?: number;
+  legroom?: string;
+  amenities?: string[];
+  seats?: SeatInfo[];
   tour?: {
     slug?: string;
     title?: string;
@@ -131,7 +138,7 @@ export function VoiceBookingCardStream({ data, checkoutUrl, hasSafetyRefusal, on
                   </span>
                   <span className="shrink-0 text-right">
                     <span className="block text-sm text-obsidian-900">
-                      ${dep.price} <span className="text-xs text-slate-600">{dep.currency}</span>
+                      CAD ${dep.price}
                     </span>
                     <span className="text-xs text-ocean-700">Choose</span>
                   </span>
@@ -189,7 +196,7 @@ export function VoiceBookingCardStream({ data, checkoutUrl, hasSafetyRefusal, on
               </p>
               {data.departure.price != null && (
                 <p className="mt-2 text-right text-base text-obsidian-900">
-                  ${data.departure.price.toFixed(2)} {data.departure.currency || "CAD"}
+                  CAD ${data.departure.price.toFixed(2)}
                 </p>
               )}
             </div>
@@ -257,6 +264,20 @@ export function VoiceBookingCardStream({ data, checkoutUrl, hasSafetyRefusal, on
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
           )}
+        </div>
+      )}
+
+      {data?.type === "seat_map" && (
+        <div className="mt-2 w-full">
+          <ConciergeSeatMap
+            vehicleType={data.vehicleType}
+            vehicleName={data.vehicleName}
+            capacity={data.capacity}
+            legroom={data.legroom}
+            amenities={data.amenities}
+            seats={data.seats}
+            onSelectSeats={onSelectSeats}
+          />
         </div>
       )}
     </div>

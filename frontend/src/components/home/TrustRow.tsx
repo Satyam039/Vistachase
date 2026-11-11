@@ -10,7 +10,7 @@ const PROPS = [
   {
     icon: Users,
     title: "Small Groups, Personal Attention",
-    body: "A maximum of 12 guests on shared tours, with more attention from your guide.",
+    body: "Shared tours stay small, with more attention from your guide.",
   },
   {
     icon: Compass,

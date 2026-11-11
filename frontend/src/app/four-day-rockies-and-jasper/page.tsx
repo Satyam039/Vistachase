@@ -23,14 +23,21 @@ import {
   X,
 } from "lucide-react";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
+import { PackageTripJsonLd } from "@/components/seo/PackageTripJsonLd";
 import { PACKAGE_DAY_PRICE, PRIVATE_MAX_GUESTS, PRIVATE_PACKAGES } from "@/lib/privateTours";
 import { PackageBookingSection } from "@/components/booking/PackageBookingSection";
 import { cancellationShort } from "@/lib/policy";
+import { cachePublicData } from "@/lib/api/cachePolicy";
+
+// Rendered once and served from cache, refreshed in the background at most every minute, instead of
+// on every request (fix recheck, 10 Nov 2026, N2/R2: 2.7-10 s responses and 5xx under a crawl).
+// Seats and prices on this page can be up to a minute old; checkout (/book) always reads them live.
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Four-Day Rockies & Jasper Private Tour | Vista Chase",
   description:
-    "Explore further across four days of lakes, waterfalls, mountain roads and glacier scenery. Travel privately with your own driver-guide, continue to Jasper after day three, and finish in Banff, Lake Louise, Canmore or Calgary.",
+    "Four private days of lakes, waterfalls and glaciers with your own driver-guide, on to Jasper, finishing in Banff, Lake Louise, Canmore or Calgary.",
   alternates: { canonical: "/four-day-rockies-and-jasper" },
 };
 
@@ -43,7 +50,7 @@ const SPECS = [
   { label: "Park admission", value: "Included", icon: Check },
   { label: "Activities", value: "Optional extras selected at checkout", icon: Sparkles },
   { label: "Accommodation", value: "Booked directly by guests; Jasper stay required after day three", icon: BedDouble },
-  { label: "Airport transfers", value: "Available to add", icon: Plane },
+  { label: "Airport transfers", value: "CAD $364 per transfer", icon: Plane },
   { label: "Availability", value: "Seasonal; available dates shown when booking", icon: Calendar },
 ];
 
@@ -257,10 +264,20 @@ const IMPORTANT_INFO = [
 ];
 
 export default function FourDayRockiesAndJasperPage() {
+  cachePublicData();
 
   return (
     <>
       <PageSeoExtras path="/four-day-rockies-and-jasper" />
+      <PackageTripJsonLd
+        path="/four-day-rockies-and-jasper"
+        name={PRIVATE_PACKAGES.four.title}
+        description={String(metadata.description)}
+        image="/media/photos/spirit-island.webp"
+        days={PRIVATE_PACKAGES.four.days.map((d) => d.title)}
+        touristType="Private Group"
+        crumbs={[{ name: "Home", path: "/" }, { name: "Multi-day tours", path: "/multi-day-tour-package-for-banff" }, { name: PRIVATE_PACKAGES.four.title }]}
+      />
       <div className="bg-obsidian-50 text-obsidian-900">
         {/* Hero */}
         <section
@@ -569,7 +586,7 @@ export default function FourDayRockiesAndJasperPage() {
               </li>
               <li className="flex items-center gap-3">
                 <Plane className="h-4 w-4 text-summit-300 shrink-0" aria-hidden="true" />
-                <span>Airport transfer can be added (2+ guests)</span>
+                <span>Airport transfer CAD $364 per transfer (2+ guests)</span>
               </li>
               <li className="flex items-center gap-3">
                 <BedDouble className="h-4 w-4 text-summit-300 shrink-0" aria-hidden="true" />

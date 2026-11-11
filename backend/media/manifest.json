@@ -1,6 +1,6 @@
 {
  "generatedBy": "scripts/media/build-media.mjs",
- "count": 391,
+ "count": 398,
  "assets": [
   {
    "id": "badges/civitatis-logo",
@@ -420,12 +420,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-apr-17-2026-10-52-35-am",
-   "src": "/media/blog/chatgpt-image-apr-17-2026-10-52-35-am.webp",
+   "id": "blog/icefields-parkway-tour",
+   "src": "/media/blog/icefields-parkway-tour.webp",
    "width": 1536,
    "height": 1024,
-   "title": "ChatGPT Image Apr 17, , 10 52 35 AM",
-   "alt": "ChatGPT Image Apr 17, , 10 52 35 AM",
+   "title": "Icefields Parkway Tour: Best Stops & Views",
+   "alt": "Icefields Parkway Tour: Best Stops & Views",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -439,12 +439,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-apr-21-2026-07-10-28-am",
-   "src": "/media/blog/chatgpt-image-apr-21-2026-07-10-28-am.webp",
+   "id": "blog/canadian-rockies-private-road-trip-itinerary-guide",
+   "src": "/media/blog/canadian-rockies-private-road-trip-itinerary-guide.webp",
    "width": 1536,
    "height": 1024,
-   "title": "ChatGPT Image Apr 21, , 07 10 28 AM",
-   "alt": "ChatGPT Image Apr 21, , 07 10 28 AM",
+   "title": "Canadian Rockies Private Road Trip Itinerary Guide",
+   "alt": "Canadian Rockies Private Road Trip Itinerary Guide",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -458,12 +458,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-aug-10-2026-08-47-17-am",
-   "src": "/media/blog/chatgpt-image-aug-10-2026-08-47-17-am.webp",
+   "id": "blog/best-luxury-experiences-in-banff-for-couples",
+   "src": "/media/blog/best-luxury-experiences-in-banff-for-couples.webp",
    "width": 1536,
    "height": 1024,
-   "title": "ChatGPT Image Aug 10, , 08 47 17 AM",
-   "alt": "ChatGPT Image Aug 10, , 08 47 17 AM",
+   "title": "Luxury Banff for Couples: Where to Stay, Tour & Dine (2026)",
+   "alt": "Luxury Banff for Couples: Where to Stay, Tour & Dine (2026)",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -477,12 +477,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-aug-21-2026-09-35-11-am",
-   "src": "/media/blog/chatgpt-image-aug-21-2026-09-35-11-am.webp",
+   "id": "blog/luxury-icefields-parkway-tours",
+   "src": "/media/blog/luxury-icefields-parkway-tours.webp",
    "width": 1536,
    "height": 1024,
-   "title": "ChatGPT Image Aug 21, , 09 35 11 AM",
-   "alt": "ChatGPT Image Aug 21, , 09 35 11 AM",
+   "title": "Luxury Icefields Parkway Tours | Banff to Jasper Private Tour",
+   "alt": "Luxury Icefields Parkway Tours | Banff to Jasper Private Tour",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -496,12 +496,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-aug-4-2026-07-18-39-am",
-   "src": "/media/blog/chatgpt-image-aug-4-2026-07-18-39-am.webp",
+   "id": "blog/luxury-banff-tours-what-vip-travelers-actually-get",
+   "src": "/media/blog/luxury-banff-tours-what-vip-travelers-actually-get.webp",
    "width": 1600,
    "height": 800,
-   "title": "ChatGPT Image Aug 4, , 07 18 39 AM",
-   "alt": "ChatGPT Image Aug 4, , 07 18 39 AM",
+   "title": "Luxury Banff Tours: What VIP Travelers Actually Get in 2026",
+   "alt": "Luxury Banff Tours: What VIP Travelers Actually Get in 2026",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -515,12 +515,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-dec-29-2025-02-07-56-pm",
-   "src": "/media/blog/chatgpt-image-dec-29-2025-02-07-56-pm.webp",
+   "id": "blog/johnston-canyon-hike",
+   "src": "/media/blog/johnston-canyon-hike.webp",
    "width": 1536,
    "height": 1024,
-   "title": "ChatGPT Image Dec 29, , 02 07 56 PM",
-   "alt": "ChatGPT Image Dec 29, , 02 07 56 PM",
+   "title": "Johnston Canyon Hike: 2026 Luxury Guide | VistaChase",
+   "alt": "Johnston Canyon Hike: 2026 Luxury Guide | VistaChase",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -534,12 +534,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-feb-2-2026-05-18-16-pm",
-   "src": "/media/blog/chatgpt-image-feb-2-2026-05-18-16-pm.webp",
+   "id": "blog/5-day-banff-itinerary",
+   "src": "/media/blog/5-day-banff-itinerary.webp",
    "width": 1536,
    "height": 1024,
-   "title": "ChatGPT Image Feb 2, , 05 18 16 PM",
-   "alt": "ChatGPT Image Feb 2, , 05 18 16 PM",
+   "title": "5-Day Banff Itinerary: Banff, Yoho & Jasper Guide",
+   "alt": "5-Day Banff Itinerary: Banff, Yoho & Jasper Guide",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -553,12 +553,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-feb-25-2026-06-36-42-pm",
-   "src": "/media/blog/chatgpt-image-feb-25-2026-06-36-42-pm.webp",
+   "id": "blog/luxury-banff-tours",
+   "src": "/media/blog/luxury-banff-tours.webp",
    "width": 1536,
    "height": 1024,
-   "title": "ChatGPT Image Feb 25, , 06 36 42 PM",
-   "alt": "ChatGPT Image Feb 25, , 06 36 42 PM",
+   "title": " Luxury Banff Tours: What to Expect & Pricing",
+   "alt": " Luxury Banff Tours: What to Expect & Pricing",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -572,12 +572,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-jan-27-2026-07-53-53-am",
-   "src": "/media/blog/chatgpt-image-jan-27-2026-07-53-53-am.webp",
+   "id": "blog/best-fairmont-hotel-in-alberta",
+   "src": "/media/blog/best-fairmont-hotel-in-alberta.webp",
    "width": 1536,
    "height": 1024,
-   "title": "ChatGPT Image Jan 27, , 07 53 53 AM",
-   "alt": "ChatGPT Image Jan 27, , 07 53 53 AM",
+   "title": "Banff Springs vs Chateau Lake Louise: Which Fairmont to Pick",
+   "alt": "Banff Springs vs Chateau Lake Louise: Which Fairmont to Pick",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -591,12 +591,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-jan-6-2026-01-40-12-pm",
-   "src": "/media/blog/chatgpt-image-jan-6-2026-01-40-12-pm.webp",
+   "id": "blog/emerald-lake-adventures",
+   "src": "/media/blog/emerald-lake-adventures.webp",
    "width": 1536,
    "height": 1024,
-   "title": "ChatGPT Image Jan 6, , 01 40 12 PM",
-   "alt": "ChatGPT Image Jan 6, , 01 40 12 PM",
+   "title": " Best Emerald Lake Adventures Beyond Canoeing (Yoho Guide)",
+   "alt": " Best Emerald Lake Adventures Beyond Canoeing (Yoho Guide)",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -610,12 +610,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-jan-8-2026-05-10-44-pm",
-   "src": "/media/blog/chatgpt-image-jan-8-2026-05-10-44-pm.webp",
+   "id": "blog/is-lake-louise-worth-visiting",
+   "src": "/media/blog/is-lake-louise-worth-visiting.webp",
    "width": 1536,
    "height": 1024,
-   "title": "ChatGPT Image Jan 8, , 05 10 44 PM",
-   "alt": "ChatGPT Image Jan 8, , 05 10 44 PM",
+   "title": "Lake Louise 2026: Is It Worth It? Tips & Guide",
+   "alt": "Lake Louise 2026: Is It Worth It? Tips & Guide",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -629,12 +629,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-jul-1-2026-09-13-32-am",
-   "src": "/media/blog/chatgpt-image-jul-1-2026-09-13-32-am.webp",
+   "id": "blog/banff-canadian-rockies-tour-tips-for-uk-tourists",
+   "src": "/media/blog/banff-canadian-rockies-tour-tips-for-uk-tourists.webp",
    "width": 1536,
    "height": 1024,
-   "title": "ChatGPT Image Jul 1, , 09 13 32 AM",
-   "alt": "ChatGPT Image Jul 1, , 09 13 32 AM",
+   "title": "Banff & Canadian Rockies Tour Tips for UK Tourists (2026 Guide)",
+   "alt": "Banff & Canadian Rockies Tour Tips for UK Tourists (2026 Guide)",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -648,12 +648,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-jul-13-2026-10-39-01-am",
-   "src": "/media/blog/chatgpt-image-jul-13-2026-10-39-01-am.webp",
+   "id": "blog/best-banff-tours-for-international-visitors",
+   "src": "/media/blog/best-banff-tours-for-international-visitors.webp",
    "width": 1536,
    "height": 1024,
-   "title": "ChatGPT Image Jul 13, , 10 39 01 AM",
-   "alt": "ChatGPT Image Jul 13, , 10 39 01 AM",
+   "title": " Best Banff Tours for International Visitors (2026 Guide)",
+   "alt": " Best Banff Tours for International Visitors (2026 Guide)",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -667,12 +667,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-jul-17-2026-06-45-51-am",
-   "src": "/media/blog/chatgpt-image-jul-17-2026-06-45-51-am.webp",
+   "id": "blog/what-to-pack-for-a-banff-tour-season-wise",
+   "src": "/media/blog/what-to-pack-for-a-banff-tour-season-wise.webp",
    "width": 1536,
    "height": 1024,
-   "title": "ChatGPT Image Jul 17, , 06 45 51 AM",
-   "alt": "ChatGPT Image Jul 17, , 06 45 51 AM",
+   "title": "What to Pack for a Banff Tour: Season-Wise Packing List (2026)",
+   "alt": "What to Pack for a Banff Tour: Season-Wise Packing List (2026)",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -686,12 +686,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-jul-21-2026-09-28-30-am",
-   "src": "/media/blog/chatgpt-image-jul-21-2026-09-28-30-am.webp",
+   "id": "blog/is-banff-safe-for-tourists",
+   "src": "/media/blog/is-banff-safe-for-tourists.webp",
    "width": 1600,
    "height": 800,
-   "title": "ChatGPT Image Jul 21, , 09 28 30 AM",
-   "alt": "ChatGPT Image Jul 21, , 09 28 30 AM",
+   "title": "Is Banff Safe for Tourists? A Complete 2026 Safety Guide | Vista Chase",
+   "alt": "Is Banff Safe for Tourists? A Complete 2026 Safety Guide | Vista Chase",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -705,12 +705,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-jul-23-2026-07-47-54-am",
-   "src": "/media/blog/chatgpt-image-jul-23-2026-07-47-54-am.webp",
+   "id": "blog/what-to-do-in-banff-after-your-alaska-cruise-ends",
+   "src": "/media/blog/what-to-do-in-banff-after-your-alaska-cruise-ends.webp",
    "width": 1536,
    "height": 1024,
-   "title": "ChatGPT Image Jul 23, , 07 47 54 AM",
-   "alt": "ChatGPT Image Jul 23, , 07 47 54 AM",
+   "title": "What to Do in Banff After Your Alaska Cruise Ends (2026 Guide)",
+   "alt": "What to Do in Banff After Your Alaska Cruise Ends (2026 Guide)",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -724,12 +724,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-jul-27-2026-09-22-21-am",
-   "src": "/media/blog/chatgpt-image-jul-27-2026-09-22-21-am.webp",
+   "id": "blog/luxury-alaska-cruise-and-banff-tour",
+   "src": "/media/blog/luxury-alaska-cruise-and-banff-tour.webp",
    "width": 1536,
    "height": 1024,
-   "title": "ChatGPT Image Jul 27, , 09 22 21 AM",
-   "alt": "ChatGPT Image Jul 27, , 09 22 21 AM",
+   "title": "Luxury Alaska Cruise and Banff Tour: The Perfect Combination (2026 Guide)",
+   "alt": "Luxury Alaska Cruise and Banff Tour: The Perfect Combination (2026 Guide)",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -743,12 +743,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-jul-29-2026-10-47-06-am",
-   "src": "/media/blog/chatgpt-image-jul-29-2026-10-47-06-am.webp",
+   "id": "blog/english-speaking-private-guides-in-banff",
+   "src": "/media/blog/english-speaking-private-guides-in-banff.webp",
    "width": 1600,
    "height": 900,
-   "title": "ChatGPT Image Jul 29, , 10 47 06 AM",
-   "alt": "ChatGPT Image Jul 29, , 10 47 06 AM",
+   "title": "English-Speaking Private Guides in Banff | Vista Chase",
+   "alt": "English-Speaking Private Guides in Banff | Vista Chase",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -762,12 +762,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-jul-3-2026-07-40-56-am",
-   "src": "/media/blog/chatgpt-image-jul-3-2026-07-40-56-am.webp",
+   "id": "blog/private-banff-tours-cost",
+   "src": "/media/blog/private-banff-tours-cost.webp",
    "width": 1600,
    "height": 878,
-   "title": "ChatGPT Image Jul 3, , 07 40 56 AM",
-   "alt": "ChatGPT Image Jul 3, , 07 40 56 AM",
+   "title": "How Much Do Private Banff Tours Cost? 2026 Pricing Guide",
+   "alt": "How Much Do Private Banff Tours Cost? 2026 Pricing Guide",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -781,12 +781,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-jul-31-2026-09-05-21-am",
-   "src": "/media/blog/chatgpt-image-jul-31-2026-09-05-21-am.webp",
+   "id": "blog/choose-a-local-banff-tour-company",
+   "src": "/media/blog/choose-a-local-banff-tour-company.webp",
    "width": 1600,
    "height": 854,
-   "title": "ChatGPT Image Jul 31, , 09 05 21 AM",
-   "alt": "ChatGPT Image Jul 31, , 09 05 21 AM",
+   "title": "Why Choose a Local Banff Tour Company? | Vista Chase",
+   "alt": "Why Choose a Local Banff Tour Company? | Vista Chase",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -800,12 +800,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-jul-7-2026-06-58-45-am",
-   "src": "/media/blog/chatgpt-image-jul-7-2026-06-58-45-am.webp",
+   "id": "blog/banff-tour-booking-tips",
+   "src": "/media/blog/banff-tour-booking-tips.webp",
    "width": 1600,
    "height": 800,
-   "title": "ChatGPT Image Jul 7, , 06 58 45 AM",
-   "alt": "ChatGPT Image Jul 7, , 06 58 45 AM",
+   "title": "Banff Tour Booking Tips: How to Book During Peak Season (2026 Guide)",
+   "alt": "Banff Tour Booking Tips: How to Book During Peak Season (2026 Guide)",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -819,12 +819,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-jul-9-2026-08-50-54-am",
-   "src": "/media/blog/chatgpt-image-jul-9-2026-08-50-54-am.webp",
+   "id": "blog/need-a-car-to-visit-banff-from-usa",
+   "src": "/media/blog/need-a-car-to-visit-banff-from-usa.webp",
    "width": 1536,
    "height": 1024,
-   "title": "ChatGPT Image Jul 9, , 08 50 54 AM",
-   "alt": "ChatGPT Image Jul 9, , 08 50 54 AM",
+   "title": "Do You Need a Car to Visit Banff from the USA? (2026 Guide)",
+   "alt": "Do You Need a Car to Visit Banff from the USA? (2026 Guide)",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -838,12 +838,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-jun-11-2026-08-12-48-am",
-   "src": "/media/blog/chatgpt-image-jun-11-2026-08-12-48-am.webp",
+   "id": "blog/private-tour-vs-public-shuttle-banff",
+   "src": "/media/blog/private-tour-vs-public-shuttle-banff.webp",
    "width": 1600,
    "height": 840,
-   "title": "ChatGPT Image Jun 11, , 08 12 48 AM",
-   "alt": "ChatGPT Image Jun 11, , 08 12 48 AM",
+   "title": "Private Tour vs Public Shuttle in Banff: Which One Should You Book? (2026 Guide)",
+   "alt": "Private Tour vs Public Shuttle in Banff: Which One Should You Book? (2026 Guide)",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -857,12 +857,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-jun-15-2026-08-15-50-am",
-   "src": "/media/blog/chatgpt-image-jun-15-2026-08-15-50-am.webp",
+   "id": "blog/visit-moraine-lake-without-a-car",
+   "src": "/media/blog/visit-moraine-lake-without-a-car.webp",
    "width": 1536,
    "height": 1024,
-   "title": "ChatGPT Image Jun 15, , 08 15 50 AM",
-   "alt": "ChatGPT Image Jun 15, , 08 15 50 AM",
+   "title": "Can You Visit Moraine Lake Without a Car? (2026 Guide)",
+   "alt": "Can You Visit Moraine Lake Without a Car? (2026 Guide)",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -876,12 +876,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-jun-17-2026-07-15-45-am",
-   "src": "/media/blog/chatgpt-image-jun-17-2026-07-15-45-am.webp",
+   "id": "blog/canmore-vs-banff-where-should-you-stay",
+   "src": "/media/blog/canmore-vs-banff-where-should-you-stay.webp",
    "width": 1600,
    "height": 757,
-   "title": "ChatGPT Image Jun 17, , 07 15 45 AM",
-   "alt": "ChatGPT Image Jun 17, , 07 15 45 AM",
+   "title": "Canmore vs Banff: Where Should You Stay? (A Honest 2026 Guide)",
+   "alt": "Canmore vs Banff: Where Should You Stay? (A Honest 2026 Guide)",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -895,12 +895,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-jun-19-2026-07-50-54-am",
-   "src": "/media/blog/chatgpt-image-jun-19-2026-07-50-54-am.webp",
+   "id": "blog/how-to-plan-a-stress-free-trip-to-banff",
+   "src": "/media/blog/how-to-plan-a-stress-free-trip-to-banff.webp",
    "width": 1600,
    "height": 757,
-   "title": "ChatGPT Image Jun 19, , 07 50 54 AM",
-   "alt": "ChatGPT Image Jun 19, , 07 50 54 AM",
+   "title": "Banff Trip Planning Guide: How to Plan a Stress-Free Trip to Banff National Park",
+   "alt": "Banff Trip Planning Guide: How to Plan a Stress-Free Trip to Banff National Park",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -914,12 +914,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-jun-2-2026-11-14-34-pm",
-   "src": "/media/blog/chatgpt-image-jun-2-2026-11-14-34-pm.webp",
+   "id": "blog/romantic-private-tours-in-banff-for-couples",
+   "src": "/media/blog/romantic-private-tours-in-banff-for-couples.webp",
    "width": 1600,
    "height": 800,
-   "title": "ChatGPT Image Jun 2, , 11 14 34 PM",
-   "alt": "ChatGPT Image Jun 2, , 11 14 34 PM",
+   "title": "Romantic Private Tours in Banff for Couples & Honeymoons",
+   "alt": "Romantic Private Tours in Banff for Couples & Honeymoons",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -933,12 +933,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-jun-23-2026-07-54-58-am",
-   "src": "/media/blog/chatgpt-image-jun-23-2026-07-54-58-am.webp",
+   "id": "blog/banff-parking-rules",
+   "src": "/media/blog/banff-parking-rules.webp",
    "width": 1600,
    "height": 640,
-   "title": "ChatGPT Image Jun 23, , 07 54 58 AM",
-   "alt": "ChatGPT Image Jun 23, , 07 54 58 AM",
+   "title": "Banff Parking Rules 2026: Fees, Zones & Free Parking",
+   "alt": "Banff Parking Rules 2026: Fees, Zones & Free Parking",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -952,12 +952,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-jun-25-2026-07-18-38-am",
-   "src": "/media/blog/chatgpt-image-jun-25-2026-07-18-38-am.webp",
+   "id": "blog/are-banff-tours-worth",
+   "src": "/media/blog/are-banff-tours-worth.webp",
    "width": 1536,
    "height": 1024,
-   "title": "ChatGPT Image Jun 25, , 07 18 38 AM",
-   "alt": "ChatGPT Image Jun 25, , 07 18 38 AM",
+   "title": "Are Banff Tours Worth the Money? (Honest 2026 Guide)",
+   "alt": "Are Banff Tours Worth the Money? (Honest 2026 Guide)",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -971,12 +971,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-jun-29-2026-07-34-17-am",
-   "src": "/media/blog/chatgpt-image-jun-29-2026-07-34-17-am.webp",
+   "id": "blog/banff-travel-guide-for-us-travelers",
+   "src": "/media/blog/banff-travel-guide-for-us-travelers.webp",
    "width": 1600,
    "height": 800,
-   "title": "ChatGPT Image Jun 29, , 07 34 17 AM",
-   "alt": "ChatGPT Image Jun 29, , 07 34 17 AM",
+   "title": "Banff Travel Guide for US Travelers: Everything You Need to Know",
+   "alt": "Banff Travel Guide for US Travelers: Everything You Need to Know",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -990,12 +990,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-jun-5-2026-10-55-42-am",
-   "src": "/media/blog/chatgpt-image-jun-5-2026-10-55-42-am.webp",
+   "id": "blog/family-friendly-banff-tours-guide",
+   "src": "/media/blog/family-friendly-banff-tours-guide.webp",
    "width": 1536,
    "height": 1024,
-   "title": "ChatGPT Image Jun 5, , 10 55 42 AM",
-   "alt": "ChatGPT Image Jun 5, , 10 55 42 AM",
+   "title": "Family-Friendly Banff Tours: The Ultimate Guide",
+   "alt": "Family-Friendly Banff Tours: The Ultimate Guide",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -1009,12 +1009,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-jun-9-2026-07-36-24-am",
-   "src": "/media/blog/chatgpt-image-jun-9-2026-07-36-24-am.webp",
+   "id": "blog/banff-moraine-lake-shuttle-alternatives",
+   "src": "/media/blog/banff-moraine-lake-shuttle-alternatives.webp",
    "width": 1600,
    "height": 683,
-   "title": "ChatGPT Image Jun 9, , 07 36 24 AM",
-   "alt": "ChatGPT Image Jun 9, , 07 36 24 AM",
+   "title": "Banff & Moraine Lake Shuttle Alternatives 2026 | Best Options",
+   "alt": "Banff & Moraine Lake Shuttle Alternatives 2026 | Best Options",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -1028,12 +1028,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-mar-10-2026-01-07-51-pm",
-   "src": "/media/blog/chatgpt-image-mar-10-2026-01-07-51-pm.webp",
+   "id": "blog/custom-canadian-rockies-tours-for-families",
+   "src": "/media/blog/custom-canadian-rockies-tours-for-families.webp",
    "width": 1536,
    "height": 1024,
-   "title": "ChatGPT Image Mar 10, , 01 07 51 PM",
-   "alt": "ChatGPT Image Mar 10, , 01 07 51 PM",
+   "title": "Custom Canadian Rockies Tours for Families | Vista Chase ",
+   "alt": "Custom Canadian Rockies Tours for Families | Vista Chase ",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -1047,12 +1047,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-mar-20-2026-01-47-14-pm",
-   "src": "/media/blog/chatgpt-image-mar-20-2026-01-47-14-pm.webp",
+   "id": "blog/banff-day-tours-vs-multi-day-tours",
+   "src": "/media/blog/banff-day-tours-vs-multi-day-tours.webp",
    "width": 1536,
    "height": 1024,
-   "title": "ChatGPT Image Mar 20, , 01 47 14 PM",
-   "alt": "ChatGPT Image Mar 20, , 01 47 14 PM",
+   "title": "Banff Day Tours vs Multi-Day Tours: Which is Better?",
+   "alt": "Banff Day Tours vs Multi-Day Tours: Which is Better?",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -1066,12 +1066,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-mar-27-2026-03-56-42-pm",
-   "src": "/media/blog/chatgpt-image-mar-27-2026-03-56-42-pm.webp",
+   "id": "blog/best-time-to-visit-moraine-lake-for-photos",
+   "src": "/media/blog/best-time-to-visit-moraine-lake-for-photos.webp",
    "width": 1024,
    "height": 1536,
-   "title": "ChatGPT Image Mar 27, , 03 56 42 PM",
-   "alt": "ChatGPT Image Mar 27, , 03 56 42 PM",
+   "title": "Best Time to Visit Moraine Lake for Photography: A Seasonal Guide",
+   "alt": "Best Time to Visit Moraine Lake for Photography: A Seasonal Guide",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -1085,12 +1085,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-mar-31-2026-11-07-13-am",
-   "src": "/media/blog/chatgpt-image-mar-31-2026-11-07-13-am.webp",
+   "id": "blog/blog-post-lake-louise-private-tours-is-it-worth-it",
+   "src": "/media/blog/blog-post-lake-louise-private-tours-is-it-worth-it.webp",
    "width": 1536,
    "height": 1024,
-   "title": "ChatGPT Image Mar 31, , 11 07 13 AM",
-   "alt": "ChatGPT Image Mar 31, , 11 07 13 AM",
+   "title": "Lake Louise Private Tours: Is It Worth It? | Vista Chase",
+   "alt": "Lake Louise Private Tours: Is It Worth It? | Vista Chase",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -1104,12 +1104,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-mar-6-2026-08-28-21-am",
-   "src": "/media/blog/chatgpt-image-mar-6-2026-08-28-21-am.webp",
+   "id": "blog/small-group-tours-in-banff-national-park",
+   "src": "/media/blog/small-group-tours-in-banff-national-park.webp",
    "width": 1536,
    "height": 1024,
-   "title": "ChatGPT Image Mar 6, , 08 28 21 AM",
-   "alt": "ChatGPT Image Mar 6, , 08 28 21 AM",
+   "title": "Small Group Tours in Banff National Park | Vista Chase",
+   "alt": "Small Group Tours in Banff National Park | Vista Chase",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -1123,12 +1123,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-may-1-2026-07-04-55-am",
-   "src": "/media/blog/chatgpt-image-may-1-2026-07-04-55-am.webp",
+   "id": "blog/yoho-national-park-day-tour-from-banf",
+   "src": "/media/blog/yoho-national-park-day-tour-from-banf.webp",
    "width": 1600,
    "height": 800,
-   "title": "ChatGPT Image May 1, , 07 04 55 AM",
-   "alt": "ChatGPT Image May 1, , 07 04 55 AM",
+   "title": "Yoho National Park Day Tour from Banff: Full Guide",
+   "alt": "Yoho National Park Day Tour from Banff: Full Guide",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -1142,12 +1142,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-may-15-2026-07-06-08-am",
-   "src": "/media/blog/chatgpt-image-may-15-2026-07-06-08-am.webp",
+   "id": "blog/is-banff-worth-visiting-in-shoulder-season",
+   "src": "/media/blog/is-banff-worth-visiting-in-shoulder-season.webp",
    "width": 1600,
    "height": 878,
-   "title": "ChatGPT Image May 15, , 07 06 08 AM",
-   "alt": "ChatGPT Image May 15, , 07 06 08 AM",
+   "title": "Is Banff Worth Visiting in Shoulder Season in 2026?",
+   "alt": "Is Banff Worth Visiting in Shoulder Season in 2026?",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -1161,12 +1161,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-may-21-2026-07-40-58-am",
-   "src": "/media/blog/chatgpt-image-may-21-2026-07-40-58-am.webp",
+   "id": "blog/banff-winter-itinerary-for-first-time-visitors",
+   "src": "/media/blog/banff-winter-itinerary-for-first-time-visitors.webp",
    "width": 1600,
    "height": 817,
-   "title": "ChatGPT Image May 21, , 07 40 58 AM",
-   "alt": "ChatGPT Image May 21, , 07 40 58 AM",
+   "title": "Banff Winter Itinerary for First-Time Visitors",
+   "alt": "Banff Winter Itinerary for First-Time Visitors",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -1180,12 +1180,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-may-25-2026-06-48-16-am",
-   "src": "/media/blog/chatgpt-image-may-25-2026-06-48-16-am.webp",
+   "id": "blog/abraham-lake-bubble-tour",
+   "src": "/media/blog/abraham-lake-bubble-tour.webp",
    "width": 1536,
    "height": 1024,
-   "title": "ChatGPT Image May 25, , 06 48 16 AM",
-   "alt": "ChatGPT Image May 25, , 06 48 16 AM",
+   "title": "Abraham Lake Bubble Tour: Your Complete Guide (2026)",
+   "alt": "Abraham Lake Bubble Tour: Your Complete Guide (2026)",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -1199,12 +1199,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-may-27-2026-07-15-15-am",
-   "src": "/media/blog/chatgpt-image-may-27-2026-07-15-15-am.webp",
+   "id": "blog/best-photography-tours-in-banff-lake-louise",
+   "src": "/media/blog/best-photography-tours-in-banff-lake-louise.webp",
    "width": 1600,
    "height": 800,
-   "title": "ChatGPT Image May 27, , 07 15 15 AM",
-   "alt": "ChatGPT Image May 27, , 07 15 15 AM",
+   "title": "Best Photography Tours in Banff & Lake Louise 2026",
+   "alt": "Best Photography Tours in Banff & Lake Louise 2026",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -1218,12 +1218,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-may-29-2026-12-15-53-pm",
-   "src": "/media/blog/chatgpt-image-may-29-2026-12-15-53-pm.webp",
+   "id": "blog/banff-mountain-film-festival",
+   "src": "/media/blog/banff-mountain-film-festival.webp",
    "width": 1600,
    "height": 640,
-   "title": "ChatGPT Image May 29, , 12 15 53 PM",
-   "alt": "ChatGPT Image May 29, , 12 15 53 PM",
+   "title": "Banff Mountain Film Festival: Ultimate 2026 Guide",
+   "alt": "Banff Mountain Film Festival: Ultimate 2026 Guide",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -1237,12 +1237,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-may-5-2026-12-19-08-pm",
-   "src": "/media/blog/chatgpt-image-may-5-2026-12-19-08-pm.webp",
+   "id": "blog/jasper-national-park-private-tours-guide",
+   "src": "/media/blog/jasper-national-park-private-tours-guide.webp",
    "width": 1600,
    "height": 900,
-   "title": "ChatGPT Image May 5, , 12 19 08 PM",
-   "alt": "ChatGPT Image May 5, , 12 19 08 PM",
+   "title": "Jasper National Park Private Tours Guide",
+   "alt": "Jasper National Park Private Tours Guide",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -1256,12 +1256,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-sep-1-2026-09-08-17-am",
-   "src": "/media/blog/chatgpt-image-sep-1-2026-09-08-17-am.webp",
+   "id": "blog/luxury-banff-itinerary-for-first-time-visitors",
+   "src": "/media/blog/luxury-banff-itinerary-for-first-time-visitors.webp",
    "width": 1536,
    "height": 1024,
-   "title": "ChatGPT Image Sep 1, , 09 08 17 AM",
-   "alt": "ChatGPT Image Sep 1, , 09 08 17 AM",
+   "title": "The Ultimate 3-Day Luxury Banff Itinerary for First-Time Visitors (2026)",
+   "alt": "The Ultimate 3-Day Luxury Banff Itinerary for First-Time Visitors (2026)",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -1275,12 +1275,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-sep-11-2026-08-33-06-am",
-   "src": "/media/blog/chatgpt-image-sep-11-2026-08-33-06-am.webp",
+   "id": "blog/luxury-canadian-rockies-tours-banff-jasper-yoho",
+   "src": "/media/blog/luxury-canadian-rockies-tours-banff-jasper-yoho.webp",
    "width": 1600,
    "height": 900,
-   "title": "ChatGPT Image Sep 11, , 08 33 06 AM",
-   "alt": "ChatGPT Image Sep 11, , 08 33 06 AM",
+   "title": "Luxury Canadian Rockies Tours: Banff, Jasper & Yoho | Vista Chase",
+   "alt": "Luxury Canadian Rockies Tours: Banff, Jasper & Yoho | Vista Chase",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -1294,12 +1294,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-sep-25-2026-12-25-17-pm",
-   "src": "/media/blog/chatgpt-image-sep-25-2026-12-25-17-pm.webp",
+   "id": "blog/best-luxury-hotels-in-banff",
+   "src": "/media/blog/best-luxury-hotels-in-banff.webp",
    "width": 1600,
    "height": 900,
-   "title": "ChatGPT Image Sep 25, , 12 25 17 PM",
-   "alt": "ChatGPT Image Sep 25, , 12 25 17 PM",
+   "title": "Best Luxury Hotels in Banff and the Experiences Worth Booking Nearby",
+   "alt": "Best Luxury Hotels in Banff and the Experiences Worth Booking Nearby",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -1313,12 +1313,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-sep-29-2026-10-16-06-am",
-   "src": "/media/blog/chatgpt-image-sep-29-2026-10-16-06-am.webp",
+   "id": "blog/sunrise-golden-hour-vip-access-in-banff",
+   "src": "/media/blog/sunrise-golden-hour-vip-access-in-banff.webp",
    "width": 1600,
    "height": 900,
-   "title": "ChatGPT Image Sep 29, , 10 16 06 AM",
-   "alt": "ChatGPT Image Sep 29, , 10 16 06 AM",
+   "title": " Sunrise, Golden Hour & VIP Access in Banff | Vista Chase",
+   "alt": " Sunrise, Golden Hour & VIP Access in Banff | Vista Chase",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -1332,12 +1332,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-sep-3-2026-10-28-01-am",
-   "src": "/media/blog/chatgpt-image-sep-3-2026-10-28-01-am.webp",
+   "id": "blog/private-tours-in-banff-for-families",
+   "src": "/media/blog/private-tours-in-banff-for-families.webp",
    "width": 1536,
    "height": 1024,
-   "title": "ChatGPT Image Sep 3, , 10 28 01 AM",
-   "alt": "ChatGPT Image Sep 3, , 10 28 01 AM",
+   "title": "Best Private Tours in Banff for Families Who Want Comfort & Flexibility",
+   "alt": "Best Private Tours in Banff for Families Who Want Comfort & Flexibility",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -1351,12 +1351,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-sep-7-2026-10-51-03-am",
-   "src": "/media/blog/chatgpt-image-sep-7-2026-10-51-03-am.webp",
+   "id": "blog/banff-without-the-crowds-luxury-travel-strategies",
+   "src": "/media/blog/banff-without-the-crowds-luxury-travel-strategies.webp",
    "width": 1600,
    "height": 900,
-   "title": "ChatGPT Image Sep 7, , 10 51 03 AM",
-   "alt": "ChatGPT Image Sep 7, , 10 51 03 AM",
+   "title": "Banff Without the Crowds: Luxury Travel Strategies That Actually Work",
+   "alt": "Banff Without the Crowds: Luxury Travel Strategies That Actually Work",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -1370,12 +1370,12 @@
    }
   },
   {
-   "id": "blog/chatgpt-image-sep-9-2026-07-48-20-am",
-   "src": "/media/blog/chatgpt-image-sep-9-2026-07-48-20-am.webp",
+   "id": "blog/executive-corporate-retreats-in-banff",
+   "src": "/media/blog/executive-corporate-retreats-in-banff.webp",
    "width": 1600,
    "height": 800,
-   "title": "ChatGPT Image Sep 9, , 07 48 20 AM",
-   "alt": "ChatGPT Image Sep 9, , 07 48 20 AM",
+   "title": "Executive & Corporate Retreats in Banff: Premium Group Experiences",
+   "alt": "Executive & Corporate Retreats in Banff: Premium Group Experiences",
    "collection": "blog",
    "kind": "blog",
    "places": [],
@@ -8102,6 +8102,149 @@
    "source": {
     "origin": "repository",
     "file": "vermilion-lakes-poster.webp"
+   }
+  },
+  {
+   "id": "blog/banff-february-snowy-highway",
+   "src": "/media/blog/banff-february-snowy-highway.webp",
+   "width": 1600,
+   "height": 1280,
+   "title": "Snow-covered highway through pine forest towards",
+   "alt": "Snow-covered highway through pine forest towards white peaks in Banff National Park in February",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/698db8c504b90fcf48129e51_9be4d205.jpeg",
+    "pages": [
+     "blog-post/what-to-do-in-banff-in-february"
+    ]
+   }
+  },
+  {
+   "id": "blog/banff-february-banff-avenue-evening",
+   "src": "/media/blog/banff-february-banff-avenue-evening.webp",
+   "width": 1600,
+   "height": 1068,
+   "title": "Banff Avenue at dusk in winter",
+   "alt": "Banff Avenue at dusk in winter with lit shopfronts and snowy Cascade Mountain behind",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/698db8c504b90fcf48129e5a_a49737b1.jpeg",
+    "pages": [
+     "blog-post/what-to-do-in-banff-in-february"
+    ]
+   }
+  },
+  {
+   "id": "blog/banff-february-lake-louise-chateau",
+   "src": "/media/blog/banff-february-lake-louise-chateau.webp",
+   "width": 1600,
+   "height": 1021,
+   "title": "Fairmont Chateau Lake Louise beside the",
+   "alt": "Fairmont Chateau Lake Louise beside the partly frozen turquoise lake under snowy peaks in winter",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/698db8c504b90fcf48129e60_0a53995c.jpeg",
+    "pages": [
+     "blog-post/what-to-do-in-banff-in-february"
+    ]
+   }
+  },
+  {
+   "id": "blog/banff-february-lake-louise-winter-panorama",
+   "src": "/media/blog/banff-february-lake-louise-winter-panorama.webp",
+   "width": 940,
+   "height": 498,
+   "title": "Wide winter view of Lake Louise,",
+   "alt": "Wide winter view of Lake Louise, snow-covered forest and the Chateau Lake Louise hotel",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/698db8c504b90fcf48129e66_558205df.jpeg",
+    "pages": [
+     "blog-post/what-to-do-in-banff-in-february"
+    ]
+   }
+  },
+  {
+   "id": "blog/banff-february-snowboarders-banff-avenue",
+   "src": "/media/blog/banff-february-snowboarders-banff-avenue.webp",
+   "width": 1000,
+   "height": 1080,
+   "title": "Snowboarders crossing snowy Banff Avenue with",
+   "alt": "Snowboarders crossing snowy Banff Avenue with Cascade Mountain in the background",
+   "collection": "blog",
+   "kind": "blog",
+   "places": [],
+   "tags": [],
+   "source": {
+    "origin": "vistachase.com",
+    "url": "https://cdn.prod.website-files.com/69187ef01b4c08ab157e43aa/698db8c504b90fcf48129e6c_76599c47.jpeg",
+    "pages": [
+     "blog-post/what-to-do-in-banff-in-february"
+    ]
+   }
+  },
+  {
+   "id": "videos/columbia-icefield-ice-explorer",
+   "src": "/media/videos/columbia-icefield-ice-explorer.mp4",
+   "poster": "/media/videos/columbia-icefield-ice-explorer-poster.webp",
+   "width": 1280,
+   "height": 720,
+   "duration": 15,
+   "title": "Ice Explorer on the Athabasca Glacier",
+   "alt": "Red Ice Explorer vehicles and guests walking on the Athabasca Glacier at the Columbia Icefield",
+   "collection": "videos",
+   "kind": "video",
+   "places": [
+    "athabasca-glacier",
+    "icefields-parkway"
+   ],
+   "tags": [
+    "summer",
+    "glacier"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "Columbia_Icefield.mp4 (7s to 22s)"
+   }
+  },
+  {
+   "id": "videos/columbia-icefield-skywalk",
+   "src": "/media/videos/columbia-icefield-skywalk.mp4",
+   "poster": "/media/videos/columbia-icefield-skywalk-poster.webp",
+   "width": 1280,
+   "height": 720,
+   "duration": 14,
+   "title": "Columbia Icefield Skywalk",
+   "alt": "Guests on the glass-floored Columbia Icefield Skywalk above the Sunwapta Valley",
+   "collection": "videos",
+   "kind": "video",
+   "places": [
+    "columbia-icefield",
+    "icefields-parkway"
+   ],
+   "tags": [
+    "summer",
+    "glacier"
+   ],
+   "source": {
+    "origin": "google_drive",
+    "file": "Glacier_Skywalk.mp4 (5s to 19s)"
    }
   }
  ]

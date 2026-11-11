@@ -66,14 +66,14 @@ const CONTENT: Record<string, DocContent> = {
   [BANFF_YOHO.slug]: {
     title: BANFF_YOHO.title,
     summary:
-      "Explore Lake Louise, Moraine Lake and the highlights of Banff and Yoho with a passionate guide. Maximum 12 guests, pickup in Banff & Canmore.",
+      "Explore Lake Louise, Moraine Lake and the highlights of Banff and Yoho with a passionate guide in a small group, with pickup in Banff & Canmore.",
     // Overview text from the owner's doc (2026-11-04, "C. Rewrite the Overview").
     description:
-      "Discover the extraordinary landscapes of the Canadian Rockies on a thoughtfully planned small-group journey through Banff and Yoho National Parks. From turquoise glacial lakes and dramatic mountain scenery to hidden natural wonders, enjoy an unforgettable day with an experienced local guide.\nTravel comfortably in a group of no more than 12 guests, with time to appreciate the scenery, capture photographs and discover what makes each destination remarkable.",
+      "Discover the extraordinary landscapes of the Canadian Rockies on a thoughtfully planned small-group journey through Banff and Yoho National Parks. From turquoise glacial lakes and dramatic mountain scenery to hidden natural wonders, enjoy an unforgettable day with an experienced local guide.\nTravel comfortably in a small group, with time to appreciate the scenery, capture photographs and discover what makes each destination remarkable.",
     facts: [
       { label: "Duration", value: "10–11 hours" },
       { label: "Entry fees", value: "Park admission included" },
-      { label: "Small group", value: "Max 12 guests" },
+      { label: "Small group", value: "Small-group tour" },
       { label: "Operation", value: "Year round · route varies by season" },
     ],
     highlights: BANFF_YOHO.stops,
@@ -84,7 +84,7 @@ const CONTENT: Record<string, DocContent> = {
       "Admission fees for itinerary stops",
       "Moraine Lake access (June 1 to October 10)",
       "Pickup and drop-off in Banff and Canmore",
-      "Gratuities",
+      // "Gratuities" removed (owner, 2026-11-10): gratuity inclusion awaits the owner's confirmation.
       "Taxes and required fees",
     ],
     exclusions: ["Lunch (stop in Lake Louise Village)", "Personal expenses"],
@@ -130,14 +130,14 @@ const CONTENT: Record<string, DocContent> = {
   [ICEFIELD.slug]: {
     title: ICEFIELD.title,
     summary:
-      "Journey along the Icefields Parkway, with scenic lake stops, the Ice Explorer and Columbia Icefield Skywalk. Maximum 12 guests, pickup in Banff & Canmore.",
+      "Journey along the Icefields Parkway, with scenic lake stops, the Ice Explorer and Columbia Icefield Skywalk, in a small group with pickup in Banff & Canmore.",
     // Overview from the owner's doc (2026-11-04, Columbia Icefield Adventure page).
     description:
       "Discover one of Canada's most spectacular mountain highways on a small-group journey through the heart of the Canadian Rockies. Travel along the legendary Icefields Parkway, surrounded by towering peaks, turquoise lakes, ancient glaciers and breathtaking alpine scenery.\nWith a knowledgeable local guide, comfortable transportation and thoughtfully planned stops, experience the remarkable landscapes of Banff and Jasper National Parks at a relaxed, enjoyable pace.",
     facts: [
       { label: "Duration", value: "9–11 hours" },
       { label: "Entry fees", value: "Park admission included" },
-      { label: "Small group", value: "Max 12 guests" },
+      { label: "Small group", value: "Small-group tour" },
     ],
     highlights: ICEFIELD.stops,
     inclusions: [
@@ -175,7 +175,7 @@ const CONTENT: Record<string, DocContent> = {
     ],
     // "Important Information" from the owner's doc (2026-11-04).
     seasonal: [
-      "Seasonal activities: The Columbia Icefield Ice Explorer and Skywalk are included on departures operating from June 1 to October 10. Outside these dates, these activities are unavailable and the sightseeing itinerary is adjusted accordingly.",
+      "Seasonal activities: The Columbia Icefield Ice Explorer and Skywalk are included on departures operating from June 1 to October 10. Outside these dates, these activities are unavailable and the sightseeing itinerary is adjusted. Our team confirms the winter route for your date.",
       "Weather and road conditions: Stops, routes and their order may change due to weather, road closures or operational requirements.",
       "What to bring: Dress in layers and bring a warm jacket, comfortable walking shoes and water. Temperatures at the Columbia Icefield can be significantly colder than in Banff.",
       "Wildlife: Wildlife sightings are possible but cannot be guaranteed.",
@@ -183,7 +183,7 @@ const CONTENT: Record<string, DocContent> = {
     // Quick facts and pickup text from the owner's doc (2026-11-04).
     quickFacts: [
       { label: "Duration", value: "9–11 hours" },
-      { label: "Group size", value: "Max 12 guests" },
+      { label: "Group size", value: "Small group" },
       { label: "Park admission", value: "Included" },
       { label: "Operating season", value: "Year round · route varies by season" },
       { label: "Hotel pickups", value: "Canmore, Banff & Lake Louise" },
@@ -278,7 +278,7 @@ CONTENT[PRIVATE_ICEFIELD.slug!] = {
   seasonal: [
     "Price per vehicle, up to 13 guests: CAD $1,750 from June 1 to October 10; CAD $1,240 from October 11 to May 31.",
     "Ice Explorer and Skywalk: June 1 to October 10, optional and at extra cost.",
-    "From October 11 to May 31 the glacier activities don't run, and the day follows an adjusted winter sightseeing itinerary.",
+    "From October 11 to May 31 the glacier activities don't run and the route is adjusted; our team confirms the route for your date.",
     "Pack an extra warm layer for the Columbia Icefield.",
     "Wildlife sightings are possible but can't be guaranteed.",
   ],
@@ -319,10 +319,74 @@ export function docQuickFacts(slug: string): { label: string; value: string }[] 
 export const PRIVATE_GROUP_TEXT = "Private, up to 13 guests";
 const OLD_PRIVATE_GROUP = /up to (6 or 13|13|14) guests/i;
 
+/**
+ * Photos for the four day tours, each one a stop the tour really visits (owner, 2026-11-09: "saare
+ * tours ke andar joh bhi photos and videos ushi tours ke according honi chahiye"). They replace the
+ * database gallery, which still had Peyto Lake on the Banff & Yoho tours and Jasper's Spirit Island
+ * on the Icefield ones. Ice Explorer, Skywalk and glacier photos are from the owner's Drive folder.
+ */
+const BANFF_YOHO_PHOTOS = [
+  "/media/photos/lake-louise-boathouse.webp",
+  "/media/photos/johnston-canyon.webp",
+  "/media/photos/emerald-lake-island.webp",
+  "/media/photos/natural-bridge.webp",
+  "/media/photos/morants-curve-summer.webp",
+  "/media/photos/lake-louise-sunrise.webp",
+  "/media/photos/emerald-lake-misty.webp",
+  "/media/site/lake-minnewanka-icy.webp",
+];
+const ICEFIELD_PHOTOS = [
+  "/media/photos/columbia-icefield-skywalk-guests-card.webp",
+  "/media/photos/bow-lake-crowfoot-mountain.webp",
+  "/media/photos/peyto-lake.webp",
+  "/media/photos/columbia-icefield-athabasca-glacier-card.webp",
+  "/media/photos/bow-lake-reflection.webp",
+  "/media/site/peyto-lake-torqoise-blue-water.webp",
+  "/media/site/icefields-parkway-winters.webp",
+  "/media/site/abraham-lake-with-frozen-bubbles.webp",
+];
+const TOUR_PHOTOS: Record<string, string[]> = {
+  [BANFF_YOHO.slug]: ["/media/photos/moraine-lake-red-canoes.webp", ...BANFF_YOHO_PHOTOS],
+  [PRIVATE_BANFF_YOHO.slug!]: ["/media/photos/moraine-lake-perfect-reflection.webp", ...BANFF_YOHO_PHOTOS],
+  [ICEFIELD.slug]: ["/media/photos/columbia-icefield-ice-explorer-card.webp", ...ICEFIELD_PHOTOS],
+  // Private: the glacier activities are optional, so the parkway leads.
+  [PRIVATE_ICEFIELD.slug!]: ["/media/photos/bow-lake-crowfoot-mountain.webp", "/media/photos/columbia-icefield-ice-explorer-card.webp", ...ICEFIELD_PHOTOS.filter((p) => !p.includes("bow-lake-crowfoot"))],
+};
+
+/**
+ * Shared tours never quote a guest number (owner, 2026-11-11: "12 guests hta de"). Imported page
+ * text that still does (the winter tour's highlights, FAQ answers) says "small group" instead.
+ */
+const SHARED_GROUP_WORDING: [RegExp, string][] = [
+  [/\s*\((?:max(?:imum)?|no more than|up to)\s*12 (?:guests|people)\)/gi, ""],
+  [/we limit each vehicle to a maximum of 12 guests\s*\./gi, "we keep every group small."],
+  [/maximum (?:of )?12 guests per vehicle/gi, "Small groups"],
+  [/with a maximum of 12 guests/gi, "in a small group"],
+  [/(?:with )?no more than 12 guests/gi, "in a small group"],
+  [/(?:a )?max(?:imum)?(?: of)? 12 (?:guests|people)/gi, "a small group"],
+];
+
+export function sharedGroupWording<T>(value: T): T {
+  const text = JSON.stringify(value);
+  const next = SHARED_GROUP_WORDING.reduce((t, [re, to]) => t.replace(re, to), text);
+  return next === text ? value : (JSON.parse(next) as T);
+}
+
 export function withDocContent(tour: TourWithAvailability): TourWithAvailability {
+  if (tour.category === "SHARED") {
+    tour = {
+      ...tour,
+      facts: tour.facts?.map((f) => (/^max(?:imum)? 12 (?:guests|people)$/i.test(f.value.trim()) ? { ...f, value: "Small group" } : f)),
+      tabs: sharedGroupWording(tour.tabs),
+      faqs: sharedGroupWording(tour.faqs),
+      ...(tour.highlights ? { highlights: sharedGroupWording(tour.highlights) } : {}),
+    };
+  }
   // Activity tickets show the operator's own photo (owner, 2026-10-30) over the catalog image.
   const ticketImage = activityTicket(tour.slug, tour.category)?.image;
   if (ticketImage) tour = { ...tour, featuredImage: ticketImage };
+  const photos = TOUR_PHOTOS[tour.slug];
+  if (photos) tour = { ...tour, featuredImage: photos[0], galleryImages: photos.slice(1) };
   if ((tour.category === "PRIVATE" || tour.category === "MULTIDAY") && tour.facts?.some((f) => OLD_PRIVATE_GROUP.test(f.value))) {
     tour = { ...tour, facts: tour.facts.map((f) => (OLD_PRIVATE_GROUP.test(f.value) ? { ...f, value: PRIVATE_GROUP_TEXT } : f)) };
   }

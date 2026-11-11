@@ -27,6 +27,8 @@ export interface StoryChapter {
   secondaryLink?: { label: string; href: string };
   image: string;
   imageAlt: string;
+  /** Tiny preview shown while the photo loads (a data: URL). */
+  blurDataURL?: string;
   video?: { src: string; poster: string };
 }
 
@@ -61,7 +63,7 @@ export function StickyStory({ chapters, tone = "dark" }: { chapters: StoryChapte
                 i === active ? "scale-100 opacity-100" : "scale-105 opacity-0"
               }`}
             >
-              <Image src={c.image} alt={c.title} fill sizes="55vw" className="object-cover" />
+              <Image src={c.image} alt={c.title} fill sizes="55vw" className="object-cover" {...(c.blurDataURL ? { placeholder: "blur" as const, blurDataURL: c.blurDataURL } : {})} />
               {c.video && i === active && (
                 <AmbientVideo src={c.video.src} poster={c.video.poster} className="absolute inset-0 h-full w-full object-cover" once />
               )}
@@ -98,7 +100,7 @@ export function StickyStory({ chapters, tone = "dark" }: { chapters: StoryChapte
                 (the CardMedia / CARD_PANEL pieces every image card uses). From lg the photo lives in
                 the pinned frame and the chapter is plain text beside it. */}
             <div className="lg:hidden" data-reveal="clip">
-              <CardMedia src={c.image} alt={c.imageAlt} sizes="100vw" aspect="aspect-[4/3] sm:aspect-[16/9]" />
+              <CardMedia src={c.image} alt={c.imageAlt} sizes="100vw" aspect="aspect-[4/3] sm:aspect-[16/9]" blurDataURL={c.blurDataURL} />
             </div>
             <div
               className={`border border-t-0 px-5 py-6 sm:px-6 lg:border-0 lg:bg-transparent lg:p-0 ${dark ? "border-white/[0.12] bg-[#161a1d]" : "border-obsidian-900/[0.08] bg-white"}`}

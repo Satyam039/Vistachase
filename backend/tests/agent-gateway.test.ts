@@ -109,10 +109,13 @@ describe("Vistachase Agentic Platform Architecture & Tool Loop", () => {
 
   describe("Anthropic Prompt Caching & Knowledge Base Integrity", () => {
     it("verifies static knowledge base contains exact cancellation policies and seasonal windows", () => {
-      expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("24 hours prior to departure time");
-      expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("72 hours prior to departure time");
-      expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("Moraine Lake Road and Takakkaw Falls Road are CLOSED");
-      expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("12-seat Modified Mercedes Sprinter");
+      // The owner's approved System Prompt and Knowledge Base v1.1 (2026-11-10), word for word.
+      expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("Shared tours and shuttles: full refund at least 24 hours before departure.");
+      expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("Private single-day tours: full refund at least 72 hours before departure.");
+      expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("Shared tours are small-group tours in a comfortable 15-passenger van, never a big coach.");
+      expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("Never use blog posts as a factual source.");
+      expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("about 80 words");
+      expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).not.toMatch(/GST|Escalade|bookings@vistachase\.com|Heart of Banff/);
     });
 
     it("verifies dynamic mountain time context provides MST/MDT zone and seasonal flags", () => {
@@ -128,9 +131,9 @@ describe("Vistachase Agentic Platform Architecture & Tool Loop", () => {
       expect(meta.byteLength).toBeGreaterThan(1000);
 
       const kb = await getMasterKnowledgeBase();
-      expect(kb).toContain("Vistachase");
+      expect(kb).toContain("Vista Chase concierge");
       expect(kb).toContain("Parks Canada");
-      expect(kb).toContain("Free Cancellation");
+      expect(kb).toContain("full refund at least 24 hours before departure");
     });
   });
 });

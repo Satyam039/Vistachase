@@ -222,14 +222,49 @@ describe("private multi-day journeys", () => {
     expect((await createPackageBooking(party(3, "four-day-rockies-and-jasper", wrongOrder))).success).toBe(false);
   });
 
+  it("private journeys can be paid with a 20% deposit; the webhook confirms both days on the deposits (owner, 2026-11-11)", async () => {
+    setPaymentProviderForTests(browserPays);
+    const ids = [await vehicle("banff-private-tour", "2027-08-02", 175000), await vehicle("icefields-jasper-private-tour", "2027-08-04", 175000)];
+    const result = await createPackageBooking(party(9, "two-day-rockies-explorer-private", ids, { paymentPlan: "DEPOSIT" }));
+    expect(result.success).toBe(true);
+    expect(result.totalAmount).toBe(1575 * 2);
+    expect(result.amountDueNow).toBe(315 * 2);
+    expect(result.payment?.amount).toBe(630);
+    const refs = result.bookings!.map((b) => b.bookingReference);
+    const stored = await prisma.booking.findMany({ where: { bookingReference: { in: refs } }, include: { payments: true } });
+    for (const b of stored) {
+      expect(b).toMatchObject({ paymentPlan: "DEPOSIT", depositAmount: 31500, totalAmount: 157500 });
+      expect(b.balanceDueAt).toBeTruthy();
+      expect(b.payments).toEqual([expect.objectContaining({ amount: 31500, kind: "DEPOSIT", status: "PENDING" })]);
+    }
+    const intentId = `pi_pkg_${refs[0]}`;
+    const app = createApp();
+    const paid = signed("payment_intent.succeeded", { id: intentId, object: "payment_intent", amount: 63000, amount_received: 63000, currency: "cad", metadata: { bookingReference: refs[0], kind: "PACKAGE", packageRefs: refs.join(",") } });
+    expect((await post(app, paid)).status).toBe(200);
+    const after = await prisma.booking.findMany({ where: { bookingReference: { in: refs } } });
+    expect(after.map((b) => b.status)).toEqual(["CONFIRMED", "CONFIRMED"]);
+  });
+
+  it("no deposit on the shared two-day package or for a journey under 15 days away", async () => {
+    const shared = await createPackageBooking({ ...guest(20, [await departure("banff-highlights-tour", "2027-09-01"), await departure("shared-tours-icefields-jasper", "2027-09-02")]), paymentPlan: "DEPOSIT" });
+    expect(shared).toMatchObject({ success: false });
+    expect(shared.error).toContain("paid in full");
+    const soon = new Date(Date.now() + 5 * 86_400_000).toISOString().slice(0, 10);
+    const later = new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10);
+    const ids = [await vehicle("banff-private-tour", soon, 175000), await vehicle("icefields-jasper-private-tour", later, 175000)];
+    const close = await createPackageBooking(party(10, "two-day-rockies-explorer-private", ids, { paymentPlan: "DEPOSIT" }));
+    expect(close).toMatchObject({ success: false });
+    expect(close.error).toContain("deposit");
+  });
+
   it("private two-day in winter is CAD 1,240 a day, and the airport transfer is booked once with Day 1", async () => {
     setPaymentProviderForTests(browserPays);
     const ids = [await vehicle("banff-private-tour", "2027-12-08", 124000), await vehicle("icefields-jasper-private-tour", "2027-12-10", 124000)];
     const transfer = { area: "BANFF" as const, arrivalDate: "2027-12-07", arrivalTime: "14:00", departureDate: "2027-12-11", departureTime: "10:00", from: "Calgary Airport", to: "Banff" };
     const result = await createPackageBooking(party(4, "two-day-rockies-explorer-private", ids, { airportTransfer: transfer }));
     expect(result.success).toBe(true);
-    // Winter transfers are priced by the team, so the total is the two days alone.
-    expect(result.totalAmount).toBe(1240 * 2);
+    // CAD 364 per transfer, all year (owner, 2026-11-11), charged once with Day 1.
+    expect(result.totalAmount).toBe(1240 * 2 + 364);
     const [a, b] = await Promise.all(result.bookings!.map((x) => prisma.booking.findUniqueOrThrow({ where: { bookingReference: x.bookingReference } })));
     expect((a.priceSnapshot as { airportTransfer?: unknown }).airportTransfer).toBeTruthy();
     expect((b.priceSnapshot as { airportTransfer?: unknown }).airportTransfer).toBeUndefined();

@@ -7,7 +7,7 @@ import prisma from "@/lib/db/prisma";
 import { checksFor, liveOf } from "@/modules/seo/seo.pages";
 import { activeRedirectMap } from "@/modules/seo/seo.redirects";
 import { BLOG_PREFIX, STATIC_ROUTES } from "@/modules/seo/static-routes";
-import { bodyImages } from "@/modules/seo/portal/images";
+import { bodyImages, webflowLocalMap } from "@/modules/seo/portal/images";
 import { isWebflowUrl } from "@/modules/seo/seo.audit";
 
 /** The number of posts in the Webflow Blog Posts collection (handoff, section 6). */
@@ -58,6 +58,9 @@ export async function blogOverview(filter: BlogFilter = {}) {
   ]);
   const known = new Set([...knownPages.map((p) => p.path), ...STATIC_ROUTES.map((r) => r.path), ...tours.map((t) => `/${t.slug}`), ...destinations.map((d) => `/destinations/${d.slug}`)]);
 
+  // A Webflow address with a copy here is served from the copy (seo.public.ts cleanBody).
+  const rehosted = webflowLocalMap();
+  const onWebflow = (s: string | null | undefined) => !!s && isWebflowUrl(s) && !rehosted.has(s);
   const rows = posts.map((p) => {
     const outline = headingOutline(p.body);
     const images = bodyImages(p.body);
@@ -73,7 +76,7 @@ export async function blogOverview(filter: BlogFilter = {}) {
     if (outline.problems.length) problems.push("headings");
     if (images.some((i) => !i.alt.trim()) || (p.featuredImage && !p.featuredImageAlt)) problems.push("alt-text");
     if (!p.featuredImage) problems.push("no-featured-image");
-    if ([p.featuredImage, p.thumbnailImage, p.ogImage, ...images.map((i) => i.src)].some((s) => s && isWebflowUrl(s))) problems.push("webflow-images");
+    if ([p.featuredImage, p.thumbnailImage, p.ogImage, ...images.map((i) => i.src)].some(onWebflow)) problems.push("webflow-images");
     if (viaRedirect.length) problems.push("links-redirect");
     if (unknown.length) problems.push("links-unknown");
     if (!p.datePublished && !p.publishedAt) problems.push("no-date");

@@ -74,7 +74,7 @@ const STATS = [
   { value: "15,000+", to: 15000, suffix: "+", label: "Guests guided through the Canadian Rockies", icon: Compass },
   { value: "1,700+", to: 1700, suffix: "+", label: "Reviews across Tripadvisor, Google & GetYourGuide", icon: MessageSquareQuote },
   { value: "5-Star", label: "Overall guest rating", icon: Star },
-  { value: "Maximum 12", label: "Guests on shared tours", icon: Users },
+  { value: "Small Groups", label: "On every shared tour", icon: Users },
 ];
 
 /** A real guest review of the award-winning tour (from /api/reviews); nothing renders without one. */

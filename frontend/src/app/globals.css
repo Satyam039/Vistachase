@@ -562,3 +562,13 @@ b {
 .vc-post-body .selectedCell::after { content: ""; position: absolute; inset: 0; background: rgb(37 119 128 / 0.12); pointer-events: none; }
 .vc-post-body .tableWrapper { overflow-x: auto; }
 .vc-post-body p.is-editor-empty:first-child::before { content: attr(data-placeholder); color: theme("colors.slate.500"); float: left; height: 0; pointer-events: none; }
+
+/* Phones and tablets: while a tour's booking panel is on screen (TourDetailView MobileBookingBar sets
+   the attribute), the floating concierge button steps aside so it doesn't cover calendar days or
+   "Book now" (mobile check, 9 Nov 2026). It comes back as soon as the panel scrolls away. */
+@media (max-width: 1023.98px) {
+  html[data-booking-in-view] .vc-concierge-fab {
+    opacity: 0;
+    pointer-events: none;
+  }
+}

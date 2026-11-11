@@ -6,20 +6,20 @@ export const SHARED_HERO = {
   title: "Small-Group Tours in the Canadian Rockies",
   kicker: "Small Groups. Big Days Out.",
   lede:
-    "Discover Banff and Yoho, journey along the Icefields Parkway to the Columbia Icefield, or combine both adventures in one easy two-day booking. Explore with passionate guides and no more than 12 guests.",
+    "Discover Banff and Yoho, journey along the Icefields Parkway to the Columbia Icefield, or combine both adventures in one easy two-day booking. Explore in small groups with passionate local guides.",
   cta: "Explore Our Three Tours",
   reviews: "1,700+ reviews across Google, Tripadvisor & GetYourGuide",
-  chips: ["Maximum 12 Guests", "Banff & Canmore Departures", "Park Admission Included", "Passionate Local Guides"],
+  chips: ["Small Groups", "Banff & Canmore Departures", "Park Admission Included", "Passionate Local Guides"],
 };
 
 export const SHARED_INTRO = {
   title: "One Day or Two. Make It Memorable.",
   body:
-    "Choose from two full-day adventures or book both together in our two-day package. Discover remarkable lakes, mountain landscapes and glacier experiences with a maximum of 12 guests each day.",
+    "Choose from two full-day adventures or book both together in our two-day package. Discover remarkable lakes, mountain landscapes and glacier experiences in a small group each day.",
   note: "The two-day package combines both day tours in one checkout. Accommodation is not included.",
   stats: [
     { value: "3", label: "Experiences" },
-    { value: "Maximum 12", label: "Guests" },
+    { value: "Small", label: "Groups" },
     { value: "1,700+", label: "Reviews" },
     { value: "15,000+", label: "Guests Guided" },
   ],
@@ -136,7 +136,7 @@ export function packagePrice(day1: number, day2: number): { price: number; separ
 export const SHARED_BENEFITS = [
   {
     title: "Small Groups, Personal Attention",
-    body: "Explore with no more than 12 guests each day, with more attention from your guide.",
+    body: "Travel in a small group each day, with time to enjoy every stop and more attention from your guide.",
   },
   {
     title: "Passionate Local Guides",
@@ -171,7 +171,7 @@ export const SHARED_FAQS: { q: string; a: string }[] = [
   },
   {
     q: "How many guests join each tour?",
-    a: "Our shared tours carry a maximum of 12 guests each day for a more personal experience.",
+    a: "Our shared tours are small-group tours, never big coaches, so every guest gets a more personal experience and time with the guide.",
   },
   {
     q: "Are attraction tickets included?",
@@ -203,7 +203,7 @@ export const SHARED_FAQS: { q: string; a: string }[] = [
   },
   {
     q: "Is the two-day package a private tour?",
-    a: "No. It combines our two shared day tours in one booking, with a maximum of 12 guests each day. Other guests may join either day.",
+    a: "No. It combines our two shared small-group day tours in one booking. Other guests may join either day.",
   },
   {
     q: "Does the two-day package include accommodation?",

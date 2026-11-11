@@ -6,7 +6,7 @@ import { CarFront, ClipboardCheck, HandHeart, MapPin, Receipt, Users } from "luc
 
 const REASONS = [
   { icon: HandHeart, title: "Passionate Local Guides", body: "Enjoy local stories, insights and a welcoming guide who makes your day memorable." },
-  { icon: Users, title: "Small Groups, Personal Attention", body: "No more than 12 guests on shared tours for a friendly, more personal experience." },
+  { icon: Users, title: "Small Groups, Personal Attention", body: "Shared tours stay small for a friendly, more personal experience." },
   { icon: CarFront, title: "Your Own Private Tour", body: "Enjoy a dedicated guide and vehicle, with flexibility to shape the day around your interests." },
   { icon: MapPin, title: "Convenient Pickup Options", body: "Depart from Banff or Canmore, with hotel pickup available on selected experiences." },
   { icon: ClipboardCheck, title: "We Handle the Details", body: "Enjoy thoughtfully planned routes and included Moraine Lake transportation on applicable tours." },
@@ -17,7 +17,7 @@ export function WhyTravelersLove() {
   return (
     <section aria-labelledby="why-heading" className="relative overflow-hidden bg-obsidian-950 py-20 text-white sm:py-28">
       <div className="pointer-events-none absolute -right-20 top-1/2 h-[34rem] w-[34rem] -translate-y-1/2 opacity-[0.04]" aria-hidden="true">
-        <Image src="/media/brand/horse-emblem-gold.png" alt="" fill sizes="34rem" className="object-contain" />
+        <Image src="/media/brand/horse-emblem-gold.png" alt="Vista Chase horse and rider emblem" fill sizes="34rem" className="object-contain" />
       </div>
 
       <div className="relative mx-auto max-w-7xl px-page">
@@ -33,7 +33,7 @@ export function WhyTravelersLove() {
           <div className="lg:col-span-5">
             <div className="relative overflow-hidden rounded-none" data-reveal="clip">
               <div className="relative h-[28rem] sm:h-[34rem]">
-                <Image src="/media/site/feature-image-1.webp" alt="A Vista Chase guide with guests in the Rockies" fill sizes="(max-width: 1024px) 100vw, 40vw" className="object-cover" data-parallax="10" />
+                <Image src="/media/site/vista-chase-guide-with-guests.webp" alt="A Vista Chase guide with guests in the Rockies" fill sizes="(max-width: 1024px) 100vw, 40vw" className="object-cover" data-parallax="10" />
                 <div className="vc-scrim" aria-hidden="true" />
               </div>
               <p className="absolute inset-x-6 bottom-6 text-lg font-light text-white">Small-group, private and shuttle tours, run from Canmore.</p>

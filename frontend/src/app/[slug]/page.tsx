@@ -6,10 +6,21 @@ import { notFound, permanentRedirect, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getTourBySlug, getTours } from "@/lib/api/catalog";
 import { TourDetailView } from "@/components/tours/TourDetailView";
+import { slimDeparture, toursForTourCards } from "@/lib/experiences";
 import { siteOrigin, withSeo } from "@/lib/seo/server";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 import { ACTIVITY_TICKETS_VISIBLE, activityTicket } from "@/lib/activityTickets";
 import { RETIRED_TOUR_REDIRECTS } from "@/lib/retiredTours";
+import { cachePublicData } from "@/lib/api/cachePolicy";
+
+// Rendered once and served from cache, refreshed in the background at most every minute, instead of
+// on every request (fix recheck, 10 Nov 2026, N2/R2: 2.7-10 s responses and 5xx under a crawl).
+// Seats and prices on this page can be up to a minute old; checkout (/book) always reads them live.
+export const revalidate = 60;
+// Pages are rendered on their first visit (not at build time), then cached as above.
+export function generateStaticParams() {
+  return [];
+}
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -17,6 +28,7 @@ type Props = { params: Promise<{ slug: string }> };
 const loadTour = cache((slug: string) => getTourBySlug(slug));
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  cachePublicData();
   const { slug } = await params;
   const tour = await loadTour(slug);
   if (!tour) return { title: "Page not found | Vista Chase" };
@@ -31,6 +43,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function TourPage({ params }: Props) {
+  cachePublicData();
   const { slug } = await params;
   // Tours retired from the owner's product list go to the closest offered page.
   if (RETIRED_TOUR_REDIRECTS[slug]) permanentRedirect(RETIRED_TOUR_REDIRECTS[slug]);
@@ -44,12 +57,12 @@ export default async function TourPage({ params }: Props) {
 
   const related = tour.crossSells.length > 0 ? await getTours() : [];
   const bySlug = new Map(related.map((t) => [t.slug, t]));
-  const crossSells = tour.crossSells.flatMap((s) => bySlug.get(s) ?? []);
+  const crossSells = toursForTourCards(tour.crossSells.flatMap((s) => bySlug.get(s) ?? []));
 
   return (
     <>
       <PageSeoExtras path={`/${tour.slug}`} />
-      <TourDetailView tour={tour} related={crossSells} siteOrigin={siteOrigin()} />
+      <TourDetailView tour={{ ...tour, departures: tour.departures.map(slimDeparture) }} related={crossSells} siteOrigin={siteOrigin()} />
     </>
   );
 }

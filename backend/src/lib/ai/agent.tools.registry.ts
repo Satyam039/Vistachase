@@ -24,7 +24,7 @@ export const AGENT_TOOL_DEFINITIONS: ToolDefinitionMetadata[] = [
     name: "search_live_inventory",
     scope: "SUITE_A",
     description:
-      "Queries real-time capacity and pricing for Shared Tours (max 12 guests), Lake Shuttles, and Private Vehicles. Automatically flags seasonal road closures (Moraine Lake mid-Oct–May) and provides side-by-side private charter comparisons for groups of 4+.",
+      "Queries real-time capacity and pricing for Shared Tours (small groups), Lake Shuttles, and Private Vehicles. Automatically flags seasonal road closures (Moraine Lake mid-Oct–May) and provides side-by-side private charter comparisons for groups of 4+.",
     inputSchema: {
       type: "object",
       properties: {
@@ -421,7 +421,7 @@ export class AgentToolExecutor {
               seats_remaining: remainingSeats,
               origin_hub: origin_hub || "Banff / Canmore",
               seasonal_notice: isMoraineRoadClosed && dep.tour?.title?.includes("Moraine")
-                ? "Moraine Lake Road is closed for the winter season. Tour features Johnston Canyon Icewalk or adjusted winter itinerary."
+                ? "Moraine Lake Road is closed for the winter season. The route is adjusted; confirm it with the team."
                 : null,
             };
           })

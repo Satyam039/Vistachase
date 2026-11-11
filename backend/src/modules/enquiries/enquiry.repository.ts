@@ -1,3 +1,4 @@
+import { staffInbox } from "@/lib/email/staff-inbox";
 import prisma from "@/lib/db/prisma";
 import { getEmailProvider } from "@/lib/email/email.provider";
 import { dateOnly } from "@/lib/utils/time";
@@ -42,7 +43,7 @@ export async function createEnquiry({ toDate, ...input }: EnquiryInput) {
 
   const emailResult = await getEmailProvider()
     .sendEmail({
-      to: process.env.ENQUIRIES_TO || "support@vistachase.com",
+      to: staffInbox(process.env.ENQUIRIES_TO),
       subject: `${tour ? `Tour request: ${tour.title}` : "Website enquiry"} from ${input.name}`,
       text: lines.join("\n"),
       html: `<p>${lines.map(escape).join("<br>")}</p>`,

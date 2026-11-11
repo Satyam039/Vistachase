@@ -1,42 +1,24 @@
-// FAQ / help centre. Answers come from the live vistachase.com product pages (the catalog) and
-// the original FAQ page; the cancellation answer follows the Booking & Cancellation Policy.
+// FAQ / help centre: the owner's approved FAQ set (lib/faqs.ts), filterable by its nine categories.
 
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { ChevronRight, MessageCircle, Phone, Sparkles } from "lucide-react";
 import { FaqBrowser, type FaqItem } from "@/components/faq/FaqBrowser";
+import { FAQ_TOPICS, SITE_FAQS } from "@/lib/faqs";
 import { withSeo } from "@/lib/seo/server";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 
 const baseMetadata: Metadata = {
   title: "FAQ | Vista Chase Tours & Shuttles",
   description:
-    "Answers on booking, cancellation deadlines, hotel pickups, Moraine Lake access, Parks Canada passes, what to bring and weather.",
+    "Answers about our tours, lake shuttles, pickups, payments and travel arrangements: cancellation, luggage, child seats, Moraine Lake access and more.",
   alternates: { canonical: "/faq" },
 };
 
-const TOPICS = ["Booking", "Pickup & access", "On the day", "Parks & seasons"];
-
-const FAQS: FaqItem[] = [
-  { topic: "Booking", q: "What is your cancellation policy?", a: "Shared tours and shuttles: full refund if you cancel at least 24 hours before departure. Private single-day tours: full refund at least 72 hours before departure. Private packages of two or more days: 80% refund at least 72 hours before the first tour day (20% of the total package price is non-refundable). Cancellations after the deadline, late arrivals and no-shows aren't refunded. Refunds are normally sent within 5–10 business days; see our full cancellation policy." },
-  { topic: "Booking", q: "How do I book and pay?", a: "Choose a date on the tour page and check out securely online; you'll get a confirmation email with your voucher. Your guide contacts you the day before with final pickup details." },
-  { topic: "Booking", q: "Can a tour be customised?", a: "Shared tours follow a set route, so changes are limited. For your own stops and pace, request a private tour and we'll build the day around you." },
-  { topic: "Booking", q: "How many people are in each group?", a: "Shared tours are capped at 12 guests per vehicle, so there's more time with your guide and more flexible photo stops." },
-  { topic: "Pickup & access", q: "Can I drive my own or a rental car to Moraine Lake?", a: "No. Parks Canada has closed Moraine Lake Road to personal and rental vehicles. Licensed commercial operators like Vista Chase can still take you there directly." },
-  { topic: "Pickup & access", q: "Do you offer doorstep pickup and drop-off?", a: "Yes, from most hotels in Banff and Canmore. If your accommodation is outside the pickup area, we'll confirm the nearest meeting point before your travel date. Use the hotel pickup finder to check yours." },
-  { topic: "Pickup & access", q: "Where do you pick up in Banff, Canmore and Lake Louise?", a: "We pick up at more than 25 hotels and lodges, including Fairmont Banff Springs, Banff Caribou Lodge, Moose Hotel, Rimrock Resort, Coast Canmore Hotel and Lake Louise Inn. Staying in a rental? We'll arrange the closest safe boarding point." },
-  { topic: "Pickup & access", q: "Do you run the Moraine Lake shuttle?", a: "Yes. Our shuttles run from Banff and Canmore while Moraine Lake is open, roughly June to early October." },
-  { topic: "Pickup & access", q: "What time do the sunrise shuttles pick up?", a: "Usually between 4:45 and 5:15 a.m., depending on your hotel and that month's sunrise, so you reach Moraine Lake before first light on the Ten Peaks." },
-  { topic: "On the day", q: "What should I bring?", a: "Comfortable walking shoes and layers, since mountain weather changes quickly. Bring a jacket, camera, sunscreen and a refillable water bottle. In winter, add warm waterproof layers, gloves and insulated boots." },
-  { topic: "On the day", q: "Is lunch included?", a: "Lunch isn't included on full-day tours. Your guide plans a stop where you can choose from restaurants and cafés, and a water bottle is provided." },
-  { topic: "On the day", q: "What if the weather changes?", a: "Tours run in most conditions; your guide may adjust stops for comfort and visibility. If Parks Canada closes a road, we'll offer a free reschedule or a full refund." },
-  { topic: "On the day", q: "Are tours suitable for children and seniors?", a: "Yes. Walks at scenic stops are short and light to moderate, and guides pace the day for everyone in the group." },
-  { topic: "Parks & seasons", q: "When is Moraine Lake open?", a: "Usually from June 1 to around October 10, depending on road and weather conditions. Outside those dates, tours visit Emerald Lake and the Natural Bridge instead." },
-  { topic: "Parks & seasons", q: "Do I need a Parks Canada pass?", a: "Every visitor to Banff National Park needs a valid Parks Canada pass. Several of our tours include park entry (see What's included on the tour page); otherwise buy one online from Parks Canada or at the park gate." },
-  { topic: "Parks & seasons", q: "What wildlife might we see?", a: "Elk, deer, bighorn sheep and mountain goats are common, and sometimes bears. Spring and fall mornings are often best. Sightings can't be guaranteed." },
-  { topic: "Parks & seasons", q: "Can I tour in winter?", a: "Yes. From December to April our winter sightseeing visits frozen lakes, canyon ice features, waterfalls and scenic viewpoints, with ice cleats and a heated vehicle." },
-];
+// Questions and topics: lib/faqs.ts (owner's FAQ document, 2026-11-10).
+const FAQS: FaqItem[] = SITE_FAQS.map(({ topic, q, a }) => ({ topic, q, a }));
+const TOPICS = FAQ_TOPICS;
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -53,7 +35,7 @@ export default function FAQPage() {
 
       {/* Hero */}
       <section data-nav-hero className="relative isolate flex min-h-[48vh] items-end overflow-hidden bg-obsidian-950 text-white">
-        <Image src="/media/photos/moraine-lake-classic.webp" alt="" fill priority sizes="100vw" className="-z-10 object-cover" data-parallax="10" />
+        <Image src="/media/photos/moraine-lake-classic.webp" alt="Moraine Lake in Banff National Park" fill priority sizes="100vw" className="-z-10 object-cover" data-parallax="10" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ocean-950 via-ocean-950/45 to-ocean-950/20" />
         <div className="mx-auto flex w-full flex-col items-center text-center max-w-7xl px-page pb-12 pt-[calc(var(--vc-nav-open-h,100px)+1.5rem)]" data-scroll-fade>
           <nav aria-label="Breadcrumb" className="mb-6">
@@ -75,7 +57,7 @@ export default function FAQPage() {
             How can we help?
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-lg font-light leading-relaxed text-white/85 motion-safe:animate-[fadeUp_1100ms_ease-out]">
-            Booking, pickups, Moraine Lake access, park passes and what to expect on the day.
+            Find answers about our tours, lake shuttles, pickups, payments and travel arrangements. For a request that needs advance confirmation, contact support@vistachase.com or call +1 (825) 734-9456.
           </p>
         </div>
       </section>

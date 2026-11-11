@@ -15,7 +15,7 @@ const COMPARISON_DATA = [
   },
   {
     feature: "Group Size",
-    shared: "Max 12 guests (small group)",
+    shared: "Small group",
     private: "Private, up to 13 guests",
     shuttle: "Direct shuttle passengers",
     activity: "Individual or party admissions",
@@ -50,9 +50,9 @@ const COMPARISON_DATA = [
   },
   {
     feature: "Pricing Model",
-    shared: "From $189 CAD per guest",
+    shared: "From CAD $189 per guest",
     private: "From $1,149 – $1,250 CAD flat vehicle rate",
-    shuttle: "From $89 – $95 CAD return per guest",
+    shuttle: "From CAD $89 – $95 return per guest",
     activity: "Partner rate / Concierge add-on",
   },
   {

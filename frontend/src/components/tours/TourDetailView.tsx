@@ -27,7 +27,8 @@ import { Dropdown } from "@/components/forms/Dropdown";
 import { DepartureCalendar } from "@/components/booking/DepartureCalendar";
 import { docQuickFacts } from "@/lib/tourContent";
 import { PriceTag } from "@/components/pricing/PriceTag";
-import { AIRPORT_TRANSFER_PRICES, AirportTransferToggle } from "@/components/booking/AirportTransferFields";
+import { ActivityAddOnToggle } from "@/components/booking/ActivityAddOnFields";
+import { activityGuestsFor, type ActivityGuests } from "@/lib/activityAddOns";
 import { groupEnquiryHref } from "@/lib/experiences";
 import { cancellationShort, SEATS_MESSAGE } from "@/lib/policy";
 import { Rail } from "@/components/motion/Rail";
@@ -46,9 +47,10 @@ import {
   reviewsLabel,
 } from "@/components/tours/TourCard";
 import type { DepartureAvailability, TourSection, TourWithAvailability } from "@/lib/api/types";
+import { TOUR_PROVIDER } from "@/lib/seo/business";
 
 const CATEGORY = {
-  SHARED: { label: "Shared tours", href: "/shared-tours", sub: "Small group · max 12 guests" },
+  SHARED: { label: "Shared tours", href: "/shared-tours", sub: "Small-group tours" },
   PRIVATE: { label: "Private tours", href: "/private-tours", sub: "Private, up to 13 guests" },
   MULTIDAY: { label: "Multi-Day Journeys", href: "/search?category=MULTIDAY" },
   SHUTTLE: { label: "Lake shuttles", href: "/shuttles", sub: "Guaranteed lake access · hotel pickup" },
@@ -56,7 +58,7 @@ const CATEGORY = {
 } as const;
 
 const money = (amount: number) =>
-  `$${amount.toLocaleString("en-CA", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+  `CAD $${amount.toLocaleString("en-CA", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 
 function formatDeparture(departure: DepartureAvailability) {
   const parsed = new Date(`${departure.date}T00:00:00`);
@@ -235,12 +237,15 @@ function PartySizeStepper({
  */
 function MobileBookingBar({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
+  // While the booking panel itself is on screen the bar (and the concierge button, globals.css
+  // html[data-booking-in-view]) step aside, so neither covers the calendar or "Book now" on a phone.
+  const [panelInView, setPanelInView] = useState(false);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     const root = document.documentElement;
     // globals.css adds it to the page's bottom scroll padding (focused elements stay clear of it).
-    const update = () => root.style.setProperty("--vc-bottom-bar-h", `${Math.ceil(el.getBoundingClientRect().height)}px`);
+    const update = () => root.style.setProperty("--vc-bottom-bar-h", panelInView ? "0px" : `${Math.ceil(el.getBoundingClientRect().height)}px`);
     update();
     const observer = new ResizeObserver(update);
     observer.observe(el);
@@ -248,9 +253,28 @@ function MobileBookingBar({ children }: { children: React.ReactNode }) {
       observer.disconnect();
       root.style.removeProperty("--vc-bottom-bar-h");
     };
+  }, [panelInView]);
+  useEffect(() => {
+    const panel = document.getElementById("booking");
+    if (!panel || typeof IntersectionObserver === "undefined") return;
+    const root = document.documentElement;
+    const io = new IntersectionObserver(([entry]) => setPanelInView(entry.isIntersecting), { rootMargin: "0px 0px -15% 0px" });
+    io.observe(panel);
+    return () => {
+      io.disconnect();
+      root.removeAttribute("data-booking-in-view");
+    };
   }, []);
+  useEffect(() => {
+    document.documentElement.toggleAttribute("data-booking-in-view", panelInView);
+  }, [panelInView]);
   return (
-    <div ref={ref} className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur-md lg:hidden">
+    <div
+      ref={ref}
+      className={`fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur-md transition-transform duration-300 lg:hidden ${
+        panelInView ? "pointer-events-none translate-y-full" : ""
+      }`}
+    >
       {children}
     </div>
   );
@@ -306,9 +330,13 @@ export function TourDetailView({
   const seatedInfants = infantsPay ? infants : 0;
   const childFare = currentDeparture?.childPrice ?? currentDeparture?.price ?? price;
   const infantFare = currentDeparture?.infantPrice ?? 0;
-  // Private tours: optional airport transfer (available only for bookings with 2 or more guests)
-  const offersAirport = tour.category === "PRIVATE" && partySize >= 2;
-  const [airport, setAirport] = useState(false);
+  // No airport transfer on a single private day: the owner's approved rules (2026-11-10) offer it
+  // only with private bookings of two or more tour days (the package checkouts).
+  // Private tours: "Add-on activities" (owner, 2026-11-09); arranged by the team and paid separately.
+  const offersActivities = tour.category === "PRIVATE";
+  const [activities, setActivities] = useState(false);
+  // Who joins the activities, with ages (owner, 2026-11-11); null until the guest changes it.
+  const [activityGuests, setActivityGuests] = useState<ActivityGuests | null>(null);
 
   // FAQ accordion state
 
@@ -331,16 +359,9 @@ export function TourDetailView({
           priceSpecification: { "@type": "UnitPriceSpecification", price, priceCurrency: tour.currency, unitText: "group" },
         }),
       },
-      provider: {
-        "@type": "TouristInformationCenter",
-        name: "Vista Chase",
-        url: "https://www.vistachase.com",
-      },
-      aggregateRating: {
-        "@type": "AggregateRating",
-        ratingValue: tour.rating.toString(),
-        reviewCount: tour.reviewCount.toString(),
-      },
+      provider: TOUR_PROVIDER,
+      // No aggregateRating: every tour carried the company's 1,700 reviews, and Google's review
+      // snippet rules need reviews of this tour itself (fix recheck, 9 Nov 2026: N4 / doc D10).
     },
     ...(tour.faqs.length > 0
       ? [
@@ -608,7 +629,7 @@ export function TourDetailView({
                     isBookable={(d) => departureFits(tour, d, 1)}
                     value={selectedDepartureId}
                     onChange={setSelectedDepartureId}
-                    describe={(d) => (isVehicle ? `$${d.price} per vehicle` : `${SEATS_MESSAGE} · $${d.price} CAD per guest`)}
+                    describe={(d) => (isVehicle ? `${money(d.price)} per vehicle` : `${SEATS_MESSAGE} · ${money(d.price)} per guest`)}
                     collapseOnSelect
                     showTimes={tour.category === "SHUTTLE"}
                   />
@@ -622,7 +643,15 @@ export function TourDetailView({
                         onChange={setPartySize}
                         hint={`Vehicle seats up to ${maxPartySize}`}
                       />
-                      {offersAirport && <AirportTransferToggle checked={airport} onChange={setAirport} />}
+                      {offersActivities && (
+                        <ActivityAddOnToggle
+                          checked={activities}
+                          onChange={setActivities}
+                          guests={activityGuests ?? activityGuestsFor(partySize)}
+                          onGuestsChange={setActivityGuests}
+                          maxGuests={partySize}
+                        />
+                      )}
                     </>
                   ) : (
                     <>
@@ -633,7 +662,7 @@ export function TourDetailView({
                         value={adults}
                         max={maxPartySize - children - seatedInfants}
                         onChange={setAdults}
-                        hint={`Age 16–99 · max ${maxPartySize} guests on this departure`}
+                        hint="Age 16–99"
                       />
                       <PartySizeStepper
                         compact
@@ -643,7 +672,7 @@ export function TourDetailView({
                         value={children}
                         max={maxPartySize - adults - seatedInfants}
                         onChange={setChildren}
-                        hint={`Age 6–15 · ${currentDeparture?.childPrice != null ? `${money(currentDeparture.childPrice)} CAD each` : "same fare as adults"}`}
+                        hint={`Age 6–15 · ${currentDeparture?.childPrice != null ? `${money(currentDeparture.childPrice)} each` : "same fare as adults"}`}
                       />
                       <PartySizeStepper
                         compact
@@ -653,11 +682,11 @@ export function TourDetailView({
                         value={infants}
                         max={infantsPay ? maxPartySize - adults - children : 4}
                         onChange={setInfants}
-                        hint={`Age 0–5 · ${infantsPay ? `${money(infantFare)} CAD each, own seat` : "free, on a lap"}`}
+                        hint={`Age 0–5 · ${infantsPay ? `${money(infantFare)} each, own seat` : "free, on a lap"}`}
                       />
                       {/* More than 12: the team plans it (owner's doc, 2026-11-05). */}
                       <p className="text-xs text-slate-600">
-                        More than 12 guests?{" "}
+                        Travelling with a larger group?{" "}
                         <Link href={groupEnquiryHref(currentDeparture?.date)} className="text-ocean-700 underline underline-offset-2 hover:text-ocean-800">
                           Plan a group trip with our team
                         </Link>
@@ -671,38 +700,38 @@ export function TourDetailView({
                       <>
                         <div className="flex items-center justify-between text-slate-600">
                           <span>Private vehicle flat rate</span>
-                          <span>{money(calculatedTotal)} CAD</span>
+                          <span>{money(calculatedTotal)}</span>
                         </div>
-                        {offersAirport && airport && (
+                        {offersActivities && activities && (
                           <div className="flex items-center justify-between gap-3 text-slate-600">
-                            <span>Airport transfer</span>
-                            <span className="text-right">{`From $${AIRPORT_TRANSFER_PRICES[0].small} both ways, priced at checkout`}</span>
+                            <span>Add-on activities</span>
+                            <span className="text-right">Paid separately once confirmed</span>
                           </div>
                         )}
                       </>
                     ) : (
                       <>
                         <div className="flex items-center justify-between text-slate-600">
-                          <span>{`${adults} × ${money(currentDeparture?.price ?? price)} CAD (${adults === 1 ? "adult" : "adults"})`}</span>
-                          <span>{money((currentDeparture?.price ?? price) * adults)} CAD</span>
+                          <span>{`${adults} × ${money(currentDeparture?.price ?? price)} (${adults === 1 ? "adult" : "adults"})`}</span>
+                          <span>{money((currentDeparture?.price ?? price) * adults)}</span>
                         </div>
                         {children > 0 && (
                           <div className="flex items-center justify-between text-slate-600">
-                            <span>{`${children} × ${money(childFare)} CAD (youth)`}</span>
-                            <span>{money(childFare * children)} CAD</span>
+                            <span>{`${children} × ${money(childFare)} (youth)`}</span>
+                            <span>{money(childFare * children)}</span>
                           </div>
                         )}
                         {seatedInfants > 0 && (
                           <div className="flex items-center justify-between text-slate-600">
-                            <span>{`${infants} × ${money(infantFare)} CAD (${infants === 1 ? "infant" : "infants"})`}</span>
-                            <span>{money(infantFare * infants)} CAD</span>
+                            <span>{`${infants} × ${money(infantFare)} (${infants === 1 ? "infant" : "infants"})`}</span>
+                            <span>{money(infantFare * infants)}</span>
                           </div>
                         )}
                       </>
                     )}
                     <div className="pt-1.5 border-t border-slate-200 flex items-center justify-between font-bold text-slate-900 text-sm">
                       <span>Estimated total</span>
-                      <span className="text-base text-obsidian-900 font-serif">{money(calculatedTotal)} CAD</span>
+                      <span className="text-base text-obsidian-900 font-serif">{money(calculatedTotal)}</span>
                     </div>
                   </div>
 
@@ -712,7 +741,15 @@ export function TourDetailView({
                       href={`/book?${new URLSearchParams({
                         departureId: selectedDepartureId || tour.departures[0]?.id || "",
                         ...(isVehicle
-                          ? { guests: String(partySize), ...(offersAirport && airport ? { airport: "1" } : {}) }
+                          ? {
+                              guests: String(partySize),
+                              ...(offersActivities && activities
+                                ? (() => {
+                                    const g = activityGuests ?? activityGuestsFor(partySize);
+                                    return { activities: "1", actAdults: String(g.adults), actChildren: String(g.children), actInfants: String(g.infants) };
+                                  })()
+                                : {}),
+                            }
                           : { guests: String(adults + children), adults: String(adults), children: String(children), ...(infants > 0 ? { infants: String(infants) } : {}) }),
                       }).toString()}`}
                       className="w-full h-13 py-4 rounded-full text-base font-medium text-obsidian-900 golden-summit-btn flex items-center justify-center gap-2 shadow-lg transition-all hover:scale-[1.01]"

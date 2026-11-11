@@ -5,6 +5,12 @@
 // sale: the seat check at booking time reads Bókun for every date (src/modules/bokun/bokun-seats.ts).
 // Tours retired from the owner's product list (RETIRED_TOUR_SLUGS) get no new dates.
 //
+// The winter tours (owner, 2026-11-11: bookable again) run December 1 to April 30, the operating
+// period on their pages, at the prices on their pages: Winter Special CAD 199 a guest (16+ and 6-15;
+// infants 0-5 ride free), Winter Signature Private CAD 999 a vehicle (SUV, up to 6 guests). Their
+// dates left over from before they were retired (old prices, November dates) are put right once,
+// when nobody has booked or held them (realignWinterDepartures).
+//
 // The Moraine Lake & Lake Louise shuttle runs June–September only, on the timetable in the owner's
 // doc (same numbers as frontend/src/lib/shuttleSchedule.ts): seven departures a day in June–July,
 // five in August–September. Its dates are seeded through the end of the coming season, so summer
@@ -62,6 +68,8 @@ const JUNE_JULY = [6, 7];
 /** Shuttles: one fare for adults, youth and infants (owner's doc, 2026-11-04). */
 const shuttleFare = (cents: number): Fare => ({ price: cents, childPrice: cents, infantPrice: cents });
 const JUNE_SEPTEMBER = [6, 7, 8, 9];
+/** December 1 to April 30: the winter tours' operating period. */
+export const WINTER_MONTHS = [12, 1, 2, 3, 4];
 
 /** How far ahead tours get dates: 5 years (shuttles: to the end of their season). */
 export const SEED_DAYS = 1825;
@@ -98,6 +106,21 @@ export const DEFAULT_SCHEDULES: ScheduleConfig[] = [
     capacity: 13,
     price: 124000,
     summer: { price: 175000 },
+    childPrice: null,
+  },
+  {
+    slug: "winter-special", // Winter Special Shared Tour
+    times: [{ time: "08:00", months: WINTER_MONTHS }],
+    capacity: 12,
+    price: 19900,
+    childPrice: 19900,
+    infantPrice: null,
+  },
+  {
+    slug: "winter-signature-private-tour", // Special Winter Private Tour, per vehicle (SUV)
+    times: [{ time: "08:00", months: WINTER_MONTHS }],
+    capacity: 6,
+    price: 99900,
     childPrice: null,
   },
   // Shuttle departures 3-7 (Morning to Late Afternoon). Same fare for every age.
@@ -214,8 +237,52 @@ async function seedFallbackSchedule(daysCount = SEED_DAYS) {
   console.log(`\n✅ Finished: Created ${totalCreated} new departures (${totalExisting} already existed).`);
 }
 
+/** The winter tours' schedules, by slug. */
+export const WINTER_SCHEDULE_SLUGS = ["winter-special", "winter-signature-private-tour"];
+
+/**
+ * What to do with a winter tour's existing future date nobody has booked or held: take it off sale
+ * outside December-April, else give it the schedule's fare and seats. null = already right.
+ */
+export function winterRealignment(
+  item: ScheduleConfig,
+  dep: { date: string; price: number; childPrice: number | null; infantPrice: number | null; capacityTotal: number; status: string },
+): { status: "CANCELLED" } | { price: number; childPrice: number | null; infantPrice: number | null; capacityTotal: number } | null {
+  if (dep.status === "CANCELLED") return null;
+  if (!WINTER_MONTHS.includes(Number(dep.date.slice(5, 7)))) return { status: "CANCELLED" };
+  const fare = fareFor(item, item.times[0], dep.date);
+  const same = dep.price === fare.price && dep.childPrice === fare.childPrice && dep.infantPrice === fare.infantPrice && dep.capacityTotal === item.capacity;
+  return same ? null : { ...fare, capacityTotal: item.capacity };
+}
+
+async function realignWinterDepartures() {
+  const today = dateOnly(todayInMountainTime());
+  for (const item of DEFAULT_SCHEDULES.filter((s) => WINTER_SCHEDULE_SLUGS.includes(s.slug))) {
+    const deps = await prisma.tourDeparture.findMany({
+      where: { tour: { slug: item.slug }, date: { gt: today }, capacityBooked: 0, capacityHeld: 0, inventorySource: "LOCAL" },
+      select: { id: true, date: true, price: true, childPrice: true, infantPrice: true, capacityTotal: true, status: true },
+    });
+    let changed = 0;
+    for (const d of deps) {
+      const fix = winterRealignment(item, {
+        date: d.date.toISOString().slice(0, 10),
+        price: Number(d.price),
+        childPrice: d.childPrice == null ? null : Number(d.childPrice),
+        infantPrice: d.infantPrice == null ? null : Number(d.infantPrice),
+        capacityTotal: d.capacityTotal,
+        status: d.status,
+      });
+      if (!fix) continue;
+      await prisma.tourDeparture.update({ where: { id: d.id }, data: fix });
+      changed++;
+    }
+    console.log(`  ✓ ${item.slug}: ${changed} unbooked older dates put on the winter schedule`);
+  }
+}
+
 async function main() {
   await seedFallbackSchedule(SEED_DAYS);
+  await realignWinterDepartures();
 }
 
 if (!process.env.VITEST) main()

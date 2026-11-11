@@ -13,9 +13,20 @@ import { TourCard } from "@/components/tours/TourCard";
 import { TrustRow } from "@/components/home/TrustRow";
 import { Rail } from "@/components/motion/Rail";
 import { getDestinationBySlug, getDestinations, getTours } from "@/lib/api/catalog";
+import { toursForTourCards } from "@/lib/experiences";
 import { siteOrigin, withSeo } from "@/lib/seo/server";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
+import { cachePublicData } from "@/lib/api/cachePolicy";
+
+// Rendered once and served from cache, refreshed in the background at most every minute, instead of
+// on every request (fix recheck, 10 Nov 2026, N2/R2: 2.7-10 s responses and 5xx under a crawl).
+// Seats and prices on this page can be up to a minute old; checkout (/book) always reads them live.
+export const revalidate = 60;
+// Pages are rendered on their first visit (not at build time), then cached as above.
+export function generateStaticParams() {
+  return [];
+}
 
 type Highlight = { name: string; body: string; image: string };
 
@@ -85,6 +96,7 @@ const META_DESCRIPTION: Record<string, string> = {
 };
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  cachePublicData();
   const { slug } = await params;
   const dest = await getDestinationBySlug(slug);
   if (!dest) return { title: "Destination not found | Vista Chase" };
@@ -96,15 +108,19 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 export default async function DestinationDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  cachePublicData();
   const { slug } = await params;
   const [dest, allTours, destinations] = await Promise.all([getDestinationBySlug(slug), getTours(), getDestinations()]);
   if (!dest) notFound();
 
   const story = STORIES[dest.slug] ?? { tagline: dest.name, match: [dest.name.toLowerCase()], highlights: [] };
   const visits = (text: string) => story.match.some((m) => text.toLowerCase().includes(m));
-  const tours = allTours
-    .filter((t) => t.destination.slug === dest.slug || visits(`${t.title} ${t.summary} ${t.description}`))
-    .sort((a, b) => Number(b.destination.slug === dest.slug) - Number(a.destination.slug === dest.slug) || b.reviewCount - a.reviewCount);
+  // Pick the tours on their full text, then send the cards only what they draw.
+  const tours = toursForTourCards(
+    allTours
+      .filter((t) => t.destination.slug === dest.slug || visits(`${t.title} ${t.summary} ${t.description}`))
+      .sort((a, b) => Number(b.destination.slug === dest.slug) - Number(a.destination.slug === dest.slug) || b.reviewCount - a.reviewCount),
+  );
   const others = destinations.filter((d) => d.slug !== dest.slug);
 
   return (

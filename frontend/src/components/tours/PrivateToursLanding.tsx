@@ -267,7 +267,7 @@ export function PrivateToursLanding({
       {/* 6 · FAQ Section */}
       <section aria-labelledby="faq-heading" className="border-t border-obsidian-900/[0.06] bg-white py-16 sm:py-24">
         <div className="mx-auto grid max-w-7xl gap-10 px-page lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] lg:gap-16">
-          <div data-reveal>
+          <div data-reveal className="lg:sticky lg:top-[calc(var(--vc-header-h,80px)+32px)] lg:self-start">
             <p className="mb-3 text-xs uppercase tracking-[0.22em] text-ocean-600 font-semibold">GOOD TO KNOW</p>
             <h2 id="faq-heading" className="text-3xl font-light tracking-tight text-obsidian-900 sm:text-4xl">
               Your Questions, Answered
@@ -288,9 +288,10 @@ export function PrivateToursLanding({
 
       {/* 7 · Other Ways to Explore */}
       <section aria-labelledby="others-heading" className="py-16 sm:py-24 bg-obsidian-50 border-t border-obsidian-900/[0.06]">
-        <div className="mx-auto max-w-7xl px-page">
+        {/* Full width (owner, 2026-11-11): the cards fill the row, one column per card (it had 3 cards in 4 columns). */}
+        <div className="mx-auto max-w-[110rem] px-page">
           <SectionHeading id="others-heading" eyebrow="KEEP EXPLORING" title="Other Ways to Explore" />
-          <ul className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4" data-stagger>
+          <ul className={`mt-10 grid gap-5 sm:grid-cols-2 ${PRIVATE_OTHER_WAYS.length >= 4 ? "lg:grid-cols-4" : "lg:grid-cols-3"}`} data-stagger>
             {PRIVATE_OTHER_WAYS.map((o) => (
               <li key={o.key} className="flex">
                 <MediaCard
@@ -300,7 +301,7 @@ export function PrivateToursLanding({
                   title={o.title}
                   description={o.description}
                   cta={o.cta}
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 320px"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 34rem"
                 />
               </li>
             ))}
@@ -471,7 +472,7 @@ function PrivateTourCard({
               <div>
                 <div className="flex items-baseline gap-1.5">
                   <span className="text-xs text-white/55">From</span>
-                  <span className="text-2xl font-light tabular-nums text-white">CAD {money(calculatedPrice)}</span>
+                  <span className="text-2xl font-light tabular-nums text-white">{money(calculatedPrice)}</span>
                   <span className="text-xs text-white/70">per vehicle</span>
                 </div>
                 <p className="mt-0.5 text-xs text-white/55">Taxes and required fees included</p>

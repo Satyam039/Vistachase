@@ -27,7 +27,7 @@ import { sendConfirmationEmail } from "@/modules/bookings/confirmation-email";
 import { getEmailProvider } from "@/lib/email/email.provider";
 import { isVehicleDeparture, partySizeError, seatedGuests, seatsToReserve } from "@/modules/pricing/departure-pricing";
 import { airportTransferLabel, airportTransferNote, airportTransferPriceCents, type AirportTransfer } from "@/modules/bookings/airport-transfer";
-import { activityAddOnsError, activityAddOnsNote, ACTIVITY_ADD_ONS, type ActivityAddOnId } from "@/modules/bookings/activity-add-ons";
+import { activityAddOnsError, activityAddOnsNote, ACTIVITY_ADD_ONS, type ActivityAddOnId, type ActivityGuests } from "@/modules/bookings/activity-add-ons";
 import { priceBooking, type AddOnChoice } from "@/modules/pricing/booking-pricing";
 import { referringAffiliateId } from "@/modules/affiliates/affiliate.repository";
 import { earnCommission, reverseCommissionForRefund } from "@/modules/affiliates/commission";
@@ -68,6 +68,8 @@ export interface CreateBookingInput {
   airportTransfer?: AirportTransfer;
   /** Activity add-ons the guest asks for (modules/bookings/activity-add-ons.ts); priced by the team. */
   activityAddOns?: ActivityAddOnId[];
+  /** Who joins the activities, with ages; the whole party when not given. */
+  activityGuests?: ActivityGuests;
 }
 
 /** What the checkout should do next. */
@@ -295,8 +297,9 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
         totals.totalCents += transferCents;
       }
       // Deposit: online checkout only (staff bookings record their own payment), far enough ahead.
+      // Package days (deferPayment) take one too; package-booking.ts charges every day's deposit at once.
       const deposit =
-        input.paymentPlan === "DEPOSIT" && !options.offlinePayment && !options.deferPayment
+        input.paymentPlan === "DEPOSIT" && !options.offlinePayment
           ? depositTerms(totals.totalCents, getMountainTimeInstant(departure.date, departure.departureTime), now)
           : null;
       if (input.paymentPlan === "DEPOSIT" && !options.offlinePayment && !deposit) {
@@ -328,7 +331,10 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
         ...(input.airportTransfer ? { airportTransfer: { ...input.airportTransfer, priceCents: transferCents } } : {}),
         // Requested, not charged: the price varies and the team confirms it.
         ...(activityAddOns.length > 0
-          ? { activityAddOns: activityAddOns.map((id) => ({ id, name: ACTIVITY_ADD_ONS[id], priceCents: null })) }
+          ? {
+              activityAddOns: activityAddOns.map((id) => ({ id, name: ACTIVITY_ADD_ONS[id], priceCents: null })),
+              ...(input.activityGuests ? { activityGuests: input.activityGuests } : {}),
+            }
           : {}),
       };
 
@@ -381,7 +387,7 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
               ? [
                   input.airportTransfer ? airportTransferNote(input.airportTransfer, transferCents) : null,
                   activityAddOns.length > 0
-                    ? activityAddOnsNote(activityAddOns, { adults: input.adultsCount, children: input.childrenCount, infants: input.infantsCount })
+                    ? activityAddOnsNote(activityAddOns, input.activityGuests ?? { adults: input.adultsCount, children: input.childrenCount, infants: input.infantsCount })
                     : null,
                   input.specialRequests,
                 ]

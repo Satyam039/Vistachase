@@ -78,7 +78,7 @@ export function SharedToursLanding({ tours, reviews }: { tours: TourWithAvailabi
       <section data-nav-hero className="relative isolate flex min-h-[36rem] flex-col justify-end overflow-hidden bg-obsidian-950 text-white sm:min-h-[42rem] lg:min-h-[82vh]">
         {service && (
           <div className="absolute inset-0 -z-10">
-            <Image src={service.image} alt="" fill priority sizes="100vw" className="object-cover" data-parallax="10" />
+            <Image src={service.image} alt={`${service.title} in the Canadian Rockies`} fill priority sizes="100vw" className="object-cover" data-parallax="10" />
             {service.video && (
               <AmbientVideo src={service.video.src} srcHd={service.video.srcHd} poster={service.video.poster} className="absolute inset-0 h-full w-full object-cover" once />
             )}
@@ -223,7 +223,7 @@ export function SharedToursLanding({ tours, reviews }: { tours: TourWithAvailabi
       {/* Before you book */}
       <section aria-labelledby="faq-heading" className="border-t border-obsidian-900/[0.06] bg-white py-16 sm:py-20">
         <div className="mx-auto grid max-w-7xl gap-10 px-page lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] lg:gap-16">
-          <div data-reveal>
+          <div data-reveal className="lg:sticky lg:top-[calc(var(--vc-header-h,80px)+32px)] lg:self-start">
             <p className="mb-3 text-sm uppercase tracking-[0.22em] text-ocean-600">Good to know</p>
             <h2 id="faq-heading" className="text-3xl font-light tracking-tight text-obsidian-900 sm:text-4xl">
               Before You Book
@@ -241,7 +241,8 @@ export function SharedToursLanding({ tours, reviews }: { tours: TourWithAvailabi
 
       {/* Other ways to explore */}
       <section aria-labelledby="others-heading" className="py-16 sm:py-24">
-        <div className="mx-auto max-w-7xl px-page">
+        {/* Full width (owner, 2026-11-11): the cards fill the row, one column per card. */}
+        <div className="mx-auto max-w-[110rem] px-page">
           <SectionHeading id="others-heading" eyebrow="Keep exploring" title="Other Ways to Explore" />
           <ul className={`grid gap-5 sm:grid-cols-2 ${others.length === 4 ? "lg:grid-cols-4" : "lg:grid-cols-3"}`} data-stagger>
             {others.map((o) => (
@@ -249,7 +250,8 @@ export function SharedToursLanding({ tours, reviews }: { tours: TourWithAvailabi
                 <MediaCard
                   href={o.href}
                   image={o.image}
-                  sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 22rem"
+                  aspect="aspect-[4/3]"
+                  sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 34rem"
                   title={o.title}
                   description={o.description}
                   cta={o.cta}
@@ -308,13 +310,13 @@ function Facts({ duration }: { duration: string }) {
       </li>
       <li className="flex items-center gap-1.5">
         <Users className="h-3.5 w-3.5 text-summit-300" aria-hidden="true" />
-        Max 12 guests
+        Small group
       </li>
     </ul>
   );
 }
 
-function Price({ price, unit = "CAD/guest", showOriginal = true }: { price: number; unit?: string; showOriginal?: boolean }) {
+function Price({ price, unit = "per guest", showOriginal = true }: { price: number; unit?: string; showOriginal?: boolean }) {
   return (
     <div className="min-w-0">
       {hasPrice(price) ? (
@@ -341,7 +343,7 @@ export function PackagePrice({ price, separate, size = "sm" }: { price: number; 
           {money(separate)}
         </s>
         <span className={`${size === "lg" ? "text-4xl" : "text-xl"} text-white`}>{money(price)}</span>
-        <span className="text-sm text-slate-300">CAD/guest</span>
+        <span className="text-sm text-slate-300">per guest</span>
       </p>
       <p className="mt-0.5 text-xs text-white/55">Both tours, 10% off · Taxes and required fees included</p>
     </div>
@@ -416,7 +418,7 @@ function DayCard({ tour, price, award = false }: { tour: DayTour; price: number;
             className="absolute left-3 top-3 block w-40 rounded-md bg-white px-2.5 py-1.5 shadow-lg sm:w-44"
             aria-label="Tripadvisor Travellers' Choice Best of the Best 2026 (opens in a new tab)"
           >
-            <Image src="/media/badges/tripadvisor-best-of-the-best-2026.png" alt="" width={1000} height={392} className="h-auto w-full" />
+            <Image src="/media/badges/tripadvisor-best-of-the-best-2026.png" alt="Tripadvisor Travelers' Choice Best of the Best 2026" width={1000} height={392} className="h-auto w-full" />
           </a>
         )}
       </div>

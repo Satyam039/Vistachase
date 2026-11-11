@@ -55,8 +55,8 @@ import {
   EMPTY_AIRPORT_TRANSFER,
   type AirportTransferValue,
 } from "@/components/booking/AirportTransferFields";
-import { ActivityAddOnFields } from "@/components/booking/ActivityAddOnFields";
-import { ACTIVITY_ADD_ONS, activityAddOnsFor, type ActivityAddOnId } from "@/lib/activityAddOns";
+import { ActivityAddOnFields, ActivityAddOnToggle } from "@/components/booking/ActivityAddOnFields";
+import { ACTIVITY_ADD_ONS, activityAddOnsFor, activityAddOnsRequestLine, activityGuestsFor, type ActivityAddOnId, type ActivityGuests } from "@/lib/activityAddOns";
 import { Dropdown } from "@/components/forms/Dropdown";
 import { PhoneField } from "@/components/forms/PhoneField";
 import { dialCode } from "@/lib/countries";
@@ -165,7 +165,7 @@ const summaryColumn: CSSProperties = {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const money = (n: number) => `$${n.toFixed(2)}`;
+const money = (n: number) => `CAD $${n.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
 const blockedMessage = (count: number) =>
@@ -222,7 +222,8 @@ export function BookingCheckoutClient({
   initialAdults,
   initialChildren,
   initialInfants,
-  initialAirport = false,
+  initialActivities = false,
+  initialActivityGuests,
 }: {
   departure: DepartureData;
   stops: StopData[];
@@ -234,8 +235,10 @@ export function BookingCheckoutClient({
   initialChildren?: number;
   /** Infants chosen on the tour page (?infants=). */
   initialInfants?: number;
-  /** Airport transfer ticked on a private tour's page (?airport=1). */
-  initialAirport?: boolean;
+  /** "Add-on activities" ticked on a private tour's page (?activities=1). */
+  initialActivities?: boolean;
+  /** Who joins the add-on activities, chosen on the tour page (?actAdults=&actChildren=&actInfants=). */
+  initialActivityGuests?: ActivityGuests | null;
 }) {
   // The responsive variant changes rendered order, so measure the host rather than the viewport.
   const hostRef = useRef<HTMLElement | null>(null);
@@ -270,11 +273,20 @@ export function BookingCheckoutClient({
   );
   const [infants, setInfants] = useState(() => Math.max(0, Math.min(initialInfants ?? 0, MAX_INFANTS)));
   // Airport transfer (private tours only): no price yet, so it doesn't change the total.
-  const [airport, setAirport] = useState(initialAirport && departure.tour?.category === "PRIVATE");
+  // Single private days don't offer the airport transfer (owner's approved rules, 2026-11-10: two or
+  // more tour days only), so this stays off; the package checkout has its own.
+  const [airport, setAirport] = useState(false);
   const [airportTransfer, setAirportTransfer] = useState<AirportTransferValue>(EMPTY_AIRPORT_TRANSFER);
   // Activity add-ons on this tour's itinerary (summer only): requested now, priced by the team.
   const offeredAddOns = activityAddOnsFor(departure.tour?.slug, departure.date);
   const [activityAddOns, setActivityAddOns] = useState<ActivityAddOnId[]>([]);
+  // Private tours: the "Add-on activities" tick box (owner, 2026-11-09). The team arranges the
+  // tickets and collects payment separately, so it only adds a line to the special requests.
+  const isPrivate = departure.tour?.category === "PRIVATE";
+  const [wantsActivities, setWantsActivities] = useState(initialActivities && isPrivate);
+  const chosenAddOns = activityAddOns.filter((id) => offeredAddOns.includes(id) && (!isPrivate || wantsActivities));
+  // Who joins the activities, with ages (owner, 2026-11-11). Starts as the whole party, as adults.
+  const [activityGuests, setActivityGuests] = useState<ActivityGuests>(() => initialActivityGuests ?? activityGuestsFor(adults));
 
   // Contact
   const [customerName, setCustomerName] = useState("");
@@ -620,6 +632,11 @@ export function BookingCheckoutClient({
     }
     const airportError = airport && totalSeats >= 2 ? airportTransferError(airportTransfer) : null;
     if (airportError) party.airport = airportError;
+    if (isPrivate && wantsActivities && activityGuests.adults + activityGuests.children + activityGuests.infants < 1) {
+      party.activities = "Add at least one guest for the add-on activities.";
+    } else if (isPrivate && wantsActivities && activityGuests.adults + activityGuests.children + activityGuests.infants > totalSeats) {
+      party.activities = `The add-on activities can be for up to ${totalSeats} ${totalSeats === 1 ? "guest" : "guests"}, your party size.`;
+    }
 
     const contact: Record<string, string> = {};
     if (!customerName.trim())
@@ -640,6 +657,9 @@ export function BookingCheckoutClient({
     isVehicle,
     airport,
     airportTransfer,
+    isPrivate,
+    wantsActivities,
+    activityGuests,
     customerName,
     customerEmail,
     phoneLocal,
@@ -699,9 +719,13 @@ export function BookingCheckoutClient({
           adultsCount: adults,
           childrenCount: children,
           infantsCount: infants,
-          specialRequests: specialRequests.trim() || undefined,
+          specialRequests:
+            [specialRequests.trim(), isPrivate && wantsActivities ? activityAddOnsRequestLine(chosenAddOns.map((id) => ACTIVITY_ADD_ONS[id]), activityGuests) : ""]
+              .filter(Boolean)
+              .join("\n") || undefined,
           airportTransfer: airport ? { ...airportTransfer, area: airportTransfer.area || undefined } : undefined,
-          activityAddOns: activityAddOns.filter((id) => offeredAddOns.includes(id)),
+          activityAddOns: chosenAddOns,
+          activityGuests: isPrivate && wantsActivities ? activityGuests : undefined,
           promoCode: appliedPromo?.code,
           paymentPlan: plan,
         }),
@@ -888,9 +912,10 @@ export function BookingCheckoutClient({
           />
         )}
         {airport && transferPrice == null && <SummaryRow label="Airport transfer" value={AIRPORT_TRANSFER_PRICE_NOTE} />}
-        {activityAddOns.length > 0 && (
-          <SummaryRow label={activityAddOns.map((id) => ACTIVITY_ADD_ONS[id]).join(", ")} value="Price confirmed by our team" />
+        {chosenAddOns.length > 0 && (
+          <SummaryRow label={chosenAddOns.map((id) => ACTIVITY_ADD_ONS[id]).join(", ")} value="Price confirmed by our team" />
         )}
+        {isPrivate && wantsActivities && chosenAddOns.length === 0 && <SummaryRow label="Add-on activities" value="Paid separately once confirmed" />}
       </VStack>
       <Divider />
       <VStack gap={2}>
@@ -907,14 +932,14 @@ export function BookingCheckoutClient({
         {appliedPromo && discount > 0 && (
           <SummaryRow label={`Promo ${appliedPromo.code} (−${appliedPromo.percent}%)`} value={`−${money(discount)}`} />
         )}
-        {transferPrice != null && <SummaryRow label="Airport transfer, both ways" value={money(transferPrice)} />}
+        {transferPrice != null && <SummaryRow label="Airport transfer" value={money(transferPrice)} />}
         <Divider />
         <HStack hAlign="between" vAlign="center">
           <Text type="large" weight="bold">
             Total
           </Text>
           <Text type="large" weight="bold">
-            {money(total)} {departure.currency}
+            {money(total)}
           </Text>
         </HStack>
         {plan === "DEPOSIT" && (
@@ -1079,16 +1104,16 @@ export function BookingCheckoutClient({
             )}
             {confirmed.paymentPlan === "DEPOSIT" ? (
               <>
-                <SummaryRow label="Deposit paid" value={`${money(confirmed.depositAmount ?? 0)} ${confirmed.currency}`} />
+                <SummaryRow label="Deposit paid" value={`${money(confirmed.depositAmount ?? 0)}`} />
                 <SummaryRow
                   label={`Balance, due by ${confirmed.balanceDueAt ? formatRockiesDate(confirmed.balanceDueAt) : balanceDueLabel}`}
-                  value={`${money(confirmed.balanceDue ?? round2(confirmed.totalAmount - (confirmed.depositAmount ?? 0)))} ${confirmed.currency}`}
+                  value={`${money(confirmed.balanceDue ?? round2(confirmed.totalAmount - (confirmed.depositAmount ?? 0)))}`}
                 />
               </>
             ) : (
               <SummaryRow
                 label="Total paid"
-                value={`${money(confirmed.totalAmount)} ${confirmed.currency}`}
+                value={`${money(confirmed.totalAmount)}`}
               />
             )}
           </VStack>
@@ -1247,19 +1272,21 @@ export function BookingCheckoutClient({
                               message={currentErrors.seats}
                             />
                           )}
-                          {departure.tour?.category === "PRIVATE" && totalSeats >= 2 && (
+                          {isPrivate ? (
                             <>
-                              <AirportTransferToggle checked={airport} onChange={setAirport} />
-                              {airport && (
-                                <AirportTransferDetails
-                                  value={airportTransfer}
-                                  onChange={setAirportTransfer}
-                                  error={currentErrors.airport}
-                                />
-                              )}
+                              <ActivityAddOnToggle
+                                checked={wantsActivities}
+                                onChange={setWantsActivities}
+                                guests={activityGuests}
+                                onGuestsChange={setActivityGuests}
+                                maxGuests={totalSeats}
+                              />
+                              {currentErrors.activities && <FieldStatus type="error" variant="detached" message={currentErrors.activities} />}
+                              {wantsActivities && <ActivityAddOnFields offered={offeredAddOns} value={activityAddOns} onChange={setActivityAddOns} />}
                             </>
+                          ) : (
+                            <ActivityAddOnFields offered={offeredAddOns} value={activityAddOns} onChange={setActivityAddOns} />
                           )}
-                          <ActivityAddOnFields offered={offeredAddOns} value={activityAddOns} onChange={setActivityAddOns} />
                         </VStack>
                       )}
 
@@ -1479,7 +1506,7 @@ export function BookingCheckoutClient({
                                   <Text weight="bold">Pay by card</Text>
                                   <StripeCheckoutForm
                                     clientSecret={awaitingPayment.clientSecret}
-                                    amountLabel={`${money(awaitingPayment.amount)} ${awaitingPayment.booking.currency}`}
+                                    amountLabel={`${money(awaitingPayment.amount)}`}
                                     onPaid={() => waitForConfirmation(awaitingPayment.booking)}
                                   />
                                 </VStack>

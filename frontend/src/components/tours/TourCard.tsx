@@ -112,13 +112,13 @@ export function TourCard({
 
   const seasonal =
     tour.slug === "banff-highlights-tour" || tour.slug === "banff-yoho-discovery"
-      ? { summer: "$220", winter: "$220" }
+      ? { summer: "CAD $220", winter: "CAD $220" }
       : tour.slug === "shared-tours-icefields-jasper" || tour.slug === "columbia-icefield-adventure"
-      ? { summer: "$320", winter: "$220" }
+      ? { summer: "CAD $320", winter: "CAD $220" }
       : tour.slug === "banff-private-tour"
-      ? { summer: "$1,750", winter: "$1,240" }
+      ? { summer: "CAD $1,750", winter: "CAD $1,240" }
       : tour.slug === "icefields-jasper-private-tour"
-      ? { summer: "$1,750", winter: "$1,240" }
+      ? { summer: "CAD $1,750", winter: "CAD $1,240" }
       : null;
 
   return (
@@ -221,7 +221,7 @@ export function TourCard({
                 <PriceTag
                   price={price}
                   currency={tour.currency}
-                  unit={`${tour.currency}/${unitLabel}`}
+                  unit={`per ${unitLabel}`}
                   size="sm"
                   tone="dark"
                   layout="inline"

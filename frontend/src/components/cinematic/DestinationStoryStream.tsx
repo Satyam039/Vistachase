@@ -7,6 +7,8 @@ import { StickyStory, type StoryChapter } from "@/components/motion/StickyStory"
 // Sister company for tailored multi-day trips; falls back to banffelite.com.
 const BANFF_ELITE_URL = process.env.NEXT_PUBLIC_BANFF_ELITE_URL || "https://banffelite.com";
 
+// blurDataURL: a 16px preview of each photo (from sharp), shown while the photo loads, so a phone
+// never shows an empty dark card (migration doc, 9 Nov 2026: Jasper card blank on mobile).
 const CHAPTERS: StoryChapter[] = [
   {
     id: "banff",
@@ -16,6 +18,7 @@ const CHAPTERS: StoryChapter[] = [
     facts: ["Bow Falls", "Surprise Corner", "Lake Minnewanka"],
     cta: { label: "Explore Banff Tours", href: "/destinations/banff-national-park" },
     image: "/media/videos/vermilion-lakes-poster.webp",
+    blurDataURL: "data:image/webp;base64,UklGRlYAAABXRUJQVlA4IEoAAADwAQCdASoQAAwAA4BaJQBOgB7Axgsd0gAA/rWpckc6EIKx7yMq9iy2I/cPyv1QcMlaNsWFBOANGwETjkZEWEUYohiTBPwmkgAAAA==",
     imageAlt: "Mount Rundle reflected in Vermilion Lakes near Banff",
     video: { src: "/media/videos/vermilion-lakes.mp4", poster: "/media/videos/vermilion-lakes-poster.webp" },
   },
@@ -27,6 +30,7 @@ const CHAPTERS: StoryChapter[] = [
     facts: ["Lake Louise", "Moraine Lake", "Valley of the Ten Peaks"],
     cta: { label: "Explore Lake Tours & Shuttles", href: "/shuttles" },
     image: "/media/photos/moraine-lake-perfect-reflection.webp",
+    blurDataURL: "data:image/webp;base64,UklGRmwAAABXRUJQVlA4IGAAAADwAQCdASoQAAwAA4BaJbACdAEe3dC0AQAA/k6JF8flBx1uCUg8CfxCsUImqyRk+4Uqw3wC/kKuZHUpUPsN6C4lG2zutwCIrjA/Mv057shA3jGMTmxI/XYiZc9B/NAXAAA=",
     imageAlt: "Moraine Lake reflecting the Valley of the Ten Peaks",
   },
   {
@@ -37,6 +41,7 @@ const CHAPTERS: StoryChapter[] = [
     facts: ["Bow Lake", "Peyto Lake", "Columbia Icefield"],
     cta: { label: "Explore Icefields Parkway Tours", href: "/search?q=Icefields" },
     image: "/media/photos/peyto-lake.webp",
+    blurDataURL: "data:image/webp;base64,UklGRmYAAABXRUJQVlA4IFoAAADwAQCdASoQAAwAA4BaJbACdADp4gErKgAA/uIbODyZWdbVmvYdJDLZ2Oazqo15azBqGtWefnxyK/vTQwc8Jpjtxjmc+U0PZrSLKoxyuJ1GlpPixCqypPuAAAA=",
     imageAlt: "Turquoise Peyto Lake below the Icefields Parkway",
   },
   {
@@ -47,6 +52,7 @@ const CHAPTERS: StoryChapter[] = [
     facts: ["Emerald Lake", "Natural Bridge", "Takakkaw Falls"],
     cta: { label: "Explore Yoho Tours", href: "/destinations/yoho-national-park" },
     image: "/media/videos/emerald-lake-canoes-poster.webp",
+    blurDataURL: "data:image/webp;base64,UklGRmQAAABXRUJQVlA4IFgAAABwAgCdASoQAAwAA4BaJbACdAYuv28Irbu9qrmAAP6Fzr+mNAdp76ewZ1qKNXrGucHkGLlZlEtx/bO5OxpEYAYs9EGga+7jHKhSn+Uo+6t/1pQNzq4H0AAA",
     imageAlt: "Red canoes at the Emerald Lake dock in Yoho National Park",
     video: { src: "/media/videos/emerald-lake-canoes.mp4", poster: "/media/videos/emerald-lake-canoes-poster.webp" },
   },
@@ -59,6 +65,7 @@ const CHAPTERS: StoryChapter[] = [
     cta: { label: "Explore Jasper Tours", href: "/private-tours" },
     secondaryLink: { label: "Plan a Custom Journey with Banff Elite ↗", href: BANFF_ELITE_URL },
     image: "/media/photos/spirit-island.webp",
+    blurDataURL: "data:image/webp;base64,UklGRmYAAABXRUJQVlA4IFoAAAAQAgCdASoQAAwAA4BaJaACdADwgA/05+zAAP5bzt+ZW1fnAZHztszDl2MzELJT91NgUCcFWhk+jGZFUl7WgkCCMY0OevEBFvOxRvMcsFAnVvCHGo2dLSXR0AA=",
     imageAlt: "Spirit Island on Maligne Lake in Jasper National Park",
   },
 ];
