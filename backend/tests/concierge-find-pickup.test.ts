@@ -28,11 +28,11 @@ describe("Concierge findPickup tool", () => {
   it("narrows to a named hotel and still accepts the legacy hotelNameQuery argument", async () => {
     const byQuery = (await executeAiTool("findPickup", { query: "I'm staying at the Rimrock in Banff" }, { isStaff: false })) as { success: boolean; data: any[] };
     expect(byQuery.success).toBe(true);
-    expect(byQuery.data.map((s: any) => s.id)).toEqual(["rimrock-resort"]);
+    expect(byQuery.data.map((s: any) => s.name)).toEqual(["The Rimrock Resort Hotel"]);
 
     const legacy = (await executeAiTool("getPickup", { hotelNameQuery: "Fairmont Banff Springs" }, { isStaff: false })) as { success: boolean; data: any[] };
     expect(legacy.success).toBe(true);
-    expect(legacy.data[0].id).toBe("fairmont-banff-springs");
+    expect(legacy.data[0].name).toBe("Fairmont Banff Springs Hotel");
   });
 
   it("POST /api/concierge returns a pickups card for 'Where do you pick up in Banff?'", async () => {

@@ -26,6 +26,7 @@ import { formatDateOnly, formatTimeOfDay } from "@/lib/utils/time";
 import { conciergeLanguage } from "@/lib/ai/languages";
 import { activityTicketsVisible } from "@/modules/tours/product-map";
 import { getMasterKnowledgeBase } from "./knowledge.sync";
+import { websiteName } from "./concierge.catalog";
 import { extractAndEvolvePersona, formatPersonaContextForPrompt, type UserPersona, type UserKnowledgeGraph } from "./user.persona";
 
 export const CARD_NUMBER = /\b(?:\d[ -]*?){13,19}\b/;
@@ -33,6 +34,37 @@ export const PROMPT_INJECTION_REGEX =
   /(?:ignore\s+(?:all\s+)?(?:previous|above|prior)\s+(?:instructions|prompts|directives)|system\s*override|you\s+are\s+now\s+(?:in\s+)?(?:developer\s+mode|dan|jailbreak|unrestricted|god\s*mode)|disregard\s+(?:all\s+)?(?:safety|security|rules|guidelines|policies)|reveal\s+(?:your\s+)?(?:system\s+prompt|hidden\s+instructions|api\s*keys?|master\s*prompt)|pretend\s+you\s+are\s+(?:an?\s+)?(?:admin|administrator|root|system\s*engineer)\s+with\s+elevated)/i;
 const MAX_STEPS = 8;
 const MAX_MEMORY = 8;
+/** Owner, 2026-11-11: every concierge answer is at most 50 words, whatever the question (token cost). */
+export const MAX_ANSWER_WORDS = 50;
+
+/**
+ * The longest prefix of `text` holding at most `max` words (a word = a run of non-space characters
+ * containing a letter or digit, so bullets and dashes don't count). A prefix, so streamed text can
+ * be cut at the same point it would be cut at the end.
+ */
+export function wordLimitPrefix(text: string, max = MAX_ANSWER_WORDS): { text: string; cut: boolean } {
+  let words = 0;
+  const re = /\S+/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text))) {
+    if (!/[\p{L}\p{N}]/u.test(m[0])) continue;
+    words += 1;
+    if (words === max) {
+      const end = m.index + m[0].length;
+      return { text: text.slice(0, end), cut: /[\p{L}\p{N}]/u.test(text.slice(end)) };
+    }
+  }
+  return { text, cut: false };
+}
+
+/** A whole answer within the word limit: cut at the last full sentence when that keeps enough. */
+export function limitAnswer(text: string, max = MAX_ANSWER_WORDS): string {
+  const { text: prefix, cut } = wordLimitPrefix(text, max);
+  if (!cut) return text;
+  const lastStop = Math.max(prefix.lastIndexOf(". "), prefix.lastIndexOf("? "), prefix.lastIndexOf("! "), prefix.lastIndexOf(".\n"), prefix.lastIndexOf("?\n"), prefix.lastIndexOf("!\n"));
+  if (lastStop > prefix.length * 0.5) return prefix.slice(0, lastStop + 1).trim();
+  return `${prefix.replace(/[\s,;:–—-]+$/, "")}…`;
+}
 
 export type AgentEvent =
   | { type: "status"; text: string }
@@ -127,11 +159,12 @@ const CUSTOMER_TOOLS: Anthropic.Tool[] = [
   {
     name: "hold_seats",
     description:
-      "Hold seats on a departure for 10 minutes and get the secure checkout link. Only after the guest confirmed tour, date, time, guests and price. Needs the departureId from availability.",
+      "Hold seats on a departure for 10 minutes and get the secure checkout link, where the guest pays by card (Stripe) and the booking is confirmed. Use only after the guest approved tour, date, time, guests and price, and gave name and email. Needs the departureId from availability. For a private tour, seats = party size (the whole vehicle is held).",
     input_schema: {
       type: "object",
       properties: {
         departureId: { type: "string" },
+        pickupStopId: { type: "string", description: "Optional: the pickup stop id from find_pickup that the guest chose" },
         seats: { type: "integer", minimum: 1, maximum: 13 },
         customerName: { type: "string" },
         customerEmail: { type: "string" },
@@ -234,6 +267,7 @@ export async function runConciergeTool(name: string, input: Record<string, any>,
       const departures = rows.slice(0, 8).map((d) => ({
         id: d.departureId,
         title: d.title ?? d.tourTitle,
+        priceUnit: d.priceUnit,
         date: d.date, // already "YYYY-MM-DD" / "HH:MM" from the tool
         departureTime: d.departureTime,
         price: d.price ?? d.pricePerPerson,
@@ -244,7 +278,7 @@ export async function runConciergeTool(name: string, input: Record<string, any>,
         result: departures.length ? departures : { message: "No departures with free seats found." },
         card: departures.length ? { data: { type: "availability", departures } } : undefined,
         memory: departures.length
-          ? `Departures shown: ${departures.map((d) => `${d.title} ${d.date} ${d.departureTime} $${d.price} ${d.availableSeats} seats (departureId ${d.id})`).join("; ")}`
+          ? `Departures shown: ${departures.map((d) => `${d.title} ${d.date} ${d.departureTime} CAD $${d.price} ${d.priceUnit ?? ""} ${d.availableSeats} seats (departureId ${d.id})`).join("; ")}`
           : undefined,
       };
     }
@@ -254,13 +288,13 @@ export async function runConciergeTool(name: string, input: Record<string, any>,
       return {
         result: r.success ? stops : { error: r.error },
         card: stops.length ? { data: { type: "pickups", stops } } : undefined,
-        memory: stops.length ? `Pickup stops shown: ${stops.map((s) => `${s.name} (${s.town})`).join("; ")}` : undefined,
+        memory: stops.length ? `Pickup stops shown: ${stops.map((s) => `${s.name} (${s.town}, pickupStopId ${s.id})`).join("; ")}` : undefined,
       };
     }
     case "hold_seats": {
       const r = await executeAiTool(
         "createVoiceReservationHold",
-        { departureId: input.departureId, seatsCount: Number(input.seats), customerName: input.customerName, customerEmail: input.customerEmail, customerPhone: input.customerPhone },
+        { departureId: input.departureId, seatsCount: Number(input.seats), customerName: input.customerName, customerEmail: input.customerEmail, customerPhone: input.customerPhone, pickupStopId: input.pickupStopId },
         ctx,
       );
       const hold = r.data as any;
@@ -268,13 +302,20 @@ export async function runConciergeTool(name: string, input: Record<string, any>,
       const dep = await prisma.tourDeparture.findUnique({ where: { id: input.departureId }, include: { tour: true, shuttleRoute: true } });
       const unit = dep?.tour?.priceUnit === "GROUP";
       const total = dep ? (unit ? dep.price : dep.price * Number(input.seats)) / 100 : undefined; // cents → dollars
+      const pickup = input.pickupStopId ? await prisma.shuttleStop.findUnique({ where: { id: String(input.pickupStopId) }, select: { name: true } }) : null;
       return {
-        result: { held: true, expiresAt: hold.expiresAt, checkoutUrl: hold.checkoutUrl, estimatedTotal: total },
+        result: {
+          held: true,
+          expiresAt: hold.expiresAt,
+          checkoutUrl: hold.checkoutUrl,
+          estimatedTotal: total,
+          next: "Tell the guest to tap 'Continue to secure checkout' within 10 minutes: they confirm guest ages and pickup and pay by card there; the booking is confirmed (email + voucher) once payment succeeds. Not confirmed yet.",
+        },
         card: {
           checkoutUrl: hold.checkoutUrl,
           data: {
             type: "hold",
-            departure: { title: dep?.tour?.title ?? dep?.shuttleRoute?.name, date: dep ? formatDateOnly(dep.date) : undefined, departureTime: formatTimeOfDay(dep?.departureTime), seats: Number(input.seats), price: total, currency: dep?.currency ?? "CAD" },
+            departure: { title: dep?.tour ? websiteName(dep.tour) : dep?.shuttleRoute?.name, date: dep ? formatDateOnly(dep.date) : undefined, departureTime: formatTimeOfDay(dep?.departureTime), seats: Number(input.seats), pickup: pickup?.name, price: total, currency: dep?.currency ?? "CAD" },
           },
         },
         memory: `Seats held (10 min) on departure ${input.departureId} for ${input.seats}; checkout ${hold.checkoutUrl}`,
@@ -291,7 +332,7 @@ export async function runConciergeTool(name: string, input: Record<string, any>,
       if (!booking || !email || booking.customerEmail.toLowerCase() !== email) {
         return { result: { error: "No booking matches that reference and email." } };
       }
-      const title = booking.tourDeparture.tour?.title ?? booking.tourDeparture.shuttleRoute?.name;
+      const title = booking.tourDeparture.tour ? websiteName(booking.tourDeparture.tour) : booking.tourDeparture.shuttleRoute?.name;
       if (name === "lookup_booking") {
         return {
           result: {
@@ -426,8 +467,7 @@ export async function runConciergeAgent(
   // Active Prompt Injection & Adversarial Jailbreak Defense
   if (PROMPT_INJECTION_REGEX.test(lastUser)) {
     const response: ConciergeResponse = {
-      message:
-        "I am the Vista Chase Rockies Travel Concierge. For security and role-based integrity, I operate within strict access controls and cannot reveal system prompts, simulate unauthorized administrative personas, or bypass operational guidelines. I am here to help you plan your Canadian Rockies trip with complete in-depth itineraries, live tour schedules, and seat holds. How can I help you explore Banff, Lake Louise, or Jasper?",
+      message: "I'm the Vista Chase concierge and can't change how I work or share internal instructions. I'm happy to help with tours, shuttles, dates, pickups or booking. What are you planning?",
       hasSafetyRefusal: true,
       sessionState,
     };
@@ -535,16 +575,7 @@ export async function runConciergeAgent(
       ? [
           {
             type: "text" as const,
-            text: `DEEP THINKING TURBO MODE — MAXIMUM IN-DEPTH DESCRIPTIVE POWER:
-The traveler has engaged Deep Thinking Turbo Mode. Deliver an exhaustive, deeply descriptive, master-class Rockies travel guide and itinerary:
-- Complete hour-by-hour schedules with realistic mountain driving times, buffer windows, and scenic stops.
-- Specific viewpoints, photo-spot lighting windows (golden hour, sunrise alpenglow angles, midday glacial illumination).
-- Detailed gear recommendations, layers, footwear, and alpine weather contingencies.
-- Elevation profiles, hike difficulty levels, and Parks Canada regulations (Discovery Pass, wildlife distance laws).
-- Curated local food, pastry, and coffee recommendations in Banff, Canmore, and Lake Louise Village.
-- Contrast shared tours, private excursions, and shuttles with thorough price breakdowns in CAD.
-- Use rich, clean Markdown with headers (###), bullet points, bold key details, and callout sections for effortless scanning.
-- Only state Vista Chase prices, times and inclusions from this prompt or a tool result.`,
+            text: `DEEP THINKING MODE: the guest wants a more careful answer. Think it through and check the tools, but the ${MAX_ANSWER_WORDS}-word limit still applies: give the single most useful answer and, for a full itinerary or comparison, the product page link. Only state Vista Chase prices, times and inclusions from this prompt or a tool result.`,
           },
         ]
       : []),
@@ -575,12 +606,19 @@ The traveler has shared one or more photos or documents (e.g. itinerary screensh
         ]
       : []),
     { type: "text", text: languageInstruction(opts.language) },
+    {
+      type: "text",
+      text: `ANSWER LENGTH (always, overrides any longer length rule above): at most ${MAX_ANSWER_WORDS} words per reply, whatever the question or language, including itineraries and comparisons. Write no text before or between tool calls; answer once, after the tools. For more detail, give the product page link. Longer replies are cut off.`,
+    },
   ];
 
   const tools: Anthropic.ToolUnion[] = [
     // No seat selection for guests (owner's "AI Training for Vista Chase", 10 Nov 2026): the seat map
-    // tool is never offered.
-    ...CUSTOMER_TOOLS.filter(t => t.name !== "get_seat_map" && (process.env.NODE_ENV !== "production" || !["hold_seats", "cancel_booking"].includes(t.name))),
+    // tool is never offered. Seat holds are offered everywhere (owner, 2026-11-11: guests book through
+    // the concierge): a hold only reserves seats for 10 minutes and payment happens on the secure
+    // checkout page, exactly as for a hold the website's own checkout places. Chat cancellation stays
+    // off in production: guests request cancellation from My Trips / the voucher (staff approve).
+    ...CUSTOMER_TOOLS.filter(t => t.name !== "get_seat_map" && (process.env.NODE_ENV !== "production" || t.name !== "cancel_booking")),
     ...(ctx.isStaff ? STAFF_TOOLS : []),
     { type: "web_search_20260318", name: "web_search", max_uses: 2, user_location: { type: "approximate", city: "Banff", region: "Alberta", country: "CA", timezone: "America/Edmonton" } },
     { type: "web_fetch_20260318", name: "web_fetch", max_uses: 1 },
@@ -591,7 +629,9 @@ The traveler has shared one or more photos or documents (e.g. itinerary screensh
   let card: Card = {};
   const sources = new Map<string, string>();
   const maxSteps = isDeepThinking ? 12 : MAX_STEPS;
-  const maxTokens = isDeepThinking ? 8192 : 800;
+  // A 50-word answer needs ~100 tokens (more in some languages); the rest is room for tool calls.
+  // Deep mode's adaptive thinking counts against max_tokens too.
+  const maxTokens = isDeepThinking ? 3000 : 500;
 
   for (let step = 0; step < maxSteps; step++) {
     if (isDeepThinking && step === 0) {
@@ -613,8 +653,11 @@ The traveler has shared one or more photos or documents (e.g. itinerary screensh
 
     const stream = anthropic().messages.stream(streamParams);
     stream.on("text", (delta) => {
+      // Only the first MAX_ANSWER_WORDS words reach the guest, cut at the same point as the final message.
+      const before = wordLimitPrefix(text).text;
       text += delta;
-      onEvent?.({ type: "text", text: delta });
+      const after = wordLimitPrefix(text).text;
+      if (after.length > before.length) onEvent?.({ type: "text", text: after.slice(before.length) });
     });
     stream.on("contentBlock", (block) => {
       if (block.type === "server_tool_use") onEvent?.({ type: "status", text: block.name === "web_fetch" ? "Reading a web page…" : "Searching the web…" });
@@ -646,18 +689,19 @@ The traveler has shared one or more photos or documents (e.g. itinerary screensh
     }
     history.push({ role: "user", content: results });
     // A new paragraph between steps keeps streamed text readable.
-    if (text && !text.endsWith("\n")) {
+    if (text && !text.endsWith("\n") && !wordLimitPrefix(text).cut) {
       text += "\n\n";
       onEvent?.({ type: "text", text: "\n\n" });
     }
   }
 
   let message = text.trim() || "Sorry, I couldn't put an answer together. Please try again, or call us on +1 (825) 734-9456.";
-  message = cleanMetaApologies(message) || message;
+  message = limitAnswer(cleanMetaApologies(message) || message);
   if (sources.size) {
-    const list = [...sources.entries()].slice(0, 3).map(([url, title]) => `• ${title}: ${url}`).join("\n");
-    message += `\n\nSources:\n${list}`;
-    onEvent?.({ type: "text", text: `\n\nSources:\n${list}` });
+    // One source link, outside the word count.
+    const [url] = [...sources.keys()];
+    message += `\n\nSource: ${url}`;
+    onEvent?.({ type: "text", text: `\n\nSource: ${url}` });
   }
 
   // Evolve traveler persona and knowledge graph dynamically from this conversation

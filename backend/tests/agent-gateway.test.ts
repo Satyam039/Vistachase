@@ -114,7 +114,7 @@ describe("Vistachase Agentic Platform Architecture & Tool Loop", () => {
       expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("Private single-day tours: full refund at least 72 hours before departure.");
       expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("Shared tours are small-group tours in a comfortable 15-passenger van, never a big coach.");
       expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("Never use blog posts as a factual source.");
-      expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("about 80 words");
+      expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("at most 50 words");
       expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).not.toMatch(/GST|Escalade|bookings@vistachase\.com|Heart of Banff/);
     });
 

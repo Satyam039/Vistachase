@@ -5,6 +5,7 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import request from "supertest";
 import prisma from "@/lib/db/prisma";
+import { conciergeTours } from "@/modules/tours/product-map";
 import { createApp } from "@/app";
 import { answerWithoutModel, mentionedDate, websiteName } from "@/lib/ai/concierge.fallback";
 import { dateOnly, timeOfDay } from "@/lib/utils/time";
@@ -17,7 +18,7 @@ const money = (cents: number) => `$${(cents / 100).toFixed(cents % 100 ? 2 : 0)}
 let shared: { slug: string; title: string };
 
 beforeAll(async () => {
-  shared = await prisma.tour.findFirstOrThrow({ where: { category: "SHARED", basePrice: { gt: 0 } }, select: { id: true, slug: true, title: true } }).then(async (t) => {
+  shared = await prisma.tour.findFirstOrThrow({ where: { ...conciergeTours(), category: "SHARED", basePrice: { gt: 0 } }, select: { id: true, slug: true, title: true } }).then(async (t) => {
     await prisma.tourDeparture.create({
       data: { inventorySource: "LOCAL", tourId: t.id, date: dateOnly("2027-06-17"), departureTime: timeOfDay("08:30"), capacityTotal: 12, capacityBooked: 0, capacityHeld: 0, price: 18900, status: "ACTIVE" },
     });

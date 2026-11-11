@@ -9,6 +9,7 @@
 //
 // It writes in English only: other languages need the Claude agent (concierge.agent.ts).
 
+import { DOC_TOUR_SLUGS, DOC_TOUR_SUMMARY, WEBSITE_NAMES } from "./concierge.catalog";
 import prisma from "@/lib/db/prisma";
 import { CARD_NUMBER, runConciergeTool } from "@/lib/ai/concierge.agent";
 import { conciergeLanguage } from "@/lib/ai/languages";
@@ -92,16 +93,8 @@ function matchTour(text: string, tours: CatalogTour[]): CatalogTour | null {
   return best;
 }
 
-/** The names the website shows (frontend lib/sharedTours.ts, lib/privateTours.ts) where they differ from the catalog's. */
-const WEBSITE_NAMES: Record<string, string> = {
-  "banff-highlights-tour": "Banff & Yoho Discovery",
-  "shared-tours-icefields-jasper": "Columbia Icefield Adventure",
-  "banff-private-tour": "Banff & Yoho Discovery (private)",
-  "icefields-jasper-private-tour": "Columbia Icefield Adventure (private)",
-};
-
 /** A tour's name as the website shows it. */
-export const websiteName = (t: { slug: string; title: string }) => WEBSITE_NAMES[t.slug] ?? t.title;
+export { websiteName } from "./concierge.catalog";
 
 async function catalog(): Promise<CatalogTour[]> {
   const tours = await prisma.tour.findMany({
@@ -110,7 +103,10 @@ async function catalog(): Promise<CatalogTour[]> {
     orderBy: [{ sortOrder: "asc" }, { basePrice: "asc" }],
   });
   // The catalog title is kept (aka) so guests can still name a tour either way.
-  return tours.map((t) => (WEBSITE_NAMES[t.slug] ? { ...t, title: WEBSITE_NAMES[t.slug], aka: t.title } : t));
+  // Doc tours get the website's name and summary (their database text is the old Webflow copy).
+  return tours.map((t) =>
+    WEBSITE_NAMES[t.slug] ? { ...t, title: WEBSITE_NAMES[t.slug], aka: t.title, summary: DOC_TOUR_SUMMARY[t.slug] ?? t.summary } : t,
+  );
 }
 
 const priceLine = (t: CatalogTour) =>
@@ -134,7 +130,7 @@ async function tourDetails(tour: CatalogTour, ctx: ToolExecutionContext): Promis
   const lines = [`${tour.title}: ${priceLine(tour)}, about ${tour.durationHours} hours.`];
   const about = firstSentence(tour.summary || d?.summary || "");
   if (about) lines.push(about);
-  const included = (d?.inclusions ?? []).filter((i) => i.length <= 80).slice(0, 4);
+  const included = DOC_TOUR_SLUGS.has(tour.slug) ? [] : (d?.inclusions ?? []).filter((i) => i.length <= 80).slice(0, 4);
   if (included.length) lines.push(`Includes: ${included.join(", ")}.`);
   lines.push(`Full details: /${tour.slug}`);
   lines.push(
