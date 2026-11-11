@@ -21,7 +21,8 @@ export async function PackageBookingSection({ config, heading = "Book your dates
     label: d.label,
     href: `/${d.slug}`,
     departures: (tours.get(d.slug)?.departures ?? [])
-      .filter((x) => x.status === "ACTIVE" && x.seatsAvailable > 0)
+      .filter((x) => x.status === "ACTIVE" && x.seatsAvailable > 0 && (x as any).bookable !== false)
+      .filter((x) => new Date(x.date).getTime() >= new Date(new Date().toDateString()).getTime())
       // A private day needs the whole vehicle free.
       .filter((x) => !config.vehicle || x.seatsAvailable >= x.capacityTotal)
       .filter((x) => !config.summerOnly || inSummer(x.date))

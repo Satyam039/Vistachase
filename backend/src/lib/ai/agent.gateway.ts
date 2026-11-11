@@ -89,7 +89,7 @@ export class AgentExecutionGateway {
     // BLOCK 2: Static Knowledge Base with cache_control: {"type": "ephemeral"}
     const mountainTime = getMountainTimeContext();
     const moraineStatus = mountainTime.isWinterSeason
-      ? "CLOSED for winter season (mid-October through late May)."
+      ? "CLOSED for winter season (mid-October through late May). Recommend Johnston Canyon ice walks or Lake Louise winter sightseeing."
       : "OPEN for summer commercial access.";
 
     // BLOCK 3: Dynamic Session Context (Uncached Tail ~50 tokens)
@@ -97,6 +97,7 @@ export class AgentExecutionGateway {
 === DYNAMIC SERVER & SESSION CONTEXT ===
 - Live Server Time: ${mountainTime.timeString}
 - Moraine Lake Road Status: ${moraineStatus}
+- Parks Canada Commercial Access Permit: ACTIVE (Vistachase Commercial #VC-PARKS-2026)
 - Verified Session Role: ${session.role}
 - Verified User ID: ${session.userId || "GUEST"}
 - Authorized PNR Context: ${session.authorizedPnr || "NONE"}

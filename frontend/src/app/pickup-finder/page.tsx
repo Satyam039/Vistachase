@@ -22,6 +22,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { pickupPhoto } from "@/lib/pickupPhotos";
+import { DEFAULT_PICKUP_LOCATIONS } from "@/lib/defaultPickups";
 import type { PickupLocation } from "@/lib/api/types";
 
 const TOWNS = ["All", "Banff", "Canmore", "Lake Louise"];
@@ -29,13 +30,17 @@ const TOWNS = ["All", "Banff", "Canmore", "Lake Louise"];
 export default function PickupFinderPage() {
   const [query, setQuery] = useState("");
   const [town, setTown] = useState("All");
-  const [pickups, setPickups] = useState<PickupLocation[] | null>(null);
+  const [pickups, setPickups] = useState<PickupLocation[]>(DEFAULT_PICKUP_LOCATIONS);
 
   useEffect(() => {
     fetch("/api/pickups")
       .then((res) => res.json())
-      .then((data) => setPickups(data.pickups || []))
-      .catch(() => setPickups([]));
+      .then((data) => {
+        if (data.pickups && Array.isArray(data.pickups) && data.pickups.length > 0) {
+          setPickups(data.pickups);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const shown = useMemo(() => {

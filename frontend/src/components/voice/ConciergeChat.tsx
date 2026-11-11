@@ -66,12 +66,10 @@ interface Message {
 type VoiceState = "idle" | "listening" | "thinking" | "speaking";
 
 const SUGGESTIONS = [
-  { icon: Sunrise, text: "How do I see sunrise at Moraine Lake?" },
-  { icon: LayoutGrid, text: "Show me the 12-seat Sprinter seat map" },
-  { icon: MapPin, text: "Where do you pick up in Banff?" },
-  { icon: Sparkles, text: "Why is Lake Louise so blue?" },
-  { icon: Ticket, text: "Book the shared Banff tour for 2 adults" },
-  { icon: Smile, text: "Can I pet the bears or ride an elk in Banff?" },
+  { icon: Navigation, text: "Which tour is right for my trip?" },
+  { icon: Sunrise, text: "How can I visit Moraine Lake and Lake Louise?" },
+  { icon: Sparkles, text: "What private tours can I book?" },
+  { icon: MapPin, text: "Can you help me plan a multi-day trip?" },
 ];
 
 type SpeechRecognitionLike = {

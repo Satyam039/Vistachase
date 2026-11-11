@@ -526,4 +526,10 @@ Standard rentals at Lake Louise, Moraine Lake, Emerald Lake and Lake Minnewanka 
 Email support@vistachase.com or call +1 (825) 734-9456. Include your planned product and date, party size and the details of your request. If you have already booked, include your booking reference.
 
 Please wait for confirmation before bringing larger luggage, relying on a child seat, or making arrangements that depend on a special pickup, accessibility provision or change to the usual itinerary.
+
+### 62. Should I drive to Lake Louise Village to catch your shuttle?
+If you are staying in Banff or Canmore, choose a pickup there. We do not recommend driving to Lake Louise Village to board. Village public parking and public day-use areas cannot be used to leave your vehicle while taking our service. Samson Mall has short-stay customer parking, not parking for a lake excursion. Our village pickup is intended for locally staying guests or those arriving without needing parking.
+
+### 63. Which shuttle should I choose for an early-morning or late-afternoon visit?
+Choose according to the scheduled arrival and time at each lake, as well as your return time. Early-morning and late-afternoon options may suit you if you prefer to visit outside peak periods, but crowd levels cannot be guaranteed. Departures vary by date and season. Tell us your travel date and pickup town so we can guide you to the appropriate departure options.
 `;
