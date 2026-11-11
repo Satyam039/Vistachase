@@ -662,7 +662,7 @@ export function TourDetailView({
                         value={adults}
                         max={maxPartySize - children - seatedInfants}
                         onChange={setAdults}
-                        hint={`Age 16–99 · max ${maxPartySize} guests on this departure`}
+                        hint="Age 16–99"
                       />
                       <PartySizeStepper
                         compact

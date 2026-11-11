@@ -9,8 +9,6 @@
 export const RETIRED_TOUR_REDIRECTS: Record<string, string> = {
   "shared-tours-heart-of-banff": "/banff-highlights-tour",
   "shared-tours-banff-yoho": "/banff-highlights-tour",
-  "winter-special": "/banff-highlights-tour",
-  "winter-signature-private-tour": "/banff-private-tour",
   "banff-yoho-custom-private-tour": "/banff-private-tour",
   "jasper-custom-private-tour": "/icefields-jasper-private-tour",
   "open-top-touring-tickets": "/banff-highlights-tour",

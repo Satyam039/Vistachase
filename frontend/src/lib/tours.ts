@@ -26,12 +26,17 @@ export function durationLabel(tour: TourWithAvailability) {
   return tour?.facts?.find((f) => /duration/i.test(f.label))?.value ?? `${tour?.durationHours ?? 8} hours`;
 }
 
-/** Group size line; private tours display "Private, up to 13 guests". */
+/**
+ * Group size line. Private tours display "Private, up to 13 guests" (a smaller vehicle when every
+ * date is, like the winter SUV's 6); shared tours say "Small group", never a number (owner, 2026-11-11).
+ */
 export function groupLabel(tour: TourWithAvailability) {
   if (tour?.category === "TICKET") return "Individual tickets";
   if (tour?.category === "PRIVATE" || (Array.isArray(tour?.vehicleOptions) && tour.vehicleOptions.length > 0)) {
-    return "Private, up to 13 guests";
+    const seats = tour?.departures?.length ? Math.max(...tour.departures.map((d) => d.capacityTotal ?? 13)) : 13;
+    return `Private, up to ${Math.min(13, seats)} guests`;
   }
+  if (tour?.category === "SHARED") return "Small group";
   return `Max ${tour?.maxGroupSize ?? 12} guests`;
 }
 

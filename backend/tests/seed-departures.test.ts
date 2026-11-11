@@ -2,7 +2,7 @@
 // Private tours take their summer price from June 1 to October 10.
 
 import { describe, it, expect } from "vitest";
-import { DEFAULT_SCHEDULES, daysToSeasonEnd, fareFor, isSummerSeason } from "../scripts/seed-departures";
+import { DEFAULT_SCHEDULES, WINTER_MONTHS, daysToSeasonEnd, fareFor, isSummerSeason, winterRealignment } from "../scripts/seed-departures";
 
 describe("daysToSeasonEnd", () => {
   it("counts to Sep 30 of this year while the season hasn't ended", () => {
@@ -48,5 +48,27 @@ describe("fareFor (owner's doc Pricing, 2026-11-04)", () => {
     expect(at(fullDay, "10:15").price).toBe(12000);
     expect(at(fullDay, "11:30").price).toBe(10800);
     expect(at(fullDay, "16:45").price).toBe(10800);
+  });
+});
+
+describe("winter tours (owner, 2026-11-11: bookable again)", () => {
+  const schedule = (slug: string) => DEFAULT_SCHEDULES.find((s) => s.slug === slug)!;
+  const dep = (date: string, price: number, childPrice: number | null, capacityTotal: number, status = "ACTIVE") => ({ date, price, childPrice, infantPrice: null, capacityTotal, status });
+
+  it("run December to April only, at the prices on their pages", () => {
+    const shared = schedule("winter-special");
+    const priv = schedule("winter-signature-private-tour");
+    expect(WINTER_MONTHS).toEqual([12, 1, 2, 3, 4]);
+    expect(fareFor(shared, shared.times[0], "2027-01-15")).toEqual({ price: 19900, childPrice: 19900, infantPrice: null });
+    expect(fareFor(priv, priv.times[0], "2027-01-15").price).toBe(99900);
+    expect(priv.capacity).toBe(6);
+  });
+
+  it("puts old unbooked dates right: off sale outside the season, new fare inside it", () => {
+    const shared = schedule("winter-special");
+    expect(winterRealignment(shared, dep("2026-11-20", 16900, 9900, 12))).toEqual({ status: "CANCELLED" });
+    expect(winterRealignment(shared, dep("2026-12-20", 16900, 9900, 12))).toEqual({ price: 19900, childPrice: 19900, infantPrice: null, capacityTotal: 12 });
+    expect(winterRealignment(shared, dep("2026-12-21", 19900, 19900, 12))).toBeNull();
+    expect(winterRealignment(shared, dep("2026-11-21", 16900, 9900, 12, "CANCELLED"))).toBeNull();
   });
 });

@@ -534,6 +534,15 @@ export function PackageCheckout({
           </p>
         )}
 
+        {/* The 20% option needs every day 15+ days away; say so instead of leaving guests guessing. */}
+        {depositAllowed && allPicked && total > 0 && !canDeposit && !awaiting && (
+          <p className="mt-6 border border-white/20 p-3 text-sm text-white/75">
+            Pay {DEPOSIT_PERCENT}% now is available when every tour day is at least 15 days away. For these dates, the full amount is paid at booking.
+          </p>
+        )}
+        {depositAllowed && !allPicked && !awaiting && (
+          <p className="mt-6 text-sm text-white/70">Choose your dates to see the option to pay {DEPOSIT_PERCENT}% now (tours 15+ days away).</p>
+        )}
         {canDeposit && !awaiting && (
           <fieldset className="mt-6">
             <legend className="text-sm uppercase tracking-[0.18em] text-summit-300">How would you like to pay?</legend>
