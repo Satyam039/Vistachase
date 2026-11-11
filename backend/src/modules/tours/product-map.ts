@@ -53,11 +53,15 @@ export const PRODUCT_MAP = (productMap.products as MappedProduct[]).map((p) => {
 export const RETIRED_TOUR_SLUGS = [
   "shared-tours-heart-of-banff",
   "shared-tours-banff-yoho",
-  "winter-special",
-  "winter-signature-private-tour",
   "banff-yoho-custom-private-tour",
   "jasper-custom-private-tour",
 ];
+/**
+ * Tours brought back after being retired (owner, 2026-11-11: the winter tours "were live before",
+ * bookable again December to April). Their old redirects are switched off on deploy
+ * (scripts/apply-seo-fixes.ts) and their archived SEO page rows restored.
+ */
+export const RESTORED_TOUR_SLUGS = ["winter-special", "winter-signature-private-tour"];
 export const REMOVED_TOUR_SLUGS = ["banff-upper-hot-springs-tickets", "open-top-touring-tickets", ...RETIRED_TOUR_SLUGS];
 export const ON_SALE = { slug: { notIn: REMOVED_TOUR_SLUGS } };
 /**

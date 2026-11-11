@@ -13,6 +13,9 @@
 //    title the audit reported; the same rule for the 13 descriptions over 160 characters.
 // 3. Blog posts: empty SEO title, meta description and social image are filled from the post's own
 //    Webflow fields (Name, Post Summary, Thumbnail Image), the way the Webflow template used them.
+// 5. Restored tours (RESTORED_TOUR_SLUGS, owner 2026-11-11: the winter tours are back): the redirect
+//    this script saved for each one's address (source IMPORT, our note) is switched off, and the page
+//    row this script archived is published again. Redirects or archives staff made themselves stay.
 // 4. Renamed images (RENAMED_MEDIA, 10 Nov 2026: "ChatGPT Image <date>" blog files named after their
 //    post): every saved page that still points at an old /media path is pointed at the new one, in
 //    its text, image fields and unpublished draft. The old paths also 301 (modules/media/renamed-media.ts).
@@ -30,6 +33,7 @@ import { isWebflowUrl } from "../src/modules/seo/seo.audit";
 import { webflowLocalMap } from "../src/modules/seo/portal/images";
 import { BLOG_PREFIX } from "../src/modules/seo/static-routes";
 import { RENAMED_MEDIA } from "../src/modules/media/renamed-media";
+import { RESTORED_TOUR_SLUGS } from "../src/modules/tours/product-map";
 
 const dryRun = process.argv.includes("--dry-run");
 
@@ -42,6 +46,49 @@ const fixes = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../prisma/cata
   titles: Record<string, Fix>;
   descriptions: Record<string, Fix>;
 };
+
+/** The note on redirects this script saves, so it can tell them from ones staff made. */
+const SCRIPT_REDIRECT_NOTE = "Webflow migration / technical audit, Nov 2026";
+
+async function restoredTours() {
+  const paths = RESTORED_TOUR_SLUGS.map((slug) => `/${slug}`);
+  const stale = await prisma.seoRedirect.findMany({
+    where: { fromPath: { in: paths }, active: true, source: "IMPORT", note: SCRIPT_REDIRECT_NOTE },
+    select: { id: true, fromPath: true, toPath: true },
+  });
+  const archivedByUs = await prisma.auditLog.findMany({
+    where: { action: "SEO_PAGE_ARCHIVED", entityType: "SeoPage" },
+    select: { entityId: true, details: true },
+  });
+  const ourArchives = new Set(
+    archivedByUs
+      .filter((a) => {
+        const d = a.details as { path?: string; script?: string } | null;
+        return d?.script === "apply-seo-fixes" && !!d.path && paths.includes(d.path);
+      })
+      .map((a) => a.entityId),
+  );
+  const pages = await prisma.seoPage.findMany({ where: { path: { in: paths }, status: "ARCHIVED" }, select: { id: true, path: true } });
+  const toRestore = pages.filter((p) => ourArchives.has(p.id));
+  if (dryRun) {
+    for (const r of stale) console.log(`  would switch off ${r.fromPath} -> ${r.toPath} (tour restored)`);
+    for (const p of toRestore) console.log(`  would publish ${p.path} again`);
+    return;
+  }
+  for (const r of stale) {
+    await prisma.$transaction(async (tx) => {
+      await tx.seoRedirect.update({ where: { id: r.id }, data: { active: false } });
+      await tx.auditLog.create({ data: { action: "SEO_REDIRECT_UPDATED", entityType: "SeoRedirect", entityId: r.id, details: { fromPath: r.fromPath, toPath: r.toPath, active: false, reason: "Tour restored (owner, 2026-11-11)", script: "apply-seo-fixes" } } });
+    });
+  }
+  for (const p of toRestore) {
+    await prisma.$transaction(async (tx) => {
+      await tx.seoPage.update({ where: { id: p.id }, data: { status: "PUBLISHED" } });
+      await tx.auditLog.create({ data: { action: "SEO_PAGE_RESTORED", entityType: "SeoPage", entityId: p.id, details: { path: p.path, reason: "Tour restored (owner, 2026-11-11)", script: "apply-seo-fixes" } } });
+    });
+  }
+  console.log(`Restored tours: ${stale.length} redirects switched off, ${toRestore.length} page rows published again.`);
+}
 
 async function redirects() {
   const existing = await prisma.seoRedirect.findMany({ select: { fromPath: true, toPath: true, active: true } });
@@ -68,7 +115,7 @@ async function redirects() {
         await tx.auditLog.create({ data: { action: "SEO_PAGE_ARCHIVED", entityType: "SeoPage", entityId: page.id, details: { path: fromPath, reason: `Redirected to ${toPath} (technical audit, Nov 2026)`, script: "apply-seo-fixes" } } });
         archived++;
       }
-      const created = await tx.seoRedirect.create({ data: { fromPath, toPath, statusCode: 301, active: true, source: "IMPORT", note: "Webflow migration / technical audit, Nov 2026" } });
+      const created = await tx.seoRedirect.create({ data: { fromPath, toPath, statusCode: 301, active: true, source: "IMPORT", note: SCRIPT_REDIRECT_NOTE } });
       await tx.auditLog.create({ data: { action: "SEO_REDIRECT_CREATED", entityType: "SeoRedirect", entityId: created.id, details: { fromPath, toPath, statusCode: 301, script: "apply-seo-fixes" } } });
     });
     added++;
@@ -146,6 +193,7 @@ async function renamedImages() {
 }
 
 async function main() {
+  await restoredTours();
   await redirects();
   await metaFixes("seoTitle", fixes.titles);
   await metaFixes("metaDescription", fixes.descriptions);

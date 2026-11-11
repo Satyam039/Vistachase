@@ -353,7 +353,35 @@ const TOUR_PHOTOS: Record<string, string[]> = {
   [PRIVATE_ICEFIELD.slug!]: ["/media/photos/bow-lake-crowfoot-mountain.webp", "/media/photos/columbia-icefield-ice-explorer-card.webp", ...ICEFIELD_PHOTOS.filter((p) => !p.includes("bow-lake-crowfoot"))],
 };
 
+/**
+ * Shared tours never quote a guest number (owner, 2026-11-11: "12 guests hta de"). Imported page
+ * text that still does (the winter tour's highlights, FAQ answers) says "small group" instead.
+ */
+const SHARED_GROUP_WORDING: [RegExp, string][] = [
+  [/\s*\((?:max(?:imum)?|no more than|up to)\s*12 (?:guests|people)\)/gi, ""],
+  [/we limit each vehicle to a maximum of 12 guests\s*\./gi, "we keep every group small."],
+  [/maximum (?:of )?12 guests per vehicle/gi, "Small groups"],
+  [/with a maximum of 12 guests/gi, "in a small group"],
+  [/(?:with )?no more than 12 guests/gi, "in a small group"],
+  [/(?:a )?max(?:imum)?(?: of)? 12 (?:guests|people)/gi, "a small group"],
+];
+
+export function sharedGroupWording<T>(value: T): T {
+  const text = JSON.stringify(value);
+  const next = SHARED_GROUP_WORDING.reduce((t, [re, to]) => t.replace(re, to), text);
+  return next === text ? value : (JSON.parse(next) as T);
+}
+
 export function withDocContent(tour: TourWithAvailability): TourWithAvailability {
+  if (tour.category === "SHARED") {
+    tour = {
+      ...tour,
+      facts: tour.facts?.map((f) => (/^max(?:imum)? 12 (?:guests|people)$/i.test(f.value.trim()) ? { ...f, value: "Small group" } : f)),
+      tabs: sharedGroupWording(tour.tabs),
+      faqs: sharedGroupWording(tour.faqs),
+      ...(tour.highlights ? { highlights: sharedGroupWording(tour.highlights) } : {}),
+    };
+  }
   // Activity tickets show the operator's own photo (owner, 2026-10-30) over the catalog image.
   const ticketImage = activityTicket(tour.slug, tour.category)?.image;
   if (ticketImage) tour = { ...tour, featuredImage: ticketImage };
