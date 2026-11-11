@@ -167,7 +167,7 @@ async function availability(date: string | null, tour: CatalogTour | null, ctx: 
   }
   const list = rows.slice(0, 6).map((r) => `• ${r.date} at ${r.departureTime}: ${r.title ?? what}, ${r.currency} $${r.price} per seat, ${r.availableSeats} seats left`);
   return {
-    message: `${date ? `Departures with free seats on ${date}` : `Next departures with free seats for ${what}`}:\n${list.join("\n")}\n\nChoose one to get its booking link.`,
+    message: `${date ? `Departures with free seats on ${date}` : `Next departures with free seats for ${what}`}:\n${list.join("\n")}\n\nTap "Book" on one to book it here in the chat.`,
     data: out.card?.data,
   };
 }
@@ -225,13 +225,17 @@ export async function answerWithoutModel(messages: ChatMessage[], previous: Stat
       return { message: `Tap "Chat with a live agent" below and this conversation goes to our support team, or ${CONTACT}.`, data: { type: "handoff" } };
     }
 
-    // A departure picked on the availability card: hand over the real checkout link.
+    // A departure the guest names: show it with its in-chat "Book" button.
     const picked = text.match(/^I choose the departure on (\d{4}-\d{2}-\d{2}) at (\d{2}:\d{2})/);
     if (picked) {
       const out = await runConciergeTool("check_availability", { date: picked[1], tourSlug: state.tourSlug }, ctx);
       const dep = (Array.isArray(out.result) ? (out.result as { id: string; title?: string; departureTime: string }[]) : []).find((d) => d.departureTime === picked[2]);
       if (!dep) return { message: `That departure no longer has free seats. Ask me for other dates, or ${CONTACT}.` };
-      return { message: `To book ${dep.title ?? "this departure"} on ${picked[1]} at ${picked[2]}, continue at /book?departureId=${dep.id}\nYou choose guests and pickup there, and the booking is confirmed once payment goes through.` };
+      // The card's "Book" button opens the checkout inside the chat (no /book page).
+      return {
+        message: `To book ${dep.title ?? "this departure"} on ${picked[1]} at ${picked[2]}, tap "Book" below. You choose guests and pickup and pay right here in the chat; the booking is confirmed once payment goes through.`,
+        data: { type: "availability", departures: [dep] },
+      };
     }
 
     // Booking lookup and tracking need the reference and the booking email, possibly over two messages.

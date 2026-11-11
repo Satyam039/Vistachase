@@ -80,9 +80,11 @@ describe("concierge without an AI model", () => {
     expect(none.message).toContain("can't find free seats");
   });
 
-  it("hands over the real checkout link for a chosen departure, without claiming a hold", async () => {
+  it("offers the chosen departure for in-chat checkout (no /book link), without claiming a hold", async () => {
     const res = await ask("I choose the departure on 2027-06-17 at 08:30", { tourSlug: shared.slug });
-    expect(res.message).toMatch(/\/book\?departureId=\w+/);
+    expect(res.message).not.toContain("/book");
+    expect(res.data?.type).toBe("availability");
+    expect((res.data as any).departures).toHaveLength(1);
     expect(res.checkoutUrl).toBeUndefined();
   });
 

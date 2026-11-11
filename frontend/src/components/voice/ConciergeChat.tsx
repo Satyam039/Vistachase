@@ -669,7 +669,6 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
                         data={m.data?.type === "handoff" ? undefined : (m.data as VoiceCardData | undefined)}
                         checkoutUrl={m.checkoutUrl}
                         hasSafetyRefusal={m.hasSafetyRefusal}
-                        onSelectDeparture={(dep) => send(`I choose the departure on ${dep.date} at ${dep.departureTime}`)}
                         onSelectPickup={(name) => send(`Pickup at ${name}`)}
                         onSelectSeats={(seats) => send(`I would like to reserve seats: ${seats.join(", ")}`)}
                       />

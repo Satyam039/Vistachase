@@ -5,11 +5,12 @@
 // quiet cards inside the conversation, with real buttons for choices. Only data the API sent
 // is shown (no placeholder drivers or vehicles).
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { moneyExact } from "@/lib/pricing";
 import { ArrowRight, Calendar, Car, CheckCircle2, Clock, MapPin, ShieldCheck, Ticket } from "lucide-react";
 import { ConciergeSeatMap, type SeatInfo } from "./ConciergeSeatMap";
+import { ConciergeCheckout } from "./ConciergeCheckout";
 
 export interface VoiceCardData {
   type?: "availability" | "pickups" | "hold" | "confirmed" | "tracking" | "tour" | "seat_map";
@@ -74,6 +75,21 @@ interface VoiceBookingCardStreamProps {
   onSelectDeparture?: (departure: NonNullable<VoiceCardData["departures"]>[number]) => void;
   onSelectPickup?: (stopName: string) => void;
   onSelectSeats?: (seats: string[]) => void;
+  /** A booking made in the chat was confirmed. */
+  onBooked?: (bookingReference: string) => void;
+}
+
+/** The in-chat checkout's starting point from a concierge hold's checkout link (/book?…). */
+function holdFromCheckoutUrl(url?: string) {
+  if (!url) return null;
+  try {
+    const q = new URL(url, "https://chat.local").searchParams;
+    const departureId = q.get("departureId");
+    if (!departureId) return null;
+    return { departureId, holdToken: q.get("holdToken") ?? undefined, pickupStopId: q.get("pickupStopId") ?? undefined, guests: Number(q.get("guests")) || undefined };
+  } catch {
+    return null;
+  }
 }
 
 const CARD = "rounded-none border border-obsidian-900/10 bg-white p-4";
@@ -87,16 +103,10 @@ const shortDate = (d?: string) => {
   return Number.isNaN(parsed.getTime()) ? d : parsed.toLocaleDateString("en-CA", { weekday: "short", month: "short", day: "numeric" });
 };
 
-export function VoiceBookingCardStream({ data, checkoutUrl, hasSafetyRefusal, onSelectDeparture, onSelectPickup, onSelectSeats }: VoiceBookingCardStreamProps) {
-  // Seat holds last 10 minutes.
-  const [secondsRemaining, setSecondsRemaining] = useState(600);
-  useEffect(() => {
-    if (!checkoutUrl && data?.type !== "hold") return;
-    const interval = setInterval(() => setSecondsRemaining((prev) => (prev > 0 ? prev - 1 : 0)), 1000);
-    return () => clearInterval(interval);
-  }, [checkoutUrl, data?.type]);
-  const countdown = `${Math.floor(secondsRemaining / 60)}:${String(secondsRemaining % 60).padStart(2, "0")}`;
-
+export function VoiceBookingCardStream({ data, checkoutUrl, hasSafetyRefusal, onSelectPickup, onSelectSeats, onBooked }: VoiceBookingCardStreamProps) {
+  // "Choose" on a departure opens the checkout right here in the chat (owner, 2026-11-11: no /book page).
+  const [chosen, setChosen] = useState<NonNullable<VoiceCardData["departures"]>[number] | null>(null);
+  const held = holdFromCheckoutUrl(checkoutUrl);
   if (!data && !checkoutUrl && !hasSafetyRefusal) return null;
 
   return (
@@ -110,12 +120,6 @@ export function VoiceBookingCardStream({ data, checkoutUrl, hasSafetyRefusal, on
           <p className="mt-1 leading-relaxed">
             The concierge never takes card numbers. Payment always happens on our secure checkout page.
           </p>
-          {checkoutUrl && (
-            <Link href={checkoutUrl} className="mt-3 inline-flex h-10 items-center gap-1.5 rounded-full bg-obsidian-900 px-4 text-sm text-white hover:bg-obsidian-800">
-              Go to secure checkout
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </Link>
-          )}
         </div>
       )}
 
@@ -128,7 +132,7 @@ export function VoiceBookingCardStream({ data, checkoutUrl, hasSafetyRefusal, on
           <ul className="grid grid-cols-[minmax(0,1fr)] gap-2">
             {data.departures.map((dep) => (
               <li key={dep.id}>
-                <button type="button" onClick={() => onSelectDeparture?.(dep)} className={CHOICE}>
+                <button type="button" onClick={() => setChosen(dep)} className={CHOICE} aria-pressed={chosen?.id === dep.id}>
                   <span className="min-w-0">
                     <span className="block truncate text-sm text-obsidian-900">{dep.title || "Departure"}</span>
                     <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-slate-600">
@@ -141,13 +145,17 @@ export function VoiceBookingCardStream({ data, checkoutUrl, hasSafetyRefusal, on
                     <span className="block text-sm text-obsidian-900">
                       {moneyExact(dep.price)}
                     </span>
-                    <span className="text-xs text-ocean-700">Choose</span>
+                    <span className="text-xs text-ocean-700">{chosen?.id === dep.id ? "Selected" : "Book"}</span>
                   </span>
                 </button>
               </li>
             ))}
           </ul>
         </div>
+      )}
+
+      {chosen && !held && (
+        <ConciergeCheckout key={chosen.id} departureId={chosen.id} title={chosen.title} onConfirmed={onBooked} />
       )}
 
       {data?.type === "pickups" && data.stops && data.stops.length > 0 && (
@@ -174,42 +182,15 @@ export function VoiceBookingCardStream({ data, checkoutUrl, hasSafetyRefusal, on
         </div>
       )}
 
-      {(checkoutUrl || data?.type === "hold") && !hasSafetyRefusal && (
-        <div className={`${CARD} border-summit-500/60`}>
-          <div className="flex items-center justify-between gap-3">
-            <p className="flex items-center gap-2 text-sm text-obsidian-900">
-              <CheckCircle2 className="h-4 w-4 text-emerald-700" aria-hidden="true" />
-              Seats held for you
-            </p>
-            <span className="inline-flex items-center gap-1 rounded-full bg-summit-100 px-2.5 py-0.5 font-mono text-xs text-obsidian-900">
-              <Clock className="h-3 w-3" aria-hidden="true" />
-              {countdown}
-              <span className="sr-only"> left on your hold</span>
-            </span>
-          </div>
-          {data?.departure && (
-            <div className="mt-3 rounded-xl bg-obsidian-50 p-3 text-sm">
-              <p className="text-obsidian-900">{data.departure.title}</p>
-              <p className="mt-0.5 text-xs text-slate-600">
-                {shortDate(data.departure.date)} · {data.departure.departureTime}
-                {data.departure.seats ? ` · ${data.departure.seats} guests` : ""}
-                {data.departure.pickup ? ` · ${data.departure.pickup}` : ""}
-              </p>
-              {data.departure.price != null && (
-                <p className="mt-2 text-right text-base text-obsidian-900">
-                  {moneyExact(data.departure.price)}
-                  <span className="block text-xs text-slate-600">Final total confirmed at checkout</span>
-                </p>
-              )}
-            </div>
-          )}
-          {checkoutUrl && (
-            <Link href={checkoutUrl} className="golden-summit-btn mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-full text-sm">
-              <ShieldCheck className="h-4 w-4" aria-hidden="true" />
-              Continue to secure checkout
-            </Link>
-          )}
-        </div>
+      {held && !hasSafetyRefusal && (
+        <ConciergeCheckout
+          departureId={held.departureId}
+          holdToken={held.holdToken}
+          pickupStopId={held.pickupStopId}
+          guests={held.guests}
+          title={data?.departure?.title}
+          onConfirmed={onBooked}
+        />
       )}
 
       {data?.type === "confirmed" && data.bookingReference && (
