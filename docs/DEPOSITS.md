@@ -22,6 +22,14 @@ A deposit doesn't change the cancellation deadline or the amount kept (policy se
 deadline is 24 hours before departure for shared tours and shuttles and 72 hours for private tours
 (before Day 1 for private packages).
 
+## Private multi-day journeys
+
+Since 2026-11-11 (owner: "continue booking with 20% payment") the private Two-, Three- and Four-Day
+journeys (`depositAllowed` in `package-booking.ts`) offer the same choice. With `paymentPlan:
+"DEPOSIT"` on `POST /api/bookings/package`, every day is a DEPOSIT booking with its own 20% deposit
+and balance (due 14 days before that day); the one PaymentIntent is for the sum of the deposits, and
+the webhook confirms all days on that sum. The shared Two-Day Rockies Explorer stays pay-in-full.
+
 ## Flow
 
 1. **Checkout.** `POST /api/bookings` with `paymentPlan: "DEPOSIT"`. The booking stores

@@ -112,7 +112,7 @@ describe("Vistachase Agentic Platform Architecture & Tool Loop", () => {
       // The owner's approved System Prompt and Knowledge Base v1.1 (2026-11-10), word for word.
       expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("Shared tours and shuttles: full refund at least 24 hours before departure.");
       expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("Private single-day tours: full refund at least 72 hours before departure.");
-      expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("Shared tours carry a maximum of 12 guests in a 15-passenger van.");
+      expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("Shared tours are small-group tours in a comfortable 15-passenger van, never a big coach.");
       expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("Never use blog posts as a factual source.");
       expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("about 80 words");
       expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).not.toMatch(/GST|Escalade|bookings@vistachase\.com|Heart of Banff/);

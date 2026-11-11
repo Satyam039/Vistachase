@@ -156,7 +156,7 @@ describe("POST /api/concierge/handoff", () => {
       ["Is accommodation included?", "Accommodation isn't included"],
       ["When is Moraine Lake open?", "June 1"],
       ["Does the icefield tour go to Jasper town?", "doesn't continue to Jasper town"],
-      ["How many people are in a group?", "maximum of 12"],
+      ["How many people are in a group?", "small-group tours"],
       ["Can I pay a deposit?", "deposit"],
       ["I didn't get my confirmation email", "spam"],
       ["What time is pickup?", "7:30 AM in Canmore"],
