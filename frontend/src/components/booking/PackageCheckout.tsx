@@ -372,7 +372,7 @@ export function PackageCheckout({
                 <QuantityInput label="Youth" description="Ages 6–15" value={children} onChange={setChildren} min={0} max={MAX_GUESTS - adults - infants} />
                 <QuantityInput label="Infants" description="Ages 0–5, take a seat" value={infants} onChange={setInfants} min={0} max={Math.min(4, MAX_GUESTS - adults - children)} />
               </div>
-              <p className="mt-3 text-sm text-slate-600">Small groups: no more than 12 guests on each tour.</p>
+              <p className="mt-3 text-sm text-slate-600">Small groups on each tour, with more time with your guide.</p>
             </>
           )}
         </Section>

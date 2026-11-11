@@ -68,7 +68,7 @@ const TOPICS: Topic[] = [
       [/\b(group size|how many (people|guests|persons|passengers)|maximum|max|capacity|large group|big group|groups? of \d+|\d+ (people|guests|persons))\b/, 2],
     ],
     answer: () =>
-      "Shared tours carry a maximum of 12 guests. Private tours are priced per vehicle, for up to 13 guests. For a bigger group, send us a request at /contact-us?group=1 and the team will plan it.",
+      "Shared tours are small-group tours. Private tours are priced per vehicle, for up to 13 guests. For a bigger group, send us a request at /contact-us?group=1 and the team will plan it.",
   },
   {
     id: "private",

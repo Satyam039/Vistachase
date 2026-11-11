@@ -133,7 +133,7 @@ export function buildExperienceTabs(tours: TourWithAvailability[]): ExperienceTa
         title: "TWO-DAY ROCKIES EXPLORER – SHARED TOUR",
         facts: [
           { icon: Clock, text: TWO_DAY_PACKAGE.duration },
-          { icon: Users, text: "Max 12 guests" },
+          { icon: Users, text: "Small group" },
         ],
         note: "Accommodation not included",
         price: sharedPackage.price,

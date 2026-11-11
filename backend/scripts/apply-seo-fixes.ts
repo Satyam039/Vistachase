@@ -34,7 +34,8 @@ import { RENAMED_MEDIA } from "../src/modules/media/renamed-media";
 const dryRun = process.argv.includes("--dry-run");
 
 interface Fix {
-  from: string;
+  /** The value(s) the page may still have: the audit's, or an earlier fix of ours (owner, 2026-11-11: no "12 guests"). */
+  from: string | string[];
   to: string;
 }
 const fixes = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../prisma/catalog/seo-fixes-2026-11.json"), "utf8")) as {
@@ -82,7 +83,8 @@ async function metaFixes(field: "seoTitle" | "metaDescription", list: Record<str
     const page = await prisma.seoPage.findUnique({ where: { path: p }, select: { id: true, seoTitle: true, metaDescription: true, status: true } });
     if (!page || page.status === "ARCHIVED") continue;
     const current = page[field];
-    if (current && current.trim() !== fix.from) continue; // staff wrote their own: keep it
+    const known = Array.isArray(fix.from) ? fix.from : [fix.from];
+    if (current && !known.includes(current.trim())) continue; // staff wrote their own: keep it
     if (current === fix.to) continue;
     if (dryRun) console.log(`  would set ${field} of ${p}: ${fix.to}`);
     else await prisma.seoPage.update({ where: { id: page.id }, data: { [field]: fix.to } });

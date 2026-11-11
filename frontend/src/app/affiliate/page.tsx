@@ -48,7 +48,7 @@ const AUDIENCES = [
   {
     icon: Users,
     title: "Travel Advisors & Agents",
-    text: "Book small-group tours capped at 12 guests and bespoke private luxury SUV journeys for your clients across Western Canada.",
+    text: "Book small-group tours and bespoke private luxury SUV journeys for your clients across Western Canada.",
   },
   {
     icon: DollarSign,

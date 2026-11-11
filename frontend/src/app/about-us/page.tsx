@@ -34,7 +34,7 @@ const VALUES = [
   {
     icon: Users,
     title: "Small groups, never coaches",
-    body: "Shared tours stop at 12 guests, so there's time with your guide, unhurried photo stops and a lighter footprint.",
+    body: "Shared tours stay small, so there's time with your guide, unhurried photo stops and a lighter footprint.",
   },
   {
     icon: HeartHandshake,

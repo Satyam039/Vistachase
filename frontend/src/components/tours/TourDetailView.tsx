@@ -50,7 +50,7 @@ import type { DepartureAvailability, TourSection, TourWithAvailability } from "@
 import { TOUR_PROVIDER } from "@/lib/seo/business";
 
 const CATEGORY = {
-  SHARED: { label: "Shared tours", href: "/shared-tours", sub: "Small group · max 12 guests" },
+  SHARED: { label: "Shared tours", href: "/shared-tours", sub: "Small-group tours" },
   PRIVATE: { label: "Private tours", href: "/private-tours", sub: "Private, up to 13 guests" },
   MULTIDAY: { label: "Multi-Day Journeys", href: "/search?category=MULTIDAY" },
   SHUTTLE: { label: "Lake shuttles", href: "/shuttles", sub: "Guaranteed lake access · hotel pickup" },
@@ -686,7 +686,7 @@ export function TourDetailView({
                       />
                       {/* More than 12: the team plans it (owner's doc, 2026-11-05). */}
                       <p className="text-xs text-slate-600">
-                        More than 12 guests?{" "}
+                        Travelling with a larger group?{" "}
                         <Link href={groupEnquiryHref(currentDeparture?.date)} className="text-ocean-700 underline underline-offset-2 hover:text-ocean-800">
                           Plan a group trip with our team
                         </Link>

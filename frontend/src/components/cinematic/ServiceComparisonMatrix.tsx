@@ -15,7 +15,7 @@ const COMPARISON_DATA = [
   },
   {
     feature: "Group Size",
-    shared: "Max 12 guests (small group)",
+    shared: "Small group",
     private: "Private, up to 13 guests",
     shuttle: "Direct shuttle passengers",
     activity: "Individual or party admissions",

@@ -24,7 +24,7 @@ export const revalidate = 60;
 export const metadata: Metadata = {
   title: "Two-Day Rockies Explorer: Banff & Icefield | Vista Chase",
   description:
-    "Both small-group day tours in one booking: Banff & Yoho Discovery and Columbia Icefield Adventure. Save 10%, max 12 guests, pickup in Banff & Canmore.",
+    "Both small-group day tours in one booking: Banff & Yoho Discovery and Columbia Icefield Adventure. Save 10%, small groups, pickup in Banff & Canmore.",
   alternates: { canonical: "/two-day-rockies-explorer" },
 };
 
@@ -141,7 +141,7 @@ export default async function TwoDayRockiesExplorerPage() {
             </li>
             <li className="flex gap-3">
               <Users className="mt-1 h-4 w-4 shrink-0 text-summit-300" aria-hidden="true" />
-              Maximum 12 guests each day
+              Small groups each day
             </li>
             <li className="flex gap-3">
               <MapPin className="mt-1 h-4 w-4 shrink-0 text-summit-300" aria-hidden="true" />

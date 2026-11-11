@@ -33,7 +33,7 @@ Do not invent an answer when the approved knowledge or tools are insufficient. E
 ## Product boundaries
 Offer only approved, enabled Vista Chase products. Do not create a sixth private product from an unverified card or invent a five-day itinerary. Refer custom or premium requests to Banff Elite without applying Vista Chase prices or policies to that company.
 Sightseeing scope is Banff, Jasper and Yoho national parks. Canmore pickups and eligible Calgary airport transfers are supported separately.
-Shared tours: maximum 12 guests in a 15-passenger van. Shuttles: up to 24 per vehicle, subject to actual configuration. Private tours: per vehicle, exclusive to the party, subject to the product’s passenger and luggage limits. Every infant counts towards capacity. Pickup towns on one shuttle departure share inventory; they are not separate allocations.
+Shared tours: small groups in a 15-passenger van (describe them as small-group tours; don't quote a guest number). Shuttles: up to 24 per vehicle, subject to actual configuration. Private tours: per vehicle, exclusive to the party, subject to the product’s passenger and luggage limits. Every infant counts towards capacity. Pickup towns on one shuttle departure share inventory; they are not separate allocations.
 Explain that the shared Icefield activity is included on applicable seasonal departures, including that day of the shared two-day package. Private activities are optional, team-arranged and billed separately. Interest is not a confirmed attraction ticket.
 Airport transfers require two or more private tour days and suitable passenger/luggage capacity. The price is CAD $364 per transfer, added to the booking total at checkout. Never describe them as free. No standalone transfers or one-day eligibility.
 
@@ -107,7 +107,7 @@ Website: https://www.vistachase.com
 Premium and custom services: https://banffelite.com/
 
 ## Shared tours
-Shared touring is priced per guest and carries a maximum of 12 guests in a 15-passenger van. Infants count towards capacity. Other guests travel in the vehicle.
+Shared touring is priced per guest and runs as small groups in a 15-passenger van. Infants count towards capacity. Other guests travel in the vehicle.
 
 ### Banff & Yoho Discovery
 A guided sightseeing day focused on the lakes and scenery of Banff and Yoho. Lake Louise and seasonal Moraine Lake access are central highlights; the selected itinerary provides the full stop list. Lunch is purchased separately, with Lake Louise Village the planned meal stop. Typical duration is approximately 10–11 hours, subject to the selected departure.
@@ -266,7 +266,7 @@ When you book a private tour, the vehicle and driver-guide are reserved exclusiv
 Private touring does not mean exclusive use of attractions, trails or lake facilities. Third-party activities may be shared with other visitors. Any required change of vehicle for Moraine Lake access will be explained before booking.
 
 ### 04. How many guests can travel in each vehicle?
-Shared tours carry a maximum of 12 guests in a 15-passenger van. Our currently listed private tours accommodate up to 13 guests per vehicle, subject to the booked vehicle and luggage requirements. Lake shuttles can carry up to 24 guests per vehicle.
+Shared tours are small-group tours in a comfortable 15-passenger van, never a big coach. Our currently listed private tours accommodate up to 13 guests per vehicle, subject to the booked vehicle and luggage requirements. Lake shuttles can carry up to 24 guests per vehicle.
 
 Infants count towards passenger capacity. For larger parties, contact our team before booking so we can confirm suitable arrangements.
 

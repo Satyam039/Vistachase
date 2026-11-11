@@ -68,7 +68,7 @@ describe("audit crawl", () => {
 describe("shorter titles and descriptions (prisma/catalog/seo-fixes-2026-11.json)", () => {
   const fixes = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../prisma/catalog/seo-fixes-2026-11.json"), "utf8")) as {
     titles: Record<string, { from: string; to: string }>;
-    descriptions: Record<string, { from: string; to: string }>;
+    descriptions: Record<string, { from: string | string[]; to: string }>;
   };
   it("keeps titles to 60 characters and descriptions to 160", () => {
     for (const f of Object.values(fixes.titles)) expect(f.to.length).toBeLessThanOrEqual(60);

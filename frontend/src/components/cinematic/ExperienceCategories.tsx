@@ -22,7 +22,7 @@ const CATEGORIES: CategoryCard[] = [
     eyebrow: "MAX 12 GUESTS",
     title: "Small-Group Tours",
     tagline: "Small groups, big days out",
-    description: "Share the adventure with no more than 12 guests, led by a passionate guide.",
+    description: "Share the adventure in a small group, led by a passionate guide.",
     image: "/media/site/bow-river-train-canadian-rockies.webp",
     href: "/shared-tours",
     icon: Users,

@@ -308,7 +308,7 @@ function Facts({ duration }: { duration: string }) {
       </li>
       <li className="flex items-center gap-1.5">
         <Users className="h-3.5 w-3.5 text-summit-300" aria-hidden="true" />
-        Max 12 guests
+        Small group
       </li>
     </ul>
   );

@@ -148,12 +148,18 @@
       "to": "Three days of mountain towns, iconic lakes, waterfalls and glaciers with your own driver-guide, private vehicle and doorstep pickup. Hotels booked by guests."
     },
     "/two-day-rockies-explorer": {
-      "from": "Both small-group day tours in one booking: Banff & Yoho Discovery and the Columbia Icefield Adventure. Save 10%, maximum 12 guests each day, pickup in Banff & Canmore. Accommodation not included.",
-      "to": "Both small-group day tours in one booking: Banff & Yoho Discovery and Columbia Icefield Adventure. Save 10%, max 12 guests, pickup in Banff & Canmore."
+      "from": [
+        "Both small-group day tours in one booking: Banff & Yoho Discovery and the Columbia Icefield Adventure. Save 10%, maximum 12 guests each day, pickup in Banff & Canmore. Accommodation not included.",
+        "Both small-group day tours in one booking: Banff & Yoho Discovery and Columbia Icefield Adventure. Save 10%, max 12 guests, pickup in Banff & Canmore."
+      ],
+      "to": "Both small-group day tours in one booking: Banff & Yoho Discovery and Columbia Icefield Adventure. Save 10%, pickup in Banff & Canmore."
     },
     "/shared-tours": {
-      "from": "Banff & Yoho Discovery, Columbia Icefield Adventure or both in the Two-Day Rockies Explorer. Maximum 12 guests, passionate local guides, park admission included, pickup in Banff & Canmore.",
-      "to": "Banff & Yoho Discovery, Columbia Icefield Adventure or both over two days. Max 12 guests, local guides, park admission included, Banff & Canmore pickup."
+      "from": [
+        "Banff & Yoho Discovery, Columbia Icefield Adventure or both in the Two-Day Rockies Explorer. Maximum 12 guests, passionate local guides, park admission included, pickup in Banff & Canmore.",
+        "Banff & Yoho Discovery, Columbia Icefield Adventure or both over two days. Max 12 guests, local guides, park admission included, Banff & Canmore pickup."
+      ],
+      "to": "Banff & Yoho Discovery, Columbia Icefield Adventure or both over two days. Small groups, local guides, park admission included, Banff & Canmore pickup."
     },
     "/multi-day-tour-package-for-banff": {
       "from": "Two-, three- and four-day journeys through Banff, Yoho, the Icefields Parkway and Jasper, with a small group or in your own private vehicle. Hotel pickup in Banff and Canmore.",

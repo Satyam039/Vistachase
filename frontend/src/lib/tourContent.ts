@@ -66,14 +66,14 @@ const CONTENT: Record<string, DocContent> = {
   [BANFF_YOHO.slug]: {
     title: BANFF_YOHO.title,
     summary:
-      "Explore Lake Louise, Moraine Lake and the highlights of Banff and Yoho with a passionate guide. Maximum 12 guests, pickup in Banff & Canmore.",
+      "Explore Lake Louise, Moraine Lake and the highlights of Banff and Yoho with a passionate guide in a small group, with pickup in Banff & Canmore.",
     // Overview text from the owner's doc (2026-11-04, "C. Rewrite the Overview").
     description:
-      "Discover the extraordinary landscapes of the Canadian Rockies on a thoughtfully planned small-group journey through Banff and Yoho National Parks. From turquoise glacial lakes and dramatic mountain scenery to hidden natural wonders, enjoy an unforgettable day with an experienced local guide.\nTravel comfortably in a group of no more than 12 guests, with time to appreciate the scenery, capture photographs and discover what makes each destination remarkable.",
+      "Discover the extraordinary landscapes of the Canadian Rockies on a thoughtfully planned small-group journey through Banff and Yoho National Parks. From turquoise glacial lakes and dramatic mountain scenery to hidden natural wonders, enjoy an unforgettable day with an experienced local guide.\nTravel comfortably in a small group, with time to appreciate the scenery, capture photographs and discover what makes each destination remarkable.",
     facts: [
       { label: "Duration", value: "10–11 hours" },
       { label: "Entry fees", value: "Park admission included" },
-      { label: "Small group", value: "Max 12 guests" },
+      { label: "Small group", value: "Small-group tour" },
       { label: "Operation", value: "Year round · route varies by season" },
     ],
     highlights: BANFF_YOHO.stops,
@@ -130,14 +130,14 @@ const CONTENT: Record<string, DocContent> = {
   [ICEFIELD.slug]: {
     title: ICEFIELD.title,
     summary:
-      "Journey along the Icefields Parkway, with scenic lake stops, the Ice Explorer and Columbia Icefield Skywalk. Maximum 12 guests, pickup in Banff & Canmore.",
+      "Journey along the Icefields Parkway, with scenic lake stops, the Ice Explorer and Columbia Icefield Skywalk, in a small group with pickup in Banff & Canmore.",
     // Overview from the owner's doc (2026-11-04, Columbia Icefield Adventure page).
     description:
       "Discover one of Canada's most spectacular mountain highways on a small-group journey through the heart of the Canadian Rockies. Travel along the legendary Icefields Parkway, surrounded by towering peaks, turquoise lakes, ancient glaciers and breathtaking alpine scenery.\nWith a knowledgeable local guide, comfortable transportation and thoughtfully planned stops, experience the remarkable landscapes of Banff and Jasper National Parks at a relaxed, enjoyable pace.",
     facts: [
       { label: "Duration", value: "9–11 hours" },
       { label: "Entry fees", value: "Park admission included" },
-      { label: "Small group", value: "Max 12 guests" },
+      { label: "Small group", value: "Small-group tour" },
     ],
     highlights: ICEFIELD.stops,
     inclusions: [
@@ -183,7 +183,7 @@ const CONTENT: Record<string, DocContent> = {
     // Quick facts and pickup text from the owner's doc (2026-11-04).
     quickFacts: [
       { label: "Duration", value: "9–11 hours" },
-      { label: "Group size", value: "Max 12 guests" },
+      { label: "Group size", value: "Small group" },
       { label: "Park admission", value: "Included" },
       { label: "Operating season", value: "Year round · route varies by season" },
       { label: "Hotel pickups", value: "Canmore, Banff & Lake Louise" },
