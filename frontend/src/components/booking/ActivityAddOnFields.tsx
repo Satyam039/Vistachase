@@ -37,7 +37,19 @@ export function ActivityAddOnToggle({
 }) {
   const showGuests = checked && guests && onGuestsChange;
   const used = guests ? guests.adults + guests.children + guests.infants : 0;
-  const set = (key: keyof ActivityGuests) => (value: number) => guests && onGuestsChange?.({ ...guests, [key]: value });
+  // The party is full (everyone starts as an adult): adding a child or infant moves one guest out of
+  // the adults, so the + buttons keep working (owner, 2026-11-11: "add nhi ho pa rha").
+  const set = (key: keyof ActivityGuests) => (value: number) => {
+    if (!guests || !onGuestsChange) return;
+    const next = { ...guests, [key]: value };
+    const over = next.adults + next.children + next.infants - maxGuests;
+    if (over > 0 && key !== "adults") next.adults = Math.max(0, next.adults - over);
+    onGuestsChange(next);
+  };
+  const maxFor = (key: keyof ActivityGuests) =>
+    key === "adults"
+      ? Math.max(guests![key], guests![key] + maxGuests - used)
+      : Math.max(guests![key], guests![key] + maxGuests - used + guests!.adults);
   return (
     <div className={`rounded-2xl border bg-white text-sm ${checked ? "border-ocean-500 ring-1 ring-ocean-500" : "border-slate-200"}`}>
       <label className="flex cursor-pointer items-start gap-3 p-4">
@@ -54,7 +66,7 @@ export function ActivityAddOnToggle({
         <fieldset className="space-y-3 border-t border-slate-200 px-4 pb-4 pt-3">
           <legend className="sr-only">Who joins the activities</legend>
           <p className="text-xs text-slate-600" aria-hidden="true">
-            Who joins the activities?
+            Who joins the activities? Up to {maxGuests} {maxGuests === 1 ? "guest" : "guests"}, your party size.
           </p>
           {ACTIVITY_AGE_BANDS.map((band) => (
             <QuantityInput
@@ -64,7 +76,7 @@ export function ActivityAddOnToggle({
               value={guests[band.key]}
               onChange={set(band.key)}
               min={0}
-              max={Math.max(guests[band.key], guests[band.key] + maxGuests - used)}
+              max={maxFor(band.key)}
             />
           ))}
           {used === 0 && (
