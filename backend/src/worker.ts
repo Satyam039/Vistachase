@@ -85,6 +85,9 @@ async function main() {
   worker.on("failed", (job, err) => console.error(`[worker] ${job?.name} failed: ${err.message}`));
   console.log("[worker] started; jobs scheduled:", Object.keys(JOBS).join(", "));
 
+  // Synchronize Master Knowledge Base and live crawl on worker startup
+  syncKnowledgeBaseTask().catch((err) => console.warn("[worker] initial knowledgebase-sync:", (err as Error).message));
+
   const stop = async () => {
     await worker.close();
     await queue.close();

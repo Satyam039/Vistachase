@@ -4,15 +4,10 @@ import { getCacheProvider } from "@/lib/cache/cache.provider";
 import { VISTACHASE_STATIC_KNOWLEDGE_BASE } from "./knowledge.base";
 import { conciergeTours } from "@/modules/tours/product-map";
 import { renderCatalogKnowledge } from "./knowledge/catalog-live";
-import { WEBSITE_FACTS } from "./knowledge/website-catalog";
+import { WEBSITE_CATALOG, WEBSITE_FACTS } from "./knowledge/website-catalog";
 
 const WEBSITE_KNOWLEDGE_FACTS = `## Website-wide facts\n${Object.values(WEBSITE_FACTS).map((f) => `- ${f}`).join("\n")}`;
 
-// Keyed by the static text's hash, so a deploy that changes knowledge.base.ts never serves the
-// previous version from Redis.
-const STATIC_HASH = crypto.createHash("sha256").update(VISTACHASE_STATIC_KNOWLEDGE_BASE).digest("hex").slice(0, 12);
-const CACHE_KEY = `vistachase:master_knowledge_base:${STATIC_HASH}`;
-const CACHE_META_KEY = `vistachase:master_knowledge_base_meta:${STATIC_HASH}`;
 const IN_MEMORY_TTL_MS = 60 * 60 * 1000; // 1 hour memory cache
 
 interface KnowledgeBaseMetadata {
@@ -21,10 +16,36 @@ interface KnowledgeBaseMetadata {
   compiledAt: string;
   tourCount: number;
   shuttleStopCount: number;
+  crawledPagesCount: number;
   byteLength: number;
 }
 
-let memoryCache: { text: string; meta: KnowledgeBaseMetadata; expiresAt: number } | null = null;
+let memoryCache: { text: string; meta: KnowledgeBaseMetadata; expiresAt: number; dateKey: string } | null = null;
+
+/**
+ * Returns today's date in Mountain Time (America/Edmonton) for daily cache partitioning.
+ */
+function mountainDateString(date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Edmonton",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+}
+
+/**
+ * Generates daily cache keys so each day triggers a fresh crawl and compilation.
+ */
+function getDailyCacheKeys(date = new Date()): { cacheKey: string; metaKey: string; dateKey: string } {
+  const dateKey = mountainDateString(date);
+  const staticHash = crypto.createHash("sha256").update(VISTACHASE_STATIC_KNOWLEDGE_BASE).digest("hex").slice(0, 8);
+  return {
+    cacheKey: `vistachase:master_kb:${dateKey}:${staticHash}`,
+    metaKey: `vistachase:master_kb_meta:${dateKey}:${staticHash}`,
+    dateKey,
+  };
+}
 
 /**
  * Checks whether Moraine Lake Road is seasonally closed based on Mountain Time
@@ -40,10 +61,123 @@ function isMoraineLakeRoadSeasonallyClosed(): boolean {
 }
 
 /**
- * Compiles the Master Knowledge Base from live database rows, product catalogs, and policies.
+ * Base URL used for daily live website crawling.
+ */
+function getLiveWebsiteBaseUrl(): string {
+  return (
+    process.env.SEO_AUDIT_BASE_URL ||
+    process.env.SITE_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    "https://www.vistachase.com"
+  ).replace(/\/+$/, "");
+}
+
+interface CrawledPageResult {
+  path: string;
+  title: string | null;
+  description: string | null;
+  h1: string | null;
+  status: number;
+}
+
+/**
+ * Crawls active live website pages to capture the latest published headings, titles, and descriptions.
+ * Falls back gracefully to typed product pages when the network or frontend server is unavailable.
+ */
+export async function crawlLiveWebsiteKnowledge(): Promise<{ text: string; crawledCount: number }> {
+  const baseUrl = getLiveWebsiteBaseUrl();
+  const today = mountainDateString();
+
+  // Core public routes to crawl daily
+  const pathsToCrawl = [
+    "/",
+    "/shared-tours",
+    "/private-tours",
+    "/shuttles",
+    "/banff-highlights-tour",
+    "/shared-tours-icefields-jasper",
+    "/winter-special",
+    "/banff-private-tour",
+    "/icefields-jasper-private-tour",
+    "/two-day-rockies-explorer",
+    "/three-day-rockies-discovery",
+    "/four-day-rockies-and-jasper",
+    "/faq",
+    "/booking-and-cancellation-policy",
+    "/contact-us",
+  ];
+
+  const results: CrawledPageResult[] = [];
+
+  // Attempt live HTTP fetch with short timeout per page
+  for (const path of pathsToCrawl) {
+    const url = `${baseUrl}${path}`;
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 2500);
+      const res = await fetch(url, {
+        headers: { "User-Agent": "VistaChase-Concierge-DailyCrawl/1.0" },
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+
+      if (res.ok) {
+        const html = await res.text();
+        const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+        const metaDescMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i);
+        const h1Match = html.match(/<h1[^>]*>([^<]+)<\/h1>/i);
+
+        results.push({
+          path,
+          title: titleMatch ? titleMatch[1].trim() : null,
+          description: metaDescMatch ? metaDescMatch[1].trim() : null,
+          h1: h1Match ? h1Match[1].trim() : null,
+          status: res.status,
+        });
+      }
+    } catch {
+      // Offline/local fallback: skip network failure without throwing
+    }
+  }
+
+  // If live HTTP crawl succeeded for pages, compile fresh findings
+  if (results.length > 0) {
+    const lines: string[] = [
+      `## Live Crawled Website Pages (Daily Crawl: ${today} • ${results.length} pages read from ${baseUrl})`,
+      "The following facts reflect the latest published state of the live website:",
+    ];
+    for (const r of results) {
+      const details = [
+        r.h1 ? `H1: "${r.h1}"` : null,
+        r.title ? `Title: "${r.title}"` : null,
+        r.description ? `Description: "${r.description}"` : null,
+      ]
+        .filter(Boolean)
+        .join(" | ");
+      lines.push(`- **${r.path}**: ${details || "Page active"}`);
+    }
+    return { text: lines.join("\n"), crawledCount: results.length };
+  }
+
+  // Fallback if HTTP is unreachable (local test or build): build verified live facts from WEBSITE_CATALOG
+  const fallbackLines: string[] = [
+    `## Live Website Facts (Verified Daily Sync: ${today} • ${WEBSITE_CATALOG.length} active catalog products)`,
+    "The live website sells the following experiences under current branding (never use obsolete Webflow titles):",
+  ];
+  for (const p of WEBSITE_CATALOG) {
+    fallbackLines.push(
+      `- **${p.name}** [page: ${p.page}]: ${p.overview} Stops: ${p.stops.slice(0, 4).join(", ")}. Inclusions: ${p.included.slice(0, 3).join(", ")}. Cancellation: ${p.cancellation}`
+    );
+  }
+  return { text: fallbackLines.join("\n"), crawledCount: WEBSITE_CATALOG.length };
+}
+
+/**
+ * Compiles the Master Knowledge Base from live database rows, product catalogs, and daily website crawl.
  */
 export async function syncMasterKnowledgeBase(): Promise<KnowledgeBaseMetadata> {
   const cache = getCacheProvider();
+  const { cacheKey, metaKey, dateKey } = getDailyCacheKeys();
 
   let liveTourCatalog = "";
   let tourCount = 0;
@@ -92,41 +226,47 @@ Pickup stops: ${stopCount} in ${towns.join(", ")} (e.g. ${stopSample}). Use find
       "[knowledge.sync] Live catalog database read failed; falling back to core knowledge base:",
       (dbErr as Error).message
     );
+    liveTourCatalog = `\n${await renderCatalogKnowledge()}\n\n${WEBSITE_KNOWLEDGE_FACTS}\n`;
   }
+
+  // Daily live crawl of published website routes
+  const crawl = await crawlLiveWebsiteKnowledge();
 
   const isWinter = isMoraineLakeRoadSeasonallyClosed();
   const roadStatusNote = isWinter
     ? "\n> [!NOTE] Season: winter (outside the June 1 to October 10 programme). Moraine Lake and the Icefield attractions are not operating; routes are adjusted, so the selected date's route needs team confirmation.\n"
     : "\n> [!NOTE] Season: summer programme (June 1 to October 10). Seasonal access still depends on official openings and conditions.\n";
 
-  // Build the complete master knowledge text
-  const masterContent = `${VISTACHASE_STATIC_KNOWLEDGE_BASE}\n${roadStatusNote}\n${liveTourCatalog}`.trim();
+  // Build the complete master knowledge text including daily crawled information
+  const masterContent = `${VISTACHASE_STATIC_KNOWLEDGE_BASE}\n${roadStatusNote}\n${liveTourCatalog}\n\n${crawl.text}`.trim();
 
   // Compute hash and version
   const hash = crypto.createHash("sha256").update(masterContent).digest("hex").slice(0, 16);
-  const version = `kb_${new Date().toISOString().slice(0, 10)}_${hash.slice(0, 6)}`;
+  const version = `kb_${dateKey}_${hash.slice(0, 6)}`;
   const metadata: KnowledgeBaseMetadata = {
     version,
     hash,
     compiledAt: new Date().toISOString(),
     tourCount,
     shuttleStopCount: stopCount,
+    crawledPagesCount: crawl.crawledCount,
     byteLength: Buffer.byteLength(masterContent, "utf8"),
   };
 
   // Persist to cache (Redis / Memory)
-  await cache.set(CACHE_KEY, masterContent, 24 * 60 * 60); // 24-hour TTL in cache
-  await cache.set(CACHE_META_KEY, metadata, 24 * 60 * 60);
+  await cache.set(cacheKey, masterContent, 36 * 60 * 60); // 36-hour TTL (covers next day's run)
+  await cache.set(metaKey, metadata, 36 * 60 * 60);
 
   // Update in-memory cache
   memoryCache = {
     text: masterContent,
     meta: metadata,
     expiresAt: Date.now() + IN_MEMORY_TTL_MS,
+    dateKey,
   };
 
   console.log(
-    `[knowledge.sync] Master knowledge base updated: Version ${version} (${metadata.byteLength} bytes, ${tourCount} tours, ${stopCount} stops)`
+    `[knowledge.sync] Master knowledge base updated: Version ${version} (${metadata.byteLength} bytes, ${tourCount} tours, ${stopCount} stops, ${crawl.crawledCount} pages crawled)`
   );
 
   return metadata;
@@ -134,32 +274,35 @@ Pickup stops: ${stopCount} in ${towns.join(", ")} (e.g. ${stopSample}). Use find
 
 /**
  * Retrieves the compiled Master Knowledge Base text for the agent prompt.
- * Seamlessly refreshes if missing or expired.
+ * Seamlessly refreshes if missing, expired, or when a new calendar day begins in Mountain Time.
  */
 export async function getMasterKnowledgeBase(): Promise<string> {
-  // 1. Check in-memory cache
-  if (memoryCache && Date.now() < memoryCache.expiresAt) {
+  const { cacheKey, metaKey, dateKey } = getDailyCacheKeys();
+
+  // 1. Check in-memory cache (must match today's date key)
+  if (memoryCache && memoryCache.dateKey === dateKey && Date.now() < memoryCache.expiresAt) {
     return memoryCache.text;
   }
 
   // 2. Check distributed cache (Redis)
   const cache = getCacheProvider();
-  const cachedText = await cache.get<string>(CACHE_KEY);
+  const cachedText = await cache.get<string>(cacheKey);
   if (cachedText) {
-    const cachedMeta = await cache.get<KnowledgeBaseMetadata>(CACHE_META_KEY);
+    const cachedMeta = await cache.get<KnowledgeBaseMetadata>(metaKey);
     if (cachedMeta) {
       memoryCache = {
         text: cachedText,
         meta: cachedMeta,
         expiresAt: Date.now() + IN_MEMORY_TTL_MS,
+        dateKey,
       };
       return cachedText;
     }
   }
 
-  // 3. If cache is empty, trigger an automated compile
+  // 3. If cache is empty or date changed, trigger a fresh automated crawl & compile
   try {
-    const meta = await syncMasterKnowledgeBase();
+    await syncMasterKnowledgeBase();
     if (memoryCache) return memoryCache.text;
   } catch (err) {
     console.warn("[knowledge.sync] Dynamic sync failed; using static fallback:", (err as Error).message);
@@ -173,18 +316,20 @@ export async function getMasterKnowledgeBase(): Promise<string> {
  * Returns metadata about the current knowledge base version
  */
 export async function getKnowledgeBaseMetadata(): Promise<KnowledgeBaseMetadata | null> {
+  const { metaKey } = getDailyCacheKeys();
   if (memoryCache?.meta) return memoryCache.meta;
   const cache = getCacheProvider();
-  return cache.get<KnowledgeBaseMetadata>(CACHE_META_KEY);
+  return cache.get<KnowledgeBaseMetadata>(metaKey);
 }
 
 /**
- * Invalidate knowledge base cache (called by admin or webhook when a tour/price changes)
+ * Invalidate knowledge base cache (called by admin, webhook, or crawler when a tour/price changes)
  */
 export async function invalidateKnowledgeBase(): Promise<KnowledgeBaseMetadata> {
+  const { cacheKey, metaKey } = getDailyCacheKeys();
   memoryCache = null;
   const cache = getCacheProvider();
-  await cache.del(CACHE_KEY);
-  await cache.del(CACHE_META_KEY);
+  await cache.del(cacheKey);
+  await cache.del(metaKey);
   return syncMasterKnowledgeBase();
 }

@@ -189,11 +189,17 @@ async function runCreate(client: BokunApi, task: BookingSyncTask, now: Date): Pr
 
     const paid = booking.payments.filter((p) => p.status === "SUCCEEDED");
     const paidCents = paid.reduce((sum, p) => sum + p.amount, 0);
-    await confirmInBokun(client, code, booking.bookingReference, {
-      amount: paidCents / 100,
-      currency: booking.currency,
-      transactionId: paid.find((p) => p.transactionId)?.transactionId ?? undefined,
-    }, { testAccount: bokunIsTestAccount() });
+    await confirmInBokun(
+      client,
+      code,
+      booking.bookingReference,
+      {
+        amount: paidCents / 100,
+        currency: booking.currency,
+        transactionId: paid.find((p) => p.transactionId)?.transactionId ?? undefined,
+      },
+      { testAccount: bokunIsTestAccount(), bookingTotal: booking.totalAmount / 100 },
+    );
     await prisma.booking.update({ where: { id: booking.id }, data: { bokunBookingId: code, externalSyncStatus: "SYNCED", lastSyncAttemptAt: now } });
     return finish(task, "SUCCEEDED", null, code);
   } catch (error) {

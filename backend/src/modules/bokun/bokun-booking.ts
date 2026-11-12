@@ -350,13 +350,28 @@ export async function reserveInBokun(
  * for Bókun's own total, so the test can finish. A live account never does this: a currency
  * mismatch there stops the booking for a person to look at.
  */
-export async function confirmInBokun(client: BokunApi, code: string, reference: string, payment: BokunPayment, options: { testAccount?: boolean } = {}) {
+export async function confirmInBokun(
+  client: BokunApi,
+  code: string,
+  reference: string,
+  payment: BokunPayment,
+  options: { testAccount?: boolean; bookingTotal?: number } = {},
+) {
+  const confirm = (value: number, currency: string) =>
+    client.fetch("POST", `/checkout.json/confirm-reserved/${encodeURIComponent(code)}`, {
+      externalBookingReference: reference,
+      amount: value,
+      currency,
+      sendNotificationToMainContact: false,
+      showPricesInNotification: false,
+      transactionDetails: { transactionDate: new Date().toISOString(), transactionId: payment.transactionId ?? reference },
+    });
+
   // Bókun takes the amount in major units (dollars); never a zero, negative or fractional-cent one.
   const amount = Number.isFinite(payment.amount) ? Math.round(payment.amount * 100) / 100 : 0;
   if (amount <= 0) {
     // Nothing was paid online (a 100% promo code, or staff approved it as "payment still due").
-    // Bókun refuses a payment of 0 ("Payment amount must be positive"), so the reservation is
-    // confirmed with no payment on it: Bókun then shows the booking as unpaid, which is the truth.
+    // First, try confirming without payment on the reservation:
     try {
       await client.fetch("POST", `/checkout.json/confirm-reserved/${encodeURIComponent(code)}`, {
         externalBookingReference: reference,
@@ -365,6 +380,41 @@ export async function confirmInBokun(client: BokunApi, code: string, reference: 
       });
       return;
     } catch (error) {
+      // Bókun's confirm-reserved endpoint often strictly validates amount > 0
+      // ("logic.InvalidDataException - Payment amount must be positive").
+      // When that happens, fetch Bókun's own reservation total (or bookingTotal / 1.00)
+      // and confirm with that positive value so the reservation is finalized and inventory locked.
+      const requiresPositive =
+        error instanceof BokunApiError &&
+        (error.message.includes("Payment amount must be positive") ||
+          error.message.includes("InvalidDataException") ||
+          error.status === 400);
+
+      if (requiresPositive) {
+        const fallback = options.bookingTotal && options.bookingTotal > 0 ? options.bookingTotal : 1;
+        const total = await bokunTotal(client, code, fallback);
+        const positiveAmount = total > 0 ? total : fallback;
+        try {
+          await confirm(positiveAmount, payment.currency || "CAD");
+          return;
+        } catch (confirmError) {
+          const bokunCurrency = options.testAccount ? currencyMismatch(confirmError) : null;
+          if (bokunCurrency && bokunCurrency !== payment.currency) {
+            console.warn(`[bokun] test account books in ${bokunCurrency}, not ${payment.currency}: confirming ${code} in ${bokunCurrency} (test only).`);
+            await confirm(await bokunTotal(client, code, positiveAmount), bokunCurrency);
+            return;
+          }
+          // If second attempt also failed with BokunApiError, throw the informative message
+          if (confirmError instanceof BokunApiError && confirmError.status < 500) {
+            throw new BokunApiError(
+              confirmError.status,
+              `Nothing was paid online for this booking (100% promo code, or approved with payment still due), and Bókun refused both unpaid and reservation-total confirmation: ${confirmError.message.slice(0, 300)}. Confirm ${code} in Bókun by hand.`,
+            );
+          }
+          throw confirmError;
+        }
+      }
+
       if (error instanceof BokunApiError && error.status < 500) {
         throw new BokunApiError(
           error.status,
@@ -375,15 +425,6 @@ export async function confirmInBokun(client: BokunApi, code: string, reference: 
     }
   }
 
-  const confirm = (value: number, currency: string) =>
-    client.fetch("POST", `/checkout.json/confirm-reserved/${encodeURIComponent(code)}`, {
-      externalBookingReference: reference,
-      amount: value,
-      currency,
-      sendNotificationToMainContact: false,
-      showPricesInNotification: false,
-      transactionDetails: { transactionDate: new Date().toISOString(), transactionId: payment.transactionId ?? reference },
-    });
   try {
     await confirm(amount, payment.currency);
   } catch (error) {

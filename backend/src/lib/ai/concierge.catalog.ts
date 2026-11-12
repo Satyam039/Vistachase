@@ -10,27 +10,29 @@
  */
 
 import { WEBSITE_TITLES } from "@/modules/bookings/tour-itinerary";
+import { WEBSITE_CATALOG } from "./knowledge/website-catalog";
+
+const CATALOG_NAMES: Record<string, string> = Object.fromEntries(
+  WEBSITE_CATALOG.map((p) => [p.slug, p.name]),
+);
 
 /** The website's name for a product, where it differs from the database title (same as vouchers and emails). */
-export const WEBSITE_NAMES: Record<string, string> = WEBSITE_TITLES;
+export const WEBSITE_NAMES: Record<string, string> = {
+  ...CATALOG_NAMES,
+  ...WEBSITE_TITLES,
+};
+
+/** One line on each doc tour, from the approved knowledge base and live website catalog. */
+export const DOC_TOUR_SUMMARY: Record<string, string> = Object.fromEntries(
+  WEBSITE_CATALOG.map((p) => [p.slug, p.overview]),
+);
 
 /**
- * Tours whose website page content comes from the owner's doc (frontend lib/tourContent.ts), so
- * the database summary, description, inclusions and highlights are the old Webflow text.
+ * Tours whose website page content comes from the live website catalog (frontend lib/tourContent.ts
+ * and lib/sharedTours.ts), so the database summary, description, inclusions and highlights are
+ * superseded by the fresh website text.
  */
-export const DOC_TOUR_SLUGS = new Set(Object.keys(WEBSITE_NAMES));
-
-/** One line on each doc tour, from the approved knowledge base. */
-export const DOC_TOUR_SUMMARY: Record<string, string> = {
-  "banff-highlights-tour":
-    "Small-group day through Banff and Yoho: Lake Louise, seasonal Moraine Lake, Emerald Lake and more, about 10 to 11 hours.",
-  "shared-tours-icefields-jasper":
-    "Small-group day on the Icefields Parkway: Bow Lake, Crowfoot Glacier, Peyto Lake and the Columbia Icefield (activity included on summer departures), about 9 to 11 hours. It does not go to Jasper town.",
-  "banff-private-tour":
-    "Your own vehicle and driver-guide for the Banff and Yoho day: Lake Louise, seasonal Moraine Lake, Emerald Lake and more. Priced per vehicle.",
-  "icefields-jasper-private-tour":
-    "Your own vehicle and driver-guide on the Icefields Parkway to the Columbia Icefield and back. Activities are optional extras. Priced per vehicle.",
-};
+export const DOC_TOUR_SLUGS = new Set(Object.keys(DOC_TOUR_SUMMARY));
 
 /** A product's name as the website shows it. */
 export function websiteName(t: { slug?: string | null; title?: string | null } | null | undefined, fallback = "Vista Chase experience"): string {
