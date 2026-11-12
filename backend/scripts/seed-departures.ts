@@ -291,11 +291,17 @@ const LIVE_BOOKING_STATUSES = ["CONFIRMED", "PENDING_PAYMENT", "PAID_UNSYNCED", 
  * time, unless one of our bookings or an active hold is on it. Those few are listed so staff can
  * move the guest; they are never listed or sold again either way (schedule-rules.ts).
  */
-export async function retireOffScheduleDepartures() {
-  const today = dateOnly(todayInMountainTime());
+/** Which dates a clean-up step touches: today onwards on deploy; one day in tests (they share a database). */
+export interface CleanupDays { from?: string; to?: string }
+const cleanupDates = (days: CleanupDays = {}) => ({
+  gte: days.from ? dateOnly(days.from) : dateOnly(todayInMountainTime()),
+  ...(days.to ? { lte: dateOnly(days.to) } : {}),
+});
+
+export async function retireOffScheduleDepartures(days: CleanupDays = {}) {
   for (const [slug, time] of Object.entries(FIXED_START_TIMES)) {
     const deps = await prisma.tourDeparture.findMany({
-      where: { tour: { slug }, date: { gte: today }, status: { not: "CANCELLED" }, departureTime: { not: timeOfDay(time) } },
+      where: { tour: { slug }, date: cleanupDates(days), status: { not: "CANCELLED" }, departureTime: { not: timeOfDay(time) } },
       select: { id: true, date: true, departureTime: true },
     });
     let cancelled = 0;
@@ -330,16 +336,15 @@ export const CAPACITY_BY_SLUG: Record<string, number> = {
   "icefields-jasper-private-tour": PRIVATE_VEHICLE_CAPACITY,
 };
 
-export async function alignCapacity() {
-  const today = dateOnly(todayInMountainTime());
+export async function alignCapacity(days: CleanupDays = {}) {
   for (const [slug, seats] of Object.entries(CAPACITY_BY_SLUG)) {
     const tour = await prisma.tour.updateMany({ where: { slug, maxGroupSize: { not: seats } }, data: { maxGroupSize: seats } });
     const raised = await prisma.tourDeparture.updateMany({
-      where: { tour: { slug }, date: { gte: today }, capacityTotal: { lt: seats } },
+      where: { tour: { slug }, date: cleanupDates(days), capacityTotal: { lt: seats } },
       data: { capacityTotal: seats },
     });
     const larger = await prisma.tourDeparture.findMany({
-      where: { tour: { slug }, date: { gte: today }, capacityTotal: { gt: seats } },
+      where: { tour: { slug }, date: cleanupDates(days), capacityTotal: { gt: seats } },
       select: { id: true, capacityBooked: true, capacityHeld: true },
     });
     let lowered = 0;
@@ -357,10 +362,9 @@ export async function alignCapacity() {
  * departures that offer more than 15 seats, unless more than 15 are already booked or held.
  * Never raises a departure.
  */
-export async function capSharedDepartures() {
-  const today = dateOnly(todayInMountainTime());
+export async function capSharedDepartures(days: CleanupDays = {}) {
   const larger = await prisma.tourDeparture.findMany({
-    where: { tour: { category: "SHARED" }, date: { gte: today }, status: { not: "CANCELLED" }, capacityTotal: { gt: SHARED_CAPACITY } },
+    where: { tour: { category: "SHARED" }, date: cleanupDates(days), status: { not: "CANCELLED" }, capacityTotal: { gt: SHARED_CAPACITY } },
     select: { id: true, capacityBooked: true, capacityHeld: true },
   });
   let lowered = 0;

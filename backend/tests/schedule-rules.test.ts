@@ -132,7 +132,7 @@ describe("the deploy's clean-up (seed-departures)", () => {
     setFixedStartTimesForTests(FIXED_START_TIMES);
     setBokunClientForTests(fakeBokun);
     expect(made.success).toBe(true);
-    await retireOffScheduleDepartures();
+    await retireOffScheduleDepartures({ from: "2036-03-03", to: "2036-03-03" }); // only this test's day: other test files share the database
     const status = async (id: string) => (await prisma.tourDeparture.findUniqueOrThrow({ where: { id } })).status;
     expect(await status(free.id)).toBe("CANCELLED");
     expect(await status(booked.id)).toBe("ACTIVE");
@@ -146,7 +146,7 @@ describe("the deploy's clean-up (seed-departures)", () => {
     const s24 = await prisma.tourDeparture.create({ data: { tourId: shuttle.id, date: dateOnly(day), departureTime: timeOfDay("11:30"), capacityTotal: 24, capacityBooked: 3, price: 10800, status: "ACTIVE", inventorySource: "LOCAL" } });
     const full = await prisma.tourDeparture.create({ data: { tourId: shuttle.id, date: dateOnly(day), departureTime: timeOfDay("14:00"), capacityTotal: 24, capacityBooked: 20, price: 10800, status: "ACTIVE", inventorySource: "LOCAL" } });
     const p14 = await prisma.tourDeparture.create({ data: { tourId: priv.id, date: dateOnly(day), departureTime: timeOfDay("08:00"), capacityTotal: 14, price: 175000, status: "ACTIVE", inventorySource: "LOCAL" } });
-    await alignCapacity();
+    await alignCapacity({ from: "2036-07-07", to: "2036-07-07" });
     const seats = async (id: string) => (await prisma.tourDeparture.findUniqueOrThrow({ where: { id } })).capacityTotal;
     expect(await seats(s24.id)).toBe(14);
     expect(await seats(full.id)).toBe(24); // 20 already sold: left for staff
@@ -163,7 +163,7 @@ describe("the deploy's clean-up (seed-departures)", () => {
     const big = await make(240, 5);
     const sold = await make(240, 18);
     const small = await make(12, 0);
-    await capSharedDepartures();
+    await capSharedDepartures({ from: "2036-07-08", to: "2036-07-08" });
     const seats = async (id: string) => (await prisma.tourDeparture.findUniqueOrThrow({ where: { id } })).capacityTotal;
     expect(await seats(big.id)).toBe(15);
     expect(await seats(sold.id)).toBe(240); // 18 already sold: left for staff
