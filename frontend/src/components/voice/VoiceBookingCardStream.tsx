@@ -11,9 +11,16 @@ import { moneyExact } from "@/lib/pricing";
 import { ArrowRight, Calendar, Car, CheckCircle2, Clock, MapPin, ShieldCheck, Ticket } from "lucide-react";
 import { ConciergeSeatMap, type SeatInfo } from "./ConciergeSeatMap";
 import { ConciergeCheckout } from "./ConciergeCheckout";
+import { ConciergeTourCards, ConciergeTourDetail, type TourCardData, type TourDetailData } from "./ConciergeTourCards";
 
 export interface VoiceCardData {
-  type?: "availability" | "pickups" | "hold" | "confirmed" | "tracking" | "tour" | "seat_map";
+  type?: "availability" | "pickups" | "hold" | "confirmed" | "tracking" | "tour" | "tours" | "choices" | "seat_map";
+  /** "tours": recommended tours as cards. */
+  tours?: TourCardData[];
+  /** "tour": one tour opened from the knowledgebase. */
+  tourDetail?: TourDetailData;
+  /** "choices": quick answers to the concierge's question. */
+  options?: string[];
   vehicleType?: "sprinter_12" | "suv_7";
   vehicleName?: string;
   capacity?: number;
@@ -77,6 +84,8 @@ interface VoiceBookingCardStreamProps {
   onSelectSeats?: (seats: string[]) => void;
   /** A booking made in the chat was confirmed. */
   onBooked?: (bookingReference: string) => void;
+  /** Sends a message as the guest (a tap on a tour card or a quick answer). */
+  onAsk?: (text: string) => void;
 }
 
 /** The in-chat checkout's starting point from a concierge hold's checkout link (/book?…). */
@@ -103,7 +112,7 @@ const shortDate = (d?: string) => {
   return Number.isNaN(parsed.getTime()) ? d : parsed.toLocaleDateString("en-CA", { weekday: "short", month: "short", day: "numeric" });
 };
 
-export function VoiceBookingCardStream({ data, checkoutUrl, hasSafetyRefusal, onSelectPickup, onSelectSeats, onBooked }: VoiceBookingCardStreamProps) {
+export function VoiceBookingCardStream({ data, checkoutUrl, hasSafetyRefusal, onSelectPickup, onSelectSeats, onBooked, onAsk }: VoiceBookingCardStreamProps) {
   // "Choose" on a departure opens the checkout right here in the chat (owner, 2026-11-11: no /book page).
   const [chosen, setChosen] = useState<NonNullable<VoiceCardData["departures"]>[number] | null>(null);
   const held = holdFromCheckoutUrl(checkoutUrl);
@@ -121,6 +130,35 @@ export function VoiceBookingCardStream({ data, checkoutUrl, hasSafetyRefusal, on
             The concierge never takes card numbers. Payment always happens on our secure checkout page.
           </p>
         </div>
+      )}
+
+      {data?.type === "choices" && data.options && data.options.length > 0 && (
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Quick answers">
+          {data.options.map((o) => (
+            <button
+              key={o}
+              type="button"
+              onClick={() => onAsk?.(o)}
+              className="inline-flex h-10 items-center rounded-full border border-obsidian-900/15 bg-white px-4 text-sm text-obsidian-900 hover:border-ocean-600/50 hover:bg-ocean-50"
+            >
+              {o}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {data?.type === "tours" && data.tours && data.tours.length > 0 && (
+        <ConciergeTourCards tours={data.tours} onOpen={(t) => onAsk?.(`Show me the tour: ${t.name}`)} />
+      )}
+
+      {data?.type === "tour" && data.tourDetail && (
+        <ConciergeTourDetail
+          tour={data.tourDetail}
+          onAsk={(text) => onAsk?.(text)}
+          onBook={(d) =>
+            setChosen({ id: d.id, title: data.tourDetail!.name, date: d.date, departureTime: d.time, price: d.price, currency: "CAD", availableSeats: d.seats })
+          }
+        />
       )}
 
       {data?.type === "availability" && data.departures && data.departures.length > 0 && (

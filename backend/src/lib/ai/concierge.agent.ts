@@ -27,6 +27,7 @@ import { conciergeLanguage } from "@/lib/ai/languages";
 import { activityTicketsVisible } from "@/modules/tours/product-map";
 import { getMasterKnowledgeBase } from "./knowledge.sync";
 import { websiteName } from "./concierge.catalog";
+import { recommendTours, tourDetail } from "./knowledge/catalog-live";
 import { extractAndEvolvePersona, formatPersonaContextForPrompt, type UserPersona, type UserKnowledgeGraph } from "./user.persona";
 
 export const CARD_NUMBER = /\b(?:\d[ -]*?){13,19}\b/;
@@ -129,9 +130,32 @@ const CUSTOMER_TOOLS: Anthropic.Tool[] = [
     },
   },
   {
+    name: "recommend_tours",
+    description:
+      "Recommend tours that fit the guest. Pass everything the guest told you. Shows up to 3 matching tours as clickable cards (photo, shared/private, overview, duration, live price, next departures with room). Returns only tours that run on the date with room for the party; reasonsLeftOut says why others don't fit.",
+    input_schema: {
+      type: "object",
+      properties: {
+        date: { type: "string", description: "Travel date YYYY-MM-DD (first day), if known" },
+        guests: { type: "integer", minimum: 1, maximum: 14 },
+        style: { type: "string", enum: ["shared", "private", "shuttle", "any"] },
+        places: { type: "array", items: { type: "string" }, description: "Places they want, e.g. Moraine Lake, Jasper, Icefields Parkway" },
+        days: { type: "integer", minimum: 1, maximum: 4, description: "1 for a day trip, 2-4 for a multi-day journey" },
+        budgetPerGuest: { type: "number", description: "Budget per guest in CAD, if given" },
+        premium: { type: "boolean", description: "true = premium/private experience, false = economical" },
+        interests: { type: "string", description: "Other wishes in a few words (sunrise, photography, glacier, winter, families...)" },
+      },
+    },
+  },
+  {
     name: "get_tour_details",
-    description: "Full details of one tour: description, inclusions, exclusions, highlights, what to bring.",
-    input_schema: { type: "object", properties: { slug: { type: "string" } }, required: ["slug"] },
+    description:
+      "One tour from the website knowledgebase, shown to the guest as a card: overview, stops, inclusions, exclusions, pickup, group size, season, live price and next departures. Use when the guest picks or asks about a tour.",
+    input_schema: {
+      type: "object",
+      properties: { slug: { type: "string" }, date: { type: "string", description: "YYYY-MM-DD if known" }, guests: { type: "integer" } },
+      required: ["slug"],
+    },
   },
   {
     name: "get_available_dates",
@@ -235,6 +259,7 @@ const STAFF_MAP: Record<string, string> = {
 };
 
 const STATUS: Record<string, string> = {
+  recommend_tours: "Finding tours that fit…",
   search_tours: "Searching tours…",
   get_tour_details: "Reading tour details…",
   get_available_dates: "Checking dates…",
@@ -254,10 +279,44 @@ export async function runConciergeTool(name: string, input: Record<string, any>,
   const email = String(input.customerEmail ?? "").trim().toLowerCase();
 
   switch (name) {
-    case "search_tours":
-    case "get_tour_details": {
-      const r = await executeAiTool(name === "search_tours" ? "searchTours" : "getTourDetails", name === "search_tours" ? input : { tourSlugOrBokunId: input.slug }, ctx);
+    case "search_tours": {
+      const r = await executeAiTool("searchTours", input, ctx);
       return { result: r.success ? r.data : { error: r.error } };
+    }
+    case "recommend_tours": {
+      const { cards, reasonsLeftOut } = await recommendTours({
+        date: typeof input.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(input.date) ? input.date : undefined,
+        guests: Number(input.guests) || undefined,
+        style: input.style,
+        places: Array.isArray(input.places) ? input.places.map(String) : undefined,
+        days: Number(input.days) || undefined,
+        budgetPerGuest: Number(input.budgetPerGuest) || undefined,
+        premium: typeof input.premium === "boolean" ? input.premium : undefined,
+        interests: typeof input.interests === "string" ? input.interests : undefined,
+      });
+      return {
+        result: cards.length
+          ? { shownToGuestAsCards: cards.map((c) => ({ slug: c.slug, name: c.name, type: c.type, days: c.days, price: c.price, nextDepartures: c.departures.map((d) => `${d.date} ${d.time} (departureId ${d.id})`) })), reasonsLeftOut }
+          : { message: "No tour fits all of that. Explain why from reasonsLeftOut and offer the closest change (another date, shared vs private).", reasonsLeftOut },
+        card: cards.length ? { data: { type: "tours", tours: cards } } : undefined,
+        memory: cards.length ? `Recommended: ${cards.map((c) => `${c.name} (slug ${c.slug})`).join("; ")}` : undefined,
+      };
+    }
+    case "get_tour_details": {
+      const detail = await tourDetail(String(input.slug ?? ""), {
+        date: typeof input.date === "string" ? input.date : undefined,
+        guests: Number(input.guests) || undefined,
+      });
+      if (!detail) {
+        // Not a website product (e.g. an activity ticket): fall back to the catalog row.
+        const r = await executeAiTool("getTourDetails", { tourSlugOrBokunId: input.slug }, ctx);
+        return { result: r.success && r.data ? r.data : { error: "No such tour on the website. Use a slug from the knowledgebase." } };
+      }
+      return {
+        result: { ...detail, image: undefined, shownToGuestAsCard: true },
+        card: { data: { type: "tour", tourDetail: detail } },
+        memory: `Guest looked at ${detail.name} (slug ${detail.slug})${detail.departures.length ? `; next departures ${detail.departures.map((d) => `${d.date} ${d.time} departureId ${d.id}`).join(", ")}` : ""}`,
+      };
     }
     case "get_available_dates":
     case "check_availability": {
