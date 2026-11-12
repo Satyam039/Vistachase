@@ -5,12 +5,14 @@
 //   - With a live chat service connected (NEXT_PUBLIC_CRISP_WEBSITE_ID, read at build time), the
 //     Crisp chat opens with the guest's details and the concierge conversation as its first
 //     message, so an agent answers in real time.
-//   - Without one, the conversation goes to POST /api/concierge/handoff: saved as an enquiry
-//     (Admin → Messages) and emailed to the support inbox, reply-to the guest. The guest is told
-//     the team replies by email, and is given the phone line for anything urgent.
+//   - Without one, it opens our own live chat (POST /api/concierge/live-chat, see
+//     LiveChatWindow): staff are alerted on their phones and in Admin → Live chat, and answer here
+//     in real time. The chat is also saved as an enquiry, so the team replies by email if they
+//     miss it. The chat id and token stay in sessionStorage, so a reload resumes it.
 
-import { useState } from "react";
-import { CheckCircle2, Headset, Phone, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Headset, X } from "lucide-react";
+import { LiveChatWindow, clearStoredChat, readStoredChat, storeChat, type StoredChat } from "./LiveChatWindow";
 
 export interface TranscriptLine {
   role: "user" | "assistant";
@@ -48,8 +50,14 @@ export function LiveAgentHandoff({ transcript, language, onClose }: { transcript
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [note, setNote] = useState("");
-  const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [state, setState] = useState<"idle" | "sending" | "error">("idle");
   const [error, setError] = useState("");
+  const [chat, setChat] = useState<StoredChat | null>(null);
+
+  // Resume a live chat started earlier in this tab.
+  useEffect(() => {
+    if (!CRISP_ID) setChat(readStoredChat());
+  }, []);
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -61,7 +69,7 @@ export function LiveAgentHandoff({ transcript, language, onClose }: { transcript
     setState("sending");
     setError("");
     try {
-      const res = await fetch("/api/concierge/handoff", {
+      const res = await fetch("/api/concierge/live-chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -75,9 +83,12 @@ export function LiveAgentHandoff({ transcript, language, onClose }: { transcript
           website: (new FormData(e.currentTarget).get("website") as string) || undefined,
         }),
       });
-      const json = (await res.json().catch(() => ({}))) as { error?: string };
-      if (!res.ok) throw new Error(json.error || "We couldn't send that just now.");
-      setState("sent");
+      const json = (await res.json().catch(() => ({}))) as { error?: string; id?: string; token?: string };
+      if (!res.ok || !json.id || !json.token) throw new Error(json.error || "We couldn't start the chat just now.");
+      const started = { id: json.id, token: json.token, email: email.trim() };
+      storeChat(started);
+      setChat(started);
+      setState("idle");
     } catch (err) {
       setError(err instanceof Error ? err.message : "We couldn't send that just now.");
       setState("error");
@@ -96,30 +107,22 @@ export function LiveAgentHandoff({ transcript, language, onClose }: { transcript
         </button>
       </div>
 
+      {chat ? (
+        <LiveChatWindow
+          chat={chat}
+          onStartOver={() => {
+            clearStoredChat();
+            setChat(null);
+          }}
+        />
+      ) : (
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5">
         <div className="mx-auto w-full max-w-md">
-          {state === "sent" ? (
-            <div className="text-center" role="status">
-              <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-700" aria-hidden="true" />
-              <p className="mt-3 text-lg text-obsidian-900">Sent to our support team</p>
-              <p className="mt-2 text-sm leading-relaxed text-slate-700">
-                They have this conversation and will reply to <span className="text-obsidian-900">{email}</span>. For anything urgent, call us.
-              </p>
-              <a href="tel:+18257349456" className="golden-summit-btn mt-5 inline-flex h-11 items-center gap-2 rounded-full px-5 text-sm">
-                <Phone className="h-4 w-4" aria-hidden="true" />
-                +1 (825) 734-9456
-              </a>
-              <p className="mt-2 text-xs text-slate-600">6 a.m. – 9 p.m. Mountain Time</p>
-              <button type="button" onClick={onClose} className="mt-6 block w-full text-sm text-ocean-700 underline underline-offset-4">
-                Back to the concierge
-              </button>
-            </div>
-          ) : (
             <form onSubmit={submit} className="space-y-4">
               <p className="text-sm leading-relaxed text-slate-700">
                 {CRISP_ID
                   ? "We'll open a chat with our support team and share your conversation with the concierge."
-                  : "We'll send your conversation with the concierge to our support team. They reply by email; for anything urgent, call +1 (825) 734-9456 (6 a.m. – 9 p.m. Mountain Time)."}
+                  : "Chat with our support team here. They'll see your conversation with the concierge and reply in this window (6 a.m. – 9 p.m. Mountain Time). If they miss you, they'll reply by email."}
               </p>
               <label className="block">
                 <span className="mb-1 block text-sm text-slate-700">Your name</span>
@@ -158,12 +161,12 @@ export function LiveAgentHandoff({ transcript, language, onClose }: { transcript
               )}
               <button type="submit" disabled={state === "sending"} className="golden-summit-btn inline-flex h-11 w-full items-center justify-center gap-2 rounded-full text-sm disabled:opacity-70">
                 <Headset className="h-4 w-4" aria-hidden="true" />
-                {state === "sending" ? "Sending…" : CRISP_ID ? "Start live chat" : "Send to support"}
+                {state === "sending" ? "Connecting…" : "Start live chat"}
               </button>
             </form>
-          )}
         </div>
       </div>
+      )}
     </div>
   );
 }

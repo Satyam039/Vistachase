@@ -20,6 +20,7 @@ import { listFlags, markRefunded, OFFLINE_METHODS, quickBook, recordPayment, res
 import { approveBooking, approveCancellation, declineCancellation, listRequests } from "@/modules/admin/booking-requests";
 import { createDepartures, departureProducts, listDepartures, setDepartureStatus, updateDeparture } from "@/modules/admin/departure-admin";
 import { createStop, listStops, updateStop } from "@/modules/admin/pickup-admin";
+import { LiveChatError, staffCloseLiveChat, staffGetLiveChat, staffListLiveChats, staffLiveChatPending, staffSendLiveChat } from "@/modules/support/live-chat";
 import { createPromo, deletePromo, listPromos, updatePromo } from "@/modules/admin/promo-admin";
 import { sendConfirmationEmail } from "@/modules/bookings/confirmation-email";
 import { linkTripBookings, tripOf, tripSummary } from "@/modules/bookings/trip";
@@ -194,6 +195,56 @@ router.post("/departures/inventory", requireStaff(["ADMIN", "OPERATOR"]), async 
 });
 
 // Enquiry inbox
+// --- Live chat with guests (modules/support/live-chat.ts). Staff screens poll these.
+const liveChatFail = (res: Response, next: NextFunction, e: unknown) =>
+  e instanceof LiveChatError ? res.status(e.status).json({ success: false, error: e.message }) : next(e);
+
+router.get("/live-chats", async (_req, res, next) => {
+  try {
+    res.json({ success: true, ...(await staffListLiveChats()) });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.get("/live-chats/pending", async (_req, res, next) => {
+  try {
+    res.json({ success: true, ...(await staffLiveChatPending()) });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.get("/live-chats/:id", async (req, res, next) => {
+  try {
+    res.json({ success: true, chat: await staffGetLiveChat(String(req.params.id)) });
+  } catch (e) {
+    liveChatFail(res, next, e);
+  }
+});
+
+router.post("/live-chats/:id/messages", async (req, res, next) => {
+  const body = parseOr400(z.object({ body: z.string().trim().min(1).max(2000) }), req.body, res);
+  if (!body) return;
+  try {
+    const { staff } = req as unknown as StaffRequest;
+    res.status(201).json({ success: true, chat: await staffSendLiveChat(String(req.params.id), staff, body.body) });
+  } catch (e) {
+    liveChatFail(res, next, e);
+  }
+});
+
+router.post("/live-chats/:id/close", async (req, res, next) => {
+  try {
+    const { staff } = req as unknown as StaffRequest;
+    const chat = await staffCloseLiveChat(String(req.params.id), staff);
+    await audit(req, "CLOSE_LIVE_CHAT", "LiveChat", chat.id, {});
+    res.json({ success: true, chat });
+  } catch (e) {
+    liveChatFail(res, next, e);
+  }
+});
+
 router.get("/enquiries", async (req, res, next) => {
   try {
     const q = parseOr400(z.object({ status: z.enum(["NEW", "REPLIED", "CLOSED"]).optional() }), req.query, res);

@@ -670,6 +670,7 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
                         checkoutUrl={m.checkoutUrl}
                         hasSafetyRefusal={m.hasSafetyRefusal}
                         onSelectPickup={(name) => send(`Pickup at ${name}`)}
+                        onAsk={(text) => send(text)}
                         onSelectSeats={(seats) => send(`I would like to reserve seats: ${seats.join(", ")}`)}
                       />
                     </div>

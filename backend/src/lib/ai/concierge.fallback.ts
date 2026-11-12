@@ -18,9 +18,13 @@ import type { ToolExecutionContext } from "@/lib/ai/ai.tools";
 import { todayInMountainTime } from "@/lib/utils/time";
 import { conciergeTours } from "@/modules/tours/product-map";
 import { CONTACT, knowledgeAnswer } from "@/lib/ai/concierge.knowledge";
+import { WEBSITE_CATALOG } from "@/lib/ai/knowledge/website-catalog";
+import type { Preferences } from "@/lib/ai/knowledge/catalog-live";
+
+type Prefs = Preferences & { dateLabel?: string };
 
 type Topic = "price" | "dates" | "details" | "pickup" | "lookup" | "track";
-type State = SessionState & { topic?: Topic; englishNotice?: boolean };
+type State = SessionState & { topic?: Topic; englishNotice?: boolean; consult?: Prefs & { asked?: "date" | "guests" | "style" }; trip?: { date?: string; guests?: number } };
 type Reply = { message: string; data?: Record<string, unknown>; checkoutUrl?: string; hasSafetyRefusal?: boolean };
 
 const REFERENCE = /\bVC-\d{4}-[A-Z0-9]{4,}\b/i;
@@ -204,6 +208,119 @@ async function booking(name: "lookup_booking" | "track_vehicle", reference: stri
   return { message: lines.join("\n"), data: out.card?.data };
 }
 
+
+// ---------------------------------------------------------------------------
+// Helping a guest choose (owner, 12 November 2026): ask what matters, one question at a time,
+// then show only tours that fit, as cards.
+// ---------------------------------------------------------------------------
+
+const FULL_MONTHS = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+const NUMBER_WORDS: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
+
+/** What the guest said about their trip in this message (only what's there). */
+export function preferencesIn(text: string, asked?: string, today = todayInMountainTime()): Prefs {
+  const lower = text.toLowerCase();
+  const out: Prefs = {};
+  const date = mentionedDate(text, today);
+  if (date) {
+    out.date = date;
+    out.dateLabel = date;
+  } else {
+    const m = lower.match(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\b/);
+    // "may" alone is too often the verb: only as a month after "in"/"of" or with a year.
+    if (m && (m[1] !== "may" || /\b(in|of|during|early|late|mid)\s+may\b|\bmay\s+20\d\d\b/.test(lower))) {
+      const month = MONTHS.indexOf(m[1]) + 1;
+      let year = Number(text.match(/\b(20\d\d)\b/)?.[1] ?? today.slice(0, 4));
+      const thisMonth = Number(today.slice(5, 7));
+      if (!text.match(/\b20\d\d\b/) && month < thisMonth) year += 1;
+      const first = `${year}-${String(month).padStart(2, "0")}-01`;
+      out.date = first < today ? today : first;
+      out.windowDays = 31;
+      out.dateLabel = `${FULL_MONTHS[month - 1][0].toUpperCase()}${FULL_MONTHS[month - 1].slice(1)} ${year}`;
+    }
+  }
+  const n = lower.match(/\b(\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten)\s*(people|persons?|guests?|adults?|pax|of us|travell?ers|friends|kids|children)\b/) ?? lower.match(/\bfamily of (\d{1,2}|three|four|five|six)\b/) ?? lower.match(/\bgroup of (\d{1,2})\b/);
+  if (n) out.guests = Number(n[1]) || NUMBER_WORDS[n[1]];
+  else if (/\b(couple|two of us|me and my (wife|husband|partner|girlfriend|boyfriend))\b/.test(lower)) out.guests = 2;
+  else if (/\b(solo|just me|alone|myself|1 person)\b/.test(lower)) out.guests = 1;
+  else if (asked === "guests" && /^\s*\d{1,2}\s*\+?\s*$/.test(text)) out.guests = Number(text.trim().replace("+", ""));
+  if (/\bprivate\b|\bour own\b|\bjust us\b/.test(lower)) out.style = "private";
+  else if (/\bshared\b|\bsmall[- ]group\b|\bgroup tour\b/.test(lower)) out.style = "shared";
+  else if (/\bshuttles?\b/.test(lower)) out.style = "shuttle";
+  else if (asked === "style" && /\b(any|either|not sure|all|show me|whatever|both|don'?t know)\b/.test(lower)) out.style = "any";
+  const d = lower.match(/\b(\d|two|three|four)[- ]days?\b/);
+  if (d) out.days = Number(d[1]) || NUMBER_WORDS[d[1]];
+  else if (/\b(day trip|one day|single day|a day)\b/.test(lower)) out.days = 1;
+  const places = ["moraine", "lake louise", "jasper", "maligne", "icefield", "glacier", "yoho", "emerald", "peyto", "johnston", "abraham", "sunrise", "banff"].filter((w) => lower.includes(w));
+  if (places.length) out.places = places;
+  if (/\b(luxury|premium|vip|exclusive)\b/.test(lower)) out.premium = true;
+  else if (/\b(cheap\w*|budget|economical|affordable|low cost|lowest)\b/.test(lower)) out.premium = false;
+  const budget = lower.match(/\$\s?(\d{2,5})|\b(\d{2,5})\s*(?:cad|dollars|\$)/);
+  if (budget && /budget|per (person|guest)|each|under|max|up to/.test(lower)) out.budgetPerGuest = Number(budget[1] ?? budget[2]);
+  const interests = ["sunrise", "photography", "winter", "snow", "hiking", "wildlife", "families", "kids", "glacier", "lakes"].filter((w) => lower.includes(w));
+  if (interests.length) out.interests = interests.join(" ");
+  return out;
+}
+
+const CONSULT_START = /\b(recommend\w*|suggest\w*|which (tour|one|trip)|what (should|can|could) (we|i) (do|book|see)|help (me |us )?(choose|pick|plan|decide)|plan(ning)? (a|my|our) (trip|visit|day)|best (tour|option|trip)|options|things to do|what do you (offer|have)|what tours|which tours|looking for a tour|want (a|to book a) tour)\b/;
+
+const STYLE_CHOICES = ["Shared small-group tour", "Private tour", "Lake shuttle", "Show me all"];
+
+/** The next question, or the recommendation once date, guests and style are known. */
+async function consult(prefs: State["consult"] & object, state: State, ctx: ToolExecutionContext): Promise<Reply> {
+  if (!prefs.date) {
+    prefs.asked = "date";
+    return { message: "Happy to help you choose. When are you travelling? A date or just the month is fine." };
+  }
+  if (!prefs.guests) {
+    prefs.asked = "guests";
+    return { message: "How many people are travelling, including children?", data: { type: "choices", options: ["1 guest", "2 guests", "4 guests", "6 guests"] } };
+  }
+  if (!prefs.style) {
+    prefs.asked = "style";
+    return {
+      message: "Would you like a shared small-group tour, a private tour with your own guide, or a lake shuttle to Moraine Lake and Lake Louise?",
+      data: { type: "choices", options: STYLE_CHOICES },
+    };
+  }
+  const out = await runConciergeTool("recommend_tours", { ...prefs, style: prefs.style }, ctx);
+  const result = out.result as { shownToGuestAsCards?: { name: string }[]; reasonsLeftOut?: string[] };
+  state.consult = undefined;
+  state.trip = { date: prefs.date, guests: prefs.guests }; // kept for the tour the guest opens next
+  const when = prefs.dateLabel ?? prefs.date;
+  if (!result.shownToGuestAsCards?.length) {
+    const why = result.reasonsLeftOut?.slice(0, 2).join("; ");
+    return { message: `Nothing fits all of that for ${when}${why ? ` (${why})` : ""}. Try another date, or a different kind of tour, and I'll check again.` };
+  }
+  return {
+    message: `${result.shownToGuestAsCards.length === 1 ? "This one fits" : "These fit"} ${when} for ${prefs.guests} ${prefs.guests === 1 ? "guest" : "guests"}. Tap a tour to see its details and dates.`,
+    data: out.card?.data,
+  };
+}
+
+/** "Show me the tour: Banff & Yoho Discovery" (a tap on a recommendation card), or a website name. */
+function catalogProductIn(text: string) {
+  const lower = text.toLowerCase().replace(/[–—]/g, "-");
+  const norm = (n: string) => n.toLowerCase().replace(/[–—]/g, "-");
+  return [...WEBSITE_CATALOG].sort((a, b) => b.name.length - a.name.length).find((p) => lower.includes(norm(p.name))) ?? null;
+}
+
+async function catalogTourDetails(slug: string, state: State, ctx: ToolExecutionContext): Promise<Reply> {
+  const trip = state.consult ?? state.trip ?? {};
+  const out = await runConciergeTool("get_tour_details", { slug, date: trip.date, guests: trip.guests }, ctx);
+  const d = out.result as { name?: string; overview?: string; price?: string; duration?: string; bookIn?: string; departures?: unknown[] };
+  if (!d?.name) return { message: `I couldn't open that tour. ${CONTACT}.` };
+  state.tourSlug = slug;
+  state.tourTitle = d.name;
+  const next =
+    d.bookIn === "page"
+      ? "It's booked on its own page, linked on the card."
+      : d.departures?.length
+        ? 'Tap "Book" on a date below to book it here, or tell me another date.'
+        : "Tell me a date and I'll check seats.";
+  return { message: `${d.name}: ${firstSentence(d.overview ?? "")} ${d.duration}, ${d.price}. ${next}`, data: out.card?.data };
+}
+
 const POLICY =
   "Shared tours and shuttles: full refund if you cancel at least 24 hours before departure. Private single-day tours: full refund at least 72 hours before. Private packages of two or more days: 80% refund at least 72 hours before the first tour day (20% of the total is non-refundable). After the deadline, and for late arrivals or no-shows, there's no refund. Refunds take 5–10 business days, and activity tickets follow the provider's rules. You can request a cancellation from My trips (/account/trips). Full policy: /privacy-policy-vista-chase.";
 
@@ -222,7 +339,7 @@ export async function answerWithoutModel(messages: ChatMessage[], previous: Stat
       return { message: "Please don't share card details in chat. I never take payment here: you pay on our secure checkout page.", hasSafetyRefusal: true };
     }
     if (/\b(human|real person|live agent|live chat|an agent|representative|(talk|speak) to (a person|someone|staff))\b/.test(lower)) {
-      return { message: `Tap "Chat with a live agent" below and this conversation goes to our support team, or ${CONTACT}.`, data: { type: "handoff" } };
+      return { message: `Tap "Chat with a live agent" below to chat with our support team here, or ${CONTACT}.`, data: { type: "handoff" } };
     }
 
     // A departure the guest names: show it with its in-chat "Book" button.
@@ -256,6 +373,22 @@ export async function answerWithoutModel(messages: ChatMessage[], previous: Stat
     }
 
     if (/\b(cancel\w*|refund\w*|money back|reschedul\w*|change my date)\b/.test(lower)) return { message: POLICY };
+
+    // A tap on a recommendation card, or a tour named as the website names it.
+    const product = /^show me the tour:/i.test(text) || !state.consult ? catalogProductIn(text) : null;
+    if (product && (/^show me the tour:/i.test(text) || /\b(tell me|about|details?|more|what is|show)\b/.test(lower))) {
+      state.topic = "details";
+      return catalogTourDetails(product.slug, state, ctx);
+    }
+
+    // Helping the guest choose: one question at a time, then matching tours as cards.
+    const said = preferencesIn(text, state.consult?.asked);
+    const saidSomething = Object.keys(said).length > 0;
+    if (CONSULT_START.test(lower) || (state.consult && saidSomething)) {
+      state.consult = { ...(state.consult ?? {}), ...said };
+      return consult(state.consult, state, ctx);
+    }
+    state.consult = undefined;
 
     const tours = await catalog();
     const named = matchTour(text, tours);
@@ -323,9 +456,10 @@ export async function answerWithoutModel(messages: ChatMessage[], previous: Stat
     if (/^(hi|hello|hey|hiya|good (morning|afternoon|evening)|namaste|bonjour|hola)\b/.test(lower) && text.length < 40) {
       return { message: `Hello! ${CAN_DO} What are you planning?` };
     }
-    if (/\b(tours?|things to do|recommend|suggest|options|what do you (offer|have))\b/.test(lower)) {
-      const list = tours.filter((t) => t.category !== "TICKET").slice(0, 8);
-      return { message: `Here's what we run:\n${list.map((t) => `• ${t.title}${t.title.includes("(") ? "" : ` (${t.category.toLowerCase()})`}: ${priceLine(t)}`).join("\n")}\n\nAsk about any of them for details or dates.` };
+    if (/\btours?\b/.test(lower)) {
+      state.consult = {};
+      const first = await consult(state.consult, state, ctx);
+      return { ...first, message: `We run small-group shared tours, private tours, lake shuttles and multi-day journeys. ${first.message.replace(/^Happy to help you choose\. /, "")}` };
     }
     if (known) return { message: known.answer };
     return {
