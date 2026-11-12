@@ -178,6 +178,74 @@ export function withPassengerNames<T extends object>(passengers: T[], customerNa
   }));
 }
 
+/** A booking question Bókun asks (checkout options `questions`, or the product's `bookingQuestions`). */
+export interface BokunQuestion {
+  questionId?: string | number;
+  id?: string | number;
+  label?: string;
+  question?: string;
+  dataType?: string;
+  required?: boolean;
+  selectFromOptions?: boolean;
+  defaultValue?: string | null;
+  answerOptions?: { label?: string; value?: string }[];
+}
+
+type Answer = { questionId: string; values: string[] };
+
+/**
+ * Answers for the product's booking questions (Bókun refuses a booking with a required one
+ * unanswered: "InvalidAnswersException ... MISSING"). Taken from the guest's booking where the
+ * question asks for it (pickup, requests, phone, ...), otherwise Bókun's default, the first option,
+ * or a pointer to the booking note. Optional questions are answered only when we know the answer.
+ */
+export function answerQuestions(questions: BokunQuestion[], input: BokunReservationInput): Answer[] {
+  const answers: Answer[] = [];
+  const guests = input.adults + input.children + input.infants;
+  for (const q of questions) {
+    const id = q.questionId ?? q.id;
+    if (id == null || id === "") continue;
+    const label = `${q.label ?? q.question ?? ""}`.toLowerCase();
+    const type = `${q.dataType ?? ""}`.toUpperCase();
+    const options = (q.answerOptions ?? []).filter((o) => o.value != null && o.value !== "");
+
+    let known: string | undefined;
+    if (/pick.?up|hotel|accommodation|where.*stay|staying/.test(label)) known = input.pickup;
+    else if (/diet|allerg|special|request|comment|note|medical|access/.test(label)) known = input.specialRequests || "None";
+    else if (/phone|mobile|whatsapp/.test(label)) known = input.customerPhone;
+    else if (/e-?mail/.test(label)) known = input.customerEmail;
+    else if (/nationality|country/.test(label)) known = input.country;
+    else if (/\bname\b/.test(label)) known = input.customerName;
+    else if (/how many|number of|guests|people|participants/.test(label)) known = String(guests);
+
+    let value: string | undefined;
+    if (options.length > 0) {
+      const match = known ? options.find((o) => `${o.label ?? ""} ${o.value}`.toLowerCase().includes(known!.toLowerCase())) : undefined;
+      if (match) value = match.value;
+      else if (q.required) value = (q.defaultValue && options.find((o) => o.value === q.defaultValue)?.value) || options[0].value;
+    } else if (known) {
+      value = known;
+    } else if (q.required) {
+      if (/BOOLEAN|CHECKBOX/.test(type)) value = "true";
+      else if (/^DATE/.test(type)) value = input.date;
+      else if (/INT|DOUBLE|NUMBER/.test(type)) value = String(guests);
+      else value = q.defaultValue || `See booking note (vistachase.com ${input.bookingReference})`;
+    }
+    if (value != null && value !== "") answers.push({ questionId: String(id), values: [String(value)] });
+  }
+  return answers;
+}
+
+/** The activity-level and per-passenger questions from Bókun's checkout options response. */
+function optionQuestions(options: unknown): { activity: BokunQuestion[]; passengers: BokunQuestion[][] } {
+  const booking = (options as { questions?: { activityBookings?: { questions?: BokunQuestion[]; passengers?: { questions?: BokunQuestion[] }[] }[] } } | null)
+    ?.questions?.activityBookings?.[0];
+  return {
+    activity: Array.isArray(booking?.questions) ? booking!.questions! : [],
+    passengers: Array.isArray(booking?.passengers) ? booking!.passengers!.map((p) => (Array.isArray(p?.questions) ? p.questions! : [])) : [],
+  };
+}
+
 /**
  * Reserves the booking in Bókun for payment taken by us; returns Bókun's confirmation code.
  * `beforeSubmit` runs just before the one call that creates the reservation, so a caller can
@@ -194,7 +262,7 @@ export async function reserveInBokun(
     // One day either side: a same-day range (start = end) can come back empty from Bókun, and
     // Bókun's day stamps can sit a few hours off UTC midnight. findSlot keeps only the asked date.
     client.getAvailabilities(activityId, shiftDay(input.date, -1), shiftDay(input.date, 1)) as Promise<Availability[] | null>,
-    client.fetch("GET", `/activity.json/${activityId}?lang=EN&currency=CAD`) as Promise<{ pricingCategories?: BokunCategory[] } | null>,
+    client.fetch("GET", `/activity.json/${activityId}?lang=EN&currency=CAD`) as Promise<{ pricingCategories?: BokunCategory[]; bookingQuestions?: BokunQuestion[] } | null>,
   ]);
 
   const slot = findSlot(Array.isArray(list) ? list : [], input.date, input.time, input.startTimeIds);
@@ -244,6 +312,20 @@ export async function reserveInBokun(
   } | null;
   const option = options?.options?.find((o) => (o.paymentMethods?.allowedMethods ?? o.allowedMethods ?? []).includes(RESERVE));
   if (!option) throw new BokunUnavailableError("Bókun offers no reserve-for-external-payment checkout for this booking (check the API key's booking channel).");
+
+  // Booking questions the product asks: answered on the activity booking and on each passenger.
+  const asked = optionQuestions(options);
+  const activityQuestions = asked.activity.length > 0 ? asked.activity : Array.isArray(detail?.bookingQuestions) ? detail!.bookingQuestions! : [];
+  const activityAnswers = answerQuestions(activityQuestions, input);
+  const booking0 = directBooking.activityBookings[0] as Record<string, unknown>;
+  if (activityAnswers.length > 0) {
+    booking0.answers = activityAnswers;
+    booking0.questions = activityAnswers;
+  }
+  booking0.passengers = (booking0.passengers as Record<string, unknown>[]).map((p, i) => {
+    const answers = answerQuestions(asked.passengers[i] ?? [], input);
+    return answers.length > 0 ? { ...p, answers, questions: answers } : p;
+  });
 
   await beforeSubmit?.();
   const submitted = (await client.fetch("POST", "/checkout.json/submit?currency=CAD", {
