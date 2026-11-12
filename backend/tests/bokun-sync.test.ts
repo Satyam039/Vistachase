@@ -5,7 +5,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import prisma from "@/lib/db/prisma";
 import { BokunApiError } from "@/modules/bokun/bokun.client";
-import { buildPassengers, findSlot } from "@/modules/bokun/bokun-booking";
+import { answerQuestions, buildPassengers, findSlot } from "@/modules/bokun/bokun-booking";
 import { setBokunClientForTests, type BokunApi } from "@/modules/bokun/config";
 import { processBokunSyncTasks, queueUpcomingBookings, retryBokunSync, setBokunAutoRunForTests } from "@/modules/bokun/bokun-sync";
 import { syncBokunSeats } from "@/modules/bokun/availability-sync";
@@ -38,6 +38,7 @@ class FakeBokun {
   failAvailability: Error | null = null;
   failSubmit: Error | null = null;
   failCancel: Error | null = null;
+  questions: unknown = undefined;
   codes = 0;
 
   slot(productId: string, date: string, time: string, left: number, booked = 0) {
@@ -54,7 +55,7 @@ class FakeBokun {
       fetch: async (method: string, path: string, body?: any) => {
         this.calls.push({ method, path, body });
         if (path.startsWith("/activity.json/")) return { pricingCategories: [{ id: 767927, title: "Adults" }, { id: 773211, title: "Child (1-13)" }] };
-        if (path.startsWith("/checkout.json/options")) return { options: [{ type: "CUSTOMER_FULL_PAYMENT", paymentMethods: { allowedMethods: ["RESERVE_FOR_EXTERNAL_PAYMENT"] } }] };
+        if (path.startsWith("/checkout.json/options")) return { options: [{ type: "CUSTOMER_FULL_PAYMENT", paymentMethods: { allowedMethods: ["RESERVE_FOR_EXTERNAL_PAYMENT"] } }], questions: this.questions };
         if (path.startsWith("/checkout.json/submit")) {
           if (this.failSubmit) throw this.failSubmit;
           return { booking: { confirmationCode: `VIS-${process.pid}-${++lastCode}` } };
@@ -118,6 +119,33 @@ afterAll(() => {
 });
 
 describe("Bókun booking requests", () => {
+  it("answers the product's booking questions from the booking", () => {
+    const input = {
+      bookingReference: "VC-2026-EBB006F4", productBokunId: "1167962", category: "PRIVATE", date: "2026-11-25", time: "07:00",
+      adults: 4, children: 1, infants: 0, customerName: "Ryan Lim", customerEmail: "r@example.com", customerPhone: "+1 213 278 8225",
+      pickup: "Elk + Avenue Hotel", specialRequests: "Booster seat for an 8yo",
+    };
+    expect(
+      answerQuestions(
+        [
+          { questionId: 1527999, label: "Pickup location / hotel", required: true, dataType: "SHORT_TEXT" },
+          { questionId: 2, label: "Dietary requirements", required: false },
+          { questionId: 3, label: "Tour language", required: true, answerOptions: [{ label: "English", value: "EN" }, { label: "French", value: "FR" }] },
+          { questionId: 4, label: "I accept the terms", required: true, dataType: "CHECKBOX_TOGGLE" },
+          { questionId: 5, label: "Favourite colour", required: true },
+          { questionId: 6, label: "Optional thing", required: false },
+        ],
+        input,
+      ),
+    ).toEqual([
+      { questionId: "1527999", values: ["Elk + Avenue Hotel"] },
+      { questionId: "2", values: ["Booster seat for an 8yo"] },
+      { questionId: "3", values: ["EN"] },
+      { questionId: "4", values: ["true"] },
+      { questionId: "5", values: ["See booking note (vistachase.com VC-2026-EBB006F4)"] },
+    ]);
+  });
+
   it("puts each guest in Bókun's categories and finds the slot by date and start time", () => {
     const { passengers } = buildPassengers({ category: "SHARED", adults: 2, children: 1, infants: 0 }, [
       { id: 1, title: "Adults" },
@@ -160,9 +188,21 @@ describe("website bookings reach Bókun", () => {
     expect(confirm.path).toContain(encodeURIComponent(synced.bokunBookingId!));
     expect(confirm.body.amount).toBe(booking.totalAmount / 100);
 
+    expect(submit.directBooking.activityBookings[0].answers).toBeUndefined();
     // Running again sends nothing twice.
     await run(booking.id);
     expect(bokun.made("/checkout.json/submit")).toHaveLength(1);
+  });
+
+  it("sends answers to the product's required booking questions", async () => {
+    const dep = await departure(sharedTourId, { time: "08:45" });
+    bokun.slot("796650", DAY, "08:45", 10);
+    bokun.questions = { activityBookings: [{ questions: [{ questionId: 1527999, label: "Where should we pick you up?", required: true }], passengers: [] }] };
+    const booking = await book(dep);
+    await run(booking.id);
+    expect((await reload(booking.id)).externalSyncStatus).toBe("SYNCED");
+    const sent = bokun.made("/checkout.json/submit")[0].body.directBooking.activityBookings[0];
+    expect(sent.answers).toEqual([{ questionId: "1527999", values: [expect.any(String)] }]);
   });
 
   it("cancels in Bókun when the booking is cancelled on the website", async () => {
