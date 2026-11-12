@@ -18,6 +18,7 @@ import { BANFF_YOHO, ICEFIELD } from "@/lib/sharedTours";
 import { PRIVATE_FAQS, PRIVATE_OPTIONS } from "@/lib/privateTours";
 import { cancellationSentence } from "@/lib/policy";
 import { activityTicket } from "@/lib/activityTickets";
+import { SHUTTLE_CAPACITY } from "@/lib/shuttleSchedule";
 
 interface DocContent {
   title: string;
@@ -462,8 +463,19 @@ function withCorrections(tour: TourWithAvailability): TourWithAvailability {
   return next;
 }
 
+/** Shuttles take 14 guests a departure (owner, 2026-11-12); older records say 12. */
+function withShuttleCapacity(tour: TourWithAvailability): TourWithAvailability {
+  if (tour.category !== "SHUTTLE") return tour;
+  const text = JSON.stringify({ facts: tour.facts, tabs: tour.tabs, faqs: tour.faqs, highlights: tour.highlights, description: tour.description, summary: tour.summary });
+  const fixed = text
+    .replace(/\bmax(?:imum)?(?: of)? 12 (guests|people)/gi, (_m, w: string) => `Max ${SHUTTLE_CAPACITY} ${w}`)
+    .replace(/\(max 12\)/gi, `(max ${SHUTTLE_CAPACITY})`)
+    .replace(/up to 12 (guests|people)/gi, (_m, w: string) => `up to ${SHUTTLE_CAPACITY} ${w}`);
+  return { ...tour, ...(fixed === text ? {} : JSON.parse(fixed)), maxGroupSize: SHUTTLE_CAPACITY };
+}
+
 export function withDocContent(tour: TourWithAvailability): TourWithAvailability {
-  tour = withCorrections(tour);
+  tour = withShuttleCapacity(withCorrections(tour));
   if (tour.category === "SHARED") {
     tour = {
       ...tour,

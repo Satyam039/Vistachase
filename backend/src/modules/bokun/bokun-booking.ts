@@ -351,22 +351,46 @@ export async function reserveInBokun(
  * mismatch there stops the booking for a person to look at.
  */
 export async function confirmInBokun(client: BokunApi, code: string, reference: string, payment: BokunPayment, options: { testAccount?: boolean } = {}) {
-  const confirm = (amount: number, currency: string) =>
+  // Bókun takes the amount in major units (dollars); never a zero, negative or fractional-cent one.
+  const amount = Number.isFinite(payment.amount) ? Math.round(payment.amount * 100) / 100 : 0;
+  if (amount <= 0) {
+    // Nothing was paid online (a 100% promo code, or staff approved it as "payment still due").
+    // Bókun refuses a payment of 0 ("Payment amount must be positive"), so the reservation is
+    // confirmed with no payment on it: Bókun then shows the booking as unpaid, which is the truth.
+    try {
+      await client.fetch("POST", `/checkout.json/confirm-reserved/${encodeURIComponent(code)}`, {
+        externalBookingReference: reference,
+        sendNotificationToMainContact: false,
+        showPricesInNotification: false,
+      });
+      return;
+    } catch (error) {
+      if (error instanceof BokunApiError && error.status < 500) {
+        throw new BokunApiError(
+          error.status,
+          `Nothing was paid online for this booking (100% promo code, or approved with payment still due), and Bókun won't confirm a reservation without a payment: ${error.message.slice(0, 300)}. Confirm ${code} in Bókun by hand and mark how it was paid.`,
+        );
+      }
+      throw error;
+    }
+  }
+
+  const confirm = (value: number, currency: string) =>
     client.fetch("POST", `/checkout.json/confirm-reserved/${encodeURIComponent(code)}`, {
       externalBookingReference: reference,
-      amount,
+      amount: value,
       currency,
       sendNotificationToMainContact: false,
       showPricesInNotification: false,
       transactionDetails: { transactionDate: new Date().toISOString(), transactionId: payment.transactionId ?? reference },
     });
   try {
-    await confirm(payment.amount, payment.currency);
+    await confirm(amount, payment.currency);
   } catch (error) {
     const bokunCurrency = options.testAccount ? currencyMismatch(error) : null;
     if (!bokunCurrency || bokunCurrency === payment.currency) throw error;
     console.warn(`[bokun] test account books in ${bokunCurrency}, not ${payment.currency}: confirming ${code} in ${bokunCurrency} (test only).`);
-    await confirm(await bokunTotal(client, code, payment.amount), bokunCurrency);
+    await confirm(await bokunTotal(client, code, amount), bokunCurrency);
   }
 }
 

@@ -99,7 +99,7 @@ export const FALLBACK_TOURS: TourWithAvailability[] = ([
       {
         id: "dep-hl-01",
         date: "2026-10-15",
-        departureTime: "08:30",
+        departureTime: "08:00",
         returnTime: "18:30",
         capacityTotal: 12,
         capacityBooked: 4,
@@ -112,7 +112,7 @@ export const FALLBACK_TOURS: TourWithAvailability[] = ([
       {
         id: "dep-hl-02",
         date: "2026-10-16",
-        departureTime: "08:30",
+        departureTime: "08:00",
         returnTime: "18:30",
         capacityTotal: 12,
         capacityBooked: 2,
@@ -237,7 +237,7 @@ export const FALLBACK_TOURS: TourWithAvailability[] = ([
       {
         id: "dep-ij-01",
         date: "2026-10-18",
-        departureTime: "07:30",
+        departureTime: "08:00",
         returnTime: "18:30",
         capacityTotal: 6,
         capacityBooked: 0,
@@ -297,7 +297,7 @@ export const FALLBACK_TOURS: TourWithAvailability[] = ([
       {
         id: "dep-ci-01",
         date: "2026-10-15",
-        departureTime: "07:30",
+        departureTime: "08:00",
         returnTime: "18:30",
         capacityTotal: 12,
         capacityBooked: 2,
@@ -310,7 +310,7 @@ export const FALLBACK_TOURS: TourWithAvailability[] = ([
       {
         id: "dep-ci-02",
         date: "2026-10-16",
-        departureTime: "07:30",
+        departureTime: "08:00",
         returnTime: "18:30",
         capacityTotal: 12,
         capacityBooked: 4,

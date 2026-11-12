@@ -27,7 +27,7 @@ const ALL_SERVICES: Service[] = [
     title: "Shared tours",
     tagline: "Why choose a shared tour? Small groups, big days out.",
     reasons: [
-      "Groups of up to 12, never a crowded bus",
+      "Small groups, never a crowded bus",
       "Doorstep pickup in Banff and Canmore",
       "Parks Canada entry fees included",
       "Local guides who know every lookout",

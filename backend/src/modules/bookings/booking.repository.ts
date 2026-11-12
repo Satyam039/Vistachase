@@ -12,6 +12,7 @@
 // Idempotency: the checkout sends an Idempotency-Key per attempt. A retry with the same key
 // (refresh, double-click, dropped response) returns the booking already made instead of a second.
 
+import { startTimeError } from "@/modules/departures/schedule-rules";
 import crypto from "node:crypto";
 import QRCode from "qrcode";
 import { Prisma, type Booking, type Payment } from "@prisma/client";
@@ -244,7 +245,7 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
         include: { tour: true, shuttleRoute: true },
       });
       if (!departure || departure.status !== "ACTIVE") throw new BookingRefused("Departure not found");
-      const notSellable = inventoryError(departure);
+      const notSellable = inventoryError(departure) ?? startTimeError(departure.tour?.slug, departure.departureTime);
       if (notSellable) throw new BookingRefused(notSellable);
       const closed = options.allowAfterCutoff
         ? getMountainTimeInstant(departure.date, departure.departureTime) <= now && "This departure has already left."

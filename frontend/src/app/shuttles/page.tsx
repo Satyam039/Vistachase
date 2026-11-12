@@ -77,7 +77,7 @@ const SHUTTLE_FAQS = [
   },
   {
     q: "How many guests travel on each shuttle vehicle?",
-    a: "Our lake shuttles carry up to 24 guests per vehicle, subject to the assigned configuration, providing spacious and comfortable transportation for independent lake exploration.",
+    a: "Up to 14 guests per departure, in a comfortable shuttle with time to explore both lakes independently.",
   },
   {
     q: "Can I bring luggage, strollers, or outdoor gear?",
