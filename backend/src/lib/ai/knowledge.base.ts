@@ -143,7 +143,7 @@ Private tours reserve the vehicle and driver-guide exclusively for the booking p
 Guests book and pay for their own hotels. Spirit Island is reached through the optional Maligne Lake cruise; it is not a standard lakeshore viewpoint. Specific attractions and access depend on seasonal operation and official restrictions.
 
 ## Moraine Lake and Lake Louise shuttles
-Shuttles provide transportation and time for independent exploration. Pickup points serve Canmore, Banff and Lake Louise Village. Up to 24 guests can travel per vehicle, subject to the assigned configuration. Seven departure options are offered during June and July, with five during August and September; the selected date’s operating calendar determines available departures.
+Shuttles provide transportation and time for independent exploration. Pickup points serve Canmore, Banff and Lake Louise Village. Up to 14 guests travel per shuttle departure. Seven departure options are offered during June and July, with five during August and September; the selected date’s operating calendar determines available departures.
 Lake visit durations, pickup and return times depend on the selected departure. Guests must follow their booked lake pickup times. A sunrise-labelled service cannot guarantee clear skies or visible sunrise.
 Booking: https://www.vistachase.com/shuttles
 
@@ -274,7 +274,7 @@ When you book a private tour, the vehicle and driver-guide are reserved exclusiv
 Private touring does not mean exclusive use of attractions, trails or lake facilities. Third-party activities may be shared with other visitors. Any required change of vehicle for Moraine Lake access will be explained before booking.
 
 ### 04. How many guests can travel in each vehicle?
-Shared tours are small-group tours in a comfortable 15-passenger van, never a big coach. Our currently listed private tours accommodate up to 13 guests per vehicle, subject to the booked vehicle and luggage requirements. Lake shuttles can carry up to 24 guests per vehicle.
+Shared tours are small-group tours in a comfortable 15-passenger van, never a big coach. Our currently listed private tours accommodate up to 13 guests per vehicle, subject to the booked vehicle and luggage requirements. Lake shuttles take up to 14 guests per departure.
 
 Infants count towards passenger capacity. For larger parties, contact our team before booking so we can confirm suitable arrangements.
 

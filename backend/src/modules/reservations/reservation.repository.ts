@@ -1,3 +1,4 @@
+import { startTimeError } from "@/modules/departures/schedule-rules";
 import crypto from "node:crypto";
 import prisma from "@/lib/db/prisma";
 import { getCacheProvider } from "@/lib/cache/cache.provider";
@@ -45,7 +46,7 @@ export async function createReservationHold(input: CreateHoldInput): Promise<Hol
   return await prisma.$transaction(async (tx) => {
     const departure = await tx.tourDeparture.findUnique({
       where: { id: input.departureId },
-      include: { tour: { select: { category: true, bookingMode: true } } },
+      include: { tour: { select: { slug: true, category: true, bookingMode: true } } },
     });
 
     if (!departure) {
@@ -60,7 +61,7 @@ export async function createReservationHold(input: CreateHoldInput): Promise<Hol
       return { success: false, error: "This experience is booked on request. Please send us an enquiry." };
     }
 
-    const notSellable = inventoryError(departure);
+    const notSellable = inventoryError(departure) ?? startTimeError(departure.tour?.slug, departure.departureTime);
     if (notSellable) {
       return { success: false, error: notSellable };
     }

@@ -6,6 +6,9 @@
 // To change the timetable, edit SHUTTLE_DEPARTURES. Samson Mall (Lake Louise Village) times are
 // not confirmed yet: fill `samson` on each departure when they are and the cards show them.
 
+/** Seats per shuttle departure (owner, 2026-11-12): the booking limit and the number every page shows. */
+export const SHUTTLE_CAPACITY = 14;
+
 export type ShuttlePickup = "canmore" | "banff" | "samson";
 
 export const SHUTTLE_PICKUPS: { id: ShuttlePickup; label: string; short: string }[] = [

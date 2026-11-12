@@ -1,5 +1,6 @@
 // Pure tour helpers shared by server pages and client components (no "use client":
 // server pages can call these directly). TourCard re-exports them for existing imports.
+import { SHUTTLE_CAPACITY } from "@/lib/shuttleSchedule";
 import type { TourWithAvailability } from "@/lib/api/types";
 
 /**
@@ -37,6 +38,7 @@ export function groupLabel(tour: TourWithAvailability) {
     return `Private, up to ${Math.min(13, seats)} guests`;
   }
   if (tour?.category === "SHARED") return "Small group";
+  if (tour?.category === "SHUTTLE") return `Max ${SHUTTLE_CAPACITY} guests`;
   return `Max ${tour?.maxGroupSize ?? 12} guests`;
 }
 

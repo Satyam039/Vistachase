@@ -19,6 +19,7 @@
 
 import prisma from "@/lib/db/prisma";
 import { BOKUN_PRODUCTS } from "@/modules/tours/product-map";
+import { isScheduledStartTime, SHUTTLE_CAPACITY } from "@/modules/departures/schedule-rules";
 import { findSlot, slotDate, type BokunAvailability } from "@/modules/bokun/bokun-booking";
 import { bokunClient, bokunIsTestAccount, bokunSyncDays, type BokunApi } from "@/modules/bokun/config";
 import { dateOnly, formatDateOnly, formatTimeOfDay, todayInMountainTime } from "@/lib/utils/time";
@@ -70,7 +71,10 @@ export async function syncBokunSeats(options: { client?: BokunApi; days?: number
       for (const dep of departures) {
         const date = formatDateOnly(dep.date);
         const key = `${date} ${formatTimeOfDay(dep.departureTime)}`;
-        const slot = findSlot(byDay.get(date) ?? [], date, formatTimeOfDay(dep.departureTime), product.bokunStartTimeIds);
+        // A time the tour no longer runs (schedule-rules.ts) stays off sale even when Bókun has a
+        // no-clock slot that day: that slot would otherwise match every time we hold.
+        const scheduled = isScheduledStartTime(product.slug, dep.departureTime);
+        const slot = scheduled ? findSlot(byDay.get(date) ?? [], date, formatTimeOfDay(dep.departureTime), product.bokunStartTimeIds) : undefined;
         if (!slot) {
           if (result.notInBokun.length < 50) result.notInBokun.push(`${product.slug} ${key}`);
           if (followCalendar && dep.inventorySource === "LOCAL") offSale.push(dep.id);
@@ -136,6 +140,8 @@ async function applySlot(departureId: string, category: string, slot: BokunAvail
       });
       capacityBooked = bokunBooked + (local._sum.totalSeats ?? 0);
       capacityTotal = Math.max(bokunLeft + bokunBooked, capacityBooked + dep.capacityHeld);
+      // Shuttles never offer more than 14 seats a departure, even if Bókun's product allows more.
+      if (category === "SHUTTLE") capacityTotal = Math.max(Math.min(capacityTotal, SHUTTLE_CAPACITY), capacityBooked + dep.capacityHeld);
     }
     if (capacityTotal === dep.capacityTotal && capacityBooked === dep.capacityBooked) return false;
     await tx.tourDeparture.update({ where: { id: departureId }, data: { capacityTotal, capacityBooked } });

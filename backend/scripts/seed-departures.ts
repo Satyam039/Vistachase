@@ -21,8 +21,10 @@
 // and infants (0-5, infantPrice) separately; a priced infant takes a seat. Private tours are priced
 // per vehicle, up to 14 guests. Shuttle departures each have their own fare (`fare` on the slot).
 //
-// Start times follow the live Bókun calendar (owner's choice, 2026-11-04): Banff & Yoho Discovery,
-// Columbia Icefield Adventure and the winter tours at 08:00, the private Icefield tour at 08:00 only.
+// Start times follow the live Bókun calendar (owner's choice, 2026-11-04) and the owner's rule of
+// 2026-11-12: Banff & Yoho Discovery and Columbia Icefield Adventure, shared and private, at 08:00
+// only (src/modules/departures/schedule-rules.ts), the winter tours at 08:00. Older dates at another
+// time that nobody has booked are cancelled on every run (retireOffScheduleDepartures).
 // Dates Bókun doesn't run are taken off sale by the seat sync (src/modules/bokun/availability-sync.ts).
 //
 // The owner confirmed these times, seats and prices as the real schedule on 2026-10-11, so the
@@ -36,7 +38,8 @@
 
 import prisma from "../src/lib/db/prisma";
 import { PRODUCT_MAP } from "../src/modules/tours/product-map";
-import { dateOnly, timeOfDay, todayInMountainTime } from "../src/lib/utils/time";
+import { dateOnly, formatDateOnly, formatTimeOfDay, timeOfDay, todayInMountainTime } from "../src/lib/utils/time";
+import { FIXED_START_TIMES, SHUTTLE_CAPACITY } from "../src/modules/departures/schedule-rules";
 
 /** Cents: adult (or per vehicle), youth 6-15, infant 0-5. null = youth pay the adult fare / infants ride free. */
 interface Fare {
@@ -85,7 +88,7 @@ export const DEFAULT_SCHEDULES: ScheduleConfig[] = [
   },
   {
     slug: "shared-tours-icefields-jasper", // Columbia Icefield Adventure
-    times: ["07:30"],
+    times: ["08:00"],
     capacity: 12,
     price: 22000,
     childPrice: 22000,
@@ -94,7 +97,7 @@ export const DEFAULT_SCHEDULES: ScheduleConfig[] = [
   },
   {
     slug: "banff-private-tour",
-    times: ["07:00", "08:00"],
+    times: ["08:00"],
     capacity: 13,
     price: 124000,
     summer: { price: 175000 },
@@ -133,7 +136,7 @@ export const DEFAULT_SCHEDULES: ScheduleConfig[] = [
       { time: "14:00", returnTime: "20:30", months: JUNE_SEPTEMBER, fare: shuttleFare(10800) },
       { time: "16:45", returnTime: "22:00", months: JUNE_JULY, fare: shuttleFare(10800) },
     ],
-    capacity: 14,
+    capacity: SHUTTLE_CAPACITY,
     ...shuttleFare(10800),
     seasonEndsMonth: 9,
   },
@@ -144,7 +147,7 @@ export const DEFAULT_SCHEDULES: ScheduleConfig[] = [
       { time: "03:15", returnTime: "09:00", months: JUNE_JULY },
       { time: "04:15", returnTime: "10:30", months: JUNE_SEPTEMBER },
     ],
-    capacity: 14,
+    capacity: SHUTTLE_CAPACITY,
     ...shuttleFare(13000),
     seasonEndsMonth: 9,
   },
@@ -280,9 +283,73 @@ async function realignWinterDepartures() {
   }
 }
 
+/** Bookings that keep a departure: anything a guest still holds or has had confirmed. */
+const LIVE_BOOKING_STATUSES = ["CONFIRMED", "PENDING_PAYMENT", "PAID_UNSYNCED", "COMPLETED"] as const;
+
+/**
+ * Cancels today's and future departures of the fixed-time tours (FIXED_START_TIMES) at any other
+ * time, unless one of our bookings or an active hold is on it. Those few are listed so staff can
+ * move the guest; they are never listed or sold again either way (schedule-rules.ts).
+ */
+export async function retireOffScheduleDepartures() {
+  const today = dateOnly(todayInMountainTime());
+  for (const [slug, time] of Object.entries(FIXED_START_TIMES)) {
+    const deps = await prisma.tourDeparture.findMany({
+      where: { tour: { slug }, date: { gte: today }, status: { not: "CANCELLED" }, departureTime: { not: timeOfDay(time) } },
+      select: { id: true, date: true, departureTime: true },
+    });
+    let cancelled = 0;
+    const kept: string[] = [];
+    for (const d of deps) {
+      const [booked, held] = await Promise.all([
+        prisma.booking.count({ where: { tourDepartureId: d.id, status: { in: [...LIVE_BOOKING_STATUSES] } } }),
+        prisma.reservationHold.count({ where: { tourDepartureId: d.id, status: "ACTIVE", expiresAt: { gt: new Date() } } }),
+      ]);
+      if (booked > 0 || held > 0) {
+        kept.push(`${formatDateOnly(d.date)} ${formatTimeOfDay(d.departureTime)}`);
+        continue;
+      }
+      await prisma.tourDeparture.update({ where: { id: d.id }, data: { status: "CANCELLED" } });
+      cancelled++;
+    }
+    console.log(`  ✓ ${slug}: ${cancelled} departures not at ${time} cancelled${kept.length ? `; kept for existing bookings: ${kept.join(", ")}` : ""}`);
+  }
+}
+
+const SHUTTLE_SLUGS = DEFAULT_SCHEDULES.filter((s) => s.seasonEndsMonth).map((s) => s.slug);
+
+/**
+ * Every shuttle takes 14 guests: the products' group size (the guest picker's limit and the
+ * "Max 14 guests" line) and the seats of today's and future departures. A departure is only
+ * lowered to 14 when fewer than 14 seats are already booked or held on it.
+ */
+export async function alignShuttleCapacity() {
+  const today = dateOnly(todayInMountainTime());
+  for (const slug of SHUTTLE_SLUGS) {
+    const tour = await prisma.tour.updateMany({ where: { slug, maxGroupSize: { not: SHUTTLE_CAPACITY } }, data: { maxGroupSize: SHUTTLE_CAPACITY } });
+    const raised = await prisma.tourDeparture.updateMany({
+      where: { tour: { slug }, date: { gte: today }, capacityTotal: { lt: SHUTTLE_CAPACITY } },
+      data: { capacityTotal: SHUTTLE_CAPACITY },
+    });
+    const larger = await prisma.tourDeparture.findMany({
+      where: { tour: { slug }, date: { gte: today }, capacityTotal: { gt: SHUTTLE_CAPACITY } },
+      select: { id: true, capacityBooked: true, capacityHeld: true },
+    });
+    let lowered = 0;
+    for (const d of larger) {
+      if (d.capacityBooked + d.capacityHeld > SHUTTLE_CAPACITY) continue;
+      await prisma.tourDeparture.update({ where: { id: d.id }, data: { capacityTotal: SHUTTLE_CAPACITY } });
+      lowered++;
+    }
+    console.log(`  ✓ ${slug}: ${SHUTTLE_CAPACITY} seats (${tour.count} product, ${raised.count + lowered} departures updated)`);
+  }
+}
+
 async function main() {
   await seedFallbackSchedule(SEED_DAYS);
   await realignWinterDepartures();
+  await retireOffScheduleDepartures();
+  await alignShuttleCapacity();
 }
 
 if (!process.env.VITEST) main()
