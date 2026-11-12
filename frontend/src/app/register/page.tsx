@@ -3,11 +3,12 @@
 // Create a guest account (same layout as sign in). Phone is optional, as in the API; passwords
 // need at least 8 characters (checked here and by the API).
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Eye, EyeOff } from "lucide-react";
 import { AUTH_FIELD, AuthShell } from "@/components/forms/AuthShell";
+import { TURNSTILE_SITE_KEY, useFormToken, useTurnstile } from "@/lib/spamGuard";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -19,6 +20,10 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const tooShort = password.length > 0 && password.length < 8;
+  // Bot checks (owner, 2026-11-12: fake signups): the page's signed token and, when set up, Turnstile.
+  const formToken = useFormToken();
+  const turnstileBox = useRef<HTMLDivElement>(null);
+  const turnstile = useTurnstile(turnstileBox);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,16 +32,28 @@ export default function RegisterPage() {
       setErrorMsg("Use a password of at least 8 characters.");
       return;
     }
+    if (!formToken.token) {
+      formToken.reload();
+      setErrorMsg("Please wait a moment and try again.");
+      return;
+    }
+    if (TURNSTILE_SITE_KEY && !turnstile.token) {
+      setErrorMsg("Please complete the security check above the button.");
+      return;
+    }
+    const website = ((e.currentTarget as HTMLFormElement).elements.namedItem("website") as HTMLInputElement | null)?.value ?? "";
     setLoading(true);
     try {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, phone: phone || undefined, password }),
+        body: JSON.stringify({ name, email, phone: phone || undefined, password, website, formToken: formToken.token, turnstileToken: turnstile.token || undefined }),
       });
       const data = await res.json();
-      if (!res.ok || !data.success) setErrorMsg(data.error || "We couldn't create your account.");
-      else router.push("/account/trips");
+      if (!res.ok || !data.success) {
+        setErrorMsg(data.error || "We couldn't create your account.");
+        turnstile.reset();
+      } else router.push("/account/trips");
     } catch {
       setErrorMsg("We couldn't reach the server. Please try again.");
     } finally {
@@ -105,6 +122,14 @@ export default function RegisterPage() {
             At least 8 characters
           </span>
         </label>
+        {/* Honeypot for bots: hidden from people and assistive technology. */}
+        <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
+          <label>
+            Website
+            <input name="website" tabIndex={-1} autoComplete="off" />
+          </label>
+        </div>
+        {TURNSTILE_SITE_KEY && <div ref={turnstileBox} />}
         <button type="submit" disabled={loading} className="golden-summit-btn h-12 w-full rounded-full text-base disabled:opacity-60">
           {loading ? "Creating account…" : "Create account"}
         </button>

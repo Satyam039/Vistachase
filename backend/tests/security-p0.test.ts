@@ -4,6 +4,7 @@
 // "Refund owed" flag, Stripe refunds update the payment and flag active bookings, and email logs hide
 // link tokens.
 
+import { issueFormToken } from "@/modules/enquiries/spam";
 import { describe, it, expect, beforeAll, afterEach, afterAll } from "vitest";
 import request from "supertest";
 import crypto from "node:crypto";
@@ -93,12 +94,24 @@ describe("email verification", () => {
   it("registering sends a confirmation and links nothing until it is used", async () => {
     const email = `new.${unique()}@example.com`;
     const booking = await guestBooking(email);
-    const res = await request(app).post("/api/auth/register").send({ name: "New Person", email, password: "longpassword1" });
+    const formToken = issueFormToken(Date.now() - 5_000);
+    const res = await request(app).post("/api/auth/register").send({ name: "New Person", email, password: "longpassword1", formToken });
     expect(res.status).toBe(200);
     expect(res.body.user.emailVerified).toBe(false);
     const user = await prisma.user.findUniqueOrThrow({ where: { email } });
     expect(user.verificationToken).toMatch(/^[a-f0-9]{64}$/);
     expect((await prisma.booking.findUniqueOrThrow({ where: { id: booking.id } })).customerId).toBeNull();
+  });
+
+  it("refuses a signup without the page's form token, and quietly drops a filled hidden field", async () => {
+    const email = `bot.${unique()}@example.com`;
+    const noToken = await request(app).post("/api/auth/register").set("X-Forwarded-For", `10.9.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}`).send({ name: "Real Name", email, password: "longpassword1" });
+    expect(noToken.status).toBe(400);
+    const tooFast = await request(app).post("/api/auth/register").set("X-Forwarded-For", `10.8.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}`).send({ name: "Real Name", email, password: "longpassword1", formToken: issueFormToken() });
+    expect(tooFast.status).toBe(400);
+    const honeypot = await request(app).post("/api/auth/register").set("X-Forwarded-For", `10.7.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}`).send({ name: "Real Name", email, password: "longpassword1", website: "http://spam.example", formToken: issueFormToken(Date.now() - 5_000) });
+    expect(honeypot.status).toBe(200);
+    expect(await prisma.user.findUnique({ where: { email } })).toBeNull();
   });
 });
 
