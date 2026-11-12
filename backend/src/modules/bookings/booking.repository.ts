@@ -28,6 +28,7 @@ import { getEmailProvider } from "@/lib/email/email.provider";
 import { isVehicleDeparture, partySizeError, seatedGuests, seatsToReserve } from "@/modules/pricing/departure-pricing";
 import { airportTransferLabel, airportTransferNote, airportTransferPriceCents, type AirportTransfer } from "@/modules/bookings/airport-transfer";
 import { activityAddOnsError, activityAddOnsNote, ACTIVITY_ADD_ONS, type ActivityAddOnId, type ActivityGuests } from "@/modules/bookings/activity-add-ons";
+import { lookupPromo, normalizeCode, type ResolvedPromo } from "@/modules/pricing/promo-codes";
 import { priceBooking, type AddOnChoice } from "@/modules/pricing/booking-pricing";
 import { referringAffiliateId } from "@/modules/affiliates/affiliate.repository";
 import { earnCommission, reverseCommissionForRefund } from "@/modules/affiliates/commission";
@@ -284,7 +285,17 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
         );
       }
 
-      const totals = priceBooking(departure, { adults: input.adultsCount, children: input.childrenCount, infants: input.infantsCount }, input.addOns, input.promoCode, options.discount?.percent);
+      // Promo code: checked again here (dates, on/off, use limit). One booking at a time per code, so
+      // two guests can't both take the last use. A code we don't know is ignored (it may be a
+      // partner's voucher code, which only credits the partner).
+      let promo: ResolvedPromo | null = null;
+      if (input.promoCode?.trim()) {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"promo:" + normalizeCode(input.promoCode)}))`;
+        const found = await lookupPromo(input.promoCode, tx, now);
+        if (found.ok) promo = found.promo;
+        else if (found.reason !== "unknown") throw new BookingRefused(`${found.error} Please remove it and try again.`);
+      }
+      const totals = priceBooking(departure, { adults: input.adultsCount, children: input.childrenCount, infants: input.infantsCount }, input.addOns, promo, options.discount?.percent);
       // Airport transfer (private tours): charged with the tour when it has a price, never discounted.
       const partySize = input.adultsCount + input.childrenCount + input.infantsCount;
       if (input.airportTransfer && partySize < 2) {
@@ -319,7 +330,12 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
         infantUnitCents: isVehicle ? null : departure.infantPrice,
         party: { adults: input.adultsCount, children: input.childrenCount, infants: input.infantsCount },
         fareCents: totals.fareCents,
-        promo: totals.discountPercent > 0 ? { code: input.promoCode?.trim().toUpperCase() || options.discount?.label, percent: totals.discountPercent } : null,
+        promo:
+          totals.discountCents > 0
+            ? promo
+              ? { code: promo.code, percent: totals.discountPercent, ...(promo.amountOffCents ? { amountOffCents: promo.amountOffCents } : {}) }
+              : { code: options.discount?.label, percent: totals.discountPercent }
+            : null,
         discountCents: totals.discountCents,
         addOns: totals.addOns,
         addOnsCents: totals.addOnsCents,
