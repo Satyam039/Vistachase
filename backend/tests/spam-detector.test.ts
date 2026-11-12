@@ -1,14 +1,32 @@
 import { describe, it, expect } from "vitest";
-import { isSyntheticBotName, isInvalidTripDate, isSpamMessage, isSpamBotEnquiry } from "@/lib/security/spam-detector";
+import {
+  isSyntheticBotName,
+  isInvalidTripDate,
+  isSpamMessage,
+  isSpamBotEnquiry,
+  isSuspiciousEmail,
+  hasValidMxRecords,
+} from "@/lib/security/spam-detector";
 
 describe("Anti-Spam & Bot Detection Filter", () => {
   describe("isSyntheticBotName", () => {
     it("flags high-entropy single-token bot strings from spam logs", () => {
       expect(isSyntheticBotName("glZrgkquEiQCfXTR")).toBe(true);
       expect(isSyntheticBotName("AXaFtFEpdQ")).toBe(true);
+      expect(isSyntheticBotName("AXaFTfE")).toBe(true);
       expect(isSyntheticBotName("qmthDEIps")).toBe(true);
+      expect(isSyntheticBotName("qmthDEl")).toBe(true);
+      expect(isSyntheticBotName("OvILdqz")).toBe(true);
       expect(isSyntheticBotName("gsXjSYTr")).toBe(true);
+      expect(isSyntheticBotName("gsXjSYT")).toBe(true);
       expect(isSyntheticBotName("NuLBPir")).toBe(true);
+      expect(isSyntheticBotName("UihzdGLr")).toBe(true);
+      expect(isSyntheticBotName("cHXwtVPyDCAWVGSEFGhh")).toBe(true);
+    });
+
+    it("flags synthetic bot names even with multiple tokens", () => {
+      expect(isSyntheticBotName("glZrgkquEi QCfXTR")).toBe(true);
+      expect(isSyntheticBotName("NuLBPir Smith")).toBe(true);
     });
 
     it("allows legitimate customer names", () => {
@@ -16,8 +34,31 @@ describe("Anti-Spam & Bot Detection Filter", () => {
       expect(isSyntheticBotName("John Smith")).toBe(false);
       expect(isSyntheticBotName("Sarah Connor")).toBe(false);
       expect(isSyntheticBotName("Jean-Luc Picard")).toBe(false);
+      expect(isSyntheticBotName("Satyam Pandey")).toBe(false);
       expect(isSyntheticBotName("Alice")).toBe(false);
       expect(isSyntheticBotName("Michael")).toBe(false);
+    });
+  });
+
+  describe("isSuspiciousEmail", () => {
+    it("flags dot-spam patterns and disposable email domains", () => {
+      expect(isSuspiciousEmail("s.i.lb.iase@gmail.com")).toBe(true);
+      expect(isSuspiciousEmail("spammer@mailinator.com")).toBe(true);
+      expect(isSuspiciousEmail("bot@tempmail.com")).toBe(true);
+      expect(isSuspiciousEmail("attacker@10minutemail.com")).toBe(true);
+    });
+
+    it("allows genuine customer email formats", () => {
+      expect(isSuspiciousEmail("brandi@gmail.com")).toBe(false);
+      expect(isSuspiciousEmail("john.smith@vistachase.com")).toBe(false);
+      expect(isSuspiciousEmail("satyam.pandey@gmail.com")).toBe(false);
+    });
+  });
+
+  describe("hasValidMxRecords", () => {
+    it("handles test environment domain checks", async () => {
+      expect(await hasValidMxRecords("nonexistent-test-domain.com")).toBe(false);
+      expect(await hasValidMxRecords("gmail.com")).toBe(true);
     });
   });
 

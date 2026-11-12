@@ -12,6 +12,7 @@
 //    NEXT_PUBLIC_TURNSTILE_SITE_KEY on the frontend and every enquiry must pass it.
 
 import crypto from "node:crypto";
+import { isSyntheticBotName } from "@/lib/security/spam-detector";
 
 /** Largest group the contact form takes (owner, 2026-11-11). */
 export const MAX_ENQUIRY_GUESTS = 28;
@@ -24,15 +25,15 @@ export const MAX_FORM_AGE_MS = 24 * 60 * 60_000;
 
 /**
  * Form-spam bots fill the name field with a random mixed-case string ("SpvViyvvcPmWsQsxlpooZFKu",
- * "cHXwtVPyDCAWVGSEFGhh"). A real name is never one long word that switches from lower to upper
- * case four or more times, or that is mostly capitals scattered through the word.
+ * "cHXwtVPyDCAWVGSEFGhh", "NuLBPir", "glZrgkquEiQCfXTR").
  */
 export function looksLikeBotName(name: string): boolean {
+  if (isSyntheticBotName(name)) return true;
   const trimmed = name.trim();
-  if (/\s/.test(trimmed) || trimmed.length < 10 || !/^[A-Za-z]+$/.test(trimmed)) return false;
+  if (/\s/.test(trimmed) || !/^[A-Za-z]+$/.test(trimmed)) return false;
   if (trimmed === trimmed.toUpperCase() || trimmed === trimmed.toLowerCase()) return false;
   const switches = trimmed.match(/[a-z][A-Z]/g)?.length ?? 0;
-  if (switches >= 4) return true;
+  if (switches >= 3) return true;
   // Capitals after the first letter: "MacKenzieMcLeod" has 3, the bot names 8 and more.
   const innerCapitals = trimmed.slice(1).match(/[A-Z]/g)?.length ?? 0;
   if (innerCapitals >= 5 && innerCapitals / trimmed.length >= 0.3) return true;

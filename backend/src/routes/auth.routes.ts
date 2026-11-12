@@ -9,7 +9,7 @@ import crypto from "node:crypto";
 import { getEmailProvider } from "@/lib/email/email.provider";
 import { siteUrl } from "@/lib/security/signed-links";
 import { emailSchema, parseOr400, z } from "@/lib/security/validate";
-import { isSyntheticBotName } from "@/lib/security/spam-detector";
+import { hasValidMxRecords, isSuspiciousEmail, isSyntheticBotName } from "@/lib/security/spam-detector";
 
 const router = Router();
 
@@ -135,10 +135,18 @@ router.post("/register", rateLimitMiddleware("register", { maxRequests: 3, windo
     // Bot signups (owner, 2026-11-12: "Confirm your Vista Chase email" sent to fake addresses, then
     // bounced). The same checks as the enquiry form: a hidden field people never fill, a signed token
     // the page fetches when it opens (no signing up within 3 seconds, or without the page), and
-    // Cloudflare Turnstile when it is set up. A filled hidden field gets a quiet "success" with no
-    // account and no email, so the bot learns nothing.
+    // Cloudflare Turnstile when it is set up. A filled hidden field or synthetic bot name gets a quiet
+    // "success" with no account and no email, so the bot learns nothing.
     if (typeof website === "string" && website.trim() !== "") {
       console.warn("[register] dropped as spam: honeypot filled");
+      return res.json({ success: true, user: null });
+    }
+    if (typeof name === "string" && (isSyntheticBotName(name) || looksLikeBotName(name))) {
+      console.warn(`[register] dropped as spam: synthetic bot name "${name}"`);
+      return res.json({ success: true, user: null });
+    }
+    if (typeof email === "string" && isSuspiciousEmail(email)) {
+      console.warn(`[register] dropped as spam: suspicious email pattern "${email}"`);
       return res.json({ success: true, user: null });
     }
     const tokenProblem = formTokenProblem(formToken);
@@ -153,21 +161,19 @@ router.post("/register", rateLimitMiddleware("register", { maxRequests: 3, windo
     if (!name || !email || !password) {
       return res.status(400).json({ success: false, error: "Name, email, and password are required" });
     }
-    if (isSyntheticBotName(name)) {
-      return res.status(400).json({ success: false, error: "Please enter your real full name" });
-    }
     if (typeof password !== "string" || password.length < 8) {
       return res.status(400).json({ success: false, error: "Use a password of at least 8 characters" });
-    }
-    // Spam bots sign up with random names and fake emails; their verification emails bounce.
-    if (typeof name !== "string" || looksLikeBotName(name)) {
-      return res.status(400).json({ success: false, error: "Please enter your full name" });
     }
     if (typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       return res.status(400).json({ success: false, error: "Enter a valid email address" });
     }
 
     const normalizedEmail = email.toLowerCase().trim();
+    const domain = normalizedEmail.split("@")[1];
+    if (domain && !(await hasValidMxRecords(domain))) {
+      console.warn(`[register] dropped as spam: domain ${domain} has no valid MX records`);
+      return res.json({ success: true, user: null });
+    }
 
     const existing = await prisma.user.findUnique({
       where: { email: normalizedEmail },

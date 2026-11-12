@@ -18,7 +18,11 @@ import type { TripBooking } from "@/modules/bookings/trip";
 export function bookingCopyRecipients(): string[] {
   const raw = (process.env.BOOKING_COPY_TO ?? "support@vistachase.com").trim();
   if (!raw || raw.toLowerCase() === "off") return [];
-  return raw.split(",").map((s) => s.trim()).filter((s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s));
+  return raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s))
+    .map((s) => (s.toLowerCase() === "info@vistachase.com" ? "support@vistachase.com" : s));
 }
 
 const ACTION = "STAFF_BOOKING_NOTICE_SENT";
