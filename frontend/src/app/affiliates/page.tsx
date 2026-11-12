@@ -53,7 +53,8 @@ const AUDIENCES = [
 const STEPS = ["Apply below and get your referral code.", "Once approved, copy links from your dashboard and share them anywhere.", "Earn commission on bookings made within 30 days of a click."];
 
 export default function AffiliatesPage() {
-  const agentPortalUrl = process.env.NEXT_PUBLIC_BOKUN_AGENT_PORTAL_URL || "https://vistachase.bokun.io/agent";
+  // Shown only when set: the old default (vistachase.bokun.io/agent) answers 404 (site audit, 2026-11-12).
+  const agentPortalUrl = process.env.NEXT_PUBLIC_BOKUN_AGENT_PORTAL_URL || "";
 
   return (
     <>
@@ -91,16 +92,18 @@ export default function AffiliatesPage() {
             <Link href="/affiliate/login" className="inline-flex h-12 items-center rounded-full border border-white/30 bg-white/10 px-7 text-base text-white backdrop-blur-md hover:bg-white/20">
               Partner sign in
             </Link>
-            <a
-              href={agentPortalUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex h-12 items-center gap-2 rounded-full border border-white/30 bg-white/10 px-7 text-base text-white backdrop-blur-md hover:bg-white/20"
-            >
-              Agent portal login
-              <ExternalLink className="h-4 w-4" aria-hidden="true" />
-              <span className="sr-only">(opens in a new tab)</span>
-            </a>
+            {agentPortalUrl && (
+              <a
+                href={agentPortalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex h-12 items-center gap-2 rounded-full border border-white/30 bg-white/10 px-7 text-base text-white backdrop-blur-md hover:bg-white/20"
+              >
+                Agent portal login
+                <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                <span className="sr-only">(opens in a new tab)</span>
+              </a>
+            )}
           </div>
         </div>
       </section>

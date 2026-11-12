@@ -3,7 +3,7 @@
 // Private Tours landing page, crafted from the owner's design and content specification (pages 27–35).
 // Features:
 // - "YOUR PEOPLE. YOUR PACE." hero with 4 key trust chips and airport transfer note
-// - "A Journey That Fits" intro with the 4 updated company statistics (6 Private Options, 1–5 Days, Doorstep Pickup, 15,000+ Guests Guided)
+// - "A Journey That Fits" intro with the 4 updated company statistics (6 Private Options, 1–4 Days, Doorstep Pickup, 15,000+ Guests Guided)
 // - 6-card private journey grid adhering to the exact card specification (Duration, Transport, Suggested Stay, Pickup, Activities, Airport transfers, Accommodation, Live CAD price, "View Itinerary →" CTA)
 // - 6th card dedicated to sister company Banff Elite ("Plan with Banff Elite ↗")
 // - 4 core private benefits
@@ -213,7 +213,7 @@ export function PrivateToursLanding({
         <div className="mx-auto max-w-7xl px-page">
           <SectionHeading
             id="options-heading"
-            eyebrow="ONE DAY TO FIVE"
+            eyebrow="ONE DAY TO FOUR"
             title="Find Your Private Rockies Journey"
             intro="Choose a day of discovery or explore further over several days, with your own guide, private vehicle and doorstep pickup. Select optional activities at checkout, and add airport transfers when booking two or more tour days."
             tone="dark"

@@ -6,7 +6,7 @@ export const PRIVATE_HERO = {
   title: "Private Tours of the Canadian Rockies",
   kicker: "YOUR PEOPLE. YOUR PACE.",
   lede:
-    "Explore for one to five days with your own guide, private vehicle and doorstep pickup. Add airport transfers when booking two or more tour days—and enjoy the Rockies without renting a car.",
+    "Explore for one to four days with your own guide, private vehicle and doorstep pickup. Add airport transfers when booking two or more tour days—and enjoy the Rockies without renting a car.",
   cta: "Explore Private Tours",
   reviews: "1,700+ company reviews across Google, Tripadvisor & GetYourGuide",
   chips: [
@@ -21,12 +21,12 @@ export const PRIVATE_HERO = {
 export const PRIVATE_INTRO = {
   title: "A Journey That Fits",
   body1:
-    "Choose a private Banff and Yoho day, a Columbia Icefield adventure, or combine both in a two-day package. Explore further with three, four and five-day options, with activities selected at checkout.",
+    "Choose a private Banff and Yoho day, a Columbia Icefield adventure, or combine both in a two-day package. Explore further with three and four-day options, with activities selected at checkout.",
   body2:
     "For journeys of up to three days, stay in Banff, Canmore or Lake Louise. The four-day itinerary includes an overnight stop in Jasper after day three; accommodation arrangements are detailed with each package.",
   stats: [
     { value: "6", label: "Private Options" },
-    { value: "1–5", label: "Days" },
+    { value: "1–4", label: "Days" },
     { value: "Doorstep", label: "Pickup" },
     { value: "15,000+", label: "Guests Guided" },
   ],
@@ -186,7 +186,7 @@ export const PRIVATE_OPTIONS: PrivateTourOption[] = [
     pickup: "Doorstep Pickup Included",
     activities: "Optional Activities at Checkout",
     airportTransfers: "CAD $364 per transfer, with 2+ tour days",
-    accommodation: "Booked Separately by customers on multi-day cards",
+    accommodation: "Booked separately by you",
     priceFrom: PACKAGE_DAY_PRICE.winter * 2,
     priceUnit: "per vehicle",
     priceNote: "CAD $1,575 per day Jun 1–Oct 10, $1,240 per day Oct 11–May 31. Private, up to 13 guests.",
@@ -210,7 +210,7 @@ export const PRIVATE_OPTIONS: PrivateTourOption[] = [
     pickup: "Doorstep Pickup Included",
     activities: "Optional Activities at Checkout",
     airportTransfers: "CAD $364 per transfer, with 2+ tour days",
-    accommodation: "Booked Separately by customers on multi-day cards",
+    accommodation: "Booked separately by you",
     priceFrom: PACKAGE_DAY_PRICE.summer * 3,
     priceUnit: "per vehicle",
     priceNote: "CAD $1,575 per day. June 1 – October 10 only. Private, up to 13 guests.",
@@ -234,7 +234,7 @@ export const PRIVATE_OPTIONS: PrivateTourOption[] = [
     pickup: "Doorstep Pickup Included",
     activities: "Optional Activities at Checkout",
     airportTransfers: "CAD $364 per transfer, with 2+ tour days",
-    accommodation: "Booked Separately by customers on multi-day cards",
+    accommodation: "Booked separately by you",
     priceFrom: PACKAGE_DAY_PRICE.summer * 4,
     priceUnit: "per vehicle",
     priceNote: "CAD $1,575 per day. June 1 – October 10 only. Private, up to 13 guests.",

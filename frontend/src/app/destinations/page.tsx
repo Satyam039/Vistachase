@@ -1,6 +1,5 @@
 // Destinations, in the "Top destinations" pattern of the booking sites studied: photo hero, then
-// image-on-top cards (MediaCard) with parallax and the number of tours based there (places visited on
-// other destinations' tours, like Lake Louise, show no count).
+// image-on-top cards (MediaCard) with parallax. Each destination's own page lists its tours.
 
 import Image from "next/image";
 import Link from "next/link";
@@ -67,7 +66,6 @@ export default async function DestinationsPage() {
       <section aria-label="Destinations" className="mx-auto max-w-7xl px-page py-14 sm:py-20">
         <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-6" data-stagger>
           {destinations.map((d, i) => {
-            const count = d.tours.length;
             return (
               <li key={d.id} className={`${SPAN[i] ?? "lg:col-span-2"} ${i === 0 ? "sm:col-span-2" : ""}`}>
                 <MediaCard
@@ -80,7 +78,9 @@ export default async function DestinationsPage() {
                   title={d.name}
                   headingLevel={2}
                   description={d.description}
-                  cta={count > 0 ? `${count} ${count === 1 ? "tour" : "tours"} · Explore` : "Explore"}
+                  // No count here: d.tours includes tours no longer on sale and misses tours that only
+                  // visit (Lake Louise showed none, Banff 10 vs 7 on its own page). The page lists them.
+                  cta="Explore"
                   parallax
                 />
               </li>
