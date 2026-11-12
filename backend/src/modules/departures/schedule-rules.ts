@@ -42,3 +42,6 @@ export function startTimeError(slug: string | null | undefined, time: string | D
  * the Bókun seat sync never lists more, whatever Bókun's own capacity is.
  */
 export const SHUTTLE_CAPACITY = 14;
+
+/** Guests per private day-tour vehicle (Banff & Yoho and Columbia Icefield private): "up to 13". */
+export const PRIVATE_VEHICLE_CAPACITY = 13;

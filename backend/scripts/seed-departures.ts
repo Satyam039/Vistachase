@@ -39,7 +39,7 @@
 import prisma from "../src/lib/db/prisma";
 import { PRODUCT_MAP } from "../src/modules/tours/product-map";
 import { dateOnly, formatDateOnly, formatTimeOfDay, timeOfDay, todayInMountainTime } from "../src/lib/utils/time";
-import { FIXED_START_TIMES, SHUTTLE_CAPACITY } from "../src/modules/departures/schedule-rules";
+import { FIXED_START_TIMES, PRIVATE_VEHICLE_CAPACITY, SHUTTLE_CAPACITY } from "../src/modules/departures/schedule-rules";
 
 /** Cents: adult (or per vehicle), youth 6-15, infant 0-5. null = youth pay the adult fare / infants ride free. */
 interface Fare {
@@ -98,7 +98,7 @@ export const DEFAULT_SCHEDULES: ScheduleConfig[] = [
   {
     slug: "banff-private-tour",
     times: ["08:00"],
-    capacity: 13,
+    capacity: PRIVATE_VEHICLE_CAPACITY,
     price: 124000,
     summer: { price: 175000 },
     childPrice: null,
@@ -106,7 +106,7 @@ export const DEFAULT_SCHEDULES: ScheduleConfig[] = [
   {
     slug: "icefields-jasper-private-tour",
     times: ["08:00"],
-    capacity: 13,
+    capacity: PRIVATE_VEHICLE_CAPACITY,
     price: 124000,
     summer: { price: 175000 },
     childPrice: null,
@@ -319,29 +319,36 @@ export async function retireOffScheduleDepartures() {
 const SHUTTLE_SLUGS = DEFAULT_SCHEDULES.filter((s) => s.seasonEndsMonth).map((s) => s.slug);
 
 /**
- * Every shuttle takes 14 guests: the products' group size (the guest picker's limit and the
- * "Max 14 guests" line) and the seats of today's and future departures. A departure is only
- * lowered to 14 when fewer than 14 seats are already booked or held on it.
+ * One vehicle size per product: shuttles take 14 guests a departure (owner, 2026-11-12) and the
+ * private day tours one vehicle of up to 13 ("Private, up to 13 guests" on every page). Sets the
+ * product's group size (the guest picker's limit) and the seats of today's and future departures.
+ * A departure is only lowered when no more than that many seats are already booked or held on it.
  */
-export async function alignShuttleCapacity() {
+export const CAPACITY_BY_SLUG: Record<string, number> = {
+  ...Object.fromEntries(SHUTTLE_SLUGS.map((slug) => [slug, SHUTTLE_CAPACITY])),
+  "banff-private-tour": PRIVATE_VEHICLE_CAPACITY,
+  "icefields-jasper-private-tour": PRIVATE_VEHICLE_CAPACITY,
+};
+
+export async function alignCapacity() {
   const today = dateOnly(todayInMountainTime());
-  for (const slug of SHUTTLE_SLUGS) {
-    const tour = await prisma.tour.updateMany({ where: { slug, maxGroupSize: { not: SHUTTLE_CAPACITY } }, data: { maxGroupSize: SHUTTLE_CAPACITY } });
+  for (const [slug, seats] of Object.entries(CAPACITY_BY_SLUG)) {
+    const tour = await prisma.tour.updateMany({ where: { slug, maxGroupSize: { not: seats } }, data: { maxGroupSize: seats } });
     const raised = await prisma.tourDeparture.updateMany({
-      where: { tour: { slug }, date: { gte: today }, capacityTotal: { lt: SHUTTLE_CAPACITY } },
-      data: { capacityTotal: SHUTTLE_CAPACITY },
+      where: { tour: { slug }, date: { gte: today }, capacityTotal: { lt: seats } },
+      data: { capacityTotal: seats },
     });
     const larger = await prisma.tourDeparture.findMany({
-      where: { tour: { slug }, date: { gte: today }, capacityTotal: { gt: SHUTTLE_CAPACITY } },
+      where: { tour: { slug }, date: { gte: today }, capacityTotal: { gt: seats } },
       select: { id: true, capacityBooked: true, capacityHeld: true },
     });
     let lowered = 0;
     for (const d of larger) {
-      if (d.capacityBooked + d.capacityHeld > SHUTTLE_CAPACITY) continue;
-      await prisma.tourDeparture.update({ where: { id: d.id }, data: { capacityTotal: SHUTTLE_CAPACITY } });
+      if (d.capacityBooked + d.capacityHeld > seats) continue;
+      await prisma.tourDeparture.update({ where: { id: d.id }, data: { capacityTotal: seats } });
       lowered++;
     }
-    console.log(`  ✓ ${slug}: ${SHUTTLE_CAPACITY} seats (${tour.count} product, ${raised.count + lowered} departures updated)`);
+    console.log(`  ✓ ${slug}: ${seats} seats (${tour.count} product, ${raised.count + lowered} departures updated)`);
   }
 }
 
@@ -349,7 +356,7 @@ async function main() {
   await seedFallbackSchedule(SEED_DAYS);
   await realignWinterDepartures();
   await retireOffScheduleDepartures();
-  await alignShuttleCapacity();
+  await alignCapacity();
 }
 
 if (!process.env.VITEST) main()

@@ -156,7 +156,7 @@ export function TourSearch({ tours, initialFilters }: { tours: TourWithAvailabil
             </ol>
           </nav>
           <h1 className="text-balance text-4xl font-light leading-[1.05] tracking-tight text-obsidian-900 sm:text-5xl">Find your Rockies tour</h1>
-          <p className="mx-auto mt-3 max-w-2xl text-lg font-light text-slate-600">Tours, shuttles and tickets across Banff, Lake Louise, Moraine Lake, Yoho and Jasper.</p>
+          <p className="mx-auto mt-3 max-w-2xl text-lg font-light text-slate-600">Tours and shuttles across Banff, Lake Louise, Moraine Lake, Yoho and Jasper.</p>
 
           <label className="relative mx-auto mt-7 block max-w-3xl text-left">
             <span className="sr-only">Search tours</span>

@@ -11,7 +11,7 @@ import { createBooking } from "@/modules/bookings/booking.repository";
 import { createReservationHold } from "@/modules/reservations/reservation.repository";
 import { getTourBySlug } from "@/modules/tours/tour.repository";
 import { dateOnly, timeOfDay } from "@/lib/utils/time";
-import { DEFAULT_SCHEDULES } from "../scripts/seed-departures";
+import { DEFAULT_SCHEDULES, alignCapacity, retireOffScheduleDepartures } from "../scripts/seed-departures";
 
 const DAY = "2036-02-12";
 const SLUG = "banff-highlights-tour"; // Bókun 796650
@@ -108,5 +108,41 @@ describe("shuttles take 14 guests a departure", () => {
     const after = await prisma.tourDeparture.findUniqueOrThrow({ where: { id: d.id } });
     expect(after.capacityTotal).toBe(14);
     expect(after.capacityBooked).toBe(4);
+  });
+});
+
+describe("the deploy's clean-up (seed-departures)", () => {
+  it("cancels unbooked departures at other times and keeps one a guest has booked", async () => {
+    const tour = await prisma.tour.findUniqueOrThrow({ where: { slug: "icefields-jasper-private-tour" } });
+    const day = "2036-03-03";
+    const mk = (time: string) => prisma.tourDeparture.create({ data: { tourId: tour.id, date: dateOnly(day), departureTime: timeOfDay(time), capacityTotal: 13, price: 124000, status: "ACTIVE", inventorySource: "LOCAL" } });
+    const [free, booked, eight] = [await mk("07:00"), await mk("07:30"), await mk("08:00")];
+    setFixedStartTimesForTests(null); // a booking made before the rule
+    setBokunClientForTests(null);
+    const made = await createBooking({ departureId: booked.id, customerName: "Ada Lovelace", customerEmail: "ada.keep@example.com", customerPhone: "+1 403 555 0100", adultsCount: 2, childrenCount: 0, infantsCount: 0 });
+    setFixedStartTimesForTests(FIXED_START_TIMES);
+    setBokunClientForTests(fakeBokun);
+    expect(made.success).toBe(true);
+    await retireOffScheduleDepartures();
+    const status = async (id: string) => (await prisma.tourDeparture.findUniqueOrThrow({ where: { id } })).status;
+    expect(await status(free.id)).toBe("CANCELLED");
+    expect(await status(booked.id)).toBe("ACTIVE");
+    expect(await status(eight.id)).toBe("ACTIVE");
+  });
+
+  it("sets shuttles to 14 seats and private day tours to 13, never below what is already sold", async () => {
+    const shuttle = await prisma.tour.findUniqueOrThrow({ where: { slug: SHUTTLE } });
+    const priv = await prisma.tour.findUniqueOrThrow({ where: { slug: "banff-private-tour" } });
+    const day = "2036-07-07";
+    const s24 = await prisma.tourDeparture.create({ data: { tourId: shuttle.id, date: dateOnly(day), departureTime: timeOfDay("11:30"), capacityTotal: 24, capacityBooked: 3, price: 10800, status: "ACTIVE", inventorySource: "LOCAL" } });
+    const full = await prisma.tourDeparture.create({ data: { tourId: shuttle.id, date: dateOnly(day), departureTime: timeOfDay("14:00"), capacityTotal: 24, capacityBooked: 20, price: 10800, status: "ACTIVE", inventorySource: "LOCAL" } });
+    const p14 = await prisma.tourDeparture.create({ data: { tourId: priv.id, date: dateOnly(day), departureTime: timeOfDay("08:00"), capacityTotal: 14, price: 175000, status: "ACTIVE", inventorySource: "LOCAL" } });
+    await alignCapacity();
+    const seats = async (id: string) => (await prisma.tourDeparture.findUniqueOrThrow({ where: { id } })).capacityTotal;
+    expect(await seats(s24.id)).toBe(14);
+    expect(await seats(full.id)).toBe(24); // 20 already sold: left for staff
+    expect(await seats(p14.id)).toBe(13);
+    expect((await prisma.tour.findUniqueOrThrow({ where: { slug: SHUTTLE } })).maxGroupSize).toBe(14);
+    expect((await prisma.tour.findUniqueOrThrow({ where: { slug: "banff-private-tour" } })).maxGroupSize).toBe(13);
   });
 });
