@@ -11,7 +11,7 @@ import { createBooking } from "@/modules/bookings/booking.repository";
 import { createReservationHold } from "@/modules/reservations/reservation.repository";
 import { getTourBySlug } from "@/modules/tours/tour.repository";
 import { dateOnly, timeOfDay } from "@/lib/utils/time";
-import { DEFAULT_SCHEDULES, alignCapacity, retireOffScheduleDepartures } from "../scripts/seed-departures";
+import { DEFAULT_SCHEDULES, alignCapacity, capSharedDepartures, retireOffScheduleDepartures } from "../scripts/seed-departures";
 
 const DAY = "2036-02-12";
 const SLUG = "banff-highlights-tour"; // Bókun 796650
@@ -109,6 +109,15 @@ describe("shuttles take 14 guests a departure", () => {
     expect(after.capacityTotal).toBe(14);
     expect(after.capacityBooked).toBe(4);
   });
+
+  it("the Bókun sync never lists more than 15 seats on a shared tour (one 15-passenger van)", async () => {
+    const d = await dep(SLUG, "08:00", 12);
+    slot("796650", "08:00", 236, 4); // Bókun: 240 seats, 4 sold
+    await syncBokunSeats({ from: DAY, days: 1 });
+    const after = await prisma.tourDeparture.findUniqueOrThrow({ where: { id: d.id } });
+    expect(after.capacityTotal).toBe(15);
+    expect(after.capacityBooked).toBe(4);
+  });
 });
 
 describe("the deploy's clean-up (seed-departures)", () => {
@@ -144,5 +153,20 @@ describe("the deploy's clean-up (seed-departures)", () => {
     expect(await seats(p14.id)).toBe(13);
     expect((await prisma.tour.findUniqueOrThrow({ where: { slug: SHUTTLE } })).maxGroupSize).toBe(14);
     expect((await prisma.tour.findUniqueOrThrow({ where: { slug: "banff-private-tour" } })).maxGroupSize).toBe(13);
+  });
+
+  it("lowers shared departures above 15 seats, never below what is already sold, and never raises one", async () => {
+    const shared = await prisma.tour.findUniqueOrThrow({ where: { slug: SLUG } });
+    const day = "2036-07-08";
+    const make = (capacityTotal: number, capacityBooked: number) =>
+      prisma.tourDeparture.create({ data: { tourId: shared.id, date: dateOnly(day), departureTime: timeOfDay("08:00"), capacityTotal, capacityBooked, price: 22000, status: "ACTIVE", inventorySource: "LOCAL" } });
+    const big = await make(240, 5);
+    const sold = await make(240, 18);
+    const small = await make(12, 0);
+    await capSharedDepartures();
+    const seats = async (id: string) => (await prisma.tourDeparture.findUniqueOrThrow({ where: { id } })).capacityTotal;
+    expect(await seats(big.id)).toBe(15);
+    expect(await seats(sold.id)).toBe(240); // 18 already sold: left for staff
+    expect(await seats(small.id)).toBe(12);
   });
 });

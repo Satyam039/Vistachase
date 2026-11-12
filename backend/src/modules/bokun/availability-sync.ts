@@ -19,7 +19,7 @@
 
 import prisma from "@/lib/db/prisma";
 import { BOKUN_PRODUCTS } from "@/modules/tours/product-map";
-import { isScheduledStartTime, SHUTTLE_CAPACITY } from "@/modules/departures/schedule-rules";
+import { isScheduledStartTime, SHARED_CAPACITY, SHUTTLE_CAPACITY } from "@/modules/departures/schedule-rules";
 import { findSlot, slotDate, type BokunAvailability } from "@/modules/bokun/bokun-booking";
 import { bokunClient, bokunIsTestAccount, bokunSyncDays, type BokunApi } from "@/modules/bokun/config";
 import { dateOnly, formatDateOnly, formatTimeOfDay, todayInMountainTime } from "@/lib/utils/time";
@@ -141,7 +141,9 @@ async function applySlot(departureId: string, category: string, slot: BokunAvail
       capacityBooked = bokunBooked + (local._sum.totalSeats ?? 0);
       capacityTotal = Math.max(bokunLeft + bokunBooked, capacityBooked + dep.capacityHeld);
       // Shuttles never offer more than 14 seats a departure, even if Bókun's product allows more.
-      if (category === "SHUTTLE") capacityTotal = Math.max(Math.min(capacityTotal, SHUTTLE_CAPACITY), capacityBooked + dep.capacityHeld);
+      // Shared tours never offer more than one 15-passenger van, whatever Bókun's product allows.
+      const cap = category === "SHUTTLE" ? SHUTTLE_CAPACITY : category === "SHARED" ? SHARED_CAPACITY : undefined;
+      if (cap !== undefined) capacityTotal = Math.max(Math.min(capacityTotal, cap), capacityBooked + dep.capacityHeld);
     }
     if (capacityTotal === dep.capacityTotal && capacityBooked === dep.capacityBooked) return false;
     await tx.tourDeparture.update({ where: { id: departureId }, data: { capacityTotal, capacityBooked } });

@@ -39,7 +39,7 @@
 import prisma from "../src/lib/db/prisma";
 import { PRODUCT_MAP } from "../src/modules/tours/product-map";
 import { dateOnly, formatDateOnly, formatTimeOfDay, timeOfDay, todayInMountainTime } from "../src/lib/utils/time";
-import { FIXED_START_TIMES, PRIVATE_VEHICLE_CAPACITY, SHUTTLE_CAPACITY } from "../src/modules/departures/schedule-rules";
+import { FIXED_START_TIMES, PRIVATE_VEHICLE_CAPACITY, SHARED_CAPACITY, SHUTTLE_CAPACITY } from "../src/modules/departures/schedule-rules";
 
 /** Cents: adult (or per vehicle), youth 6-15, infant 0-5. null = youth pay the adult fare / infants ride free. */
 interface Fare {
@@ -352,11 +352,32 @@ export async function alignCapacity() {
   }
 }
 
+/**
+ * Shared tours run in one 15-passenger van (owner, 2026-11-12): lowers today's and future shared
+ * departures that offer more than 15 seats, unless more than 15 are already booked or held.
+ * Never raises a departure.
+ */
+export async function capSharedDepartures() {
+  const today = dateOnly(todayInMountainTime());
+  const larger = await prisma.tourDeparture.findMany({
+    where: { tour: { category: "SHARED" }, date: { gte: today }, status: { not: "CANCELLED" }, capacityTotal: { gt: SHARED_CAPACITY } },
+    select: { id: true, capacityBooked: true, capacityHeld: true },
+  });
+  let lowered = 0;
+  for (const d of larger) {
+    if (d.capacityBooked + d.capacityHeld > SHARED_CAPACITY) continue;
+    await prisma.tourDeparture.update({ where: { id: d.id }, data: { capacityTotal: SHARED_CAPACITY } });
+    lowered++;
+  }
+  console.log(`  ✓ shared tours: at most ${SHARED_CAPACITY} seats (${lowered} departures lowered, ${larger.length - lowered} kept: already more booked)`);
+}
+
 async function main() {
   await seedFallbackSchedule(SEED_DAYS);
   await realignWinterDepartures();
   await retireOffScheduleDepartures();
   await alignCapacity();
+  await capSharedDepartures();
 }
 
 if (!process.env.VITEST) main()
