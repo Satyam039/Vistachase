@@ -58,6 +58,8 @@ export interface LinkCard {
   facts: { icon: LucideIcon; text: string }[];
   note?: string;
   price: number;
+  /** Struck-through price when it is a real one (both tours booked separately); else the fixed markup. */
+  original?: number;
   /** "per guest", "per vehicle"... (the price itself reads "CAD $189") */
   unit: string;
   /** Shown instead of a price when there is none. */
@@ -137,6 +139,8 @@ export function buildExperienceTabs(tours: TourWithAvailability[]): ExperienceTa
         ],
         note: "Accommodation not included",
         price: sharedPackage.price,
+        // The package page strikes through the two tours booked separately; the card shows the same.
+        original: sharedPackage.separate,
         unit: "per guest",
         noPrice: "Price on request",
       },

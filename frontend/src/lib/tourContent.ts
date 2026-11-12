@@ -380,7 +380,90 @@ export function sharedGroupWording<T>(value: T): T {
   return next === text ? value : (JSON.parse(next) as T);
 }
 
+// Site audit (2026-11-12): copy in the product records that contradicts the rest of the site.
+// Applied to every field of the tour (text replacements) plus whole FAQ answers by question, so the
+// fix holds whatever Admin → Content stores. Remove an entry once the record itself is corrected.
+const PAYMENT_ANSWER =
+  "You pay securely online when you book. For departures at least 15 days away you can choose to pay a 20% deposit now and the balance 14 days before your tour.";
+const PRIVATE_GROUP_ANSWER =
+  "Your group has the vehicle and guide to itself, up to 13 guests: a luxury SUV for smaller groups or an executive van for larger ones. The price is per vehicle, not per person.";
+
+interface Correction {
+  /** Literal text replaced in every string of the tour (titles, tabs, FAQs, facts...). */
+  text?: [string, string][];
+  /** Whole FAQ answers replaced by question. */
+  faqs?: { match: RegExp; answer: string }[];
+}
+
+const CORRECTIONS: Record<string, Correction> = {
+  // Old product name left in the FAQ.
+  "banff-highlights-tour": {
+    text: [
+      ["Banff Standard Shared Tour", "Banff & Yoho Discovery"],
+      ["Banff Standard Tour", "Banff & Yoho Discovery"],
+    ],
+  },
+  // Old name; the tour stops at the Columbia Icefield and doesn't go to Jasper.
+  "shared-tours-icefields-jasper": {
+    text: [["Icefields Parkway & Jasper shared tour", "Columbia Icefield Adventure"]],
+  },
+  // "Up to 6 guests", "Book Now, Pay Later: no upfront payment" and "June through September" contradict
+  // the per-vehicle price (up to 13), the checkout (payment at booking) and the Jun 1–Oct 10 season.
+  "icefields-jasper-private-tour": {
+    text: [["Do you offer Book Now, Pay Later?", "Do I pay in full when I book?"]],
+    faqs: [
+      { match: /how many people/i, answer: PRIVATE_GROUP_ANSWER },
+      { match: /pay in full when i book/i, answer: PAYMENT_ANSWER },
+      {
+        match: /best time to visit the icefields/i,
+        answer:
+          "June 1 to October 10, when the Ice Explorer and Skywalk operate and the lakes are at their most turquoise. The rest of the year the route is adjusted for winter conditions and our team confirms it for your date.",
+      },
+    ],
+  },
+  "banff-private-tour": {
+    faqs: [{ match: /how many people/i, answer: PRIVATE_GROUP_ANSWER }],
+  },
+  "winter-signature-private-tour": {
+    text: [
+      ["Winter Standard Private Tour", "Special Winter Private Tour"],
+      ["Lowest Price Guarantee + Pay Later Option", "Lowest Price Guarantee"],
+      ["With our Lowest Price Guarantee and Book Now, Pay Later option,", "With our Lowest Price Guarantee,"],
+      ["Do you offer Book Now, Pay Later?", "Do I pay in full when I book?"],
+    ],
+    faqs: [{ match: /pay in full when i book/i, answer: PAYMENT_ANSWER }],
+  },
+  // The shuttle timetable (lib/shuttleSchedule.ts, owner's doc) runs June–September, with sunrise
+  // pickups from 2:45 AM (Canmore) to 4:55 AM (Samson Mall).
+  "sunrise-shuttle-to-moraine-lake-and-lake-louise": {
+    text: [
+      ["Operating from May to mid-October", "Operating from June to September"],
+      ["operates from May to mid-October", "operates from June to September"],
+      ["Operates June 1 – October 1 only.", "Operates June 1 – September 30 only."],
+      ['"June–October"', '"June–September"'],
+      ['"4:00 - 6:00 AM"', '"2:45 - 4:55 AM"'],
+      ['"Stop 2 (1 hr)"', '"Stop 2 (1.5–2 hr)"'],
+    ],
+  },
+};
+
+function withCorrections(tour: TourWithAvailability): TourWithAvailability {
+  const c = CORRECTIONS[tour.slug];
+  if (!c) return tour;
+  let next = tour;
+  if (c.text?.length) {
+    const json = JSON.stringify(next);
+    const fixed = c.text.reduce((t, [from, to]) => t.split(from.startsWith('"') ? from : JSON.stringify(from).slice(1, -1)).join(from.startsWith('"') ? to : JSON.stringify(to).slice(1, -1)), json);
+    if (fixed !== json) next = JSON.parse(fixed) as TourWithAvailability;
+  }
+  if (c.faqs?.length) {
+    next = { ...next, faqs: next.faqs.map((f) => ({ ...f, answer: c.faqs!.find((r) => r.match.test(f.question))?.answer ?? f.answer })) };
+  }
+  return next;
+}
+
 export function withDocContent(tour: TourWithAvailability): TourWithAvailability {
+  tour = withCorrections(tour);
   if (tour.category === "SHARED") {
     tour = {
       ...tour,

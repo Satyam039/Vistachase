@@ -180,6 +180,7 @@ export function ExperienceCard({ card }: { card: LinkCard }) {
                     tone="dark"
                     layout="inline"
                     showOriginal={card.key !== "banff-highlights-tour" && card.key !== "shared-tours-icefields-jasper"}
+                    original={card.original}
                   />
                 </div>
                 <p className="mt-0.5 text-xs text-white/55">Taxes and required fees included</p>
