@@ -1,4 +1,4 @@
-import { looksLikeBotName } from "@/modules/enquiries/spam";
+import { formTokenProblem, looksLikeBotName, verifyTurnstile } from "@/modules/enquiries/spam";
 import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
 import { Router, type Request, type Response } from "express";
 import prisma from "@/lib/db/prisma";
@@ -130,7 +130,25 @@ const user = await prisma.user.findUnique({
 
 router.post("/register", rateLimitMiddleware("register", { maxRequests: 3, windowSeconds: 3600 }), async (req, res) => {
   try {
-    const { name, email, password, phone } = req.body ?? {};
+    const { name, email, password, phone, website, formToken, turnstileToken } = req.body ?? {};
+
+    // Bot signups (owner, 2026-11-12: "Confirm your Vista Chase email" sent to fake addresses, then
+    // bounced). The same checks as the enquiry form: a hidden field people never fill, a signed token
+    // the page fetches when it opens (no signing up within 3 seconds, or without the page), and
+    // Cloudflare Turnstile when it is set up. A filled hidden field gets a quiet "success" with no
+    // account and no email, so the bot learns nothing.
+    if (typeof website === "string" && website.trim() !== "") {
+      console.warn("[register] dropped as spam: honeypot filled");
+      return res.json({ success: true, user: null });
+    }
+    const tokenProblem = formTokenProblem(formToken);
+    if (tokenProblem) {
+      console.warn(`[register] refused: ${tokenProblem}`);
+      return res.status(400).json({ success: false, error: "Please wait a moment and try again. If this keeps happening, reload the page." });
+    }
+    if (!(await verifyTurnstile(turnstileToken, req.ip))) {
+      return res.status(400).json({ success: false, error: "Please complete the security check and try again." });
+    }
 
     if (!name || !email || !password) {
       return res.status(400).json({ success: false, error: "Name, email, and password are required" });
