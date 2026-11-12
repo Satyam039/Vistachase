@@ -46,6 +46,15 @@ const STEPS = [
 ];
 
 const SHUTTLE_FAQS = [
+  // Owner's "AI Training for Vista Chase" (2026-11-11), word for word.
+  {
+    q: "Staying in Banff or Canmore? Board your shuttle there.",
+    a: "We do not recommend driving to Lake Louise Village to catch our shuttle. Village public parking and day-use areas cannot be used to leave your vehicle while taking our service. Samson Mall’s short-stay customer parking is not suitable for your lake excursion.\n\nOur Lake Louise Village pickup is intended for guests staying locally or arriving without needing to park. Enjoy both lakes without the drive or parking worries by choosing pickup in Banff or Canmore.",
+  },
+  {
+    q: "Which shuttle should I choose for an early-morning or late-afternoon visit?",
+    a: "Choose according to the scheduled arrival and time at each lake, as well as your return time. Early-morning and late-afternoon options may suit you if you prefer to visit outside peak periods, but crowd levels cannot be guaranteed. Departures vary by date and season. Tell us your travel date and pickup town so we can guide you to the appropriate departure options.",
+  },
   {
     q: "Why can't I drive my personal car to Moraine Lake?",
     a: "Parks Canada closed Moraine Lake Road to personal and rental vehicles to manage traffic and protect the alpine ecosystem. Only licensed commercial operators like Vista Chase, public Roam Transit, and Parks Canada shuttles are permitted on the road. Booking with Vista Chase guarantees your seat and direct access right to the lake shore.",
@@ -64,7 +73,7 @@ const SHUTTLE_FAQS = [
   },
   {
     q: "How much time do we spend at Moraine Lake and Lake Louise?",
-    a: "Visit durations follow your selected departure schedule—typically 1.5 to 2.5 hours at Moraine Lake and 1.5 to 2.5 hours at Lake Louise. Please review our detailed departure timetable for each departure's specific lake visit and return times.",
+    a: "Visit durations follow your selected departure schedule—about 1¼ to 1¾ hours at Moraine Lake and 1½ to 2½ hours at Lake Louise. Please review our detailed departure timetable for each departure's specific lake visit and return times.",
   },
   {
     q: "How many guests travel on each shuttle vehicle?",

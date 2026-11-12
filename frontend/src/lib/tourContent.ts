@@ -186,7 +186,9 @@ const CONTENT: Record<string, DocContent> = {
       { label: "Group size", value: "Small group" },
       { label: "Park admission", value: "Included" },
       { label: "Operating season", value: "Year round · route varies by season" },
-      { label: "Hotel pickups", value: "Canmore, Banff & Lake Louise" },
+      // Banff & Canmore only, like the pickup section (owner's AI training doc, 2026-11-11, flagged the
+      // Lake Louise mismatch); a Lake Louise pickup needs team confirmation.
+      { label: "Hotel pickups", value: "Canmore & Banff" },
       { label: "Tickets included", value: "Columbia Icefield Adventure (June 1 – October 10)" },
     ],
     pickup: [
@@ -349,7 +351,7 @@ const ICEFIELD_PHOTOS = [
   "/media/photos/bow-lake-reflection.webp",
   "/media/site/peyto-lake-torqoise-blue-water.webp",
   "/media/site/icefields-parkway-winters.webp",
-  "/media/site/abraham-lake-with-frozen-bubbles.webp",
+  // No Abraham Lake photo: it is outside the approved sightseeing area (owner's AI training doc, 2026-11-11).
 ];
 const TOUR_PHOTOS: Record<string, string[]> = {
   [BANFF_YOHO.slug]: ["/media/photos/moraine-lake-red-canoes.webp", ...BANFF_YOHO_PHOTOS],
