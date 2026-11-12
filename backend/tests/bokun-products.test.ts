@@ -170,3 +170,35 @@ describe("confirming on a test account in another currency", () => {
     expect(confirms).toHaveLength(1);
   });
 });
+
+describe("confirming a booking with nothing paid online", () => {
+  it("confirms without a payment instead of sending 0, and never sends a zero or negative amount", async () => {
+    const { confirmInBokun } = await import("@/modules/bokun/bokun-booking");
+    const bodies: any[] = [];
+    const api: BokunApi = {
+      getAvailabilities: async () => [],
+      fetch: async (_method: string, _path: string, body?: any) => {
+        bodies.push(body);
+        return null;
+      },
+    };
+    await confirmInBokun(api, "VistaChase-108972148", "VC-2026-D818D10B", { amount: 0, currency: "CAD" });
+    await confirmInBokun(api, "VistaChase-1", "VC-2", { amount: -5, currency: "CAD" });
+    await confirmInBokun(api, "VistaChase-2", "VC-3", { amount: 1240.004, currency: "CAD", transactionId: "pi_1" });
+    expect(bodies[0]).toEqual({ externalBookingReference: "VC-2026-D818D10B", sendNotificationToMainContact: false, showPricesInNotification: false });
+    expect(bodies[1].amount).toBeUndefined();
+    expect(bodies[2]).toMatchObject({ amount: 1240, currency: "CAD", transactionDetails: { transactionId: "pi_1" } });
+  });
+
+  it("explains a refusal so staff confirm it by hand", async () => {
+    const { confirmInBokun } = await import("@/modules/bokun/bokun-booking");
+    const { BokunApiError } = await import("@/modules/bokun/bokun.client");
+    const api: BokunApi = {
+      getAvailabilities: async () => [],
+      fetch: async () => {
+        throw new BokunApiError(400, "Bókun API Error: 400 Bad Request - Payment amount must be positive");
+      },
+    };
+    await expect(confirmInBokun(api, "VistaChase-9", "VC-9", { amount: 0, currency: "CAD" })).rejects.toThrow(/Nothing was paid online.*Confirm VistaChase-9 in Bókun by hand/);
+  });
+});
