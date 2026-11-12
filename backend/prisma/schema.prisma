@@ -1361,3 +1361,40 @@ model SeoBaselineUrl {
   @@unique([batchId, path])
   @@index([path])
 }
+
+/// "Chat with a live agent" from the AI concierge: a real-time chat between a guest and a staff member
+/// (src/modules/support/live-chat.ts). The guest holds a random token (only its SHA-256 is stored);
+/// staff answer from Admin → Live chat. Each chat is also saved as an Enquiry as the email backup.
+model LiveChat {
+  id             String            @id @default(cuid())
+  guestTokenHash String
+  name           String
+  email          String
+  phone          String?
+  language       String?
+  page           String?
+  status         String            @default("WAITING") // WAITING | ACTIVE | CLOSED
+  agentId        String?
+  agentName      String?
+  enquiryId      String?
+  lastGuestAt    DateTime          @default(now())
+  lastAgentAt    DateTime?
+  closedAt       DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  messages       LiveChatMessage[]
+
+  @@index([status, createdAt])
+}
+
+model LiveChatMessage {
+  id         String   @id @default(cuid())
+  chatId     String
+  chat       LiveChat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  sender     String // GUEST | AGENT | AI | SYSTEM
+  authorName String?
+  body       String
+  createdAt  DateTime @default(now())
+
+  @@index([chatId, createdAt])
+}

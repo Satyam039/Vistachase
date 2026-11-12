@@ -4,6 +4,7 @@ import { z } from "zod";
 import type { ChatMessage } from "@/lib/ai/ai.provider";
 import { answerWithoutModel } from "@/lib/ai/concierge.fallback";
 import { createSupportHandoff } from "@/modules/support/handoff";
+import { LiveChatError, guestCloseLiveChat, guestLiveChat, guestSendLiveChat, startLiveChat } from "@/modules/support/live-chat";
 import { executeAiTool } from "@/lib/ai/ai.tools";
 import { getAuthenticatedStaff } from "@/lib/auth/admin-guard";
 import { CARD_NUMBER, isClaudeConfigured, runConciergeAgent } from "@/lib/ai/concierge.agent";
@@ -120,6 +121,59 @@ router.post("/handoff", rateLimitMiddleware("concierge_handoff", { maxRequests: 
   } catch (error) {
     console.error("Concierge handoff error:", error);
     return res.status(500).json({ success: false, error: "We couldn't send that just now. Please call +1 (825) 734-9456 or email support@vistachase.com." });
+  }
+});
+
+// Live chat with the support team (modules/support/live-chat.ts). POST starts a chat and returns
+// the guest's token once; the other calls need it (?t= or body.token).
+router.post("/live-chat", rateLimitMiddleware("concierge_live_chat", { maxRequests: 5, windowSeconds: 600 }), async (req, res) => {
+  const parsed = handoffSchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    return res.status(400).json({ success: false, error: "Please add your name and a valid email.", fields: parsed.error.flatten().fieldErrors });
+  }
+  if (parsed.data.website) return res.status(400).json({ success: false, error: "We couldn't start the chat." }); // bot
+  const { website: _honeypot, phone, note, ...rest } = parsed.data;
+  try {
+    const chat = await startLiveChat({ ...rest, phone: phone || undefined, note: note || undefined });
+    return res.status(201).json({ success: true, ...chat });
+  } catch (error) {
+    console.error("Live chat start error:", error);
+    return res.status(500).json({ success: false, error: "We couldn't start the chat just now. Please call +1 (825) 734-9456 or email support@vistachase.com." });
+  }
+});
+
+const liveChatError = (res: import("express").Response, error: unknown) => {
+  if (error instanceof LiveChatError) return res.status(error.status).json({ success: false, error: error.message });
+  console.error("Live chat error:", error);
+  return res.status(500).json({ success: false, error: "Something went wrong. Please try again." });
+};
+const chatToken = (req: import("express").Request) => String((req.query.t as string | undefined) ?? req.body?.token ?? "");
+
+router.get("/live-chat/:id", rateLimitMiddleware("concierge_live_chat_poll", { maxRequests: 120, windowSeconds: 60 }), async (req, res) => {
+  try {
+    return res.json({ success: true, chat: await guestLiveChat(String(req.params.id), chatToken(req)) });
+  } catch (error) {
+    return liveChatError(res, error);
+  }
+});
+
+const chatMessageSchema = z.object({ token: z.string().min(20).max(100), body: z.string().trim().min(1).max(2000) });
+
+router.post("/live-chat/:id/messages", rateLimitMiddleware("concierge_live_chat_send", { maxRequests: 30, windowSeconds: 60 }), async (req, res) => {
+  const parsed = chatMessageSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ success: false, error: "Type a message first." });
+  try {
+    return res.status(201).json({ success: true, chat: await guestSendLiveChat(String(req.params.id), parsed.data.token, parsed.data.body) });
+  } catch (error) {
+    return liveChatError(res, error);
+  }
+});
+
+router.post("/live-chat/:id/close", rateLimitMiddleware("concierge_live_chat_send", { maxRequests: 30, windowSeconds: 60 }), async (req, res) => {
+  try {
+    return res.json(await guestCloseLiveChat(String(req.params.id), chatToken(req)));
+  } catch (error) {
+    return liveChatError(res, error);
   }
 });
 

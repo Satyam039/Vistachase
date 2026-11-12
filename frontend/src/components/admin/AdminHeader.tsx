@@ -6,7 +6,8 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { CalendarDays, Handshake, LayoutDashboard, Lock, ArrowRight, MapPin, MessageSquare, ScrollText, Search, Settings, Ticket, Truck, Users, Workflow } from "lucide-react";
+import { LiveChatAlerts } from "@/components/admin/staff/LiveChatAlerts";
+import { CalendarDays, Handshake, Headset, LayoutDashboard, Lock, ArrowRight, MapPin, MessageSquare, ScrollText, Search, Settings, Ticket, Truck, Users, Workflow } from "lucide-react";
 
 // Admin pages are for admins, operators and dispatchers only (src/lib/portals.ts). SEO and page
 // copy live in the separate SEO portal at /seo, which admins open from here.
@@ -20,6 +21,7 @@ export const ADMIN_TABS = [
   { label: "Operations", href: "/admin/operations", icon: Workflow, roles: OPS },
   { label: "Partners", href: "/admin/partners", icon: Handshake, roles: ["ADMIN"] },
   { label: "Pickup stops", href: "/admin/pickup-stops", icon: MapPin, roles: OPS },
+  { label: "Live chat", href: "/admin/live-chat", icon: Headset, roles: OPS },
   { label: "Messages", href: "/admin/messages", icon: MessageSquare, roles: OPS },
   { label: "Audit log", href: "/admin/audit", icon: ScrollText, roles: ["ADMIN"] },
   { label: "Staff", href: "/admin/staff", icon: Users, roles: ["ADMIN"] },
@@ -68,7 +70,12 @@ export function AdminHeader({
             <h1 className="mt-2 text-3xl font-light tracking-tight text-obsidian-900 sm:text-4xl">{title}</h1>
             {subtitle && <p className="mt-1 text-base text-slate-600">{subtitle}</p>}
           </div>
-          {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+          {(actions || (role && OPS.includes(role))) && (
+            <div className="flex flex-wrap items-center gap-2">
+              {role && OPS.includes(role) && <LiveChatAlerts onLiveChatPage={current === "/admin/live-chat"} />}
+              {actions}
+            </div>
+          )}
         </div>
         <nav aria-label="Admin sections" className="vc-rail -mx-page mt-7 flex gap-1 overflow-x-auto px-page">
           {tabs.map(({ label, href, icon: Icon }) => {

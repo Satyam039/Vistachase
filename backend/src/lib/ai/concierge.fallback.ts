@@ -222,7 +222,7 @@ export async function answerWithoutModel(messages: ChatMessage[], previous: Stat
       return { message: "Please don't share card details in chat. I never take payment here: you pay on our secure checkout page.", hasSafetyRefusal: true };
     }
     if (/\b(human|real person|live agent|live chat|an agent|representative|(talk|speak) to (a person|someone|staff))\b/.test(lower)) {
-      return { message: `Tap "Chat with a live agent" below and this conversation goes to our support team, or ${CONTACT}.`, data: { type: "handoff" } };
+      return { message: `Tap "Chat with a live agent" below to chat with our support team here, or ${CONTACT}.`, data: { type: "handoff" } };
     }
 
     // A departure the guest names: show it with its in-chat "Book" button.
