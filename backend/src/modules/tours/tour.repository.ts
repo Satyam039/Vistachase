@@ -1,3 +1,4 @@
+import { isScheduledStartTime } from "@/modules/departures/schedule-rules";
 import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/db/prisma";
 import { LISTED, PRODUCT_MAP, REMOVED_TOUR_SLUGS } from "@/modules/tours/product-map";
@@ -166,7 +167,7 @@ function toTourDto(t: TourRow, expiredHeld: Map<string, number>): TourWithAvaila
     metaTitle: t.metaTitle,
     metaDescription: t.metaDescription,
     destination: t.destination,
-    departures: t.departures.filter((d) => isBookable(d)).map((d) => ({
+    departures: t.departures.filter((d) => isBookable(d) && isScheduledStartTime(t.slug, d.departureTime)).map((d) => ({
       id: d.id,
       date: formatDateOnly(d.date),
       departureTime: formatTimeOfDay(d.departureTime),
