@@ -108,3 +108,11 @@ describe("booking through the concierge", () => {
     await prisma.tourDeparture.update({ where: { id: dep.id }, data: { capacityHeld: { decrement: 2 } } });
   });
 });
+
+describe("website facts the concierge must know", () => {
+  it("knows the Tripadvisor award shown on the home page and the 10% two-day saving", () => {
+    expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("Best of the Best 2026");
+    expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("#6 Experience in all of Canada");
+    expect(VISTACHASE_STATIC_KNOWLEDGE_BASE).toContain("save 10%");
+  });
+});
