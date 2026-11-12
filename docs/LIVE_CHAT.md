@@ -3,7 +3,7 @@
 "Chat with a live agent" in the AI concierge opens a real-time chat between the guest and the
 support team. Code: `backend/src/modules/support/live-chat.ts` (chats), `staff-alerts.ts` (phone
 alerts), `frontend/src/components/voice/LiveChatWindow.tsx` (guest), `components/admin/staff/LiveChatPanel.tsx`
-and `LiveChatAlerts.tsx` (staff). Migration `9i_live_chat` adds the `LiveChat` and `LiveChatMessage` tables.
+and `LiveChatAlerts.tsx` (staff). Migration `9j_live_chat` adds the `LiveChat` and `LiveChatMessage` tables.
 
 ## How it works
 
