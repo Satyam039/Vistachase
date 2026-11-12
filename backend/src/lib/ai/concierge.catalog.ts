@@ -28,11 +28,10 @@ export const DOC_TOUR_SUMMARY: Record<string, string> = Object.fromEntries(
 );
 
 /**
- * Tours whose website page content comes from the live website catalog (frontend lib/tourContent.ts
- * and lib/sharedTours.ts), so the database summary, description, inclusions and highlights are
- * superseded by the fresh website text.
+ * Tours whose website page content comes from the owner's doc (frontend lib/tourContent.ts), so
+ * the database summary, description, inclusions and highlights are the old Webflow text.
  */
-export const DOC_TOUR_SLUGS = new Set(Object.keys(DOC_TOUR_SUMMARY));
+export const DOC_TOUR_SLUGS = new Set(Object.keys(WEBSITE_TITLES));
 
 /** A product's name as the website shows it. */
 export function websiteName(t: { slug?: string | null; title?: string | null } | null | undefined, fallback = "Vista Chase experience"): string {
