@@ -21,6 +21,7 @@ import { approveBooking, approveCancellation, declineCancellation, listRequests 
 import { createDepartures, departureProducts, listDepartures, setDepartureStatus, updateDeparture } from "@/modules/admin/departure-admin";
 import { createStop, listStops, updateStop } from "@/modules/admin/pickup-admin";
 import { LiveChatError, staffCloseLiveChat, staffGetLiveChat, staffListLiveChats, staffLiveChatPending, staffSendLiveChat } from "@/modules/support/live-chat";
+import { createPromo, deletePromo, listPromos, updatePromo } from "@/modules/admin/promo-admin";
 import { sendConfirmationEmail } from "@/modules/bookings/confirmation-email";
 import { linkTripBookings, tripOf, tripSummary } from "@/modules/bookings/trip";
 import { emailDeliveryConfigured, getEmailProvider } from "@/lib/email/email.provider";
@@ -707,6 +708,74 @@ router.patch("/pickup-stops/:id", requireStaff(MANAGERS), async (req, res, next)
     const before = Object.fromEntries(Object.keys(body).map((k) => [k, result.before[k as keyof typeof result.before]]));
     await audit(req, "UPDATE_PICKUP_STOP", "ShuttleStop", result.stop.id, { changes: body, before });
     send(res, { status: 200, stop: result.stop });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// Promo codes (Admin → Promo codes): staff see them; admins create, change and delete them.
+router.get("/promo-codes", requireStaff(MANAGERS), async (_req, res, next) => {
+  try {
+    res.json({ success: true, ...(await listPromos()) });
+  } catch (e) {
+    next(e);
+  }
+});
+
+const promoSchema = z
+  .object({
+    code: z.string().trim().regex(/^[A-Za-z0-9_-]{3,40}$/, "Use 3 to 40 letters, numbers, - or _ (no spaces)."),
+    kind: z.enum(["PERCENT", "AMOUNT"]),
+    value: z.number().positive(),
+    isActive: z.boolean().optional(),
+    startsOn: day.nullable().optional(),
+    endsOn: day.nullable().optional(),
+    maxUses: z.number().int().min(1).max(100_000).nullable().optional(),
+    note: z.string().trim().max(300).optional(),
+  })
+  .strict();
+
+const promoValueError = (b: { kind?: string; value?: number }) =>
+  b.kind === "PERCENT" && (!Number.isInteger(b.value) || (b.value ?? 0) > 100)
+    ? "A percent discount must be a whole number from 1 to 100."
+    : b.kind === "AMOUNT" && (b.value ?? 0) > 10_000
+      ? "A fixed discount can be at most CAD 10,000."
+      : null;
+
+router.post("/promo-codes", requireStaff(["ADMIN"]), async (req, res, next) => {
+  try {
+    const body = parseOr400(promoSchema, req.body, res);
+    if (!body) return;
+    const bad = promoValueError(body);
+    if (bad) return res.status(400).json({ success: false, error: bad });
+    const result = await createPromo(body);
+    if (result.status === 201) await audit(req, "CREATE_PROMO_CODE", "PromoCode", result.promo.id, body);
+    send(res, result);
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.patch("/promo-codes/:id", requireStaff(["ADMIN"]), async (req, res, next) => {
+  try {
+    const body = parseOr400(promoSchema.partial(), req.body, res);
+    if (!body) return;
+    const bad = promoValueError(body);
+    if (bad) return res.status(400).json({ success: false, error: bad });
+    const result = await updatePromo(id(req), body);
+    if (result.status !== 200) return send(res, result);
+    await audit(req, "UPDATE_PROMO_CODE", "PromoCode", result.promo.id, { changes: body, code: result.before.code });
+    send(res, { status: 200, promo: result.promo });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.delete("/promo-codes/:id", requireStaff(["ADMIN"]), async (req, res, next) => {
+  try {
+    const result = await deletePromo(id(req));
+    if (result.status === 200) await audit(req, "DELETE_PROMO_CODE", "PromoCode", result.promo.id, { code: result.promo.code });
+    send(res, result);
   } catch (e) {
     next(e);
   }

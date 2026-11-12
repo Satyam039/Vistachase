@@ -340,7 +340,7 @@ export function BookingCheckoutClient({
         : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
   };
   const [promoCodeInput, setPromoCodeInput] = useState("");
-  const [appliedPromo, setAppliedPromo] = useState<{ code: string; percent: number; amount: number } | null>(null);
+  const [appliedPromo, setAppliedPromo] = useState<{ code: string; percent: number; amountOff: number; message: string; partner: boolean } | null>(null);
   const [promoError, setPromoError] = useState("");
   const [isApplyingPromo, setIsApplyingPromo] = useState(false);
 
@@ -358,7 +358,13 @@ export function BookingCheckoutClient({
         setPromoError(data.error || "Invalid promo code");
         setAppliedPromo(null);
       } else {
-        setAppliedPromo({ code: data.promoCode, percent: data.discountPercent, amount: data.discountAmount });
+        setAppliedPromo({
+          code: data.promoCode,
+          percent: Number(data.discountPercent) || 0,
+          amountOff: Number(data.amountOff) || 0,
+          message: data.message || `Code ${data.promoCode} applied.`,
+          partner: Boolean(data.isPartnerVoucher),
+        });
         setPromoCodeInput("");
       }
     } catch {
@@ -603,7 +609,13 @@ export function BookingCheckoutClient({
     .filter(Boolean)
     .join(" + ");
   // Same rounding as the server (whole cents). No sales tax is added.
-  const discount = appliedPromo ? round2(fareSubtotal * (appliedPromo.percent / 100)) : 0;
+  // A fixed-amount code takes off at most the fare.
+  const discount = !appliedPromo
+    ? 0
+    : appliedPromo.amountOff > 0
+      ? round2(Math.min(appliedPromo.amountOff, fareSubtotal))
+      : round2(fareSubtotal * (appliedPromo.percent / 100));
+  const promoTag = appliedPromo ? (appliedPromo.amountOff > 0 ? `−${money(appliedPromo.amountOff)}` : `−${appliedPromo.percent}%`) : "";
   // Airport transfer (private tours): the doc's both-ways price, added after any promo discount.
   const transferPrice = airport ? airportTransferPrice(airportTransfer, adults + children + infants) : null;
   const total = round2(fareSubtotal - discount + (transferPrice ?? 0));
@@ -938,7 +950,7 @@ export function BookingCheckoutClient({
           value={money(fareSubtotal)}
         />
         {appliedPromo && discount > 0 && (
-          <SummaryRow label={`Promo ${appliedPromo.code} (−${appliedPromo.percent}%)`} value={`−${money(discount)}`} />
+          <SummaryRow label={`Promo ${appliedPromo.code} (${promoTag})`} value={`−${money(discount)}`} />
         )}
         {transferPrice != null && <SummaryRow label="Airport transfer" value={money(transferPrice)} />}
         <Divider />
@@ -1458,11 +1470,17 @@ export function BookingCheckoutClient({
                                   isDisabled={!promoCodeInput.trim() || isApplyingPromo}
                                 />
                               </HStack>
-                              {promoError && <p className="text-sm text-red-600">{promoError}</p>}
+                              {promoError && <p role="alert" className="text-sm text-red-700">{promoError}</p>}
                               {appliedPromo && (
-                                <HStack hAlign="between" className="text-sm text-ocean-600 font-medium">
-                                  <span>Applied: {appliedPromo.code} (-{appliedPromo.percent}%)</span>
-                                  <button onClick={() => setAppliedPromo(null)} className="underline hover:text-ocean-700">Remove</button>
+                                <HStack hAlign="between" vAlign="center" gap={3} className="rounded-none bg-ocean-50 px-3 py-2 text-sm text-ocean-800 ring-1 ring-ocean-200">
+                                  <span role="status">
+                                    <span aria-hidden="true">✓ </span>
+                                    {appliedPromo.message}
+                                    {discount > 0 ? ` You save ${money(discount)}.` : ""}
+                                  </span>
+                                  <button type="button" onClick={() => setAppliedPromo(null)} className="shrink-0 underline hover:text-ocean-900">
+                                    Remove <span className="sr-only">promo code {appliedPromo.code}</span>
+                                  </button>
                                 </HStack>
                               )}
                             </VStack>

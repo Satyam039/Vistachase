@@ -22,7 +22,7 @@ export const MENU_SECTIONS: MenuSection[] = [
     id: "experiences",
     title: "Experiences",
     links: [
-      { title: "Shared tours", description: "Small groups of up to 12, our best-sellers", href: "/shared-tours" },
+      { title: "Shared tours", description: "Small groups, our best-sellers", href: "/shared-tours" },
       { title: "Private tours", description: "Your own vehicle and guide, your pace", href: "/private-tours" },
       { title: "Shuttles", description: "Guaranteed Moraine Lake & Lake Louise access", href: "/shuttles" },
       { title: "Multi-Day Journeys", description: "Two, three and four-day Rockies itineraries", href: "/multi-day-tour-package-for-banff" },

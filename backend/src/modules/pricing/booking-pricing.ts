@@ -56,15 +56,19 @@ export function priceBooking(
   departure: PricedDeparture,
   party: number | { adults: number; children: number; infants?: number },
   addOnChoices: AddOnChoice[] = [],
-  promoCode?: string | null,
+  /** A code from the PROMO_CODES setting, or a code already checked by promo-codes.ts lookupPromo(). */
+  promoCode?: string | { percentOff: number | null; amountOffCents: number | null } | null,
   /** A discount the server applies itself (package deals) when no promo code is given. */
   fixedPercent?: number,
 ): BookingTotals {
   const { adults, children, infants = 0 } = typeof party === "number" ? { adults: party, children: 0 } : party;
   const guests = adults + children;
   const fareCents = fareSubtotal(departure, adults, children, infants);
-  const discountPercent = promoPercent(promoCode) ?? fixedPercent ?? 0;
-  const discountCents = Math.round((fareCents * discountPercent) / 100);
+  const promo = typeof promoCode === "object" && promoCode ? promoCode : null;
+  // A fixed-amount code takes off at most the fare (never add-ons or the airport transfer).
+  const amountOffCents = promo?.amountOffCents ? Math.min(promo.amountOffCents, fareCents) : 0;
+  const discountPercent = amountOffCents > 0 ? 0 : ((promo ? promo.percentOff : promoPercent(promoCode as string | null | undefined)) ?? fixedPercent ?? 0);
+  const discountCents = amountOffCents > 0 ? amountOffCents : Math.round((fareCents * discountPercent) / 100);
 
   // Each add-on once, matched by id (or by its stored name, for older clients); prices are ours.
   const seen = new Set<string>();

@@ -1,6 +1,6 @@
 // About Vista Chase, structured like the "About" pages of the booking sites studied (photo hero,
 // numbers, story, values, fleet, recognition) in the brand system. Figures are the ones used across
-// the live site: since 2018, 10,000+ guests, 5.0 from 1,700+ reviews, #6 in Canada (2026).
+// the live site: since 2018, 15,000+ guests (owner, round 3; was 10,000+), 5.0 from 1,700+ reviews, #6 in Canada (2026).
 
 import Image from "next/image";
 import { AwardSeal } from "@/components/brand/AwardSeal";
@@ -20,7 +20,7 @@ const baseMetadata: Metadata = {
 
 const STATS = [
   { to: 2018, label: "guiding the Rockies since", plain: true },
-  { to: 10000, suffix: "+", label: "guests guided" },
+  { to: 15000, suffix: "+", label: "guests guided" },
   { to: 5, decimals: 1, label: "average rating, 1,700+ reviews" },
   { to: 6, prefix: "#", label: "experience in Canada, TripAdvisor 2026" },
 ];
@@ -120,10 +120,10 @@ export default function AboutUsPage() {
             </p>
             <p>
               We built Vista Chase as the calmer alternative: licensed access, doorstep pickup in Banff, Canmore and Lake
-              Louise, small groups of up to 12, and private vehicles for travellers who want to set their own pace.
+              Louise, small-group tours, and private vehicles for travellers who want to set their own pace.
             </p>
             <p>
-              More than 10,000 guests later, and named the <strong>#6 experience in Canada</strong>, the idea hasn&rsquo;t
+              More than 15,000 guests later, and named the <strong>#6 experience in Canada</strong>, the idea hasn&rsquo;t
               changed.
             </p>
           </div>
