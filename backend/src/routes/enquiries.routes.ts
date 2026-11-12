@@ -64,32 +64,8 @@ router.post("/", rateLimitMiddleware("enquiry_create", { maxRequests: 5, windowS
   const recent = (hits.get(key) ?? []).filter((t) => now - t < 10 * 60_000);
   if (recent.length >= 5) return res.status(429).json({ success: false, error: "Too many messages. Please try again in a few minutes." });
 
-  const raw = req.body ?? {};
-  // 1. Immediate anti-bot heuristics: drop silently without DB writes or email notifications
-  if (raw.website && typeof raw.website === "string" && raw.website.trim().length > 0) {
-    return dropAsSpam(res, "honeypot filled");
-  }
-  if (typeof raw.name === "string" && (isSyntheticBotName(raw.name) || looksLikeBotName(raw.name))) {
-    return dropAsSpam(res, `synthetic bot name "${raw.name}"`);
-  }
-  if (typeof raw.message === "string" && (isSpamMessage(raw.message) || looksLikeBotMessage(raw.message))) {
-    return dropAsSpam(res, "spam bot message");
-  }
-  if (typeof raw.email === "string" && isSuspiciousEmail(raw.email)) {
-    return dropAsSpam(res, `suspicious email "${raw.email}"`);
-  }
-  if (isInvalidTripDate(raw.date) || isInvalidTripDate(raw.toDate)) {
-    return dropAsSpam(res, "absurd travel dates");
-  }
-  if (isSpamBotEnquiry(raw)) {
-    return dropAsSpam(res, "spam bot enquiry heuristic");
-  }
-
-  const parsed = schema.safeParse(raw);
+  const parsed = schema.safeParse(req.body ?? {});
   if (!parsed.success) {
-    if (Number(raw.guests) > 35 || isInvalidTripDate(raw.date) || isInvalidTripDate(raw.toDate)) {
-      return dropAsSpam(res, "bot absurd field values");
-    }
     return res.status(400).json({ success: false, error: "Please check the highlighted fields.", fields: parsed.error.flatten().fieldErrors });
   }
   const data = parsed.data;
@@ -99,13 +75,13 @@ router.post("/", rateLimitMiddleware("enquiry_create", { maxRequests: 5, windowS
   if (data.website) return dropAsSpam(res, "honeypot filled");
   if (looksLikeBotName(data.name) || isSyntheticBotName(data.name)) return dropAsSpam(res, "random-string name");
   if (looksLikeBotMessage(data.message) || isSpamMessage(data.message)) return dropAsSpam(res, "message has no words");
+  if (isSuspiciousEmail(data.email)) return dropAsSpam(res, "suspicious email address");
   const tokenProblem = formTokenProblem(data.formToken, now);
   if (tokenProblem) return dropAsSpam(res, tokenProblem);
   if (!(await verifyTurnstile(data.turnstileToken, req.ip))) {
     return res.status(400).json({ success: false, error: "Please complete the security check and send again." });
   }
   if (tooManyFromEmail(data.email, now)) return dropAsSpam(res, "more than 3 enquiries from one email today");
-  if (isSuspiciousEmail(data.email)) return dropAsSpam(res, "suspicious email address");
 
   recent.push(now);
   hits.set(key, recent);

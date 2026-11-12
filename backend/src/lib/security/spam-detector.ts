@@ -40,36 +40,29 @@ export const DISPOSABLE_EMAIL_DOMAINS = new Set([
 function isSingleTokenSynthetic(token: string): boolean {
   const clean = token.replace(/[^A-Za-z]/g, "");
   if (clean.length < 5) return false;
+  // All-caps or all-lowercase names are not mixed-case synthetic tokens
+  if (clean === clean.toUpperCase() || clean === clean.toLowerCase()) return false;
 
-  // 4 or more consecutive consonants (e.g. qmth, glZrg, QCfXTR, gsXjS, etc.)
-  if (/[bcdfghjklmnpqrstvwxyz]{4,}/i.test(clean)) return true;
+  // 4 or more consecutive strict consonants (excluding y which often acts as vowel in names)
+  if (/[bcdfghjklmnpqrstvwxz]{4,}/i.test(clean)) return true;
 
   // Two or more consecutive uppercase letters appearing after lowercase (e.g. NuLBPir, qmthDEIps, AXaFtFE)
   if (/[a-z][A-Z]{2,}/.test(clean)) return true;
 
-  // Starts with lowercase followed by uppercase in tokens >= 6 chars (e.g. cHXw...)
-  if (/^[a-z][A-Z]/.test(clean) && clean.length >= 6) return true;
+  // Starts with lowercase followed by 2 uppercase in tokens >= 6 chars (e.g. cHXw...)
+  if (/^[a-z][A-Z]{2}/.test(clean)) return true;
 
-  // 2 or more switches between lowercase and uppercase in tokens >= 6 chars
+  // 4 or more switches between lowercase and uppercase in tokens >= 6 chars
   const switches = clean.match(/[a-z][A-Z]/g)?.length ?? 0;
-  if (switches >= 2 && clean.length >= 6) return true;
+  if (switches >= 4) return true;
 
   // Multiple uppercase letters scattered in non-initial positions
-  const upperCount = (clean.match(/[A-Z]/g) || []).length;
-  const lowerCount = (clean.match(/[a-z]/g) || []).length;
-  if (upperCount >= 2 && lowerCount >= 2 && clean.length >= 6) {
-    let transitions = 0;
-    for (let i = 1; i < clean.length; i++) {
-      const prevLower = /[a-z]/.test(clean[i - 1]);
-      const currUpper = /[A-Z]/.test(clean[i]);
-      if (prevLower && currUpper) transitions++;
-    }
-    if (transitions >= 2) return true;
-  }
+  const innerCapitals = clean.slice(1).match(/[A-Z]/g)?.length ?? 0;
+  if (innerCapitals >= 5 && innerCapitals / clean.length >= 0.3) return true;
 
-  // Extreme consonant ratio in a token >= 6 chars (< 18% vowels, e.g. 5+ consonants and 0-1 vowel)
+  // Extreme consonant ratio in a token >= 6 chars (< 15% vowels)
   const vowels = (clean.match(/[aeiouy]/gi) || []).length;
-  if (clean.length >= 6 && vowels / clean.length < 0.18) return true;
+  if (clean.length >= 6 && vowels / clean.length < 0.15) return true;
 
   return false;
 }
@@ -116,8 +109,11 @@ export function isSuspiciousEmail(email?: string): boolean {
     return true;
   }
 
-  // Synthetic local-part matching bot patterns
-  if (isSingleTokenSynthetic(local)) return true;
+  // Synthetic local-part matching bot patterns (evaluated per segment so first.last isn't merged)
+  const segments = local.split(/[._+-]/);
+  for (const seg of segments) {
+    if (isSingleTokenSynthetic(seg)) return true;
+  }
 
   return false;
 }
@@ -127,7 +123,9 @@ export function isSuspiciousEmail(email?: string): boolean {
  */
 export async function hasValidMxRecords(domain: string): Promise<boolean> {
   if (process.env.NODE_ENV === "test") {
-    if (domain.includes("nonexistent") || domain.includes("fake") || domain === "invalid") return false;
+    if (domain.includes("nonexistent") || domain.includes("fake") || domain.includes("invalid") || domain === "not-an-email") {
+      return false;
+    }
     return true;
   }
   try {

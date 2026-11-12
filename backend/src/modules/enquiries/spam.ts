@@ -33,7 +33,7 @@ export function looksLikeBotName(name: string): boolean {
   if (/\s/.test(trimmed) || !/^[A-Za-z]+$/.test(trimmed)) return false;
   if (trimmed === trimmed.toUpperCase() || trimmed === trimmed.toLowerCase()) return false;
   const switches = trimmed.match(/[a-z][A-Z]/g)?.length ?? 0;
-  if (switches >= 3) return true;
+  if (switches >= 4) return true;
   // Capitals after the first letter: "MacKenzieMcLeod" has 3, the bot names 8 and more.
   const innerCapitals = trimmed.slice(1).match(/[A-Z]/g)?.length ?? 0;
   if (innerCapitals >= 5 && innerCapitals / trimmed.length >= 0.3) return true;
