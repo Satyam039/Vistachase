@@ -146,7 +146,7 @@ export async function renderCatalogKnowledge(): Promise<string> {
       `- Not included: ${p.notIncluded.join("; ")}`,
       ...(p.seasonNotes ?? []).map((n) => `- Note: ${n}`),
       `- Cancellation: ${p.cancellation}`,
-      `- Book: ${p.bookIn === "chat" ? "in this chat (live departures)" : `on its page ${p.page} (multi-day package)`}; page ${p.page}`,
+      `- Book: ${p.bookIn === "chat" ? "in this chat (live departures)" : 'in this chat: get_tour_details shows the card, the guest taps "Choose dates and book" and picks a date for each day (multi-day package)'}; page ${p.page}`,
     ]
       .filter(Boolean)
       .join("\n");

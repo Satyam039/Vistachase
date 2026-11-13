@@ -4,7 +4,8 @@
 // recommend only what fits, as clickable cards, then explain the tour and book it in the chat).
 // The data comes from the backend's product knowledgebase (lib/ai/knowledge) with live prices and
 // departures. Tapping a card asks the concierge for that tour; "Book" on a departure opens the
-// in-chat checkout (ConciergeCheckout) through the parent.
+// in-chat checkout (ConciergeCheckout) through the parent; a multi-day package's "Choose dates and
+// book" opens the in-chat package checkout (ConciergePackageCheckout).
 
 import Image from "next/image";
 import { ArrowRight, CalendarDays, Check, Clock, ExternalLink, MapPin, Users, X } from "lucide-react";
@@ -109,10 +110,13 @@ export function ConciergeTourDetail({
   tour,
   onBook,
   onAsk,
+  onBookPackage,
 }: {
   tour: TourDetailData;
   onBook: (departure: TourDetailData["departures"][number]) => void;
   onAsk: (text: string) => void;
+  /** Multi-day packages: open the package checkout in the chat (ConciergePackageCheckout). */
+  onBookPackage?: (slug: string) => void;
 }) {
   return (
     <article className="overflow-hidden border border-obsidian-900/10 bg-white" aria-label={tour.name}>
@@ -215,6 +219,11 @@ export function ConciergeTourDetail({
                 Check dates
               </button>
             )
+          ) : onBookPackage ? (
+            <button type="button" onClick={() => onBookPackage(tour.slug)} className="golden-summit-btn inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-sm">
+              Choose dates and book
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </button>
           ) : (
             <a href={tour.page} target="_blank" rel="noopener" className="golden-summit-btn inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-sm">
               Choose dates and book

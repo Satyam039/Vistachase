@@ -11,6 +11,7 @@ import { moneyExact } from "@/lib/pricing";
 import { ArrowRight, Calendar, Car, CheckCircle2, Clock, MapPin, ShieldCheck, Ticket } from "lucide-react";
 import { ConciergeSeatMap, type SeatInfo } from "./ConciergeSeatMap";
 import { ConciergeCheckout } from "./ConciergeCheckout";
+import { CHAT_PACKAGES, ConciergePackageCheckout } from "./ConciergePackageCheckout";
 import { ConciergeTourCards, ConciergeTourDetail, type TourCardData, type TourDetailData } from "./ConciergeTourCards";
 
 export interface VoiceCardData {
@@ -115,6 +116,8 @@ const shortDate = (d?: string) => {
 export function VoiceBookingCardStream({ data, checkoutUrl, hasSafetyRefusal, onSelectPickup, onSelectSeats, onBooked, onAsk }: VoiceBookingCardStreamProps) {
   // "Choose" on a departure opens the checkout right here in the chat (owner, 2026-11-11: no /book page).
   const [chosen, setChosen] = useState<NonNullable<VoiceCardData["departures"]>[number] | null>(null);
+  // A multi-day package's "Choose dates and book" opens its checkout here too (owner, 2026-11-13).
+  const [packageSlug, setPackageSlug] = useState<string | null>(null);
   const held = holdFromCheckoutUrl(checkoutUrl);
   if (!data && !checkoutUrl && !hasSafetyRefusal) return null;
 
@@ -158,8 +161,11 @@ export function VoiceBookingCardStream({ data, checkoutUrl, hasSafetyRefusal, on
           onBook={(d) =>
             setChosen({ id: d.id, title: data.tourDetail!.name, date: d.date, departureTime: d.time, price: d.price, currency: "CAD", availableSeats: d.seats })
           }
+          onBookPackage={CHAT_PACKAGES[data.tourDetail.slug] ? setPackageSlug : undefined}
         />
       )}
+
+      {packageSlug && <ConciergePackageCheckout key={packageSlug} slug={packageSlug} />}
 
       {data?.type === "availability" && data.departures && data.departures.length > 0 && (
         <div className={CARD}>
