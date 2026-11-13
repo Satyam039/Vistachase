@@ -47,7 +47,8 @@ export interface WebsiteProduct {
   cancellation: string;
   /** Season notes that change what's included (e.g. Moraine Lake, Ice Explorer). */
   seasonNotes?: string[];
-  /** Booked in the chat (a departure in the live calendar) or on its own page (multi-day packages). */
+  /** "chat": a departure in the live calendar, booked with the in-chat checkout. "page": a multi-day
+   *  package, booked with the in-chat package checkout (frontend ConciergePackageCheckout). */
   bookIn: "chat" | "page";
   /** Packages only: the page's published price (CAD, per guest or per vehicle). */
   packagePrice?: { text: string; fromAmount: number; unit: "per guest" | "per vehicle" };

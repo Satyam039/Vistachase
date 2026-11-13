@@ -24,7 +24,7 @@ import type { Preferences } from "@/lib/ai/knowledge/catalog-live";
 type Prefs = Preferences & { dateLabel?: string };
 
 type Topic = "price" | "dates" | "details" | "pickup" | "lookup" | "track";
-type State = SessionState & { topic?: Topic; englishNotice?: boolean; consult?: Prefs & { asked?: "date" | "guests" | "style" }; trip?: { date?: string; guests?: number } };
+type State = SessionState & { topic?: Topic; englishNotice?: boolean; consult?: Prefs & { asked?: "date" | "guests" | "style" | "days" }; trip?: { date?: string; guests?: number } };
 type Reply = { message: string; data?: Record<string, unknown>; checkoutUrl?: string; hasSafetyRefusal?: boolean };
 
 const REFERENCE = /\bVC-\d{4}-[A-Z0-9]{4,}\b/i;
@@ -251,6 +251,8 @@ export function preferencesIn(text: string, asked?: string, today = todayInMount
   const d = lower.match(/\b(\d|two|three|four)[- ]days?\b/);
   if (d) out.days = Number(d[1]) || NUMBER_WORDS[d[1]];
   else if (/\b(day trip|one day|single day|a day)\b/.test(lower)) out.days = 1;
+  // "Not sure" to the one-day-or-more question: any length (0 = no preference).
+  else if (asked === "days" && /\b(not sure|either|any|no preference|don'?t mind|whatever|both)\b/.test(lower)) out.days = 0;
   const places = ["moraine", "lake louise", "jasper", "maligne", "icefield", "glacier", "yoho", "emerald", "peyto", "johnston", "abraham", "sunrise", "banff"].filter((w) => lower.includes(w));
   if (places.length) out.places = places;
   if (/\b(luxury|premium|vip|exclusive)\b/.test(lower)) out.premium = true;
@@ -283,7 +285,19 @@ async function consult(prefs: State["consult"] & object, state: State, ctx: Tool
       data: { type: "choices", options: STYLE_CHOICES },
     };
   }
-  const out = await runConciergeTool("recommend_tours", { ...prefs, style: prefs.style }, ctx);
+  // One day or more: asked in the step-by-step chat (not when the guest said it all at once), and
+  // only where a multi-day package fits the style and season.
+  if (prefs.days === undefined && prefs.asked === "style" && prefs.style !== "shuttle") {
+    const lengths = multiDayChoices(prefs.style, prefs.date);
+    if (lengths.length) {
+      prefs.asked = "days";
+      return {
+        message: "Would you like a single day tour, or a multi-day trip with a date for each day?",
+        data: { type: "choices", options: ["One day", ...lengths, "Not sure"] },
+      };
+    }
+  }
+  const out = await runConciergeTool("recommend_tours", { ...prefs, style: prefs.style, days: prefs.days || undefined }, ctx);
   const result = out.result as { shownToGuestAsCards?: { name: string }[]; reasonsLeftOut?: string[] };
   state.consult = undefined;
   state.trip = { date: prefs.date, guests: prefs.guests }; // kept for the tour the guest opens next
@@ -296,6 +310,21 @@ async function consult(prefs: State["consult"] & object, state: State, ctx: Tool
     message: `${result.shownToGuestAsCards.length === 1 ? "This one fits" : "These fit"} ${when} for ${prefs.guests} ${prefs.guests === 1 ? "guest" : "guests"}. Tap a tour to see its details and dates.`,
     data: out.card?.data,
   };
+}
+
+/** Multi-day lengths on sale for the style and date: the shared two-day package all year; the private
+ *  two-day package all year and the three- and four-day journeys in summer (catalog seasons). */
+function multiDayChoices(style: Prefs["style"], date?: string): string[] {
+  const month = date ? Number(date.slice(5, 7)) : undefined;
+  const lengths = new Set<number>();
+  for (const p of WEBSITE_CATALOG) {
+    if (p.days < 2) continue;
+    if (style === "shared" && p.type !== "SHARED") continue;
+    if (style === "private" && p.type !== "PRIVATE") continue;
+    if (month && p.season.months && !p.season.months.includes(month)) continue;
+    lengths.add(p.days);
+  }
+  return [...lengths].sort().map((n) => `${n} days`);
 }
 
 /** "Show me the tour: Banff & Yoho Discovery" (a tap on a recommendation card), or a website name. */
@@ -312,12 +341,13 @@ async function catalogTourDetails(slug: string, state: State, ctx: ToolExecution
   if (!d?.name) return { message: `I couldn't open that tour. ${CONTACT}.` };
   state.tourSlug = slug;
   state.tourTitle = d.name;
+  const ask = trip.guests ? "" : " How many guests are travelling?";
   const next =
     d.bookIn === "page"
-      ? "It's booked on its own page, linked on the card."
+      ? `Tap "Choose dates and book" to pick a date for each day and pay here in the chat.${ask}`
       : d.departures?.length
-        ? 'Tap "Book" on a date below to book it here, or tell me another date.'
-        : "Tell me a date and I'll check seats.";
+        ? `Tap "Book" on a date below to book it here, or tell me another date.${ask}`
+        : `Tell me a date and I'll check seats.${ask}`;
   return { message: `${d.name}: ${firstSentence(d.overview ?? "")} ${d.duration}, ${d.price}. ${next}`, data: out.card?.data };
 }
 

@@ -115,7 +115,10 @@ describe("the concierge asks before it recommends", () => {
     const third = await say("2 guests");
     expect(third.message).toMatch(/shared small-group tour, a private tour/);
     const fourth = await say("Shared small-group tour");
-    const data = fourth.data as { type: string; tours: { slug: string }[] };
+    expect(fourth.message).toMatch(/single day tour, or a multi-day trip/);
+    expect((fourth.data as { options: string[] }).options).toEqual(["One day", "2 days", "Not sure"]);
+    const fifth = await say("One day");
+    const data = fifth.data as { type: string; tours: { slug: string }[] };
     expect(data.type).toBe("tours");
     expect(data.tours.map((t) => t.slug)).toContain("banff-highlights-tour");
     expect(data.tours.map((t) => t.slug)).not.toContain("winter-special");
@@ -124,6 +127,28 @@ describe("the concierge asks before it recommends", () => {
     expect((opened.data as { type: string }).type).toBe("tour");
     expect(opened.message).toMatch(/Banff & Yoho Discovery/);
     expect(opened.message).toMatch(/Book/);
+  });
+
+  it("offers the multi-day lengths that run then, and books a package in the chat", async () => {
+    expect(preferencesIn("Not sure", "days").days).toBe(0);
+    const chat: ChatMessage[] = [];
+    let state: SessionState | undefined;
+    const say = async (text: string) => {
+      chat.push({ role: "user", content: text });
+      const r = await answerWithoutModel(chat, state, ctx);
+      chat.push({ role: "assistant", content: r.message });
+      state = r.sessionState;
+      return r;
+    };
+    await say("Can you recommend a tour?");
+    await say("July 2027");
+    await say("4 guests");
+    const days = await say("Private tour");
+    expect((days.data as { options: string[] }).options).toEqual(["One day", "2 days", "3 days", "4 days", "Not sure"]);
+    const opened = await say("Show me the tour: Three-Day Rockies Discovery – Private");
+    expect((opened.data as { type: string; tourDetail: { bookIn: string } }).tourDetail.bookIn).toBe("page");
+    expect(opened.message).toMatch(/Choose dates and book/);
+    expect(opened.message).not.toMatch(/own page/);
   });
 
   it("answers everything in one message at once", async () => {

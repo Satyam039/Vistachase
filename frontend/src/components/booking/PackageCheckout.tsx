@@ -123,6 +123,7 @@ export function PackageCheckout({
   requestHref = `/contact-us?package=${packageSlug}`,
   cancellationNote = "Each day can be cancelled for a full refund up to 24 hours before it starts.",
   depositAllowed = false,
+  compact = false,
 }: {
   packageSlug: string;
   title: string;
@@ -139,7 +140,10 @@ export function PackageCheckout({
   cancellationNote?: string;
   /** Private journeys: offer "continue with a 20% deposit" beside full payment (owner, 2026-11-11). */
   depositAllowed?: boolean;
+  /** Inside the AI concierge's chat panel: one narrow column, links open in a new tab (no redirect). */
+  compact?: boolean;
 }) {
+  const newTab = compact ? ({ target: "_blank", rel: "noopener" } as const) : {};
   const MAX_GUESTS = maxGuests ?? SHARED_MAX_GUESTS;
   const discountOn = (date: string | undefined) => (date && !inSummer(date) && winterDiscountPercent != null ? winterDiscountPercent : discountPercent);
   const [adults, setAdults] = useState(2);
@@ -323,7 +327,7 @@ export function PackageCheckout({
 
   if (confirmed) {
     return (
-      <section className="mx-auto max-w-2xl rounded-none bg-white p-6 text-center ring-1 ring-obsidian-900/[0.07] sm:p-10" aria-live="polite">
+      <section className={`mx-auto max-w-2xl rounded-none bg-white text-center ring-1 ring-obsidian-900/[0.07] ${compact ? "p-4" : "p-6 sm:p-10"}`} aria-live="polite">
         <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
           <Check className="h-7 w-7" aria-hidden="true" />
         </span>
@@ -342,7 +346,7 @@ export function PackageCheckout({
                   {b.bookingReference}
                 </span>
               </span>
-              <a href={b.voucherUrl} className="inline-flex h-10 items-center rounded-full bg-obsidian-950 px-5 text-sm text-white hover:bg-obsidian-900">
+              <a href={b.voucherUrl} {...newTab} className="inline-flex h-10 items-center rounded-full bg-obsidian-950 px-5 text-sm text-white hover:bg-obsidian-900">
                 Open voucher
               </a>
             </li>
@@ -353,9 +357,9 @@ export function PackageCheckout({
   }
 
   return (
-    <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-12">
+    <div className={compact ? "grid items-start gap-4" : "grid items-start gap-8 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-12"}>
       <div className="space-y-6">
-        <Section icon={Users} title="Who's coming">
+        <Section compact={compact} icon={Users} title="Who's coming">
           {vehicle ? (
             <>
               <div className="max-w-xs">
@@ -379,7 +383,7 @@ export function PackageCheckout({
             </>
           ) : (
             <>
-              <div className="grid gap-4 sm:grid-cols-3">
+              <div className={compact ? "grid gap-4" : "grid gap-4 sm:grid-cols-3"}>
                 <QuantityInput label="Adults" description="Ages 16–99" value={adults} onChange={setAdults} min={1} max={MAX_GUESTS - children - infants} />
                 <QuantityInput label="Youth" description="Ages 6–15" value={children} onChange={setChildren} min={0} max={MAX_GUESTS - adults - infants} />
                 <QuantityInput label="Infants" description="Ages 0–5, take a seat" value={infants} onChange={setInfants} min={0} max={Math.min(4, MAX_GUESTS - adults - children)} />
@@ -389,7 +393,7 @@ export function PackageCheckout({
           )}
         </Section>
 
-        <Section icon={CalendarDays} title="Choose your dates">
+        <Section compact={compact} icon={CalendarDays} title="Choose your dates">
           <div className="space-y-6">
             <p className="text-sm text-slate-600">
               Pick the date you want for each day. They don&rsquo;t have to be in a row, but each day is a full-day tour, so every day needs its own date.
@@ -422,7 +426,7 @@ export function PackageCheckout({
                     ) : (
                       <p className="rounded-xl bg-obsidian-50 px-4 py-3 text-sm text-slate-700">
                         {vehicle ? "No free vehicle dates for this day right now." : `No dates with ${guests} free seats right now.`}{" "}
-                        <Link href={requestHref} className="text-ocean-700 underline underline-offset-2">
+                        <Link href={requestHref} {...newTab} className="text-ocean-700 underline underline-offset-2">
                           Ask us about other dates
                         </Link>
                         .
@@ -434,7 +438,7 @@ export function PackageCheckout({
                       </p>
                     )}
                   </div>
-                  <Link href={day.href} className="mt-1.5 inline-block text-sm text-ocean-700 underline underline-offset-2">
+                  <Link href={day.href} {...newTab} className="mt-1.5 inline-block text-sm text-ocean-700 underline underline-offset-2">
                     What this day includes
                   </Link>
                 </div>
@@ -444,12 +448,12 @@ export function PackageCheckout({
           </div>
         </Section>
 
-        <Section icon={Mail} title="Lead guest">
+        <Section compact={compact} icon={Mail} title="Lead guest">
           <div className="space-y-4">
             <div {...(show("name") ? { "data-first-error": true } : {})}>
               <TextInput label="Full name" value={name} onChange={setName} autoComplete="name" status={status("name")} />
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className={compact ? "grid gap-4" : "grid gap-4 sm:grid-cols-2"}>
               <div {...(show("email") ? { "data-first-error": true } : {})}>
                 <TextInput label="Email" type="email" value={email} onChange={setEmail} autoComplete="email" description={days.length === 2 ? "Both vouchers are sent here." : "Your vouchers are sent here."} status={status("email")} />
               </div>
@@ -460,7 +464,7 @@ export function PackageCheckout({
           </div>
         </Section>
 
-        <Section icon={MapPin} title="Pickup">
+        <Section compact={compact} icon={MapPin} title="Pickup">
           <div className="space-y-4" {...(show("stop") || show("jasperPickup") ? { "data-first-error": true } : {})}>
             {stops.length > 0 && (
               <Dropdown
@@ -511,7 +515,7 @@ export function PackageCheckout({
         </Section>
       </div>
 
-      <aside className="rounded-none bg-obsidian-950 p-6 text-white sm:p-8 lg:sticky lg:top-[calc(var(--vc-header-h,80px)+24px)]" aria-label="Your package">
+      <aside className={compact ? "rounded-none bg-obsidian-950 p-5 text-white" : "rounded-none bg-obsidian-950 p-6 text-white sm:p-8 lg:sticky lg:top-[calc(var(--vc-header-h,80px)+24px)]"} aria-label="Your package">
         <p className="text-sm uppercase tracking-[0.22em] text-summit-300">{title}</p>
         <ul className="mt-5 space-y-4">
           {days.map((day, i) => (
@@ -650,9 +654,9 @@ export function PackageCheckout({
   );
 }
 
-function Section({ icon: Icon, title, children }: { icon: typeof Users; title: string; children: React.ReactNode }) {
+function Section({ icon: Icon, title, children, compact = false }: { icon: typeof Users; title: string; children: React.ReactNode; compact?: boolean }) {
   return (
-    <section className="rounded-none bg-white p-5 ring-1 ring-obsidian-900/[0.07] sm:p-7">
+    <section className={compact ? "rounded-none bg-white p-4 ring-1 ring-obsidian-900/[0.07]" : "rounded-none bg-white p-5 ring-1 ring-obsidian-900/[0.07] sm:p-7"}>
       <h2 className="mb-4 flex items-center gap-2.5 text-xl font-light text-obsidian-900">
         <Icon className="h-5 w-5 text-ocean-600" aria-hidden="true" />
         {title}
