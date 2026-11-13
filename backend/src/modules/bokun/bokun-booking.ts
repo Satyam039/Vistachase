@@ -43,6 +43,8 @@ export interface BokunReservationInput {
   productBokunId: string;
   /** The product's Bókun start time IDs (product-map.json), when known. */
   startTimeIds?: number[];
+  /** The product's Bókun rate per season (product-map.json), when it has a summer and a winter rate. */
+  rateIds?: { summer?: number; winter?: number };
   /** Our tour category: PRIVATE books the whole vehicle. */
   category: string;
   date: string; // YYYY-MM-DD
@@ -90,6 +92,26 @@ const groupSize = (title: string) => Number(/group of (\d+)/i.exec(title)?.[1] ?
 
 /** "2026-11-15" moved by whole days. */
 export const shiftDay = (date: string, days: number) => new Date(Date.parse(`${date}T00:00:00Z`) + days * DAY_MS).toISOString().slice(0, 10);
+
+/** June 1 to October 10 is summer (the website's seasonal prices, scripts/seed-departures.ts). */
+export const isSummerDate = (date: string) => {
+  const md = date.slice(5, 10);
+  return md >= "06-01" && md <= "10-10";
+};
+
+/**
+ * The season's Bókun rate for a product with a summer and a winter rate (e.g. Banff & Yoho
+ * Discovery Private: summer 2319946 at $1,750, winter 2319969 at $1,240), so Bókun prices the
+ * booking as the website did. Bókun's default rate would otherwise price a winter booking at the
+ * summer price and show it as "Partially paid". Undefined when the product has no seasonal rates,
+ * or the slot lists its rates and this one isn't among them.
+ */
+export function seasonRateId(rateIds: { summer?: number; winter?: number } | undefined, date: string, slot: Pick<BokunAvailability, "rates">) {
+  const id = rateIds ? (isSummerDate(date) ? rateIds.summer : rateIds.winter) : undefined;
+  if (id == null) return undefined;
+  const offered = slot.rates?.map((r) => Number(r.id));
+  return !offered || offered.length === 0 || offered.includes(Number(id)) ? id : undefined;
+}
 
 /**
  * Bókun's start for our departure: same day and start time. A product Bókun runs without a clock
@@ -286,7 +308,7 @@ export async function reserveInBokun(
   const seatsLeft = Math.max(0, slot.availabilityCount ?? 0);
   if (slot.soldOut || seatsLeft < needed) throw new BokunUnavailableError(`Bókun has ${seatsLeft} seat(s) left.`);
 
-  const rateId = slot.defaultRateId ?? slot.rates?.[0]?.id;
+  const rateId = seasonRateId(input.rateIds, input.date, slot) ?? slot.defaultRateId ?? slot.rates?.[0]?.id;
   const { passengers, infantsInNote } = buildPassengers(input, (detail?.pricingCategories ?? []).map((c) => ({ id: c.id, title: c.title })));
   const bookingDate = slotDate(slot);
   const directBooking = {
