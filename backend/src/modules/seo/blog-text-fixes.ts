@@ -28,12 +28,28 @@ export const BLOG_TEXT_FIELDS = [
 
 export type BlogTextField = (typeof BLOG_TEXT_FIELDS)[number];
 
+const LINK_TARGET = /\]\([^)\s]+\)/g;
+const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/**
+ * The fix's "from" text as a pattern. A Markdown link target in it matches any target: the public
+ * blog API shows links that hit a redirect at the redirect's target (cleanBody in seo.public.ts),
+ * while the stored body may still hold the old address (e.g. /shared-tours-heart-of-banff). The
+ * replacement uses the current address written in "to".
+ */
+export function fixPattern(from: string): RegExp {
+  const parts = from.split(LINK_TARGET).map(escapeRegExp);
+  return new RegExp(parts.join("\\]\\([^)\\s]+\\)"), "g");
+}
+
 export function applyTextFixes(text: string, fixes: TextFix[]): { text: string; applied: TextFix[] } {
   let out = text;
   const applied: TextFix[] = [];
   for (const fix of fixes) {
-    if (!fix.from || !out.includes(fix.from)) continue;
-    out = out.split(fix.from).join(fix.to);
+    if (!fix.from) continue;
+    const pattern = fixPattern(fix.from);
+    if (!pattern.test(out)) continue;
+    out = out.replace(fixPattern(fix.from), () => fix.to);
     applied.push(fix);
   }
   return { text: out, applied };

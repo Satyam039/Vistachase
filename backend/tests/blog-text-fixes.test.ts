@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { planBlogTextFixes, type TextFix } from "../src/modules/seo/blog-text-fixes";
+import { fixPattern, planBlogTextFixes, type TextFix } from "../src/modules/seo/blog-text-fixes";
 
 const file = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../prisma/catalog/blog-fixes-2026-11.json"), "utf8")) as {
   posts: Record<string, TextFix[]>;
@@ -18,6 +18,12 @@ describe("blog text fixes", () => {
     expect(second.data).toEqual({});
     expect(second.applied).toEqual([]);
     expect(second.missing).toEqual([]);
+  });
+
+  it("matches a link stored at its old address and writes the current one", () => {
+    const fixes = [{ from: "Our [Heart of Banff Tour](/banff-highlights-tour) costs $99.", to: "Our [Banff & Yoho Discovery](/banff-highlights-tour) costs $220." }];
+    const plan = planBlogTextFixes({ body: "A. Our [Heart of Banff Tour](https://www.vistachase.com/shared-tours-heart-of-banff) costs $99. B." }, fixes);
+    expect(plan.data).toEqual({ body: "A. Our [Banff & Yoho Discovery](/banff-highlights-tour) costs $220. B." });
   });
 
   it("leaves a passage staff rewrote and reports it", () => {
@@ -39,6 +45,7 @@ describe("blog text fixes", () => {
     for (const f of all) {
       expect(f.from.length).toBeGreaterThan(10);
       expect(f.to.includes(f.from)).toBe(false);
+      expect(fixPattern(f.from).test(f.to)).toBe(false);
     }
   });
 
