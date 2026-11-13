@@ -46,6 +46,11 @@ export function bokunProductId(tour: { slug: string; bokunId: string | null } | 
   return tour.bokunId;
 }
 
+/** Bókun's answer when a reservation lapsed or was aborted before it was confirmed. */
+export function reservationGone(error: unknown) {
+  return error instanceof BokunApiError && error.status < 500 && /not in reserved state[^:]*:\s*(TIMEOUT|ABORTED|CANCELLED|EXPIRED)/i.test(error.message);
+}
+
 /** Retrying won't help: stop and ask staff. */
 class StopError extends Error {}
 
@@ -153,13 +158,11 @@ async function runCreate(client: BokunApi, task: BookingSyncTask, now: Date): Pr
   let code = task.externalRef;
   let submitting = false;
   try {
-    if (!code) {
-      if (stage === "submitting") {
-        throw new StopError(`An earlier attempt got no answer from Bókun while creating it, so it may already be there. Look for ${booking.bookingReference} in Bókun before adding it by hand.`);
-      }
+    // Reserves in Bókun and saves the code on the task (so a retry never reserves twice).
+    const reserve = async () => {
       const dep = booking.tourDeparture;
       const place = booking.pickupStop?.name ?? booking.pickupCustomText ?? "";
-      code = await reserveInBokun(
+      const reserved = await reserveInBokun(
         client,
         {
           bookingReference: booking.bookingReference,
@@ -184,22 +187,41 @@ async function runCreate(client: BokunApi, task: BookingSyncTask, now: Date): Pr
         },
       );
       submitting = false;
-      await prisma.bookingSyncTask.update({ where: { id: task.id }, data: { externalRef: code, payload: { stage: "reserved" } } });
+      await prisma.bookingSyncTask.update({ where: { id: task.id }, data: { externalRef: reserved, payload: { stage: "reserved" } } });
+      return reserved;
+    };
+    if (!code) {
+      if (stage === "submitting") {
+        throw new StopError(`An earlier attempt got no answer from Bókun while creating it, so it may already be there. Look for ${booking.bookingReference} in Bókun before adding it by hand.`);
+      }
+      code = await reserve();
     }
 
     const paid = booking.payments.filter((p) => p.status === "SUCCEEDED");
     const paidCents = paid.reduce((sum, p) => sum + p.amount, 0);
-    await confirmInBokun(
-      client,
-      code,
-      booking.bookingReference,
-      {
-        amount: paidCents / 100,
-        currency: booking.currency,
-        transactionId: paid.find((p) => p.transactionId)?.transactionId ?? undefined,
-      },
-      { testAccount: bokunIsTestAccount(), bookingTotal: booking.totalAmount / 100 },
-    );
+    const confirm = (reservation: string) =>
+      confirmInBokun(
+        client,
+        reservation,
+        booking.bookingReference,
+        {
+          amount: paidCents / 100,
+          currency: booking.currency,
+          transactionId: paid.find((p) => p.transactionId)?.transactionId ?? undefined,
+        },
+        { testAccount: bokunIsTestAccount(), bookingTotal: booking.totalAmount / 100 },
+      );
+    try {
+      await confirm(code);
+    } catch (error) {
+      // Bókun lets an unconfirmed reservation lapse (TIMEOUT) or staff abort it. That one is gone,
+      // so nothing is doubled by reserving again, once, and confirming the new one.
+      if (!reservationGone(error)) throw error;
+      console.warn(`[bokun] reservation ${code} for ${booking.bookingReference} is no longer reserved in Bókun; reserving again.`);
+      await prisma.bookingSyncTask.update({ where: { id: task.id }, data: { externalRef: null, payload: { stage: "lapsed", lapsed: code } } });
+      code = await reserve();
+      await confirm(code);
+    }
     await prisma.booking.update({ where: { id: booking.id }, data: { bokunBookingId: code, externalSyncStatus: "SYNCED", lastSyncAttemptAt: now } });
     return finish(task, "SUCCEEDED", null, code);
   } catch (error) {
