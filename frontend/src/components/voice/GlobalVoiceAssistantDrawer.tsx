@@ -4,11 +4,24 @@
 // panel: a floating card on the right on desktop (like ChatGPT / Intercom side chats), full
 // screen on phones. The panel is a modal dialog: focus moves into the composer, Esc or the
 // close button closes it, and focus returns to the launcher.
+//
+// Page speed: the chat (with its booking checkout and Stripe) is loaded only when a visitor
+// hovers, focuses or opens the launcher, so it isn't downloaded and run on every page load.
 
 import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { Sparkles } from "lucide-react";
-import { ConciergeChat } from "./ConciergeChat";
+
+const loadChat = () => import("./ConciergeChat");
+const ConciergeChat = dynamic(() => loadChat().then((m) => m.ConciergeChat), {
+  ssr: false,
+  loading: () => (
+    <div className="flex flex-1 items-center justify-center text-sm text-obsidian-500" role="status">
+      Loading the concierge…
+    </div>
+  ),
+});
 
 export function GlobalVoiceAssistantDrawer() {
   const pathname = usePathname();
@@ -22,7 +35,14 @@ export function GlobalVoiceAssistantDrawer() {
   useEffect(() => {
     if (!open) return;
     const el = panel.current;
-    el?.querySelector<HTMLTextAreaElement>("textarea")?.focus();
+    // The chat loads on first open: focus its composer as soon as it appears.
+    const focusComposer = () => {
+      const box = el?.querySelector<HTMLTextAreaElement>("textarea");
+      box?.focus();
+      return !!box;
+    };
+    const waitForComposer = el && !focusComposer() ? new MutationObserver(() => focusComposer() && waitForComposer?.disconnect()) : null;
+    if (el) waitForComposer?.observe(el, { childList: true, subtree: true });
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") close();
       // Keep Tab inside the dialog.
@@ -44,6 +64,7 @@ export function GlobalVoiceAssistantDrawer() {
     const overflow = document.body.style.overflow;
     if (window.matchMedia("(max-width: 639px)").matches) document.body.style.overflow = "hidden";
     return () => {
+      waitForComposer?.disconnect();
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = overflow;
     };
@@ -62,6 +83,8 @@ export function GlobalVoiceAssistantDrawer() {
         ref={launcher}
         type="button"
         onClick={() => setOpen(true)}
+        onPointerEnter={() => void loadChat()}
+        onFocus={() => void loadChat()}
         aria-haspopup="dialog"
         aria-expanded={open}
         className={`vc-concierge-fab fixed bottom-[calc(1.5rem+var(--vc-bottom-bar-h,0px))] right-6 z-40 inline-flex h-14 items-center gap-2.5 rounded-full bg-obsidian-900 pl-2 pr-5 text-white shadow-[0_18px_40px_-16px_rgba(12,31,33,0.7)] ring-1 ring-white/10 transition-transform duration-300 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-summit-500 ${

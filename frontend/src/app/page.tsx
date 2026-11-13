@@ -6,7 +6,7 @@ import type { TourWithAvailability } from "@/lib/api/types";
 import { SERVICES } from "@/lib/services";
 import { TrustRow } from "@/components/home/TrustRow";
 import { TopExperiences } from "@/components/home/TopExperiences";
-import { toursForCards } from "@/lib/experiences";
+import { toursForTourCards } from "@/lib/experiences";
 import { ExperienceCategories } from "@/components/cinematic/ExperienceCategories";
 import { DestinationStoryStream } from "@/components/cinematic/DestinationStoryStream";
 import { PlanAheadGuaranteedAccess } from "@/components/cinematic/PlanAheadGuaranteedAccess";
@@ -95,17 +95,19 @@ export default async function HomePage() {
       <PageSeoExtras path="/" />
     <div className="flex w-full flex-col bg-white selection:bg-summit-500 selection:text-obsidian-900">
       <ServicesHero slides={slides} />
+      {/* Below the first screen: rendered as they come near (vc-defer, globals.css). The sizes are
+          each section's measured height on phones and from 1024px, so the page keeps its length. */}
       <TrustRow />
       <NatGeoFeatureSection />
-      <VerifiedAwardSection quote={awardQuote} />
-      <TopExperiences tours={toursForCards(tours, 60)} />
-      <ExperienceCategories />
-      <DestinationStoryStream />
-      <PlanAheadGuaranteedAccess />
-      <WhyTravelersLove />
-      <GuestTestimonials reviews={reviews} />
-      <LiveTrackingTeaser />
-      <TrustBar />
+      <div className="vc-defer [contain-intrinsic-size:auto_1849px] lg:[contain-intrinsic-size:auto_1088px]"><VerifiedAwardSection quote={awardQuote} /></div>
+      <div className="vc-defer [contain-intrinsic-size:auto_1151px] lg:[contain-intrinsic-size:auto_1233px]"><TopExperiences tours={toursForTourCards(tours, 60)} /></div>
+      <div className="vc-defer [contain-intrinsic-size:auto_2487px] lg:[contain-intrinsic-size:auto_1135px]"><ExperienceCategories /></div>
+      <div className="vc-defer [contain-intrinsic-size:auto_4465px] lg:[contain-intrinsic-size:auto_4349px]"><DestinationStoryStream /></div>
+      <div className="vc-defer [contain-intrinsic-size:auto_1613px] lg:[contain-intrinsic-size:auto_1019px]"><PlanAheadGuaranteedAccess /></div>
+      <div className="vc-defer [contain-intrinsic-size:auto_2266px] lg:[contain-intrinsic-size:auto_1129px]"><WhyTravelersLove /></div>
+      <div className="vc-defer [contain-intrinsic-size:auto_1636px] lg:[contain-intrinsic-size:auto_1434px]"><GuestTestimonials reviews={reviews} /></div>
+      <div className="vc-defer [contain-intrinsic-size:auto_1018px] lg:[contain-intrinsic-size:auto_613px]"><LiveTrackingTeaser /></div>
+      <div className="vc-defer [contain-intrinsic-size:auto_215px] lg:[contain-intrinsic-size:auto_192px]"><TrustBar /></div>
     </div>
     </>
   );
