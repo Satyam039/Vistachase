@@ -120,6 +120,7 @@
    "bookingMode": "BOKUN",
    "bokunId": "1167962",
    "bokunStartTimeIds": [4787116],
+   "bokunRateIds": { "summer": 2319946, "winter": 2319969 },
    "destination": "banff-national-park",
    "mornbyTour": "Banff Private Tour",
    "mornbyMatch": "proposed",

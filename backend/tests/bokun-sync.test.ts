@@ -5,7 +5,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import prisma from "@/lib/db/prisma";
 import { BokunApiError } from "@/modules/bokun/bokun.client";
-import { answerQuestions, buildPassengers, findSlot } from "@/modules/bokun/bokun-booking";
+import { answerQuestions, buildPassengers, findSlot, seasonRateId } from "@/modules/bokun/bokun-booking";
 import { setBokunClientForTests, type BokunApi } from "@/modules/bokun/config";
 import { processBokunSyncTasks, queueUpcomingBookings, retryBokunSync, setBokunAutoRunForTests } from "@/modules/bokun/bokun-sync";
 import { syncBokunSeats } from "@/modules/bokun/availability-sync";
@@ -146,6 +146,18 @@ describe("Bókun booking requests", () => {
       { questionId: "4", values: ["true"] },
       { questionId: "5", values: ["See booking note (vistachase.com VC-2026-EBB006F4)"] },
     ]);
+  });
+
+  it("books the season's Bókun rate: summer June 1 to October 10, winter otherwise", () => {
+    const rates = { summer: 2319946, winter: 2319969 };
+    const slot = { rates: [{ id: 2319946 }, { id: 2319969 }] };
+    expect(seasonRateId(rates, "2026-11-25", slot)).toBe(2319969);
+    expect(seasonRateId(rates, "2027-06-01", slot)).toBe(2319946);
+    expect(seasonRateId(rates, "2027-10-10", slot)).toBe(2319946);
+    expect(seasonRateId(rates, "2027-10-11", slot)).toBe(2319969);
+    expect(seasonRateId(rates, "2027-07-01", { rates: [] })).toBe(2319946); // slot doesn't list its rates
+    expect(seasonRateId(rates, "2027-07-01", { rates: [{ id: 5 }] })).toBeUndefined(); // not offered: Bókun's default
+    expect(seasonRateId(undefined, "2027-07-01", slot)).toBeUndefined();
   });
 
   it("puts each guest in Bókun's categories and finds the slot by date and start time", () => {

@@ -15,6 +15,8 @@ export interface MappedProduct {
   bokunId: string | null;
   /** Bókun start time IDs (owner's doc, 2026-11-05); see findSlot in modules/bokun/bokun-booking.ts. */
   bokunStartTimeIds?: number[];
+  /** Bókun rate IDs per season (owner's doc, 2026-11-13): summer = June 1 to October 10. */
+  bokunRateIds?: { summer?: number; winter?: number };
   destination: string;
   mornbyTour: string | null;
   mornbyMatch: "confirmed" | "proposed" | "none";

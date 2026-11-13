@@ -39,6 +39,11 @@ export function bokunStartTimeIds(slug: string | null | undefined): number[] {
   return PRODUCT_MAP.find((p) => p.slug === slug)?.bokunStartTimeIds ?? [];
 }
 
+/** The Bókun rate IDs per season of a website product (product-map.json), if the doc gives them. */
+export function bokunRateIds(slug: string | null | undefined) {
+  return PRODUCT_MAP.find((p) => p.slug === slug)?.bokunRateIds;
+}
+
 export function bokunProductId(tour: { slug: string; bokunId: string | null } | null | undefined) {
   if (!tour) return null;
   const mapped = PRODUCT_MAP.find((p) => p.slug === tour.slug);
@@ -168,6 +173,7 @@ async function runCreate(client: BokunApi, task: BookingSyncTask, now: Date): Pr
           bookingReference: booking.bookingReference,
           productBokunId: productId,
           startTimeIds: bokunStartTimeIds(tour.slug),
+          rateIds: bokunRateIds(tour.slug),
           category: tour.category,
           date: formatDateOnly(dep.date),
           time: formatTimeOfDay(dep.departureTime),
