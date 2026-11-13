@@ -114,7 +114,7 @@ export async function crawlLiveWebsiteKnowledge(): Promise<{ text: string; crawl
   // In test environment, skip external network fetch for instant deterministic execution
   if (process.env.NODE_ENV === "test") {
     const lines = [
-      `## Live Website Facts (Verified Daily Sync: ${today} • ${WEBSITE_CATALOG.length} active catalog products)`,
+      `## Live Website Facts (Verified 4-Hour Live Sync: ${today} • ${WEBSITE_CATALOG.length} active catalog products)`,
       "The live website sells the following experiences under current branding (never use obsolete Webflow titles):",
     ];
     for (const p of WEBSITE_CATALOG) {
@@ -151,7 +151,7 @@ export async function crawlLiveWebsiteKnowledge(): Promise<{ text: string; crawl
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 1500);
       const res = await fetch(url, {
-        headers: { "User-Agent": "VistaChase-Concierge-DailyCrawl/1.0" },
+        headers: { "User-Agent": "VistaChase-Concierge-4HourCrawl/1.0" },
         signal: controller.signal,
       });
       clearTimeout(timeout);
@@ -184,7 +184,7 @@ export async function crawlLiveWebsiteKnowledge(): Promise<{ text: string; crawl
   // If live HTTP crawl succeeded for pages, compile fresh findings
   if (results.length > 0) {
     const lines: string[] = [
-      `## Live Crawled Website Pages (Daily Crawl: ${today} • ${results.length} pages read from ${baseUrl})`,
+      `## Live Crawled Website Pages (4-Hour Live Crawl: ${today} • ${results.length} pages read from ${baseUrl})`,
       "The following facts reflect the latest published state of the live website:",
     ];
     for (const r of results) {
