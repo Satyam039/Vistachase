@@ -346,9 +346,20 @@ export function PackageCheckout({
                   {b.bookingReference}
                 </span>
               </span>
-              <a href={b.voucherUrl} {...newTab} className="inline-flex h-10 items-center rounded-full bg-obsidian-950 px-5 text-sm text-white hover:bg-obsidian-900">
-                Open voucher
-              </a>
+              <span className="flex flex-wrap gap-2">
+                <a href={b.voucherUrl} {...newTab} className="inline-flex h-10 items-center rounded-full bg-obsidian-950 px-5 text-sm text-white hover:bg-obsidian-900">
+                  Open voucher
+                </a>
+                {compact && (
+                  <a
+                    href={`/api/bookings/voucher.pdf?ref=${encodeURIComponent(b.bookingReference)}&t=${encodeURIComponent(b.voucherToken)}`}
+                    download={`vista-chase-voucher-${b.bookingReference}.pdf`}
+                    className="inline-flex h-10 items-center rounded-full px-5 text-sm text-ocean-700 ring-1 ring-obsidian-900/15 hover:bg-ocean-50"
+                  >
+                    Download PDF
+                  </a>
+                )}
+              </span>
             </li>
           ))}
         </ul>
