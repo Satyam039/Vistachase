@@ -6,7 +6,7 @@ import { Router, type Request } from "express";
 import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
 import { cancelBooking, createBooking, getBookingByReference, paymentState } from "@/modules/bookings/booking.repository";
 import { getAuthenticatedStaff, getAuthenticatedUser, getSessionUser, ownsBooking } from "@/lib/auth/admin-guard";
-import { signBookingLink, verifyBookingLink } from "@/lib/security/signed-links";
+import { signBookingLink, verifyBookingLink, voucherLink } from "@/lib/security/signed-links";
 import { paymentSummary } from "@/modules/bookings/deposit";
 import { startBalancePayment } from "@/modules/bookings/deposit-payments";
 import { requestCancellation } from "@/modules/admin/booking-requests";
@@ -211,6 +211,8 @@ router.get("/", rateLimitMiddleware("booking_read", { maxRequests: 30, windowSec
         pickupCustomText: booking.pickupCustomText,
         specialRequests: booking.specialRequests,
         voucherCode: booking.voucherCode,
+        voucherUrl: voucherLink(booking.bookingReference),
+        voucherToken: signBookingLink(booking.bookingReference, "voucher"),
         qrCodeUrl: booking.qrCodeUrl,
         subtotal: booking.subtotal / 100,
         addOnsTotal: booking.addOnsTotal / 100,

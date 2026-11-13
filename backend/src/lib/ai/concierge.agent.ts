@@ -29,6 +29,7 @@ import { getMasterKnowledgeBase } from "./knowledge.sync";
 import { websiteName } from "./concierge.catalog";
 import { recommendTours, tourDetail } from "./knowledge/catalog-live";
 import { extractAndEvolvePersona, formatPersonaContextForPrompt, type UserPersona, type UserKnowledgeGraph } from "./user.persona";
+import { signBookingLink, voucherLink } from "@/lib/security/signed-links";
 
 export const CARD_NUMBER = /\b(?:\d[ -]*?){13,19}\b/;
 export const PROMPT_INJECTION_REGEX =
@@ -413,7 +414,7 @@ export async function runConciergeTool(name: string, input: Record<string, any>,
                     type: "confirmed",
                     bookingReference: booking.bookingReference,
                     voucherCode: booking.voucherCode,
-                    voucherUrl: `/booking/${booking.bookingReference}/voucher`,
+                    voucherUrl: `/booking/${booking.bookingReference}/voucher?t=${signBookingLink(booking.bookingReference, "voucher")}`,
                     tourTitle: title,
                     date: formatDateOnly(booking.tourDeparture.date),
                     pickup: booking.pickupStop?.name ?? booking.pickupCustomText ?? undefined,

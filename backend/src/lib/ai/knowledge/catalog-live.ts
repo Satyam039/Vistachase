@@ -178,7 +178,7 @@ const PLACE_WORDS: Record<Place, RegExp> = {
   "icefields-parkway": /icefield|parkway|peyto|bow lake|crowfoot/i,
   "columbia-icefield": /columbia|glacier|ice explorer|skywalk|athabasca/i,
   jasper: /jasper|maligne|spirit island/i,
-  "abraham-lake": /abraham|ice bubble/i,
+  "abraham-lake": /abraham|ice bubble|ice bubbles|frozen|winter special/i,
   "johnston-canyon": /johnston/i,
 };
 
@@ -275,6 +275,9 @@ export async function recommendTours(prefs: Preferences, limit = 3): Promise<{ c
     let score = 0;
     for (const [place, re] of Object.entries(PLACE_WORDS) as [Place, RegExp][]) {
       if (re.test(wanted)) score += p.places.includes(place) ? 3 : -2;
+    }
+    if (/\b(winter|snow|ice bubble|frozen)\b/i.test(wanted) && (p.slug === "winter-special" || p.slug === "winter-signature-private-tour")) {
+      score += 4;
     }
     if (prefs.interests) for (const g of p.goodFor) if (new RegExp(`\\b${g.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i").test(prefs.interests)) score += 2;
     if (prefs.premium === true) score += p.type === "PRIVATE" ? 3 : -1;
