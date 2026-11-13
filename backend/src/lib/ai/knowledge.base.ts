@@ -131,6 +131,10 @@ Booking: https://www.vistachase.com/shared-tours-icefields-jasper
 Combines the Banff & Yoho sightseeing day with the shared Columbia Icefield day in one package. The applicable Icefield activity inclusion carries into this package. Each day has a selected date; guests may have different fellow passengers or guides on the two days. Accommodation is not included.
 Booking: https://www.vistachase.com/two-day-rockies-explorer
 
+### Winter Special Shared Tour
+A dedicated small-group winter day tour (operating December 1 to April 30 only) in a heated SUV or 15-passenger van. Highlights include frozen Lake Louise, Abraham Lake's world-famous frozen methane ice bubbles, Howse Pass Viewpoint, Peyto Lake, Bow Lake, and Crowfoot Glacier Lookout, with ice cleats provided for walking safely on the lake ice. Typical duration is 8–10 hours. Hotel pickup in Banff or Canmore between 7:00 and 8:00 AM (exact time confirmed the evening before), returning between 5:00 and 6:00 PM. Priced at CAD $199 per guest (all taxes and park fees included; Oct 11–May 31 winter rate). Lunch stop is in Lake Louise Village (lunch not included).
+Booking: https://www.vistachase.com/winter-special
+
 ## Private tours
 Private tours reserve the vehicle and driver-guide exclusively for the booking party and are priced per vehicle. Currently listed products accommodate up to 13 guests, subject to the confirmed vehicle and luggage requirements. Attractions and public sightseeing locations are not exclusively reserved. Optional activities, including Icefield activities, cost extra and are arranged and billed separately by the team.
 
@@ -138,6 +142,7 @@ Private tours reserve the vehicle and driver-guide exclusively for the booking p
 |---|---|---|
 | Banff & Yoho Discovery — Private | Private version of the Banff and Yoho sightseeing day | https://www.vistachase.com/banff-private-tour |
 | Columbia Icefield Adventure — Private | Private Icefields Parkway day returning from the Columbia Icefield; activity admissions optional | https://www.vistachase.com/icefields-jasper-private-tour |
+| Special Winter Private Tour | Private winter day in a heated SUV: Abraham Lake ice bubbles, frozen Lake Louise, Howse Pass, Bow Lake, Peyto Lake, Crowfoot Glacier, ice cleats provided | https://www.vistachase.com/winter-signature-private-tour |
 | Two-Day Rockies Explorer — Private | Both sightseeing routes over two selected tour days | https://www.vistachase.com/two-day-rockies-explorer/private |
 | Three-Day Rockies Discovery — Private | Banff sights, lakes and Yoho, and the Icefields corridor over three days; seasonal programme | https://www.vistachase.com/three-day-rockies-discovery |
 | Four-Day Rockies & Jasper — Private | Includes onward travel to Jasper after day three, a guest-booked Jasper overnight, and day-four touring and return arrangements | https://www.vistachase.com/four-day-rockies-and-jasper |
@@ -194,6 +199,24 @@ On the shared tour, Ice Explorer and Skywalk admission is included in the publis
 Lunch stop: Columbia Icefield Centre; meal extra. Outside attraction operating dates, the sightseeing route is adjusted and requires date-specific confirmation. Glacier travel is through the attraction operator, not independent glacier walking.
 Shared pickup is confirmed at supported Banff/Canmore locations; a Lake Louise request needs team confirmation. Private pickup supports Banff, Canmore and Lake Louise. General shared pickup begins around 7:30 AM Canmore / 8:00 AM Banff; use the actual booking confirmation.
 Included: vehicle, guide, water, park admission, mandatory taxes/fees, supported pickup/drop-off and the shared seasonal activity inclusion described above. Private touring reserves the vehicle exclusively. Meals, personal purchases and gratuities are extra on these Icefield products.
+
+### Winter Special Shared Tour — itinerary and arrangements
+Runs December 1 to April 30. Designed specifically for winter scenery and frozen lake photography in small groups (heated SUV or 15-passenger van).
+| Location | Duration | Features |
+|---|---|---|
+| Lake Louise | 45–60 minutes | Frozen lake and Victoria Glacier backdrop |
+| Crowfoot Glacier | 15 minutes | Winter glacier lookout |
+| Bow Lake | 20–30 minutes | Snow-covered frozen lake views |
+| Peyto Lake | 30–45 minutes | Winter viewpoint (weather permitting) |
+| Howse Pass Viewpoint | 20 minutes | Historic mountain pass overlook |
+| Abraham Lake | 60–90 minutes | World-famous frozen methane ice bubbles; ice cleats provided |
+| Lake Louise Village | 45 minutes | Lunch stop (meals purchased separately) |
+| Johnston Canyon | 30–45 minutes | Winter canyon view if daylight allows |
+
+Pickup: Banff or Canmore accommodation between 7:00 and 8:00 AM (exact time confirmed the evening before); return 5:00–6:00 PM. Price: CAD $199 per guest, taxes and park fees included. Ice cleats are provided for guest safety.
+
+### Special Winter Private Tour — itinerary and arrangements
+Runs December 1 to April 30. A private winter day in a heated luxury SUV with winter tires for up to 6 guests. Follows Abraham Lake ice bubbles, Howse Pass Viewpoint, Bow Lake, Peyto Lake (weather permitting), Crowfoot Glacier, frozen Lake Louise, and Johnston Canyon ice walk if daylight allows. Ice cleats provided. Doorstep pickup in Banff, Canmore, or Lake Louise between 6:00 and 7:00 AM. 8–10 hours duration. Price: CAD $999 per vehicle. Meals and gratuities not included.
 
 ### Two-Day Rockies Explorer — shared
 Day 1 follows the complete Banff & Yoho shared itinerary above. Day 2 follows the complete shared Columbia Icefield itinerary above, including its applicable seasonal activity tickets. Both are full-day tours with their respective stop timings, pickups and lunch locations. Other guests may join either day.

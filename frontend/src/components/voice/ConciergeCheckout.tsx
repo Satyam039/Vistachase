@@ -216,7 +216,12 @@ export function ConciergeCheckout(props: ConciergeCheckoutProps) {
       const data = res?.ok ? await res.json().catch(() => null) : null;
       const status = data?.booking?.status as string | undefined;
       if (status === "CONFIRMED" || status === "PAID_UNSYNCED") {
-        const done = { ...booking, ...data.booking, voucherUrl: booking.voucherUrl, voucherToken: booking.voucherToken };
+        const done = {
+          ...booking,
+          ...data.booking,
+          voucherUrl: data.booking?.voucherUrl || booking.voucherUrl,
+          voucherToken: data.booking?.voucherToken || booking.voucherToken,
+        };
         setConfirmed(done);
         setStep("confirmed");
         onConfirmed?.(booking.bookingReference);
@@ -476,12 +481,22 @@ export function ConciergeCheckout(props: ConciergeCheckoutProps) {
               ? `Your confirmation email and PDF voucher will reach ${email.trim()} in a few minutes.`
               : `We've emailed your confirmation and PDF voucher to ${email.trim()}. Your guide confirms the exact pickup time the day before.`}
           </p>
-          {confirmed.voucherUrl && (
-            <a href={confirmed.voucherUrl.replace(/^https?:\/\/[^/]+/, "")} target="_blank" rel="noopener" className="golden-summit-btn inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-sm">
-              <Ticket className="h-4 w-4" aria-hidden="true" />
-              View voucher
-            </a>
-          )}
+          {confirmed.bookingReference && (() => {
+            const voucherHref = confirmed.voucherUrl
+              ? confirmed.voucherUrl.replace(/^https?:\/\/[^/]+/, "")
+              : `/booking/${encodeURIComponent(confirmed.bookingReference)}/voucher${confirmed.voucherToken ? `?t=${encodeURIComponent(confirmed.voucherToken)}` : ""}`;
+            return (
+              <a
+                href={voucherHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="golden-summit-btn inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-sm font-medium"
+              >
+                <Ticket className="h-4 w-4" aria-hidden="true" />
+                View voucher
+              </a>
+            );
+          })()}
         </div>
       )}
     </section>

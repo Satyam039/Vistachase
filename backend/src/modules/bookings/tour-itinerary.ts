@@ -54,6 +54,20 @@ export const WEBSITE_ITINERARIES: Record<string, ItineraryStep[]> = {
     { time: "Afternoon", text: "Scenic drive back along the Icefields Parkway." },
     { time: "Evening", text: "Drop-off at your accommodation. Traffic, weather and road conditions can affect return times." },
   ],
+  "winter-special": [
+    { time: "7:00 - 8:00 AM", text: `Hotel pickup in Banff or Canmore from 7:00 to 8:00 AM. ${GUIDE_CALL}` },
+    { time: "Morning", text: "Frozen Lake Louise and scenic drive along the Icefields Parkway, stopping at Crowfoot Glacier Lookout and Bow Lake." },
+    { time: "Midday", text: "Abraham Lake to experience the famous frozen methane ice bubbles (ice cleats provided). Lunch stop in Lake Louise Village (lunch not included)." },
+    { time: "Afternoon", text: "Howse Pass Viewpoint, Peyto Lake, and Johnston Canyon (if daylight allows)." },
+    { time: "5:00 - 6:00 PM", text: "Return drop-off at your hotel in Banff or Canmore." },
+  ],
+  "winter-signature-private-tour": [
+    { time: "6:00 - 7:00 AM", text: `Private doorstep pickup in a heated SUV at your hotel in Banff, Canmore or Lake Louise. ${GUIDE_CALL}` },
+    { time: "Morning", text: "Abraham Lake for the breathtaking frozen ice bubbles, traveling in a heated SUV with winter tires (ice cleats provided)." },
+    { time: "Midday", text: "Howse Pass Viewpoint, Bow Lake and Peyto Lake (weather permitting). Lunch stop in Lake Louise Village (lunch not included)." },
+    { time: "Afternoon", text: "Frozen Lake Louise and Johnston Canyon ice walk (if daylight allows)." },
+    { time: "Evening", text: "Drop-off at your accommodation. The day runs about 8 to 10 hours at your private pace." },
+  ],
 };
 
 /**
@@ -66,6 +80,8 @@ export const WEBSITE_TITLES: Record<string, string> = {
   "shared-tours-icefields-jasper": "Columbia Icefield Adventure (Shared Tour)",
   "banff-private-tour": "Banff & Yoho Discovery (Private Tour)",
   "icefields-jasper-private-tour": "Columbia Icefield Adventure (Private Tour)",
+  "winter-special": "Winter Special Shared Tour",
+  "winter-signature-private-tour": "Special Winter Private Tour",
 };
 
 /** The experience's name for vouchers and emails: the website's name for the tour, else its title. */

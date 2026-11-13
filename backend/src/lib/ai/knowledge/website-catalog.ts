@@ -187,7 +187,7 @@ export const WEBSITE_CATALOG: WebsiteProduct[] = [
     duration: "8–10 hours",
     stops: ["Abraham Lake", "Howse Pass Viewpoint", "Bow Lake", "Peyto Lake (weather permitting)", "Crowfoot Glacier", "Lake Louise", "Johnston Canyon ice walk (if daylight allows)"],
     places: ["abraham-lake", "icefields-parkway", "lake-louise", "johnston-canyon"],
-    season: { text: "Winter (dates in the live calendar)" },
+    season: { text: "December 1 to April 30 only", months: [12, 1, 2, 3, 4] },
     pickup: "Pickup from Banff, Canmore and Lake Louise hotels, 6:00–7:00 AM (exact time confirmed the day before).",
     capacity: "Private, up to 6 guests in a heated SUV with winter tires; priced per vehicle",
     maxGuests: 6,
