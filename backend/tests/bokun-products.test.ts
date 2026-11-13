@@ -190,6 +190,35 @@ describe("confirming a booking with nothing paid online", () => {
     expect(bodies[2]).toMatchObject({ amount: 1240, currency: "CAD", transactionDetails: { transactionId: "pi_1" } });
   });
 
+  it("automatically recovers by confirming with Bókun total when unpaid confirmation is refused", async () => {
+    const { confirmInBokun } = await import("@/modules/bokun/bokun-booking");
+    const { BokunApiError } = await import("@/modules/bokun/bokun.client");
+    const calls: { method: string; path: string; body?: any }[] = [];
+    let firstCall = true;
+    const api: BokunApi = {
+      getAvailabilities: async () => [],
+      fetch: async (method: string, path: string, body?: any) => {
+        calls.push({ method, path, body });
+        if (firstCall && method === "POST" && path.includes("confirm-reserved")) {
+          firstCall = false;
+          throw new BokunApiError(400, "Bókun API Error: 400 Bad Request - Payment amount must be positive");
+        }
+        if (method === "GET" && path.includes("/booking.json/booking/")) {
+          return { totalPrice: 220 };
+        }
+        return null;
+      },
+    };
+    await confirmInBokun(api, "VistaChase-108972148", "VC-2026-D818D10B", { amount: 0, currency: "CAD" });
+    expect(calls).toHaveLength(3);
+    expect(calls[0].path).toContain("confirm-reserved");
+    expect(calls[1].path).toContain("/booking.json/booking/VistaChase-108972148");
+    expect(calls[2]).toMatchObject({
+      method: "POST",
+      body: { externalBookingReference: "VC-2026-D818D10B", amount: 220, currency: "CAD" },
+    });
+  });
+
   it("explains a refusal so staff confirm it by hand", async () => {
     const { confirmInBokun } = await import("@/modules/bokun/bokun-booking");
     const { BokunApiError } = await import("@/modules/bokun/bokun.client");

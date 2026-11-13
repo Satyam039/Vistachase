@@ -13,6 +13,13 @@ import {
   turnstileEnabled,
   verifyTurnstile,
 } from "@/modules/enquiries/spam";
+import {
+  isInvalidTripDate,
+  isSpamBotEnquiry,
+  isSpamMessage,
+  isSuspiciousEmail,
+  isSyntheticBotName,
+} from "@/lib/security/spam-detector";
 import { todayInMountainTime } from "@/lib/utils/time";
 
 const router = Router();
@@ -66,8 +73,9 @@ router.post("/", rateLimitMiddleware("enquiry_create", { maxRequests: 5, windowS
   if (dateErrors) return res.status(400).json({ success: false, error: "Please check the highlighted fields.", fields: dateErrors });
 
   if (data.website) return dropAsSpam(res, "honeypot filled");
-  if (looksLikeBotName(data.name)) return dropAsSpam(res, "random-string name");
-  if (looksLikeBotMessage(data.message)) return dropAsSpam(res, "message has no words");
+  if (looksLikeBotName(data.name) || isSyntheticBotName(data.name)) return dropAsSpam(res, "random-string name");
+  if (looksLikeBotMessage(data.message) || isSpamMessage(data.message)) return dropAsSpam(res, "message has no words");
+  if (isSuspiciousEmail(data.email)) return dropAsSpam(res, "suspicious email address");
   const tokenProblem = formTokenProblem(data.formToken, now);
   if (tokenProblem) return dropAsSpam(res, tokenProblem);
   if (!(await verifyTurnstile(data.turnstileToken, req.ip))) {

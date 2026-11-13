@@ -6,6 +6,7 @@ import { sellableInventoryWhere } from "@/modules/departures/inventory";
 import { dateOnly, formatDateOnly, formatTimeOfDay, todayInMountainTime } from "@/lib/utils/time";
 import { conciergeTours } from "@/modules/tours/product-map";
 import { DOC_TOUR_SLUGS, DOC_TOUR_SUMMARY, productPage, websiteName } from "@/lib/ai/concierge.catalog";
+import { catalogEntry } from "./knowledge/website-catalog";
 
 export interface ToolExecutionContext {
   isStaff?: boolean;
@@ -75,6 +76,23 @@ export async function getTourDetails(args: { tourSlugOrBokunId: string }) {
   // has the website's itinerary, inclusions and pickups for them.
   if (DOC_TOUR_SLUGS.has(tour.slug)) {
     return { ...base, summary: DOC_TOUR_SUMMARY[tour.slug], details: "Itinerary, inclusions and pickups: use the approved knowledge base section for this tour." };
+  }
+  // Structured product knowledgebase: always prefer the live website catalog over old Webflow database copy.
+  const cat = catalogEntry(tour.slug);
+  if (cat) {
+    return {
+      ...base,
+      summary: cat.overview,
+      description: cat.overview,
+      stops: cat.stops,
+      inclusions: cat.included,
+      exclusions: cat.notIncluded,
+      pickup: cat.pickup,
+      capacity: cat.capacity,
+      cancellation: cat.cancellation,
+      seasonNotes: cat.seasonNotes,
+      details: "Itinerary, inclusions and pickups: use the approved knowledge base section for this tour.",
+    };
   }
   return {
     ...base,
