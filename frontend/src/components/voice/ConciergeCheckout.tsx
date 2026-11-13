@@ -14,7 +14,7 @@
 // straight from the browser to Stripe (Payment Element), never to Vista Chase or the concierge.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CheckCircle2, Clock, Loader2, Lock, Mail, MapPin, ShieldCheck, Ticket, Users } from "lucide-react";
+import { CheckCircle2, Clock, Download, Loader2, Lock, Mail, MapPin, ShieldCheck, Ticket, Users } from "lucide-react";
 import { QuantityInput } from "@/components/forms/QuantityInput";
 import { PhoneField } from "@/components/forms/PhoneField";
 import { Dropdown } from "@/components/forms/Dropdown";
@@ -38,7 +38,7 @@ type Departure = {
   tour?: { title: string; category: string } | null;
   shuttleRoute?: { name: string } | null;
 };
-type Booking = { bookingReference: string; voucherToken?: string; voucherUrl?: string; voucherCode?: string; status?: string; totalAmount?: number };
+type Booking = { bookingReference: string; voucherToken?: string; voucherUrl?: string; voucherCode?: string; status?: string; totalAmount?: number; qrCodeUrl?: string | null };
 
 export interface ConciergeCheckoutProps {
   departureId: string;
@@ -485,16 +485,37 @@ export function ConciergeCheckout(props: ConciergeCheckoutProps) {
             const voucherHref = confirmed.voucherUrl
               ? confirmed.voucherUrl.replace(/^https?:\/\/[^/]+/, "")
               : `/booking/${encodeURIComponent(confirmed.bookingReference)}/voucher${confirmed.voucherToken ? `?t=${encodeURIComponent(confirmed.voucherToken)}` : ""}`;
+            // Same as the website's confirmation: the voucher (boarding pass) and its real PDF.
+            const pdfHref = `/api/bookings/voucher.pdf?ref=${encodeURIComponent(confirmed.bookingReference)}${confirmed.voucherToken ? `&t=${encodeURIComponent(confirmed.voucherToken)}` : ""}`;
             return (
-              <a
-                href={voucherHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="golden-summit-btn inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-sm font-medium"
-              >
-                <Ticket className="h-4 w-4" aria-hidden="true" />
-                View voucher
-              </a>
+              <>
+                {confirmed.qrCodeUrl && (
+                  <div className="flex flex-col items-center gap-1.5">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- a data/remote QR image, as on the voucher page */}
+                    <img src={confirmed.qrCodeUrl} alt="Boarding pass QR code" width={140} height={140} />
+                    <p className="text-xs text-slate-600">Show this QR code or your voucher at pickup.</p>
+                  </div>
+                )}
+                <div className="flex flex-wrap gap-2">
+                  <a
+                    href={voucherHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="golden-summit-btn inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-sm font-medium"
+                  >
+                    <Ticket className="h-4 w-4" aria-hidden="true" />
+                    View voucher
+                  </a>
+                  <a
+                    href={pdfHref}
+                    download={`vista-chase-voucher-${confirmed.bookingReference}.pdf`}
+                    className="inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-sm text-ocean-700 ring-1 ring-obsidian-900/15 hover:bg-ocean-50"
+                  >
+                    <Download className="h-4 w-4" aria-hidden="true" />
+                    Download PDF
+                  </a>
+                </div>
+              </>
             );
           })()}
         </div>
