@@ -63,7 +63,7 @@ async function main() {
   await queue.upsertJobScheduler("partner-commissions", { pattern: "0 3 * * *", tz: TZ }, { name: "partner-commissions" });
   await queue.upsertJobScheduler("seo-scheduled-publish", { every: 5 * 60 * 1000 }, { name: "seo-scheduled-publish" });
   await queue.upsertJobScheduler("seo-audit", { pattern: "0 4 * * *", tz: TZ }, { name: "seo-audit" });
-  await queue.upsertJobScheduler("knowledgebase-sync", { pattern: "30 4 * * *", tz: TZ }, { name: "knowledgebase-sync" });
+  await queue.upsertJobScheduler("knowledgebase-sync", { pattern: "0 */4 * * *", tz: TZ }, { name: "knowledgebase-sync" });
   await queue.upsertJobScheduler("balance-reminders", { pattern: "20 * * * *", tz: TZ }, { name: "balance-reminders" });
   await queue.upsertJobScheduler("confirmation-email-retry", { pattern: "*/15 * * * *", tz: TZ }, { name: "confirmation-email-retry" });
   if (isWebflowSyncEnabled()) await queue.upsertJobScheduler("webflow-blog-sync", { every: webflowSyncMinutes() * 60 * 1000 }, { name: "webflow-blog-sync" });

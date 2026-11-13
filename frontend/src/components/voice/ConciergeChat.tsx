@@ -82,8 +82,9 @@ type SpeechRecognitionLike = {
   interimResults: boolean;
   start: () => void;
   stop: () => void;
-  onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
-  onerror: (() => void) | null;
+  abort?: () => void;
+  onresult: ((e: { resultIndex?: number; results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal?: boolean }> }) => void) | null;
+  onerror: ((e?: { error?: string }) => void) | null;
   onend: (() => void) | null;
 };
 
@@ -109,6 +110,7 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
   const field = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recognition = useRef<SpeechRecognitionLike | null>(null);
+  const isListeningRef = useRef(false);
   const sendRef = useRef<(text: string) => void>(() => {});
 
   // The language, chat history sessions, and traveler persona loaded on mount
@@ -276,6 +278,13 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
       if (!text && currentAttachments.length > 0) {
         text = "Please inspect and help me with this photo/document for my Canadian Rockies trip.";
       }
+      if (isListeningRef.current) {
+        isListeningRef.current = false;
+        try {
+          recognition.current?.stop();
+        } catch {}
+        setVoice("idle");
+      }
       stopSpeaking();
 
       const userAttachments: MessageAttachment[] = currentAttachments.map((a) => ({
@@ -437,7 +446,7 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
   );
   sendRef.current = send;
 
-  // Voice input (browser speech recognition), created once.
+  // Voice input (browser speech recognition), created once for dictation typing.
   useEffect(() => {
     const w = window as unknown as { SpeechRecognition?: new () => SpeechRecognitionLike; webkitSpeechRecognition?: new () => SpeechRecognitionLike };
     const Ctor = w.SpeechRecognition || w.webkitSpeechRecognition;
@@ -446,16 +455,56 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
       return;
     }
     const r = new Ctor();
-    r.lang = "en-CA";
-    r.continuous = false;
+    r.lang = speechTag(language) || "en-CA";
+    r.continuous = true;
     r.interimResults = false;
+
     r.onresult = (e) => {
-      const transcript = e.results[0]?.[0]?.transcript;
-      if (transcript) sendRef.current(transcript);
+      let speechChunk = "";
+      const startIndex = e.resultIndex ?? 0;
+      for (let i = startIndex; i < e.results.length; i++) {
+        const item = e.results[i];
+        const piece = item?.[0]?.transcript?.trim();
+        if (piece) {
+          speechChunk = speechChunk ? `${speechChunk} ${piece}` : piece;
+        }
+      }
+      if (speechChunk) {
+        setInput((prev) => (prev && prev.trim() ? `${prev.trim()} ${speechChunk}` : speechChunk));
+      }
     };
-    r.onerror = () => setVoice((v) => (v === "listening" ? "idle" : v));
-    r.onend = () => setVoice((v) => (v === "listening" ? "idle" : v));
+
+    r.onerror = (e) => {
+      const err = e?.error;
+      // Do not abort voice dictation on natural speaking pauses while typing or speaking
+      if ((err === "no-speech" || err === "aborted") && isListeningRef.current) {
+        return;
+      }
+      isListeningRef.current = false;
+      setVoice((v) => (v === "listening" ? "idle" : v));
+    };
+
+    r.onend = () => {
+      // Auto-restart if user still has mic toggled active (prevents closing on brief silence while typing)
+      if (isListeningRef.current) {
+        try {
+          r.start();
+          return;
+        } catch {
+          // fall through if cannot restart immediately
+        }
+      }
+      setVoice((v) => (v === "listening" ? "idle" : v));
+    };
+
     recognition.current = r;
+
+    return () => {
+      isListeningRef.current = false;
+      try {
+        r.stop();
+      } catch {}
+    };
   }, []);
 
   useEffect(() => {
@@ -465,20 +514,32 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
   const toggleMic = () => {
     if (!recognition.current) return;
     if (voice === "listening") {
-      recognition.current.stop();
+      isListeningRef.current = false;
+      try {
+        recognition.current.stop();
+      } catch {}
       setVoice("idle");
       return;
     }
     stopSpeaking();
+    isListeningRef.current = true;
     try {
       recognition.current.start();
       setVoice("listening");
+      field.current?.focus();
     } catch {
+      isListeningRef.current = false;
       setVoice("idle");
     }
   };
 
   const reset = () => {
+    if (isListeningRef.current) {
+      isListeningRef.current = false;
+      try {
+        recognition.current?.stop();
+      } catch {}
+    }
     stopSpeaking();
     setMessages([]);
     setSession({});

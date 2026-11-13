@@ -252,12 +252,22 @@ export function VoiceBookingCardStream({ data, checkoutUrl, hasSafetyRefusal, on
             {data.pickup ? ` · Pickup: ${data.pickup}` : ""}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
-            {data.voucherUrl && (
-              <Link href={data.voucherUrl} className="golden-summit-btn inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-sm">
-                <Ticket className="h-4 w-4" aria-hidden="true" />
-                View voucher
-              </Link>
-            )}
+            {(data.voucherUrl || data.bookingReference) && (() => {
+              const voucherHref = data.voucherUrl
+                ? data.voucherUrl.replace(/^https?:\/\/[^/]+/, "")
+                : `/booking/${encodeURIComponent(data.bookingReference!)}/voucher`;
+              return (
+                <a
+                  href={voucherHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="golden-summit-btn inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-sm font-medium"
+                >
+                  <Ticket className="h-4 w-4" aria-hidden="true" />
+                  View voucher
+                </a>
+              );
+            })()}
             <Link href="/pickup-finder" className="inline-flex h-10 items-center gap-1.5 rounded-full border border-obsidian-900/10 px-4 text-sm text-obsidian-900 hover:bg-obsidian-50">
               <MapPin className="h-4 w-4" aria-hidden="true" />
               Pickup directions

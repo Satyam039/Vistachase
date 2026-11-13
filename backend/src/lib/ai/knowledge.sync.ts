@@ -8,7 +8,8 @@ import { WEBSITE_CATALOG, WEBSITE_FACTS } from "./knowledge/website-catalog";
 
 const WEBSITE_KNOWLEDGE_FACTS = `## Website-wide facts\n${Object.values(WEBSITE_FACTS).map((f) => `- ${f}`).join("\n")}`;
 
-const IN_MEMORY_TTL_MS = 60 * 60 * 1000; // 1 hour memory cache
+const FOUR_HOUR_TTL_SECONDS = 4 * 60 * 60; // 4-hour crawl & cache cadence
+const IN_MEMORY_TTL_MS = 4 * 60 * 60 * 1000; // 4-hour memory cache
 
 interface KnowledgeBaseMetadata {
   version: string;
@@ -23,9 +24,31 @@ interface KnowledgeBaseMetadata {
 let memoryCache: { text: string; meta: KnowledgeBaseMetadata; expiresAt: number; dateKey: string } | null = null;
 
 /**
- * Returns today's date in Mountain Time (America/Edmonton) for daily cache partitioning.
+ * Returns the 4-hour bucket key in Mountain Time (America/Edmonton) for 4-hour cache partitioning.
+ * e.g., 2026-11-13-H00, 2026-11-13-H04, 2026-11-13-H08, 2026-11-13-H12, 2026-11-13-H16, 2026-11-13-H20.
  */
-function mountainDateString(date = new Date()): string {
+export function mountainFourHourBucket(date = new Date()): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Edmonton",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    hour12: false,
+  }).formatToParts(date);
+  const year = parts.find((p) => p.type === "year")?.value;
+  const month = parts.find((p) => p.type === "month")?.value;
+  const day = parts.find((p) => p.type === "day")?.value;
+  const hour = parseInt(parts.find((p) => p.type === "hour")?.value ?? "0", 10);
+  const bucketHour = Math.floor(hour / 4) * 4;
+  const bucketStr = String(bucketHour).padStart(2, "0");
+  return `${year}-${month}-${day}-H${bucketStr}`;
+}
+
+/**
+ * Returns today's date in Mountain Time (America/Edmonton).
+ */
+export function mountainDateString(date = new Date()): string {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/Edmonton",
     year: "numeric",
@@ -35,10 +58,10 @@ function mountainDateString(date = new Date()): string {
 }
 
 /**
- * Generates daily cache keys so each day triggers a fresh crawl and compilation.
+ * Generates 4-hour partitioned cache keys so each 4-hour window triggers a fresh crawl and compilation.
  */
-function getDailyCacheKeys(date = new Date()): { cacheKey: string; metaKey: string; dateKey: string } {
-  const dateKey = mountainDateString(date);
+export function getDailyCacheKeys(date = new Date()): { cacheKey: string; metaKey: string; dateKey: string } {
+  const dateKey = mountainFourHourBucket(date);
   const staticHash = crypto.createHash("sha256").update(VISTACHASE_STATIC_KNOWLEDGE_BASE).digest("hex").slice(0, 8);
   return {
     cacheKey: `vistachase:master_kb:${dateKey}:${staticHash}`,
@@ -91,7 +114,7 @@ export async function crawlLiveWebsiteKnowledge(): Promise<{ text: string; crawl
   // In test environment, skip external network fetch for instant deterministic execution
   if (process.env.NODE_ENV === "test") {
     const lines = [
-      `## Live Website Facts (Verified Daily Sync: ${today} • ${WEBSITE_CATALOG.length} active catalog products)`,
+      `## Live Website Facts (Verified 4-Hour Live Sync: ${today} • ${WEBSITE_CATALOG.length} active catalog products)`,
       "The live website sells the following experiences under current branding (never use obsolete Webflow titles):",
     ];
     for (const p of WEBSITE_CATALOG) {
@@ -111,6 +134,7 @@ export async function crawlLiveWebsiteKnowledge(): Promise<{ text: string; crawl
     "/banff-highlights-tour",
     "/shared-tours-icefields-jasper",
     "/winter-special",
+    "/winter-signature-private-tour",
     "/banff-private-tour",
     "/icefields-jasper-private-tour",
     "/two-day-rockies-explorer",
@@ -127,7 +151,7 @@ export async function crawlLiveWebsiteKnowledge(): Promise<{ text: string; crawl
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 1500);
       const res = await fetch(url, {
-        headers: { "User-Agent": "VistaChase-Concierge-DailyCrawl/1.0" },
+        headers: { "User-Agent": "VistaChase-Concierge-4HourCrawl/1.0" },
         signal: controller.signal,
       });
       clearTimeout(timeout);
@@ -160,7 +184,7 @@ export async function crawlLiveWebsiteKnowledge(): Promise<{ text: string; crawl
   // If live HTTP crawl succeeded for pages, compile fresh findings
   if (results.length > 0) {
     const lines: string[] = [
-      `## Live Crawled Website Pages (Daily Crawl: ${today} • ${results.length} pages read from ${baseUrl})`,
+      `## Live Crawled Website Pages (4-Hour Live Crawl: ${today} • ${results.length} pages read from ${baseUrl})`,
       "The following facts reflect the latest published state of the live website:",
     ];
     for (const r of results) {
@@ -270,9 +294,9 @@ Pickup stops: ${stopCount} in ${towns.join(", ")} (e.g. ${stopSample}). Use find
     byteLength: Buffer.byteLength(masterContent, "utf8"),
   };
 
-  // Persist to cache (Redis / Memory)
-  await cache.set(cacheKey, masterContent, 36 * 60 * 60); // 36-hour TTL (covers next day's run)
-  await cache.set(metaKey, metadata, 36 * 60 * 60);
+  // Persist to cache (Redis / Memory) with 4-hour crawl cadence
+  await cache.set(cacheKey, masterContent, FOUR_HOUR_TTL_SECONDS + 3600);
+  await cache.set(metaKey, metadata, FOUR_HOUR_TTL_SECONDS + 3600);
 
   // Update in-memory cache
   memoryCache = {
