@@ -187,7 +187,7 @@ const TOPICS: Topic[] = [
     id: "winter",
     patterns: [[/\b(winter|winter-special|special winter|december|january|february|march|april|ice bubble\w*|frozen\w*|christmas|ski\w*)\b/, 2]],
     answer: () =>
-      "Yes! Our premier winter experience is the Winter Special Shared Tour (CAD $199 per guest, Dec 1 to Apr 30: frozen Lake Louise, Abraham Lake ice bubbles, Howse Pass, Peyto Lake, Bow Lake and Crowfoot Glacier, with ice cleats provided; visit /winter-special) and the Special Winter Private Tour (CAD $999 per vehicle up to 6 guests; /winter-signature-private-tour). Banff & Yoho Discovery also runs year-round. Lake shuttles run in summer only.",
+      "Yes! Our premier winter experience is the Winter Special Shared Tour (CAD $199 per guest, Dec 1 to Apr 30: frozen Lake Louise, Abraham Lake ice bubbles, Howse Pass, Peyto Lake, Bow Lake and Crowfoot Glacier, with ice cleats provided; visit /winter-special) and the Special Winter Private Tour (CAD $999 per vehicle up to 6 guests; /winter-signature-private-tour). Banff & Yoho Discovery also runs all year with seasonal route adjustments. Lake shuttles run in summer only.",
   },
   {
     id: "about",

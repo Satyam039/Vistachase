@@ -36,7 +36,7 @@ describe("concierge without an AI model", () => {
   });
 
   it("gives a different, data-backed answer to each question", async () => {
-    const privateTour = await prisma.tour.findFirstOrThrow({ where: { category: "PRIVATE", basePrice: { gt: 0 }, title: { contains: "Jasper" } } });
+    const privateTour = await prisma.tour.findFirstOrThrow({ where: { ...conciergeTours(), category: "PRIVATE", basePrice: { gt: 0 }, title: { contains: "Jasper" } } });
     const price = await ask("How much is the private Jasper tour?");
     expect(price.message).toContain(websiteName(privateTour));
     expect(price.message).toContain(money(privateTour.basePrice));
