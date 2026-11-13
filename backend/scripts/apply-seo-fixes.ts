@@ -19,6 +19,9 @@
 // 4. Renamed images (RENAMED_MEDIA, 10 Nov 2026: "ChatGPT Image <date>" blog files named after their
 //    post): every saved page that still points at an old /media path is pointed at the new one, in
 //    its text, image fields and unpublished draft. The old paths also 301 (modules/media/renamed-media.ts).
+// 6. Blog post text (prisma/catalog/blog-fixes-2026-11.json, owner 13 Nov 2026): exact sentence swaps
+//    that replace retired tour names, old prices and old group sizes in 20 imported posts. A fix only
+//    replaces its own old text, so passages staff have rewritten in the SEO portal are left alone.
 //
 // Usage:
 //   npm run seed:seo-fixes
@@ -34,6 +37,7 @@ import { webflowLocalMap } from "../src/modules/seo/portal/images";
 import { BLOG_PREFIX } from "../src/modules/seo/static-routes";
 import { RENAMED_MEDIA } from "../src/modules/media/renamed-media";
 import { RESTORED_TOUR_SLUGS } from "../src/modules/tours/product-map";
+import { planBlogTextFixes, type TextFix } from "../src/modules/seo/blog-text-fixes";
 
 const dryRun = process.argv.includes("--dry-run");
 
@@ -192,6 +196,48 @@ async function renamedImages() {
   console.log(`Renamed images: ${changed} pages updated.`);
 }
 
+const blogFixes = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../prisma/catalog/blog-fixes-2026-11.json"), "utf8")) as {
+  posts: Record<string, TextFix[]>;
+};
+
+async function blogTextFixes() {
+  let changed = 0;
+  let applied = 0;
+  for (const [slug, list] of Object.entries(blogFixes.posts)) {
+    const p = `${BLOG_PREFIX}${slug}`;
+    const page = await prisma.seoPage.findUnique({
+      where: { path: p },
+      select: {
+        id: true, status: true, faqs: true, draft: true, label: true, h1: true, seoTitle: true, metaDescription: true, excerpt: true,
+        ogTitle: true, ogDescription: true, twitterTitle: true, twitterDescription: true, searchTitle: true, searchDescription: true,
+        answerSnippet: true, citationFact: true, body: true,
+      },
+    });
+    if (!page || page.status === "ARCHIVED") continue;
+    const plan = planBlogTextFixes(page, list);
+    for (const f of plan.missing) console.warn(`  ${p}: text not found, left as staff wrote it: "${f.from.slice(0, 60)}..."`);
+    if (!plan.applied.length) continue;
+    if (dryRun) {
+      console.log(`  would update ${p}: ${plan.applied.length} passages in ${Object.keys(plan.data).join(", ")}`);
+    } else {
+      await prisma.$transaction(async (tx) => {
+        await tx.seoPage.update({ where: { id: page.id }, data: plan.data });
+        await tx.auditLog.create({
+          data: {
+            action: "SEO_PAGE_UPDATED",
+            entityType: "SeoPage",
+            entityId: page.id,
+            details: { path: p, fields: Object.keys(plan.data), passages: plan.applied.length, reason: "Current tour names, prices and group sizes (owner, 2026-11-13)", script: "apply-seo-fixes" },
+          },
+        });
+      });
+    }
+    changed++;
+    applied += plan.applied.length;
+  }
+  console.log(`Blog text: ${applied} passages updated in ${changed} posts.`);
+}
+
 async function main() {
   await restoredTours();
   await redirects();
@@ -199,6 +245,7 @@ async function main() {
   await metaFixes("metaDescription", fixes.descriptions);
   await blogMetadata();
   await renamedImages();
+  await blogTextFixes();
 }
 
 main()
