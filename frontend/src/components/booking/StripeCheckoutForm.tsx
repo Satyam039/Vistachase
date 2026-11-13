@@ -5,7 +5,8 @@
 // webhook reports the payment, so onPaid only tells the checkout to wait for that confirmation.
 
 import { useMemo, useState } from "react";
-import { loadStripe, type Stripe } from "@stripe/stripe-js";
+import { loadStripe } from "@stripe/stripe-js/pure";
+import type { Stripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { Button } from "@astryxdesign/core/Button";
 import { FieldStatus } from "@astryxdesign/core/FieldStatus";

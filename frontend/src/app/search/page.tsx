@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getTours } from "@/lib/api/catalog";
-import { MAX_SEARCH_GUESTS, groupEnquiryHref, toursForCards } from "@/lib/experiences";
+import { MAX_SEARCH_GUESTS, groupEnquiryHref, toursForTourCards } from "@/lib/experiences";
 import { TourSearch, type SearchFilters } from "@/components/search/TourSearch";
 import type { Metadata } from "next";
 
@@ -42,5 +42,5 @@ export default async function SearchResultsPage({
   // All tours load once; filtering happens in place on the client.
   const tours = await getTours();
 
-  return <TourSearch tours={toursForCards(tours)} initialFilters={initialFilters} />;
+  return <TourSearch tours={toursForTourCards(tours)} initialFilters={initialFilters} />;
 }

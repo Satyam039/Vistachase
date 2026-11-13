@@ -4,7 +4,7 @@
 import type { Metadata } from "next";
 import { getTours } from "@/lib/api/catalog";
 import { MultiDayLanding } from "@/components/tours/MultiDayLanding";
-import { toursForCards } from "@/lib/experiences";
+import { toursForTourCards } from "@/lib/experiences";
 import { withSeo } from "@/lib/seo/server";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 import { PackageListJsonLd } from "@/components/seo/PackageTripJsonLd";
@@ -48,7 +48,7 @@ export default async function MultiDayPage() {
           { name: PRIVATE_PACKAGES.four.title, path: "/four-day-rockies-and-jasper" },
         ]}
       />
-      <MultiDayLanding tours={toursForCards(tours, 60)} />
+      <MultiDayLanding tours={toursForTourCards(tours, 60)} />
     </>
   );
 }

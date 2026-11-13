@@ -81,6 +81,23 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
   // The search's Experience field follows the tab the visitor picks (never the automatic rotation).
   const [pickedCategory, setPickedCategory] = useState<string | null>(null);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  // Page speed: only the first photo loads with the page. The other services' photos are added once
+  // the page has loaded (well before the first rotation), so they don't compete with it on phones.
+  const [restReady, setRestReady] = useState(false);
+  useEffect(() => {
+    const start = () => window.setTimeout(() => setRestReady(true), 1500);
+    if (document.readyState === "complete") {
+      const t = start();
+      return () => window.clearTimeout(t);
+    }
+    let t = 0;
+    const onLoad = () => (t = start());
+    window.addEventListener("load", onLoad, { once: true });
+    return () => {
+      window.removeEventListener("load", onLoad);
+      window.clearTimeout(t);
+    };
+  }, []);
 
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -136,6 +153,7 @@ export function ServicesHero({ slides }: { slides: HeroSlide[] }) {
       <div className="absolute inset-0 -z-10">
         {items.map((s, i) => {
           const hero = HERO_IMAGE[s.id] ?? { src: s.image, position: "50% 50%" };
+          if (i !== 0 && i !== index && !restReady) return null;
           return (
             <div
               key={s.id}

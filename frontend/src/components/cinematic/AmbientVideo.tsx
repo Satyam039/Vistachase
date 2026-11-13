@@ -6,7 +6,7 @@
 // prefers reduced motion, and a visible Pause / Play button is always available. It is muted
 // and decorative, so it is hidden from assistive technology.
 //
-// Performance: nothing downloads until the clip scrolls into view; it pauses when it leaves the
+// Performance: nothing downloads until the clip scrolls into view (the poster from 800px away); it pauses when it leaves the
 // viewport, and it stays on the poster on data-saver connections. Large screens get the 1080p
 // encode when there is one. If the clip can't load, the video is removed so whatever sits under
 // it (the poster or the parent's photo) shows instead. With a media CDN configured the clip and
@@ -53,6 +53,24 @@ export function AmbientVideo({
   const [playing, setPlaying] = useState(true);
   const [ownPaused, setUserPaused] = useState(false);
   const [failed, setFailed] = useState(false);
+  // The poster is set only once the clip is near the screen: a <video poster> downloads at full size
+  // as soon as the page loads, wherever the clip sits, and competed with the hero photo on phones.
+  const [near, setNear] = useState(false);
+  useEffect(() => {
+    const video = ref.current;
+    if (!video || near) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setNear(true);
+          io.disconnect();
+        }
+      },
+      { rootMargin: "800px 0px" },
+    );
+    io.observe(video);
+    return () => io.disconnect();
+  }, [near]);
   const controlled = paused !== undefined || once;
   const userPaused = paused !== undefined ? paused : ownPaused;
 
@@ -81,17 +99,14 @@ export function AmbientVideo({
       return;
     }
 
-    // Try starting video on mount
-    video.play().catch(() => {
-      // Browser autoplay policy might require interaction
-      setPlaying(false);
-    });
-
+    // No play() on mount: the observer below starts the clip once it is on (or near) the screen,
+    // so a clip further down the page downloads nothing until the visitor scrolls to it.
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (!ref.current) return;
         if (entry.isIntersecting && !userPaused) {
-          ref.current.play().catch(() => {});
+          // Browser autoplay policy might require interaction: then it stays on the poster.
+          ref.current.play().catch(() => setPlaying(false));
         } else if (!entry.isIntersecting) {
           ref.current.pause();
         }
@@ -122,12 +137,11 @@ export function AmbientVideo({
     <>
       <video
         ref={ref}
-        autoPlay
         muted
         loop={!once}
         playsInline
-        preload="metadata"
-        poster={mediaUrl(poster)}
+        preload="none"
+        poster={near && poster ? mediaUrl(poster) : undefined}
         aria-hidden="true"
         tabIndex={-1}
         onPlay={() => setPlaying(true)}
