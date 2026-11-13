@@ -1,0 +1,477 @@
+{
+  "source": "Owner request 2026-11-13 (audit item 8, 12 Nov 2026 site audit): bring 20 blog posts in line with current tours. Facts from lib/sharedTours.ts, lib/privateTours.ts, lib/tourContent.ts, lib/shuttleSchedule.ts and live prices on 2026-11-13.",
+  "posts": {
+    "are-banff-tours-worth": [
+      {
+        "from": "typically in a vehicle with 10 to 12 guests. At Vista Chase, [shared tours in Banff](/shared-tours) start from CAD $99 per person.",
+        "to": "typically in a small group in a single vehicle. At Vista Chase, [shared tours in Banff](/shared-tours) start from CAD $220 per person."
+      },
+      {
+        "from": "move on when you are ready, not when twelve other people are done.",
+        "to": "move on when you are ready, not when the rest of a group is done."
+      },
+      {
+        "from": "Small group tours, by contrast, cap at around 10 to 12 guests. At that size,",
+        "to": "Small group tours, by contrast, keep groups small. At that size,"
+      },
+      {
+        "from": "Shared group tours start from around CAD $99 per person for a full day.",
+        "to": "Shared group tours start from CAD $220 per person for a full day."
+      },
+      {
+        "from": "The key is group size: tours capped at 10 to 12 guests deliver",
+        "to": "The key is group size: small-group tours deliver"
+      }
+    ],
+    "banff-private-tours-vs-group-tours": [
+      {
+        "from": "Vista Chase caps its shared tours at 12 guests, which is a meaningfully smaller experience",
+        "to": "Vista Chase keeps its shared tours to small groups, a meaningfully smaller experience"
+      },
+      {
+        "from": "are capped at 12 guests, which keeps that structured format",
+        "to": "run in small groups, which keeps that structured format"
+      }
+    ],
+    "banff-travel-guide-for-us-travelers": [
+      {
+        "from": "You get a dedicated SUV, a local guide,",
+        "to": "You get a dedicated SUV or van, a local guide,"
+      },
+      {
+        "from": "joins you with a maximum of 12 other guests.",
+        "to": "joins you with a small group of other guests."
+      }
+    ],
+    "best-banff-summer-tours": [
+      {
+        "from": "keep groups small — a maximum of 12 passengers — so you always",
+        "to": "keep groups small, so you always"
+      },
+      {
+        "from": "- **Typical duration:** 10–12 hours.\n- **Group size:** Maximum 12 passengers.",
+        "to": "- **Typical duration:** 9–11 hours.\n- **Group size:** Small group."
+      },
+      {
+        "from": "- **Private half-day Banff highlights tour + private full-day lakes tour** — ideal if you have two days",
+        "to": "- **Private Two-Day Rockies Explorer (Banff & Yoho Discovery + Columbia Icefield Adventure)** — ideal if you have two days"
+      },
+      {
+        "from": "(7-passenger SUV, Cadillac Escalade, or Mercedes Sprinter depending on group size)",
+        "to": "(luxury SUV, Cadillac Escalade, or Mercedes Sprinter depending on group size)"
+      },
+      {
+        "from": "with 600+ verified reviews on Google and TripAdvisor.",
+        "to": "with 1,700+ reviews across Google, Tripadvisor and GetYourGuide."
+      },
+      {
+        "from": "- **Small groups** — maximum 12 passengers on shared tours, ensuring a personal experience.",
+        "to": "- **Small groups** — shared tours stay small, ensuring a personal experience."
+      },
+      {
+        "from": "Vista Chase holds a 5-star rating with 600+ verified reviews.",
+        "to": "Vista Chase holds a 5-star rating with 1,700+ reviews across Google, Tripadvisor and GetYourGuide."
+      },
+      {
+        "from": "Vista Chase caps shared tours at 12.",
+        "to": "Vista Chase keeps shared tours to small groups."
+      }
+    ],
+    "best-banff-tours-for-fall-colors": [
+      {
+        "from": "Vista Chase private tours use full-size SUVs with comfortable seating",
+        "to": "Vista Chase private tours use luxury SUVs, or an executive van for larger groups, with comfortable seating"
+      },
+      {
+        "from": "small-group tours with a maximum of 12 passengers, ensuring",
+        "to": "small-group tours, ensuring"
+      },
+      {
+        "from": "Over three to five days, you can combine",
+        "to": "Over two to four days, you can combine"
+      }
+    ],
+    "best-banff-tours-for-international-visitors": [
+      {
+        "from": "Options like the [Heart of Banff Shared Tour](/banff-highlights-tour) and the wider [Shared Tours](/shared-tours) lineup keep groups capped at around twelve guests, which is small enough to still feel personal",
+        "to": "Options like the [Banff & Yoho Discovery](/banff-highlights-tour) and the wider [Shared Tours](/shared-tours) lineup keep groups small enough to still feel personal"
+      },
+      {
+        "from": "outlines Sunrise, Golden Hour, and Mid-Day departures,",
+        "to": "outlines Sunrise and Day Shuttle departures, from before dawn to late afternoon,"
+      },
+      {
+        "from": "generally starting from around CAD $99 to $149 per person depending on the itinerary and season.",
+        "to": "starting from CAD $220 per person depending on the itinerary and season."
+      },
+      {
+        "from": "Shared day tours generally start around CAD $99 to $149 per person.",
+        "to": "Shared day tours start from CAD $220 per person."
+      },
+      {
+        "from": "including sunrise and golden hour departures.",
+        "to": "including sunrise and late-afternoon departures."
+      },
+      {
+        "from": "typically capped around twelve guests per vehicle,",
+        "to": "kept to a small group in each vehicle,"
+      }
+    ],
+    "best-way-to-travel-from-banff-to-jasper": [
+      {
+        "from": "**A private tour** is the best overall experience, and for groups of four or more it often costs about the same per person as a shared tour.",
+        "to": "**A private tour** is the best overall experience, and for groups of five or six it costs about the same per person as a shared tour."
+      },
+      {
+        "from": "- **Time:** 10 to 12 hours\n- **Stops:** 8+ set stops\n- **Guide:** yes\n- **Ends in Jasper:** no, returns to Banff the same day\n- **Season:** June to November\n- **Cost:** from CAD $249 per person",
+        "to": "- **Time:** 9 to 11 hours\n- **Stops:** set stops as far as the Columbia Icefield\n- **Guide:** yes\n- **Ends in Jasper:** no, turns back at the Columbia Icefield and returns to Banff the same day\n- **Season:** year-round, with the Ice Explorer and Skywalk from June 1 to October 10\n- **Cost:** from CAD $220 per person (CAD $320 from June 1 to October 10)"
+      },
+      {
+        "from": "- **Ends in Jasper:** your choice, return to Banff or stay in Jasper\n- **Season:** year-round\n- **Cost:** from CAD $999 per group",
+        "to": "- **Ends in Jasper:** no, the day tour returns to Banff; our Four-Day Rockies & Jasper journey continues to Jasper\n- **Season:** year-round\n- **Cost:** from CAD $1,240 per vehicle (CAD $1,750 from June 1 to October 10)"
+      },
+      {
+        "from": "Our [Icefields Parkway and Jasper shared tour](/shared-tours-icefields-jasper) is a 10 to 12 hour day with a maximum of 12 guests, starting from CAD $249 per person with Parks Canada entry included.",
+        "to": "Our [Columbia Icefield Adventure](/shared-tours-icefields-jasper) shared tour is a 9 to 11 hour day in a small group, starting from CAD $220 per person (CAD $320 from June 1 to October 10) with Parks Canada entry included."
+      },
+      {
+        "from": "The day covers Bow Lake, Peyto Lake, Crowfoot Glacier, Weeping Wall, the Athabasca Glacier, Sunwapta Falls, Athabasca Falls and Tangle Falls, with pickup in Banff or Canmore. Ice Explorer and Skywalk tickets are optional extras.",
+        "to": "The day covers Bow Lake, Crowfoot Glacier, Peyto Lake, Waterfowl Lakes and the Columbia Icefield, with pickup in Banff or Canmore. From June 1 to October 10, Ice Explorer and Skywalk tickets are included."
+      },
+      {
+        "from": "One thing to know: the shared tour runs from June to November and **returns to Banff the same day**.",
+        "to": "One thing to know: the shared tour travels as far as the Columbia Icefield, not to Jasper town, and **returns to Banff the same day**."
+      },
+      {
+        "from": "if you are moving your luggage to Jasper you will want a private tour or a separate transfer.",
+        "to": "if you are moving your luggage to Jasper you will want a multi-day private journey or a separate transfer."
+      },
+      {
+        "from": "Our [Icefields Parkway and Jasper private tour](/icefields-jasper-private-tour) starts from CAD $999 per group, with up to 6 guests in an SUV or up to 12 in a van. It runs year-round, includes Parks Canada fees and doorstep pickup in Banff, Canmore or Lake Louise, and you can **choose to return to Banff or be dropped off in Jasper** with your bags.",
+        "to": "Our [private Columbia Icefield Adventure](/icefields-jasper-private-tour) starts from CAD $1,240 per vehicle (CAD $1,750 from June 1 to October 10), with up to 6 guests in an SUV or up to 13 in an executive van. It runs year-round, includes Parks Canada fees and doorstep pickup in Banff, Canmore or Lake Louise, and travels as far as the Columbia Icefield before **returning to Banff**. To finish in Jasper with your bags, our [Four-Day Rockies & Jasper](/four-day-rockies-and-jasper) private journey continues up the Parkway."
+      },
+      {
+        "from": "Already in Jasper, or want to spend more of the day around Maligne Lake and Spirit Island? The [customizable Jasper private tour](/icefields-jasper-private-tour) lets you pick any six stops from Jasper and the Parkway.",
+        "to": "Want to spend time around Maligne Lake and Spirit Island too? Our [Four-Day Rockies & Jasper](/four-day-rockies-and-jasper) private journey includes a day of Jasper highlights."
+      },
+      {
+        "from": "**Best for:** first-time visitors, families, photographers, seniors, and any group of four or more.",
+        "to": "**Best for:** first-time visitors, families, photographers, seniors, and any group of five or more."
+      },
+      {
+        "from": "- **1 traveller:** shared tour $249, private tour $999\n- **2 travellers:** shared tour $249 each ($498 total), private tour about $500 each\n- **4 travellers:** shared tour $249 each ($996 total), private tour about $250 each\n- **6 travellers:** shared tour $249 each ($1,494 total), private tour about $167 each",
+        "to": "Summer prices (June 1 to October 10):\n\n- **1 traveller:** shared tour $320, private tour $1,750\n- **2 travellers:** shared tour $320 each ($640 total), private tour about $875 each\n- **4 travellers:** shared tour $320 each ($1,280 total), private tour about $438 each\n- **6 travellers:** shared tour $320 each ($1,920 total), private tour about $292 each"
+      },
+      {
+        "from": "At four people the two cost about the same, and the private tour adds a flexible schedule and the option to finish in Jasper.",
+        "to": "At five or six people the two cost about the same, and the private tour adds a flexible schedule built around your group."
+      },
+      {
+        "from": "Shared tours return to Banff, the bus is one-way, and private tours can do either.",
+        "to": "Day tours return to Banff, the bus is one-way, and a multi-day private journey can end in Jasper."
+      },
+      {
+        "from": "combines Banff, the Icefields Parkway and Jasper with transport for your whole stay, starting from CAD $1,799 per group.",
+        "to": "combines Banff, the Icefields Parkway and Jasper with transport for your whole stay, from CAD $1,575 per vehicle per day."
+      },
+      {
+        "from": "- **Choose a private tour** if it is your first time on the Parkway, you are a group of four or more, you are travelling outside summer, or you want to finish the day in Jasper with your luggage.",
+        "to": "- **Choose a private tour** if it is your first time on the Parkway, you are a group of five or more, or you are travelling outside summer. To finish in Jasper with your luggage, choose a multi-day private journey."
+      },
+      {
+        "from": "For sightseeing on the way, book a shared Icefields Parkway tour or a private tour. A private tour is the only guided option that can drop you in Jasper with your luggage.",
+        "to": "For sightseeing on the way, book a shared or private Icefields Parkway tour; these day tours go as far as the Columbia Icefield and return to Banff. Our Four-Day Rockies & Jasper private journey is the guided option that continues to Jasper."
+      },
+      {
+        "from": "In winter your options are driving with winter tires or chains, or a private guided tour, which operates year-round.",
+        "to": "In winter your options are driving with winter tires or chains. Our Icefields Parkway day tours run year-round but return to Banff."
+      },
+      {
+        "from": "For first-time visitors and groups of four or more, usually yes. At four people the per-person cost is close to a shared tour, and you gain a flexible schedule, a guide focused only on your group, and the option to end in Jasper.",
+        "to": "For first-time visitors and groups of five or more, usually yes. At five or six people the per-person cost is close to a shared tour, and you gain a flexible schedule and a guide focused only on your group."
+      }
+    ],
+    "emerald-lake-tour-from-banff": [
+      {
+        "from": "Emerald Lake is part of our [Banff + Yoho shared tour](/banff-highlights-tour) . It runs 9 to 11 hours with a maximum of 12 guests,",
+        "to": "Emerald Lake is part of our [Banff & Yoho Discovery shared tour](/banff-highlights-tour) . It runs 10 to 11 hours in a small group,"
+      },
+      {
+        "from": "**Pickup, 7:00 to 8:00 AM.** We collect guests from hotels in Banff and Canmore, and confirm the exact time the day before.",
+        "to": "**Pickup from 7:30 AM.** We collect guests from hotels in Canmore from 7:30 AM and in Banff from 8:00 AM, and confirm the exact time before your tour."
+      },
+      {
+        "from": "From June to mid-October the tour continues to Moraine Lake,",
+        "to": "From June 1 to October 10 the tour continues to Moraine Lake,"
+      },
+      {
+        "from": "The shared tour starts from CAD $175 per person.",
+        "to": "The shared tour starts from CAD $220 per person."
+      },
+      {
+        "from": "the private Banff + Yoho tour starts at CAD $1,099 per group, and you choose up to six stops.",
+        "to": "the private Banff & Yoho Discovery starts at CAD $1,240 per vehicle (CAD $1,750 from June 1 to October 10), for up to 13 guests."
+      },
+      {
+        "from": "The Banff + Yoho shared tour takes 9 to 11 hours, with pickup between 7:00 and 8:00 AM and a return in the early evening.",
+        "to": "The Banff & Yoho Discovery shared tour takes 10 to 11 hours, with pickup from 7:30 AM in Canmore and 8:00 AM in Banff, and a return in the early evening."
+      }
+    ],
+    "family-friendly-banff-tours-guide": [
+      {
+        "from": "Our [Icefields Parkway & Jasper Shared Tour](/shared-tours-icefields-jasper) takes",
+        "to": "Our [Columbia Icefield Adventure](/shared-tours-icefields-jasper) shared tour takes"
+      },
+      {
+        "from": "Johnston Canyon is included in our [Banff Highlights Tour](/banff-highlights-tour)",
+        "to": "Johnston Canyon is included in our [Banff & Yoho Discovery](/banff-highlights-tour) tour"
+      },
+      {
+        "from": "Our [Heart of Banff Tour](/banff-highlights-tour) is specifically designed for first-timers exploring the town and its surroundings.",
+        "to": "Our [Banff & Yoho Discovery](/banff-highlights-tour) tour is designed for first-timers exploring Banff and its surroundings."
+      },
+      {
+        "from": "Small group tours (typically up to 12 people) offer",
+        "to": "Small group tours offer"
+      }
+    ],
+    "is-banff-worth-visiting-in-shoulder-season": [
+      {
+        "from": "Sunrise and Golden Hour options are both available, with round-trip pickup included.",
+        "to": "Sunrise and daytime departures run from June to September, with round-trip pickup included."
+      },
+      {
+        "from": "The [Heart of Banff Shared Tour](/banff-highlights-tour) runs year-round and covers Banff's top highlights Bow Falls, the Banff Gondola, Lake Minnewanka, Surprise Corner, the Hoodoos, and more in a small group of up to 12 guests. It's one of the most efficient and affordable ways to cover the town's best spots in a single day,",
+        "to": "The [Banff & Yoho Discovery](/banff-highlights-tour) shared tour runs year-round and covers Lake Louise, Johnston Canyon, Emerald Lake, Lake Minnewanka, Morant's Curve and more (Moraine Lake from June 1 to October 10) in a small group. It's one of the most efficient and affordable ways to cover Banff and Yoho's best spots in a single day,"
+      }
+    ],
+    "lake-louise-hiking-guide": [
+      {
+        "from": "with a local guide and a maximum of 12 guests.",
+        "to": "with a local guide and a maximum of 14 guests."
+      }
+    ],
+    "lake-louise-summer-gondola-guide": [
+      {
+        "from": "a local guide, a maximum of 12\n\nguests,",
+        "to": "a local guide, a maximum of 14\n\nguests,"
+      }
+    ],
+    "private-tours-in-banff-for-families": [
+      {
+        "from": "are built with families in mind and cap groups at 12 guests, which keeps the pace",
+        "to": "are built with families in mind and keep groups small, which keeps the pace"
+      },
+      {
+        "from": "### The Banff Private Best Selling Tour",
+        "to": "### Banff & Yoho Discovery (Private)"
+      },
+      {
+        "from": "It covers Banff's core highlights, Lake Louise, Moraine Lake, Bow Lake, and Peyto Lake among them,",
+        "to": "It covers the core highlights of Banff and Yoho, Lake Louise, Moraine Lake, Johnston Canyon, and Emerald Lake among them,"
+      },
+      {
+        "from": "### The Banff & Yoho Custom Private Tour",
+        "to": "### Columbia Icefield Adventure (Private)"
+      },
+      {
+        "from": "Families who want to build their own day rather than follow a fixed set of stops tend to prefer this option. You choose which destinations to include, which suits mixed-age families where a teenager wants a longer hike and a toddler needs shorter, easier stops. See the full list of destinations on the",
+        "to": "Families who want glaciers and big mountain lakes tend to prefer this option. It follows the Icefields Parkway past Bow Lake and Peyto Lake to the Columbia Icefield at your family's pace, which suits mixed-age families where a teenager wants a longer stop and a toddler needs shorter, easier ones. See the full itinerary on the"
+      },
+      {
+        "from": "[Banff & Yoho Custom Private Tour page](/banff-private-tour) .",
+        "to": "[Columbia Icefield private tour page](/icefields-jasper-private-tour) ."
+      },
+      {
+        "from": "For families staying four days or longer,",
+        "to": "For families staying two days or longer,"
+      },
+      {
+        "from": "bundle airport transfers, daily private touring, and hotel-to-hotel logistics into one plan,",
+        "to": "bundle daily private touring, optional airport transfers, and hotel-to-hotel logistics into one plan,"
+      }
+    ],
+    "small-group-tours-in-banff-national-park": [
+      {
+        "from": "Max 12 guests, local guides & exclusive Moraine Lake access.",
+        "to": "Small groups, local guides & exclusive Moraine Lake access."
+      },
+      {
+        "from": "with a limited number of passengers — a maximum of 12 people — in a single comfortable vehicle.",
+        "to": "with a limited number of passengers in a single comfortable vehicle."
+      },
+      {
+        "from": "With a maximum of 12 guests per tour, Vista Chase ensures",
+        "to": "With small groups on every shared tour, Vista Chase ensures"
+      },
+      {
+        "from": "With no more than 12 guests in each group, there's never",
+        "to": "With a small group, there's never"
+      },
+      {
+        "from": "Sunrise shuttles: CAD $50–$90 per person Golden Hour shuttles: CAD $50–$90 per person",
+        "to": "Sunrise shuttles: from CAD $130 per person Day shuttles: from CAD $108 per person (Vista Chase, June to September)"
+      },
+      {
+        "from": "Full-day tours (8–10 hours): CAD $120–$200 per person",
+        "to": "Full-day tours (9–11 hours): from CAD $220 per person at Vista Chase"
+      },
+      {
+        "from": "2-day Banff + Yoho packages: CAD $350–$600 per person",
+        "to": "Two-Day Rockies Explorer (Banff & Yoho + Columbia Icefield): from CAD $396 per person"
+      },
+      {
+        "from": "but Vista Chase caps every shared tour at a maximum of 12 guests — the sweet spot for a genuinely personal experience.",
+        "to": "and Vista Chase keeps every shared tour within that — the sweet spot for a genuinely personal experience."
+      },
+      {
+        "from": "Sunrise and Golden Hour departures from Banff, Canmore, and Lake Louise Village.",
+        "to": "Sunrise and daytime departures from Banff, Canmore, and Lake Louise Village, June to September."
+      },
+      {
+        "from": "with a limited number of passengers — Vista Chase caps every tour at a maximum of 12 guests — travelling together",
+        "to": "with a limited number of passengers travelling together"
+      },
+      {
+        "from": "Vista Chase caps all small group tours in Banff at a maximum of 12 guests per tour.",
+        "to": "Vista Chase keeps all of its shared tours in Banff to small groups."
+      },
+      {
+        "from": "Many operators allow up to 16 or even 20, but Vista Chase believes 12 is the threshold where the experience stays truly personal.",
+        "to": "Many operators allow up to 16 or even 20, but Vista Chase keeps its groups below that, where the experience stays truly personal."
+      },
+      {
+        "from": "Shuttle-based tours to Moraine Lake and Lake Louise start around CAD $50–$90 per person. Multi-day packages begin at approximately CAD $350 per person.",
+        "to": "At Vista Chase, full-day shared tours start from CAD $220 per person, Moraine Lake and Lake Louise shuttles from CAD $108 per person, and the Two-Day Rockies Explorer from CAD $396 per person."
+      },
+      {
+        "from": "Vista Chase small group tours cap guests at 12 — small enough",
+        "to": "Vista Chase small group tours keep groups small — small enough"
+      },
+      {
+        "from": "With a maximum group size of 12, there's always room",
+        "to": "With a small group, there's always room"
+      },
+      {
+        "from": "- Cap group sizes at 12 to minimise trail and site impact",
+        "to": "- Keep group sizes small to minimise trail and site impact"
+      }
+    ],
+    "sunrise-golden-hour-vip-access-in-banff": [
+      {
+        "from": "Our [Golden Hour shuttle to Moraine Lake and Lake Louise](/shuttles) is built for guests who want this window",
+        "to": "Our [late-afternoon shuttle to Moraine Lake and Lake Louise](/shuttles) (June to September) is built for guests who want this window"
+      },
+      {
+        "from": "then lunch in Lake Louise Village, then the Icefields Parkway stops (Bow Lake, Peyto Lake and Crowfoot Glacier) in the afternoon. That is how our [Banff Bestseller Private Tour](/banff-private-tour) is laid out,",
+        "to": "then lunch in Lake Louise Village, then Emerald Lake and the Natural Bridge in Yoho in the afternoon. That is how our [private Banff & Yoho Discovery](/banff-private-tour) is laid out,"
+      },
+      {
+        "from": "On the Banff Bestseller Private Tour, the 6-passenger SUV",
+        "to": "On the private Banff & Yoho Discovery, the 6-passenger SUV"
+      },
+      {
+        "from": "The 12-passenger van includes direct private access",
+        "to": "The executive van (up to 13 guests) includes direct private access"
+      },
+      {
+        "from": "(from CAD $125 per person): ideal for photographers",
+        "to": "(from CAD $130 per person): ideal for photographers"
+      },
+      {
+        "from": "(from CAD $99 per person): for travelers who want long lake time",
+        "to": "(from CAD $108 per person): for travelers who want long lake time"
+      },
+      {
+        "from": "- [Banff Bestseller Private Tour](/banff-private-tour) (from CAD $999 per group):",
+        "to": "- [Private Banff & Yoho Discovery](/banff-private-tour) (from CAD $1,240 per vehicle; CAD $1,750 from June 1 to October 10):"
+      },
+      {
+        "from": "(from CAD $1,799 plus GST per group): for longer stays and several sunrises. Sunrise and sunset visits are planned across 2 to 7 days,",
+        "to": "(from CAD $1,240 per vehicle per day): for longer stays and several sunrises. Sunrise and sunset visits are planned across 2 to 4 days,"
+      },
+      {
+        "from": "our [shared tours](/shared-tours) keep groups to 12 guests.",
+        "to": "our [shared tours](/shared-tours) keep groups small."
+      }
+    ],
+    "visit-moraine-lake-without-a-car": [
+      {
+        "from": "Vista Chase operates sunrise and golden hour shuttles that depart",
+        "to": "Vista Chase operates sunrise and daytime shuttles (June to September) that depart"
+      },
+      {
+        "from": "• Sunrise or golden hour access to Moraine Lake",
+        "to": "• Sunrise, daytime or late-afternoon access to Moraine Lake"
+      },
+      {
+        "from": "in a full-size luxury SUV with a dedicated guide.",
+        "to": "in a luxury SUV or executive van with a dedicated guide."
+      },
+      {
+        "from": "continue to Bow Lake or Peyto Lake on the Icefields Parkway, or build an entirely custom Rockies day.",
+        "to": "or continue to Yoho's Emerald Lake on the same day."
+      },
+      {
+        "from": "The [Banff Bestseller Private Tour](/banff-private-tour) is a popular starting point, combining Moraine Lake, Lake Louise, and Bow Lake into one",
+        "to": "The [private Banff & Yoho Discovery](/banff-private-tour) is a popular starting point, combining Moraine Lake, Lake Louise, and Emerald Lake into one"
+      },
+      {
+        "from": "operate with a maximum of 12 guests per vehicle, meaning",
+        "to": "operate in small groups, meaning"
+      },
+      {
+        "from": "the [Heart of Banff shared tour](/banff-highlights-tour) is one of the best-value",
+        "to": "the [Banff & Yoho Discovery shared tour](/banff-highlights-tour) is one of the best-value"
+      },
+      {
+        "from": "Vista Chase offers sunrise and golden hour shuttles, private tours,",
+        "to": "Vista Chase offers sunrise and daytime shuttles, private tours,"
+      }
+    ],
+    "what-to-do-in-banff-after-your-alaska-cruise-ends": [
+      {
+        "from": "[Sunrise and Golden Hour Lake Louise and Moraine Lake shuttles](/shuttles)",
+        "to": "[Sunrise and Day Lake Louise and Moraine Lake shuttles](/shuttles)"
+      },
+      {
+        "from": "[Banff Bestseller Private Tour](/banff-private-tour) is the most requested",
+        "to": "[Private Banff & Yoho Discovery](/banff-private-tour) is the most requested"
+      },
+      {
+        "from": "Lake Louise, Moraine Lake, and the Icefields corridor, in a small group of up to 12 guests",
+        "to": "Lake Louise, Moraine Lake, and Yoho, in a small group"
+      }
+    ],
+    "what-to-pack-for-a-banff-tour-season-wise": [
+      {
+        "from": "Whether you join our [Heart of Banff shared tour](/banff-highlights-tour) , the [Banff Bestseller Private Tour](/banff-private-tour) ,",
+        "to": "Whether you join our [Banff & Yoho Discovery shared tour](/banff-highlights-tour) , the [private Banff & Yoho Discovery](/banff-private-tour) ,"
+      },
+      {
+        "from": "in and out of a warm, climate-controlled SUV several times.",
+        "to": "in and out of a warm, climate-controlled vehicle several times."
+      }
+    ],
+    "wildlife-viewing-tours-in-banff": [
+      {
+        "from": "Our [shared tours](/shared-tours) are capped at 12 guests per vehicle, and if wildlife",
+        "to": "Our [shared tours](/shared-tours) run in small groups, and if wildlife"
+      }
+    ],
+    "yoho-national-park-day-tour-from-banf": [
+      {
+        "from": "Our [shared tours](/shared-tours) are capped at 12 guests per vehicle, with pickups from Banff and Canmore, and our Banff + Yoho shared tour starts at CAD $175.",
+        "to": "Our [shared tours](/shared-tours) run in small groups, with pickups from Banff and Canmore, and our Banff & Yoho Discovery shared tour starts at CAD $220."
+      },
+      {
+        "from": "Our Banff & Yoho custom private tour starts at CAD $1,099.",
+        "to": "Our private Banff & Yoho Discovery starts at CAD $1,240 per vehicle (CAD $1,750 from June 1 to October 10)."
+      },
+      {
+        "from": "Our shared Banff + Yoho tour starts at CAD $175 and our private Banff & Yoho custom tour starts at CAD $1,099.",
+        "to": "Our Banff & Yoho Discovery shared tour starts at CAD $220 and the private version starts at CAD $1,240 per vehicle (CAD $1,750 from June 1 to October 10)."
+      }
+    ]
+  }
+}
