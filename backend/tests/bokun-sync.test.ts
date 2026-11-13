@@ -37,6 +37,7 @@ class FakeBokun {
   slots: Record<string, Slot[]> = {};
   failAvailability: Error | null = null;
   failSubmit: Error | null = null;
+  failConfirm: Error[] = [];
   failCancel: Error | null = null;
   questions: unknown = undefined;
   codes = 0;
@@ -60,6 +61,7 @@ class FakeBokun {
           if (this.failSubmit) throw this.failSubmit;
           return { booking: { confirmationCode: `VIS-${process.pid}-${++lastCode}` } };
         }
+        if (path.startsWith("/checkout.json/confirm-reserved/") && this.failConfirm.length) throw this.failConfirm.shift();
         if (path.startsWith("/booking.json/cancel-booking") && this.failCancel) throw this.failCancel;
         return null;
       },
@@ -282,6 +284,33 @@ describe("website bookings reach Bókun", () => {
     expect((await retryBokunSync(booking.id)).status).toBe(200);
     expect(bokun.made("/checkout.json/submit")).toHaveLength(2);
     expect((await reload(booking.id)).externalSyncStatus).toBe("SYNCED");
+  });
+
+  it("reserves again when Bókun let the reservation lapse before it was confirmed, then confirms the new one", async () => {
+    const dep = await departure(sharedTourId, { time: "11:45" });
+    bokun.slot("796650", DAY, "11:45", 10);
+    const lapsed = () => new BokunApiError(400, 'Bókun API Error: 400 Bad Request - {"message":"Error occurred: logic.InvalidDataException - Confirming a booking which is not in reserved state [VistaChase-1]: TIMEOUT"}');
+    bokun.failConfirm = [lapsed()];
+    const booking = await book(dep);
+    await run(booking.id);
+    const after = await reload(booking.id);
+    expect(after.externalSyncStatus).toBe("SYNCED");
+    expect(bokun.made("/checkout.json/submit")).toHaveLength(2);
+    const confirms = bokun.made("/checkout.json/confirm-reserved/").map((c) => c.path);
+    expect(confirms).toHaveLength(2);
+    expect(confirms[1]).toContain(encodeURIComponent(after.bokunBookingId!));
+    expect(confirms[0]).not.toBe(confirms[1]);
+  });
+
+  it("stops instead of reserving a third time when the new reservation also can't be confirmed", async () => {
+    const dep = await departure(sharedTourId, { time: "12:05" });
+    bokun.slot("796650", DAY, "12:05", 10);
+    const lapsed = () => new BokunApiError(400, "Bókun API Error: 400 - Confirming a booking which is not in reserved state [X]: TIMEOUT");
+    bokun.failConfirm = [lapsed(), lapsed()];
+    const booking = await book(dep);
+    await run(booking.id);
+    expect((await reload(booking.id)).externalSyncStatus).toBe("FAILED");
+    expect(bokun.made("/checkout.json/submit")).toHaveLength(2);
   });
 
   it("flags a refused cancellation for staff to cancel in Bókun by hand", async () => {
