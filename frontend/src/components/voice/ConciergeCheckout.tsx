@@ -10,6 +10,9 @@
 //   DELETE /api/reservations/hold      release a hold whose party size changed
 //   POST   /api/bookings               booking (PENDING_PAYMENT) + Stripe PaymentIntent, Idempotency-Key
 //   GET    /api/bookings?ref=&t=       poll until Stripe's webhook has confirmed it
+//   POST   /api/pricing/quote          check a promo/voucher code (same as the /book page's Apply)
+// The airport transfer (the /book page's AirportTransferFields; the server checks eligibility and
+// prices it) follows the website's rule, see AIRPORT_ON_SINGLE_DAYS.
 // The booking is only confirmed by the server once Stripe reports the payment; card details go
 // straight from the browser to Stripe (Payment Element), never to Vista Chase or the concierge.
 
@@ -21,6 +24,14 @@ import { Dropdown } from "@/components/forms/Dropdown";
 import { StripeCheckoutForm } from "@/components/booking/StripeCheckoutForm";
 import { dialCode } from "@/lib/countries";
 import { moneyExact } from "@/lib/pricing";
+import {
+  AirportTransferDetails,
+  AirportTransferToggle,
+  airportTransferError,
+  airportTransferPrice,
+  EMPTY_AIRPORT_TRANSFER,
+  type AirportTransferValue,
+} from "@/components/booking/AirportTransferFields";
 
 type Stop = { id: string; name: string; town: string; address: string };
 type Departure = {
@@ -55,6 +66,12 @@ export interface ConciergeCheckoutProps {
 
 const HOLD_SECONDS = 600;
 const round2 = (n: number) => Math.round(n * 100) / 100;
+/** CAD $1,439.10 when there are cents (a percentage code), CAD $1,599 when there aren't. */
+const cad = (n: number) => moneyExact(n, Math.round(n * 100) % 100 !== 0);
+/** Airport transfers come with private bookings of two or more tour days (owner's rule, 2026-11-10;
+ *  the booking API refuses them on a single day). Single days in this chat follow that rule; private
+ *  packages offer the transfer in the in-chat package checkout (PackageCheckout). */
+const AIRPORT_ON_SINGLE_DAYS = false;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const INPUT = "h-10 w-full rounded-lg border border-obsidian-900/15 bg-white px-3 text-sm text-obsidian-900 focus-visible:border-ocean-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-600/30";
 const PRIMARY = "golden-summit-btn flex h-11 w-full items-center justify-center gap-2 rounded-full text-sm disabled:opacity-60";
@@ -86,6 +103,14 @@ export function ConciergeCheckout(props: ConciergeCheckoutProps) {
   const [phoneLocal, setPhoneLocal] = useState("");
   const [requests, setRequests] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  // Airport transfer (private tours, 2+ guests): the website's tick box and details.
+  const [airport, setAirport] = useState(false);
+  const [airportTransfer, setAirportTransfer] = useState<AirportTransferValue>(EMPTY_AIRPORT_TRANSFER);
+  // Promo / voucher code, checked by the server exactly as on the /book page.
+  const [promoInput, setPromoInput] = useState("");
+  const [promo, setPromo] = useState<{ code: string; percent: number; amountOff: number; message: string } | null>(null);
+  const [promoError, setPromoError] = useState("");
+  const [applyingPromo, setApplyingPromo] = useState(false);
 
   const [hold, setHold] = useState<{ token: string; seats: number; expiresAt: number } | null>(null);
   const [now, setNow] = useState(() => Date.now());
@@ -149,11 +174,18 @@ export function ConciergeCheckout(props: ConciergeCheckoutProps) {
   const childPrice = dep?.childPrice ?? dep?.price ?? 0;
   const infantsPay = !isVehicle && dep?.infantPrice != null;
   const seats = adults + children + (infantsPay ? infants : 0);
-  const total = useMemo(() => {
+  const fare = useMemo(() => {
     if (!dep) return 0;
     if (isVehicle) return dep.price;
     return round2(dep.price * adults + childPrice * children + (infantsPay ? (dep.infantPrice ?? 0) * infants : 0));
   }, [dep, isVehicle, adults, children, infants, childPrice, infantsPay]);
+  // Same as the /book page: a fixed-amount code takes off at most the fare; the airport transfer is
+  // added after the discount. The server recomputes all of it and charges its own total.
+  const discount = !promo ? 0 : promo.amountOff > 0 ? round2(Math.min(promo.amountOff, fare)) : round2(fare * (promo.percent / 100));
+  const partySize = adults + children + infants;
+  const offersAirport = AIRPORT_ON_SINGLE_DAYS && isVehicle && partySize >= 2;
+  const transferPrice = offersAirport && airport ? airportTransferPrice(airportTransfer, partySize) : null;
+  const total = round2(fare - discount + (transferPrice ?? 0));
   const capacity = dep ? (isVehicle ? dep.capacityTotal : dep.seatsAvailable + (hold?.seats ?? 0)) : 0;
   const selectedStop = stops.find((s) => s.id === pickupStopId);
 
@@ -173,12 +205,41 @@ export function ConciergeCheckout(props: ConciergeCheckoutProps) {
 
   const checkDetails = () => {
     const e: Record<string, string> = {};
+    const airportProblem = offersAirport && airport ? airportTransferError(airportTransfer) : null;
+    if (airportProblem) e.airport = airportProblem;
     if (!pickupStopId && !customPickup.trim()) e.pickup = "Choose your pickup hotel.";
     if (name.trim().length < 2) e.name = "Enter the lead guest's full name.";
     if (!EMAIL.test(email.trim())) e.email = "Enter a valid email address.";
     if (phoneLocal.replace(/\D/g, "").length < 6) e.phone = "Enter a mobile number.";
     setErrors(e);
     return Object.keys(e).length === 0;
+  };
+
+  // The /book page's Apply: the server validates the code for this departure and party.
+  const applyPromo = async () => {
+    const code = promoInput.trim();
+    if (!code || applyingPromo) return;
+    setPromoError("");
+    setApplyingPromo(true);
+    try {
+      const res = await fetch("/api/pricing/quote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ departureId, adultsCount: adults, childrenCount: children, infantsCount: infants, promoCode: code }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        setPromo(null);
+        setPromoError(data.error || "Invalid promo code");
+      } else {
+        setPromo({ code: data.promoCode, percent: Number(data.discountPercent) || 0, amountOff: Number(data.amountOff) || 0, message: data.message || `Code ${data.promoCode} applied.` });
+        setPromoInput("");
+      }
+    } catch {
+      setPromoError("Network error. Please try again.");
+    } finally {
+      setApplyingPromo(false);
+    }
   };
 
   const releaseHold = async (token: string) => {
@@ -264,6 +325,8 @@ export function ConciergeCheckout(props: ConciergeCheckoutProps) {
           childrenCount: children,
           infantsCount: infants,
           specialRequests: [requests.trim(), "Booked through the AI concierge chat."].filter(Boolean).join("\n"),
+          airportTransfer: offersAirport && airport ? { ...airportTransfer, area: airportTransfer.area || undefined } : undefined,
+          promoCode: promo?.code,
           paymentPlan: "FULL",
         }),
       }).catch(() => null);
@@ -351,6 +414,7 @@ export function ConciergeCheckout(props: ConciergeCheckoutProps) {
           <QuantityInput label="Adults" description="Age 16–99" value={adults} onChange={setAdults} min={1} max={Math.max(1, capacity - children - (infantsPay ? infants : 0))} />
           <QuantityInput label="Youth" description="Age 6–15" value={children} onChange={setChildren} min={0} max={Math.max(0, capacity - adults - (infantsPay ? infants : 0))} />
           <QuantityInput label="Infants" description={infantsPay ? "Age 0–5" : "Age 0–5 · free on a lap"} value={infants} onChange={setInfants} min={0} max={Math.max(0, capacity - adults - children)} />
+          {offersAirport && <AirportTransferToggle checked={airport} onChange={setAirport} />}
           <button type="button" className={PRIMARY} onClick={() => checkParty() && setStep("details")}>
             Continue
           </button>
@@ -398,6 +462,12 @@ export function ConciergeCheckout(props: ConciergeCheckoutProps) {
             <span className="mb-1.5 block text-sm">Requests (optional)</span>
             <input className={INPUT} value={requests} onChange={(e) => setRequests(e.target.value)} placeholder="Dietary needs, child seats, celebrations…" maxLength={500} />
           </label>
+          {offersAirport && airport && (
+            <div className="space-y-2">
+              <p className="text-sm text-obsidian-900">Airport transfer details</p>
+              <AirportTransferDetails value={airportTransfer} onChange={setAirportTransfer} error={errors.airport} minDate={dep.date.slice(0, 10)} />
+            </div>
+          )}
           <div className="flex gap-2">
             <button type="button" className={SECONDARY} onClick={() => setStep("party")}>
               Back
@@ -418,20 +488,69 @@ export function ConciergeCheckout(props: ConciergeCheckoutProps) {
             <div className="border-t border-obsidian-900/10 pt-2">
               <div className="flex justify-between gap-3 text-xs text-slate-600">
                 <span>{priceLine}</span>
-                <span className="shrink-0">{moneyExact(total)}</span>
+                <span className="shrink-0">{cad(fare)}</span>
               </div>
+              {promo && discount > 0 && (
+                <div className="flex justify-between gap-3 text-xs text-emerald-800">
+                  <span>Promo {promo.code} ({promo.amountOff > 0 ? `−${cad(promo.amountOff)}` : `−${promo.percent}%`})</span>
+                  <span className="shrink-0">−{cad(discount)}</span>
+                </div>
+              )}
+              {transferPrice != null && (
+                <div className="flex justify-between gap-3 text-xs text-slate-600">
+                  <span>Calgary Airport transfer</span>
+                  <span className="shrink-0">{cad(transferPrice)}</span>
+                </div>
+              )}
               <div className="flex justify-between gap-3 text-xs text-slate-600">
                 <span>Taxes and required fees</span>
                 <span className="shrink-0">Included</span>
               </div>
               <div className="mt-1 flex justify-between gap-3 text-base">
                 <span>Total</span>
-                <span>{moneyExact(payment?.amount ?? total)}</span>
+                <span>{cad(payment?.amount ?? total)}</span>
               </div>
             </div>
           </dl>
           {step === "review" && (
             <>
+              <div>
+                <label htmlFor="concierge-promo" className="mb-1.5 block text-sm">
+                  Promo or voucher code <span className="text-slate-500">(optional)</span>
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    id="concierge-promo"
+                    className={INPUT}
+                    value={promoInput}
+                    onChange={(e) => setPromoInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        void applyPromo();
+                      }
+                    }}
+                    placeholder="Enter code"
+                    autoComplete="off"
+                    disabled={applyingPromo || busy}
+                  />
+                  <button type="button" className={SECONDARY} onClick={applyPromo} disabled={!promoInput.trim() || applyingPromo || busy}>
+                    {applyingPromo ? "Applying…" : "Apply"}
+                  </button>
+                </div>
+                {promoError && <p role="alert" className="mt-1 text-xs text-red-700">{promoError}</p>}
+                {promo && (
+                  <p role="status" className="mt-1.5 flex items-center justify-between gap-3 rounded-lg bg-ocean-50 px-3 py-2 text-xs text-ocean-800">
+                    <span>
+                      ✓ {promo.message}
+                      {discount > 0 ? ` You save ${cad(discount)}.` : ""}
+                    </span>
+                    <button type="button" onClick={() => setPromo(null)} className="shrink-0 underline">
+                      Remove <span className="sr-only">promo code {promo.code}</span>
+                    </button>
+                  </p>
+                )}
+              </div>
               <p className="text-xs text-slate-600">
                 By paying you accept our{" "}
                 <a href="/terms-and-conditions" target="_blank" rel="noopener" className="underline">terms</a> and{" "}
