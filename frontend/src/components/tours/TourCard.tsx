@@ -83,6 +83,7 @@ export function TourCard({
   headingLevel = 3,
   title,
   image,
+  priority = false,
 }: {
   tour: TourWithAvailability;
   seats?: number;
@@ -91,6 +92,8 @@ export function TourCard({
   /** Name and photo to show instead of the catalog's (home rail cards use the landing pages'). */
   title?: string;
   image?: string;
+  /** The first card on a page without a hero photo: load its photo first (page speed, LCP). */
+  priority?: boolean;
 }) {
   const TitleTag = headingLevel === 2 ? "h2" : "h3";
   const unitLabel = tour.priceUnit === "GROUP" ? "group" : tour.category === "TICKET" ? "ticket" : "guest";
@@ -129,6 +132,7 @@ export function TourCard({
           src={image ?? tour.featuredImage}
           alt={tour.title}
           fill
+          priority={priority}
           sizes="(max-width: 640px) 90vw, (max-width: 1024px) 46vw, (max-width: 1280px) 31vw, 400px"
           className="object-cover transition-transform duration-[1.4s] ease-out group-hover:scale-[1.04]"
         />

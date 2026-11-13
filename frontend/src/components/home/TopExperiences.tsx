@@ -105,7 +105,7 @@ export function TopExperiences({ tours }: { tours: TourWithAvailability[] }) {
 
 /** Same layout as TourCard, for options that are not a single catalog product (packages,
  *  multi-day journeys, shuttle departures). The whole card is one link. */
-export function ExperienceCard({ card }: { card: LinkCard }) {
+export function ExperienceCard({ card, priority = false }: { card: LinkCard; priority?: boolean }) {
   const { href, external, image, badge, eyebrow, title, facts, note, price, unit, noPrice } = card;
   const seasonal =
     card.key === "two-day-shared"
@@ -125,6 +125,7 @@ export function ExperienceCard({ card }: { card: LinkCard }) {
           src={image}
           alt={title}
           fill
+          priority={priority}
           sizes="(max-width: 640px) 90vw, (max-width: 1024px) 46vw, (max-width: 1280px) 31vw, 400px"
           className="object-cover transition-transform duration-[1.4s] ease-out group-hover:scale-[1.04]"
         />
