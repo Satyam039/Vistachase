@@ -45,3 +45,6 @@ export const SHUTTLE_CAPACITY = 14;
 
 /** Guests per private day-tour vehicle (Banff & Yoho and Columbia Icefield private): "up to 13". */
 export const PRIVATE_VEHICLE_CAPACITY = 13;
+
+/** Most seats a shared tour departure offers: one 15-passenger van (owner, 2026-11-12). */
+export const SHARED_CAPACITY = 15;
