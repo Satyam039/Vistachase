@@ -23,6 +23,7 @@ import { ConciergeHistoryDrawer, type ChatSessionMeta } from "./ConciergeHistory
 import { LiveAgentHandoff } from "./LiveAgentHandoff";
 import { CONCIERGE_LANGUAGES, speechTag } from "@/lib/conciergeLanguages";
 import { SPEECH_HINTS, bestAlternative, fixPlaceNames, joinTranscript, recognitionLang } from "@/lib/speechInput";
+import { captureClientLocation, getStoredClientLocation, type ClientLocationInfo } from "@/lib/location";
 
 const LANGUAGE_KEY = "vc-concierge-language";
 const CHAT_SESSIONS_KEY = "vc_concierge_sessions";
@@ -94,6 +95,9 @@ type SpeechRecognitionLike = {
 export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page"; onClose?: () => void }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+  const [liveTranscript, setLiveTranscript] = useState("");
+  const [speechError, setSpeechError] = useState<string | null>(null);
+  const [clientLocation, setClientLocation] = useState<ClientLocationInfo | null>(() => getStoredClientLocation());
   const [voice, setVoice] = useState<VoiceState>("idle");
   const [speakReplies, setSpeakReplies] = useState(false);
   const [session, setSession] = useState<Record<string, unknown>>({});
@@ -128,7 +132,7 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
     fallback: 0 as ReturnType<typeof setTimeout> | 0,
   });
 
-  // The language, chat history sessions, and traveler persona loaded on mount
+  // The language, chat history sessions, traveler persona, and client location loaded on mount
   useEffect(() => {
     try {
       const savedLang = localStorage.getItem(LANGUAGE_KEY);
@@ -149,6 +153,20 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
     } catch {
       // storage blocked: stay on defaults
     }
+
+    // Capture and persist traveler IP and geolocation
+    captureClientLocation().then((loc) => {
+      if (loc) {
+        setClientLocation(loc);
+        setUserPersona((prev: any) => {
+          const next = { ...(prev || {}) };
+          if (!next.travelerLocation) {
+            next.travelerLocation = loc;
+          }
+          return next;
+        });
+      }
+    });
   }, []);
 
   const chooseLanguage = (code: string) => {
@@ -300,7 +318,12 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
   const send = useCallback(
     async (raw: string, explicitAttachments?: StagedAttachment[]) => {
       const currentAttachments = explicitAttachments ?? stagedFiles;
+      const interimPiece = liveTranscript.trim();
       let text = (raw || "").trim();
+      if (interimPiece) {
+        text = text ? `${text} ${interimPiece}` : interimPiece;
+        setLiveTranscript("");
+      }
       if (!text && currentAttachments.length === 0) return;
       if (voice === "thinking") return;
       if (!text && currentAttachments.length > 0) {
@@ -336,6 +359,7 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
       ];
       setMessages(next);
       setInput("");
+      setLiveTranscript("");
       setStagedFiles([]);
       setVoice("thinking");
 
@@ -350,7 +374,11 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
       try {
         const sessionPayload = {
           ...session,
-          userPersona: userPersona || undefined,
+          userPersona: {
+            ...(userPersona || {}),
+            travelerLocation: userPersona?.travelerLocation || clientLocation || undefined,
+          },
+          clientLocation: clientLocation || undefined,
           knowledgeGraph: knowledgeGraph || undefined,
         };
 
@@ -472,7 +500,7 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
         setVoice("idle");
       }
     },
-    [messages, session, voice, speak, stopSpeaking, language, currentSessionId, userPersona, knowledgeGraph, thinkingMode, stagedFiles, clearSpeechTimers],
+    [messages, session, voice, speak, stopSpeaking, language, currentSessionId, userPersona, knowledgeGraph, thinkingMode, stagedFiles, clearSpeechTimers, clientLocation],
   );
   sendRef.current = send;
 
@@ -553,6 +581,8 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
       v.finals = finals;
       v.interim = interim;
       setInput(speechText());
+      setLiveTranscript(interim.trim());
+      setSpeechError(null);
       // About 2 seconds of silence after a finished phrase: the guest is done, send it.
       if (v.silence) clearTimeout(v.silence);
       v.silence = 0;
@@ -569,13 +599,18 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
       if ((err === "no-speech" || err === "aborted") && isListeningRef.current) return;
       if (err === "not-allowed" || err === "service-not-allowed") {
         setStatus("Microphone access is blocked. Allow the microphone for this site in your browser, or type your question.");
+        setSpeechError("Microphone access was denied. Please allow microphone permissions in your browser.");
+        isListeningRef.current = false;
+        setVoice("idle");
+        return;
       } else if (err === "network") {
         setStatus("Voice input needs an internet connection. Please try again or type your question.");
+        setSpeechError("Voice input needs an internet connection.");
       } else if (err === "audio-capture") {
         setStatus("No microphone was found. Please type your question.");
+        setSpeechError("No microphone was found. Please type your question.");
       }
-      isListeningRef.current = false;
-      setVoice((v) => (v === "listening" ? "idle" : v));
+      console.warn("[speech recognition]", err);
     };
 
     r.onend = () => {
@@ -630,10 +665,13 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
     if (voice === "listening") {
       // Tapping Stop: the guest has finished speaking, so what was heard goes to the concierge.
       finishListening(true);
+      setLiveTranscript("");
       return;
     }
     stopSpeaking();
     setStatus(null);
+    setSpeechError(null);
+    setLiveTranscript("");
     const v = speech.current;
     clearSpeechTimers();
     v.base = input;
@@ -665,6 +703,8 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
     setMessages([]);
     setSession({});
     setInput("");
+    setLiveTranscript("");
+    setSpeechError(null);
     field.current?.focus();
   };
 
@@ -710,7 +750,20 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
             ) : (
               <h2 className="truncate text-base text-obsidian-900">Vista Chase Concierge</h2>
             )}
-            <p className="truncate text-xs text-slate-600">Tours, pickups and bookings in the Rockies</p>
+            <div className="flex items-center gap-1.5">
+              <p className="truncate text-xs text-slate-600">Tours, pickups and bookings in the Rockies</p>
+              {clientLocation && (clientLocation.city || clientLocation.country || clientLocation.ip) && (
+                <span
+                  className="hidden md:inline-flex items-center gap-1 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-600 border border-slate-200/80"
+                  title={`Detected via IP: ${clientLocation.ip} (${clientLocation.source})`}
+                >
+                  <MapPin className="h-2.5 w-2.5 text-slate-500" />
+                  <span>
+                    {[clientLocation.city, clientLocation.region || clientLocation.countryCode].filter(Boolean).join(", ") || clientLocation.ip}
+                  </span>
+                </span>
+              )}
+            </div>
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1">
@@ -959,6 +1012,53 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
                     </button>
                   </div>
                 ))}
+              </div>
+            )}
+            {/* Live voice transcription panel */}
+            {(voice === "listening" || liveTranscript || speechError) && (
+              <div className="mx-2 mb-2 rounded-xl border border-red-200/90 bg-red-50/90 p-2.5 text-xs shadow-xs transition-all">
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <div className="flex items-center gap-2 font-medium text-red-950">
+                    <span className="relative flex h-2.5 w-2.5">
+                      <span className={`absolute inline-flex h-full w-full rounded-full bg-red-400 ${voice === "listening" ? "animate-ping opacity-75" : "opacity-0"}`} />
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600" />
+                    </span>
+                    <span>{voice === "listening" ? "Live Voice Transcription" : speechError ? "Microphone Status" : "Transcribed Speech"}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    {liveTranscript && (
+                      <button
+                        type="button"
+                        onClick={() => setLiveTranscript("")}
+                        className="rounded px-1.5 py-0.5 text-[11px] text-red-700 hover:bg-red-100 transition-colors"
+                      >
+                        Clear
+                      </button>
+                    )}
+                    {voice === "listening" && (
+                      <button
+                        type="button"
+                        onClick={toggleMic}
+                        className="rounded px-2 py-0.5 text-[11px] font-medium bg-red-600 text-white hover:bg-red-700 transition-colors shadow-2xs"
+                      >
+                        Done Speaking
+                      </button>
+                    )}
+                  </div>
+                </div>
+                {speechError ? (
+                  <p className="text-red-700 text-xs">{speechError}</p>
+                ) : (
+                  <div className="text-slate-800 text-[13px] leading-relaxed break-words">
+                    {liveTranscript ? (
+                      <span className="font-normal italic text-slate-900 bg-white/70 px-1.5 py-0.5 rounded border border-red-200/60">
+                        {liveTranscript}
+                      </span>
+                    ) : (
+                      <span className="text-red-800/80 italic">Listening... speak your question about Banff and the Canadian Rockies</span>
+                    )}
+                  </div>
+                )}
               </div>
             )}
             <textarea
