@@ -13,8 +13,12 @@ import { usePathname } from "next/navigation";
 import { ArrowRight, ChevronDown, Mail, Menu, Phone, Sparkles, X } from "lucide-react";
 import { BrandMark } from "@/components/brand/BrandMark";
 import { isVisibleLink } from "@/lib/activityTickets";
+import { GOOGLE_REVIEWS_URL } from "@/lib/reviews/links";
 
-type MenuLink = { title: string; description?: string; href: string };
+/** `external` links (Google Reviews) open in a new tab. */
+type MenuLink = { title: string; description?: string; href: string; external?: boolean };
+
+const newTab = (link: MenuLink) => (link.external ? { target: "_blank", rel: "noopener noreferrer" } : {});
 type MenuSection = { id: string; title: string; links: MenuLink[] };
 
 export const MENU_SECTIONS: MenuSection[] = [
@@ -50,6 +54,7 @@ export const MENU_SECTIONS: MenuSection[] = [
       { title: "FAQ & cancellation", href: "/faq" },
       { title: "Search tours & dates", description: "Filter by date, guests and destination", href: "/search" },
       { title: "Hotel pickup finder", description: "Your pickup point and time", href: "/pickup-finder" },
+      { title: "Leave a review", description: "Share your experience on Google", href: GOOGLE_REVIEWS_URL, external: true },
     ],
   },
   {
@@ -185,11 +190,13 @@ export function SiteMenu() {
                     <li key={link.href}>
                       <Link
                         href={link.href}
+                        {...newTab(link)}
                         className="group block py-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-summit-300"
                       >
                         <span className="text-xl font-light text-white/90 underline decoration-transparent underline-offset-[6px] transition-colors group-hover:text-white group-hover:decoration-summit-300/60">
                           {link.title}
                         </span>
+                        {link.external && <span className="sr-only"> (opens in a new tab)</span>}
                         {link.description && <span className="mt-1 block text-sm text-white/50">{link.description}</span>}
                       </Link>
                     </li>
@@ -219,9 +226,11 @@ export function SiteMenu() {
                         <li key={link.href}>
                           <Link
                             href={link.href}
+                            {...newTab(link)}
                             className="block rounded-xl px-3 py-3 text-base text-white/85 hover:bg-white/[0.06] hover:text-white active:bg-white/[0.1] focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-summit-300"
                           >
                             <span className="font-medium text-white">{link.title}</span>
+                            {link.external && <span className="sr-only"> (opens in a new tab)</span>}
                             {link.description && (
                               <span className="mt-0.5 block text-xs text-white/55">{link.description}</span>
                             )}

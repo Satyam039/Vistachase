@@ -143,7 +143,7 @@ describe("guest cancel", () => {
     setPaymentProviderForTests(failing);
     const res = await request(app).post("/api/bookings/cancel").send({ bookingReference: booking.bookingReference, t: signBookingLink(booking.bookingReference, "voucher") });
     expect(res.status).toBe(200);
-    const flags = await prisma.bookingFlag.findMany({ where: { bookingId: booking.id } });
+    const flags = await prisma.bookingFlag.findMany({ where: { bookingId: booking.id, NOT: { note: { startsWith: "Itinerary missing" } } } }); // not the test tour's missing-itinerary flag
     expect(flags).toHaveLength(1);
     expect(flags[0]).toMatchObject({ type: "REFUND_DUE", status: "OPEN", amountCents: booking.payments[0].amount });
     expect((await prisma.booking.findUniqueOrThrow({ where: { id: booking.id } })).status).toBe("CANCELLED");
@@ -210,7 +210,7 @@ describe("Stripe refund webhook", () => {
     expect((await send("charge.refunded", charge)).status).toBe(200); // retried delivery
 
     expect((await prisma.payment.findUniqueOrThrow({ where: { id: payment.id } })).status).toBe("REFUNDED");
-    const flags = await prisma.bookingFlag.findMany({ where: { bookingId: booking.id } });
+    const flags = await prisma.bookingFlag.findMany({ where: { bookingId: booking.id, NOT: { note: { startsWith: "Itinerary missing" } } } }); // not the test tour's missing-itinerary flag
     expect(flags).toHaveLength(1);
     expect(flags[0].type).toBe("OTHER");
     expect(flags[0].note).toContain("refunded in Stripe");

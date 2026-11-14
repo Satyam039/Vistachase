@@ -15,6 +15,9 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      // The website's own itinerary data (frontend/src/lib/itineraries.ts, shuttleSchedule.ts):
+      // import-free files the booking PDF reads, so the website and the PDFs never drift apart.
+      '@site': path.resolve(__dirname, '../frontend/src/lib'),
     },
   },
 });

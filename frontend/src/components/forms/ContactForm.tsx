@@ -11,11 +11,12 @@ import { PhoneField } from "@/components/forms/PhoneField";
 import { dialCode } from "@/lib/countries";
 import { openDatePicker } from "@/lib/utils/datePicker";
 import { RequestDateCalendar, shortDate, tripDays } from "@/components/forms/RequestDateCalendar";
+import { STAYING_IN_OPTIONS } from "@/lib/stayingIn";
 import { TURNSTILE_SITE_KEY, useFormToken, useTurnstile } from "@/lib/spamGuard";
 
 /** Largest group the form takes (owner, 2026-11-11); bigger groups are planned with the team by email. */
 const MAX_GUESTS = 28;
-type Fields = "name" | "email" | "phone" | "message" | "date" | "fromDate" | "toDate" | "guests" | "tour";
+type Fields = "name" | "email" | "phone" | "message" | "date" | "fromDate" | "toDate" | "guests" | "tour" | "stayingIn";
 const FIELD =
   "h-12 w-full rounded-xl border border-obsidian-900/10 bg-white px-4 text-base text-obsidian-900 placeholder:text-slate-400 focus:border-ocean-600 focus:outline-none focus:ring-2 focus:ring-ocean-600/30 aria-[invalid=true]:border-red-600";
 
@@ -24,6 +25,8 @@ const GENERAL_QUESTION_OPTIONS = [
   { value: "shared", label: "Shared" },
   { value: "shuttle", label: "Shuttle" },
 ];
+
+const STAYING_IN_DROPDOWN = STAYING_IN_OPTIONS.map((o) => ({ value: o, label: o }));
 
 /** Writes the picked dates into the prefilled request lines ("Preferred Day 1 date:", "Preferred start date:"). */
 function fillDates(message: string, start: string, days: number) {
@@ -79,6 +82,7 @@ export function ContactForm({
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [guests, setGuests] = useState(defaultGuests ? String(defaultGuests) : "");
+  const [stayingIn, setStayingIn] = useState("");
   const [message, setMessage] = useState(defaultMessage || "");
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
@@ -112,6 +116,9 @@ export function ContactForm({
     } else if (!Number.isInteger(Number(guests)) || Number(guests) > MAX_GUESTS) {
       errs.guests = `Enter 1 to ${MAX_GUESTS} guests. For a bigger group, email support@vistachase.com.`;
     }
+    if (!stayingIn) {
+      errs.stayingIn = "Tell us where you're staying, or choose Arriving at Calgary Airport.";
+    }
     if (!message.trim() || message.trim().length < 5) {
       errs.message = "Please write a message (at least 5 characters).";
     }
@@ -141,6 +148,7 @@ export function ContactForm({
       date: fromDate,
       toDate: requestDays ? "" : toDate,
       guests: Number(guests),
+      stayingIn,
       message: message.trim(),
       website: (e.currentTarget.elements.namedItem("website") as HTMLInputElement | null)?.value ?? "",
       formToken: formToken.token,
@@ -170,6 +178,8 @@ export function ContactForm({
                 ? "Please write a short message."
                 : k === "name"
                 ? "Enter your name."
+                : k === "stayingIn"
+                ? "Choose where you're staying."
                 : "Please check this field.",
             ]),
           ),
@@ -324,6 +334,20 @@ export function ContactForm({
         />
         {err("guests")}
       </label>
+
+      <div className="block">
+        <Dropdown
+          name="stayingIn"
+          label="We are staying in"
+          placeholder="Choose a town or the airport"
+          value={stayingIn}
+          onChange={setStayingIn}
+          options={STAYING_IN_DROPDOWN}
+          invalid={!!fieldErrors.stayingIn}
+          describedBy={fieldErrors.stayingIn ? "contact-stayingIn-error" : undefined}
+        />
+        {err("stayingIn")}
+      </div>
 
       {!!requestDays && (
         <div className="sm:col-span-2">

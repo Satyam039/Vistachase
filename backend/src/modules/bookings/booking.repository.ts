@@ -40,6 +40,7 @@ import { policyDecision } from "@/modules/bookings/cancellation-policy";
 import { resolveShuttlePickupTime } from "@/modules/shuttles/shuttle-timing";
 import { ADMIN_NOTIFICATION_RECIPIENTS } from "@/modules/bookings/confirmation-email";
 import { experienceTitle } from "@/modules/bookings/tour-itinerary";
+import { pickupError } from "@/modules/bookings/pickup-rules";
 
 export interface CreateBookingInput {
   holdToken?: string;
@@ -356,6 +357,9 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
       };
 
       const stop = input.pickupStopId ? await tx.shuttleStop.findUnique({ where: { id: input.pickupStopId } }) : null;
+      // Shared tours: no Lake Louise pickup (pickup-rules.ts). Refused here, so no caller can skip it.
+      const pickupRefusal = pickupError(departure.tour, stop, input.pickupCustomText);
+      if (pickupRefusal) throw new BookingRefused(pickupRefusal);
       const isShuttle = Boolean(
         departure.shuttleRouteId ||
         departure.shuttleRoute ||

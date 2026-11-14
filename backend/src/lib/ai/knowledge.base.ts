@@ -44,7 +44,7 @@ Use the complete approved itinerary when asked for all stops or a day-by-day pla
 Describe stops as planned, durations as approximate and seasonal access as conditional. Published operating dates do not guarantee that a road or attraction will open on a particular day. An activity shown in an itinerary is not automatically included in the price. Preserve the shared seasonal Icefield inclusion and the separate paid-activity rule for private tours.
 For shuttles, distinguish the pickup town, departure number, time at each lake and estimated return. Use the selected departure’s confirmed schedule over generic FAQ timings. The stored schedule is for planning, not proof of current availability. Do not infer the Lake Louise Village return time or promise sunrise arrival without verification.
 For the four-day journey, preserve included transportation to Jasper after day three, pickup in Jasper on day four, and the agreed final drop-off. Do not mistakenly refer these included arrangements to Banff Elite as custom extras. Confirm the Jasper hotel, luggage and final destination; a Calgary finish does not automatically mean an approved airport drop-off or a feasible flight connection.
-For unresolved shared Icefield pickup from Lake Louise, shared Banff & Yoho gratuity inclusion, or the exact approved winter Icefield replacement route, request team confirmation. Do not invent a resolution from conflicting website sections. Exact hotel boarding instructions require a verified pickup record or team confirmation.
+Shared (small-group) tours never pick up in Lake Louise (owner decision, 2026-11-14): offer a Banff or Canmore pickup, or a private tour. For shared Banff & Yoho gratuity inclusion, or the exact approved winter Icefield replacement route, request team confirmation. Do not invent a resolution from conflicting website sections. Exact hotel boarding instructions require a verified pickup record or team confirmation.
 
 ## Booking conversation
 1. Confirm product, date/year, guest counts and ages where required, and pickup town. All operating times are local Alberta time, America/Edmonton, unless explicitly stated otherwise.
@@ -197,7 +197,7 @@ Shared duration: approximately 9–11 hours. Private duration: approximately 10�
 
 On the shared tour, Ice Explorer and Skywalk admission is included in the published June 1–October 10 programme, subject to the selected departure and attraction operation. On the private tour both are optional, separately paid activities arranged by the team. No fixed activity duration is promised here.
 Lunch stop: Columbia Icefield Centre; meal extra. Outside attraction operating dates, the sightseeing route is adjusted and requires date-specific confirmation. Glacier travel is through the attraction operator, not independent glacier walking.
-Shared pickup is confirmed at supported Banff/Canmore locations; a Lake Louise request needs team confirmation. Private pickup supports Banff, Canmore and Lake Louise. General shared pickup begins around 7:30 AM Canmore / 8:00 AM Banff; use the actual booking confirmation.
+Shared pickup is at supported Banff/Canmore locations only; shared tours do not pick up in Lake Louise. Private pickup supports Banff, Canmore and Lake Louise. General shared pickup begins around 7:30 AM Canmore / 8:00 AM Banff; use the actual booking confirmation.
 Included: vehicle, guide, water, park admission, mandatory taxes/fees, supported pickup/drop-off and the shared seasonal activity inclusion described above. Private touring reserves the vehicle exclusively. Meals, personal purchases and gratuities are extra on these Icefield products.
 
 ### Winter Special Shared Tour — itinerary and arrangements
@@ -327,7 +327,7 @@ Select your pickup during booking. If your accommodation is not listed, contact 
 ### 10. Can you pick me up from Lake Louise?
 Yes, on services that support Lake Louise pickup. Our lake shuttles offer pickup in Lake Louise Village, and private tours offer pickup from supported accommodation in Lake Louise.
 
-Lake Louise Village and the Lake Louise lakeshore are different locations. Do not assume a lakeshore pickup unless it is confirmed. For shared tours, contact our team before booking if you need Lake Louise pickup.
+Lake Louise Village and the Lake Louise lakeshore are different locations. Do not assume a lakeshore pickup unless it is confirmed. Shared (small-group) tours do not pick up in Lake Louise; they pick up in Banff and Canmore.
 
 ### 11. Can you pick me up from Sunshine Mountain Lodge or Sunshine Village?
 Please contact us before booking. Sunshine Mountain Lodge is in the upper village and is normally reached by gondola, so standard roadside hotel pickup does not apply.
@@ -491,6 +491,12 @@ Approved refunds are normally initiated within 5–10 business days. Your bank m
 ### 48. Can I reschedule, including because of a flight delay?
 Contact us promptly. Changes depend on availability and any price difference. A flight delay does not automatically waive cancellation terms or guarantee a replacement departure.
 
+### 48a. How can I request a change to my booking date? (website FAQ, 2026-11-14)
+Open the Manage booking link in the confirmation email (or My Trips → View voucher), choose Change date or time, pick the new date and send the request. The team checks seats and any price difference and confirms by email, usually within one business day; the booking stays as it is until then. Guests can also email support@vistachase.com or call +1 (825) 734-9456 with their reference. Platform (e.g. Viator) bookings are changed through that platform.
+
+### 48b. What payment methods do you accept? (website FAQ, 2026-11-14)
+Paid online at booking through the secure Stripe checkout, in Canadian dollars: credit or debit card, or any other method the payment form offers on the guest's device (such as Apple Pay or Google Pay). No cash or pay-the-driver for tours; guide gratuities can be paid by credit card.
+
 ## Category 7 — Weather, Wildlife & Lake Access
 
 ### 49. Will the tour operate in rain, and can the itinerary change?
@@ -520,6 +526,12 @@ Our lake-shuttle tickets also include the booked transportation to Moraine Lake.
 The time available depends on the tour or shuttle departure you choose. Check that product’s itinerary or departure card for the planned lake visit.
 
 Shuttle departures have specific lake pickup times, which must be followed. Tour timings can change with conditions, traffic and the day’s operating arrangements.
+
+### 54a. What time will we visit Moraine Lake on the shared tour? (website FAQ, 2026-11-14)
+On the shared Banff & Yoho Discovery, Moraine Lake is a morning stop, visited together with Lake Louise after pickup (from about 7:30 AM in Canmore and 8:00 AM in Banff) and before the lunch stop in Lake Louise Village. The exact time depends on pickups, traffic and the day's Moraine Lake access arrangements; the guide confirms on the day. Moraine Lake is on the shared itinerary June 1 to October 10. The shared Columbia Icefield Adventure does not visit Moraine Lake.
+
+### 54b. How much time will we spend at Moraine Lake on the shared tour? (website FAQ, 2026-11-14)
+About 1 hour at Moraine Lake on the shared Banff & Yoho Discovery (June 1 to October 10), and about 1 hour at Lake Louise. Times can change with conditions, traffic and operating arrangements.
 
 ### 55. Can we spend more time at Moraine Lake?
 Shared tours and shuttles follow their planned schedules, so extra time cannot be guaranteed. Choose a shuttle departure with a lake visit that suits your plans.

@@ -8,6 +8,7 @@ import { portalFor } from "@/lib/auth/permissions";
 import crypto from "node:crypto";
 import { getEmailProvider } from "@/lib/email/email.provider";
 import { siteUrl } from "@/lib/security/signed-links";
+import { renderVerificationEmail } from "@/lib/email/verification-email";
 import { emailSchema, parseOr400, z } from "@/lib/security/validate";
 import { hasValidMxRecords, isSuspiciousEmail, isSyntheticBotName } from "@/lib/security/spam-detector";
 
@@ -248,13 +249,10 @@ async function sendVerificationEmail(user: { id: string; email: string; name: st
   const token = crypto.randomBytes(32).toString("hex");
   await prisma.user.update({ where: { id: user.id }, data: { verificationToken: sha256(token) } });
   const link = `${siteUrl()}/verify-email?token=${token}`;
+  // Branded "Welcome to Vista Chase!" email (lib/email/verification-email.ts); same token and link.
+  const email = renderVerificationEmail({ name: user.name, link, site: siteUrl() });
   await getEmailProvider()
-    .sendEmail({
-      to: user.email,
-      subject: "Confirm your Vista Chase email",
-      html: `<p>Hi ${user.name.replace(/[<>&]/g, "")},</p><p><a href="${link}">Confirm your email address</a> to see every booking made with it under My trips.</p><p>If you didn't create a Vista Chase account, you can ignore this email.</p>`,
-      text: `Confirm your Vista Chase email: ${link}\nIf you didn't create a Vista Chase account, ignore this email.`,
-    })
+    .sendEmail({ to: user.email, subject: email.subject, html: email.html, text: email.text })
     .catch((e) => console.error("Verification email failed:", (e as Error).message));
 }
 

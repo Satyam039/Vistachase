@@ -15,6 +15,7 @@ interface Enquiry {
   tourSlug: string | null;
   guests: number | null;
   date: string | null;
+  stayingIn?: string | null;
   message: string;
   status: "NEW" | "REPLIED" | "CLOSED";
   createdAt: string;
@@ -104,6 +105,7 @@ export function MessagesPanel({ onDenied }: { onDenied: () => void }) {
                     {e.tourSlug ? ` · ${e.tourSlug}` : ""}
                     {e.guests ? ` · ${e.guests} guests` : ""}
                     {e.date ? ` · ${e.date.slice(0, 10)}` : ""}
+                    {e.stayingIn ? ` · Staying in ${e.stayingIn}` : ""}
                     {` · ${when(e.createdAt)}`}
                   </p>
                 </div>

@@ -22,7 +22,7 @@ import { balanceDueLabel } from "@/modules/bookings/booking.repository";
 import { tripBookings, tripOf, type TripBooking } from "@/modules/bookings/trip";
 import { bookingIcs, googleCalendarLink, icsLink } from "@/modules/bookings/calendar-event";
 import { resolveShuttlePickupTime } from "@/modules/shuttles/shuttle-timing";
-import { experienceTitle } from "@/modules/bookings/tour-itinerary";
+import { bookingItinerary, experienceTitle, type ItineraryResult } from "@/modules/bookings/tour-itinerary";
 import { sendStaffBookingNotice } from "@/modules/bookings/staff-booking-notice";
 
 export const ADMIN_NOTIFICATION_RECIPIENTS = {
@@ -72,7 +72,49 @@ function dayLines(b: TripBooking) {
     isShuttle,
   });
   const pickup = pickupTime ? `${clock(pickupTime)}${place ? ` at ${place}` : ""}` : (place ?? "Pickup details to follow by email");
-  return { title, date: longDate(d.date), time, pickup };
+  // The website's current itinerary for exactly this booking (tour-itinerary.ts).
+  return { title, date: longDate(d.date), time, pickup, itinerary: bookingItinerary(b) };
+}
+
+export const MISSING_ITINERARY_FLAG = "Itinerary missing";
+
+/**
+ * A booking whose confirmation went out without an itinerary (none on the website for what was
+ * booked): staff get one open flag (Admin → Bookings → Flags) to send the guest the plan by hand.
+ */
+async function flagMissingItinerary(booking: { id: string; bookingReference: string }, reason: string) {
+  const open = await prisma.bookingFlag.findFirst({ where: { bookingId: booking.id, type: "OTHER", status: "OPEN", note: { startsWith: MISSING_ITINERARY_FLAG } } });
+  if (open) return;
+  const note = `${MISSING_ITINERARY_FLAG}: ${reason} The guest's confirmation says our team will confirm the itinerary by email: please send it before the tour.`;
+  console.warn(`[confirmation-email] ${booking.bookingReference}: ${note}`);
+  await prisma.bookingFlag.create({ data: { bookingId: booking.id, type: "OTHER", note: note.slice(0, 1000) } });
+}
+
+/** The day's plan in the email: the timeline (or the note that the team will confirm it). */
+function itineraryHtml(result: ItineraryResult) {
+  if (!result.ok) return `<p style="margin: 8px 0 0; color: #5d6168; font-size: 13px;">${escapeHtml(result.guestNote)}</p>`;
+  const plan = result.itinerary;
+  const rows = plan.steps
+    .map((st) => `<tr><td style="padding: 2px 10px 2px 0; vertical-align: top; color: #257780; font-size: 13px; white-space: nowrap;">${escapeHtml(st.time)}</td><td style="padding: 2px 0; font-size: 13px; color: #3f4650;">${escapeHtml(st.text)}</td></tr>`)
+    .join("");
+  const stops = plan.stops.length ? `<p style="margin: 6px 0 0; font-size: 13px; color: #3f4650;"><strong>Stops:</strong> ${escapeHtml(plan.stops.map((st) => st.name).join(", "))}</p>` : "";
+  return `
+            ${plan.heading ? `<p style="margin: 8px 0 0; font-size: 13px; font-weight: bold; color: #1c1f23;">${escapeHtml(plan.heading)}</p>` : ""}
+            ${plan.duration ? `<p style="margin: 4px 0 0; font-size: 13px; color: #5d6168;">Duration: ${escapeHtml(plan.duration)}</p>` : ""}
+            ${rows ? `<table role="presentation" style="border-collapse: collapse; margin-top: 6px;">${rows}</table>` : ""}
+            ${stops}
+            <p style="margin: 6px 0 0; font-size: 12px; color: #5d6168;">Full stop-by-stop itinerary in the attached PDF.</p>`;
+}
+
+function itineraryText(result: ItineraryResult) {
+  if (!result.ok) return [`  ${result.guestNote}`];
+  const plan = result.itinerary;
+  return [
+    ...(plan.heading ? [`  ${plan.heading}`] : []),
+    ...(plan.duration ? [`  Duration: ${plan.duration}`] : []),
+    ...plan.steps.map((st) => `  ${st.time}: ${st.text}`),
+    ...(plan.stops.length ? [`  Stops: ${plan.stops.map((st) => st.name).join(", ")}`] : []),
+  ];
 }
 
 /** Builds and sends the email for a confirmed booking (or its whole trip). */
@@ -104,6 +146,11 @@ export async function sendConfirmationEmail(reference: string, options: { force?
     const currency = lead.currency;
     const days = live.map((b, i) => ({ ...dayLines(b), day: i + 1, reference: b.bookingReference, link: voucherLink(b.bookingReference), google: googleCalendarLink(b) }));
     const multi = live.length > 1;
+    // Days with no current website itinerary: the guest is told the team confirms it, staff are flagged.
+    const missingItinerary = days.flatMap((d, i) => (d.itinerary.ok ? [] : [{ booking: live[i], day: d.day, reason: d.itinerary.reason }]));
+    for (const m of missingItinerary) {
+      await flagMissingItinerary(m.booking, m.reason).catch((e) => console.error(`[confirmation-email] itinerary flag failed: ${(e as Error).message}`));
+    }
     // Manage booking (manage-booking.ts): the lead day's voucher page, opened at its Manage section.
     const manageLink = `${voucherLink(lead.bookingReference)}#manage`;
     // Add to calendar: the .ics (attached too, so iPhone Mail shows "Add to Calendar") and Google.
@@ -116,7 +163,8 @@ export async function sendConfirmationEmail(reference: string, options: { force?
             <p style="margin: 0; color: #257780; font-size: 13px; font-weight: bold;">${multi ? `Day ${d.day} · ` : ""}${escapeHtml(d.date)}</p>
             <p style="margin: 4px 0 0; font-weight: bold;">${escapeHtml(d.title)}</p>
             <p style="margin: 4px 0 0; color: #5d6168; font-size: 14px;">${d.time ? `Departs ${d.time} · ` : ""}Pickup: ${escapeHtml(d.pickup)}</p>
-            <p style="margin: 4px 0 0; font-size: 14px;"><a href="${d.link}" style="color: #257780;">${multi ? `Day ${d.day} voucher (${d.reference})` : "Open your voucher"}</a>${multi ? ` · <a href="${escapeHtml(d.google)}" style="color: #257780;">Add day ${d.day} to Google Calendar</a>` : ""}</p>
+            ${itineraryHtml(d.itinerary)}
+            <p style="margin: 8px 0 0; font-size: 14px;"><a href="${d.link}" style="color: #257780;">${multi ? `Day ${d.day} voucher (${d.reference})` : "Open your voucher"}</a>${multi ? ` · <a href="${escapeHtml(d.google)}" style="color: #257780;">Add day ${d.day} to Google Calendar</a>` : ""}</p>
           </td></tr>`,
       )
       .join("");
@@ -152,7 +200,7 @@ export async function sendConfirmationEmail(reference: string, options: { force?
       `Guests: ${lead.totalSeats}`,
       `Total ${money(total, currency)}, paid ${money(paid, currency)}${balance > 0 ? `, balance due ${money(balance, currency)}${dueBy}` : ""}.`,
       "",
-      ...days.map((d) => `${multi ? `Day ${d.day}: ` : ""}${d.date}, ${d.title}${d.time ? `, departs ${d.time}` : ""}. Pickup: ${d.pickup}. Voucher: ${d.link}`),
+      ...days.flatMap((d) => [`${multi ? `Day ${d.day}: ` : ""}${d.date}, ${d.title}${d.time ? `, departs ${d.time}` : ""}. Pickup: ${d.pickup}. Voucher: ${d.link}`, ...itineraryText(d.itinerary)]),
       "",
       policy,
       `Manage booking (change name or phone, ask for another date, cancel): ${manageLink}`,
@@ -190,7 +238,8 @@ export async function sendConfirmationEmail(reference: string, options: { force?
             <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; font-weight: bold;">Departure Date &amp; Time:</td><td style="padding: 8px 0;">${escapeHtml(days.map((d) => `${d.date}${d.time ? ` at ${d.time}` : ""}`).join("; "))}</td></tr>
             <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; font-weight: bold;">Number of Guests:</td><td style="padding: 8px 0;">${lead.totalSeats}</td></tr>
             <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; font-weight: bold;">Total Amount Paid:</td><td style="padding: 8px 0; font-weight: bold;">${money(paid, currency)}${balance > 0 ? ` (Balance due: ${money(balance, currency)})` : ""}</td></tr>
-            <tr><td style="padding: 8px 0; font-weight: bold;">Pickup Location &amp; Time:</td><td style="padding: 8px 0;">${escapeHtml(days.map((d) => d.pickup).join("; "))}</td></tr>
+            <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; font-weight: bold;">Pickup Location &amp; Time:</td><td style="padding: 8px 0;">${escapeHtml(days.map((d) => d.pickup).join("; "))}</td></tr>
+            ${missingItinerary.length ? `<tr><td style="padding: 8px 0; font-weight: bold; color: #b91c1c;">Itinerary missing:</td><td style="padding: 8px 0; color: #b91c1c;">${escapeHtml(missingItinerary.map((m) => `${multi ? `Day ${m.day}: ` : ""}${m.reason}`).join(" "))} The guest was told we will confirm it by email.</td></tr>` : ""}
           </tbody>
         </table>
       </div>`;
@@ -208,6 +257,7 @@ export async function sendConfirmationEmail(reference: string, options: { force?
       `Pickup Location & Time: ${days.map((d) => d.pickup).join("; ")}`,
       `Booking Reference: ${tripReference}`,
       `Booking Status: ${lead.status}`,
+      ...missingItinerary.map((m) => `ITINERARY MISSING${multi ? ` (Day ${m.day})` : ""}: ${m.reason} The guest was told we will confirm it by email.`),
     ].join("\n");
 
     getEmailProvider()

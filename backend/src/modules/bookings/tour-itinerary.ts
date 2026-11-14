@@ -1,85 +1,72 @@
-// The tour's itinerary for the voucher PDF and the confirmation email (owner, 2026-11-01: "ticket
-// me tours ki itinerary nhi hai, usko dal de").
+// The itinerary a booking's confirmation email and PDF carry (owner, 2026-11-14: "Fix outdated
+// itineraries in booking confirmation emails and PDFs").
 //
-// Most tours: the "Itinerary" tab of the tour's catalog content (Tour.tabs, Admin → Content).
-// Four tours show a different itinerary on the website, set in code from the owner's Google Doc
-// (frontend/src/lib/tourContent.ts "steps"), so their tabs in the database are out of date. Those
-// four are mirrored here: when the steps change there, change them here too.
+// Source of truth: the website itself. The data is imported from the frontend's own files
+// (`@site/*` = frontend/src/lib, see tsconfig.json / vitest.config.ts):
+//   - frontend/src/lib/itineraries.ts   the day tours' stops, timeline, pickup text and Important
+//                                        Information (the tour pages render the same objects), and
+//                                        the Three- and Four-Day journeys' day-by-day itineraries
+//   - frontend/src/lib/shuttleSchedule.ts the shuttle timetable the shuttles page shows
+// so a change on the website reaches every PDF built after it, with nothing to copy by hand.
+//
+// The booking is matched by what was actually booked, never a generic template:
+//   - a private Three- or Four-Day journey day: that journey's itinerary for that day (from the
+//     booking's price snapshot: package slug + day number), not the day tour it is booked on;
+//   - a day tour: that tour's own itinerary (shared and private versions differ), with stops that
+//     only run June 1 – October 10 left out on other dates;
+//   - a shuttle: its departure's row of the timetable (pickup times, lake windows, return).
+// When none of these fits (a retired tour, an off-timetable shuttle time, a winter Icefield date
+// whose route the team confirms) the result is `missing` with the reason: the guest is told the
+// team will confirm the itinerary, and staff get a flag, instead of an old Webflow itinerary.
+
+import { PACKAGE_ITINERARIES, TOUR_ITINERARIES, inSummerSeason } from "@site/itineraries";
+import { SHUTTLE_DEPARTURES, SHUTTLE_PICKUPS, clockRange, departuresFor, clock as shuttleClock } from "@site/shuttleSchedule";
+import { formatDateOnly, formatTimeOfDay } from "@/lib/utils/time";
 
 export interface ItineraryStep {
   time: string;
   text: string;
 }
 
-export interface TourItinerary {
-  steps: ItineraryStep[];
-  note: string | null;
+export interface ItineraryStop {
+  name: string;
+  text: string;
 }
 
-const GUIDE_CALL = "Your guide contacts you the evening before, between 6 and 9 PM, to confirm your exact pickup time.";
-const PRIVATE_PICKUP = "Doorstep pickup at your accommodation in Banff, Canmore or Lake Louise, at a time agreed with you before the tour.";
-const ROUTE_NOTE = "Stops and their order can change with the season, weather and road conditions.";
+export interface BookingItinerary {
+  /** A line naming this day's plan, when it isn't the tour's own (a journey's "Day 2 — …", a shuttle departure). */
+  heading: string | null;
+  duration: string | null;
+  /** The day in order (pickup, morning, midday…, return). */
+  steps: ItineraryStep[];
+  /** Stop by stop. */
+  stops: ItineraryStop[];
+  /** Important information for this day. */
+  notes: string[];
+  /** Where it came from, for logs and tests: "tour:<slug>", "package:<slug>:<day>", "shuttle:<n>". */
+  source: string;
+}
 
-const BANFF_YOHO_MIDDAY = "Lunch stop in Lake Louise Village (lunch not included), then Emerald Lake and the Natural Bridge in Yoho, the Lower Spiral Tunnels and Morant's Curve.";
-const BANFF_YOHO_AFTERNOON = "Johnston Canyon, Lake Minnewanka and Two Jack Lake.";
-const ICEFIELD_MORNING = "Bow Lake, Crowfoot Glacier, Peyto Lake and Waterfowl Lakes along the Icefields Parkway.";
+export type ItineraryResult =
+  | { ok: true; itinerary: BookingItinerary }
+  | {
+      ok: false;
+      /** For staff (the booking flag): what is missing and why. */
+      reason: string;
+      /** For the guest: what the PDF and email say instead of an itinerary. */
+      guestNote: string;
+    };
 
-/** Mirrors frontend/src/lib/tourContent.ts (the steps shown on these tours' pages). */
-export const WEBSITE_ITINERARIES: Record<string, ItineraryStep[]> = {
-  "banff-highlights-tour": [
-    { time: "7:30 - 8:00 AM", text: `Pickup in Canmore from about 7:30 AM and in Banff from about 8:00 AM. ${GUIDE_CALL}` },
-    { time: "Morning", text: "Lake Louise and Moraine Lake (Moraine Lake from June 1 to October 10)." },
-    { time: "Midday", text: BANFF_YOHO_MIDDAY },
-    { time: "Afternoon", text: BANFF_YOHO_AFTERNOON },
-    { time: "5:30 - 6:00 PM", text: "Back in Banff around 5:30 PM and Canmore around 6:00 PM." },
-  ],
-  "shared-tours-icefields-jasper": [
-    { time: "7:30 - 8:00 AM", text: `Pickup in Canmore from about 7:30 AM and in Banff from about 8:00 AM. ${GUIDE_CALL}` },
-    { time: "Morning", text: ICEFIELD_MORNING },
-    { time: "Midday", text: "Columbia Icefield: the Ice Explorer onto the Athabasca Glacier and the Skywalk (June 1 to October 10). Lunch stop at the Columbia Icefield Centre (lunch not included)." },
-    { time: "Afternoon", text: "Scenic drive back along the Icefields Parkway." },
-    { time: "Evening", text: "Back in Banff and Canmore. Traffic, weather and road conditions can affect return times." },
-  ],
-  "banff-private-tour": [
-    { time: "Morning", text: `${PRIVATE_PICKUP} ${GUIDE_CALL}` },
-    { time: "Morning", text: "Lake Louise and Moraine Lake (Moraine Lake during its operating season)." },
-    { time: "Midday", text: BANFF_YOHO_MIDDAY },
-    { time: "Afternoon", text: BANFF_YOHO_AFTERNOON },
-    { time: "Evening", text: "Drop-off at your accommodation. The day runs about 10 to 12 hours, depending on your pace." },
-  ],
-  "icefields-jasper-private-tour": [
-    { time: "Morning", text: `${PRIVATE_PICKUP} ${GUIDE_CALL}` },
-    { time: "Morning", text: ICEFIELD_MORNING },
-    { time: "Midday", text: "Columbia Icefield, with the optional Ice Explorer and Skywalk in season. Lunch stop at the Columbia Icefield Centre (lunch not included)." },
-    { time: "Afternoon", text: "Scenic drive back along the Icefields Parkway." },
-    { time: "Evening", text: "Drop-off at your accommodation. Traffic, weather and road conditions can affect return times." },
-  ],
-  "winter-special": [
-    { time: "7:00 - 8:00 AM", text: `Hotel pickup in Banff or Canmore from 7:00 to 8:00 AM. ${GUIDE_CALL}` },
-    { time: "Morning", text: "Frozen Lake Louise and scenic drive along the Icefields Parkway, stopping at Crowfoot Glacier Lookout and Bow Lake." },
-    { time: "Midday", text: "Abraham Lake to experience the famous frozen methane ice bubbles (ice cleats provided). Lunch stop in Lake Louise Village (lunch not included)." },
-    { time: "Afternoon", text: "Howse Pass Viewpoint, Peyto Lake, and Johnston Canyon (if daylight allows)." },
-    { time: "5:00 - 6:00 PM", text: "Return drop-off at your hotel in Banff or Canmore." },
-  ],
-  "winter-signature-private-tour": [
-    { time: "6:00 - 7:00 AM", text: `Private doorstep pickup in a heated SUV at your hotel in Banff, Canmore or Lake Louise. ${GUIDE_CALL}` },
-    { time: "Morning", text: "Abraham Lake for the breathtaking frozen ice bubbles, traveling in a heated SUV with winter tires (ice cleats provided)." },
-    { time: "Midday", text: "Howse Pass Viewpoint, Bow Lake and Peyto Lake (weather permitting). Lunch stop in Lake Louise Village (lunch not included)." },
-    { time: "Afternoon", text: "Frozen Lake Louise and Johnston Canyon ice walk (if daylight allows)." },
-    { time: "Evening", text: "Drop-off at your accommodation. The day runs about 8 to 10 hours at your private pace." },
-  ],
-};
+export const MISSING_ITINERARY_NOTE =
+  "Our team will confirm your detailed itinerary for this date by email before your tour, and your guide goes through it with you the evening before.";
 
 /**
- * The names these tours carry on the website (frontend/src/lib/sharedTours.ts, privateTours.ts),
- * where the database title is an older Webflow name ("Our Best Selling Banff Shared Tour").
- * Shared and private share a page name, so emails say which one was booked.
+ * The names these tours carry on the website, where the database title is an older Webflow name
+ * ("Our Best Selling Banff Shared Tour"). Shared and private share a page name, so emails say which
+ * one was booked. The day tours' names come from lib/itineraries.ts.
  */
 export const WEBSITE_TITLES: Record<string, string> = {
-  "banff-highlights-tour": "Banff & Yoho Discovery (Shared Tour)",
-  "shared-tours-icefields-jasper": "Columbia Icefield Adventure (Shared Tour)",
-  "banff-private-tour": "Banff & Yoho Discovery (Private Tour)",
-  "icefields-jasper-private-tour": "Columbia Icefield Adventure (Private Tour)",
+  ...Object.fromEntries(Object.entries(TOUR_ITINERARIES).map(([slug, t]) => [slug, t.title])),
   "winter-special": "Winter Special Shared Tour",
   "winter-signature-private-tour": "Special Winter Private Tour",
 };
@@ -90,27 +77,114 @@ export function experienceTitle(departure: { tour?: { slug: string; title: strin
   return (tour && WEBSITE_TITLES[tour.slug]) || tour?.title || departure.shuttleRoute?.name || "Vista Chase experience";
 }
 
-const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+export interface ItineraryBooking {
+  priceSnapshot?: unknown;
+  tourDeparture: {
+    date: Date | string;
+    departureTime: Date | string | null;
+    shuttleRouteId?: string | null;
+    shuttleRoute?: unknown;
+    tour?: { slug: string; category?: string | null } | null;
+  };
+}
 
-/** The itinerary for a tour, or null when it has none (shuttles without steps, enquiries). */
-export function tourItinerary(tour: { slug: string; tabs?: unknown } | null | undefined): TourItinerary | null {
-  if (!tour) return null;
-  const fixed = WEBSITE_ITINERARIES[tour.slug];
-  if (fixed) return { steps: fixed, note: ROUTE_NOTE };
+const dateOf = (d: Date | string) => (typeof d === "string" ? d.slice(0, 10) : formatDateOnly(d));
+const hhmm = (t: Date | string | null) => (t == null ? "" : typeof t === "string" ? t.slice(0, 5) : formatTimeOfDay(t));
 
-  const tabs = Array.isArray(tour.tabs) ? (tour.tabs as { label?: unknown; sections?: unknown }[]) : [];
-  const tab = tabs.find((t) => /itinerary/i.test(str(t?.label)));
-  const sections = Array.isArray(tab?.sections) ? (tab!.sections as Record<string, unknown>[]) : [];
-  const steps: ItineraryStep[] = [];
-  let note: string | null = null;
-  for (const s of sections) {
-    for (const step of Array.isArray(s.steps) ? (s.steps as Record<string, unknown>[]) : []) {
-      if (str(step?.text)) steps.push({ time: str(step.time), text: str(step.text) });
+const SEASON_NOTE = "Moraine Lake and the Columbia Icefield activities run from June 1 to October 10 only, so they are not part of your date's itinerary.";
+
+function packageDay(snapshot: unknown): { slug: string; day: number } | null {
+  const pkg = (snapshot as { package?: { slug?: unknown; day?: unknown } } | null)?.package;
+  if (!pkg || typeof pkg.slug !== "string" || typeof pkg.day !== "number") return null;
+  return { slug: pkg.slug, day: pkg.day };
+}
+
+const isShuttle = (d: ItineraryBooking["tourDeparture"]) =>
+  Boolean(d.shuttleRouteId || d.shuttleRoute || d.tour?.category === "SHUTTLE" || d.tour?.slug?.includes("shuttle"));
+
+/** The itinerary for this booking's day, or why there is none to send. */
+export function bookingItinerary(booking: ItineraryBooking): ItineraryResult {
+  const d = booking.tourDeparture;
+  const date = dateOf(d.date);
+  const slug = d.tour?.slug ?? "";
+
+  // 1. A day of a private Three- or Four-Day journey: that journey's itinerary for the day.
+  const pkg = packageDay(booking.priceSnapshot);
+  const journey = pkg ? PACKAGE_ITINERARIES[pkg.slug as keyof typeof PACKAGE_ITINERARIES] : undefined;
+  if (pkg && journey) {
+    const day = journey.find((x) => x.dayNumber === pkg.day);
+    if (!day) {
+      return { ok: false, reason: `No Day ${pkg.day} in the website itinerary of ${pkg.slug}.`, guestNote: MISSING_ITINERARY_NOTE };
     }
-    for (const item of Array.isArray(s.items) ? s.items : []) {
-      if (str(item)) steps.push({ time: "", text: str(item) });
-    }
-    note ??= str(s.note) || null;
+    return {
+      ok: true,
+      itinerary: {
+        heading: day.title,
+        duration: null,
+        steps: [],
+        stops: day.stops.map((s) => ({ name: s.name, text: s.desc })),
+        notes: [day.closing],
+        source: `package:${pkg.slug}:${pkg.day}`,
+      },
+    };
   }
-  return steps.length ? { steps: steps.slice(0, 12), note } : null;
+
+  // 2. A day tour (also each day of the Two-Day Rockies Explorer, shared or private).
+  const tour = TOUR_ITINERARIES[slug];
+  if (tour) {
+    const summer = inSummerSeason(date);
+    if (!summer && tour.winterRouteToBeConfirmed) {
+      return {
+        ok: false,
+        reason: `${tour.title} on ${date}: the website publishes only the June 1 – October 10 route; the team confirms the winter route for each date.`,
+        guestNote: `Between October 11 and May 31 the Ice Explorer and Skywalk don't run and the route is adjusted for winter. ${MISSING_ITINERARY_NOTE}`,
+      };
+    }
+    const stops = tour.stops.filter((s) => summer || !s.summerOnly).map(({ name, text }) => ({ name, text }));
+    const notes = [...(tour.pickup ?? []), ...tour.seasonal];
+    if (!summer && tour.stops.some((s) => s.summerOnly)) notes.unshift(SEASON_NOTE);
+    return {
+      ok: true,
+      itinerary: { heading: null, duration: tour.duration, steps: tour.steps, stops, notes, source: `tour:${slug}` },
+    };
+  }
+
+  // 3. A shuttle: its row of the website timetable.
+  if (isShuttle(d)) {
+    const time = hhmm(d.departureTime);
+    const dep = SHUTTLE_DEPARTURES.find((x) => x.pickup.banff === time);
+    if (!dep) {
+      return { ok: false, reason: `Shuttle departure at ${time || "no time"} is not on the website's shuttle timetable.`, guestNote: MISSING_ITINERARY_NOTE };
+    }
+    if (!departuresFor(date).some((x) => x.number === dep.number)) {
+      return { ok: false, reason: `Shuttle departure ${dep.number} (${time}) doesn't run on ${date} according to the website's timetable.`, guestNote: MISSING_ITINERARY_NOTE };
+    }
+    const pickups = SHUTTLE_PICKUPS.map((p) => (dep.pickup[p.id] ? `${p.label} ${shuttleClock(dep.pickup[p.id]!)}` : null)).filter(Boolean).join(" · ");
+    return {
+      ok: true,
+      itinerary: {
+        heading: `Departure ${dep.number} · ${dep.name}`,
+        duration: null,
+        steps: [
+          { time: "Pickup", text: pickups },
+          { time: clockRange(dep.moraine), text: "Moraine Lake" },
+          { time: clockRange(dep.louise), text: "Lake Louise" },
+          { time: "Return", text: `Back in Banff around ${shuttleClock(dep.returnBanff)} and Canmore around ${shuttleClock(dep.returnCanmore)} (estimated).` },
+        ],
+        stops: [],
+        notes: [
+          "Shuttle departures have specific lake pickup times, which must be followed.",
+          "Times are local Alberta time. Your exact pickup time and stop are shown above.",
+        ],
+        source: `shuttle:${dep.number}`,
+      },
+    };
+  }
+
+  // 4. Nothing current on the website for this product: never fall back to old catalog text.
+  return {
+    ok: false,
+    reason: `No current website itinerary for "${slug || "unknown product"}".`,
+    guestNote: MISSING_ITINERARY_NOTE,
+  };
 }

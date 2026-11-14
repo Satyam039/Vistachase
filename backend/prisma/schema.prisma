@@ -642,6 +642,8 @@ model Enquiry {
   tourSlug  String?
   guests    Int?
   date      DateTime?
+  /// Contact form "We Are Staying In": a town from STAYING_IN_OPTIONS or "Arriving at Calgary Airport".
+  stayingIn String?
   message   String
   status    EnquiryStatus @default(NEW) // NEW | REPLIED | CLOSED
   createdAt DateTime      @default(now())

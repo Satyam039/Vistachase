@@ -33,15 +33,21 @@ export function MotionRuntime() {
       el.querySelectorAll<HTMLElement>("[data-count-to]").forEach(countUp);
     };
 
+    // An element reveals once 8% of it is in view. A list taller than the screen (the hotel
+    // pickup finder's 43 cards, about 6,000px) may never show 8% of itself at once after a
+    // client-side navigation, so it stayed invisible until a filter shortened it (owner's PDF,
+    // 2026-11-14, Bug #005): tall elements reveal as soon as any part enters the view.
     const io = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (!entry.isIntersecting) continue;
+          const tall = entry.boundingClientRect.height > (entry.rootBounds?.height ?? window.innerHeight) * 0.5;
+          if (entry.intersectionRatio < 0.08 && !tall) continue;
           revealNow(entry.target);
           io.unobserve(entry.target);
         }
       },
-      { rootMargin: "0px 0px -8% 0px", threshold: 0.08 },
+      { rootMargin: "0px 0px -8% 0px", threshold: [0, 0.08] },
     );
 
     // Per run, not a DOM flag: a remount (Strict Mode, fast refresh) must rebind everything.

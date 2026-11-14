@@ -12,6 +12,8 @@ export interface EnquiryInput {
   date?: string;
   /** The trip's last day (From/To dates); kept in the email and message, the record stores `date`. */
   toDate?: string;
+  /** Contact form "We Are Staying In" (modules/enquiries/staying-in.ts). */
+  stayingIn?: string;
   message: string;
 }
 
@@ -37,6 +39,7 @@ export async function createEnquiry({ toDate, ...input }: EnquiryInput) {
     tour ? `Tour: ${tour.title}` : null,
     input.date && toDate ? `Trip dates: from ${input.date} to ${toDate}` : input.date ? `Preferred date: ${input.date}` : null,
     input.guests ? `Guests: ${input.guests}` : null,
+    input.stayingIn ? `Staying in: ${input.stayingIn}` : null,
     "",
     input.message,
   ].filter((l): l is string => l !== null);
