@@ -9,7 +9,8 @@ import { createApp } from "@/app";
 import { createBooking, getBookingByReference } from "@/modules/bookings/booking.repository";
 import { signBookingLink } from "@/lib/security/signed-links";
 import { dateOnly, timeOfDay } from "@/lib/utils/time";
-import { tourItinerary, WEBSITE_ITINERARIES } from "@/modules/bookings/tour-itinerary";
+import { bookingItinerary } from "@/modules/bookings/tour-itinerary";
+import { TOUR_ITINERARIES } from "@site/itineraries";
 import { voucherPdf } from "@/modules/bookings/voucher-pdf";
 
 const app = createApp();
@@ -66,7 +67,8 @@ describe("Manage booking", () => {
     const newDate = new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10);
     const first = await request(app).post("/api/bookings/manage/change-date").send({ bookingReference: ref, t, newDate, preferredTime: "7:30 AM", note: "Flight moved" });
     expect(first.status).toBe(201);
-    const row = await prisma.booking.findUniqueOrThrow({ where: { bookingReference: ref }, include: { flags: true } });
+    // (The test tour has no website itinerary, so its confirmation also raised an "Itinerary missing" flag.)
+    const row = await prisma.booking.findUniqueOrThrow({ where: { bookingReference: ref }, include: { flags: { where: { NOT: { note: { startsWith: "Itinerary missing" } } } } } });
     expect(row.flags).toHaveLength(1);
     expect(row.flags[0]).toMatchObject({ type: "OTHER", status: "OPEN" });
     expect(row.flags[0].note).toContain(`to ${newDate} (7:30 AM)`);
@@ -78,14 +80,12 @@ describe("Manage booking", () => {
 });
 
 describe("Itinerary on the voucher", () => {
-  it("uses the website's steps for the doc tours and the catalog tab for the rest", () => {
-    expect(tourItinerary({ slug: "shared-tours-icefields-jasper", tabs: [] })?.steps).toBe(WEBSITE_ITINERARIES["shared-tours-icefields-jasper"]);
-    const fromTab = tourItinerary({
-      slug: "some-tour",
-      tabs: [{ label: "Itinerary", sections: [{ steps: [{ time: "9 AM", text: "Lake Louise" }], items: ["Moraine Lake"], note: "Order may change." }] }],
-    });
-    expect(fromTab).toEqual({ steps: [{ time: "9 AM", text: "Lake Louise" }, { time: "", text: "Moraine Lake" }], note: "Order may change." });
-    expect(tourItinerary({ slug: "x", tabs: [{ label: "Overview", sections: [] }] })).toBeNull();
+  it("uses the website's itinerary for the tour, never the old catalog tab", () => {
+    const icefield = bookingItinerary({ tourDeparture: { date: "2027-07-01", departureTime: "08:00", tour: { slug: "shared-tours-icefields-jasper", category: "SHARED" } } });
+    expect(icefield.ok && icefield.itinerary.steps).toBe(TOUR_ITINERARIES["shared-tours-icefields-jasper"].steps);
+    // A product the website has no itinerary for is flagged, not filled from Admin → Content tabs.
+    const other = bookingItinerary({ tourDeparture: { date: "2027-07-01", departureTime: "08:00", tour: { slug: "some-tour", category: "SHARED" } } });
+    expect(other.ok).toBe(false);
   });
 
   it("builds the voucher PDF with the itinerary section", async () => {

@@ -24,6 +24,7 @@ import {
   X,
 } from "lucide-react";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
+import { PACKAGE_ITINERARIES } from "@/lib/itineraries";
 import { PackageTripJsonLd } from "@/components/seo/PackageTripJsonLd";
 import { PACKAGE_DAY_PRICE, PRIVATE_MAX_GUESTS, PRIVATE_PACKAGES } from "@/lib/privateTours";
 import { PackageBookingSection } from "@/components/booking/PackageBookingSection";
@@ -54,136 +55,8 @@ const SPECS = [
   { label: "Availability", value: "Seasonal; available dates shown when booking", icon: Calendar },
 ];
 
-const ITINERARY_DAYS = [
-  {
-    dayNumber: 1,
-    title: "Day 1 — Banff’s Lakes, Viewpoints & Mountain Scenery",
-    stops: [
-      {
-        name: "Bow Falls",
-        desc: "See the Bow River tumble over a broad cascade, framed by forest and mountain scenery.",
-      },
-      {
-        name: "Surprise Corner",
-        desc: "Enjoy a classic viewpoint overlooking the Fairmont Banff Springs hotel above the Bow River.",
-      },
-      {
-        name: "Hoodoos Trail Viewpoint",
-        desc: "Discover distinctive rock formations and views across the Bow Valley. Enjoy a short walk suited to your group’s interests and ability.",
-      },
-      {
-        name: "Lake Minnewanka",
-        desc: "Take in the wide waters and mountain backdrop of one of Banff’s best-known lakes.",
-      },
-      {
-        name: "Two Jack Lake",
-        desc: "Pause beside a peaceful lake with beautiful reflections and views toward Mount Rundle.",
-      },
-      {
-        name: "Cascade Ponds",
-        desc: "Enjoy a gentle scenic stop among ponds, footbridges and surrounding peaks.",
-      },
-      {
-        name: "Johnston Canyon",
-        desc: "Follow the canyon’s paths and elevated walkways toward the Lower Falls, conditions permitting. Walking can be adjusted to your group’s comfort.",
-      },
-      {
-        name: "Banff Gondola — Optional Add-On",
-        desc: "Choose a gondola ride up Sulphur Mountain for panoramic views over Banff and its surrounding ranges. Admission costs extra.",
-        isOptional: true,
-      },
-      {
-        name: "Lunch in Banff Town",
-        desc: "Enjoy a lunch break with a choice of cafés and restaurants. Meals are purchased separately.",
-      },
-    ],
-    closing: "Return to your accommodation after the day’s sightseeing.",
-  },
-  {
-    dayNumber: 2,
-    title: "Day 2 — Lake Louise, Moraine Lake & Yoho",
-    stops: [
-      {
-        name: "Moraine Lake — Seasonal Access",
-        desc: "Discover the vivid waters and dramatic peaks of the Valley of the Ten Peaks. Enjoy lakeside views and photo opportunities, with transportation arranged as part of your tour.",
-      },
-      {
-        name: "Lake Louise",
-        desc: "Spend time beside the famous lake, framed by mountain slopes and the distant Victoria Glacier.",
-      },
-      {
-        name: "Emerald Lake",
-        desc: "Explore the shoreline of this beautiful Yoho lake, surrounded by forest and towering mountains.",
-      },
-      {
-        name: "Natural Bridge",
-        desc: "See the Kicking Horse River rush through a striking rock formation shaped by moving water.",
-      },
-      {
-        name: "Takakkaw Falls — Seasonal Access",
-        desc: "Travel into Yoho Valley to admire a dramatic waterfall descending from high above the valley floor.",
-      },
-      {
-        name: "Spiral Tunnels Viewpoint — When Accessible",
-        desc: "Learn how railway engineers tackled the steep mountain terrain. A passing train may offer a chance to see the tunnels in action, although train sightings are not guaranteed.",
-      },
-      {
-        name: "Bow Valley Parkway — Scenic Drive",
-        desc: "Enjoy forest, mountain and valley scenery along this quieter route, where road access permits.",
-      },
-      {
-        name: "Lunch in Lake Louise Village",
-        desc: "Stop in the village to purchase lunch before continuing your sightseeing.",
-      },
-    ],
-    closing: "Return to your accommodation after the tour.",
-  },
-  {
-    dayNumber: 3,
-    title: "Day 3 — Icefields Parkway & Columbia Icefield",
-    stops: [
-      {
-        name: "Bow Lake",
-        desc: "Pause beside a glacier-fed lake surrounded by dramatic peaks and alpine scenery.",
-      },
-      {
-        name: "Peyto Lake",
-        desc: "Take a short uphill walk to the viewpoint overlooking Peyto Lake and its distinctive outline.",
-      },
-      {
-        name: "Crowfoot Glacier Lookout",
-        desc: "View the glacier from a roadside lookout and hear how the landscape has changed over time.",
-      },
-      {
-        name: "Waterfowl Lakes",
-        desc: "Enjoy a scenic photo stop overlooking mountain-framed waters along the parkway.",
-      },
-      {
-        name: "Big Bend Viewpoint",
-        desc: "Take in sweeping views of the valley and the famous curve of the Icefields Parkway.",
-      },
-      {
-        name: "Athabasca Glacier & Columbia Icefield Area",
-        desc: "Discover the scale of the glacier landscape and learn about the icefield that shapes this region. Travelling onto the glacier requires the optional Ice Explorer experience.",
-      },
-      {
-        name: "Ice Explorer — Optional Add-On",
-        desc: "Travel aboard a specialised vehicle onto the Athabasca Glacier, with an opportunity to step onto the ice under the attraction operator’s supervision. Admission costs extra.",
-        isOptional: true,
-      },
-      {
-        name: "Columbia Icefield Skywalk — Optional Add-On",
-        desc: "Experience a glass-floored walkway overlooking the Sunwapta Valley. Admission costs extra.",
-        isOptional: true,
-      },
-      {
-        name: "Lunch at the Columbia Icefield Centre",
-        desc: "Purchase lunch at the centre during your visit.",
-      },
-    ],
-    closing: "Return to your accommodation in Banff, Canmore or Lake Louise.",
-  },
-];
+// Day-by-day itinerary: lib/itineraries.ts (shared with the booking PDF).
+const ITINERARY_DAYS = PACKAGE_ITINERARIES["three-day-rockies-discovery"];
 
 const INCLUSIONS = [
   "Private vehicle for your group during the three tour days.",

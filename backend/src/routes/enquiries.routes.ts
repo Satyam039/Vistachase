@@ -2,6 +2,7 @@ import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
 import { Router } from "express";
 import { z } from "zod";
 import { createEnquiry } from "@/modules/enquiries/enquiry.repository";
+import { STAYING_IN_OPTIONS } from "@/modules/enquiries/staying-in";
 import {
   enquiryDateErrors,
   formTokenProblem,
@@ -33,6 +34,9 @@ const schema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().or(z.literal("")),
   // "Plan your trip" asks From and To dates (owner, 2026-11-06): `date` is the From date.
   toDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().or(z.literal("")),
+  // "We Are Staying In" (contact form): a town, or arriving at Calgary Airport. Optional here so
+  // older pages and other callers keep working; the contact form asks for it.
+  stayingIn: z.enum(STAYING_IN_OPTIONS).optional().or(z.literal("")),
   message: z.string().trim().min(5).max(4000),
   // Honeypot: real visitors never see or fill this field.
   website: z.string().max(500).optional(),
@@ -85,8 +89,15 @@ router.post("/", rateLimitMiddleware("enquiry_create", { maxRequests: 5, windowS
 
   recent.push(now);
   hits.set(key, recent);
-  const { website: _honeypot, formToken: _token, turnstileToken: _turnstile, phone, tourSlug, date, toDate, ...rest } = data;
-  const result = await createEnquiry({ ...rest, phone: phone || undefined, tourSlug: tourSlug || undefined, date: date || undefined, toDate: toDate || undefined });
+  const { website: _honeypot, formToken: _token, turnstileToken: _turnstile, phone, tourSlug, date, toDate, stayingIn, ...rest } = data;
+  const result = await createEnquiry({
+    ...rest,
+    phone: phone || undefined,
+    tourSlug: tourSlug || undefined,
+    date: date || undefined,
+    toDate: toDate || undefined,
+    stayingIn: stayingIn || undefined,
+  });
   return res.status(201).json({ success: true, id: result.id });
 });
 

@@ -19,10 +19,12 @@ import { AwardMark } from "@/components/brand/AwardSeal";
 import { BrandLogo } from "@/components/brand/BrandMark";
 import Link from "next/link";
 import { isVisibleLink } from "@/lib/activityTickets";
+import { GOOGLE_REVIEWS_URL } from "@/lib/reviews/links";
 import { ArrowRight, ArrowUp, ArrowUpRight, CalendarCheck, ChevronDown, Clock, Mail, MapPin, Phone, Search, ShieldCheck, Sparkles, Star } from "lucide-react";
 
 // nofollow: signed-in pages robots.txt blocks (My trips), so crawlers aren't sent there.
-type FooterLink = { label: string; href: string; nofollow?: boolean };
+/** `external` links (Google Reviews) open in a new tab. */
+type FooterLink = { label: string; href: string; nofollow?: boolean; external?: boolean };
 
 const GROUPS: { heading: string; links: FooterLink[] }[] = [
   {
@@ -55,6 +57,7 @@ const GROUPS: { heading: string; links: FooterLink[] }[] = [
       // "Travel guides" (/guides) comes back here once guides are published; an empty page isn't linked.
       { label: "AI concierge", href: "/concierge" },
       { label: "Photo gallery", href: "/gallery" },
+      { label: "Leave a review", href: GOOGLE_REVIEWS_URL, external: true },
     ],
   },
   {
@@ -158,10 +161,12 @@ function LinkGroup({ heading, links }: { heading: string; links: FooterLink[] })
           <li key={link.href}>
             <Link
               href={link.href}
-              rel={link.nofollow ? "nofollow" : undefined}
+              rel={link.external ? "noopener noreferrer" : link.nofollow ? "nofollow" : undefined}
+              target={link.external ? "_blank" : undefined}
               className="group inline-flex items-center gap-1.5 py-1 text-base font-light text-white/75 transition-colors hover:text-white"
             >
               {link.label}
+              {link.external && <span className="sr-only"> (opens in a new tab)</span>}
               <ArrowRight
                 className="h-3.5 w-3.5 -translate-x-1 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100"
                 aria-hidden="true"
@@ -298,6 +303,17 @@ export function SiteFooter() {
               </li>
             ))}
           </ul>
+          {/* Phones fold the link groups below, so the review link also sits here in view (wide screens: "Plan your trip"). */}
+          <a
+            href={GOOGLE_REVIEWS_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex w-fit items-center gap-2 rounded-full border border-white/15 px-4 py-2.5 text-sm text-white/85 transition-colors hover:border-summit-200 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-summit-500 lg:hidden"
+          >
+            <Star className="h-4 w-4 fill-summit-500 text-summit-500" aria-hidden="true" />
+            Leave a review on Google
+            <span className="sr-only">(opens in a new tab)</span>
+          </a>
         </div>
 
         <nav aria-label="Footer" className="grid border-t border-white/10 lg:grid-cols-4 lg:gap-8 lg:border-0">

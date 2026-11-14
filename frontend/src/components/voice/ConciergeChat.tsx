@@ -22,6 +22,7 @@ import { ConciergeMarkdownRenderer } from "./ConciergeMarkdownRenderer";
 import { ConciergeHistoryDrawer, type ChatSessionMeta } from "./ConciergeHistoryDrawer";
 import { LiveAgentHandoff } from "./LiveAgentHandoff";
 import { CONCIERGE_LANGUAGES, speechTag } from "@/lib/conciergeLanguages";
+import { SPEECH_HINTS, bestAlternative, fixPlaceNames, joinTranscript, recognitionLang } from "@/lib/speechInput";
 
 const LANGUAGE_KEY = "vc-concierge-language";
 const CHAT_SESSIONS_KEY = "vc_concierge_sessions";
@@ -80,10 +81,12 @@ type SpeechRecognitionLike = {
   lang: string;
   continuous: boolean;
   interimResults: boolean;
+  maxAlternatives?: number;
+  phrases?: unknown;
   start: () => void;
   stop: () => void;
   abort?: () => void;
-  onresult: ((e: { resultIndex?: number; results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal?: boolean }> }) => void) | null;
+  onresult: ((e: { resultIndex?: number; results: ArrayLike<ArrayLike<{ transcript: string; confidence?: number }> & { isFinal?: boolean }> }) => void) | null;
   onerror: ((e?: { error?: string }) => void) | null;
   onend: (() => void) | null;
 };
@@ -112,6 +115,18 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
   const recognition = useRef<SpeechRecognitionLike | null>(null);
   const isListeningRef = useRef(false);
   const sendRef = useRef<(text: string) => void>(() => {});
+  // Voice dictation (see the speech recognition effect below).
+  const speech = useRef({
+    base: "", // what was in the box when the mic started (or when the guest last typed)
+    committed: "", // final words from earlier recognition runs (it restarts after pauses)
+    finals: "", // final words of the current run
+    interim: "", // words still being recognised
+    skip: 0, // results of the current run already taken into `base` (the guest typed meanwhile)
+    seen: 0, // results the current run has delivered so far
+    sendOnEnd: false, // send what was heard once recognition has delivered its last words
+    silence: 0 as ReturnType<typeof setTimeout> | 0,
+    fallback: 0 as ReturnType<typeof setTimeout> | 0,
+  });
 
   // The language, chat history sessions, and traveler persona loaded on mount
   useEffect(() => {
@@ -269,6 +284,19 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
     [speakReplies, language],
   );
 
+  const speechText = useCallback(() => {
+    const v = speech.current;
+    return joinTranscript(v.base, v.committed, v.finals, v.interim);
+  }, []);
+
+  const clearSpeechTimers = useCallback(() => {
+    const v = speech.current;
+    if (v.silence) clearTimeout(v.silence);
+    if (v.fallback) clearTimeout(v.fallback);
+    v.silence = 0;
+    v.fallback = 0;
+  }, []);
+
   const send = useCallback(
     async (raw: string, explicitAttachments?: StagedAttachment[]) => {
       const currentAttachments = explicitAttachments ?? stagedFiles;
@@ -278,10 +306,12 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
       if (!text && currentAttachments.length > 0) {
         text = "Please inspect and help me with this photo/document for my Canadian Rockies trip.";
       }
-      if (isListeningRef.current) {
+      if (isListeningRef.current || speech.current.sendOnEnd) {
         isListeningRef.current = false;
+        speech.current.sendOnEnd = false;
+        clearSpeechTimers();
         try {
-          recognition.current?.stop();
+          recognition.current?.abort?.() ?? recognition.current?.stop();
         } catch {}
         setVoice("idle");
       }
@@ -442,86 +472,177 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
         setVoice("idle");
       }
     },
-    [messages, session, voice, speak, stopSpeaking, language, currentSessionId, userPersona, knowledgeGraph, thinkingMode, stagedFiles],
+    [messages, session, voice, speak, stopSpeaking, language, currentSessionId, userPersona, knowledgeGraph, thinkingMode, stagedFiles, clearSpeechTimers],
   );
   sendRef.current = send;
 
-  // Voice input (browser speech recognition), created once for dictation typing.
+  // Voice input (browser speech recognition). Owner's PDF (2026-11-14): words were misheard or
+  // missed, and what was heard wasn't always sent. Now:
+  //   - English recognition follows the browser's own English (en-IN, en-GB…) on Auto, and the
+  //     concierge's language when one is chosen (lib/speechInput.ts recognitionLang);
+  //   - live (interim) words show in the box as the guest speaks, the most confident alternative is
+  //     kept, and nothing is dropped when recognition restarts after a pause or is stopped mid-word;
+  //   - local names are spelled right (Banff, Lake Louise, Canmore…: fixPlaceNames), and browsers
+  //     that accept phrase hints get them;
+  //   - what was heard is SENT to the concierge after about 2 seconds of silence, or when the guest
+  //     taps Stop, so a question is never left sitting in the box. Typing while listening keeps the
+  //     typed text and adds new speech after it.
+  /** Stops listening; with `send`, the transcript goes to the concierge once the last words are in. */
+  const finishListening = useCallback(
+    (send: boolean) => {
+      const v = speech.current;
+      clearSpeechTimers();
+      isListeningRef.current = false;
+      v.sendOnEnd = send;
+      try {
+        recognition.current?.stop(); // delivers any pending final words, then onend
+      } catch {}
+      // Some browsers never fire onend after stop(): send what we have after a moment anyway.
+      v.fallback = setTimeout(() => {
+        if (!v.sendOnEnd) return;
+        v.sendOnEnd = false;
+        const text = speechText();
+        setVoice((x) => (x === "listening" ? "idle" : x));
+        if (text) sendRef.current(text);
+      }, 1500);
+    },
+    [clearSpeechTimers, speechText],
+  );
+  const finishRef = useRef(finishListening);
+  finishRef.current = finishListening;
+
   useEffect(() => {
-    const w = window as unknown as { SpeechRecognition?: new () => SpeechRecognitionLike; webkitSpeechRecognition?: new () => SpeechRecognitionLike };
+    const w = window as unknown as {
+      SpeechRecognition?: new () => SpeechRecognitionLike;
+      webkitSpeechRecognition?: new () => SpeechRecognitionLike;
+      SpeechRecognitionPhrase?: new (phrase: string, boost?: number) => unknown;
+    };
     const Ctor = w.SpeechRecognition || w.webkitSpeechRecognition;
     if (!Ctor) {
       setMicSupported(false);
       return;
     }
     const r = new Ctor();
-    r.lang = speechTag(language) || "en-CA";
-    r.continuous = true;
-    r.interimResults = false;
+    r.lang = recognitionLang(language, navigator.language);
+    // Android Chrome repeats earlier words in continuous mode; there one run per phrase is used and
+    // restarted after each pause instead.
+    r.continuous = !/android/i.test(navigator.userAgent);
+    r.interimResults = true;
+    r.maxAlternatives = 3;
+    // Phrase hints (contextual biasing) where the browser supports them.
+    if (w.SpeechRecognitionPhrase && "phrases" in r) {
+      try {
+        r.phrases = SPEECH_HINTS.map((p) => new w.SpeechRecognitionPhrase!(p, 3));
+      } catch {}
+    }
 
     r.onresult = (e) => {
-      let speechChunk = "";
-      const startIndex = e.resultIndex ?? 0;
-      for (let i = startIndex; i < e.results.length; i++) {
+      const v = speech.current;
+      if (!isListeningRef.current && !v.sendOnEnd) return; // late words after the message was sent
+      let finals = "";
+      let interim = "";
+      for (let i = v.skip; i < e.results.length; i++) {
         const item = e.results[i];
-        const piece = item?.[0]?.transcript?.trim();
-        if (piece) {
-          speechChunk = speechChunk ? `${speechChunk} ${piece}` : piece;
-        }
+        const piece = fixPlaceNames(bestAlternative(item), r.lang);
+        if (!piece) continue;
+        if (item.isFinal) finals = joinTranscript(finals, piece);
+        else interim = joinTranscript(interim, piece);
       }
-      if (speechChunk) {
-        setInput((prev) => (prev && prev.trim() ? `${prev.trim()} ${speechChunk}` : speechChunk));
+      v.seen = e.results.length;
+      const gotFinal = finals !== v.finals;
+      v.finals = finals;
+      v.interim = interim;
+      setInput(speechText());
+      // About 2 seconds of silence after a finished phrase: the guest is done, send it.
+      if (v.silence) clearTimeout(v.silence);
+      v.silence = 0;
+      if (isListeningRef.current && gotFinal && !interim) {
+        v.silence = setTimeout(() => {
+          if (isListeningRef.current && speechText()) finishRef.current(true);
+        }, 2000);
       }
     };
 
     r.onerror = (e) => {
       const err = e?.error;
-      // Do not abort voice dictation on natural speaking pauses while typing or speaking
-      if ((err === "no-speech" || err === "aborted") && isListeningRef.current) {
-        return;
+      // Natural pauses: keep listening (onend restarts it).
+      if ((err === "no-speech" || err === "aborted") && isListeningRef.current) return;
+      if (err === "not-allowed" || err === "service-not-allowed") {
+        setStatus("Microphone access is blocked. Allow the microphone for this site in your browser, or type your question.");
+      } else if (err === "network") {
+        setStatus("Voice input needs an internet connection. Please try again or type your question.");
+      } else if (err === "audio-capture") {
+        setStatus("No microphone was found. Please type your question.");
       }
       isListeningRef.current = false;
       setVoice((v) => (v === "listening" ? "idle" : v));
     };
 
     r.onend = () => {
-      // Auto-restart if user still has mic toggled active (prevents closing on brief silence while typing)
+      const v = speech.current;
+      // Keep every word of this run, including any still in progress when it ended.
+      v.committed = joinTranscript(v.committed, v.finals, v.interim);
+      v.finals = "";
+      v.interim = "";
+      v.skip = 0;
+      v.seen = 0;
       if (isListeningRef.current) {
+        // Restart after a pause so a long question isn't cut off.
         try {
           r.start();
           return;
         } catch {
-          // fall through if cannot restart immediately
+          // fall through if it can't restart right away
         }
+        isListeningRef.current = false;
       }
-      setVoice((v) => (v === "listening" ? "idle" : v));
+      setVoice((x) => (x === "listening" ? "idle" : x));
+      if (v.sendOnEnd) {
+        v.sendOnEnd = false;
+        if (v.fallback) clearTimeout(v.fallback);
+        v.fallback = 0;
+        const text = speechText();
+        if (text) sendRef.current(text);
+      }
     };
 
     recognition.current = r;
+    const state = speech.current;
 
     return () => {
       isListeningRef.current = false;
+      state.sendOnEnd = false;
+      clearSpeechTimers();
       try {
-        r.stop();
+        r.abort?.();
       } catch {}
     };
+    // Created once; the language is updated by the effect below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (recognition.current) recognition.current.lang = speechTag(language);
+    if (recognition.current) recognition.current.lang = recognitionLang(language, navigator.language);
   }, [language]);
 
   const toggleMic = () => {
     if (!recognition.current) return;
     if (voice === "listening") {
-      isListeningRef.current = false;
-      try {
-        recognition.current.stop();
-      } catch {}
-      setVoice("idle");
+      // Tapping Stop: the guest has finished speaking, so what was heard goes to the concierge.
+      finishListening(true);
       return;
     }
     stopSpeaking();
+    setStatus(null);
+    const v = speech.current;
+    clearSpeechTimers();
+    v.base = input;
+    v.committed = "";
+    v.finals = "";
+    v.interim = "";
+    v.skip = 0;
+    v.seen = 0;
+    v.sendOnEnd = false;
     isListeningRef.current = true;
     try {
       recognition.current.start();
@@ -848,6 +969,15 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
               onChange={(e) => {
                 setInput(e.target.value);
                 if (voice === "speaking") stopSpeaking();
+                if (isListeningRef.current) {
+                  // Typing while the mic is on: keep the edited text, add new speech after it.
+                  const v = speech.current;
+                  v.base = e.target.value;
+                  v.committed = v.finals = v.interim = "";
+                  v.skip = v.seen;
+                  if (v.silence) clearTimeout(v.silence);
+                  v.silence = 0;
+                }
               }}
               onPaste={(e) => {
                 if (e.clipboardData.files && e.clipboardData.files.length > 0) {

@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 import { ArrowUpRight, Award, Star } from "lucide-react";
 import { ReviewSlider, type SliderReview } from "@/components/reviews/ReviewSlider";
+import { GOOGLE_REVIEWS_URL } from "@/lib/reviews/links";
 import { REVIEW_EXCERPTS, TRIPADVISOR_REVIEWS } from "@/lib/reviews/tripadvisorReviews";
 
 const TRIPADVISOR_URL =
@@ -11,7 +12,7 @@ const TRIPADVISOR_URL =
 // Where guests can read the reviews themselves. GetYourGuide shows once its page address is known.
 const REVIEW_PLATFORMS = [
   { label: "Tripadvisor Reviews", href: TRIPADVISOR_URL },
-  { label: "Google Reviews", href: "https://www.google.com/maps/search/?api=1&query=Vista+Chase+Canmore+AB" },
+  { label: "Google Reviews", href: GOOGLE_REVIEWS_URL },
   { label: "GetYourGuide Reviews", href: process.env.NEXT_PUBLIC_GETYOURGUIDE_REVIEWS_URL ?? "" },
 ].filter((p) => p.href);
 

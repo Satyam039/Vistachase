@@ -17,6 +17,7 @@ import { getLiveTrackingProvider } from "@/lib/tracking/tracking.provider";
 // The browser only sends the chat text, so tool results the model needs later (departure IDs,
 // holds) travel in sessionState.memory and are replayed into the system prompt each turn.
 
+import { pickupError } from "@/modules/bookings/pickup-rules";
 import Anthropic from "@anthropic-ai/sdk";
 import prisma from "@/lib/db/prisma";
 import { executeAiTool, type ToolExecutionContext } from "@/lib/ai/ai.tools";
@@ -174,7 +175,7 @@ const CUSTOMER_TOOLS: Anthropic.Tool[] = [
   },
   {
     name: "find_pickup",
-    description: "Find hotel pickup stops by hotel name or town (Banff, Canmore, Lake Louise).",
+    description: "Find hotel pickup stops by hotel name or town (Banff, Canmore, Lake Louise). Shared (small-group) tours pick up in Banff and Canmore only, never Lake Louise; Lake Louise stops are for private tours and shuttles.",
     input_schema: {
       type: "object",
       properties: { query: { type: "string", description: "Hotel name or question" }, town: { type: "string" } },
@@ -352,6 +353,16 @@ export async function runConciergeTool(name: string, input: Record<string, any>,
       };
     }
     case "hold_seats": {
+      // Shared tours don't pick up in Lake Louise (modules/bookings/pickup-rules.ts): say so before
+      // holding seats rather than at payment.
+      if (input.pickupStopId) {
+        const [heldDep, heldStop] = await Promise.all([
+          prisma.tourDeparture.findUnique({ where: { id: String(input.departureId) }, select: { tour: { select: { category: true } } } }),
+          prisma.shuttleStop.findUnique({ where: { id: String(input.pickupStopId) }, select: { town: true, name: true } }),
+        ]);
+        const refusal = pickupError(heldDep?.tour, heldStop);
+        if (refusal) return { result: { error: refusal } };
+      }
       const r = await executeAiTool(
         "createVoiceReservationHold",
         { departureId: input.departureId, seatsCount: Number(input.seats), customerName: input.customerName, customerEmail: input.customerEmail, customerPhone: input.customerPhone, pickupStopId: input.pickupStopId },

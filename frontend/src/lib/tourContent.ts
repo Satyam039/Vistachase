@@ -10,8 +10,9 @@
 // third-party activities (Ice Explorer, Skywalk, gondola) at extra cost.
 //
 // These fields override what Admin → Content holds for these four tours, so edit them here (or
-// delete an entry to hand a tour back to Admin → Content). Checkout, vouchers and emails still use
-// the product title stored in the database.
+// delete an entry to hand a tour back to Admin → Content). The itineraries themselves (stops,
+// timeline, pickup text, Important Information) live in lib/itineraries.ts, which the booking
+// confirmation email and PDF read too: edit them there.
 
 import type { TourFaq, TourTab, TourWithAvailability } from "@/lib/api/types";
 import { BANFF_YOHO, ICEFIELD } from "@/lib/sharedTours";
@@ -19,6 +20,7 @@ import { PRIVATE_FAQS, PRIVATE_OPTIONS } from "@/lib/privateTours";
 import { cancellationSentence } from "@/lib/policy";
 import { activityTicket } from "@/lib/activityTickets";
 import { SHUTTLE_CAPACITY } from "@/lib/shuttleSchedule";
+import { TOUR_ITINERARIES } from "@/lib/itineraries";
 
 interface DocContent {
   title: string;
@@ -42,10 +44,8 @@ interface DocContent {
   pickup?: string[];
 }
 
-const GUIDE_CALL = "Your guide contacts you the evening before, between 6 and 9 PM, to confirm your exact pickup time.";
 
 const [PRIVATE_BANFF_YOHO, PRIVATE_ICEFIELD] = PRIVATE_OPTIONS;
-const PRIVATE_PICKUP = "Doorstep pickup at your accommodation in Banff, Canmore or Lake Louise, at a time agreed with you before the tour.";
 const PRIVATE_INCLUDED = (PRIVATE_FAQS.find((f) => /what is included/i.test(f.q))?.a ?? "").split(" Third-party")[0];
 const PRIVATE_MORAINE =
   "Yes, on itineraries that include Moraine Lake during its operating season. Transportation arrangements depend on your vehicle option and will be explained before booking, including whether a shuttle transfer is required.";
@@ -96,31 +96,10 @@ const CONTENT: Record<string, DocContent> = {
       "Not recommended for guests with heart problems or other serious medical conditions",
       "Summer traffic, long weekends and events can extend the day: book dinner for 7:00 PM or later in Banff, 7:30 PM or later in Canmore",
     ],
-    stops: [
-      { name: "Lake Louise", text: "About 1 hour beside the famous lake below Victoria Glacier." },
-      { name: "Moraine Lake", text: "About 1 hour in the Valley of the Ten Peaks. Transportation is arranged for you from June 1 to October 10." },
-      { name: "Johnston Canyon", text: "About 1 hour on the canyon walkways toward the falls." },
-      { name: "Emerald Lake", text: "About 30 minutes on the shore of Yoho's best-known lake." },
-      { name: "Natural Bridge", text: "About 15 minutes where the Kicking Horse River cuts through the rock." },
-      { name: "Lake Minnewanka", text: "About 20 minutes beside Banff's largest lake." },
-      { name: "Two Jack Lake", text: "About 15 minutes for reflections of Mount Rundle." },
-      { name: "Lower Spiral Tunnels Viewpoint", text: "About 15 minutes at the railway's famous loop tunnels." },
-      { name: "Morant's Curve", text: "About 15 minutes at the classic Bow River railway view, with a drive along the Bow Valley Parkway." },
-    ],
-    steps: [
-      { time: "7:30 – 8:00 AM", text: `Pickup in Canmore from about 7:30 AM and in Banff from about 8:00 AM. ${GUIDE_CALL}` },
-      { time: "Morning", text: "Lake Louise and Moraine Lake (Moraine Lake from June 1 to October 10)." },
-      { time: "Midday", text: "Lunch stop in Lake Louise Village (lunch not included), then Emerald Lake and the Natural Bridge in Yoho, the Lower Spiral Tunnels and Morant's Curve." },
-      { time: "Afternoon", text: "Johnston Canyon, Lake Minnewanka and Two Jack Lake." },
-      { time: "5:30 – 6:00 PM", text: "Back in Banff around 5:30 PM and Canmore around 6:00 PM." },
-    ],
+    stops: TOUR_ITINERARIES[BANFF_YOHO.slug].stops,
+    steps: TOUR_ITINERARIES[BANFF_YOHO.slug].steps,
     // "Important Information" from the owner's doc (2026-11-04, section E).
-    seasonal: [
-      "Seasonal itinerary: The route and accessible attractions vary by season. Moraine Lake is generally accessible during its operating season, subject to conditions.",
-      "Mountain weather: Conditions can change quickly. Comfortable footwear and layered clothing are recommended.",
-      "Itinerary adjustments: Stops may change because of road closures, weather, operational restrictions or other circumstances.",
-      "Wildlife sightings are possible but can't be guaranteed.",
-    ],
+    seasonal: TOUR_ITINERARIES[BANFF_YOHO.slug].seasonal,
     faqs: [
       { match: /how long/i, answer: "About 10 to 11 hours, including travel time. Pickups start at 7:30 AM in Canmore and 8:00 AM in Banff, and you're back around 5:30 PM in Banff and 6:00 PM in Canmore." },
       { match: /what sights/i, answer: "Lake Louise, Moraine Lake (June 1 to October 10), Johnston Canyon, Emerald Lake, the Natural Bridge, Lake Minnewanka, Two Jack Lake, the Lower Spiral Tunnels Viewpoint and Morant's Curve. Stops and their order can change with the season, weather and road conditions." },
@@ -159,28 +138,10 @@ const CONTENT: Record<string, DocContent> = {
       "Bring an extra warm layer for the glacier",
     ],
     // Stop descriptions from the owner's doc (2026-11-04).
-    stops: [
-      { name: "Bow Lake", text: "A scenic lakeside stop surrounded by towering peaks and glacier-fed waters. Approximately 30 minutes." },
-      { name: "Crowfoot Glacier", text: "A brief roadside viewpoint overlooking the historic glacier. Approximately 15 minutes." },
-      { name: "Peyto Lake", text: "Enjoy the famous turquoise lake from its panoramic viewpoint. Approximately 30 minutes, including a short uphill walk." },
-      { name: "Waterfowl Lakes", text: "A peaceful photography stop framed by the rugged peaks of the Icefields Parkway. Approximately 15 minutes." },
-      { name: "Columbia Icefield Ice Explorer", text: "Ride a specially designed vehicle onto the Athabasca Glacier. Seasonal activity." },
-      { name: "Columbia Icefield Skywalk", text: "Experience dramatic views over the Sunwapta Valley from a glass-floored walkway. Seasonal activity." },
-    ],
-    steps: [
-      { time: "7:30 – 8:00 AM", text: `Pickup in Canmore from about 7:30 AM and in Banff from about 8:00 AM. ${GUIDE_CALL}` },
-      { time: "Morning", text: "Bow Lake, Crowfoot Glacier, Peyto Lake and Waterfowl Lakes along the Icefields Parkway." },
-      { time: "Midday", text: "Columbia Icefield: the Ice Explorer onto the Athabasca Glacier and the Skywalk (June 1 to October 10). Lunch stop at the Columbia Icefield Centre (lunch not included)." },
-      { time: "Afternoon", text: "Scenic drive back along the Icefields Parkway." },
-      { time: "Evening", text: "Back in Banff and Canmore. Traffic, weather and road conditions can affect return times." },
-    ],
+    stops: TOUR_ITINERARIES[ICEFIELD.slug].stops,
+    steps: TOUR_ITINERARIES[ICEFIELD.slug].steps,
     // "Important Information" from the owner's doc (2026-11-04).
-    seasonal: [
-      "Seasonal activities: The Columbia Icefield Ice Explorer and Skywalk are included on departures operating from June 1 to October 10. Outside these dates, these activities are unavailable and the sightseeing itinerary is adjusted. Our team confirms the winter route for your date.",
-      "Weather and road conditions: Stops, routes and their order may change due to weather, road closures or operational requirements.",
-      "What to bring: Dress in layers and bring a warm jacket, comfortable walking shoes and water. Temperatures at the Columbia Icefield can be significantly colder than in Banff.",
-      "Wildlife: Wildlife sightings are possible but cannot be guaranteed.",
-    ],
+    seasonal: TOUR_ITINERARIES[ICEFIELD.slug].seasonal,
     // Quick facts and pickup text from the owner's doc (2026-11-04).
     quickFacts: [
       { label: "Duration", value: "9–11 hours" },
@@ -188,15 +149,11 @@ const CONTENT: Record<string, DocContent> = {
       { label: "Park admission", value: "Included" },
       { label: "Operating season", value: "Year round · route varies by season" },
       // Banff & Canmore only, like the pickup section (owner's AI training doc, 2026-11-11, flagged the
-      // Lake Louise mismatch); a Lake Louise pickup needs team confirmation.
+      // Lake Louise mismatch). Shared tours never pick up in Lake Louise (owner PDF, 2026-11-14).
       { label: "Hotel pickups", value: "Canmore & Banff" },
       { label: "Tickets included", value: "Columbia Icefield Adventure (June 1 – October 10)" },
     ],
-    pickup: [
-      "Complimentary pickup and drop-off are available at designated locations in Canmore and Banff.",
-      "Pickup generally begins around 7:30 AM in Canmore and 8:00 AM in Banff. Your guide will contact you the evening before departure to confirm your exact pickup time and meeting instructions.",
-      "Please be ready at your confirmed pickup location a few minutes before the scheduled time.",
-    ],
+    pickup: TOUR_ITINERARIES[ICEFIELD.slug].pickup,
     faqs: [
       { match: /how long/i, answer: "About 9 to 11 hours. Pickups start at 7:30 AM in Canmore and 8:00 AM in Banff; your exact pickup time is confirmed before your tour." },
       { match: /what.s included/i, answer: "Park admission, a professional local guide, an air-conditioned vehicle, bottled water, pickup in Banff and Canmore, and the Ice Explorer and Skywalk tickets from June 1 to October 10." },
@@ -228,23 +185,9 @@ CONTENT[PRIVATE_BANFF_YOHO.slug!] = {
   inclusions: [...PRIVATE_INCLUSIONS, "Moraine Lake access arrangements during its operating season"],
   exclusions: ["Lunch (stop in Lake Louise Village)", "Third-party activities such as the Banff Gondola, lake cruises and canoe rentals", "Gratuities", "Personal expenses"],
   goodToKnow: PRIVATE_GOOD_TO_KNOW,
-  stops: CONTENT[BANFF_YOHO.slug].stops.map((s) =>
-    s.name === "Moraine Lake" ? { ...s, text: "About 1 hour in the Valley of the Ten Peaks, during its operating season (usually June to early October)." } : s,
-  ),
-  steps: [
-    { time: "Morning", text: `${PRIVATE_PICKUP} ${GUIDE_CALL}` },
-    { time: "Morning", text: "Lake Louise and Moraine Lake (Moraine Lake during its operating season)." },
-    { time: "Midday", text: "Lunch stop in Lake Louise Village (lunch not included), then Emerald Lake and the Natural Bridge in Yoho, the Lower Spiral Tunnels and Morant's Curve." },
-    { time: "Afternoon", text: "Johnston Canyon, Lake Minnewanka and Two Jack Lake." },
-    { time: "Evening", text: "Drop-off at your accommodation. The day runs about 10 to 12 hours, depending on your pace." },
-  ],
-  seasonal: [
-    "Price per vehicle, up to 13 guests: CAD $1,750 from June 1 to October 10, all-inclusive (tax, park entry and Moraine Lake entry fees); CAD $1,240 from October 11 to May 31.",
-    "Moraine Lake: during its operating season (usually June to early October); access arrangements depend on your vehicle and are explained before booking.",
-    "The route varies by season: your guide adjusts stops to road and weather conditions.",
-    "Weather: mountain conditions change quickly, so dress in layers and wear comfortable shoes.",
-    "Wildlife sightings are possible but can't be guaranteed.",
-  ],
+  stops: TOUR_ITINERARIES[PRIVATE_BANFF_YOHO.slug!].stops,
+  steps: TOUR_ITINERARIES[PRIVATE_BANFF_YOHO.slug!].steps,
+  seasonal: TOUR_ITINERARIES[PRIVATE_BANFF_YOHO.slug!].seasonal,
   faqs: [
     { match: /how long/i, answer: "About 10 to 12 hours, door to door. Your pickup time is agreed with you before the tour, and the pace is set around your group." },
     { match: /what is included/i, answer: PRIVATE_INCLUDED },
@@ -268,23 +211,9 @@ CONTENT[PRIVATE_ICEFIELD.slug!] = {
   inclusions: PRIVATE_INCLUSIONS,
   exclusions: ["Ice Explorer and Columbia Icefield Skywalk admission (optional)", "Lunch (stop at the Columbia Icefield Centre)", "Gratuities", "Personal expenses"],
   goodToKnow: [...PRIVATE_GOOD_TO_KNOW, "Bring an extra warm layer for the glacier"],
-  stops: CONTENT[ICEFIELD.slug].stops.map((s) =>
-    /ice explorer|skywalk/i.test(s.name) ? { ...s, name: `${s.name} — Optional Add-On`, text: s.text.replace("Included from June 1 to October 10.", "Seasonal; admission costs extra.") } : s,
-  ),
-  steps: [
-    { time: "Morning", text: `${PRIVATE_PICKUP} ${GUIDE_CALL}` },
-    { time: "Morning", text: "Bow Lake, Crowfoot Glacier, Peyto Lake and Waterfowl Lakes along the Icefields Parkway." },
-    { time: "Midday", text: "Columbia Icefield, with the optional Ice Explorer and Skywalk in season. Lunch stop at the Columbia Icefield Centre (lunch not included)." },
-    { time: "Afternoon", text: "Scenic drive back along the Icefields Parkway." },
-    { time: "Evening", text: "Drop-off at your accommodation. Traffic, weather and road conditions can affect return times." },
-  ],
-  seasonal: [
-    "Price per vehicle, up to 13 guests: CAD $1,750 from June 1 to October 10; CAD $1,240 from October 11 to May 31.",
-    "Ice Explorer and Skywalk: June 1 to October 10, optional and at extra cost.",
-    "From October 11 to May 31 the glacier activities don't run and the route is adjusted; our team confirms the route for your date.",
-    "Pack an extra warm layer for the Columbia Icefield.",
-    "Wildlife sightings are possible but can't be guaranteed.",
-  ],
+  stops: TOUR_ITINERARIES[PRIVATE_ICEFIELD.slug!].stops,
+  steps: TOUR_ITINERARIES[PRIVATE_ICEFIELD.slug!].steps,
+  seasonal: TOUR_ITINERARIES[PRIVATE_ICEFIELD.slug!].seasonal,
   faqs: [
     { match: /how long/i, answer: "About 10 to 12 hours, door to door. Your pickup time is agreed with you before the tour." },
     { match: /athabasca glacier and skywalk/i, answer: "Yes, in season, as optional add-ons at extra cost: the Ice Explorer onto the Athabasca Glacier and the glass-floored Columbia Icefield Skywalk. Ask us when you book and we'll time the day around them." },

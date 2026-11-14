@@ -1360,8 +1360,9 @@ export function BookingCheckoutClient({
                           <VStack gap={1}>
                             <Heading level={2}>Pickup & extras</Heading>
                             <Text type="supporting" color="secondary">
-                              Complimentary door-to-door pickup across Banff,
-                              Canmore and Lake Louise.
+                              {departure.tour?.category === "SHARED"
+                                ? "Complimentary pickup at hotels in Banff and Canmore. Small-group tours don't pick up in Lake Louise."
+                                : "Complimentary door-to-door pickup across Banff, Canmore and Lake Louise."}
                             </Text>
                           </VStack>
                           <FormLayout defaultOptionality="required">

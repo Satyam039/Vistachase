@@ -1,3 +1,4 @@
+import { stopsForTour } from "@/modules/bookings/pickup-rules";
 import prisma from "@/lib/db/prisma";
 import { getExpiredHeldSeats, liveCapacity } from "@/modules/reservations/reservation.repository";
 import { inventoryError, sellableInventoryWhere } from "@/modules/departures/inventory";
@@ -48,10 +49,14 @@ export async function getCheckoutDeparture(departureId?: string) {
 
   if (!departure) return null;
 
-  const stops = await prisma.shuttleStop.findMany({
-    where: { isActive: true },
-    orderBy: { sortOrder: "asc" },
-  });
+  // Shared tours don't pick up in Lake Louise (modules/bookings/pickup-rules.ts).
+  const stops = stopsForTour(
+    departure.tour,
+    await prisma.shuttleStop.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: "asc" },
+    }),
+  );
 
   const expiredHeld = await getExpiredHeldSeats([departure.id]);
 

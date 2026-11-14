@@ -12,7 +12,7 @@ import { checkinLink } from "@/lib/security/signed-links";
 import { formatDateOnly, formatTimeOfDay } from "@/lib/utils/time";
 import { paidCents, paymentSummary } from "@/modules/bookings/deposit";
 import type { getBookingByReference } from "@/modules/bookings/booking.repository";
-import { experienceTitle, tourItinerary } from "@/modules/bookings/tour-itinerary";
+import { bookingItinerary, experienceTitle } from "@/modules/bookings/tour-itinerary";
 import { resolveShuttlePickupTime } from "@/modules/shuttles/shuttle-timing";
 
 type VoucherBooking = NonNullable<Awaited<ReturnType<typeof getBookingByReference>>>;
@@ -125,7 +125,8 @@ export async function voucherPdf(booking: VoucherBooking): Promise<Uint8Array> {
 
 /**
  * One A4 voucher page for a booking; `dayLabel` ("Day 2 of 3 · Two-Day Rockies Explorer") for trips.
- * With the tour's itinerary (tour-itinerary.ts), on a second page when it doesn't fit.
+ * With the booking's itinerary (tour-itinerary.ts: the website's current itinerary for exactly what
+ * was booked), set smaller when it is long so the voucher stays one page.
  */
 export async function addVoucherPage(pdf: PDFDocument, booking: VoucherBooking, dayLabel?: string, options: { itinerary?: boolean } = {}) {
   const departure = booking.tourDeparture;
@@ -257,21 +258,44 @@ export async function addVoucherPage(pdf: PDFDocument, booking: VoucherBooking, 
   // The tour's itinerary, on this same page: the voucher is always one page, so a long itinerary
   // is set smaller rather than moved to a second page. Left out inside the emailed itinerary PDF,
   // whose page already lists it.
-  const plan = options.itinerary === false ? null : tourItinerary(departure.tour);
+  const result = options.itinerary === false ? null : bookingItinerary(booking);
+  if (result && !result.ok) {
+    rule();
+    text("Your itinerary", margin, y, 11, bold);
+    y -= 16;
+    for (const line of wrap(result.guestNote, regular, 10, inner)) {
+      text(line, margin, y, 10, regular, MUTED);
+      y -= 13;
+    }
+    y -= 6;
+  }
+  const plan = result?.ok ? result.itinerary : null;
   if (plan) {
     const timeWidth = 96;
+    // The day's timeline, then each stop ("Lake Louise: about 1 hour…"), in one list.
+    const rows = [...plan.steps, ...plan.stops.map((st) => ({ time: "", text: `${st.name}: ${st.text}` }))];
     const fit = [
       { size: 10, lead: 13, gap: 5 },
       { size: 9, lead: 11, gap: 3 },
       { size: 8, lead: 10, gap: 2 },
-    ].map((f) => ({ ...f, lines: plan.steps.map((step) => wrap(step.text, regular, f.size, inner - timeWidth)) }));
-    const neededFor = (f: (typeof fit)[number]) => 38 + f.lines.reduce((n, l) => n + l.length * f.lead + f.gap, 0) + (plan.note ? 16 : 0);
+      { size: 7, lead: 8.5, gap: 1 },
+    ].map((f) => ({ ...f, lines: rows.map((step) => wrap(step.text, regular, f.size, inner - timeWidth)) }));
+    const extra = (plan.heading ? 14 : 0) + (plan.duration ? 14 : 0);
+    const neededFor = (f: (typeof fit)[number]) => 38 + extra + f.lines.reduce((n, l) => n + l.length * f.lead + f.gap, 0) + 16;
     // Room above "On the day", "Need help?" and the footer (about 150pt).
     const f = fit.find((option) => y - neededFor(option) >= 150) ?? fit[fit.length - 1];
     rule();
     text("Your itinerary", margin, y, 11, bold);
-    y -= 18;
-    for (const [i, step] of plan.steps.entries()) {
+    y -= 16;
+    if (plan.heading) {
+      text(plan.heading, margin, y, Math.min(10, f.size + 1), bold, OCEAN);
+      y -= 14;
+    }
+    if (plan.duration) {
+      text(`Duration: ${plan.duration}`, margin, y, Math.min(9.5, f.size), regular, MUTED);
+      y -= 14;
+    }
+    for (const [i, step] of rows.entries()) {
       if (step.time) text(step.time, margin, y, Math.min(9, f.size), bold, OCEAN);
       for (const line of f.lines[i]) {
         text(line, margin + timeWidth, y, f.size);
@@ -279,10 +303,8 @@ export async function addVoucherPage(pdf: PDFDocument, booking: VoucherBooking, 
       }
       y -= f.gap;
     }
-    if (plan.note) {
-      text(plan.note, margin, y, 9, regular, MUTED);
-      y -= 16;
-    }
+    text("Stops, their order and timings can change with the season, weather and road conditions.", margin, y, Math.min(9, f.size), regular, MUTED);
+    y -= 16;
   }
 
   rule();
@@ -332,7 +354,7 @@ export async function itineraryPdf(bookings: VoucherBooking[], trip: { title: st
   };
   // A new page when the next block wouldn't fit above the footer.
   const room = (needed: number) => {
-    if (y - needed > 60) return;
+    if (y - needed > 46) return; // the footer line sits at 32pt
     page = pdf.addPage([595.28, 841.89]);
     header(`Canadian Rockies tours & shuttles - ${reference} (continued)`);
   };
@@ -406,8 +428,7 @@ export async function itineraryPdf(bookings: VoucherBooking[], trip: { title: st
       .join(", ") || `${lead.totalSeats} guest${lead.totalSeats === 1 ? "" : "s"}`;
   row("Booked on", booked);
   row("Lead guest", lead.customerName);
-  row("Email", lead.customerEmail);
-  row("Phone", lead.customerPhone);
+  row("Contact", [lead.customerEmail, lead.customerPhone].filter(Boolean).join(" · "));
   row("Guests", guests);
   row("Special requests", lead.specialRequests);
 
@@ -451,44 +472,93 @@ export async function itineraryPdf(bookings: VoucherBooking[], trip: { title: st
     if (bookings.length > 1) row("Day reference", b.bookingReference, beside);
     if (!(b.status === "CONFIRMED" || b.status === "COMPLETED")) row("Status", b.status.replace(/_/g, " ").toLowerCase(), beside);
     if (dayQr) y = Math.min(y, dayTop - dayQr - 20); // below the QR code and its caption
-    const plan = tourItinerary(d.tour);
-    if (plan) {
+    // The website's current itinerary for exactly this booking (tour-itinerary.ts); when there is
+    // none to send, the guest is told the team will confirm it (staff get a flag).
+    const result = bookingItinerary(b);
+    y -= 3;
+    room(40);
+    text("ITINERARY", margin, y, 8, bold, MUTED);
+    y -= 14;
+    if (!result.ok) {
+      for (const line of wrap(result.guestNote, regular, 9.5, inner)) {
+        room(13);
+        text(line, margin, y, 9.5, regular, MUTED);
+        y -= 12;
+      }
       y -= 3;
-      room(40);
-      text("ITINERARY", margin, y, 8, bold, MUTED);
-      y -= 14;
+    } else {
+      const plan = result.itinerary;
+      if (plan.heading) {
+        for (const line of wrap(plan.heading, bold, 10, inner)) {
+          room(14);
+          text(line, margin, y, 10, bold, OCEAN);
+          y -= 13;
+        }
+        y -= 2;
+      }
+      if (plan.duration) {
+        room(14);
+        text("Duration", margin, y, 8.5, bold, OCEAN);
+        text(plan.duration, margin + 96, y, 9.5);
+        y -= 15;
+      }
       for (const step of plan.steps) {
-        const lines = wrap(step.text, regular, 9.5, inner - 96);
-        room(lines.length * 12 + 4);
+        const lines = wrap(step.text, regular, 9, inner - 96);
+        room(lines.length * 11 + 3);
         if (step.time) text(step.time, margin, y, 8.5, bold, OCEAN);
         for (const line of lines) {
-          text(line, margin + 96, y, 9.5);
-          y -= 12;
+          text(line, margin + 96, y, 9);
+          y -= 11;
         }
-        y -= 3;
+        y -= 2;
       }
-      if (plan.note) {
-        room(14);
-        text(plan.note, margin, y, 8.5, regular, MUTED);
+      if (plan.stops.length) {
+        y -= 2;
+        room(28);
+        text("STOP BY STOP", margin, y, 8, bold, MUTED);
         y -= 13;
+        for (const st of plan.stops) {
+          const nameLines = wrap(st.name, bold, 8.5, 140);
+          const lines = wrap(st.text, regular, 8.5, inner - 150);
+          const rowsNeeded = Math.max(nameLines.length, lines.length);
+          room(rowsNeeded * 10 + 2);
+          nameLines.forEach((line, k) => text(line, margin, y - k * 10, 8.5, bold));
+          lines.forEach((line, k) => text(line, margin + 150, y - k * 10, 8.5));
+          y -= rowsNeeded * 10 + 2;
+        }
+      }
+      if (plan.notes.length) {
+        y -= 2;
+        room(28);
+        text("GOOD TO KNOW", margin, y, 8, bold, MUTED);
+        y -= 13;
+        for (const note of plan.notes) {
+          const lines = wrap(`- ${note}`, regular, 8, inner);
+          room(lines.length * 9.5 + 1);
+          for (const line of lines) {
+            text(line, margin, y, 8, regular, MUTED);
+            y -= 9.5;
+          }
+          y -= 1;
+        }
       }
     }
     y -= 4;
   }
 
+  // Payment on one line, so a single tour with its full itinerary still fits one page.
   rule();
-  heading("Payment");
   const currency = lead.currency;
   const total = bookings.reduce((n, b) => n + b.totalAmount, 0);
   const paid = bookings.reduce((n, b) => n + paidCents(b.payments), 0);
-  row("Total", money(total, currency));
-  row("Paid", money(Math.min(paid, total), currency));
   const deposit = bookings.find((b) => b.paymentPlan === "DEPOSIT" && b.balanceDueAt);
   row(
-    "Balance due",
-    paid >= total
-      ? "Nothing - paid in full"
-      : `${money(total - paid, currency)}${deposit?.balanceDueAt ? ` by ${deposit.balanceDueAt.toLocaleDateString("en-CA", { month: "long", day: "numeric", year: "numeric", timeZone: "America/Edmonton" })}` : ""} (pay it from your voucher page)`,
+    "Payment",
+    `Total ${money(total, currency)} · Paid ${money(Math.min(paid, total), currency)} · ${
+      paid >= total
+        ? "Nothing due - paid in full"
+        : `Balance due ${money(total - paid, currency)}${deposit?.balanceDueAt ? ` by ${deposit.balanceDueAt.toLocaleDateString("en-CA", { month: "long", day: "numeric", year: "numeric", timeZone: "America/Edmonton" })}` : ""} (pay it from your voucher page)`
+    }`,
   );
 
   rule();

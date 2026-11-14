@@ -66,7 +66,9 @@ describe("confirmation email", () => {
     expect(email.text).toContain("Pickup: Moxy Banff");
     expect(email.attachments?.[0].filename).toBe(`Vista-Chase-itinerary-${ref}.pdf`);
     expect(email.attachments?.[0].content.subarray(0, 4).toString()).toBe("%PDF");
-    expect(await pages(email)).toBe(1); // one page: itinerary, tour steps and the check-in QR code
+    // The tour's full current itinerary (timeline, stop by stop, good to know) and the check-in QR
+    // code: one page, or two when the itinerary is long (owner, 2026-11-14: complete itineraries).
+    expect(await pages(email)).toBeLessThanOrEqual(2);
 
     // The website's name for the tour, not the older database title.
     expect(email.html).toContain("Banff &amp; Yoho Discovery (Shared Tour)");
