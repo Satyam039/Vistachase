@@ -21,6 +21,18 @@ export interface UserPersona {
   tonePreference?: "witty_and_playful" | "direct_and_concise" | "warm_and_detailed";
   humorAppreciation?: boolean;
   specialRequests?: string[];
+  travelerLocation?: {
+    ip?: string;
+    city?: string;
+    region?: string;
+    country?: string;
+    countryCode?: string;
+    latitude?: number;
+    longitude?: number;
+    timezone?: string;
+    source?: string;
+    capturedAt?: string;
+  };
 }
 
 export interface KnowledgeGraphEntity {
@@ -222,6 +234,15 @@ export function formatPersonaContextForPrompt(persona?: UserPersona, graph?: Use
 
   if (p.lodgingLocation) {
     lines.push(`• Lodging: ${p.lodgingLocation}${p.lodgingTown ? ` in ${p.lodgingTown}` : ""} (Qualifies for doorstep pickup)`);
+  }
+
+  if (p.travelerLocation) {
+    const loc = p.travelerLocation;
+    const parts = [loc.city, loc.region, loc.country].filter(Boolean).join(", ");
+    const ipStr = loc.ip ? ` [Client IP: ${loc.ip}]` : "";
+    if (parts || ipStr) {
+      lines.push(`• Traveler Location: ${parts || "Detected"}${ipStr}`);
+    }
   }
 
   if (p.travelDates || p.season) {

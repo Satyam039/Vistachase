@@ -8,6 +8,7 @@ import { LiveChatError, guestCloseLiveChat, guestLiveChat, guestSendLiveChat, st
 import { executeAiTool } from "@/lib/ai/ai.tools";
 import { getAuthenticatedStaff } from "@/lib/auth/admin-guard";
 import { CARD_NUMBER, isClaudeConfigured, runConciergeAgent } from "@/lib/ai/concierge.agent";
+import { detectClientLocation, extractClientIp } from "@/lib/geo/location";
 import type { Request, Response, NextFunction } from "express";
 
 const router = Router();
@@ -19,6 +20,16 @@ async function staffContext(req: Request) {
   const staff = await getAuthenticatedStaff(req, ["ADMIN", "OPERATOR", "DISPATCHER"]);
   return { isStaff: !!staff, role: staff?.role, userEmail: staff?.email };
 }
+
+// GET /api/concierge/location: captures client IP and geographic location for personalization
+router.get("/location", rateLimitMiddleware("concierge", { maxRequests: 60, windowSeconds: 60 }), async (req, res) => {
+  try {
+    const location = await detectClientLocation(req);
+    return res.json({ success: true, location });
+  } catch (error) {
+    return res.json({ success: false, location: { ip: extractClientIp(req), source: "fallback" } });
+  }
+});
 
 // POST /api/concierge/stream: Server-Sent Events. Events: status (what the agent is doing),
 // text (reply deltas), done (final payload: message, cards, sessionState), error.
@@ -37,11 +48,21 @@ router.post("/stream", rateLimitMiddleware("concierge", { maxRequests: 30, windo
   const thinkingMode: "standard" | "deep" = req.body?.thinkingMode === "deep" ? "deep" : "standard";
   const attachments = Array.isArray(req.body?.attachments) ? req.body.attachments : undefined;
 
+  const detectedLocation = await detectClientLocation(req);
+  const sessionPayload = { ...(req.body?.sessionState || {}) };
+  if (!sessionPayload.userPersona) sessionPayload.userPersona = {};
+  if (!sessionPayload.userPersona.travelerLocation) {
+    sessionPayload.userPersona.travelerLocation = detectedLocation;
+  }
+  if (!sessionPayload.clientLocation) {
+    sessionPayload.clientLocation = detectedLocation;
+  }
+
   try {
     if (isClaudeConfigured()) {
       await runConciergeAgent(
         messages,
-        req.body?.sessionState,
+        sessionPayload,
         await staffContext(req),
         (e) => {
           if (e.type === "text") send("text", { text: e.text });
@@ -52,7 +73,7 @@ router.post("/stream", rateLimitMiddleware("concierge", { maxRequests: 30, windo
       );
     } else {
       // No AI key configured: answers come from the booking system's data only, in one piece.
-      const response = await answerWithoutModel(messages, req.body?.sessionState, await staffContext(req), language);
+      const response = await answerWithoutModel(messages, sessionPayload, await staffContext(req), language);
       send("text", { text: response.message });
       send("done", { success: true, ...response });
     }
@@ -75,9 +96,20 @@ router.post("/", rateLimitMiddleware("concierge", { maxRequests: 30, windowSecon
     const thinkingMode: "standard" | "deep" = req.body?.thinkingMode === "deep" ? "deep" : "standard";
     const attachments = Array.isArray(req.body?.attachments) ? req.body.attachments : undefined;
     const ctx = await staffContext(req);
+
+    const detectedLocation = await detectClientLocation(req);
+    const sessionPayload = { ...(req.body?.sessionState || {}) };
+    if (!sessionPayload.userPersona) sessionPayload.userPersona = {};
+    if (!sessionPayload.userPersona.travelerLocation) {
+      sessionPayload.userPersona.travelerLocation = detectedLocation;
+    }
+    if (!sessionPayload.clientLocation) {
+      sessionPayload.clientLocation = detectedLocation;
+    }
+
     const response = isClaudeConfigured()
-      ? await runConciergeAgent(messages, req.body?.sessionState, ctx, undefined, { language, thinkingMode, attachments })
-      : await answerWithoutModel(messages, req.body?.sessionState, ctx, language);
+      ? await runConciergeAgent(messages, sessionPayload, ctx, undefined, { language, thinkingMode, attachments })
+      : await answerWithoutModel(messages, sessionPayload, ctx, language);
     return res.json({ success: true, ...response });
   } catch (error) {
     console.error("Concierge route error:", error);

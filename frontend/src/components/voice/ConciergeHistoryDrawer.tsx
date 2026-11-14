@@ -26,6 +26,13 @@ export interface ConciergeHistoryDrawerProps {
     partySize?: number;
     lodgingLocation?: string;
     interests?: string[];
+    travelerLocation?: {
+      ip?: string;
+      city?: string;
+      region?: string;
+      country?: string;
+      source?: string;
+    };
   };
 }
 
@@ -109,20 +116,30 @@ export function ConciergeHistoryDrawer({
         </div>
 
         {/* Persona recognition banner if detected */}
-        {userPersona?.travelerType && (
+        {(userPersona?.travelerType || userPersona?.travelerLocation) && (
           <div className="mx-4 mt-3 rounded-xl border border-ocean-100 bg-ocean-50/70 p-3 text-xs text-slate-700">
             <div className="flex items-center gap-1.5 font-medium text-ocean-900">
               <Sparkles className="h-3.5 w-3.5 text-amber-500" />
               <span>Learned Traveler Profile</span>
             </div>
             <div className="mt-1 flex flex-wrap gap-1 text-[11px] text-slate-600">
-              <span className="rounded-md bg-white/80 px-1.5 py-0.5 border border-ocean-200/60 capitalize">
-                {userPersona.travelerType}
-                {userPersona.partySize ? ` (${userPersona.partySize})` : ""}
-              </span>
+              {userPersona.travelerType && (
+                <span className="rounded-md bg-white/80 px-1.5 py-0.5 border border-ocean-200/60 capitalize">
+                  {userPersona.travelerType}
+                  {userPersona.partySize ? ` (${userPersona.partySize})` : ""}
+                </span>
+              )}
               {userPersona.lodgingLocation && (
                 <span className="rounded-md bg-white/80 px-1.5 py-0.5 border border-ocean-200/60">
                   📍 {userPersona.lodgingLocation}
+                </span>
+              )}
+              {userPersona.travelerLocation && (
+                <span
+                  className="rounded-md bg-white/80 px-1.5 py-0.5 border border-ocean-200/60"
+                  title={`Detected via IP: ${userPersona.travelerLocation.ip || "Unknown"}`}
+                >
+                  🌐 {[userPersona.travelerLocation.city, userPersona.travelerLocation.region, userPersona.travelerLocation.country].filter(Boolean).join(", ") || userPersona.travelerLocation.ip || "Detected Location"}
                 </span>
               )}
             </div>
