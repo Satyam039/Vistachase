@@ -36,9 +36,38 @@ export interface BokunCategory {
   title: string;
 }
 
+/** One answer Bókun refused: `reason` INVALID or MISSING, `path` a JSON pointer into our request. */
+export interface BokunAnswerError {
+  reason: string;
+  path?: string;
+  questionId?: string;
+}
+
+/**
+ * The answers Bókun refused, from its InvalidAnswersException ("fields": {"errors": [{"reason":
+ * "INVALID", "path": "/mainContactDetails/4", "questionId": "phoneNumber"}]}), or null when the
+ * error is something else.
+ */
+export function answerErrors(error: unknown): BokunAnswerError[] | null {
+  if (!(error instanceof BokunApiError) || error.status >= 500 || !/InvalidAnswers/i.test(error.message)) return null;
+  const json = error.message.slice(error.message.indexOf("{"));
+  try {
+    const list = (JSON.parse(json) as { fields?: { errors?: unknown[] } })?.fields?.errors;
+    if (Array.isArray(list)) {
+      return list
+        .filter((e): e is Record<string, unknown> => Boolean(e) && typeof e === "object")
+        .map((e) => ({ reason: String(e.reason ?? "").toUpperCase(), path: e.path == null ? undefined : String(e.path), questionId: e.questionId == null ? undefined : String(e.questionId) }));
+    }
+  } catch {
+    // Not JSON: read what we can from the text.
+  }
+  const found = [...error.message.matchAll(/\b(INVALID|MISSING)\b[^\n]*?question(?:Id)?["\s:=]*"?([\w-]+)/gi)];
+  return found.map((m) => ({ reason: m[1].toUpperCase(), questionId: m[2] }));
+}
+
 /** Bókun's refusal of the main contact's phone number ("not a valid phone number"). */
 export function invalidPhone(error: unknown) {
-  return error instanceof BokunApiError && error.status < 500 && /InvalidAnswers/i.test(error.message) && /phoneNumber/.test(error.message) && /INVALID/.test(error.message);
+  return (answerErrors(error) ?? []).some((e) => e.reason === "INVALID" && e.questionId === "phoneNumber");
 }
 
 /** Bókun has no room for this party on this departure (sold out, closed, or not offered). */
@@ -180,10 +209,10 @@ function splitName(name: string) {
   return { first: first || name, last: rest.join(" ") || "-" };
 }
 
-function mainContact(input: BokunReservationInput, withPhone = true) {
+function mainContact(input: BokunReservationInput) {
   const { first, last } = splitName(input.customerName);
   // Bókun refuses a phone it can't read ("not a valid phone number"): E.164 or none (it's in the note).
-  const phone = withPhone ? toE164(input.customerPhone, input.country) : null;
+  const phone = toE164(input.customerPhone, input.country);
   return [
     { questionId: "firstName", values: [first] },
     { questionId: "lastName", values: [last] },
@@ -277,6 +306,101 @@ function optionQuestions(options: unknown): { activity: BokunQuestion[]; passeng
   };
 }
 
+/** Answers Bókun can't do without: never dropped. */
+const ESSENTIAL = new Set(["firstName", "lastName", "email"]);
+
+/** The value at a JSON pointer ("/activityBookings/0/passengers/1") in our request. */
+function at(root: unknown, path: string): unknown {
+  return path
+    .split("/")
+    .filter(Boolean)
+    .reduce<unknown>((node, key) => (node && typeof node === "object" ? (node as Record<string, unknown>)[key] : undefined), root);
+}
+
+/** Every answer list in our request: main contact, the activity booking's, each passenger's. */
+function answerLists(booking: Record<string, unknown>): { path: string; list: Answer[] }[] {
+  const lists: { path: string; list: Answer[] }[] = [];
+  const add = (path: string, list: unknown) => {
+    if (Array.isArray(list) && !lists.some((l) => l.list === list)) lists.push({ path, list: list as Answer[] });
+  };
+  add("/mainContactDetails", booking.mainContactDetails);
+  const activities = Array.isArray(booking.activityBookings) ? (booking.activityBookings as Record<string, unknown>[]) : [];
+  activities.forEach((a, i) => {
+    add(`/activityBookings/${i}/answers`, a.answers);
+    add(`/activityBookings/${i}/questions`, a.questions);
+    const passengers = Array.isArray(a.passengers) ? (a.passengers as Record<string, unknown>[]) : [];
+    passengers.forEach((p, j) => {
+      add(`/activityBookings/${i}/passengers/${j}/answers`, p.answers);
+      add(`/activityBookings/${i}/passengers/${j}/questions`, p.questions);
+      add(`/activityBookings/${i}/passengers/${j}/passengerDetails`, p.passengerDetails);
+    });
+  });
+  return lists;
+}
+
+/**
+ * Fixes the answers Bókun refused, in place. Returns false when nothing could be fixed (then the
+ * refusal stands and staff are asked).
+ *   INVALID: the answer is taken out (its value is in the booking note), except the name and email.
+ *   MISSING: answered with the guest's phone or country when that's asked, otherwise a pointer to
+ *            the booking note, on the activity booking or the passenger the path names.
+ */
+export function repairAnswers(booking: Record<string, unknown>, errors: BokunAnswerError[], input: BokunReservationInput): boolean {
+  let changed = false;
+  // Refused entries are found first and removed after, so the paths' indexes stay right.
+  const refused = new Set<Answer>();
+  for (const e of errors) {
+    if (e.reason !== "INVALID" || (e.questionId && ESSENTIAL.has(e.questionId))) continue;
+    // By question: in the list the path names, or anywhere when it names none we sent. Bókun's
+    // index in the path doesn't always match ours, so it's used only when there's no question ID.
+    const lists = answerLists(booking);
+    const named = lists.filter(({ path }) => e.path?.startsWith(`${path}/`));
+    for (const { path, list } of named.length > 0 && named.some(({ list }) => list.some((a) => a?.questionId === e.questionId)) ? named : lists) {
+      const index = e.path?.startsWith(`${path}/`) ? Number(e.path.slice(path.length + 1).split("/")[0]) : NaN;
+      list.forEach((a, k) => {
+        const hit = e.questionId != null ? a?.questionId === e.questionId : k === index;
+        if (hit && !ESSENTIAL.has(a?.questionId)) refused.add(a);
+      });
+    }
+  }
+  for (const { list } of answerLists(booking)) {
+    for (let k = list.length - 1; k >= 0; k--) {
+      if (refused.has(list[k])) {
+        list.splice(k, 1);
+        changed = true;
+      }
+    }
+  }
+  for (const e of errors) {
+    const id = e.questionId;
+    if (e.reason === "INVALID") {
+      continue;
+    } else if (e.reason === "MISSING" && id) {
+      const value =
+        id === "phoneNumber" ? toE164(input.customerPhone, input.country) : id === "nationality" ? input.country : `See booking note (vistachase.com ${input.bookingReference})`;
+      if (!value) continue;
+      const lists = answerLists(booking);
+      if (lists.some(({ list }) => list.some((a) => a?.questionId === id && a.values?.length))) continue; // already answered
+      let target: unknown;
+      if (/^\/mainContactDetails/.test(e.path ?? "") || id === "phoneNumber" || id === "nationality") target = booking.mainContactDetails;
+      else {
+        const passenger = /^(\/activityBookings\/\d+\/passengers\/\d+)/.exec(e.path ?? "")?.[1];
+        const owner = (at(booking, passenger ?? (/^(\/activityBookings\/\d+)/.exec(e.path ?? "")?.[1] ?? "/activityBookings/0")) ?? {}) as Record<string, unknown>;
+        if (!Array.isArray(owner.answers)) {
+          owner.answers = Array.isArray(owner.questions) ? owner.questions : [];
+        }
+        owner.questions = owner.answers;
+        target = owner.answers;
+      }
+      if (Array.isArray(target)) {
+        (target as Answer[]).push({ questionId: id, values: [value] });
+        changed = true;
+      }
+    }
+  }
+  return changed;
+}
+
 /**
  * Reserves the booking in Bókun for payment taken by us; returns Bókun's confirmation code.
  * `beforeSubmit` runs just before the one call that creates the reservation, so a caller can
@@ -368,16 +492,19 @@ export async function reserveInBokun(
       // The site sends its own confirmation email and voucher.
       sendNotificationToMainContact: false,
     }) as Promise<{ booking?: { confirmationCode?: string } } | null>;
-  let submitted: { booking?: { confirmationCode?: string } } | null;
-  try {
-    submitted = await submit();
-  } catch (error) {
-    // A refused answer creates nothing, so sending it again is safe. Bókun still not reading the
-    // phone: send the booking without it, once (the phone is in the booking note).
-    if (!invalidPhone(error) || !directBooking.mainContactDetails.some((d) => d.questionId === "phoneNumber")) throw error;
-    console.warn(`[bokun] ${input.bookingReference}: Bókun refused the phone number; sending it without (it's in the note).`);
-    directBooking.mainContactDetails = mainContact(input, false);
-    submitted = await submit();
+  let submitted: { booking?: { confirmationCode?: string } } | null = null;
+  // A refused answer creates nothing, so sending it again is safe. Each refusal names the answers
+  // Bókun didn't like: those are fixed (an invalid optional answer goes, it's in the note; a
+  // missing one gets the guest's details or a pointer to the note) and the booking goes again.
+  for (let attempt = 0; ; attempt++) {
+    try {
+      submitted = await submit();
+      break;
+    } catch (error) {
+      const errors = answerErrors(error);
+      if (!errors || attempt >= 3 || !repairAnswers(directBooking as unknown as Record<string, unknown>, errors, input)) throw error;
+      console.warn(`[bokun] ${input.bookingReference}: Bókun refused ${errors.map((e) => `${e.questionId ?? e.path} (${e.reason})`).join(", ")}; fixed and sending again.`);
+    }
   }
   const code = submitted?.booking?.confirmationCode?.trim();
   if (!code) throw new Error("Bókun accepted the reservation but returned no confirmation code.");
@@ -496,6 +623,39 @@ async function bokunTotal(client: BokunApi, code: string, fallback: number): Pro
     // Not readable: fall back to our amount.
   }
   return fallback;
+}
+
+/** A booking Bókun already has under our reference. `gone`: lapsed, aborted or cancelled. */
+export interface BokunFoundBooking {
+  code: string;
+  status: string;
+  gone: boolean;
+}
+
+/**
+ * Bókun's booking with our reference (externalBookingReference), or null when Bókun's booking
+ * search doesn't show one or can't be read. Only an exact match of our reference counts.
+ */
+export async function findInBokun(client: BokunApi, reference: string): Promise<BokunFoundBooking | null> {
+  try {
+    const found = (await client.fetch("POST", "/booking.json/booking-search", {
+      externalBookingReference: reference,
+      textFilter: reference,
+      page: 1,
+      pageSize: 20,
+    })) as { results?: Record<string, unknown>[]; items?: Record<string, unknown>[] } | null;
+    const rows = (Array.isArray(found?.results) ? found!.results! : Array.isArray(found?.items) ? found!.items! : []).filter(
+      (b) => String(b?.externalBookingReference ?? "").trim() === reference && typeof b?.confirmationCode === "string" && b.confirmationCode,
+    );
+    const live = (b: Record<string, unknown>) => /^(CONFIRMED|RESERVED|ARRIVED)$/i.test(String(b.status ?? ""));
+    const best = rows.find(live) ?? rows[0];
+    if (!best) return null;
+    const status = String(best.status ?? "").toUpperCase();
+    return { code: String(best.confirmationCode), status: status === "ARRIVED" ? "CONFIRMED" : status, gone: /TIMEOUT|ABORTED|CANCELLED|EXPIRED/.test(status) };
+  } catch (error) {
+    console.warn(`[bokun] booking search for ${reference} failed: ${(error as Error).message.slice(0, 200)}`);
+    return null;
+  }
 }
 
 /** Releases a reservation that was never paid. */

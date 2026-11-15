@@ -64,14 +64,20 @@ Tours retired from the owner's product list (2026-11-05: Heart of Banff, the old
 | Every 15 minutes | Bókun's seats left and seats booked set our seat counts on matching departures. Live account: departures Bókun doesn't offer go off sale, and come back on sale when Bókun offers them. Prices and statuses stay the website's. | `src/modules/bokun/availability-sync.ts` |
 | Every 6 hours | The same read for the dates past `BOKUN_SYNC_DAYS`, out to five years (the calendar's range, owner 2026-11-06), a year per request, so far-off dates Bókun doesn't run go off sale too. | `src/jobs/tasks.ts` `syncFarCalendarFromBokun` |
 
-The change for Bókun is queued in the same database transaction as the booking's status change (`BookingSyncTask`), sent a moment later, and retried with backoff (1, 5, 15, 60, 180, 360 minutes) if Bókun can't be reached. A Bókun outage never blocks or loses a website booking. A booking always goes to Bókun on its own date and start time; when Bókun doesn't have that start, staff are flagged (it's never moved to another day).
+The change for Bókun is queued in the same database transaction as the booking's status change (`BookingSyncTask`), sent a moment later, and retried with backoff (1, 5, 15, 60, 180, 360 minutes) if Bókun can't be reached, then every 6 hours until the trip date (staff get one flag after the sixth try; it clears itself when the booking goes in). A Bókun outage never blocks or loses a website booking.
+
+Fixed without a person:
+- Bókun refuses an answer (InvalidAnswersException): an invalid phone, nationality or product-question answer is taken out (it's in the booking note) and a missing one is answered with the guest's details or "See booking note", then the booking is sent again (up to three times). Only the name and email are never dropped.
+- Phones go in E.164 (`toE164`): spaces and brackets go, a local 0 typed after the country code goes ("+44 07700…" is "+447700…", not Italy's +39), and a code typed twice ("+1 1 403…") is fixed.
+- Bókun didn't answer while creating it: the next try first looks it up in Bókun's booking search by our reference (exact match only). Reserved there: that one is confirmed. Confirmed there: it's marked synced. Lapsed or cancelled there: reserved again. Not shown: it stops for staff (below), so nothing is ever created twice.
+- The server restarted mid-create: same lookup on the next try. A booking always goes to Bókun on its own date and start time; when Bókun doesn't have that start, staff are flagged (it's never moved to another day).
 
 ## When something needs a person
 
 A booking stops and gets a flag (**Admin → Bookings → Flags**, note starting "Bókun:") when:
 - Bókun has no seats or no matching start time for it;
-- Bókun refuses it (wrong product setup, the key's channel can't reserve for external payment);
-- Bókun didn't answer while creating it, so it may already be in Bókun. It is never sent again automatically: look for the booking reference in Bókun first.
+- Bókun refuses it for something the answers fix above can't cover (wrong product setup, a bad email, the key's channel can't reserve for external payment);
+- Bókun didn't answer while creating it and its booking search doesn't show it, so it may still be in Bókun. It is never sent again automatically: look for the booking reference in Bókun first.
 - a cancellation is refused by Bókun.
 
 Fix it in Bókun by hand and resolve the flag, or press **Retry** in the Bókun tab. The nightly booking check emails any confirmed booking that isn't in Bókun.

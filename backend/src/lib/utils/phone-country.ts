@@ -74,6 +74,27 @@ export function toE164(phone: string | null | undefined, country?: string | null
       return null;
     }
   }
-  digits = digits.replace(/^0+/, "");
+  digits = withoutTrunkZero(digits.replace(/^0+/, ""), country);
   return digits.length >= 8 && digits.length <= 15 ? `+${digits}` : null;
+}
+
+/** Countries whose numbers keep their leading 0 after the country code (Italian landlines: +39 06…). */
+const KEEPS_ZERO = new Set(["39", "378"]);
+
+/**
+ * "+44 07700 900123" (the checkout puts the picked country's code in front of what the guest typed,
+ * and many guests type the local 0) is "+447700900123". Also "+1 1 403 555 0100" (the 1 typed twice).
+ * `digits` start with the country code.
+ */
+function withoutTrunkZero(digits: string, country?: string | null) {
+  const iso = knownCountry(country);
+  const code =
+    iso && digits.startsWith(DIAL[iso])
+      ? DIAL[iso]
+      : [3, 2, 1].map((len) => digits.slice(0, len)).find((prefix) => BY_DIAL.has(prefix));
+  if (!code) return digits;
+  let national = digits.slice(code.length);
+  if (!KEEPS_ZERO.has(code)) national = national.replace(/^0+/, "");
+  if (code === "1" && national.length === 11 && national.startsWith("1")) national = national.slice(1);
+  return code + national;
 }
