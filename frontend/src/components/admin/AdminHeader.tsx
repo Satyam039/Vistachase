@@ -7,7 +7,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { LiveChatAlerts } from "@/components/admin/staff/LiveChatAlerts";
-import { CalendarDays, Handshake, Headset, LayoutDashboard, Lock, ArrowRight, MapPin, MessageSquare, ScrollText, Search, Settings, Tag, Ticket, Truck, Users, Workflow } from "lucide-react";
+import { ShieldAlert, CalendarDays, Handshake, Headset, LayoutDashboard, Lock, ArrowRight, MapPin, MessageSquare, ScrollText, Search, Settings, Tag, Ticket, Truck, Users, Workflow } from "lucide-react";
 
 // Admin pages are for admins, operators and dispatchers only (src/lib/portals.ts). SEO and page
 // copy live in the separate SEO portal at /seo, which admins open from here.
@@ -25,6 +25,7 @@ export const ADMIN_TABS = [
   { label: "Live chat", href: "/admin/live-chat", icon: Headset, roles: OPS },
   { label: "Messages", href: "/admin/messages", icon: MessageSquare, roles: OPS },
   { label: "Audit log", href: "/admin/audit", icon: ScrollText, roles: ["ADMIN"] },
+  { label: "Security", href: "/admin/security", icon: ShieldAlert, roles: ["ADMIN"] },
   { label: "Staff", href: "/admin/staff", icon: Users, roles: ["ADMIN"] },
   { label: "Settings", href: "/admin/settings", icon: Settings, roles: ["ADMIN"] },
 ];

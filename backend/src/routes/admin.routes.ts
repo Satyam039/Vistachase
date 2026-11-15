@@ -38,6 +38,8 @@ import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
 import { verifyBookingLink, voucherLink } from "@/lib/security/signed-links";
 import { emailSchema, parseOr400, referenceSchema, z } from "@/lib/security/validate";
 import { dateOnly, getMountainTimeInstant, timeOfDay, todayInMountainTime } from "@/lib/utils/time";
+import net from "node:net";
+import { clientIp, forgetBlocklist, isPrivateAddress } from "@/modules/security/visitor-log";
 
 const router = Router();
 type StaffRequest = Request & { staff: TokenPayload };
@@ -1040,6 +1042,141 @@ router.post("/bokun/retry/:id", requireStaff(MANAGERS), async (req, res, next) =
     const result = await retryBokunSync(id(req));
     if (result.status === 200) await audit(req, "BOKUN_RETRY", "Booking", id(req), {});
     send(res, result);
+  } catch (e) {
+    next(e);
+  }
+});
+
+// ---------------------------------------------------------------------------------------------
+// Security (admins only): who sent each public form, with IP and location, and the blocklist
+// (modules/security/visitor-log.ts). Every block and unblock is written to the audit log.
+
+const securityQuery = z.object({
+  outcome: z.enum(["ACCEPTED", "SPAM", "REFUSED", "BLOCKED", "FLAGGED"]).optional(),
+  form: z.string().trim().regex(/^[A-Z_]{2,30}$/).optional(),
+  q: z.string().trim().max(200).optional(),
+  before: z.string().max(64).optional(),
+});
+
+router.get("/security/events", requireStaff(["ADMIN"]), async (req, res, next) => {
+  try {
+    const q = parseOr400(securityQuery, req.query, res);
+    if (!q) return;
+    const search = q.q?.toLowerCase();
+    const where = {
+      ...(q.outcome === "FLAGGED" ? { outcome: { in: ["SPAM", "REFUSED", "BLOCKED"] } } : q.outcome ? { outcome: q.outcome } : {}),
+      ...(q.form ? { form: q.form } : {}),
+      ...(search
+        ? { OR: [{ ip: search }, { email: { contains: search } }, { city: { contains: q.q, mode: "insensitive" as const } }, { country: { contains: q.q, mode: "insensitive" as const } }] }
+        : {}),
+    };
+    const page = await prisma.securityEvent.findMany({
+      where,
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: 101,
+      ...(q.before ? { cursor: { id: q.before }, skip: 1 } : {}),
+    });
+    const since = new Date(Date.now() - 7 * 24 * 60 * 60_000);
+    const [blocked, topIps, counts] = await Promise.all([
+      prisma.blockedSender.findMany({ select: { kind: true, value: true, id: true } }),
+      q.before
+        ? Promise.resolve([])
+        : prisma.securityEvent.groupBy({
+            by: ["ip"],
+            where: { createdAt: { gte: since }, outcome: { in: ["SPAM", "REFUSED", "BLOCKED"] } },
+            _count: { _all: true },
+            orderBy: { _count: { ip: "desc" } },
+            take: 10,
+          }),
+      q.before
+        ? Promise.resolve([])
+        : prisma.securityEvent.groupBy({ by: ["outcome"], where: { createdAt: { gte: since } }, _count: { _all: true } }),
+    ]);
+    const blockedId = new Map(blocked.map((b) => [`${b.kind}:${b.value}`, b.id]));
+    // A location for each top IP, from its latest row that has one.
+    const places = topIps.length
+      ? await prisma.securityEvent.findMany({
+          where: { ip: { in: topIps.map((t) => t.ip) }, OR: [{ city: { not: null } }, { country: { not: null } }] },
+          distinct: ["ip"],
+          orderBy: { createdAt: "desc" },
+          select: { ip: true, city: true, region: true, country: true },
+        })
+      : [];
+    const placeOf = new Map(places.map((p) => [p.ip, p]));
+    res.json({
+      success: true,
+      yourIp: clientIp(req),
+      events: page.slice(0, 100).map((e) => ({
+        ...e,
+        ipBlockId: blockedId.get(`IP:${e.ip}`) ?? null,
+        emailBlockId: e.email ? blockedId.get(`EMAIL:${e.email}`) ?? null : null,
+      })),
+      next: page.length > 100 ? page[99].id : null,
+      topIps: topIps.map((t) => ({ ip: t.ip, count: t._count._all, ...(placeOf.get(t.ip) ?? {}), ipBlockId: blockedId.get(`IP:${t.ip}`) ?? null })),
+      last7Days: Object.fromEntries(counts.map((c) => [c.outcome, c._count._all])),
+    });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.get("/security/blocked", requireStaff(["ADMIN"]), async (_req, res, next) => {
+  try {
+    const rows = await prisma.blockedSender.findMany({ orderBy: { createdAt: "desc" }, take: 1000 });
+    const ids = [...new Set(rows.map((r) => r.createdById).filter((v): v is string => !!v))];
+    const people = ids.length ? await prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, email: true } }) : [];
+    const who = new Map(people.map((p) => [p.id, p.name || p.email]));
+    res.json({ success: true, blocked: rows.map((r) => ({ ...r, createdBy: r.createdById ? who.get(r.createdById) ?? null : null })) });
+  } catch (e) {
+    next(e);
+  }
+});
+
+const blockSchema = z.object({
+  kind: z.enum(["IP", "EMAIL"]),
+  value: z.string().trim().min(3).max(200),
+  reason: z.string().trim().max(200).optional(),
+});
+
+router.post("/security/blocked", requireStaff(["ADMIN"]), rateLimitMiddleware("admin_block", { maxRequests: 60, windowSeconds: 600 }), async (req, res, next) => {
+  try {
+    const body = parseOr400(blockSchema, req.body, res);
+    if (!body) return;
+    let value = body.value;
+    if (body.kind === "IP") {
+      value = value.replace(/^::ffff:/i, "").toLowerCase();
+      if (!net.isIP(value)) return res.status(400).json({ success: false, error: "That isn't an IP address." });
+      if (isPrivateAddress(value)) return res.status(400).json({ success: false, error: "That's a private or server address. Blocking it could block every visitor." });
+      if (value === clientIp(req)) return res.status(400).json({ success: false, error: "That's your own IP address right now. Blocking it would block you." });
+    } else {
+      value = value.toLowerCase();
+      if (!emailSchema.safeParse(value).success) return res.status(400).json({ success: false, error: "That isn't an email address." });
+      const staffUser = await prisma.user.findUnique({ where: { email: value }, select: { role: true } });
+      if (staffUser && staffUser.role !== "CUSTOMER" && staffUser.role !== "AFFILIATE") {
+        return res.status(400).json({ success: false, error: "That email belongs to a staff account." });
+      }
+    }
+    const row = await prisma.blockedSender.upsert({
+      where: { kind_value: { kind: body.kind, value } },
+      create: { kind: body.kind, value, reason: body.reason || null, createdById: staffId(req) },
+      update: { reason: body.reason || undefined },
+    });
+    forgetBlocklist();
+    await audit(req, "SENDER_BLOCKED", "BlockedSender", row.id, { kind: body.kind, value, reason: body.reason ?? null });
+    res.status(201).json({ success: true, blocked: row });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.delete("/security/blocked/:id", requireStaff(["ADMIN"]), async (req, res, next) => {
+  try {
+    const row = await prisma.blockedSender.findUnique({ where: { id: id(req) } });
+    if (!row) return res.status(404).json({ success: false, error: "That block was already removed." });
+    await prisma.blockedSender.delete({ where: { id: row.id } });
+    forgetBlocklist();
+    await audit(req, "SENDER_UNBLOCKED", "BlockedSender", row.id, { kind: row.kind, value: row.value });
+    res.json({ success: true });
   } catch (e) {
     next(e);
   }

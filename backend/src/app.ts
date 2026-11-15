@@ -31,6 +31,7 @@ import contentRoutes from "@/routes/content.routes";
 import { apiJsonReplacer } from "@/lib/utils/time";
 import { isAllowedOrigin } from "@/lib/security/origin-check";
 import { renamedMediaRedirect } from "@/modules/media/renamed-media";
+import { blockedSenderGuard } from "@/modules/security/visitor-log";
 
 export function createApp() {
   const app = express();
@@ -86,6 +87,10 @@ export function createApp() {
     console.warn(`Cross-site request refused: ${req.method} ${req.path} origin=${origin} host=${requestHost ?? "-"}`);
     return res.status(403).json({ success: false, error: "Cross-site request refused" });
   });
+
+  // IPs and emails an admin blocked under Admin → Security can't send forms, sign up, chat or book
+  // (modules/security/visitor-log.ts). Staff sign-in and the staff areas are never blocked.
+  app.use("/api", blockedSenderGuard);
 
 
   app.use((_req, res, next) => {

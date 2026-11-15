@@ -1,3 +1,4 @@
+import { recordSubmission } from "@/modules/security/visitor-log";
 import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
 import { Router } from "express";
 import { z } from "zod";
@@ -50,8 +51,9 @@ const schema = z.object({
 const hits = new Map<string, number[]>();
 
 /** Bot: answer as if it worked, so it learns nothing; save and email nothing. */
-function dropAsSpam(res: import("express").Response, reason: string) {
+function dropAsSpam(req: import("express").Request, res: import("express").Response, reason: string) {
   console.warn(`[enquiry] dropped as spam: ${reason}`);
+  void recordSubmission(req, { form: "ENQUIRY", outcome: "SPAM", reason, email: req.body?.email, name: req.body?.name });
   return res.status(201).json({ success: true });
 }
 
@@ -76,16 +78,17 @@ router.post("/", rateLimitMiddleware("enquiry_create", { maxRequests: 5, windowS
   const dateErrors = enquiryDateErrors(data.date || undefined, data.toDate || undefined, todayInMountainTime());
   if (dateErrors) return res.status(400).json({ success: false, error: "Please check the highlighted fields.", fields: dateErrors });
 
-  if (data.website) return dropAsSpam(res, "honeypot filled");
-  if (looksLikeBotName(data.name) || isSyntheticBotName(data.name)) return dropAsSpam(res, "random-string name");
-  if (looksLikeBotMessage(data.message) || isSpamMessage(data.message)) return dropAsSpam(res, "message has no words");
-  if (isSuspiciousEmail(data.email)) return dropAsSpam(res, "suspicious email address");
+  if (data.website) return dropAsSpam(req, res, "honeypot filled");
+  if (looksLikeBotName(data.name) || isSyntheticBotName(data.name)) return dropAsSpam(req, res, "random-string name");
+  if (looksLikeBotMessage(data.message) || isSpamMessage(data.message)) return dropAsSpam(req, res, "message has no words");
+  if (isSuspiciousEmail(data.email)) return dropAsSpam(req, res, "suspicious email address");
   const tokenProblem = formTokenProblem(data.formToken, now);
-  if (tokenProblem) return dropAsSpam(res, tokenProblem);
+  if (tokenProblem) return dropAsSpam(req, res, tokenProblem);
   if (!(await verifyTurnstile(data.turnstileToken, req.ip))) {
+    void recordSubmission(req, { form: "ENQUIRY", outcome: "REFUSED", reason: "security check failed", email: data.email, name: data.name });
     return res.status(400).json({ success: false, error: "Please complete the security check and send again." });
   }
-  if (tooManyFromEmail(data.email, now)) return dropAsSpam(res, "more than 3 enquiries from one email today");
+  if (tooManyFromEmail(data.email, now)) return dropAsSpam(req, res, "more than 3 enquiries from one email today");
 
   recent.push(now);
   hits.set(key, recent);
@@ -98,6 +101,7 @@ router.post("/", rateLimitMiddleware("enquiry_create", { maxRequests: 5, windowS
     toDate: toDate || undefined,
     stayingIn: stayingIn || undefined,
   });
+  void recordSubmission(req, { form: "ENQUIRY", outcome: "ACCEPTED", email: data.email, name: data.name });
   return res.status(201).json({ success: true, id: result.id });
 });
 
