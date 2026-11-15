@@ -325,6 +325,36 @@ describe("website bookings reach Bókun", () => {
     expect(bokun.made("/checkout.json/submit")).toHaveLength(2);
   });
 
+  it("sends the phone in E.164, and without it once if Bókun still can't read it", async () => {
+    const dep = await departure(sharedTourId, { time: "12:25" });
+    bokun.slot("796650", DAY, "12:25", 10);
+    bokun.failSubmit = new BokunApiError(400, 'Bókun API Error: 400 Bad Request - {"message":"Error occurred: is.bokun.dtos.questions.validation.InvalidAnswersException - Invalid or missing answers for the booking","fields":{"errors":[{"reason":"INVALID","path":"/mainContactDetails/4","questionId":"phoneNumber","message":"Not a valid phone number"}]}}');
+    const booking = await book(dep);
+    let first = true;
+    const original = bokun.failSubmit;
+    // Refuse only the first submit.
+    const api = bokun.api();
+    setBokunClientForTests({
+      ...api,
+      fetch: async (method: "GET" | "POST" | "PUT" | "DELETE", path: string, body?: any) => {
+        if (path.startsWith("/checkout.json/submit") && first) {
+          first = false;
+          bokun.calls.push({ method, path, body: JSON.parse(JSON.stringify(body)) });
+          throw original;
+        }
+        bokun.failSubmit = null;
+        return api.fetch(method, path, body);
+      },
+    } as BokunApi);
+    await run(booking.id);
+    expect((await reload(booking.id)).externalSyncStatus).toBe("SYNCED");
+    const submits = bokun.made("/checkout.json/submit").map((c) => c.body.directBooking.mainContactDetails);
+    expect(submits).toHaveLength(2);
+    expect(submits[0].find((d: any) => d.questionId === "phoneNumber").values).toEqual(["+14035550100"]);
+    expect(submits[1].find((d: any) => d.questionId === "phoneNumber")).toBeUndefined();
+    expect(bokun.made("/checkout.json/submit")[1].body.directBooking.activityBookings[0].note).toContain("Guest phone: +1 403 555 0100");
+  });
+
   it("flags a refused cancellation for staff to cancel in Bókun by hand", async () => {
     const dep = await departure(sharedTourId, { time: "10:45" });
     bokun.slot("796650", DAY, "10:45", 10);

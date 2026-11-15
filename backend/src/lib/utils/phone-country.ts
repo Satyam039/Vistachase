@@ -44,3 +44,36 @@ export function countryFromPhone(phone: string): string | null {
   }
   return null;
 }
+
+/**
+ * A phone number in E.164 form ("+14035550100"), as booking partners (Bókun) require, or null when
+ * it can't be made into one. Spaces, dashes, dots and brackets go; "00" becomes "+"; a number
+ * typed without its country code gets the guest's country's code (a leading trunk 0 dropped), or
+ * +1 for a 10-digit North American number. 8 to 15 digits after the "+".
+ */
+export function toE164(phone: string | null | undefined, country?: string | null): string | null {
+  const raw = (phone ?? "").trim();
+  if (!raw) return null;
+  let digits = raw.replace(/\D/g, "");
+  let international = raw.startsWith("+");
+  if (!international && digits.startsWith("00")) {
+    digits = digits.slice(2);
+    international = true;
+  }
+  if (!international) {
+    const code = knownCountry(country) ? DIAL[knownCountry(country)!] : null;
+    if (code && digits.startsWith(code) && digits.length > code.length + 6) {
+      // Already has the country code, just no "+".
+    } else if (code) {
+      digits = code + digits.replace(/^0+/, "");
+    } else if (digits.length === 10 && /^[2-9]/.test(digits)) {
+      digits = `1${digits}`;
+    } else if (digits.length === 11 && digits.startsWith("1")) {
+      // North American with its 1.
+    } else {
+      return null;
+    }
+  }
+  digits = digits.replace(/^0+/, "");
+  return digits.length >= 8 && digits.length <= 15 ? `+${digits}` : null;
+}

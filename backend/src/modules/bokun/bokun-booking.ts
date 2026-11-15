@@ -12,6 +12,7 @@
 // time, so a booking always uses Bókun's current IDs and seat count.
 
 import { BokunApiError } from "@/modules/bokun/bokun.client";
+import { toE164 } from "@/lib/utils/phone-country";
 import type { BokunApi } from "@/modules/bokun/config";
 
 /** One start of a Bókun product (GET /activity.json/{id}/availabilities). */
@@ -33,6 +34,11 @@ export interface BokunAvailability {
 export interface BokunCategory {
   id: number;
   title: string;
+}
+
+/** Bókun's refusal of the main contact's phone number ("not a valid phone number"). */
+export function invalidPhone(error: unknown) {
+  return error instanceof BokunApiError && error.status < 500 && /InvalidAnswers/i.test(error.message) && /phoneNumber/.test(error.message) && /INVALID/.test(error.message);
 }
 
 /** Bókun has no room for this party on this departure (sold out, closed, or not offered). */
@@ -160,6 +166,7 @@ export function buildNote(input: BokunReservationInput, infantsInNote: number) {
   return [
     `Booked on vistachase.com, reference ${input.bookingReference}.`,
     input.pickup ? `Pickup: ${input.pickup}.` : "",
+    input.customerPhone ? `Guest phone: ${input.customerPhone}.` : "",
     infantsInNote > 0 ? `Also ${infantsInNote} infant${infantsInNote === 1 ? "" : "s"} (0–5).` : "",
     input.specialRequests ? `Guest requests: ${input.specialRequests}` : "",
   ]
@@ -173,13 +180,15 @@ function splitName(name: string) {
   return { first: first || name, last: rest.join(" ") || "-" };
 }
 
-function mainContact(input: BokunReservationInput) {
+function mainContact(input: BokunReservationInput, withPhone = true) {
   const { first, last } = splitName(input.customerName);
+  // Bókun refuses a phone it can't read ("not a valid phone number"): E.164 or none (it's in the note).
+  const phone = withPhone ? toE164(input.customerPhone, input.country) : null;
   return [
     { questionId: "firstName", values: [first] },
     { questionId: "lastName", values: [last] },
     { questionId: "email", values: [input.customerEmail] },
-    { questionId: "phoneNumber", values: [input.customerPhone] },
+    ...(phone ? [{ questionId: "phoneNumber", values: [phone] }] : []),
     ...(input.country ? [{ questionId: "nationality", values: [input.country] }] : []),
   ];
 }
@@ -234,7 +243,7 @@ export function answerQuestions(questions: BokunQuestion[], input: BokunReservat
     let known: string | undefined;
     if (/pick.?up|hotel|accommodation|where.*stay|staying/.test(label)) known = input.pickup;
     else if (/diet|allerg|special|request|comment|note|medical|access/.test(label)) known = input.specialRequests || "None";
-    else if (/phone|mobile|whatsapp/.test(label)) known = input.customerPhone;
+    else if (/phone|mobile|whatsapp/.test(label)) known = toE164(input.customerPhone, input.country) ?? input.customerPhone;
     else if (/e-?mail/.test(label)) known = input.customerEmail;
     else if (/nationality|country/.test(label)) known = input.country;
     else if (/\bname\b/.test(label)) known = input.customerName;
@@ -350,14 +359,26 @@ export async function reserveInBokun(
   });
 
   await beforeSubmit?.();
-  const submitted = (await client.fetch("POST", "/checkout.json/submit?currency=CAD", {
-    checkoutOption: option.type,
-    paymentMethod: RESERVE,
-    source: "DIRECT_REQUEST",
-    directBooking,
-    // The site sends its own confirmation email and voucher.
-    sendNotificationToMainContact: false,
-  })) as { booking?: { confirmationCode?: string } } | null;
+  const submit = () =>
+    client.fetch("POST", "/checkout.json/submit?currency=CAD", {
+      checkoutOption: option.type,
+      paymentMethod: RESERVE,
+      source: "DIRECT_REQUEST",
+      directBooking,
+      // The site sends its own confirmation email and voucher.
+      sendNotificationToMainContact: false,
+    }) as Promise<{ booking?: { confirmationCode?: string } } | null>;
+  let submitted: { booking?: { confirmationCode?: string } } | null;
+  try {
+    submitted = await submit();
+  } catch (error) {
+    // A refused answer creates nothing, so sending it again is safe. Bókun still not reading the
+    // phone: send the booking without it, once (the phone is in the booking note).
+    if (!invalidPhone(error) || !directBooking.mainContactDetails.some((d) => d.questionId === "phoneNumber")) throw error;
+    console.warn(`[bokun] ${input.bookingReference}: Bókun refused the phone number; sending it without (it's in the note).`);
+    directBooking.mainContactDetails = mainContact(input, false);
+    submitted = await submit();
+  }
   const code = submitted?.booking?.confirmationCode?.trim();
   if (!code) throw new Error("Bókun accepted the reservation but returned no confirmation code.");
   return code;
