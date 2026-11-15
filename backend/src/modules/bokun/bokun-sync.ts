@@ -17,7 +17,7 @@ import type { BookingStatus, BookingSyncTask, Prisma } from "@prisma/client";
 import prisma from "@/lib/db/prisma";
 import { countryFromPhone, knownCountry } from "@/lib/utils/phone-country";
 import { BokunApiError } from "@/modules/bokun/bokun.client";
-import { abortInBokun, BokunUnavailableError, cancelInBokun, confirmInBokun, reserveInBokun } from "@/modules/bokun/bokun-booking";
+import { abortInBokun, BokunUnavailableError, cancelInBokun, confirmInBokun, findInBokun, reserveInBokun } from "@/modules/bokun/bokun-booking";
 import { bokunClient, bokunConnected, bokunIsTestAccount, type BokunApi } from "@/modules/bokun/config";
 import { formatDateOnly, formatTimeOfDay, todayInMountainTime, dateOnly } from "@/lib/utils/time";
 import { PRODUCT_MAP } from "@/modules/tours/product-map";
@@ -196,12 +196,25 @@ async function runCreate(client: BokunApi, task: BookingSyncTask, now: Date): Pr
       await prisma.bookingSyncTask.update({ where: { id: task.id }, data: { externalRef: reserved, payload: { stage: "reserved" } } });
       return reserved;
     };
-    if (!code) {
-      if (stage === "submitting") {
-        throw new StopError(`An earlier attempt got no answer from Bókun while creating it, so it may already be there. Look for ${booking.bookingReference} in Bókun before adding it by hand.`);
+    if (!code && stage === "submitting") {
+      // An earlier attempt got no answer while creating it: Bókun may have it. Look it up by our
+      // reference; only what Bókun shows decides, so nothing is ever created twice.
+      const found = await findInBokun(client, booking.bookingReference);
+      if (found && found.status === "CONFIRMED") {
+        await prisma.booking.update({ where: { id: booking.id }, data: { bokunBookingId: found.code, externalSyncStatus: "SYNCED", lastSyncAttemptAt: now } });
+        await resolveFlags(booking.id);
+        return finish(task, "SUCCEEDED", null, found.code);
       }
-      code = await reserve();
+      if (found && found.status === "RESERVED") {
+        code = found.code;
+        await prisma.bookingSyncTask.update({ where: { id: task.id }, data: { externalRef: code, payload: { stage: "reserved" } } });
+      } else if (found && found.gone) {
+        console.warn(`[bokun] ${booking.bookingReference}: Bókun has it as ${found.code} (${found.status}); reserving again.`);
+      } else {
+        throw new StopError(`An earlier attempt got no answer from Bókun while creating it, and Bókun's booking search didn't show it, so it may still be there. Look for ${booking.bookingReference} in Bókun before adding it by hand.`);
+      }
     }
+    if (!code) code = await reserve();
 
     const paid = booking.payments.filter((p) => p.status === "SUCCEEDED");
     const paidCents = paid.reduce((sum, p) => sum + p.amount, 0);
@@ -229,6 +242,7 @@ async function runCreate(client: BokunApi, task: BookingSyncTask, now: Date): Pr
       await confirm(code);
     }
     await prisma.booking.update({ where: { id: booking.id }, data: { bokunBookingId: code, externalSyncStatus: "SYNCED", lastSyncAttemptAt: now } });
+    await resolveFlags(booking.id);
     return finish(task, "SUCCEEDED", null, code);
   } catch (error) {
     const message = (error as Error).message.slice(0, 500);
@@ -243,16 +257,29 @@ async function runCreate(client: BokunApi, task: BookingSyncTask, now: Date): Pr
         await prisma.bookingSyncTask.update({ where: { id: task.id }, data: { payload: { stage: "refused" } } });
         stop = `Bókun refused it: ${message} Add it in Bókun by hand, or fix the product in Bókun and press Retry.`;
       } else {
-        stop = `No answer from Bókun while creating it (${message}), so it may already be there. Look for ${booking.bookingReference} in Bókun before adding it by hand.`;
+        // No answer: the stage stays "submitting", so the next run looks it up in Bókun first.
+        return retryLater(task, `No answer from Bókun while creating it (${message}); checking Bókun on the next try.`, now);
       }
     } else if (error instanceof BokunApiError && error.status < 500) {
       stop = code
         ? `Reserved in Bókun as ${code}, but Bókun refused the confirmation: ${message} Confirm it in Bókun by hand.`
         : `Bókun refused it: ${message} Add it in Bókun by hand, or fix the product in Bókun and press Retry.`;
     }
-    if (stop || task.attempts >= RETRY_MINUTES.length) {
-      await failBooking(booking.id, stop ?? `Bókun didn't answer after ${task.attempts} tries (${message}). Press Retry in Admin → Bookings → Bókun, or add it in Bókun by hand.`);
-      return finish(task, "FAILED", stop ?? message);
+    if (stop) {
+      await failBooking(booking.id, stop);
+      return finish(task, "FAILED", stop);
+    }
+    if (task.attempts >= RETRY_MINUTES.length) {
+      // Bókun down or not answering: staff hear about it, but the booking keeps trying (every
+      // 6 hours) until the day of the trip, so it goes in by itself once Bókun is back.
+      const tripDay = formatDateOnly(booking.tourDeparture.date);
+      if (tripDay < todayInMountainTime()) {
+        await failBooking(booking.id, `Bókun didn't answer after ${task.attempts} tries (${message}), and the trip date has passed. Add it in Bókun by hand if it's still needed.`);
+        return finish(task, "FAILED", message);
+      }
+      if (task.attempts === RETRY_MINUTES.length) {
+        await raiseFlag(booking.id, `${FLAG_PREFIX} not added yet. Bókun didn't answer after ${task.attempts} tries (${message}). It keeps trying every 6 hours until the trip; nothing to do unless Bókun stays down.`);
+      }
     }
     return retryLater(task, message, now);
   }
@@ -324,6 +351,11 @@ async function raiseFlag(bookingId: string, note: string) {
   await prisma.bookingFlag.create({ data: { bookingId, type: "OTHER", note: note.slice(0, 1000) } });
 }
 
+/** The booking reached Bókun: its open Bókun flags are done. */
+async function resolveFlags(bookingId: string) {
+  await prisma.bookingFlag.updateMany({ where: { bookingId, status: "OPEN", type: "OTHER", note: { startsWith: FLAG_PREFIX } }, data: { status: "RESOLVED", resolvedAt: new Date(), resolution: "Reached Bókun." } });
+}
+
 /** Tasks left IN_PROGRESS by a run that died. A create that was mid-submit can't be retried blindly. */
 async function recoverStaleTasks(now: Date, scope: { bookingId?: string }) {
   const stale = await prisma.bookingSyncTask.findMany({
@@ -332,9 +364,8 @@ async function recoverStaleTasks(now: Date, scope: { bookingId?: string }) {
   for (const task of stale) {
     const midSubmit = task.operation === "CREATE" && !task.externalRef && (task.payload as { stage?: string } | null)?.stage === "submitting";
     if (midSubmit) {
-      const booking = await prisma.booking.findUnique({ where: { id: task.bookingId }, select: { bookingReference: true } });
-      await failBooking(task.bookingId, `The server stopped while creating it in Bókun, so it may already be there. Look for ${booking?.bookingReference ?? "the booking"} in Bókun before adding it by hand.`);
-      await prisma.bookingSyncTask.update({ where: { id: task.id }, data: { status: "FAILED", lastError: "Interrupted while creating in Bókun." } });
+      // The server stopped mid-create: the next run looks it up in Bókun before anything else.
+      await prisma.bookingSyncTask.update({ where: { id: task.id }, data: { status: "RETRYABLE_FAILURE", nextAttemptAt: now, lastError: "Interrupted while creating in Bókun; checking Bókun." } });
     } else {
       await prisma.bookingSyncTask.update({ where: { id: task.id }, data: { status: "RETRYABLE_FAILURE", nextAttemptAt: now } });
     }

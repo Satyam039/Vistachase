@@ -5,7 +5,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import prisma from "@/lib/db/prisma";
 import { BokunApiError } from "@/modules/bokun/bokun.client";
-import { answerQuestions, buildPassengers, findSlot, seasonRateId } from "@/modules/bokun/bokun-booking";
+import { answerErrors, answerQuestions, buildPassengers, findSlot, repairAnswers, seasonRateId } from "@/modules/bokun/bokun-booking";
 import { setBokunClientForTests, type BokunApi } from "@/modules/bokun/config";
 import { processBokunSyncTasks, queueUpcomingBookings, retryBokunSync, setBokunAutoRunForTests } from "@/modules/bokun/bokun-sync";
 import { syncBokunSeats } from "@/modules/bokun/availability-sync";
@@ -41,6 +41,10 @@ class FakeBokun {
   failCancel: Error | null = null;
   questions: unknown = undefined;
   codes = 0;
+  /** What Bókun's booking search shows (by our reference). */
+  inBokun: { externalBookingReference: string; confirmationCode: string; status: string }[] = [];
+  /** Each failSubmit error, once (then failSubmit applies). */
+  failSubmits: Error[] = [];
 
   slot(productId: string, date: string, time: string, left: number, booked = 0) {
     (this.slots[productId] ??= []).push({ date: Date.parse(`${date}T00:00:00Z`), startTime: time, startTimeId: 4600000 + this.codes++, availabilityCount: left, bookedParticipants: booked, defaultRateId: 5, rates: [{ id: 5 }] });
@@ -57,7 +61,9 @@ class FakeBokun {
         this.calls.push({ method, path, body });
         if (path.startsWith("/activity.json/")) return { pricingCategories: [{ id: 767927, title: "Adults" }, { id: 773211, title: "Child (1-13)" }] };
         if (path.startsWith("/checkout.json/options")) return { options: [{ type: "CUSTOMER_FULL_PAYMENT", paymentMethods: { allowedMethods: ["RESERVE_FOR_EXTERNAL_PAYMENT"] } }], questions: this.questions };
+        if (path.startsWith("/booking.json/booking-search")) return { totalHits: this.inBokun.length, results: this.inBokun };
         if (path.startsWith("/checkout.json/submit")) {
+          if (this.failSubmits.length) throw this.failSubmits.shift();
           if (this.failSubmit) throw this.failSubmit;
           return { booking: { confirmationCode: `VIS-${process.pid}-${++lastCode}` } };
         }
@@ -118,6 +124,89 @@ beforeEach(() => {
 afterAll(() => {
   setBokunClientForTests(null);
   setBokunAutoRunForTests(true);
+});
+
+describe("Bókun refused answers", () => {
+  const input = {
+    bookingReference: "VC-2026-REPAIR01", productBokunId: "1167962", category: "SHARED", date: "2026-11-25", time: "08:00",
+    adults: 2, children: 0, infants: 0, customerName: "Mei Tan", customerEmail: "m@example.com", customerPhone: "+65 9123 4567", country: "SG",
+  };
+  const refusal = (errors: unknown[]) =>
+    new BokunApiError(400, `Bókun API Error: 400 Bad Request - ${JSON.stringify({ message: "Error occurred: is.bokun.dtos.questions.validation.InvalidAnswersException - Invalid or missing answers for the booking", fields: { errors } })}`);
+  const request = () => {
+    const answers = [{ questionId: "1527999", values: ["Fairmont"] }, { questionId: "77", values: ["13:00 flight"] }];
+    return {
+      mainContactDetails: [
+        { questionId: "firstName", values: ["Mei"] },
+        { questionId: "email", values: ["m@example.com"] },
+        { questionId: "phoneNumber", values: ["+6591234567"] },
+        { questionId: "nationality", values: ["SG"] },
+      ],
+      activityBookings: [{ answers, questions: answers, passengers: [{ pricingCategoryId: 1 }, { pricingCategoryId: 1 }] }],
+    } as Record<string, any>;
+  };
+
+  it("reads Bókun's list of refused answers", () => {
+    expect(answerErrors(refusal([{ reason: "INVALID", path: "/mainContactDetails/4", questionId: "phoneNumber" }]))).toEqual([{ reason: "INVALID", path: "/mainContactDetails/4", questionId: "phoneNumber" }]);
+    expect(answerErrors(new BokunApiError(400, "Bókun API Error: 400 - logic.InvalidDataException - Payment amount must be positive"))).toBeNull();
+    expect(answerErrors(new Error("fetch failed"))).toBeNull();
+  });
+
+  it("takes out an invalid answer (phone, nationality or a product question) and keeps name and email", () => {
+    const b = request();
+    expect(repairAnswers(b, [{ reason: "INVALID", path: "/mainContactDetails/9", questionId: "nationality" }, { reason: "INVALID", questionId: "77" }], input)).toBe(true);
+    expect(b.mainContactDetails.map((d: any) => d.questionId)).toEqual(["firstName", "email", "phoneNumber"]);
+    expect(b.activityBookings[0].answers.map((d: any) => d.questionId)).toEqual(["1527999"]);
+    expect(b.activityBookings[0].questions).toBe(b.activityBookings[0].answers);
+    expect(repairAnswers(request(), [{ reason: "INVALID", questionId: "email" }], input)).toBe(false);
+  });
+
+  it("answers a missing question on the booking or on the passenger Bókun names", () => {
+    const b = request();
+    b.mainContactDetails = b.mainContactDetails.filter((d: any) => d.questionId !== "phoneNumber");
+    expect(
+      repairAnswers(
+        b,
+        [
+          { reason: "MISSING", path: "/activityBookings/0/passengers/1", questionId: "501" },
+          { reason: "MISSING", path: "/activityBookings/0", questionId: "88" },
+          { reason: "MISSING", path: "/mainContactDetails", questionId: "phoneNumber" },
+        ],
+        input,
+      ),
+    ).toBe(true);
+    expect(b.activityBookings[0].passengers[1].answers).toEqual([{ questionId: "501", values: ["See booking note (vistachase.com VC-2026-REPAIR01)"] }]);
+    expect(b.activityBookings[0].passengers[0].answers).toBeUndefined();
+    expect(b.activityBookings[0].answers.at(-1)).toEqual({ questionId: "88", values: ["See booking note (vistachase.com VC-2026-REPAIR01)"] });
+    expect(b.mainContactDetails.at(-1)).toEqual({ questionId: "phoneNumber", values: ["+6591234567"] });
+  });
+
+  it("gets a booking into Bókun after several refusals in a row", async () => {
+    const dep = await departure(sharedTourId, { time: "12:35" });
+    bokun.slot("796650", DAY, "12:35", 10);
+    bokun.failSubmits = [
+      refusal([{ reason: "INVALID", path: "/mainContactDetails/3", questionId: "phoneNumber" }]),
+      refusal([{ reason: "MISSING", path: "/activityBookings/0", questionId: "4242" }]),
+    ];
+    const booking = await book(dep);
+    await run(booking.id);
+    expect((await reload(booking.id)).externalSyncStatus).toBe("SYNCED");
+    const submits = bokun.made("/checkout.json/submit");
+    expect(submits).toHaveLength(3);
+    const last = submits[2].body.directBooking;
+    expect(last.mainContactDetails.find((d: any) => d.questionId === "phoneNumber")).toBeUndefined();
+    expect(last.activityBookings[0].answers).toContainEqual({ questionId: "4242", values: [`See booking note (vistachase.com ${booking.bookingReference})`] });
+  });
+
+  it("stops for staff when the refusal can't be fixed (a bad email)", async () => {
+    const dep = await departure(sharedTourId, { time: "12:45" });
+    bokun.slot("796650", DAY, "12:45", 10);
+    bokun.failSubmit = refusal([{ reason: "INVALID", path: "/mainContactDetails/2", questionId: "email" }]);
+    const booking = await book(dep);
+    await run(booking.id);
+    expect((await reload(booking.id)).externalSyncStatus).toBe("FAILED");
+    expect(bokun.made("/checkout.json/submit")).toHaveLength(1);
+  });
 });
 
 describe("Bókun booking requests", () => {
@@ -279,15 +368,21 @@ describe("website bookings reach Bókun", () => {
     expect((await reload(booking.id)).externalSyncStatus).toBe("SYNCED");
   });
 
-  it("never re-sends a create that got no answer; staff check Bókun and press Retry", async () => {
+  it("never re-sends a create that got no answer; looks in Bókun, then staff check and press Retry", async () => {
     const dep = await departure(sharedTourId, { time: "10:15" });
     bokun.slot("796650", DAY, "10:15", 10);
     bokun.failSubmit = new Error("The operation was aborted due to timeout");
     const booking = await book(dep);
-    await run(booking.id);
+    const now = new Date();
+    await processBokunSyncTasks({ bookingId: booking.id, now });
+    expect((await tasksFor(booking.id))[0].status).toBe("RETRYABLE_FAILURE");
+
+    // Next try: Bókun's booking search doesn't show it, so it stops for staff instead of sending again.
+    await processBokunSyncTasks({ bookingId: booking.id, now: new Date(now.getTime() + 61_000) });
     expect((await tasksFor(booking.id))[0].status).toBe("FAILED");
+    expect(bokun.made("/booking.json/booking-search")).toHaveLength(1);
     const flag = await prisma.bookingFlag.findFirstOrThrow({ where: { bookingId: booking.id, type: "OTHER" } });
-    expect(flag.note).toContain(`may already be there. Look for ${booking.bookingReference} in Bókun`);
+    expect(flag.note).toContain(`may still be there. Look for ${booking.bookingReference} in Bókun`);
 
     await run(booking.id);
     expect(bokun.made("/checkout.json/submit")).toHaveLength(1);
@@ -296,6 +391,50 @@ describe("website bookings reach Bókun", () => {
     expect((await retryBokunSync(booking.id)).status).toBe(200);
     expect(bokun.made("/checkout.json/submit")).toHaveLength(2);
     expect((await reload(booking.id)).externalSyncStatus).toBe("SYNCED");
+    expect((await prisma.bookingFlag.findUniqueOrThrow({ where: { id: flag.id } })).status).toBe("RESOLVED");
+  });
+
+  it("finds a create that got no answer in Bókun and confirms that one, without sending it again", async () => {
+    const dep = await departure(sharedTourId, { time: "10:25" });
+    bokun.slot("796650", DAY, "10:25", 10);
+    bokun.failSubmits = [new Error("socket hang up")];
+    const booking = await book(dep);
+    const now = new Date();
+    await processBokunSyncTasks({ bookingId: booking.id, now });
+    // Bókun did create it before the answer was lost.
+    bokun.inBokun = [
+      { externalBookingReference: `${booking.bookingReference}-other`, confirmationCode: "VIS-WRONG", status: "RESERVED" },
+      { externalBookingReference: booking.bookingReference, confirmationCode: "VIS-LOST-1", status: "RESERVED" },
+    ];
+    await processBokunSyncTasks({ bookingId: booking.id, now: new Date(now.getTime() + 61_000) });
+    const after = await reload(booking.id);
+    expect(after.externalSyncStatus).toBe("SYNCED");
+    expect(after.bokunBookingId).toBe("VIS-LOST-1");
+    expect(bokun.made("/checkout.json/submit")).toHaveLength(1);
+    expect(bokun.made("/checkout.json/confirm-reserved/")[0].path).toContain("VIS-LOST-1");
+  });
+
+  it("keeps trying while Bókun is down, flags staff once, and clears the flag when it goes in", async () => {
+    const dep = await departure(sharedTourId, { time: "10:35" });
+    bokun.slot("796650", DAY, "10:35", 10);
+    bokun.failAvailability = new Error("fetch failed");
+    const booking = await book(dep);
+    let now = Date.now();
+    for (let i = 0; i < 8; i++) {
+      await processBokunSyncTasks({ bookingId: booking.id, now: new Date(now) });
+      now += 7 * 3_600_000;
+    }
+    const [task] = await tasksFor(booking.id);
+    expect(task.status).toBe("RETRYABLE_FAILURE");
+    expect(task.attempts).toBe(8);
+    const flags = await prisma.bookingFlag.findMany({ where: { bookingId: booking.id, type: "OTHER", status: "OPEN" } });
+    expect(flags).toHaveLength(1);
+    expect(flags[0].note).toContain("keeps trying");
+
+    bokun.failAvailability = null;
+    await processBokunSyncTasks({ bookingId: booking.id, now: new Date(now) });
+    expect((await reload(booking.id)).externalSyncStatus).toBe("SYNCED");
+    expect(await prisma.bookingFlag.count({ where: { bookingId: booking.id, status: "OPEN" } })).toBe(0);
   });
 
   it("reserves again when Bókun let the reservation lapse before it was confirmed, then confirms the new one", async () => {
@@ -323,6 +462,36 @@ describe("website bookings reach Bókun", () => {
     await run(booking.id);
     expect((await reload(booking.id)).externalSyncStatus).toBe("FAILED");
     expect(bokun.made("/checkout.json/submit")).toHaveLength(2);
+  });
+
+  it("sends the phone in E.164, and without it once if Bókun still can't read it", async () => {
+    const dep = await departure(sharedTourId, { time: "12:25" });
+    bokun.slot("796650", DAY, "12:25", 10);
+    bokun.failSubmit = new BokunApiError(400, 'Bókun API Error: 400 Bad Request - {"message":"Error occurred: is.bokun.dtos.questions.validation.InvalidAnswersException - Invalid or missing answers for the booking","fields":{"errors":[{"reason":"INVALID","path":"/mainContactDetails/4","questionId":"phoneNumber","message":"Not a valid phone number"}]}}');
+    const booking = await book(dep);
+    let first = true;
+    const original = bokun.failSubmit;
+    // Refuse only the first submit.
+    const api = bokun.api();
+    setBokunClientForTests({
+      ...api,
+      fetch: async (method: "GET" | "POST" | "PUT" | "DELETE", path: string, body?: any) => {
+        if (path.startsWith("/checkout.json/submit") && first) {
+          first = false;
+          bokun.calls.push({ method, path, body: JSON.parse(JSON.stringify(body)) });
+          throw original;
+        }
+        bokun.failSubmit = null;
+        return api.fetch(method, path, body);
+      },
+    } as BokunApi);
+    await run(booking.id);
+    expect((await reload(booking.id)).externalSyncStatus).toBe("SYNCED");
+    const submits = bokun.made("/checkout.json/submit").map((c) => c.body.directBooking.mainContactDetails);
+    expect(submits).toHaveLength(2);
+    expect(submits[0].find((d: any) => d.questionId === "phoneNumber").values).toEqual(["+14035550100"]);
+    expect(submits[1].find((d: any) => d.questionId === "phoneNumber")).toBeUndefined();
+    expect(bokun.made("/checkout.json/submit")[1].body.directBooking.activityBookings[0].note).toContain("Guest phone: +1 403 555 0100");
   });
 
   it("flags a refused cancellation for staff to cancel in Bókun by hand", async () => {

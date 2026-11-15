@@ -44,3 +44,57 @@ export function countryFromPhone(phone: string): string | null {
   }
   return null;
 }
+
+/**
+ * A phone number in E.164 form ("+14035550100"), as booking partners (Bókun) require, or null when
+ * it can't be made into one. Spaces, dashes, dots and brackets go; "00" becomes "+"; a number
+ * typed without its country code gets the guest's country's code (a leading trunk 0 dropped), or
+ * +1 for a 10-digit North American number. 8 to 15 digits after the "+".
+ */
+export function toE164(phone: string | null | undefined, country?: string | null): string | null {
+  const raw = (phone ?? "").trim();
+  if (!raw) return null;
+  let digits = raw.replace(/\D/g, "");
+  let international = raw.startsWith("+");
+  if (!international && digits.startsWith("00")) {
+    digits = digits.slice(2);
+    international = true;
+  }
+  if (!international) {
+    const code = knownCountry(country) ? DIAL[knownCountry(country)!] : null;
+    if (code && digits.startsWith(code) && digits.length > code.length + 6) {
+      // Already has the country code, just no "+".
+    } else if (code) {
+      digits = code + digits.replace(/^0+/, "");
+    } else if (digits.length === 10 && /^[2-9]/.test(digits)) {
+      digits = `1${digits}`;
+    } else if (digits.length === 11 && digits.startsWith("1")) {
+      // North American with its 1.
+    } else {
+      return null;
+    }
+  }
+  digits = withoutTrunkZero(digits.replace(/^0+/, ""), country);
+  return digits.length >= 8 && digits.length <= 15 ? `+${digits}` : null;
+}
+
+/** Countries whose numbers keep their leading 0 after the country code (Italian landlines: +39 06…). */
+const KEEPS_ZERO = new Set(["39", "378"]);
+
+/**
+ * "+44 07700 900123" (the checkout puts the picked country's code in front of what the guest typed,
+ * and many guests type the local 0) is "+447700900123". Also "+1 1 403 555 0100" (the 1 typed twice).
+ * `digits` start with the country code.
+ */
+function withoutTrunkZero(digits: string, country?: string | null) {
+  const iso = knownCountry(country);
+  const code =
+    iso && digits.startsWith(DIAL[iso])
+      ? DIAL[iso]
+      : [3, 2, 1].map((len) => digits.slice(0, len)).find((prefix) => BY_DIAL.has(prefix));
+  if (!code) return digits;
+  let national = digits.slice(code.length);
+  if (!KEEPS_ZERO.has(code)) national = national.replace(/^0+/, "");
+  if (code === "1" && national.length === 11 && national.startsWith("1")) national = national.slice(1);
+  return code + national;
+}
