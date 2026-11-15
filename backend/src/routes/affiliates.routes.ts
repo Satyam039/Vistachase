@@ -29,6 +29,8 @@ import { cancelPayout, createPayout, listPayouts, markPayoutPaid, payoutDto } fr
 import { affiliateReport, reportToCsv } from "@/modules/affiliates/reports";
 import { sendPayoutPaidEmail, sendStatusEmail } from "@/modules/affiliates/partner-emails";
 import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
+import { formTokenProblem, looksLikeBotName, verifyTurnstile } from "@/modules/enquiries/spam";
+import { hasValidMxRecords, isSuspiciousEmail, isSyntheticBotName } from "@/lib/security/spam-detector";
 
 const router = Router();
 
@@ -71,9 +73,43 @@ const applySchema = z.object({
 });
 
 // Apply to the partner program. New partners start PENDING until Vista Chase approves them.
+//
+// Bot applications (owner, 2026-11-15: fake partner signups were sending "application received"
+// emails). The same checks as account signup and the enquiry form: a hidden field people never
+// fill (`fax`; `website` is a real field here), a random-string name, a throwaway or dot-spam
+// email, an email domain that can't receive mail, the signed token the page fetches when it opens
+// (no applying within 3 seconds, or without the page), and Cloudflare Turnstile when it is set up.
+// A bot that trips a quiet check is told it worked: nothing is saved and no email is sent.
+// Real business names can look odd ("BanffTravelHQ", "AirBnB Banff"), so a name only counts as a
+// bot's when it is one word AND the contact name is one random word too ("NuLBPir" / "cHXwtVPyDC").
+const looksRandom = (value: unknown) =>
+  typeof value === "string" && /^\S{5,}$/.test(value.trim()) && (isSyntheticBotName(value) || looksLikeBotName(value));
+
+const quietlyDropped = (res: Response, reason: string) => {
+  console.warn(`[affiliate-apply] dropped as spam: ${reason}`);
+  return res.status(201).json({ success: true, affiliate: { code: "", status: "PENDING" } });
+};
+
 router.post("/apply", rateLimitMiddleware("affiliate_apply", { maxRequests: 3, windowSeconds: 3600 }), async (req, res) => {
-  const parsed = applySchema.safeParse(req.body ?? {});
+  const body = (req.body ?? {}) as Record<string, unknown>;
+  if (typeof body.fax === "string" && body.fax.trim() !== "") return quietlyDropped(res, "honeypot filled");
+  if (looksRandom(body.contactName) && looksRandom(body.name)) {
+    return quietlyDropped(res, `random names "${String(body.contactName)}" / "${String(body.name)}"`);
+  }
+  if (typeof body.email === "string" && isSuspiciousEmail(body.email)) return quietlyDropped(res, `suspicious email "${body.email}"`);
+  const tokenProblem = formTokenProblem(body.formToken);
+  if (tokenProblem) {
+    console.warn(`[affiliate-apply] refused: ${tokenProblem}`);
+    return res.status(400).json({ success: false, error: "Please wait a moment and try again. If this keeps happening, reload the page." });
+  }
+  if (!(await verifyTurnstile(body.turnstileToken, req.ip))) {
+    return res.status(400).json({ success: false, error: "Please complete the security check and try again." });
+  }
+
+  const parsed = applySchema.safeParse(body);
   if (!parsed.success) return invalid(res, parsed.error);
+  const domain = parsed.data.email.toLowerCase().split("@")[1];
+  if (domain && !(await hasValidMxRecords(domain))) return quietlyDropped(res, `domain ${domain} has no mail server`);
   try {
     const result = await applyAffiliate(parsed.data);
     return res.status(result.success ? 201 : 409).json(result);

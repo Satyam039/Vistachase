@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { AlertCircle, CheckCircle2, Send } from "lucide-react";
 import { Dropdown } from "@/components/forms/Dropdown";
+import { TURNSTILE_SITE_KEY, useFormToken, useTurnstile } from "@/lib/spamGuard";
 
 const TYPES = [
   { value: "HOTEL", label: "Hotel, lodge or rental host" },
@@ -20,24 +21,39 @@ export function PartnerApplyForm() {
   const [error, setError] = useState("");
   const [fields, setFields] = useState<Record<string, string[]>>({});
   const [code, setCode] = useState("");
+  // Bot checks (owner, 2026-11-15: fake partner applications): the page's signed token, a hidden
+  // field (`fax`) and, when set up, Cloudflare Turnstile. The API checks the same things.
+  const formToken = useFormToken();
+  const turnstileBox = useRef<HTMLDivElement>(null);
+  const turnstile = useTurnstile(turnstileBox);
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     setFields({});
+    if (!formToken.token) {
+      formToken.reload();
+      setError("Please wait a moment and try again.");
+      return;
+    }
+    if (TURNSTILE_SITE_KEY && !turnstile.token) {
+      setError("Please complete the security check above the button.");
+      return;
+    }
     setStatus("sending");
     const form = Object.fromEntries(new FormData(e.currentTarget)) as Record<string, string>;
     try {
       const res = await fetch("/api/affiliates/apply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, formToken: formToken.token, turnstileToken: turnstile.token || undefined }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
         setError(data.error || "We couldn't submit your application.");
         setFields(data.fields || {});
         setStatus("idle");
+        turnstile.reset();
         return;
       }
       setCode(data.affiliate.code);
@@ -55,7 +71,12 @@ export function PartnerApplyForm() {
           <CheckCircle2 className="h-6 w-6" aria-hidden="true" /> Application received
         </p>
         <p className="text-base">
-          Your referral code is <span className="font-mono">{code}</span>. We review applications within two business days. Once
+          {code && (
+            <>
+              Your referral code is <span className="font-mono">{code}</span>.{" "}
+            </>
+          )}
+          We review applications within two business days. Once
           you&apos;re approved, every booking made through your links is credited to you.
         </p>
         <Link href="/affiliate/login" className="inline-flex min-h-11 items-center underline underline-offset-4">
@@ -120,9 +141,17 @@ export function PartnerApplyForm() {
           {err("phone")}
         </div>
       </div>
+      {/* Honeypot for bots: hidden from people and assistive technology. */}
+      <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
+        <label>
+          Fax
+          <input name="fax" tabIndex={-1} autoComplete="off" />
+        </label>
+      </div>
       <p className="text-sm text-slate-600">
         We use these details only to run your partner account and pay your commission. Commission is earned when a guest you referred pays for a booking.
       </p>
+      {TURNSTILE_SITE_KEY && <div ref={turnstileBox} />}
       <button
         type="submit"
         disabled={status === "sending"}
