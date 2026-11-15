@@ -1417,3 +1417,42 @@ model LiveChatMessage {
 
   @@index([chatId, createdAt])
 }
+
+// Who sent the public forms (owner, 2026-11-15: "kaise pta chalega ki koi person ki IP yeh hai"):
+// one row per enquiry, signup, partner application or chat start, with the sender's IP and the
+// city/country looked up from it, and whether it went through or was caught as spam. Admins see
+// it under Admin → Security and can block an IP or email from there. Rows older than 180 days are
+// deleted (modules/security/visitor-log.ts).
+model SecurityEvent {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  form        String // ENQUIRY, SIGNUP, PARTNER_APPLY, CHAT, LIVE_CHAT, CHAT_HANDOFF, BLOCKED_REQUEST
+  outcome     String // ACCEPTED, SPAM (quietly dropped), REFUSED (asked to retry), BLOCKED
+  reason      String?
+  ip          String
+  country     String?
+  countryCode String?
+  region      String?
+  city        String?
+  email       String?
+  name        String?
+  userAgent   String?
+  path        String?
+
+  @@index([createdAt])
+  @@index([ip])
+  @@index([email])
+}
+
+// IPs and email addresses an admin blocked: they can't send forms, sign up, apply as a partner,
+// chat or book. Staff sign-in and the admin area are never blocked, so nobody locks themself out.
+model BlockedSender {
+  id          String   @id @default(cuid())
+  kind        String // IP or EMAIL
+  value       String // the IP, or the lower-case email
+  reason      String?
+  createdById String?
+  createdAt   DateTime @default(now())
+
+  @@unique([kind, value])
+}

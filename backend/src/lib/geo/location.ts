@@ -5,6 +5,7 @@
  */
 
 import type { Request } from "express";
+import { clientIp, isPrivateAddress } from "@/modules/security/visitor-log";
 
 export interface ClientLocationInfo {
   ip: string;
@@ -19,36 +20,15 @@ export interface ClientLocationInfo {
   capturedAt?: string;
 }
 
+// The visitor's address as our own proxy saw it. The left-most X-Forwarded-For entry is whatever
+// the visitor sent, so it isn't trusted (modules/security/visitor-log.ts clientIp()).
 export function extractClientIp(req: Request): string {
-  const forwarded = req.headers["x-forwarded-for"];
-  if (typeof forwarded === "string") {
-    const first = forwarded.split(",")[0].trim();
-    if (first) return first;
-  }
-  const realIp = req.headers["x-real-ip"];
-  if (typeof realIp === "string" && realIp.trim()) return realIp.trim();
-  const cfIp = req.headers["cf-connecting-ip"];
-  if (typeof cfIp === "string" && cfIp.trim()) return cfIp.trim();
-  return req.socket.remoteAddress || "127.0.0.1";
+  return clientIp(req);
 }
 
 export function isPrivateIp(ip: string): boolean {
-  return (
-    ip === "127.0.0.1" ||
-    ip === "::1" ||
-    ip === "::ffff:127.0.0.1" ||
-    ip.startsWith("10.") ||
-    ip.startsWith("192.168.") ||
-    ip.startsWith("172.16.") ||
-    ip.startsWith("172.17.") ||
-    ip.startsWith("172.18.") ||
-    ip.startsWith("172.19.") ||
-    ip.startsWith("172.2") ||
-    ip.startsWith("172.30.") ||
-    ip.startsWith("172.31.") ||
-    ip.startsWith("fc00:") ||
-    ip.startsWith("fe80:")
-  );
+  // "172.2…" used to match public addresses such as 172.217.x.x (Google); proper ranges now.
+  return isPrivateAddress(ip);
 }
 
 export async function detectClientLocation(req: Request): Promise<ClientLocationInfo> {

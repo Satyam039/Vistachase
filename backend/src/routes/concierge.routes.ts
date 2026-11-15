@@ -9,6 +9,7 @@ import { executeAiTool } from "@/lib/ai/ai.tools";
 import { getAuthenticatedStaff } from "@/lib/auth/admin-guard";
 import { CARD_NUMBER, isClaudeConfigured, runConciergeAgent } from "@/lib/ai/concierge.agent";
 import { detectClientLocation, extractClientIp } from "@/lib/geo/location";
+import { recordChatStart, recordSubmission } from "@/modules/security/visitor-log";
 import type { Request, Response, NextFunction } from "express";
 
 const router = Router();
@@ -39,6 +40,7 @@ router.post("/stream", rateLimitMiddleware("concierge", { maxRequests: 30, windo
   if (!Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ error: "Invalid messages array." });
   }
+  recordChatStart(req);
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache, no-transform");
   res.setHeader("Connection", "keep-alive");
@@ -92,6 +94,7 @@ router.post("/", rateLimitMiddleware("concierge", { maxRequests: 30, windowSecon
     if (!Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: "Invalid messages array." });
     }
+    recordChatStart(req);
     const language = typeof req.body?.language === "string" ? req.body.language : undefined;
     const thinkingMode: "standard" | "deep" = req.body?.thinkingMode === "deep" ? "deep" : "standard";
     const attachments = Array.isArray(req.body?.attachments) ? req.body.attachments : undefined;
@@ -139,7 +142,11 @@ router.post("/handoff", rateLimitMiddleware("concierge_handoff", { maxRequests: 
   if (!parsed.success) {
     return res.status(400).json({ success: false, error: "Please add your name and a valid email.", fields: parsed.error.flatten().fieldErrors });
   }
-  if (parsed.data.website) return res.json({ success: true }); // bot: pretend it worked
+  if (parsed.data.website) {
+    void recordSubmission(req, { form: "CHAT_HANDOFF", outcome: "SPAM", reason: "honeypot filled", email: parsed.data.email, name: parsed.data.name });
+    return res.json({ success: true }); // bot: pretend it worked
+  }
+  void recordSubmission(req, { form: "CHAT_HANDOFF", outcome: "ACCEPTED", email: parsed.data.email, name: parsed.data.name });
   const { website: _honeypot, phone, note, transcript, ...rest } = parsed.data;
   try {
     const result = await createSupportHandoff({
@@ -163,7 +170,11 @@ router.post("/live-chat", rateLimitMiddleware("concierge_live_chat", { maxReques
   if (!parsed.success) {
     return res.status(400).json({ success: false, error: "Please add your name and a valid email.", fields: parsed.error.flatten().fieldErrors });
   }
-  if (parsed.data.website) return res.status(400).json({ success: false, error: "We couldn't start the chat." }); // bot
+  if (parsed.data.website) {
+    void recordSubmission(req, { form: "LIVE_CHAT", outcome: "SPAM", reason: "honeypot filled", email: parsed.data.email, name: parsed.data.name });
+    return res.status(400).json({ success: false, error: "We couldn't start the chat." }); // bot
+  }
+  void recordSubmission(req, { form: "LIVE_CHAT", outcome: "ACCEPTED", email: parsed.data.email, name: parsed.data.name });
   const { website: _honeypot, phone, note, ...rest } = parsed.data;
   try {
     const chat = await startLiveChat({ ...rest, phone: phone || undefined, note: note || undefined });

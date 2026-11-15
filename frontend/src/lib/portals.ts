@@ -27,7 +27,7 @@ export function homeForRole(role: string | undefined | null): string {
 }
 
 /** Admin pages operators and dispatchers can't open. */
-export const ADMIN_ONLY_PATHS = ["/admin/partners", "/admin/affiliates", "/admin/staff", "/admin/roles", "/admin/audit"];
+export const ADMIN_ONLY_PATHS = ["/admin/partners", "/admin/affiliates", "/admin/staff", "/admin/roles", "/admin/audit", "/admin/security"];
 
 const under = (path: string, base: string) => path === base || path.startsWith(`${base}/`);
 

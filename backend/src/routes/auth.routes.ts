@@ -1,5 +1,6 @@
 import { formTokenProblem, looksLikeBotName, verifyTurnstile } from "@/modules/enquiries/spam";
 import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
+import { recordSubmission } from "@/modules/security/visitor-log";
 import { Router, type Request, type Response } from "express";
 import prisma from "@/lib/db/prisma";
 import { hashPassword, verifyPassword, signToken, UserRole } from "@/lib/auth/auth";
@@ -140,19 +141,23 @@ router.post("/register", rateLimitMiddleware("register", { maxRequests: 3, windo
     // "success" with no account and no email, so the bot learns nothing.
     if (typeof website === "string" && website.trim() !== "") {
       console.warn("[register] dropped as spam: honeypot filled");
+      void recordSubmission(req, { form: "SIGNUP", outcome: "SPAM", reason: "honeypot filled", email, name });
       return res.json({ success: true, user: null });
     }
     if (typeof name === "string" && (isSyntheticBotName(name) || looksLikeBotName(name))) {
       console.warn(`[register] dropped as spam: synthetic bot name "${name}"`);
+      void recordSubmission(req, { form: "SIGNUP", outcome: "SPAM", reason: "random-string name", email, name });
       return res.json({ success: true, user: null });
     }
     if (typeof email === "string" && isSuspiciousEmail(email)) {
       console.warn(`[register] dropped as spam: suspicious email pattern "${email}"`);
+      void recordSubmission(req, { form: "SIGNUP", outcome: "SPAM", reason: "suspicious email address", email, name });
       return res.json({ success: true, user: null });
     }
     const tokenProblem = formTokenProblem(formToken);
     if (tokenProblem) {
       console.warn(`[register] refused: ${tokenProblem}`);
+      void recordSubmission(req, { form: "SIGNUP", outcome: "REFUSED", reason: tokenProblem, email, name });
       return res.status(400).json({ success: false, error: "Please wait a moment and try again. If this keeps happening, reload the page." });
     }
     if (!(await verifyTurnstile(turnstileToken, req.ip))) {
@@ -173,6 +178,7 @@ router.post("/register", rateLimitMiddleware("register", { maxRequests: 3, windo
     const domain = normalizedEmail.split("@")[1];
     if (domain && !(await hasValidMxRecords(domain))) {
       console.warn(`[register] dropped as spam: domain ${domain} has no valid MX records`);
+      void recordSubmission(req, { form: "SIGNUP", outcome: "SPAM", reason: "email domain can't receive mail", email, name });
       return res.json({ success: true, user: null });
     }
 
@@ -185,6 +191,7 @@ router.post("/register", rateLimitMiddleware("register", { maxRequests: 3, windo
     }
 
     const passwordHash = await hashPassword(password);
+    void recordSubmission(req, { form: "SIGNUP", outcome: "ACCEPTED", email: normalizedEmail, name });
     const user = await prisma.user.create({
       data: {
         name,
