@@ -51,9 +51,17 @@ export function bokunProductId(tour: { slug: string; bokunId: string | null } | 
   return tour.bokunId;
 }
 
-/** Bókun's answer when a reservation lapsed or was aborted before it was confirmed. */
+/**
+ * Bókun's answer when a reservation lapsed or was aborted before it was confirmed, or Bókun has no
+ * booking under that code at all ("No such booking found": the reservation was removed, or the
+ * Bókun keys now point at another account).
+ */
 export function reservationGone(error: unknown) {
-  return error instanceof BokunApiError && error.status < 500 && /not in reserved state[^:]*:\s*(TIMEOUT|ABORTED|CANCELLED|EXPIRED)/i.test(error.message);
+  return (
+    error instanceof BokunApiError &&
+    error.status < 500 &&
+    (/not in reserved state[^:]*:\s*(TIMEOUT|ABORTED|CANCELLED|EXPIRED)/i.test(error.message) || /No such booking found/i.test(error.message))
+  );
 }
 
 /** Retrying won't help: stop and ask staff. */
@@ -236,10 +244,20 @@ async function runCreate(client: BokunApi, task: BookingSyncTask, now: Date): Pr
       // Bókun lets an unconfirmed reservation lapse (TIMEOUT) or staff abort it. That one is gone,
       // so nothing is doubled by reserving again, once, and confirming the new one.
       if (!reservationGone(error)) throw error;
-      console.warn(`[bokun] reservation ${code} for ${booking.bookingReference} is no longer reserved in Bókun; reserving again.`);
-      await prisma.bookingSyncTask.update({ where: { id: task.id }, data: { externalRef: null, payload: { stage: "lapsed", lapsed: code } } });
-      code = await reserve();
-      await confirm(code);
+      // Bókun may hold it under another code: confirm that one rather than reserving twice.
+      const found = await findInBokun(client, booking.bookingReference);
+      if (found && found.code !== code && found.status === "CONFIRMED") {
+        code = found.code;
+      } else if (found && found.code !== code && found.status === "RESERVED") {
+        code = found.code;
+        await prisma.bookingSyncTask.update({ where: { id: task.id }, data: { externalRef: code, payload: { stage: "reserved" } } });
+        await confirm(code);
+      } else {
+        console.warn(`[bokun] reservation ${code} for ${booking.bookingReference} is no longer reserved in Bókun; reserving again.`);
+        await prisma.bookingSyncTask.update({ where: { id: task.id }, data: { externalRef: null, payload: { stage: "lapsed", lapsed: code } } });
+        code = await reserve();
+        await confirm(code);
+      }
     }
     await prisma.booking.update({ where: { id: booking.id }, data: { bokunBookingId: code, externalSyncStatus: "SYNCED", lastSyncAttemptAt: now } });
     await resolveFlags(booking.id);

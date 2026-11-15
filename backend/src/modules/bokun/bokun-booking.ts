@@ -195,7 +195,7 @@ export function buildNote(input: BokunReservationInput, infantsInNote: number) {
   return [
     `Booked on vistachase.com, reference ${input.bookingReference}.`,
     input.pickup ? `Pickup: ${input.pickup}.` : "",
-    input.customerPhone ? `Guest phone: ${input.customerPhone}.` : "",
+    input.customerPhone ? `Guest phone: ${input.customerPhone}.` : "Guest phone: not given.",
     infantsInNote > 0 ? `Also ${infantsInNote} infant${infantsInNote === 1 ? "" : "s"} (0–5).` : "",
     input.specialRequests ? `Guest requests: ${input.specialRequests}` : "",
   ]
@@ -306,6 +306,14 @@ function optionQuestions(options: unknown): { activity: BokunQuestion[]; passeng
   };
 }
 
+/**
+ * The phone Bókun gets when it can't take the guest's (Vista Chase's office, or BOKUN_CONTACT_PHONE).
+ * Bókun never messages the guest (sendNotificationToMainContact is off), so nothing goes astray.
+ */
+export function officePhone() {
+  return toE164(process.env.BOKUN_CONTACT_PHONE) ?? "+18257349456";
+}
+
 /** Answers Bókun can't do without: never dropped. */
 const ESSENTIAL = new Set(["firstName", "lastName", "email"]);
 
@@ -347,6 +355,22 @@ function answerLists(booking: Record<string, unknown>): { path: string; list: An
  */
 export function repairAnswers(booking: Record<string, unknown>, errors: BokunAnswerError[], input: BokunReservationInput): boolean {
   let changed = false;
+  // The main contact's phone: some Bókun products require one, so a guest number Bókun can't read
+  // (or none) is replaced by Vista Chase's office number; the guest's own is in the booking note.
+  const contact = Array.isArray(booking.mainContactDetails) ? (booking.mainContactDetails as Answer[]) : null;
+  const phoneRefused = errors.some((e) => e.questionId === "phoneNumber" && (e.reason === "INVALID" || e.reason === "MISSING") && (!e.path || e.path.startsWith("/mainContactDetails")));
+  const office = officePhone();
+  if (contact && phoneRefused) {
+    const current = contact.find((a) => a?.questionId === "phoneNumber");
+    if (!current) {
+      contact.push({ questionId: "phoneNumber", values: [office] });
+      changed = true;
+    } else if (current.values?.[0] !== office) {
+      current.values = [office];
+      changed = true;
+    }
+    if (changed) errors = errors.filter((e) => !(e.questionId === "phoneNumber" && (!e.path || e.path.startsWith("/mainContactDetails"))));
+  }
   // Refused entries are found first and removed after, so the paths' indexes stay right.
   const refused = new Set<Answer>();
   for (const e of errors) {

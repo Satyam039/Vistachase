@@ -178,7 +178,8 @@ describe("Bókun refused answers", () => {
     expect(b.activityBookings[0].passengers[1].answers).toEqual([{ questionId: "501", values: ["See booking note (vistachase.com VC-2026-REPAIR01)"] }]);
     expect(b.activityBookings[0].passengers[0].answers).toBeUndefined();
     expect(b.activityBookings[0].answers.at(-1)).toEqual({ questionId: "88", values: ["See booking note (vistachase.com VC-2026-REPAIR01)"] });
-    expect(b.mainContactDetails.at(-1)).toEqual({ questionId: "phoneNumber", values: ["+6591234567"] });
+    // Bókun requires a phone: the office number goes in (the guest's is in the note).
+    expect(b.mainContactDetails.at(-1)).toEqual({ questionId: "phoneNumber", values: ["+18257349456"] });
   });
 
   it("gets a booking into Bókun after several refusals in a row", async () => {
@@ -194,8 +195,20 @@ describe("Bókun refused answers", () => {
     const submits = bokun.made("/checkout.json/submit");
     expect(submits).toHaveLength(3);
     const last = submits[2].body.directBooking;
-    expect(last.mainContactDetails.find((d: any) => d.questionId === "phoneNumber")).toBeUndefined();
+    expect(last.mainContactDetails.find((d: any) => d.questionId === "phoneNumber").values).toEqual(["+18257349456"]);
     expect(last.activityBookings[0].answers).toContainEqual({ questionId: "4242", values: [`See booking note (vistachase.com ${booking.bookingReference})`] });
+  });
+
+  it("gets past Bókun requiring a phone the guest's number can't fill (VC-2026-9F41CB14)", async () => {
+    const dep = await departure(sharedTourId, { time: "12:40" });
+    bokun.slot("796650", DAY, "12:40", 10);
+    bokun.failSubmits = [refusal([{ reason: "INVALID", path: "/mainContactDetails/4", questionId: "phoneNumber" }])];
+    const booking = await book(dep);
+    await run(booking.id);
+    expect((await reload(booking.id)).externalSyncStatus).toBe("SYNCED");
+    const last = bokun.made("/checkout.json/submit").at(-1)!.body.directBooking;
+    expect(last.mainContactDetails.find((d: any) => d.questionId === "phoneNumber").values).toEqual(["+18257349456"]);
+    expect(last.activityBookings[0].note).toContain("Guest phone: +1 403 555 0100");
   });
 
   it("stops for staff when the refusal can't be fixed (a bad email)", async () => {
@@ -453,6 +466,29 @@ describe("website bookings reach Bókun", () => {
     expect(confirms[0]).not.toBe(confirms[1]);
   });
 
+  it("reserves again when Bókun has no booking under the reserved code (VC-2026-DCC9AB6D, WEB-276670)", async () => {
+    const dep = await departure(sharedTourId, { time: "11:55" });
+    bokun.slot("796650", DAY, "11:55", 10);
+    bokun.failConfirm = [new BokunApiError(400, 'Bókun API Error: 400 Bad Request - {"message":"Error occurred: logic.InvalidDataException - CheckoutService: No such booking found [WEB-276670]","fields":{}}')];
+    const booking = await book(dep);
+    await run(booking.id);
+    expect((await reload(booking.id)).externalSyncStatus).toBe("SYNCED");
+    expect(bokun.made("/booking.json/booking-search")).toHaveLength(1);
+    expect(bokun.made("/checkout.json/submit")).toHaveLength(2);
+  });
+
+  it("confirms the booking Bókun holds under another code instead of reserving again", async () => {
+    const dep = await departure(sharedTourId, { time: "11:58" });
+    bokun.slot("796650", DAY, "11:58", 10);
+    bokun.failConfirm = [new BokunApiError(400, "Bókun API Error: 400 - CheckoutService: No such booking found [WEB-1]")];
+    const booking = await book(dep);
+    bokun.inBokun = [{ externalBookingReference: booking.bookingReference, confirmationCode: "VIS-REAL-7", status: "RESERVED" }];
+    await run(booking.id);
+    const after = await reload(booking.id);
+    expect(after.bokunBookingId).toBe("VIS-REAL-7");
+    expect(bokun.made("/checkout.json/submit")).toHaveLength(1);
+  });
+
   it("stops instead of reserving a third time when the new reservation also can't be confirmed", async () => {
     const dep = await departure(sharedTourId, { time: "12:05" });
     bokun.slot("796650", DAY, "12:05", 10);
@@ -464,7 +500,7 @@ describe("website bookings reach Bókun", () => {
     expect(bokun.made("/checkout.json/submit")).toHaveLength(2);
   });
 
-  it("sends the phone in E.164, and without it once if Bókun still can't read it", async () => {
+  it("sends the phone in E.164, and the office number if Bókun still can't read it", async () => {
     const dep = await departure(sharedTourId, { time: "12:25" });
     bokun.slot("796650", DAY, "12:25", 10);
     bokun.failSubmit = new BokunApiError(400, 'Bókun API Error: 400 Bad Request - {"message":"Error occurred: is.bokun.dtos.questions.validation.InvalidAnswersException - Invalid or missing answers for the booking","fields":{"errors":[{"reason":"INVALID","path":"/mainContactDetails/4","questionId":"phoneNumber","message":"Not a valid phone number"}]}}');
@@ -490,7 +526,7 @@ describe("website bookings reach Bókun", () => {
     const submits = bokun.made("/checkout.json/submit").map((c) => c.body.directBooking.mainContactDetails);
     expect(submits).toHaveLength(2);
     expect(submits[0].find((d: any) => d.questionId === "phoneNumber").values).toEqual(["+14035550100"]);
-    expect(submits[1].find((d: any) => d.questionId === "phoneNumber")).toBeUndefined();
+    expect(submits[1].find((d: any) => d.questionId === "phoneNumber").values).toEqual(["+18257349456"]);
     expect(bokun.made("/checkout.json/submit")[1].body.directBooking.activityBookings[0].note).toContain("Guest phone: +1 403 555 0100");
   });
 
