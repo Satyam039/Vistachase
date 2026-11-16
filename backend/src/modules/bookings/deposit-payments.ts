@@ -15,6 +15,7 @@
 import prisma from "@/lib/db/prisma";
 import { getPaymentProvider } from "@/lib/payment/payment.provider";
 import { getEmailProvider } from "@/lib/email/email.provider";
+import { renderMasterEmail } from "@/lib/email/email-template";
 import { voucherLink } from "@/lib/security/signed-links";
 import { formatDateOnly, formatTimeOfDay, getMountainTimeInstant } from "@/lib/utils/time";
 import { earnCommission } from "@/modules/affiliates/commission";
@@ -142,16 +143,38 @@ export async function recordBalancePayment(reference: string, verified: { amount
   if (result.inFull) {
     const when = `${formatDateOnly(booking.tourDeparture.date)} at ${formatTimeOfDay(booking.tourDeparture.departureTime)}`;
     const link = voucherLink(booking.bookingReference);
+    const receiptEmail = renderMasterEmail({
+      subject: `Paid in full: ${booking.bookingReference}`,
+      preheader: `Thank you! Your balance payment for booking ${booking.bookingReference} has been received.`,
+      title: "Booking Paid in Full",
+      greeting: `Hi ${booking.customerName.replace(/[<>&]/g, "")},`,
+      paragraphs: [
+        `We received your balance payment of <strong>${money(payment.amount, booking.currency)}</strong> for <strong>${escapeHtml(titleOf(booking))}</strong> on ${when} (Mountain Time).`,
+        `Total paid: <strong>${money(booking.totalAmount, booking.currency)}</strong>.`,
+        "Your booking is confirmed and paid in full. Please open your voucher and show it to your guide or driver at pickup.",
+      ],
+      cta: {
+        label: "Open Your Voucher",
+        url: link,
+      },
+      fallbackText: "If the button doesn't work, access your voucher directly here:",
+      fallbackUrl: link,
+      plainTextLines: [
+        `Paid in full: ${booking.bookingReference}`,
+        "",
+        `Hi ${booking.customerName},`,
+        "",
+        `We received your balance of ${money(payment.amount, booking.currency)} for booking ${booking.bookingReference}.`,
+        `Total paid: ${money(booking.totalAmount, booking.currency)}.`,
+        `Voucher: ${link}`,
+      ],
+    });
     getEmailProvider()
       .sendEmail({
         to: booking.customerEmail,
-        subject: `Paid in full: ${booking.bookingReference}`,
-        html: `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #1c1f23;">
-          <h2>Thank you, your booking is paid in full</h2>
-          <p>We received your balance of <strong>${money(payment.amount, booking.currency)}</strong> for ${escapeHtml(titleOf(booking))} on ${when} (Mountain Time). Total paid: ${money(booking.totalAmount, booking.currency)}.</p>
-          <p><a href="${link}" style="color: #257780; font-weight: bold;">Open your voucher</a> and show it to your guide at pickup.</p>
-        </div>`,
-        text: `We received your balance of ${money(payment.amount, booking.currency)} for booking ${booking.bookingReference}. Total paid: ${money(booking.totalAmount, booking.currency)}.\nVoucher: ${link}`,
+        subject: receiptEmail.subject,
+        html: receiptEmail.html,
+        text: receiptEmail.text,
       })
       .catch((e) => console.error("Balance receipt email failed:", (e as Error).message));
   }
@@ -230,18 +253,38 @@ export async function sendBalanceReminders(now = new Date()) {
     const link = voucherLink(booking.bookingReference);
     const when = `${formatDateOnly(booking.tourDeparture.date)} at ${formatTimeOfDay(booking.tourDeparture.departureTime)}`;
     const copy = STAGES[stage as 1 | 2 | 3];
+    const reminderEmail = renderMasterEmail({
+      subject: copy.subject(booking.bookingReference),
+      preheader: copy.lead(amount, dueLabel).replace(/<[^>]+>/g, ""),
+      title: stage === 3 ? "Action Needed: Balance Unpaid" : "Trip Balance Reminder",
+      greeting: `Hi ${escapeHtml(booking.customerName)},`,
+      paragraphs: [
+        copy.lead(amount, dueLabel),
+        `Trip: <strong>${escapeHtml(titleOf(booking))}</strong>, ${when} (Mountain Time).<br>Booking reference: <strong>${booking.bookingReference}</strong>.`,
+        "Your seats remain reserved. You can easily complete the remaining payment online using your voucher link.",
+      ],
+      cta: {
+        label: "Pay Remaining Balance",
+        url: link,
+      },
+      fallbackText: "If the button doesn't work, open your voucher directly to pay:",
+      fallbackUrl: link,
+      disclaimer: "Already paid? Thank you, you can safely ignore this reminder.",
+      plainTextLines: [
+        `${copy.lead(amount, dueLabel).replace(/<[^>]+>/g, "")}`,
+        "",
+        `Hi ${booking.customerName},`,
+        "",
+        `${titleOf(booking)}, ${when} (Mountain Time). Booking ${booking.bookingReference}.`,
+        `Pay balance: ${link}`,
+      ],
+    });
     await getEmailProvider()
       .sendEmail({
         to: booking.customerEmail,
-        subject: copy.subject(booking.bookingReference),
-        html: `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #1c1f23;">
-          <p>Hi ${escapeHtml(booking.customerName)},</p>
-          <p>${copy.lead(amount, dueLabel)}</p>
-          <p>${escapeHtml(titleOf(booking))}, ${when} (Mountain Time). Booking ${booking.bookingReference}.</p>
-          <p><a href="${link}" style="color: #257780; font-weight: bold;">Pay the balance on your voucher</a>. It takes a minute by card.</p>
-          <p style="color: #5d6168; font-size: 13px;">Already paid? Thank you, you can ignore this email.</p>
-        </div>`,
-        text: `${copy.lead(amount, dueLabel).replace(/<[^>]+>/g, "")}\n${titleOf(booking)}, ${when} (Mountain Time). Booking ${booking.bookingReference}.\nPay the balance: ${link}`,
+        subject: reminderEmail.subject,
+        html: reminderEmail.html,
+        text: reminderEmail.text,
       })
       .then((r) => {
         if (r.success) sent++;

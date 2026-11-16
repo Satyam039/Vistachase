@@ -26,6 +26,7 @@ import { transitionBooking } from "@/modules/bookings/booking-status";
 import { getPaymentProvider } from "@/lib/payment/payment.provider";
 import { sendConfirmationEmail } from "@/modules/bookings/confirmation-email";
 import { getEmailProvider } from "@/lib/email/email.provider";
+import { renderMasterEmail } from "@/lib/email/email-template";
 import { isVehicleDeparture, partySizeError, seatedGuests, seatsToReserve } from "@/modules/pricing/departure-pricing";
 import { airportTransferLabel, airportTransferNote, airportTransferPriceCents, type AirportTransfer } from "@/modules/bookings/airport-transfer";
 import { activityAddOnsError, activityAddOnsNote, ACTIVITY_ADD_ONS, type ActivityAddOnId, type ActivityGuests } from "@/modules/bookings/activity-add-ons";
@@ -748,20 +749,42 @@ export async function cancelBooking(reference: string, customerEmail?: string) {
   }
   const final = refundedCents > 0 ? await prisma.booking.findUniqueOrThrow({ where: { id: booking.id } }) : updated;
 
+  const cancelEmail = renderMasterEmail({
+    subject: `Your Vista Chase booking is cancelled: ${booking.bookingReference}`,
+    preheader: `Booking ${booking.bookingReference} for ${experienceTitle(booking.tourDeparture)} has been cancelled.`,
+    title: "Booking Cancelled",
+    greeting: `Hi ${booking.customerName.replace(/[<>&]/g, "")},`,
+    paragraphs: [
+      `Your booking <strong>${booking.bookingReference}</strong> for <strong>${escapeHtml(experienceTitle(booking.tourDeparture))}</strong> on ${formatDateOnly(booking.tourDeparture.date)} has been cancelled.`,
+      ...(refundedCents > 0
+        ? [`We have refunded <strong>$${(refundedCents / 100).toFixed(2)} ${booking.currency}</strong> to your original payment method; it usually arrives within 5–10 business days.`]
+        : []),
+      ...(failedCents > 0
+        ? [`Your refund of <strong>$${(failedCents / 100).toFixed(2)} ${booking.currency}</strong> couldn't be sent automatically. Our team has been notified and will send it to your original payment method.`]
+        : []),
+      policy.keepPercent > 0
+        ? `This is a private multi-day package: ${policy.keepPercent}% of the total price is non-refundable, and everything else you paid is refunded.`
+        : "Cancelled within the policy deadline, so everything you paid is refunded.",
+    ],
+    disclaimer: "If you have any questions, simply reply to this email or call our team at +1 (825) 734-9456.",
+    plainTextLines: [
+      `Your Vista Chase booking ${booking.bookingReference} is cancelled.`,
+      "",
+      `Hi ${booking.customerName},`,
+      "",
+      `Booking ${booking.bookingReference} for ${experienceTitle(booking.tourDeparture)} on ${formatDateOnly(booking.tourDeparture.date)} has been cancelled.`,
+      ...(refundedCents > 0 ? [`Refunded: $${(refundedCents / 100).toFixed(2)} ${booking.currency}`] : []),
+      "",
+      "Questions? Call +1 (825) 734-9456 or email support@vistachase.com",
+    ],
+  });
+
   getEmailProvider()
     .sendEmail({
       to: booking.customerEmail,
-      subject: `Your Vista Chase booking is cancelled: ${booking.bookingReference}`,
-      html: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #1c1f23;">
-          <h2>Booking cancelled</h2>
-          <p>Your booking <strong>${booking.bookingReference}</strong> for <strong>${escapeHtml(experienceTitle(booking.tourDeparture))}</strong> on ${formatDateOnly(booking.tourDeparture.date)} has been cancelled.</p>
-          ${refundedCents > 0 ? `<p>We have refunded <strong>$${(refundedCents / 100).toFixed(2)} ${booking.currency}</strong> to your original payment method; it usually arrives within 5–10 business days.</p>` : ""}
-          ${failedCents > 0 ? `<p>Your refund of <strong>$${(failedCents / 100).toFixed(2)} ${booking.currency}</strong> couldn't be sent automatically. Our team has been notified and will send it to your original payment method.</p>` : ""}
-          <p>${policy.keepPercent > 0 ? `This is a private multi-day package: ${policy.keepPercent}% of the total price is non-refundable, and everything else you paid is refunded.` : "Cancelled within the policy deadline, so everything you paid is refunded."}</p>
-          <p>Questions? Reply to this email or call +1 (825) 734-9456.</p>
-        </div>`,
-      text: `Your Vista Chase booking ${booking.bookingReference} is cancelled.${refundedCents > 0 ? ` Refund: $${(refundedCents / 100).toFixed(2)} ${booking.currency}.` : ""}`,
+      subject: cancelEmail.subject,
+      html: cancelEmail.html,
+      text: cancelEmail.text,
     })
     .catch((e) => console.error("Cancellation email failed:", (e as Error).message));
 

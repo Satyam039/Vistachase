@@ -25,6 +25,7 @@ import { createPromo, deletePromo, listPromos, updatePromo } from "@/modules/adm
 import { sendConfirmationEmail } from "@/modules/bookings/confirmation-email";
 import { linkTripBookings, tripOf, tripSummary } from "@/modules/bookings/trip";
 import { emailDeliveryConfigured, getEmailProvider } from "@/lib/email/email.provider";
+import { renderMasterEmail } from "@/lib/email/email-template";
 import { bokunAvailabilitySyncEnabled, bokunConfig, bokunConnected, bokunIsTestAccount } from "@/modules/bokun/config";
 import { checkBokunProducts } from "@/modules/bokun/bokun-products";
 import { bokunSyncStatus, processBokunSyncTasks, queueUpcomingBookings, retryBokunSync } from "@/modules/bokun/bokun-sync";
@@ -342,11 +343,34 @@ router.post("/bookings/:id/resend-voucher", async (req, res, next) => {
       return res.json({ success: true });
     }
     const link = voucherLink(booking.bookingReference);
+    const voucherEmail = renderMasterEmail({
+      site: siteUrl(),
+      subject: `Your Vista Chase voucher: ${booking.bookingReference}`,
+      preheader: `View your digital voucher for booking ${booking.bookingReference}`,
+      title: "Your Booking Voucher",
+      greeting: `Hi ${booking.customerName.replace(/[<>&]/g, "")},`,
+      paragraphs: [
+        `Here is your voucher for booking <strong>${booking.bookingReference}</strong>. Please present it to your driver or guide at pickup.`,
+      ],
+      cta: {
+        label: "Open Your Voucher",
+        url: link,
+      },
+      fallbackText: "If the button doesn't work, open your voucher directly using this link:",
+      fallbackUrl: link,
+      plainTextLines: [
+        `Your Vista Chase Voucher: ${booking.bookingReference}`,
+        "",
+        `Hi ${booking.customerName},`,
+        "",
+        `View your booking voucher: ${link}`,
+      ],
+    });
     await getEmailProvider().sendEmail({
       to: booking.customerEmail,
-      subject: `Your Vista Chase voucher: ${booking.bookingReference}`,
-      html: `<p>Hi ${booking.customerName.replace(/[<>&]/g, "")},</p><p>Here is your voucher for booking <strong>${booking.bookingReference}</strong>: <a href="${link}">open your voucher</a>.</p>`,
-      text: `Your voucher for booking ${booking.bookingReference}: ${link}`,
+      subject: voucherEmail.subject,
+      html: voucherEmail.html,
+      text: voucherEmail.text,
     });
     await audit(req, "RESEND_VOUCHER", "Booking", booking.id, {});
     res.json({ success: true });
@@ -885,12 +909,40 @@ async function issueSetupLink(user: { id: string; email: string; name: string },
   let emailed = false;
   if (emailDeliveryConfigured()) {
     const name = user.name.replace(/[<>&]/g, "");
+    const setupEmail = renderMasterEmail({
+      site: siteUrl(),
+      subject: purpose === "invite" ? "Your Vista Chase staff account" : "Set a new Vista Chase password",
+      preheader: purpose === "invite" ? "An account has been created for you on the Vista Chase dashboard." : "Set a new password for your Vista Chase account.",
+      title: purpose === "invite" ? "Welcome to the Team" : "Set Your Password",
+      greeting: `Hi ${name},`,
+      paragraphs: [
+        purpose === "invite"
+          ? "An account has been created for you on the Vista Chase team dashboard."
+          : "An administrator requested a new password link for your account.",
+        `Click the button below to choose your password. This link works once and expires in ${INVITE_HOURS} hours:`,
+      ],
+      cta: {
+        label: "Choose Your Password",
+        url: link,
+      },
+      fallbackText: "If the button doesn't work, copy and paste this link into your browser:",
+      fallbackUrl: link,
+      disclaimer: `This setup link works once and expires in ${INVITE_HOURS} hours.`,
+      plainTextLines: [
+        purpose === "invite" ? "Your Vista Chase Staff Account" : "Set a New Vista Chase Password",
+        "",
+        `Hi ${name},`,
+        "",
+        `Choose your password: ${link}`,
+        `This link works once and expires in ${INVITE_HOURS} hours.`,
+      ],
+    });
     const result = await getEmailProvider()
       .sendEmail({
         to: user.email,
-        subject: purpose === "invite" ? "Your Vista Chase staff account" : "Set a new Vista Chase password",
-        html: `<p>Hi ${name},</p><p>${purpose === "invite" ? "An account has been created for you on the Vista Chase dashboard." : "An admin asked for a new password link for you."} <a href="${link}">Choose your password</a>. The link works once and expires in ${INVITE_HOURS} hours.</p>`,
-        text: `Choose your Vista Chase password: ${link}\nThe link works once and expires in ${INVITE_HOURS} hours.`,
+        subject: setupEmail.subject,
+        html: setupEmail.html,
+        text: setupEmail.text,
       })
       .catch(() => ({ success: false }));
     emailed = !!result.success;

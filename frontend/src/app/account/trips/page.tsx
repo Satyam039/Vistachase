@@ -18,6 +18,7 @@ import {
   ArrowRight,
   LogOut,
   RefreshCw,
+  Settings,
 } from "lucide-react";
 
 interface TripBooking {
@@ -580,14 +581,23 @@ export default function MyTripsPage() {
             </p>
           </div>
           {user && (
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="inline-flex h-11 items-center gap-2 self-start rounded-full border border-white/25 px-5 text-sm text-white hover:bg-white/10 md:self-auto"
-            >
-              <LogOut className="h-4 w-4" aria-hidden="true" />
-              Sign out
-            </button>
+            <div className="flex flex-wrap items-center gap-3">
+              <Link
+                href="/account/settings"
+                className="inline-flex h-11 items-center gap-2 rounded-full border border-white/25 px-5 text-sm text-white hover:bg-white/10"
+              >
+                <Settings className="h-4 w-4" aria-hidden="true" />
+                Account settings
+              </Link>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="inline-flex h-11 items-center gap-2 rounded-full border border-white/25 px-5 text-sm text-white hover:bg-white/10"
+              >
+                <LogOut className="h-4 w-4" aria-hidden="true" />
+                Sign out
+              </button>
+            </div>
           )}
         </div>
       </section>

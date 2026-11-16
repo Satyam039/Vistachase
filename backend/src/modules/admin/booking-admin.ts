@@ -12,6 +12,7 @@ import crypto from "node:crypto";
 import type { BookingFlagType, Prisma } from "@prisma/client";
 import prisma from "@/lib/db/prisma";
 import { getEmailProvider } from "@/lib/email/email.provider";
+import { renderMasterEmail } from "@/lib/email/email-template";
 import { getPaymentProvider } from "@/lib/payment/payment.provider";
 import { sendConfirmationEmail } from "@/modules/bookings/confirmation-email";
 import { formatDateOnly, formatTimeOfDay, getMountainTimeInstant } from "@/lib/utils/time";
@@ -152,18 +153,33 @@ export async function staffCancelBooking(bookingId: string, input: StaffCancelIn
         : owed > 0
           ? `A refund of ${money(owed, booking.currency)} is on its way; we'll confirm once it has been sent.`
           : "";
+    const cancelEmail = renderMasterEmail({
+      subject: `Your Vista Chase booking is cancelled: ${booking.bookingReference}`,
+      preheader: `Booking ${booking.bookingReference} for ${title} has been cancelled.`,
+      title: "Booking Cancelled",
+      greeting: `Hi ${booking.customerName.replace(/[<>&]/g, "")},`,
+      paragraphs: [
+        `Your booking <strong>${booking.bookingReference}</strong> for <strong>${escapeHtml(title)}</strong> on ${formatDateOnly(booking.tourDeparture.date)} has been cancelled.`,
+        ...(refundLine ? [refundLine] : []),
+      ],
+      disclaimer: "Questions? Reply to this email or call +1 (825) 734-9456.",
+      plainTextLines: [
+        `Your Vista Chase booking ${booking.bookingReference} is cancelled.`,
+        "",
+        `Hi ${booking.customerName},`,
+        "",
+        `Booking ${booking.bookingReference} for ${title} on ${formatDateOnly(booking.tourDeparture.date)} has been cancelled.`,
+        ...(refundLine ? [refundLine] : []),
+        "",
+        "Questions? Call +1 (825) 734-9456 or email support@vistachase.com",
+      ],
+    });
     getEmailProvider()
       .sendEmail({
         to: booking.customerEmail,
-        subject: `Your Vista Chase booking is cancelled: ${booking.bookingReference}`,
-        html: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #1c1f23;">
-          <h2>Booking cancelled</h2>
-          <p>Hi ${escapeHtml(booking.customerName)}, your booking <strong>${booking.bookingReference}</strong> for <strong>${escapeHtml(title)}</strong> on ${formatDateOnly(booking.tourDeparture.date)} has been cancelled.</p>
-          ${refundLine ? `<p>${refundLine}</p>` : ""}
-          <p>Questions? Reply to this email or call +1 (825) 734-9456.</p>
-        </div>`,
-        text: `Your Vista Chase booking ${booking.bookingReference} is cancelled.${refundLine ? ` ${refundLine}` : ""}`,
+        subject: cancelEmail.subject,
+        html: cancelEmail.html,
+        text: cancelEmail.text,
       })
       .catch((e) => console.error("Cancellation email failed:", (e as Error).message));
   }

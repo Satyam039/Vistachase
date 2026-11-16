@@ -13,6 +13,7 @@
 import type { BookingStatus } from "@prisma/client";
 import prisma from "@/lib/db/prisma";
 import { getEmailProvider } from "@/lib/email/email.provider";
+import { renderMasterEmail } from "@/lib/email/email-template";
 import { formatDateOnly, formatTimeOfDay } from "@/lib/utils/time";
 import { transitionBooking } from "@/modules/bookings/booking-status";
 import { policyDecision, type PolicyBooking } from "@/modules/bookings/cancellation-policy";
@@ -44,17 +45,28 @@ export function titleOf(b: { tourDeparture: { tour: { title: string } | null; sh
 }
 
 export function guestEmail(to: string, subject: string, heading: string, paragraphs: string[]) {
+  const master = renderMasterEmail({
+    subject,
+    title: heading,
+    paragraphs,
+    disclaimer: "Questions? Reply to this email or call +1 (825) 734-9456.",
+    plainTextLines: [
+      heading,
+      "",
+      ...paragraphs.map((p) => p.replace(/<[^>]+>/g, "")),
+      "",
+      "Questions? Reply to this email or call +1 (825) 734-9456.",
+      "© Vista Chase | Explore the Canadian Rockies",
+      "www.vistachase.com · support@vistachase.com · +1 (825) 734-9456",
+    ],
+  });
+
   getEmailProvider()
     .sendEmail({
       to,
-      subject,
-      html: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #1c1f23;">
-          <h2>${heading}</h2>
-          ${paragraphs.map((p) => `<p>${p}</p>`).join("\n          ")}
-          <p style="color: #5d6168; font-size: 13px;">Questions? Reply to this email or call +1 (825) 734-9456.</p>
-        </div>`,
-      text: paragraphs.map((p) => p.replace(/<[^>]+>/g, "")).join("\n\n"),
+      subject: master.subject,
+      html: master.html,
+      text: master.text,
     })
     .catch((e) => console.error(`${heading} email failed:`, (e as Error).message));
 }

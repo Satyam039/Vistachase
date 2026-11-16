@@ -3,6 +3,7 @@
 
 import prisma from "@/lib/db/prisma";
 import { getEmailProvider } from "@/lib/email/email.provider";
+import { renderMasterEmail } from "@/lib/email/email-template";
 import { freeExpiredSeats } from "@/modules/departures/inventory";
 import { reviewLink } from "@/lib/security/signed-links";
 import { dateOnly, todayInMountainTime } from "@/lib/utils/time";
@@ -129,12 +130,37 @@ export async function sendReviewRequests(now = new Date()) {
     if (claimed.count === 0) continue;
     const title = booking.tourDeparture.tour?.title || booking.tourDeparture.shuttleRoute?.name || "your Vista Chase trip";
     const link = reviewLink(booking.bookingReference);
+    const reviewEmail = renderMasterEmail({
+      subject: `How was ${title}?`,
+      preheader: "Thank you for travelling with Vista Chase. Tell us how your day went.",
+      title: "How Was Your Trip?",
+      greeting: `Hi ${booking.customerName.replace(/[<>&]/g, "")},`,
+      paragraphs: [
+        `Thank you for travelling with Vista Chase yesterday on <strong>${title}</strong>!`,
+        "Your feedback helps fellow travellers and means the world to our local guides and team. If you have a minute, please share how your day went:",
+      ],
+      cta: {
+        label: "Tell Us How Your Day Went",
+        url: link,
+      },
+      fallbackText: "If the button doesn't work, share your thoughts using this link:",
+      fallbackUrl: link,
+      disclaimer: `This is a one-time message about your booking ${booking.bookingReference}. We don't send marketing email without your consent.`,
+      plainTextLines: [
+        `How was ${title}?`,
+        "",
+        `Hi ${booking.customerName},`,
+        "",
+        `Thank you for travelling with Vista Chase. Tell us how your day went: ${link}`,
+        `Booking: ${booking.bookingReference}`,
+      ],
+    });
     await getEmailProvider()
       .sendEmail({
         to: booking.customerEmail,
-        subject: `How was ${title}?`,
-        html: `<p>Hi ${booking.customerName.replace(/[<>&]/g, "")},</p><p>Thank you for travelling with Vista Chase yesterday. If you have a minute, <a href="${link}">tell us how your day went</a>.</p><p style="color:#5d6168;font-size:12px">This is a one-time message about your booking ${booking.bookingReference}. We don't send marketing email without your consent.</p>`,
-        text: `Thank you for travelling with Vista Chase. Tell us how your day went: ${link}\nThis is a one-time message about your booking ${booking.bookingReference}.`,
+        subject: reviewEmail.subject,
+        html: reviewEmail.html,
+        text: reviewEmail.text,
       })
       .then(() => sent++)
       .catch((e) => console.error(`Review request for ${booking.bookingReference} failed:`, (e as Error).message));
