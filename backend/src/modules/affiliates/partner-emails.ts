@@ -3,16 +3,29 @@
 
 import { staffInbox } from "@/lib/email/staff-inbox";
 import { getEmailProvider } from "@/lib/email/email.provider";
+import { renderMasterEmail } from "@/lib/email/email-template";
 import { siteUrl } from "@/lib/security/signed-links";
 
 const escapeHtml = (value: string) =>
   value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 
 function send(to: string, subject: string, lines: string[]) {
-  const html = `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #1c1f23;">${lines.map((l) => `<p>${l}</p>`).join("")}</div>`;
-  const text = lines.map((l) => l.replace(/<[^>]*>/g, "")).join("\n\n");
+  const master = renderMasterEmail({
+    site: siteUrl(),
+    subject,
+    title: subject,
+    paragraphs: lines,
+    plainTextLines: [
+      subject,
+      "",
+      ...lines.map((l) => l.replace(/<[^>]*>/g, "")),
+      "",
+      "© Vista Chase | Explore the Canadian Rockies",
+      "www.vistachase.com · support@vistachase.com · +1 (825) 734-9456",
+    ],
+  });
   getEmailProvider()
-    .sendEmail({ to, subject, html, text })
+    .sendEmail({ to, subject: master.subject, html: master.html, text: master.text })
     .catch((e) => console.error(`Partner email "${subject}" failed:`, (e as Error).message));
 }
 

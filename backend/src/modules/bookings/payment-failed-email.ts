@@ -5,6 +5,7 @@
 
 import prisma from "@/lib/db/prisma";
 import { getEmailProvider } from "@/lib/email/email.provider";
+import { renderMasterEmail } from "@/lib/email/email-template";
 import { siteUrl } from "@/lib/security/signed-links";
 import { formatDateOnly } from "@/lib/utils/time";
 import { tripOf } from "@/modules/bookings/trip";
@@ -27,19 +28,34 @@ export async function sendPaymentFailedEmail(reference: string): Promise<boolean
     const title = trip?.title ?? experienceTitle(d);
     const when = trip ? `starting ${formatDateOnly(d.date)}` : `on ${formatDateOnly(d.date)}`;
     const retry = d.tour?.slug ? `${siteUrl()}/tours/${d.tour.slug}` : `${siteUrl()}/search`;
-    const html = `
-      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #1c1f23;">
-        <h2 style="font-weight: normal;">Your payment didn't go through</h2>
-        <p>Hi ${escapeHtml(booking.customerName)}, the card payment for <strong>${escapeHtml(title)}</strong> ${when} (reference ${booking.bookingReference}) didn't go through, so the booking was not confirmed and you have not been charged.</p>
-        <p>You can book again with another card: <a href="${retry}" style="color: #257780;">choose your date again</a>. Seats aren't held, so book soon if the date is popular.</p>
-        <p style="color: #5d6168; font-size: 13px;">Questions, or prefer to book by phone? Call +1 (825) 734-9456 (6 a.m. – 9 p.m. Mountain Time) or write to support@vistachase.com.</p>
-      </div>`;
-    const text = [
-      `Your card payment for ${title} ${when} (reference ${booking.bookingReference}) didn't go through, so the booking was not confirmed and you have not been charged.`,
-      `Book again with another card: ${retry}`,
-      "Questions? Call +1 (825) 734-9456 or write to support@vistachase.com.",
-    ].join("\n");
-    const result = await getEmailProvider().sendEmail({ to: booking.customerEmail, subject: `Your Vista Chase payment didn't go through: ${booking.bookingReference}`, html, text });
+
+    const rendered = renderMasterEmail({
+      subject: `Your Vista Chase payment didn't go through: ${booking.bookingReference}`,
+      preheader: `Payment could not be processed for booking ${booking.bookingReference}. You have not been charged.`,
+      title: "Payment Unsuccessful",
+      greeting: `Hi ${escapeHtml(booking.customerName)},`,
+      paragraphs: [
+        `The card payment for <strong>${escapeHtml(title)}</strong> ${when} (reference ${escapeHtml(booking.bookingReference)}) didn't go through, so the booking was not confirmed and you have not been charged.`,
+        "Seats are not held automatically. You can book again using another card or payment method:",
+      ],
+      cta: {
+        label: "Choose Your Date & Try Again",
+        url: retry,
+      },
+      disclaimer: "Questions, or prefer to book by phone? Call +1 (825) 734-9456 (6 a.m. – 9 p.m. Mountain Time) or write to support@vistachase.com.",
+      plainTextLines: [
+        `Your card payment for ${title} ${when} (reference ${booking.bookingReference}) didn't go through, so the booking was not confirmed and you have not been charged.`,
+        `Book again with another card: ${retry}`,
+        "Questions? Call +1 (825) 734-9456 or write to support@vistachase.com.",
+      ],
+    });
+
+    const result = await getEmailProvider().sendEmail({
+      to: booking.customerEmail,
+      subject: rendered.subject,
+      html: rendered.html,
+      text: rendered.text,
+    });
     if (!result.success) throw new Error(result.error || "The email provider refused the message.");
     return true;
   } catch (err) {

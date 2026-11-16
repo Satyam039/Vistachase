@@ -14,6 +14,7 @@
 import { cancellationTerms, termsSentence } from "@/modules/bookings/cancellation-policy";
 import prisma from "@/lib/db/prisma";
 import { getEmailProvider } from "@/lib/email/email.provider";
+import { renderMasterEmail } from "@/lib/email/email-template";
 import { voucherLink } from "@/lib/security/signed-links";
 import { formatDateOnly, formatTimeOfDay } from "@/lib/utils/time";
 import { itineraryPdf } from "@/modules/bookings/voucher-pdf";
@@ -173,27 +174,7 @@ export async function sendConfirmationEmail(reference: string, options: { force?
     const dueBy = balance > 0 && deposit ? ` by ${balanceDueLabel(deposit.balanceDueAt)}` : "";
     // Booking & Cancellation Policy for this product (cancellation-policy.ts); a deposit doesn't change it.
     const policy = `${termsSentence(cancellationTerms(lead.tourDeparture.tour?.category, multi))}${deposit && balance > 0 ? ` You paid a ${DEPOSIT_PERCENT}% deposit: pay the balance from your voucher.` : ""}`;
-    const html = `
-      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #1c1f23;">
-        <h2 style="font-weight: normal;">Your booking is confirmed</h2>
-        <p>Hi ${escapeHtml(lead.customerName)}, thank you for booking with Vista Chase. Your itinerary is attached as a PDF.</p>
-        <div style="border: 1px solid #e1e1db; padding: 16px; margin: 20px 0;">
-          <p style="margin: 0 0 6px;"><strong>Booking reference:</strong> ${tripReference}</p>
-          <p style="margin: 0 0 6px;"><strong>${multi ? "Trip" : "Experience"}:</strong> ${escapeHtml(title)}${multi ? ` (${live.length} days)` : ""}</p>
-          <p style="margin: 0 0 6px;"><strong>Guests:</strong> ${lead.totalSeats}</p>
-          <p style="margin: 0 0 6px;"><strong>Total:</strong> ${money(total, currency)} · <strong>Paid:</strong> ${money(paid, currency)}${balance > 0 ? ` · <strong>Balance due:</strong> ${money(balance, currency)}${dueBy}` : ""}</p>
-          <table role="presentation" style="width: 100%; border-collapse: collapse; margin-top: 8px;">${dayHtml}</table>
-        </div>
-        <p style="margin: 0 0 6px; font-weight: bold;">Add to your calendar</p>
-        <p style="margin: 0 0 20px;">
-          <a href="${escapeHtml(calendarFile)}" style="display: inline-block; border: 1px solid #257780; color: #257780; text-decoration: none; padding: 10px 16px; margin: 0 8px 8px 0;">iPhone / Apple / Outlook</a>
-          <a href="${escapeHtml(days[0].google)}" style="display: inline-block; border: 1px solid #257780; color: #257780; text-decoration: none; padding: 10px 16px; margin: 0 8px 8px 0;">Android / Google Calendar${multi ? " (Day 1)" : ""}</a>
-        </p>
-        <p style="margin: 24px 0;"><a href="${manageLink}" style="display: inline-block; background: #257780; color: #ffffff; text-decoration: none; padding: 12px 22px; font-weight: bold;">Manage booking</a></p>
-        <p style="color: #5d6168; font-size: 13px; margin-top: -12px;">Change the lead guest's name or phone, ask for a different date, or cancel.</p>
-        <p>Be at your pickup 10 minutes early and show your voucher to your guide, printed or on your phone.</p>
-        <p style="color: #5d6168; font-size: 13px;">${policy} Questions? Reply to this email, call +1 (825) 734-9456 (6 a.m. – 9 p.m. Mountain Time) or write to support@vistachase.com.</p>
-      </div>`;
+
     const text = [
       `Your Vista Chase booking ${tripReference} is confirmed.`,
       `${multi ? "Trip" : "Experience"}: ${title}${multi ? ` (${live.length} days)` : ""}`,
@@ -208,11 +189,49 @@ export async function sendConfirmationEmail(reference: string, options: { force?
       "Your itinerary is attached as a PDF. Questions? Call +1 (825) 734-9456 or write to support@vistachase.com.",
     ].join("\n");
 
+    const customHtml = `
+      <div style="border:1px solid #e5e7eb;border-radius:8px;padding:18px;margin:16px 0;background-color:#f9fafb;">
+        <table role="presentation" style="width:100%;border-collapse:collapse;font-size:14px;color:#1c1f23;">
+          <tr><td style="padding:4px 0;width:140px;color:#6b7280;">Booking reference:</td><td style="padding:4px 0;font-weight:600;color:#14363a;">${escapeHtml(tripReference)}</td></tr>
+          <tr><td style="padding:4px 0;color:#6b7280;">${multi ? "Trip" : "Experience"}:</td><td style="padding:4px 0;font-weight:600;">${escapeHtml(title)}${multi ? ` (${live.length} days)` : ""}</td></tr>
+          <tr><td style="padding:4px 0;color:#6b7280;">Guests:</td><td style="padding:4px 0;">${lead.totalSeats}</td></tr>
+          <tr><td style="padding:4px 0;color:#6b7280;">Payment:</td><td style="padding:4px 0;">Total: ${money(total, currency)} · Paid: ${money(paid, currency)}${balance > 0 ? ` · <span style="color:#b91c1c;">Balance due: ${money(balance, currency)}${dueBy}</span>` : ""}</td></tr>
+        </table>
+        <table role="presentation" style="width:100%;border-collapse:collapse;margin-top:12px;">${dayHtml}</table>
+      </div>
+      <div style="margin:16px 0 8px;text-align:center;">
+        <p style="margin:0 0 8px;font-size:13px;font-weight:600;color:#374151;">Add to your calendar</p>
+        <p style="margin:0;">
+          <a href="${escapeHtml(calendarFile)}" style="display:inline-block;border:1px solid #257780;color:#257780;text-decoration:none;padding:8px 14px;font-size:12px;font-weight:600;border-radius:6px;margin:0 4px 6px;">iPhone / Outlook (.ics)</a>
+          <a href="${escapeHtml(days[0].google)}" style="display:inline-block;border:1px solid #257780;color:#257780;text-decoration:none;padding:8px 14px;font-size:12px;font-weight:600;border-radius:6px;margin:0 4px 6px;">Google Calendar${multi ? " (Day 1)" : ""}</a>
+        </p>
+      </div>
+      <p style="margin:16px 0 4px;font-size:13px;color:#4b5563;text-align:center;">Be at your pickup point 10 minutes early and show your voucher to your guide, printed or on your phone.</p>
+      <p style="margin:4px 0 0;font-size:12px;color:#6b7280;text-align:center;">${escapeHtml(policy)}</p>
+    `;
+
+    const rendered = renderMasterEmail({
+      subject: `Your Vista Chase booking is confirmed: ${tripReference}`,
+      preheader: `Booking reference: ${tripReference}. ${title}. Your itinerary is attached as a PDF.`,
+      title: "Your Booking is Confirmed!",
+      greeting: `Hi ${escapeHtml(lead.customerName)},`,
+      paragraphs: [
+        "Thank you for booking with Vista Chase. We are excited to welcome you to the Canadian Rockies! Your complete itinerary and voucher details are below and attached as a PDF.",
+      ],
+      customHtml,
+      cta: {
+        label: "Manage Booking",
+        url: manageLink,
+      },
+      disclaimer: "Questions? Reply to this email, call +1 (825) 734-9456 (6 a.m. – 9 p.m. Mountain Time) or write to support@vistachase.com.",
+      plainTextLines: text.split("\n"),
+    });
+
     const result = await getEmailProvider().sendEmail({
       to: lead.customerEmail,
-      subject: `Your Vista Chase booking is confirmed: ${tripReference}`,
-      html,
-      text,
+      subject: rendered.subject,
+      html: rendered.html,
+      text: rendered.text,
       attachments: [
         { filename: `Vista-Chase-itinerary-${tripReference}.pdf`, content: Buffer.from(pdf), contentType: "application/pdf" },
         { filename: `Vista-Chase-${tripReference}.ics`, content: Buffer.from(bookingIcs(live), "utf8"), contentType: "text/calendar; charset=utf-8; method=PUBLISH" },
