@@ -7,7 +7,7 @@ export interface PasswordResetEmailInput {
 }
 
 export function renderPasswordResetEmail({ name, link, site }: PasswordResetEmailInput) {
-  const first = name.trim() || "there";
+  const first = name.trim().split(/\s+/)[0] || "there";
 
   return renderMasterEmail({
     site,

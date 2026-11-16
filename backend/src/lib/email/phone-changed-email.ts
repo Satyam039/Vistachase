@@ -7,7 +7,7 @@ export interface PhoneChangedEmailInput {
 }
 
 export function renderPhoneChangedEmail({ name, phone, site }: PhoneChangedEmailInput) {
-  const first = name.trim() || "there";
+  const first = name.trim().split(/\s+/)[0] || "there";
 
   return renderMasterEmail({
     site,

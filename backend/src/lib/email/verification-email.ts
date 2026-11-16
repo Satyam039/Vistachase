@@ -13,7 +13,7 @@ export interface VerificationEmailInput {
 }
 
 export function renderVerificationEmail({ name, link, site }: VerificationEmailInput) {
-  const first = name.trim() || "there";
+  const first = name.trim().split(/\s+/)[0] || "there";
 
   return renderMasterEmail({
     site,

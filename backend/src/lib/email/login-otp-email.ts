@@ -7,7 +7,7 @@ export interface LoginOtpEmailInput {
 }
 
 export function renderLoginOtpEmail({ name, otp, site }: LoginOtpEmailInput) {
-  const first = name.trim() || "there";
+  const first = name.trim().split(/\s+/)[0] || "there";
 
   const customHtml = `
     <div style="margin:20px 0 16px;text-align:center;">

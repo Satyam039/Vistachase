@@ -8,7 +8,7 @@ export interface EmailChangeVerificationInput {
 }
 
 export function renderEmailChangeVerificationEmail({ name, newEmail, link, site }: EmailChangeVerificationInput) {
-  const first = name.trim() || "there";
+  const first = name.trim().split(/\s+/)[0] || "there";
 
   return renderMasterEmail({
     site,
@@ -50,7 +50,7 @@ export interface EmailChangedNotificationInput {
 }
 
 export function renderEmailChangedConfirmationEmail({ name, newEmail, site }: EmailChangedNotificationInput) {
-  const first = name.trim() || "there";
+  const first = name.trim().split(/\s+/)[0] || "there";
 
   return renderMasterEmail({
     site,
