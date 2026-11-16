@@ -35,6 +35,7 @@ import { PhoneField } from "@/components/forms/PhoneField";
 import { dialCode } from "@/lib/countries";
 import { StripeCheckoutForm, stripeConfigured } from "@/components/booking/StripeCheckoutForm";
 import { balanceDueDate, DEPOSIT_PERCENT, depositAvailable, depositFor, formatRockiesDate } from "@/lib/policy";
+import { trackAdsPurchase } from "@/lib/googleAds";
 
 export interface PackageDeparture {
   id: string;
@@ -173,6 +174,17 @@ export function PackageCheckout({
   const [confirming, setConfirming] = useState<"no" | "yes" | "slow">("no");
   const [confirmed, setConfirmed] = useState<BookingRef[] | null>(null);
   const keyRef = useRef("");
+
+  // Google Ads "Purchase" conversion once the package is confirmed (owner, 16 Nov 2026): one
+  // conversion for the whole package, under the first day's booking reference.
+  useEffect(() => {
+    if (!confirmed?.length) return;
+    trackAdsPurchase({
+      transactionId: confirmed[0]!.bookingReference,
+      value: confirmed.reduce((sum, b) => sum + (Number(b.totalAmount) || 0), 0),
+      currency: "CAD",
+    });
+  }, [confirmed]);
 
   const guests = vehicle ? adults : adults + children + infants;
   const activityGuests = activityGuestsPicked ?? activityGuestsFor(adults);
