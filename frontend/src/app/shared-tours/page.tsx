@@ -4,7 +4,8 @@ import { SharedToursLanding } from "@/components/tours/SharedToursLanding";
 import { BANFF_YOHO, ICEFIELD } from "@/lib/sharedTours";
 import type { TourWithAvailability } from "@/lib/api/types";
 import type { Metadata } from "next";
-import { withSeo } from "@/lib/seo/server";
+import { getSiteConfig, withSeo } from "@/lib/seo/server";
+import { TrackingTags } from "@/components/seo/TrackingTags";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 import { cachePublicData } from "@/lib/api/cachePolicy";
 
@@ -12,6 +13,10 @@ import { cachePublicData } from "@/lib/api/cachePolicy";
 // on every request (fix recheck, 10 Nov 2026, N2/R2: 2.7-10 s responses and 5xx under a crawl).
 // Seats and prices on this page can be up to a minute old; checkout (/book) always reads them live.
 export const revalidate = 60;
+
+// Google tag for the Google Ads launch (owner, 16 Nov 2026): Ads + GA4 on this page first. Skipped
+// when the site-wide tag is already switched on in the SEO portal, so gtag.js never loads twice.
+const SHARED_TOURS_TRACKING = { ga4Id: "G-KH1432E703", adsId: "AW-16675422535", consentDefault: null };
 
 const baseMetadata: Metadata = {
   title: "Small-Group Tours in Banff & the Rockies | Vista Chase",
@@ -41,10 +46,13 @@ export default async function SharedToursPage() {
     console.warn("[SharedToursPage] getCategoryExtras failed:", err);
   }
 
+  const siteConfig = await getSiteConfig();
+
   return (
     <>
       <PageSeoExtras path="/shared-tours" />
       <SharedToursLanding tours={featured} reviews={reviews} />
+      {!siteConfig?.tracking && <TrackingTags tracking={SHARED_TOURS_TRACKING} />}
     </>
   );
 }
