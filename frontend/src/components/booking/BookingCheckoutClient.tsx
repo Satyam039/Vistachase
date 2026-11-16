@@ -62,6 +62,7 @@ import { PhoneField } from "@/components/forms/PhoneField";
 import { dialCode } from "@/lib/countries";
 import { balanceDueDate, cancellationShort, DEPOSIT_PERCENT, depositAvailable, depositFor, depositPolicy, formatRockiesDate, SEATS_MESSAGE } from "@/lib/policy";
 import { StripeCheckoutForm, stripeConfigured } from "@/components/booking/StripeCheckoutForm";
+import { trackAdsPurchase } from "@/lib/googleAds";
 import {
   CreditCard,
   Lock,
@@ -379,6 +380,11 @@ export function BookingCheckoutClient({
   // Pay everything now, or the deposit now and the balance 14 days before departure.
   const [paymentPlan, setPaymentPlan] = useState<"FULL" | "DEPOSIT">("FULL");
   const [paymentState, setPaymentState] = useState<"pay" | "confirming" | "slow">("pay");
+
+  // Google Ads "Purchase" conversion once the booking is confirmed (owner, 16 Nov 2026).
+  useEffect(() => {
+    if (confirmed) trackAdsPurchase({ transactionId: confirmed.bookingReference, value: confirmed.totalAmount, currency: confirmed.currency });
+  }, [confirmed]);
 
   // After Stripe accepts the card, wait for the server's confirmation (sent by Stripe's webhook).
   const waitForConfirmation = async (booking: ConfirmedBooking) => {

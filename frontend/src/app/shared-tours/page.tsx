@@ -6,6 +6,7 @@ import type { TourWithAvailability } from "@/lib/api/types";
 import type { Metadata } from "next";
 import { getSiteConfig, withSeo } from "@/lib/seo/server";
 import { TrackingTags } from "@/components/seo/TrackingTags";
+import { GA4_ID, GOOGLE_ADS_ID } from "@/lib/googleAds";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 import { cachePublicData } from "@/lib/api/cachePolicy";
 
@@ -16,7 +17,7 @@ export const revalidate = 60;
 
 // Google tag for the Google Ads launch (owner, 16 Nov 2026): Ads + GA4 on this page first. Skipped
 // when the site-wide tag is already switched on in the SEO portal, so gtag.js never loads twice.
-const SHARED_TOURS_TRACKING = { ga4Id: "G-KH1432E703", adsId: "AW-16675422535", consentDefault: null };
+const SHARED_TOURS_TRACKING = { ga4Id: GA4_ID, adsId: GOOGLE_ADS_ID, consentDefault: null };
 
 const baseMetadata: Metadata = {
   title: "Small-Group Tours in Banff & the Rockies | Vista Chase",
