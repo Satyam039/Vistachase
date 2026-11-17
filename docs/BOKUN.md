@@ -74,6 +74,18 @@ Fixed without a person:
 - Bókun didn't answer while creating it: the next try first looks it up in Bókun's booking search by our reference (exact match only). Reserved there: that one is confirmed. Confirmed there: it's marked synced. Lapsed or cancelled there: reserved again. Not shown: it stops for staff (below), so nothing is ever created twice.
 - The server restarted mid-create: same lookup on the next try. A booking always goes to Bókun on its own date and start time; when Bókun doesn't have that start, staff are flagged (it's never moved to another day).
 
+## Changes made in Bókun
+
+Every 15 minutes (and when staff press **Check Bókun now** on a booking) upcoming website bookings that are in Bókun are read back from Bókun (`GET /booking.json/booking/<code>`):
+
+- **Cancelled in Bókun**: cancelled on the website too (seats released, nothing sent back to Bókun). The guest gets the cancellation email; if they paid, staff get a "Bókun:" flag to decide the refund (nothing is refunded automatically).
+- **Moved to another date or start time in Bókun**: the booking moves to the website departure of the same tour on that date and time, and the guest gets the date-change email with the updated PDF ticket. If the website has no such departure, staff are flagged instead.
+- Party size changes in Bókun are only noted in the booking's Bókun log.
+
+On with the live account. With a test account only when `BOKUN_INBOUND_SYNC=true`; `BOKUN_INBOUND_SYNC=false` turns it off on either. Each change is in the booking's **Bókun Logs** tab. Code: `src/modules/bokun/bokun-inbound.ts`.
+
+A date change made by staff on the website (Manage booking → Change Tour Date) is sent to Bókun as a new booking on the new date (task `CREATE` keyed with the old code), then the old Bókun booking is cancelled (task `CANCEL_OLD`) once the new one is confirmed.
+
 ## When something needs a person
 
 A booking stops and gets a flag (**Admin → Bookings → Flags**, note starting "Bókun:") when:

@@ -4,6 +4,7 @@
 // notes, Resend voucher and (managers only) Approve for a booking waiting for payment and the staff
 // cancellation with a recorded refund choice.
 
+import Link from "next/link";
 import { TripSection, type AdminTrip } from "@/components/admin/staff/TripSection";
 import {
   useCallback,
@@ -46,7 +47,7 @@ interface Flag {
   createdAt: string;
 }
 
-interface Detail extends Omit<BookingRow, "flags" | "trip"> {
+export interface Detail extends Omit<BookingRow, "flags" | "trip"> {
   adultsCount: number;
   childrenCount: number;
   infantsCount: number;
@@ -77,7 +78,7 @@ function bokunLabel(b: Pick<Detail, "bokunBookingId" | "externalSyncStatus">) {
   return null;
 }
 
-interface HistoryRow {
+export interface HistoryRow {
   id: string;
   action: string;
   details: unknown;
@@ -85,7 +86,7 @@ interface HistoryRow {
   user: { name: string | null; email: string } | null;
 }
 
-interface CancelResult {
+export interface CancelResult {
   paid: number;
   refundOwed: number;
   refunded: number;
@@ -119,7 +120,7 @@ const REFUNDS: {
   },
 ];
 
-const PROVIDER_LABEL = (p: string) =>
+export const PROVIDER_LABEL = (p: string) =>
   p.toLowerCase() === "offline" ? "Recorded by staff" : words(p);
 
 export function BookingDetail({
@@ -225,6 +226,14 @@ export function BookingDetail({
         }
         actions={
           <>
+            {booking && (
+              <Link
+                href={`/admin/bookings/${encodeURIComponent(id)}`}
+                className={quietBtn}
+              >
+                Open full page
+              </Link>
+            )}
             {booking && (
               <button
                 type="button"
@@ -554,7 +563,7 @@ export function BookingDetail({
   );
 }
 
-function reasonOf(details: unknown): string {
+export function reasonOf(details: unknown): string {
   if (!details || typeof details !== "object") return "";
   const d = details as Record<string, unknown>;
   const text = [d.reason, d.resolution, d.note].find(
@@ -589,20 +598,23 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-function CancelForm({
+export function CancelForm({
   id,
   reference,
   viaProvider,
   notify,
   onCancelled,
+  startOpen = false,
 }: {
   id: string;
   reference: string;
   viaProvider: boolean;
   notify: (m: string) => void;
   onCancelled: (r: CancelResult) => Promise<void>;
+  /** Open the form straight away (the Manage booking page's Cancel Booking button). */
+  startOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(startOpen);
   const [reason, setReason] = useState("");
   const [refund, setRefund] = useState<"POLICY" | "FULL" | "NONE">("POLICY");
   const [notifyGuest, setNotifyGuest] = useState(true);
@@ -767,7 +779,7 @@ function CancelForm({
   );
 }
 
-function CancelSummary({
+export function CancelSummary({
   result,
   currency,
   viaProvider,

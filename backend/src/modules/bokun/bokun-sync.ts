@@ -143,7 +143,12 @@ export async function processBokunSyncTasks(options: { now?: Date; bookingId?: s
     });
     if (claimed.count === 0) continue; // another run took it
     const claimedTask = { ...task, attempts: task.attempts + 1 };
-    const outcome = task.operation === "CREATE" ? await runCreate(client, claimedTask, now) : await runCancel(client, claimedTask, now);
+    const outcome =
+      task.operation === "CREATE"
+        ? await runCreate(client, claimedTask, now)
+        : task.operation === CANCEL_OLD
+          ? await runCancelOld(client, claimedTask, now)
+          : await runCancel(client, claimedTask, now);
     result.processed++;
     result[outcome]++;
   }
@@ -207,7 +212,7 @@ async function runCreate(client: BokunApi, task: BookingSyncTask, now: Date): Pr
     if (!code && stage === "submitting") {
       // An earlier attempt got no answer while creating it: Bókun may have it. Look it up by our
       // reference; only what Bókun shows decides, so nothing is ever created twice.
-      const found = await findInBokun(client, booking.bookingReference);
+      const found = await findInBokun(client, booking.bookingReference, replacedCode(task));
       if (found && found.status === "CONFIRMED") {
         await prisma.booking.update({ where: { id: booking.id }, data: { bokunBookingId: found.code, externalSyncStatus: "SYNCED", lastSyncAttemptAt: now } });
         await resolveFlags(booking.id);
@@ -245,7 +250,7 @@ async function runCreate(client: BokunApi, task: BookingSyncTask, now: Date): Pr
       // so nothing is doubled by reserving again, once, and confirming the new one.
       if (!reservationGone(error)) throw error;
       // Bókun may hold it under another code: confirm that one rather than reserving twice.
-      const found = await findInBokun(client, booking.bookingReference);
+      const found = await findInBokun(client, booking.bookingReference, replacedCode(task));
       if (found && found.code !== code && found.status === "CONFIRMED") {
         code = found.code;
       } else if (found && found.code !== code && found.status === "RESERVED") {
@@ -306,7 +311,8 @@ async function runCreate(client: BokunApi, task: BookingSyncTask, now: Date): Pr
 async function runCancel(client: BokunApi, task: BookingSyncTask, now: Date): Promise<Outcome> {
   const booking = await prisma.booking.findUnique({ where: { id: task.bookingId }, select: { id: true, bookingReference: true, bokunBookingId: true } });
   if (!booking) return finish(task, "SKIPPED", "Booking not found.");
-  const create = await prisma.bookingSyncTask.findUnique({ where: { idempotencyKey: taskKey(booking.id, "CREATE") } });
+  // The latest create: after a staff date change a second create (CREATE:<old code>) replaces the first.
+  const create = await prisma.bookingSyncTask.findFirst({ where: { bookingId: booking.id, provider: PROVIDER, operation: "CREATE" }, orderBy: { createdAt: "desc" } });
   try {
     if (booking.bokunBookingId) {
       await cancelInBokun(client, booking.bokunBookingId, `Cancelled on vistachase.com (${booking.bookingReference})`);
@@ -330,6 +336,99 @@ async function runCancel(client: BokunApi, task: BookingSyncTask, now: Date): Pr
     if (refused || task.attempts >= RETRY_MINUTES.length) {
       const code = booking.bokunBookingId ?? create?.externalRef;
       await raiseFlag(booking.id, `${FLAG_PREFIX} cancelled on the website but not in Bókun (${message}). Cancel ${code ?? booking.bookingReference} in Bókun by hand.`);
+      return finish(task, "FAILED", message);
+    }
+    return retryLater(task, message, now);
+  }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Date change by staff (Admin → booking → Change tour date, booking-manage.ts)
+//
+// Bókun's own date change isn't used: the booking is created again in Bókun on the new date (a
+// CREATE task keyed CREATE:<old code>), and only once that one is confirmed is the old Bókun
+// booking cancelled (a CANCEL_OLD task carrying the old code). If the new date can't be created
+// in Bókun the old one stays there and staff are flagged, so Bókun never loses the guest.
+
+const CANCEL_OLD = "CANCEL_OLD";
+
+/** The Bókun code a create replaces (a date change), from its key BOKUN:<booking>:CREATE:<code>. */
+function replacedCode(task: Pick<BookingSyncTask, "idempotencyKey" | "operation">) {
+  if (task.operation !== "CREATE") return undefined;
+  return task.idempotencyKey.split(":").slice(3).join(":") || undefined;
+}
+
+/**
+ * Called inside the transaction that moved the booking to another departure. `oldCode`: the
+ * booking's Bókun code before the move (null when it wasn't in Bókun yet).
+ */
+export async function queueBokunDateChange(tx: Tx, bookingId: string, oldCode: string | null) {
+  if (!bokunConnected()) return;
+  const booking = await tx.booking.findUnique({
+    where: { id: bookingId },
+    select: { status: true, tourDeparture: { select: { tour: { select: { slug: true, bokunId: true } } } } },
+  });
+  if (!booking || !bokunProductId(booking.tourDeparture.tour)) return;
+  if (!oldCode) {
+    // Not in Bókun yet: a waiting create simply books the new date when it runs.
+    const waiting = await tx.bookingSyncTask.findFirst({ where: { bookingId, provider: PROVIDER, operation: "CREATE", status: { in: ["PENDING", "RETRYABLE_FAILURE"] } } });
+    if (!waiting && (booking.status === "CONFIRMED" || booking.status === "COMPLETED")) {
+      const failed = await tx.bookingSyncTask.findFirst({ where: { bookingId, provider: PROVIDER, operation: "CREATE", status: "FAILED" } });
+      if (failed) {
+        // It had stopped (staff were flagged): send it again for the new date.
+        await tx.bookingSyncTask.update({ where: { id: failed.id }, data: { status: "PENDING", attempts: 0, nextAttemptAt: new Date(), lastError: null, externalRef: null, payload: { stage: "date-changed" } } });
+        await tx.booking.update({ where: { id: bookingId }, data: { externalSyncStatus: "PENDING" } });
+      } else await queueBokunSync(tx, bookingId, "CONFIRMED");
+    }
+    runSoon();
+    return;
+  }
+  await tx.bookingSyncTask.createMany({
+    data: [
+      { bookingId, provider: PROVIDER, operation: "CREATE", idempotencyKey: `${taskKey(bookingId, "CREATE")}:${oldCode}`, payload: { stage: "date-change", replaces: oldCode } },
+      { bookingId, provider: PROVIDER, operation: CANCEL_OLD, idempotencyKey: `${PROVIDER}:${bookingId}:${CANCEL_OLD}:${oldCode}`, externalRef: oldCode, payload: { replaces: oldCode } },
+    ],
+    skipDuplicates: true,
+  });
+  await tx.booking.update({ where: { id: bookingId }, data: { bokunBookingId: null, externalSyncStatus: "PENDING" } });
+  runSoon();
+}
+
+/** True while a Bókun task for this booking is running or holds a reservation (a date change must wait). */
+export async function bokunBusy(bookingId: string) {
+  const busy = await prisma.bookingSyncTask.findFirst({
+    where: {
+      bookingId,
+      provider: PROVIDER,
+      OR: [{ status: "IN_PROGRESS" }, { operation: "CREATE", status: { in: ["PENDING", "RETRYABLE_FAILURE"] }, externalRef: { not: null } }],
+    },
+    select: { id: true },
+  });
+  return Boolean(busy);
+}
+
+async function runCancelOld(client: BokunApi, task: BookingSyncTask, now: Date): Promise<Outcome> {
+  const oldCode = task.externalRef;
+  if (!oldCode) return finish(task, "SKIPPED", "No old Bókun booking.");
+  const booking = await prisma.booking.findUnique({ where: { id: task.bookingId }, select: { id: true, bookingReference: true, status: true } });
+  if (!booking) return finish(task, "SKIPPED", "Booking not found.");
+  const create = await prisma.bookingSyncTask.findUnique({ where: { idempotencyKey: `${taskKey(booking.id, "CREATE")}:${oldCode}` } });
+  const live = booking.status === "CONFIRMED" || booking.status === "COMPLETED";
+  if (create && (create.status === "PENDING" || create.status === "RETRYABLE_FAILURE" || create.status === "IN_PROGRESS")) {
+    return retryLater({ ...task, attempts: Math.min(task.attempts, RETRY_MINUTES.length) }, "Waiting for the booking on the new date to reach Bókun.", now);
+  }
+  if (create && create.status !== "SUCCEEDED" && live) {
+    await raiseFlag(booking.id, `${FLAG_PREFIX} the date was changed on the website, but the new date couldn't be added in Bókun, so the old Bókun booking ${oldCode} was left on the old date. Change it in Bókun by hand.`);
+    return finish(task, "SKIPPED", "New date not in Bókun; old booking kept and staff flagged.");
+  }
+  try {
+    await cancelInBokun(client, oldCode, `Date changed on vistachase.com (${booking.bookingReference})`);
+    return finish(task, "SUCCEEDED", null, oldCode);
+  } catch (error) {
+    const message = (error as Error).message.slice(0, 500);
+    const refused = error instanceof BokunApiError && error.status < 500;
+    if (refused || task.attempts >= RETRY_MINUTES.length) {
+      await raiseFlag(booking.id, `${FLAG_PREFIX} the date was changed and the new date is in Bókun, but the old Bókun booking ${oldCode} couldn't be cancelled (${message}). Cancel ${oldCode} in Bókun by hand.`);
       return finish(task, "FAILED", message);
     }
     return retryLater(task, message, now);

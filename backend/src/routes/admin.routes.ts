@@ -30,6 +30,8 @@ import { bokunAvailabilitySyncEnabled, bokunConfig, bokunConnected, bokunIsTestA
 import { checkBokunProducts } from "@/modules/bokun/bokun-products";
 import { bokunSyncStatus, processBokunSyncTasks, queueUpcomingBookings, retryBokunSync } from "@/modules/bokun/bokun-sync";
 import { syncBokunSeats } from "@/modules/bokun/availability-sync";
+import { pullBokunChanges } from "@/modules/bokun/bokun-inbound";
+import { bookingOverview, changeBookingDate, dateOptions, updateGuestContact } from "@/modules/admin/booking-manage";
 import { PRODUCT_MAP } from "@/modules/tours/product-map";
 import { hashPassword } from "@/lib/auth/auth";
 import { ASSIGNABLE_ROLES, STAFF_LIST_ROLES } from "@/lib/auth/permissions";
@@ -442,6 +444,77 @@ router.get("/bookings/:id", async (req, res, next) => {
       history,
       refundsViaProvider: staffRefundsViaProvider(),
     });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// Manage booking page (modules/admin/booking-manage.ts): overview, change tour date, edit guest
+// details and a Bókun check for one booking. Added alongside the routes above, which are unchanged.
+router.get("/bookings/:id/overview", async (req, res, next) => {
+  try {
+    const overview = await bookingOverview(id(req));
+    if (!overview) return res.status(404).json({ success: false, error: "Booking not found" });
+    const me = await prisma.user.findUnique({ where: { id: staffId(req) }, select: { name: true, email: true, role: true } });
+    res.json({ success: true, overview, staff: me });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.get("/bookings/:id/date-options", async (req, res, next) => {
+  try {
+    const q = parseOr400(z.object({ from: day.optional(), to: day.optional() }), req.query, res);
+    if (!q) return;
+    send(res, await dateOptions(id(req), q));
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post("/bookings/:id/change-date", requireStaff(MANAGERS), async (req, res, next) => {
+  try {
+    const body = parseOr400(
+      z.object({ departureId: z.string().min(1).max(64), reason: z.string().trim().min(3).max(500), notifyGuest: z.boolean().default(true) }),
+      req.body,
+      res,
+    );
+    if (!body) return;
+    send(res, await changeBookingDate(id(req), body, staffId(req)));
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post("/bookings/:id/guest", requireStaff(MANAGERS), async (req, res, next) => {
+  try {
+    const body = parseOr400(
+      z
+        .object({
+          customerName: z.string().trim().min(2).max(120).optional(),
+          customerEmail: emailSchema.optional(),
+          customerPhone: z.string().trim().min(6).max(32).regex(/^[+()\d\s.-]+$/, "Use digits, spaces and + ( ) - only").optional(),
+        })
+        .strict(),
+      req.body,
+      res,
+    );
+    if (!body) return;
+    send(res, await updateGuestContact(id(req), body, staffId(req)));
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post("/bookings/:id/bokun-check", requireStaff(MANAGERS), async (req, res, next) => {
+  try {
+    if (!bokunConnected()) return res.status(409).json({ success: false, error: "Bókun isn't connected yet." });
+    const booking = await prisma.booking.findUnique({ where: { id: id(req) }, select: { id: true, bokunBookingId: true } });
+    if (!booking) return res.status(404).json({ success: false, error: "Booking not found" });
+    // Not in Bókun yet: send whatever is waiting (or stopped) for it.
+    const outbound = booking.bokunBookingId ? null : await processBokunSyncTasks({ bookingId: booking.id });
+    const inbound = booking.bokunBookingId ? await pullBokunChanges({ bookingId: booking.id }) : null;
+    res.json({ success: true, outbound, inbound });
   } catch (e) {
     next(e);
   }

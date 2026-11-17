@@ -331,7 +331,7 @@ export async function addVoucherPage(pdf: PDFDocument, booking: VoucherBooking, 
  * check-in QR code. A single booking always fits one page; a long multi-day trip continues on a
  * second page only when it can't fit.
  */
-export async function itineraryPdf(bookings: VoucherBooking[], trip: { title: string; reference: string } | null): Promise<Uint8Array> {
+export async function itineraryPdf(bookings: VoucherBooking[], trip: { title: string; reference: string } | null, options: { updated?: boolean } = {}): Promise<Uint8Array> {
   const lead = bookings[0];
   const pdf = await PDFDocument.create();
   const reference = trip?.reference ?? lead.bookingReference;
@@ -390,13 +390,13 @@ export async function itineraryPdf(bookings: VoucherBooking[], trip: { title: st
     text(caption, width - margin - size / 2 - regular.widthOfTextAtSize(safe(caption), capSize) / 2, top - size - 10, capSize, regular, MUTED);
   };
 
-  header("Canadian Rockies tours & shuttles - itinerary and voucher");
+  header(options.updated ? "Canadian Rockies tours & shuttles - UPDATED ticket (new date)" : "Canadian Rockies tours & shuttles - itinerary and voucher");
   const allConfirmed = bookings.every((b) => b.status === "CONFIRMED" || b.status === "COMPLETED");
   const single = bookings.length === 1;
   const qrSize = 112;
   const titleTop = y + 12;
   const titleWidth = single ? inner - qrSize - 24 : inner;
-  text(allConfirmed ? "CONFIRMED" : "NOT CONFIRMED - see the status of each day below", margin, y, 11, bold, allConfirmed ? OCEAN : RED);
+  text(allConfirmed ? (options.updated ? "CONFIRMED - TOUR TICKET (UPDATED)" : "CONFIRMED") : "NOT CONFIRMED - see the status of each day below", margin, y, 11, bold, allConfirmed ? OCEAN : RED);
   y -= 26;
   const title = trip?.title ?? experienceTitle(lead.tourDeparture);
   for (const line of wrap(title, bold, 19, titleWidth)) {
