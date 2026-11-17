@@ -1,13 +1,13 @@
 "use client";
 
-// Shared header for the staff pages: eyebrow, light title, actions on the right and the section
-// tabs underlined under the current page. Tabs follow the signed-in role (the API enforces the
-// same rules; this only hides sections a role can't open).
+// Shared header for the staff pages: eyebrow, light title and actions on the right. The section
+// list (ADMIN_TABS, filtered by the signed-in role; the API enforces the same rules) is shown in
+// the left sidebar, components/admin/AdminShell.tsx.
 
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { LiveChatAlerts } from "@/components/admin/staff/LiveChatAlerts";
-import { ShieldAlert, CalendarDays, Handshake, Headset, LayoutDashboard, Lock, ArrowRight, MapPin, MessageSquare, ScrollText, Search, Settings, Tag, Ticket, Truck, Users, Workflow } from "lucide-react";
+import { ShieldAlert, CalendarDays, Handshake, Headset, LayoutDashboard, Lock, ArrowRight, MapPin, MessageSquare, ScrollText, Settings, Tag, Ticket, Truck, Users, Workflow } from "lucide-react";
 
 // Admin pages are for admins, operators and dispatchers only (src/lib/portals.ts). SEO and page
 // copy live in the separate SEO portal at /seo, which admins open from here.
@@ -61,11 +61,10 @@ export function AdminHeader({
   current: string;
 }) {
   const role = useStaffRole();
-  // Until the role is known show only the current tab, so a role never sees tabs flash that it can't use.
-  const tabs = ADMIN_TABS.filter((t) => (role ? t.roles.includes(role) : t.href === current));
   return (
     <div className="border-b border-obsidian-900/[0.07] bg-white">
-      <div className="mx-auto max-w-7xl px-page pt-8">
+      {/* The section links live in the left sidebar (AdminShell). */}
+      <div className="mx-auto max-w-7xl px-page py-8">
         <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-sm uppercase tracking-[0.2em] text-ocean-700">{eyebrow}</p>
@@ -79,33 +78,6 @@ export function AdminHeader({
             </div>
           )}
         </div>
-        <nav aria-label="Admin sections" className="vc-rail -mx-page mt-7 flex gap-1 overflow-x-auto px-page">
-          {tabs.map(({ label, href, icon: Icon }) => {
-            const isCurrent = href === current;
-            return (
-              <Link
-                key={href}
-                href={href}
-                aria-current={isCurrent ? "page" : undefined}
-                className={`inline-flex h-12 shrink-0 items-center gap-2 border-b-2 px-4 text-sm transition-colors ${
-                  isCurrent ? "border-ocean-600 text-obsidian-900" : "border-transparent text-slate-600 hover:border-obsidian-900/15 hover:text-obsidian-900"
-                }`}
-              >
-                <Icon className="h-4 w-4" aria-hidden="true" />
-                {label}
-              </Link>
-            );
-          })}
-          {role === "ADMIN" && (
-            <Link
-              href="/seo"
-              className="inline-flex h-12 shrink-0 items-center gap-2 border-b-2 border-transparent px-4 text-sm text-slate-600 hover:border-obsidian-900/15 hover:text-obsidian-900"
-            >
-              <Search className="h-4 w-4" aria-hidden="true" />
-              SEO portal
-            </Link>
-          )}
-        </nav>
       </div>
     </div>
   );

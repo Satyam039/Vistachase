@@ -11,6 +11,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { BrandMark } from "@/components/brand/BrandMark";
+import { AdminShell } from "@/components/admin/AdminShell";
 
 export type PortalKind = "admin" | "partner";
 
@@ -68,6 +69,21 @@ export function PortalFrame({ kind, children }: { kind: PortalKind | "seo"; chil
   const onSignIn = usePathname()?.startsWith("/admin/login") ?? false;
 
   usePortalLinks(kind);
+
+  // Staff pages: left sidebar frame (AdminShell), like the SEO portal. The sign-in page keeps this bar.
+  if (kind === "admin" && !onSignIn) {
+    return (
+      <>
+        <a
+          href="#portal-main"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-white focus:px-4 focus:py-2 focus:text-obsidian-900"
+        >
+          Skip to content
+        </a>
+        <AdminShell>{children}</AdminShell>
+      </>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-obsidian-50">
