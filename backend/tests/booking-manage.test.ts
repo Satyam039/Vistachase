@@ -246,6 +246,46 @@ describe("Changes made in Bókun come back to the website", () => {
     expect(await prisma.auditLog.count({ where: { entityId: booking.id, action: "BOKUN_MOVE_UNDONE" } })).toBe(1);
   });
 
+  it("puts back a private booking even when the seat sync marked its emptied departure sold out (VC-2026-EBB006F4)", async () => {
+    setBokunClientForTests(null);
+    const privateTour = await prisma.tour.findFirstOrThrow({ where: { category: "PRIVATE" } });
+    const mk = (time: string) =>
+      prisma.tourDeparture.create({ data: { tourId: privateTour.id, date: dateOnly(DAY), departureTime: timeOfDay(time), capacityTotal: 6, price: 124000, status: "ACTIVE", inventorySource: "LOCAL" } });
+    const at7 = await mk("07:05");
+    const at8 = await mk("08:05");
+    // What happened live: the booking moved to 08:05, then Bókun's one sold-out 8am slot made the
+    // seat sync mark the emptied 07:05 full too, so the first undo found no seats and flagged it.
+    const booking = await prisma.booking.create({
+      data: {
+        bookingReference: `VC-TEST-${process.pid}-P`,
+        voucherCode: `VTEST${process.pid}P`,
+        tourDepartureId: at8.id,
+        customerName: "Ryan Test",
+        customerEmail: "ryan.test@example.com",
+        customerPhone: "+1 403 555 0199",
+        subtotal: 124000,
+        adultsCount: 4,
+        childrenCount: 1,
+        totalSeats: 5,
+        totalAmount: 124000,
+        status: "CONFIRMED",
+      } as never,
+    });
+    await prisma.tourDeparture.update({ where: { id: at7.id }, data: { capacityBooked: 6 } });
+    await prisma.tourDeparture.update({ where: { id: at8.id }, data: { capacityBooked: 6 } });
+    const move = await prisma.auditLog.create({
+      data: { action: "BOKUN_DATE_CHANGED", entityType: "Booking", entityId: booking.id, details: { code: "X", from: `${DAY} 07:05`, to: `${DAY} 08:05`, fromDepartureId: at7.id, toDepartureId: at8.id } },
+    });
+    await prisma.auditLog.create({ data: { action: "BOKUN_MOVE_UNDONE", entityType: "Booking", entityId: booking.id, details: { undoes: move.id, note: "Couldn't put it back automatically; staff flagged." } } });
+    await prisma.bookingFlag.create({ data: { bookingId: booking.id, type: "OTHER", note: "Bókun: this booking was wrongly moved from x to y" } });
+
+    await undoTimeOnlyMoves();
+    expect((await reload(booking.id)).tourDepartureId).toBe(at7.id);
+    expect(await seats(at7.id)).toBe(6);
+    expect(await seats(at8.id)).toBe(0);
+    expect(await prisma.bookingFlag.count({ where: { bookingId: booking.id, status: "OPEN" } })).toBe(0);
+  });
+
   it("flags staff when the website has no departure on Bókun's new date", async () => {
     const from = await departure(DAY, "12:30");
     bokun.slot("796650", DAY, "12:30", 10);
