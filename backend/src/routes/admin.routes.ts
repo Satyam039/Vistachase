@@ -2,6 +2,7 @@
 // token for scripts); some need ADMIN. Inputs are validated, writes are limited to named fields
 // and recorded in the audit log, and errors never echo internal messages.
 
+import { airportTransferSummary } from "@/modules/bookings/airport-transfer";
 import { Router, type Request, type Response, type NextFunction } from "express";
 import prisma from "@/lib/db/prisma";
 import { getAuthenticatedStaff } from "@/lib/auth/admin-guard";
@@ -431,6 +432,8 @@ router.get("/bookings/:id", async (req, res, next) => {
       booking: {
         ...booking,
         priceSnapshot: undefined,
+        // e.g. "Round trip (Calgary Airport (YYC) to Banff and back), ..., 2 x CAD 850.00 = CAD 1,700.00"
+        airportTransfer: airportTransferSummary(booking.priceSnapshot),
         trip: trip ? await tripSummary(trip) : null,
         // False while EMAIL_PROVIDER/RESEND_API_KEY aren't set: emails are only written to the server log.
         emailDelivery: emailDeliveryConfigured(),

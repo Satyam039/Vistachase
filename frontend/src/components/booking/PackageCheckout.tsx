@@ -24,8 +24,11 @@ import {
   AirportTransferDetails,
   AirportTransferToggle,
   airportTransferError,
-  airportTransferPrice,
+  airportTransferPayload,
+  airportTransferQuote,
+  airportTransferSummaryLabel,
   EMPTY_AIRPORT_TRANSFER,
+  useAirportTransferPrices,
   type AirportTransferValue,
 } from "@/components/booking/AirportTransferFields";
 import { ActivityAddOnToggle } from "@/components/booking/ActivityAddOnFields";
@@ -166,6 +169,7 @@ export function PackageCheckout({
   const [activityGuestsPicked, setActivityGuests] = useState<ActivityGuests | null>(null);
   const [airport, setAirport] = useState(false);
   const [airportTransfer, setAirportTransfer] = useState<AirportTransferValue>(EMPTY_AIRPORT_TRANSFER);
+  const transferPrices = useAirportTransferPrices();
   const [paymentPlan, setPaymentPlan] = useState<"FULL" | "DEPOSIT">("FULL");
   const [attempted, setAttempted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -218,8 +222,10 @@ export function PackageCheckout({
   const lines = chosen.map((d) => dayCents(d, adults, children, infants, discountOn(d?.date), vehicle));
   const fare = lines.reduce((n, l) => n + l.fare, 0);
   const saving = lines.reduce((n, l) => n + l.discount, 0);
-  // The transfer: CAD 364 per transfer (owner, 2026-11-11), added to Day 1; never discounted.
-  const transferDollars = withAirport ? airportTransferPrice(airportTransfer, guests) : null;
+  // The transfer (owner, 2026-11-17): the server's price per one-way transfer by where the guest
+  // stays, twice for a round trip; added to Day 1, never discounted. The server prices it again.
+  const transferQuote = withAirport ? airportTransferQuote(airportTransfer, guests, transferPrices) : null;
+  const transferDollars = transferQuote?.total ?? null;
   const total = lines.reduce((n, l) => n + l.total, 0) + (transferDollars ?? 0) * 100;
   const allPicked = chosen.every(Boolean);
   // 20% deposit: each day's own deposit (the server rounds per day), when every day is 15+ days away.
@@ -286,7 +292,7 @@ export function PackageCheckout({
           childrenCount: vehicle ? 0 : children,
           infantsCount: vehicle ? 0 : infants,
           specialRequests: [requests.trim(), vehicle && activities ? activityAddOnsRequestLine([], activityGuests) : ""].filter(Boolean).join("\n") || undefined,
-          airportTransfer: withAirport ? { ...airportTransfer, area: airportTransfer.area || undefined } : undefined,
+          airportTransfer: withAirport ? airportTransferPayload(airportTransfer) : undefined,
           paymentPlan: plan,
         }),
       });
@@ -392,7 +398,7 @@ export function PackageCheckout({
               {offersAirport && (
                 <div className="mt-4 space-y-3" {...(show("airport") ? { "data-first-error": true } : {})}>
                   <AirportTransferToggle checked={airport} onChange={setAirport} />
-                  {airport && <AirportTransferDetails value={airportTransfer} onChange={setAirportTransfer} error={show("airport")} />}
+                  {airport && <AirportTransferDetails value={airportTransfer} onChange={setAirportTransfer} error={show("airport")} guests={guests} />}
                 </div>
               )}
               <div className="mt-3" {...(show("activities") ? { "data-first-error": true } : {})}>
@@ -569,8 +575,8 @@ export function PackageCheckout({
             )}
             {withAirport && (
               <div className="flex justify-between text-white/80">
-                <dt>Calgary airport transfer</dt>
-                <dd>{transferDollars != null ? cad(transferDollars) : "Confirmed by our team"}</dd>
+                <dt>{airportTransferSummaryLabel(airportTransfer, transferQuote)}</dt>
+                <dd>{transferDollars != null ? cad(transferDollars) : guests > (transferPrices?.maxGuests ?? 12) ? "Confirmed by our team" : "Choose above"}</dd>
               </div>
             )}
             <div className="flex justify-between border-t border-white/15 pt-3 text-xl">

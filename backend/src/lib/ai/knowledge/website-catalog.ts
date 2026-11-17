@@ -286,7 +286,7 @@ export const WEBSITE_CATALOG: WebsiteProduct[] = [
     notIncluded: ["Accommodation", "Meals", "Optional activities (billed separately)", "Gratuities"],
     cancellation: PACKAGE_CANCEL,
     bookIn: "page",
-    packagePrice: { text: "CAD $1,575 per day per vehicle (June 1–Oct 10) or CAD $1,240 per day (Oct 11–May 31); airport transfer CAD $364 each", fromAmount: 1240 * 2, unit: "per vehicle" },
+    packagePrice: { text: "CAD $1,575 per day per vehicle (June 1–Oct 10) or CAD $1,240 per day (Oct 11–May 31); airport transfer from CAD $850 per one-way transfer", fromAmount: 1240 * 2, unit: "per vehicle" },
     goodFor: ["multi-day", "two days", "private", "premium", "groups"],
   },
   {
@@ -305,7 +305,7 @@ export const WEBSITE_CATALOG: WebsiteProduct[] = [
     capacity: "Private, up to 13 guests; priced per vehicle",
     maxGuests: 13,
     included: ["Private vehicle and driver-guide for 3 days", "Doorstep pickup and drop-off", "Park admission", "Moraine Lake access arrangements", "Taxes and mandatory fees"],
-    notIncluded: ["Accommodation", "Meals", "Optional activities (gondola, Ice Explorer, Skywalk)", "Airport transfers unless added (CAD $364 each)", "Gratuities"],
+    notIncluded: ["Accommodation", "Meals", "Optional activities (gondola, Ice Explorer, Skywalk)", "Airport transfers unless added (from CAD $850 per one-way transfer)", "Gratuities"],
     cancellation: PACKAGE_CANCEL,
     bookIn: "page",
     packagePrice: { text: "CAD $4,725 per vehicle (CAD $1,575 per day), summer only", fromAmount: 4725, unit: "per vehicle" },
@@ -341,7 +341,7 @@ export const catalogEntry = (slug: string) => WEBSITE_CATALOG.find((p) => p.slug
 export const WEBSITE_FACTS = {
   ages: "Age categories: adult 16–99, youth 6–15, infant 0–5. The checkout shows each category's price for the date; infants ride free on a lap unless that departure has an infant price (then they pay it and take a seat).",
   seasons: "Summer prices and itineraries: June 1 to October 10. Winter: October 11 to May 31 (Moraine Lake road closed, no Ice Explorer or Skywalk).",
-  airportTransfer: "Calgary Airport (YYC) transfers: CAD $364 per transfer, only with private tours of two or more days.",
+  airportTransfer: "Calgary Airport (YYC) transfers: CAD $850 (Banff or Canmore) or CAD $895 (Lake Louise) per one-way transfer; a round trip is two transfers, only with private tours of two or more days.",
   contact: "support@vistachase.com, +1 (825) 734-9456, 6 a.m. to 9 p.m. Mountain Time.",
   refunds: "Approved refunds go back to the original payment method in 5–10 business days. Late arrivals, missed pickups and no-shows aren't refunded.",
   payment: "Prices include taxes and required fees; the total is shown before paying. Payment is by card on the secure checkout.",

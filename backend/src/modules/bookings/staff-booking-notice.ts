@@ -3,6 +3,7 @@
 // guest's email. Sent once per booking or trip, when it confirms, even if the guest's own email
 // fails; the audit log entry STAFF_BOOKING_NOTICE_SENT keeps retries from sending it twice.
 
+import { airportTransferSummary } from "@/modules/bookings/airport-transfer";
 import prisma from "@/lib/db/prisma";
 import { getEmailProvider } from "@/lib/email/email.provider";
 import { siteUrl } from "@/lib/security/signed-links";
@@ -71,6 +72,10 @@ export async function sendStaffBookingNotice(live: TripBooking[], trip: { title:
       ["Phone", lead.customerPhone],
       ["Party", `${party(lead)} (${lead.totalSeats} seat${lead.totalSeats === 1 ? "" : "s"})`],
       ["Pickup", pickup(lead)],
+      ...live.flatMap((b): [string, string][] => {
+        const transfer = airportTransferSummary(b.priceSnapshot);
+        return transfer ? [["Airport transfer", transfer]] : [];
+      }),
       ["Total", money(total, currency)],
       ["Paid", `${money(paid, currency)}${total > paid ? ` · balance ${money(total - paid, currency)} still due` : ""}`],
       ...(lead.specialRequests ? ([["Requests", lead.specialRequests]] as [string, string][]) : []),

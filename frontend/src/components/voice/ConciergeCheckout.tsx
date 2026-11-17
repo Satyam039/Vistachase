@@ -28,7 +28,9 @@ import {
   AirportTransferDetails,
   AirportTransferToggle,
   airportTransferError,
+  airportTransferPayload,
   airportTransferPrice,
+  useAirportTransferPrices,
   EMPTY_AIRPORT_TRANSFER,
   type AirportTransferValue,
 } from "@/components/booking/AirportTransferFields";
@@ -106,6 +108,7 @@ export function ConciergeCheckout(props: ConciergeCheckoutProps) {
   // Airport transfer (private tours, 2+ guests): the website's tick box and details.
   const [airport, setAirport] = useState(false);
   const [airportTransfer, setAirportTransfer] = useState<AirportTransferValue>(EMPTY_AIRPORT_TRANSFER);
+  const transferPrices = useAirportTransferPrices();
   // Promo / voucher code, checked by the server exactly as on the /book page.
   const [promoInput, setPromoInput] = useState("");
   const [promo, setPromo] = useState<{ code: string; percent: number; amountOff: number; message: string } | null>(null);
@@ -184,7 +187,7 @@ export function ConciergeCheckout(props: ConciergeCheckoutProps) {
   const discount = !promo ? 0 : promo.amountOff > 0 ? round2(Math.min(promo.amountOff, fare)) : round2(fare * (promo.percent / 100));
   const partySize = adults + children + infants;
   const offersAirport = AIRPORT_ON_SINGLE_DAYS && isVehicle && partySize >= 2;
-  const transferPrice = offersAirport && airport ? airportTransferPrice(airportTransfer, partySize) : null;
+  const transferPrice = offersAirport && airport ? airportTransferPrice(airportTransfer, partySize, transferPrices) : null;
   const total = round2(fare - discount + (transferPrice ?? 0));
   const capacity = dep ? (isVehicle ? dep.capacityTotal : dep.seatsAvailable + (hold?.seats ?? 0)) : 0;
   const selectedStop = stops.find((s) => s.id === pickupStopId);
@@ -325,7 +328,7 @@ export function ConciergeCheckout(props: ConciergeCheckoutProps) {
           childrenCount: children,
           infantsCount: infants,
           specialRequests: [requests.trim(), "Booked through the AI concierge chat."].filter(Boolean).join("\n"),
-          airportTransfer: offersAirport && airport ? { ...airportTransfer, area: airportTransfer.area || undefined } : undefined,
+          airportTransfer: offersAirport && airport ? airportTransferPayload(airportTransfer) : undefined,
           promoCode: promo?.code,
           paymentPlan: "FULL",
         }),
@@ -465,7 +468,7 @@ export function ConciergeCheckout(props: ConciergeCheckoutProps) {
           {offersAirport && airport && (
             <div className="space-y-2">
               <p className="text-sm text-obsidian-900">Airport transfer details</p>
-              <AirportTransferDetails value={airportTransfer} onChange={setAirportTransfer} error={errors.airport} minDate={dep.date.slice(0, 10)} />
+              <AirportTransferDetails value={airportTransfer} onChange={setAirportTransfer} error={errors.airport} minDate={dep.date.slice(0, 10)} guests={partySize} />
             </div>
           )}
           <div className="flex gap-2">

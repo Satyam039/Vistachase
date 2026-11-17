@@ -11,6 +11,7 @@
 // jobs runner retries it (retryFailedConfirmationEmails). Staff "Resend voucher" sends it again
 // on purpose (force).
 
+import { airportTransferSummary } from "@/modules/bookings/airport-transfer";
 import { cancellationTerms, termsSentence } from "@/modules/bookings/cancellation-policy";
 import prisma from "@/lib/db/prisma";
 import { getEmailProvider } from "@/lib/email/email.provider";
@@ -170,6 +171,8 @@ export async function sendConfirmationEmail(reference: string, options: { force?
       )
       .join("");
     const balance = total - paid;
+    // Airport transfer (booked with Day 1): type, route and price, e.g. "Round trip (...), 2 x CAD 850.00 = CAD 1,700.00".
+    const transfer = live.map((b) => airportTransferSummary(b.priceSnapshot)).find(Boolean) ?? null;
     const deposit = live.find((b) => b.paymentPlan === "DEPOSIT");
     const dueBy = balance > 0 && deposit ? ` by ${balanceDueLabel(deposit.balanceDueAt)}` : "";
     // Booking & Cancellation Policy for this product (cancellation-policy.ts); a deposit doesn't change it.
@@ -179,6 +182,7 @@ export async function sendConfirmationEmail(reference: string, options: { force?
       `Your Vista Chase booking ${tripReference} is confirmed.`,
       `${multi ? "Trip" : "Experience"}: ${title}${multi ? ` (${live.length} days)` : ""}`,
       `Guests: ${lead.totalSeats}`,
+      ...(transfer ? [`Airport transfer: ${transfer}`] : []),
       `Total ${money(total, currency)}, paid ${money(paid, currency)}${balance > 0 ? `, balance due ${money(balance, currency)}${dueBy}` : ""}.`,
       "",
       ...days.flatMap((d) => [`${multi ? `Day ${d.day}: ` : ""}${d.date}, ${d.title}${d.time ? `, departs ${d.time}` : ""}. Pickup: ${d.pickup}. Voucher: ${d.link}`, ...itineraryText(d.itinerary)]),
@@ -195,6 +199,7 @@ export async function sendConfirmationEmail(reference: string, options: { force?
           <tr><td style="padding:4px 0;width:140px;color:#6b7280;">Booking reference:</td><td style="padding:4px 0;font-weight:600;color:#14363a;">${escapeHtml(tripReference)}</td></tr>
           <tr><td style="padding:4px 0;color:#6b7280;">${multi ? "Trip" : "Experience"}:</td><td style="padding:4px 0;font-weight:600;">${escapeHtml(title)}${multi ? ` (${live.length} days)` : ""}</td></tr>
           <tr><td style="padding:4px 0;color:#6b7280;">Guests:</td><td style="padding:4px 0;">${lead.totalSeats}</td></tr>
+          ${transfer ? `<tr><td style="padding:4px 0;color:#6b7280;vertical-align:top;">Airport transfer:</td><td style="padding:4px 0;">${escapeHtml(transfer)}</td></tr>` : ""}
           <tr><td style="padding:4px 0;color:#6b7280;">Payment:</td><td style="padding:4px 0;">Total: ${money(total, currency)} · Paid: ${money(paid, currency)}${balance > 0 ? ` · <span style="color:#b91c1c;">Balance due: ${money(balance, currency)}${dueBy}</span>` : ""}</td></tr>
         </table>
         <table role="presentation" style="width:100%;border-collapse:collapse;margin-top:12px;">${dayHtml}</table>
@@ -256,6 +261,7 @@ export async function sendConfirmationEmail(reference: string, options: { force?
             <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; font-weight: bold;">Booking Date:</td><td style="padding: 8px 0;">${formatDateOnly(lead.createdAt)}</td></tr>
             <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; font-weight: bold;">Departure Date &amp; Time:</td><td style="padding: 8px 0;">${escapeHtml(days.map((d) => `${d.date}${d.time ? ` at ${d.time}` : ""}`).join("; "))}</td></tr>
             <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; font-weight: bold;">Number of Guests:</td><td style="padding: 8px 0;">${lead.totalSeats}</td></tr>
+            ${transfer ? `<tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; font-weight: bold;">Airport Transfer:</td><td style="padding: 8px 0;">${escapeHtml(transfer)}</td></tr>` : ""}
             <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; font-weight: bold;">Total Amount Paid:</td><td style="padding: 8px 0; font-weight: bold;">${money(paid, currency)}${balance > 0 ? ` (Balance due: ${money(balance, currency)})` : ""}</td></tr>
             <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; font-weight: bold;">Pickup Location &amp; Time:</td><td style="padding: 8px 0;">${escapeHtml(days.map((d) => d.pickup).join("; "))}</td></tr>
             ${missingItinerary.length ? `<tr><td style="padding: 8px 0; font-weight: bold; color: #b91c1c;">Itinerary missing:</td><td style="padding: 8px 0; color: #b91c1c;">${escapeHtml(missingItinerary.map((m) => `${multi ? `Day ${m.day}: ` : ""}${m.reason}`).join(" "))} The guest was told we will confirm it by email.</td></tr>` : ""}
@@ -272,6 +278,7 @@ export async function sendConfirmationEmail(reference: string, options: { force?
       `Booking Date: ${formatDateOnly(lead.createdAt)}`,
       `Departure Date & Time: ${days.map((d) => `${d.date}${d.time ? ` at ${d.time}` : ""}`).join("; ")}`,
       `Number of Guests: ${lead.totalSeats}`,
+      ...(transfer ? [`Airport Transfer: ${transfer}`] : []),
       `Total Amount Paid: ${money(paid, currency)} (Total: ${money(total, currency)})`,
       `Pickup Location & Time: ${days.map((d) => d.pickup).join("; ")}`,
       `Booking Reference: ${tripReference}`,

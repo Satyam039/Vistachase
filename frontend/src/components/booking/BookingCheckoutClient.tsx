@@ -51,7 +51,9 @@ import {
   AirportTransferDetails,
   AirportTransferToggle,
   airportTransferError,
+  airportTransferPayload,
   airportTransferPrice,
+  useAirportTransferPrices,
   EMPTY_AIRPORT_TRANSFER,
   type AirportTransferValue,
 } from "@/components/booking/AirportTransferFields";
@@ -281,6 +283,7 @@ export function BookingCheckoutClient({
   // more tour days only), so this stays off; the package checkout has its own.
   const [airport, setAirport] = useState(false);
   const [airportTransfer, setAirportTransfer] = useState<AirportTransferValue>(EMPTY_AIRPORT_TRANSFER);
+  const transferPrices = useAirportTransferPrices();
   // Activity add-ons on this tour's itinerary (summer only): requested now, priced by the team.
   const offeredAddOns = activityAddOnsFor(departure.tour?.slug, departure.date);
   const [activityAddOns, setActivityAddOns] = useState<ActivityAddOnId[]>([]);
@@ -623,7 +626,7 @@ export function BookingCheckoutClient({
       : round2(fareSubtotal * (appliedPromo.percent / 100));
   const promoTag = appliedPromo ? (appliedPromo.amountOff > 0 ? `−${money(appliedPromo.amountOff)}` : `−${appliedPromo.percent}%`) : "";
   // Airport transfer (private tours): the doc's both-ways price, added after any promo discount.
-  const transferPrice = airport ? airportTransferPrice(airportTransfer, adults + children + infants) : null;
+  const transferPrice = airport ? airportTransferPrice(airportTransfer, adults + children + infants, transferPrices) : null;
   const total = round2(fareSubtotal - discount + (transferPrice ?? 0));
   const canDeposit = total > 0 && depositAvailable(departure.date, departure.departureTime);
   const plan = canDeposit ? paymentPlan : "FULL";
@@ -749,7 +752,7 @@ export function BookingCheckoutClient({
             [specialRequests.trim(), isPrivate && wantsActivities ? activityAddOnsRequestLine(chosenAddOns.map((id) => ACTIVITY_ADD_ONS[id]), activityGuests) : ""]
               .filter(Boolean)
               .join("\n") || undefined,
-          airportTransfer: airport ? { ...airportTransfer, area: airportTransfer.area || undefined } : undefined,
+          airportTransfer: airport ? airportTransferPayload(airportTransfer) : undefined,
           activityAddOns: chosenAddOns,
           activityGuests: isPrivate && wantsActivities ? activityGuests : undefined,
           promoCode: appliedPromo?.code,
