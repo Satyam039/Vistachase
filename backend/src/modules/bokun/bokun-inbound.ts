@@ -61,8 +61,9 @@ const pad = (n: number) => String(n).padStart(2, "0");
 /** A Bókun date: epoch milliseconds, "YYYY-MM-DD" or an ISO timestamp. */
 function readDate(value: unknown): string | null {
   if (typeof value === "number" && Number.isFinite(value)) {
-    const d = new Date(value);
-    return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
+    // Midnight in the vendor's time zone (Banff: 07:00 UTC): rounded to the nearest UTC midnight,
+    // as the seat sync reads Bókun's days (bokun-booking.ts slotDate).
+    return new Date(Math.round(value / 86_400_000) * 86_400_000).toISOString().slice(0, 10);
   }
   if (typeof value === "string") {
     const m = value.match(/^(\d{4}-\d{2}-\d{2})/);
@@ -136,6 +137,7 @@ export async function pullBokunChanges(options: { bookingId?: string; client?: B
   });
 
   const result: PullResult = { checked: 0, cancelled: 0, moved: 0, flagged: 0, errors: 0 };
+  await undoTimeOnlyMoves().catch((e) => console.error("[bokun] undoing time-only moves failed:", (e as Error).message));
   const changes: Record<string, unknown>[] = [];
   for (const booking of bookings) {
     const code = booking.bokunBookingId!;
@@ -166,16 +168,17 @@ export async function pullBokunChanges(options: { bookingId?: string; client?: B
       continue;
     }
 
-    // Moved in Bókun.
+    // Moved to another DAY in Bókun. Only the day counts: a Bókun start time often shows another
+    // clock time than the website departure it belongs to (the private tours' one 8am start serves
+    // every website time, the Icefield's summer/winter starts), so a different clock time is not a
+    // change (VC-2026-EBB006F4 was wrongly moved from 07:00 to 08:00 by comparing times).
     const ourDate = formatDateOnly(booking.tourDeparture.date);
     const ourTime = formatTimeOfDay(booking.tourDeparture.departureTime);
-    const dateMoved = state.date && state.date !== ourDate;
-    const timeMoved = state.time && state.time !== "00:00" && state.time !== ourTime;
-    if (dateMoved || timeMoved) {
-      const outcome = await moveFromBokun(booking, code, state.date ?? ourDate, timeMoved ? state.time : null);
+    if (state.date && state.date !== ourDate) {
+      const outcome = await moveFromBokun(booking, code, state.date, null);
       if (outcome === "moved") result.moved++;
       else result.flagged++;
-      changes.push({ reference: booking.bookingReference, from: `${ourDate} ${ourTime}`, to: `${state.date ?? ourDate} ${state.time ?? ""}`.trim(), outcome });
+      changes.push({ reference: booking.bookingReference, from: `${ourDate} ${ourTime}`, to: state.date, outcome });
       continue;
     }
 
@@ -190,6 +193,54 @@ export async function pullBokunChanges(options: { bookingId?: string; client?: B
     .create({ data: { syncType: "BOOKING_PULL", recordsSynced: result.cancelled + result.moved, status: result.errors ? "PARTIAL" : "SUCCESS", details: { ...result, changes, bookingId: options.bookingId ?? null } as Prisma.InputJsonValue } })
     .catch(() => {});
   return result;
+}
+
+/**
+ * Puts back bookings the first release moved to another start time on the SAME day (it compared
+ * clock times, see above). Each move is undone once (BOKUN_MOVE_UNDONE names the move it undid),
+ * only while the booking is still confirmed on the departure it was moved to. Seats go back and
+ * Bókun is not told (Bókun never changed). The guest is not emailed: staff decide (Resend voucher
+ * sends the correct time).
+ */
+export async function undoTimeOnlyMoves() {
+  const moves = await prisma.auditLog.findMany({ where: { action: "BOKUN_DATE_CHANGED", entityType: "Booking" }, orderBy: { createdAt: "asc" } });
+  let undone = 0;
+  for (const move of moves) {
+    const d = (move.details ?? {}) as { from?: string; to?: string; fromDepartureId?: string; toDepartureId?: string; code?: string };
+    if (!d.from || !d.to || !d.fromDepartureId || !d.toDepartureId) continue;
+    if (d.from.slice(0, 10) !== d.to.slice(0, 10)) continue; // a real day change
+    const already = await prisma.auditLog.findFirst({ where: { action: "BOKUN_MOVE_UNDONE", entityType: "Booking", entityId: move.entityId, details: { path: ["undoes"], equals: move.id } } });
+    if (already) continue;
+    const booking = await prisma.booking.findUnique({ where: { id: move.entityId }, select: { id: true, status: true, totalSeats: true, tourDepartureId: true, bookingReference: true } });
+    const back = await prisma.tourDeparture.findUnique({ where: { id: d.fromDepartureId } });
+    const now = await prisma.tourDeparture.findUnique({ where: { id: d.toDepartureId } });
+    if (!booking || !back || !now || booking.status !== "CONFIRMED" || booking.tourDepartureId !== now.id) {
+      await prisma.auditLog.create({ data: { action: "BOKUN_MOVE_UNDONE", entityType: "Booking", entityId: move.entityId, details: { undoes: move.id, note: "Not put back: the booking was changed or cancelled since." } } });
+      continue;
+    }
+    const ok = await prisma
+      .$transaction(async (tx) => {
+        const seats = seatsToReserve(back, booking.totalSeats);
+        if (!(await takeBookedSeats(tx, back.id, seats))) return false;
+        await releaseBookedSeats(tx, now.id, seatsToReserve(now, booking.totalSeats));
+        const moved = await tx.booking.updateMany({ where: { id: booking.id, tourDepartureId: now.id, status: "CONFIRMED" }, data: { tourDepartureId: back.id } });
+        if (moved.count !== 1) throw new Error("changed");
+        await audit(tx, booking.id, "BOKUN_MOVE_UNDONE", {
+          undoes: move.id,
+          from: d.to,
+          to: d.from,
+          note: `Put back to ${d.from}: Bókun had not changed this booking (its start time just shows another clock time). The guest was not emailed again.`,
+        });
+        return true;
+      })
+      .catch(() => false);
+    if (ok) undone++;
+    else {
+      await raiseFlag(booking.id, `${FLAG_PREFIX} this booking was wrongly moved from ${d.from} to ${d.to} on the website (Bókun had not changed it) and couldn't be put back automatically (no seats left on ${d.from}). Use Change Tour Date to move it back.`);
+      await audit(prisma, booking.id, "BOKUN_MOVE_UNDONE", { undoes: move.id, note: "Couldn't put it back automatically; staff flagged." });
+    }
+  }
+  return undone;
 }
 
 type PulledBooking = Prisma.BookingGetPayload<{ include: { tourDeparture: { include: { tour: true; shuttleRoute: true } } } }>;
