@@ -2,7 +2,10 @@ import { Router } from "express";
 import crypto from "node:crypto";
 import prisma from "@/lib/db/prisma";
 import { AUTH_COOKIE_NAME, getSessionUser } from "@/lib/auth/admin-guard";
-import { verifyPassword } from "@/lib/auth/auth";
+import { hashPassword, signToken, verifyPassword, type UserRole } from "@/lib/auth/auth";
+import { secureCookie } from "@/routes/auth.routes";
+import { renderAccountDeletedEmail, renderPasswordChangedEmail } from "@/lib/email/account-security-email";
+import { dateOnly, todayInMountainTime } from "@/lib/utils/time";
 import { getCustomerBookings } from "@/modules/bookings/booking.repository";
 import { paymentSummary } from "@/modules/bookings/deposit";
 import { tripOf } from "@/modules/bookings/trip";
@@ -15,6 +18,21 @@ import { hasValidMxRecords, isSuspiciousEmail } from "@/lib/security/spam-detect
 
 const router = Router();
 const sha256 = (value: string) => crypto.createHash("sha256").update(value).digest("hex");
+
+// My Account (/account/settings) checks. Names are stored as one "First Last" string (User.name),
+// so first and last name are joined here and split again by the page.
+const NAME_MAX = 60;
+// Digits with the usual separators and an optional leading +: 7 to 15 digits (E.164 allows 15).
+const PHONE_CHARS = /^\+?[0-9\s().-]+$/;
+function phoneProblem(phone: string): string | null {
+  if (!PHONE_CHARS.test(phone)) return "Please enter a phone number using digits only (a leading + is fine).";
+  const digits = phone.replace(/\D/g, "").length;
+  if (digits < 7 || digits > 15) return "Please enter a full phone number, including the country code.";
+  return null;
+}
+// Bookings that still need the guest: not cancelled, refunded, expired or completed, and the tour
+// date hasn't passed (Mountain Time).
+const ACTIVE_STATUSES = ["CONFIRMED", "PENDING_PAYMENT", "PAID_UNSYNCED"] as const;
 
 router.get("/trips", async (req, res) => {
   try {
@@ -94,17 +112,35 @@ router.patch(
         return res.status(401).json({ success: false, error: "Please sign in to update your profile." });
       }
 
-      const { name, phone } = req.body ?? {};
+      const { firstName, lastName, phone } = req.body ?? {};
+      let { name } = req.body ?? {};
       const user = await prisma.user.findUnique({ where: { id: session.userId } });
       if (!user) {
         return res.status(404).json({ success: false, error: "User not found." });
       }
 
+      // First and last name (My Account) or one full name (older callers).
+      if (typeof firstName === "string" || typeof lastName === "string") {
+        const first = typeof firstName === "string" ? firstName.trim().replace(/\s+/g, " ") : "";
+        const last = typeof lastName === "string" ? lastName.trim().replace(/\s+/g, " ") : "";
+        if (!first) return res.status(400).json({ success: false, error: "Please enter your first name." });
+        if (first.length > NAME_MAX || last.length > NAME_MAX) {
+          return res.status(400).json({ success: false, error: `Names can be at most ${NAME_MAX} characters.` });
+        }
+        name = [first, last].filter(Boolean).join(" ");
+      }
+
       const updates: { name?: string; phone?: string | null } = {};
       if (typeof name === "string") {
-        const trimmedName = name.trim();
+        const trimmedName = name.trim().replace(/\s+/g, " ");
         if (trimmedName.length < 2) {
           return res.status(400).json({ success: false, error: "Name must be at least 2 characters long." });
+        }
+        if (trimmedName.length > NAME_MAX * 2 + 1) {
+          return res.status(400).json({ success: false, error: "That name is too long." });
+        }
+        if (/[<>]/.test(trimmedName)) {
+          return res.status(400).json({ success: false, error: "Names can't contain < or >." });
         }
         updates.name = trimmedName;
       }
@@ -113,6 +149,8 @@ router.patch(
       let phoneUpdated = false;
       if (typeof phone === "string") {
         const trimmedPhone = phone.trim();
+        const problem = trimmedPhone ? phoneProblem(trimmedPhone) : null;
+        if (problem) return res.status(400).json({ success: false, error: problem });
         if (trimmedPhone !== currentPhone) {
           updates.phone = trimmedPhone || null;
           phoneUpdated = true;
@@ -282,17 +320,33 @@ router.post(
       const oldEmail = user.email;
       const newEmail = user.pendingEmail;
 
-      // Update email and reset change token
-      await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          email: newEmail,
-          emailVerified: true,
-          pendingEmail: null,
-          emailChangeToken: null,
-          emailChangeExpiry: null,
-        },
-      });
+      // Someone may have registered the address since the link was sent.
+      const taken = await prisma.user.findFirst({ where: { email: { equals: newEmail, mode: "insensitive" }, id: { not: user.id } } });
+      if (taken) {
+        await prisma.user.update({ where: { id: user.id }, data: { pendingEmail: null, emailChangeToken: null, emailChangeExpiry: null } });
+        return res.status(409).json({ success: false, error: "Another account now uses this email address, so it can't be moved to yours." });
+      }
+
+      await prisma.$transaction([
+        // Trips this account saw through its old verified email stay on the account after the
+        // switch (My Trips also finds bookings by the account's current email).
+        ...(user.emailVerified
+          ? [prisma.booking.updateMany({ where: { customerId: null, customerEmail: { equals: oldEmail, mode: "insensitive" } }, data: { customerId: user.id } })]
+          : []),
+        // The new address is verified now, so its guest bookings join the account too.
+        prisma.booking.updateMany({ where: { customerId: null, customerEmail: { equals: newEmail, mode: "insensitive" } }, data: { customerId: user.id } }),
+        prisma.user.update({
+          where: { id: user.id },
+          data: {
+            email: newEmail,
+            emailVerified: true,
+            verificationToken: null,
+            pendingEmail: null,
+            emailChangeToken: null,
+            emailChangeExpiry: null,
+          },
+        }),
+      ]);
 
       // Send confirmation notification to old email and new email
       const confirmationEmail = renderEmailChangedConfirmationEmail({
@@ -327,6 +381,86 @@ router.post(
   }
 );
 
+/** Cancel an email change that hasn't been confirmed yet (the link stops working). */
+router.delete("/change-email", async (req, res) => {
+  try {
+    const session = await getSessionUser(req);
+    if (!session) return res.status(401).json({ success: false, error: "Please sign in." });
+    await prisma.user.update({ where: { id: session.userId }, data: { pendingEmail: null, emailChangeToken: null, emailChangeExpiry: null } });
+    return res.json({ success: true, message: "The email change was cancelled." });
+  } catch (error) {
+    console.error("Cancel email change error:", error);
+    return res.status(500).json({ success: false, error: "Failed to cancel the email change." });
+  }
+});
+
+/**
+ * Account Security: change the password. Needs the current one. Every other sign-in ends
+ * (sessionsValidAfter); this browser gets a fresh sign-in so it stays signed in.
+ */
+router.post(
+  "/password",
+  rateLimitMiddleware("change_password", { maxRequests: 5, windowSeconds: 900 }),
+  async (req, res) => {
+    try {
+      const session = await getSessionUser(req);
+      if (!session) return res.status(401).json({ success: false, error: "Please sign in to change your password." });
+
+      const { currentPassword, newPassword } = req.body ?? {};
+      if (typeof currentPassword !== "string" || typeof newPassword !== "string" || !currentPassword) {
+        return res.status(400).json({ success: false, error: "Current and new password are required." });
+      }
+      if (newPassword.length < 8 || newPassword.length > 200) {
+        return res.status(400).json({ success: false, error: "The new password must be at least 8 characters." });
+      }
+
+      const user = await prisma.user.findUnique({ where: { id: session.userId } });
+      if (!user) return res.status(404).json({ success: false, error: "User not found." });
+      if (!(await verifyPassword(currentPassword, user.passwordHash))) {
+        return res.status(401).json({ success: false, error: "Your current password is incorrect." });
+      }
+      if (await verifyPassword(newPassword, user.passwordHash)) {
+        return res.status(400).json({ success: false, error: "The new password must be different from the current one." });
+      }
+
+      // Whole seconds: token iat is in seconds, so this browser's new token (signed below) is valid.
+      const validAfter = new Date(Math.floor(Date.now() / 1000) * 1000);
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { passwordHash: await hashPassword(newPassword), sessionsValidAfter: validAfter, resetToken: null, resetTokenExpiry: null },
+      });
+
+      const token = signToken({ userId: user.id, email: user.email, role: user.role as UserRole, name: user.name });
+      res.cookie(AUTH_COOKIE_NAME, token, { httpOnly: true, secure: secureCookie(req), sameSite: "lax", maxAge: 1000 * 60 * 60 * 24 * 7, path: "/" });
+
+      const notice = renderPasswordChangedEmail({ name: user.name, site: siteUrl() });
+      await getEmailProvider()
+        .sendEmail({ to: user.email, subject: notice.subject, html: notice.html, text: notice.text })
+        .catch((e) => console.error("Password changed email failed:", (e as Error).message));
+
+      return res.json({ success: true, message: "Password changed. Other devices have been signed out." });
+    } catch (error) {
+      console.error("Change password error:", error);
+      return res.status(500).json({ success: false, error: "Failed to change password." });
+    }
+  }
+);
+
+/** Account Security: sign out every device, this one included. */
+router.post("/sign-out-everywhere", async (req, res) => {
+  try {
+    const session = await getSessionUser(req);
+    if (!session) return res.status(401).json({ success: false, error: "Please sign in." });
+    // One second ahead so a token issued in this same second is refused too.
+    await prisma.user.update({ where: { id: session.userId }, data: { sessionsValidAfter: new Date(Date.now() + 1000) } });
+    res.clearCookie(AUTH_COOKIE_NAME, { path: "/" });
+    return res.json({ success: true, message: "You've been signed out on every device." });
+  } catch (error) {
+    console.error("Sign out everywhere error:", error);
+    return res.status(500).json({ success: false, error: "Failed to sign out." });
+  }
+});
+
 /** Manage Profile & Account Settings: Delete Account Permanently */
 router.delete(
   "/",
@@ -338,9 +472,12 @@ router.delete(
         return res.status(401).json({ success: false, error: "Please sign in to delete your account." });
       }
 
-      const { password } = req.body ?? {};
+      const { password, confirm } = req.body ?? {};
       if (!password || typeof password !== "string") {
         return res.status(400).json({ success: false, error: "Password is required to permanently delete your account." });
+      }
+      if (typeof confirm !== "string" || confirm.trim().toUpperCase() !== "DELETE") {
+        return res.status(400).json({ success: false, error: 'Type DELETE to confirm.' });
       }
 
       const user = await prisma.user.findUnique({ where: { id: session.userId } });
@@ -362,8 +499,39 @@ router.delete(
         });
       }
 
-      // Permanently delete user account
-      await prisma.user.delete({ where: { id: user.id } });
+      // Upcoming trips still need the guest (pickup messages, changes, refunds), so they are
+      // cancelled or taken first. The page lists them.
+      const upcoming = await prisma.booking.findMany({
+        where: {
+          status: { in: [...ACTIVE_STATUSES] },
+          tourDeparture: { date: { gte: dateOnly(todayInMountainTime()) } },
+          OR: [{ customerId: user.id }, ...(user.emailVerified ? [{ customerEmail: { equals: user.email, mode: "insensitive" as const } }] : [])],
+        },
+        select: { bookingReference: true },
+        orderBy: { createdAt: "asc" },
+      });
+      if (upcoming.length > 0) {
+        return res.status(409).json({
+          success: false,
+          code: "UPCOMING_TRIPS",
+          upcoming: upcoming.map((b) => b.bookingReference),
+          error: "You have upcoming trips on this account. Please cancel them from My Trips, or contact us, before deleting your account.",
+        });
+      }
+
+      // The account goes; booking and payment records stay (tax, refunds, chargebacks) but are no
+      // longer tied to a sign-in (Booking.customerId is set to null by the relation). The audit row
+      // keeps only the account id and how many bookings it had, no personal details.
+      const kept = await prisma.booking.count({ where: { customerId: user.id } });
+      await prisma.$transaction([
+        prisma.auditLog.create({ data: { userId: null, action: "ACCOUNT_DELETED_BY_CUSTOMER", entityType: "User", entityId: user.id, details: { bookingsKept: kept } } }),
+        prisma.user.delete({ where: { id: user.id } }),
+      ]);
+
+      const notice = renderAccountDeletedEmail({ name: user.name, site: siteUrl() });
+      await getEmailProvider()
+        .sendEmail({ to: user.email, subject: notice.subject, html: notice.html, text: notice.text })
+        .catch((e) => console.error("Account deleted email failed:", (e as Error).message));
 
       // Clear authentication cookie
       res.clearCookie(AUTH_COOKIE_NAME, { path: "/" });

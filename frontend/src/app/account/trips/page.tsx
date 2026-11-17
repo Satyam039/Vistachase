@@ -587,7 +587,7 @@ export default function MyTripsPage() {
                 className="inline-flex h-11 items-center gap-2 rounded-full border border-white/25 px-5 text-sm text-white hover:bg-white/10"
               >
                 <Settings className="h-4 w-4" aria-hidden="true" />
-                Account settings
+                My account
               </Link>
               <button
                 type="button"

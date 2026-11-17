@@ -1,4 +1,4 @@
-import { renderMasterEmail } from "@/lib/email/email-template";
+import { escapeHtml, renderMasterEmail } from "@/lib/email/email-template";
 
 export interface EmailChangeVerificationInput {
   name: string;
@@ -17,7 +17,7 @@ export function renderEmailChangeVerificationEmail({ name, newEmail, link, site 
     title: "Verify New Email Address",
     greeting: `Hi ${first},`,
     paragraphs: [
-      `We received a request to change your registered Vista Chase account email address to <strong>${newEmail}</strong>.`,
+      `We received a request to change your registered Vista Chase account email address to <strong>${escapeHtml(newEmail)}</strong>.`,
       "Please click the button below to confirm and activate this email address for your account:",
     ],
     cta: {
@@ -59,7 +59,7 @@ export function renderEmailChangedConfirmationEmail({ name, newEmail, site }: Em
     title: "Email Address Updated",
     greeting: `Hi ${first},`,
     paragraphs: [
-      `Your Vista Chase account email address has been successfully changed to <strong>${newEmail}</strong>.`,
+      `Your Vista Chase account email address has been successfully changed to <strong>${escapeHtml(newEmail)}</strong>.`,
       "From now on, please use this new email address to sign in and receive booking confirmations and trip updates.",
     ],
     cta: {
