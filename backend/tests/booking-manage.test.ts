@@ -5,7 +5,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import prisma from "@/lib/db/prisma";
 import { setBokunClientForTests, type BokunApi } from "@/modules/bokun/config";
 import { processBokunSyncTasks, setBokunAutoRunForTests } from "@/modules/bokun/bokun-sync";
-import { pullBokunChanges, readBokunBooking, setBokunInboundForTests } from "@/modules/bokun/bokun-inbound";
+import { pullBokunChanges, readBokunBooking, setBokunInboundForTests, undoTimeOnlyMoves } from "@/modules/bokun/bokun-inbound";
 import { bookingOverview, changeBookingDate, dateOptions, updateGuestContact } from "@/modules/admin/booking-manage";
 import { createBooking } from "@/modules/bookings/booking.repository";
 import { dateOnly, timeOfDay } from "@/lib/utils/time";
@@ -210,6 +210,40 @@ describe("Changes made in Bókun come back to the website", () => {
     expect(await seats(from.id)).toBe(0);
     const actions = (await prisma.auditLog.findMany({ where: { entityId: booking.id } })).map((a) => a.action);
     expect(actions).toEqual(expect.arrayContaining(["BOKUN_DATE_CHANGED", "DATE_CHANGE_EMAIL_SENT"]));
+  });
+
+  it("doesn't move a booking when Bókun's start shows another clock time on the same day (VC-2026-EBB006F4)", async () => {
+    const at7 = await departure(DAY, "07:05");
+    const at8 = await departure(DAY, "08:05");
+    bokun.slot("796650", DAY, "07:05", 10);
+    const booking = await book(at7);
+    await processBokunSyncTasks({ bookingId: booking.id });
+    const code = (await reload(booking.id)).bokunBookingId!;
+    // Midnight in Banff as epoch ms (07:00 UTC), and the private tours' single 8am start.
+    bokun.bookings[code] = { status: "CONFIRMED", activityBookings: [{ status: "CONFIRMED", date: Date.parse(`${DAY}T07:00:00Z`), startTime: "08:05" }] };
+    expect(await pullBokunChanges({ bookingId: booking.id })).toMatchObject({ checked: 1, moved: 0, flagged: 0 });
+    expect((await reload(booking.id)).tourDepartureId).toBe(at7.id);
+    expect(await seats(at8.id)).toBe(0);
+  });
+
+  it("puts back a booking the first release moved to another time on the same day, once", async () => {
+    setBokunClientForTests(null);
+    const at7 = await departure(DAY, "07:10");
+    const at8 = await departure(DAY, "08:10");
+    const booking = await book(at7);
+    // What the first release did: moved it to 08:10 and logged it.
+    await prisma.$executeRaw`UPDATE "TourDeparture" SET "capacityBooked" = "capacityBooked" - 2 WHERE id = ${at7.id}`;
+    await prisma.$executeRaw`UPDATE "TourDeparture" SET "capacityBooked" = "capacityBooked" + 2 WHERE id = ${at8.id}`;
+    await prisma.booking.update({ where: { id: booking.id }, data: { tourDepartureId: at8.id } });
+    await prisma.auditLog.create({
+      data: { action: "BOKUN_DATE_CHANGED", entityType: "Booking", entityId: booking.id, details: { code: "X", from: `${DAY} 07:10`, to: `${DAY} 08:10`, fromDepartureId: at7.id, toDepartureId: at8.id } },
+    });
+    expect(await undoTimeOnlyMoves()).toBeGreaterThanOrEqual(1);
+    expect((await reload(booking.id)).tourDepartureId).toBe(at7.id);
+    expect(await seats(at7.id)).toBe(2);
+    expect(await seats(at8.id)).toBe(0);
+    await undoTimeOnlyMoves();
+    expect(await prisma.auditLog.count({ where: { entityId: booking.id, action: "BOKUN_MOVE_UNDONE" } })).toBe(1);
   });
 
   it("flags staff when the website has no departure on Bókun's new date", async () => {
