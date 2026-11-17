@@ -1,4 +1,4 @@
-import { renderMasterEmail } from "@/lib/email/email-template";
+import { escapeHtml, renderMasterEmail } from "@/lib/email/email-template";
 
 export interface PhoneChangedEmailInput {
   name: string;
@@ -16,7 +16,7 @@ export function renderPhoneChangedEmail({ name, phone, site }: PhoneChangedEmail
     title: "Phone Number Updated",
     greeting: `Hi ${first},`,
     paragraphs: [
-      `Your registered contact phone number for your Vista Chase account has been successfully updated to <strong>${phone}</strong>.`,
+      `Your registered contact phone number for your Vista Chase account has been successfully updated to <strong>${escapeHtml(phone)}</strong>.`,
       "Our team and guides will use this number if we need to reach you on the day of your tour or shuttle departure.",
     ],
     cta: {
