@@ -23,13 +23,14 @@ import { getEmailProvider } from "@/lib/email/email.provider";
 import { renderMasterEmail } from "@/lib/email/email-template";
 import { dateOnly, formatDateOnly, formatTimeOfDay, todayInMountainTime } from "@/lib/utils/time";
 import { endBooking, releaseBookedSeats, takeBookedSeats } from "@/modules/departures/inventory";
-import { seatsToReserve } from "@/modules/pricing/departure-pricing";
+import { isVehicleDeparture, seatsToReserve } from "@/modules/pricing/departure-pricing";
 import { experienceTitle } from "@/modules/bookings/tour-itinerary";
 import { bokunClient, bokunConnected, bokunIsTestAccount, type BokunApi } from "@/modules/bokun/config";
 import { BokunApiError } from "@/modules/bokun/bokun.client";
 import { sendDateChangeEmail } from "@/modules/bookings/confirmation-email";
 
 const PROVIDER = "BOKUN";
+const SEAT_STATUSES = ["CONFIRMED", "COMPLETED", "PENDING_PAYMENT", "PAID_UNSYNCED"] as const;
 const FLAG_PREFIX = "Bókun:";
 
 let testOverride: boolean | null = null;
@@ -209,11 +210,13 @@ export async function undoTimeOnlyMoves() {
     const d = (move.details ?? {}) as { from?: string; to?: string; fromDepartureId?: string; toDepartureId?: string; code?: string };
     if (!d.from || !d.to || !d.fromDepartureId || !d.toDepartureId) continue;
     if (d.from.slice(0, 10) !== d.to.slice(0, 10)) continue; // a real day change
-    const already = await prisma.auditLog.findFirst({ where: { action: "BOKUN_MOVE_UNDONE", entityType: "Booking", entityId: move.entityId, details: { path: ["undoes"], equals: move.id } } });
-    if (already) continue;
+    // Done once: put back, or given up because the booking changed. A try that found no seats
+    // ("retry") is tried again, since those seats are usually the booking's own (see below).
+    const tries = await prisma.auditLog.findMany({ where: { action: "BOKUN_MOVE_UNDONE", entityType: "Booking", entityId: move.entityId, details: { path: ["undoes"], equals: move.id } } });
+    if (tries.some((t) => !isRetry(t.details))) continue;
     const booking = await prisma.booking.findUnique({ where: { id: move.entityId }, select: { id: true, status: true, totalSeats: true, tourDepartureId: true, bookingReference: true } });
-    const back = await prisma.tourDeparture.findUnique({ where: { id: d.fromDepartureId } });
-    const now = await prisma.tourDeparture.findUnique({ where: { id: d.toDepartureId } });
+    const back = await prisma.tourDeparture.findUnique({ where: { id: d.fromDepartureId }, include: { tour: { select: { category: true } } } });
+    const now = await prisma.tourDeparture.findUnique({ where: { id: d.toDepartureId }, include: { tour: { select: { category: true } } } });
     if (!booking || !back || !now || booking.status !== "CONFIRMED" || booking.tourDepartureId !== now.id) {
       await prisma.auditLog.create({ data: { action: "BOKUN_MOVE_UNDONE", entityType: "Booking", entityId: move.entityId, details: { undoes: move.id, note: "Not put back: the booking was changed or cancelled since." } } });
       continue;
@@ -221,7 +224,19 @@ export async function undoTimeOnlyMoves() {
     const ok = await prisma
       .$transaction(async (tx) => {
         const seats = seatsToReserve(back, booking.totalSeats);
-        if (!(await takeBookedSeats(tx, back.id, seats))) return false;
+        if (!(await takeBookedSeats(tx, back.id, seats))) {
+          // The original departure looks full. Usually it is this booking's own seats: Bókun still
+          // has the booking at that time, so the seat sync marked the emptied departure sold out
+          // (private tours: one vehicle a day). Take it back unless another website booking is on it.
+          const others = await tx.booking.count({ where: { tourDepartureId: back.id, id: { not: booking.id }, status: { in: [...SEAT_STATUSES] } } });
+          if (isVehicleDeparture(back)) {
+            const holds = await tx.reservationHold.count({ where: { tourDepartureId: back.id, status: "ACTIVE" } });
+            if (others > 0 || holds > 0) return false;
+            await tx.$executeRaw`UPDATE "TourDeparture" SET "capacityBooked" = "capacityTotal", "capacityHeld" = 0, "updatedAt" = ${new Date()} WHERE "id" = ${back.id}`;
+          } else {
+            await tx.$executeRaw`UPDATE "TourDeparture" SET "capacityTotal" = GREATEST("capacityTotal", "capacityBooked" + "capacityHeld" + ${seats}), "capacityBooked" = "capacityBooked" + ${seats}, "updatedAt" = ${new Date()} WHERE "id" = ${back.id}`;
+          }
+        }
         await releaseBookedSeats(tx, now.id, seatsToReserve(now, booking.totalSeats));
         const moved = await tx.booking.updateMany({ where: { id: booking.id, tourDepartureId: now.id, status: "CONFIRMED" }, data: { tourDepartureId: back.id } });
         if (moved.count !== 1) throw new Error("changed");
@@ -231,16 +246,26 @@ export async function undoTimeOnlyMoves() {
           to: d.from,
           note: `Put back to ${d.from}: Bókun had not changed this booking (its start time just shows another clock time). The guest was not emailed again.`,
         });
+        await tx.bookingFlag.updateMany({
+          where: { bookingId: booking.id, status: "OPEN", note: { startsWith: `${FLAG_PREFIX} this booking was wrongly moved` } },
+          data: { status: "RESOLVED", resolvedAt: new Date(), resolution: `Put back to ${d.from} automatically.` },
+        });
         return true;
       })
       .catch(() => false);
     if (ok) undone++;
     else {
-      await raiseFlag(booking.id, `${FLAG_PREFIX} this booking was wrongly moved from ${d.from} to ${d.to} on the website (Bókun had not changed it) and couldn't be put back automatically (no seats left on ${d.from}). Use Change Tour Date to move it back.`);
-      await audit(prisma, booking.id, "BOKUN_MOVE_UNDONE", { undoes: move.id, note: "Couldn't put it back automatically; staff flagged." });
+      await raiseFlag(booking.id, `${FLAG_PREFIX} this booking was wrongly moved from ${d.from} to ${d.to} on the website (Bókun had not changed it) and couldn't be put back automatically (another website booking is on ${d.from}). Sort out the two bookings, then press "Check Bókun now" to try again.`);
+      if (tries.length === 0) await audit(prisma, booking.id, "BOKUN_MOVE_UNDONE", { undoes: move.id, retry: true, note: "Couldn't put it back automatically (another booking is on that departure); staff flagged." });
     }
   }
   return undone;
+}
+
+/** An undo try that found no seats: the first release logged these without `retry`. */
+function isRetry(details: unknown) {
+  const d = (details ?? {}) as { retry?: boolean; note?: string };
+  return d.retry === true || (typeof d.note === "string" && d.note.startsWith("Couldn't put it back"));
 }
 
 type PulledBooking = Prisma.BookingGetPayload<{ include: { tourDeparture: { include: { tour: true; shuttleRoute: true } } } }>;
