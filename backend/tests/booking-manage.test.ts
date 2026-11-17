@@ -109,7 +109,7 @@ describe("Change tour date (staff)", () => {
 
     const options = await dateOptions(booking.id, {});
     expect(options.status).toBe(200);
-    expect("departures" in options && options.departures.some((d) => d.id === to.id && d.fits)).toBe(true);
+    expect("departures" in options && (options.departures ?? []).some((d) => d.id === to.id && d.fits)).toBe(true);
 
     const result = await changeBookingDate(booking.id, { departureId: to.id, reason: "Guest asked for the next day", notifyGuest: true }, staffId);
     expect(result).toMatchObject({ status: 200, from: `${DAY} 08:30`, to: `${OTHER_DAY} 08:30`, email: "sent", bokun: "queued" });
