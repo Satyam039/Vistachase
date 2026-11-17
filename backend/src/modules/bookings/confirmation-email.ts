@@ -120,7 +120,7 @@ function itineraryText(result: ItineraryResult) {
 }
 
 /** Builds and sends the email for a confirmed booking (or its whole trip). */
-export async function sendConfirmationEmail(reference: string, options: { force?: boolean } = {}): Promise<ConfirmationResult> {
+export async function sendConfirmationEmail(reference: string, options: { force?: boolean; dateChange?: { previous: string } } = {}): Promise<ConfirmationResult> {
   const all = await tripBookings(reference);
   if (all.length === 0) return "not-confirmed";
   const self = all.find((b) => b.bookingReference === reference) ?? all[0];
@@ -132,7 +132,7 @@ export async function sendConfirmationEmail(reference: string, options: { force?
   const trip = tripOf(self.priceSnapshot, self.bookingReference);
   const lead = live[0];
 
-  if (!options.force) {
+  if (!options.force && !options.dateChange) {
     const claimed = await prisma.booking.updateMany({ where: { id: lead.id, confirmationEmailSentAt: null }, data: { confirmationEmailSentAt: new Date() } });
     if (claimed.count === 0) return "already-sent";
     // Staff hear about the booking whether or not the guest's email goes through (sent once).
@@ -140,7 +140,7 @@ export async function sendConfirmationEmail(reference: string, options: { force?
   }
 
   try {
-    const pdf = await itineraryPdf(live, trip ? { title: trip.title, reference: trip.reference } : null);
+    const pdf = await itineraryPdf(live, trip ? { title: trip.title, reference: trip.reference } : null, { updated: Boolean(options.dateChange) });
     const tripReference = trip?.reference ?? lead.bookingReference;
     const title = trip?.title ?? dayLines(lead).title;
     const total = live.reduce((n, b) => n + b.totalAmount, 0);
@@ -215,21 +215,37 @@ export async function sendConfirmationEmail(reference: string, options: { force?
       <p style="margin:4px 0 0;font-size:12px;color:#6b7280;text-align:center;">${escapeHtml(policy)}</p>
     `;
 
+    // Staff (or Bókun) moved the booking to another date: same details, "updated" wording, and
+    // the updated voucher PDF with the new date (Admin → booking → Change tour date).
+    const changed = options.dateChange;
+    const previousLabel = changed ? previousDateLabel(changed.previous) : "";
+    const newLabel = days.map((d) => `${d.date}${d.time ? ` at ${d.time}` : ""}`).join("; ");
     const rendered = renderMasterEmail({
-      subject: `Your Vista Chase booking is confirmed: ${tripReference}`,
-      preheader: `Booking reference: ${tripReference}. ${title}. Your itinerary is attached as a PDF.`,
-      title: "Your Booking is Confirmed!",
+      subject: changed ? `Your tour date has been updated: ${tripReference}` : `Your Vista Chase booking is confirmed: ${tripReference}`,
+      preheader: changed
+        ? `Booking ${tripReference} is now on ${newLabel}. Your updated ticket is attached as a PDF.`
+        : `Booking reference: ${tripReference}. ${title}. Your itinerary is attached as a PDF.`,
+      title: changed ? "Your Tour Date Has Been Updated" : "Your Booking is Confirmed!",
       greeting: `Hi ${escapeHtml(lead.customerName)},`,
-      paragraphs: [
-        "Thank you for booking with Vista Chase. We are excited to welcome you to the Canadian Rockies! Your complete itinerary and voucher details are below and attached as a PDF.",
-      ],
+      paragraphs: changed
+        ? [
+            `Your booking has been successfully rescheduled. <strong>New date: ${escapeHtml(newLabel)}</strong>${previousLabel ? ` (was ${escapeHtml(previousLabel)})` : ""}.`,
+            "Your updated ticket (voucher) and itinerary are below and attached as a PDF. Please use this one; the earlier ticket is no longer valid.",
+          ]
+        : [
+            "Thank you for booking with Vista Chase. We are excited to welcome you to the Canadian Rockies! Your complete itinerary and voucher details are below and attached as a PDF.",
+          ],
       customHtml,
-      cta: {
-        label: "Manage Booking",
-        url: manageLink,
-      },
+      cta: changed
+        ? { label: "Download Updated Ticket", url: voucherLink(lead.bookingReference) }
+        : {
+            label: "Manage Booking",
+            url: manageLink,
+          },
       disclaimer: "Questions? Reply to this email, call +1 (825) 734-9456 (6 a.m. – 9 p.m. Mountain Time) or write to support@vistachase.com.",
-      plainTextLines: text.split("\n"),
+      plainTextLines: changed
+        ? [`Your tour date has been updated: ${tripReference}`, `New date: ${newLabel}${previousLabel ? ` (was ${previousLabel})` : ""}`, "", ...text.split("\n").slice(1)]
+        : text.split("\n"),
     });
 
     const result = await getEmailProvider().sendEmail({
@@ -238,7 +254,7 @@ export async function sendConfirmationEmail(reference: string, options: { force?
       html: rendered.html,
       text: rendered.text,
       attachments: [
-        { filename: `Vista-Chase-itinerary-${tripReference}.pdf`, content: Buffer.from(pdf), contentType: "application/pdf" },
+        { filename: changed ? `Vista-Chase-updated-ticket-${tripReference}.pdf` : `Vista-Chase-itinerary-${tripReference}.pdf`, content: Buffer.from(pdf), contentType: "application/pdf" },
         { filename: `Vista-Chase-${tripReference}.ics`, content: Buffer.from(bookingIcs(live), "utf8"), contentType: "text/calendar; charset=utf-8; method=PUBLISH" },
       ],
     });
@@ -290,12 +306,16 @@ export async function sendConfirmationEmail(reference: string, options: { force?
       .sendEmail({
         to: ADMIN_NOTIFICATION_RECIPIENTS.to,
         cc: ADMIN_NOTIFICATION_RECIPIENTS.cc,
-        subject: `[New Booking] ${tripReference} - ${lead.customerName} - ${title}`,
+        subject: changed ? `[Date Changed] ${tripReference} - ${lead.customerName} - ${title} (was ${previousLabel})` : `[New Booking] ${tripReference} - ${lead.customerName} - ${title}`,
         html: adminHtml,
         text: adminText,
       })
       .catch((e) => console.error(`[admin-booking-notification] ${tripReference} error:`, (e as Error).message));
 
+    if (changed) {
+      await prisma.auditLog.create({ data: { action: "DATE_CHANGE_EMAIL_SENT", entityType: "Booking", entityId: lead.id, details: { references: live.map((b) => b.bookingReference), previous: changed.previous, note: `Date change email and updated ticket sent to ${lead.customerEmail}.` } } });
+      return "sent";
+    }
     const ids = live.map((b) => b.id);
     await prisma.booking.updateMany({ where: { id: { in: ids } }, data: { confirmationEmailSentAt: new Date(), confirmationEmailError: null } });
     await prisma.auditLog.create({ data: { action: "CONFIRMATION_EMAIL_SENT", entityType: "Booking", entityId: lead.id, details: { references: live.map((b) => b.bookingReference), forced: Boolean(options.force) } } });
@@ -303,10 +323,30 @@ export async function sendConfirmationEmail(reference: string, options: { force?
   } catch (err) {
     const message = (err as Error).message.slice(0, 500);
     console.error(`[confirmation-email] ${reference} failed: ${message}`);
+    if (options.dateChange) {
+      await prisma.auditLog.create({ data: { action: "DATE_CHANGE_EMAIL_FAILED", entityType: "Booking", entityId: lead.id, details: { reference, error: message } } }).catch(() => {});
+      return "failed";
+    }
     await prisma.booking.update({ where: { id: lead.id }, data: { ...(options.force ? {} : { confirmationEmailSentAt: null }), confirmationEmailError: message } }).catch(() => {});
     await prisma.auditLog.create({ data: { action: "CONFIRMATION_EMAIL_FAILED", entityType: "Booking", entityId: lead.id, details: { reference, error: message } } }).catch(() => {});
     return "failed";
   }
+}
+
+/** "2026-12-01 08:00" (or "2026-12-01") as "Tuesday, December 1, 2026 at 8:00 AM". */
+function previousDateLabel(previous: string) {
+  const [day, time] = previous.trim().split(/\s+/);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day ?? "")) return previous;
+  const label = new Date(`${day}T12:00:00Z`).toLocaleDateString("en-CA", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
+  return time && /^\d{2}:\d{2}$/.test(time) ? `${label} at ${clock(time)}` : label;
+}
+
+/**
+ * The date-change email: the confirmation email with "Your Tour Date Has Been Updated" wording and
+ * the updated voucher PDF (new date) attached. `previous`: the old "YYYY-MM-DD HH:MM".
+ */
+export function sendDateChangeEmail(reference: string, change: { previous: string }) {
+  return sendConfirmationEmail(reference, { force: true, dateChange: change });
 }
 
 /** Jobs runner: retries confirmation emails that failed in the last 7 days. Returns how many went out. */

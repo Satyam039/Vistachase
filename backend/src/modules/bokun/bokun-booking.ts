@@ -660,7 +660,7 @@ export interface BokunFoundBooking {
  * Bókun's booking with our reference (externalBookingReference), or null when Bókun's booking
  * search doesn't show one or can't be read. Only an exact match of our reference counts.
  */
-export async function findInBokun(client: BokunApi, reference: string): Promise<BokunFoundBooking | null> {
+export async function findInBokun(client: BokunApi, reference: string, exclude?: string): Promise<BokunFoundBooking | null> {
   try {
     const found = (await client.fetch("POST", "/booking.json/booking-search", {
       externalBookingReference: reference,
@@ -669,7 +669,12 @@ export async function findInBokun(client: BokunApi, reference: string): Promise<
       pageSize: 20,
     })) as { results?: Record<string, unknown>[]; items?: Record<string, unknown>[] } | null;
     const rows = (Array.isArray(found?.results) ? found!.results! : Array.isArray(found?.items) ? found!.items! : []).filter(
-      (b) => String(b?.externalBookingReference ?? "").trim() === reference && typeof b?.confirmationCode === "string" && b.confirmationCode,
+      (b) =>
+        String(b?.externalBookingReference ?? "").trim() === reference &&
+        typeof b?.confirmationCode === "string" &&
+        b.confirmationCode &&
+        // After a date change the old booking (still live until the new one is in) isn't the one we want.
+        b.confirmationCode !== exclude,
     );
     const live = (b: Record<string, unknown>) => /^(CONFIRMED|RESERVED|ARRIVED)$/i.test(String(b.status ?? ""));
     const best = rows.find(live) ?? rows[0];

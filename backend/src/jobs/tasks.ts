@@ -18,6 +18,12 @@ export async function sendBookingsToBokun() {
   return processBokunSyncTasks();
 }
 
+/** Every 15 minutes: cancellations and date changes made in Bókun to website bookings (bokun-inbound.ts). */
+export async function pullChangesFromBokun() {
+  const { pullBokunChanges } = await import("@/modules/bokun/bokun-inbound");
+  return pullBokunChanges();
+}
+
 /** Every 15 minutes: Bókun's seats into our departures (skipped without keys or when switched off). */
 export async function syncSeatsFromBokun() {
   const { bokunAvailabilitySyncEnabled } = await import("@/modules/bokun/config");

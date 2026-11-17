@@ -95,6 +95,16 @@ card payment goes through afterwards, it settles an open Payment due flag, or, w
 recorded a payment, raises a **Paid after expiry** flag saying the guest may have paid twice.
 To turn a pending booking down, cancel it from its detail instead.
 
+## Manage booking page
+
+**Admin → Bookings → open a booking → Open full page** (`/admin/bookings/<id>`) shows one booking the way the owner's "Admin Booking Management" reference lays it out. It is added next to the existing list and detail panel, which work as before.
+
+- Top: lead guest name, email, phone, booking reference, tour, tour date and time, guests; the Bókun status (Synced / Sending / Not in Bókun, Bókun ID, last synced, **Check Bókun now**); the signed-in staff member's name and role.
+- Actions (managers): **Change Tour Date**, **Cancel Booking** (the same staff cancellation as before, refund by policy / full / none, cancellation email with the refund line), **Edit Booking** (lead guest name, email, phone, pickup time and note, special requests), **View Payments**, **Booking History**, **Resend voucher**.
+- Tabs: Booking Overview (photo, pickup, departs, status, created / updated, source, Bókun ID, approve, admin notes), Guest Details, Payments, Change History (who did what), Bókun Logs (what was sent to Bókun and what came back).
+
+**Change Tour Date** moves the booking to another departure of the same tour: seats are taken on the new one and released on the old one in one step, a guest's open "Change request" flag is closed, a deposit's balance due date follows the new date, and the price stays as booked (the screen says when the new departure's price differs). With Bókun connected, Bókun's seats on the new start are checked first; the booking is then created in Bókun on the new date and only after that is the old Bókun booking cancelled (if the new date can't go in, the old one is kept and staff are flagged). The guest gets "Your Tour Date Has Been Updated" with the updated PDF ticket attached and a Download Updated Ticket button; support gets a "[Date Changed]" notice. Code: `backend/src/modules/admin/booking-manage.ts`.
+
 ## Quick Book
 
 Books a LOCAL, active departure for a guest with the server's price (same pricing, seat checks and
