@@ -17,7 +17,7 @@ import { itineraryPdf, voucherPdf } from "@/modules/bookings/voucher-pdf";
 import { tripBookings, tripOf, tripSummary } from "@/modules/bookings/trip";
 import { bookingIcs } from "@/modules/bookings/calendar-event";
 import { emailSchema, parseOr400, referenceSchema, z } from "@/lib/security/validate";
-import { airportTransferSchema } from "@/modules/bookings/airport-transfer";
+import { airportTransferPriceList, airportTransferSchema } from "@/modules/bookings/airport-transfer";
 import { activityAddOnsSchema, activityGuestsSchema } from "@/modules/bookings/activity-add-ons";
 
 const router = Router();
@@ -143,6 +143,12 @@ async function readableBooking(req: Request, ref: string, token: string | undefi
 
 // The voucher as a PDF file, with the same access as the voucher itself. In-app browsers (Gmail,
 // WhatsApp) can't print the voucher page, but they can download and open this.
+// Airport transfer prices for the checkout (public): the server prices every booking from the same table.
+router.get("/airport-transfer", (_req, res) => {
+  res.set("Cache-Control", "public, max-age=300");
+  res.json({ success: true, prices: airportTransferPriceList() });
+});
+
 router.get("/voucher.pdf", rateLimitMiddleware("booking_read", { maxRequests: 30, windowSeconds: 60 }), async (req, res, next) => {
   try {
     const query = parseOr400(readSchema, req.query, res);

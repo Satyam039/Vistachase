@@ -28,7 +28,7 @@ import { sendConfirmationEmail } from "@/modules/bookings/confirmation-email";
 import { getEmailProvider } from "@/lib/email/email.provider";
 import { renderMasterEmail } from "@/lib/email/email-template";
 import { isVehicleDeparture, partySizeError, seatedGuests, seatsToReserve } from "@/modules/pricing/departure-pricing";
-import { airportTransferLabel, airportTransferNote, airportTransferPriceCents, type AirportTransfer } from "@/modules/bookings/airport-transfer";
+import { airportTransferLabel, airportTransferNote, airportTransferSchema, quoteAirportTransfer, type AirportTransferInput } from "@/modules/bookings/airport-transfer";
 import { activityAddOnsError, activityAddOnsNote, ACTIVITY_ADD_ONS, type ActivityAddOnId, type ActivityGuests } from "@/modules/bookings/activity-add-ons";
 import { lookupPromo, normalizeCode, type ResolvedPromo } from "@/modules/pricing/promo-codes";
 import { priceBooking, type AddOnChoice } from "@/modules/pricing/booking-pricing";
@@ -69,7 +69,7 @@ export interface CreateBookingInput {
   /** Pay everything now (default), or the deposit now and the balance later (modules/bookings/deposit.ts). */
   paymentPlan?: "FULL" | "DEPOSIT";
   /** Private tours only: airport arrival and departure for a transfer (modules/bookings/airport-transfer.ts). */
-  airportTransfer?: AirportTransfer;
+  airportTransfer?: AirportTransferInput;
   /** Activity add-ons the guest asks for (modules/bookings/activity-add-ons.ts); priced by the team. */
   activityAddOns?: ActivityAddOnId[];
   /** Who joins the activities, with ages; the whole party when not given. */
@@ -304,11 +304,20 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
       if (input.airportTransfer && partySize < 2) {
         throw new BookingRefused("Airport transfer is available only for bookings with two or more guests.");
       }
-      const transferCents = input.airportTransfer ? airportTransferPriceCents(input.airportTransfer, partySize) : null;
-      if (input.airportTransfer && transferCents != null) {
-        totals.addOns.push({ name: airportTransferLabel(input.airportTransfer, partySize), priceCents: transferCents, quantity: 1 });
-        totals.addOnsCents += transferCents;
-        totals.totalCents += transferCents;
+      // Priced here, never from the page: per transfer by where the guest stays, a round trip is two.
+      let transfer: ReturnType<typeof airportTransferSchema.parse> | null = null;
+      if (input.airportTransfer) {
+        const parsed = airportTransferSchema.safeParse(input.airportTransfer);
+        if (!parsed.success) throw new BookingRefused(parsed.error.issues[0]?.message ?? "Check your airport transfer details.");
+        transfer = parsed.data;
+        if (!transfer.area) throw new BookingRefused("Choose where you're staying (Banff, Canmore or Lake Louise) for the airport transfer price.");
+      }
+      const transferQuote = transfer ? quoteAirportTransfer(transfer, partySize) : null;
+      const transferCents = transferQuote?.totalCents ?? null;
+      if (transfer && transferQuote?.unitCents != null) {
+        totals.addOns.push({ name: airportTransferLabel(transfer), priceCents: transferQuote.unitCents, quantity: transferQuote.transfers });
+        totals.addOnsCents += transferQuote.unitCents * transferQuote.transfers;
+        totals.totalCents += transferQuote.unitCents * transferQuote.transfers;
       }
       // Deposit: online checkout only (staff bookings record their own payment), far enough ahead.
       // Package days (deferPayment) take one too; package-booking.ts charges every day's deposit at once.
@@ -346,8 +355,11 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
         totalCents: totals.totalCents,
         inventorySource: departure.inventorySource,
         customerCountry: knownCountry(input.customerCountry) ?? undefined,
-        // priceCents null: the team confirms the price (winter, 13+ guests); otherwise it is in addOns.
-        ...(input.airportTransfer ? { airportTransfer: { ...input.airportTransfer, priceCents: transferCents } } : {}),
+        // priceCents null: the team confirms the price (13+ guests); otherwise it is in addOns.
+        // type, transfers (2 for a round trip), unitCents (one way) and priceCents (all transfers).
+        ...(transfer && transferQuote
+          ? { airportTransfer: { ...transfer, transfers: transferQuote.transfers, unitCents: transferQuote.unitCents, priceCents: transferCents } }
+          : {}),
         // Requested, not charged: the price varies and the team confirms it.
         ...(activityAddOns.length > 0
           ? {
@@ -405,9 +417,9 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
           balanceDueAt: deposit?.balanceDueAt ?? null,
           paymentExpiresAt: new Date(now.getTime() + PENDING_PAYMENT_MINUTES * 60_000),
           specialRequests:
-            input.airportTransfer || activityAddOns.length > 0
+            transfer || activityAddOns.length > 0
               ? [
-                  input.airportTransfer ? airportTransferNote(input.airportTransfer, transferCents) : null,
+                  transfer ? airportTransferNote(transfer, partySize) : null,
                   activityAddOns.length > 0
                     ? activityAddOnsNote(activityAddOns, input.activityGuests ?? { adults: input.adultsCount, children: input.childrenCount, infants: input.infantsCount })
                     : null,

@@ -52,6 +52,8 @@ interface Detail extends Omit<BookingRow, "flags" | "trip"> {
   infantsCount: number;
   pickupStop: { name: string; town: string } | null;
   items: { name: string; price: number; quantity: number }[];
+  /** Airport transfer type, route, times and price (from the booking's price snapshot), or null. */
+  airportTransfer?: string | null;
   payments: {
     id: string;
     amount: number;
@@ -349,6 +351,12 @@ export function BookingDetail({
             />
 
             <Section title="Add-ons">
+              {booking.airportTransfer && (
+                <p className="mb-2 text-sm text-obsidian-900">
+                  <span className="text-slate-600">Airport transfer: </span>
+                  {booking.airportTransfer}
+                </p>
+              )}
               {booking.items.length === 0 ? (
                 <p className="text-sm text-slate-600">None.</p>
               ) : (

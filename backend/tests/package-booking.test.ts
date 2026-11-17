@@ -260,11 +260,11 @@ describe("private multi-day journeys", () => {
   it("private two-day in winter is CAD 1,240 a day, and the airport transfer is booked once with Day 1", async () => {
     setPaymentProviderForTests(browserPays);
     const ids = [await vehicle("banff-private-tour", "2027-12-08", 124000), await vehicle("icefields-jasper-private-tour", "2027-12-10", 124000)];
-    const transfer = { area: "BANFF" as const, arrivalDate: "2027-12-07", arrivalTime: "14:00", departureDate: "2027-12-11", departureTime: "10:00", from: "Calgary Airport", to: "Banff" };
+    const transfer = { type: "ROUND_TRIP" as const, area: "BANFF" as const, arrivalDate: "2027-12-07", arrivalTime: "14:00", departureDate: "2027-12-11", departureTime: "10:00", from: "Calgary Airport", to: "Banff" };
     const result = await createPackageBooking(party(4, "two-day-rockies-explorer-private", ids, { airportTransfer: transfer }));
     expect(result.success).toBe(true);
-    // CAD 364 per transfer, all year (owner, 2026-11-11), charged once with Day 1.
-    expect(result.totalAmount).toBe(1240 * 2 + 364);
+    // Round trip to Banff: 2 x CAD 850 (owner, 2026-11-17), charged with Day 1, never discounted.
+    expect(result.totalAmount).toBe(1240 * 2 + 2 * 850);
     const [a, b] = await Promise.all(result.bookings!.map((x) => prisma.booking.findUniqueOrThrow({ where: { bookingReference: x.bookingReference } })));
     expect((a.priceSnapshot as { airportTransfer?: unknown }).airportTransfer).toBeTruthy();
     expect((b.priceSnapshot as { airportTransfer?: unknown }).airportTransfer).toBeUndefined();
