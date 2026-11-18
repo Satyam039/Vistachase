@@ -19,7 +19,7 @@ export interface AdminPartner {
   code: string;
   type: string;
   website: string | null;
-  status: "PENDING" | "ACTIVE" | "SUSPENDED";
+  status: "PENDING" | "ACTIVE" | "SUSPENDED" | "REJECTED";
   commissionRate: number;
   bokunChannelId: string | null;
   bookings: number;

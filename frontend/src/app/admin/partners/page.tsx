@@ -1,10 +1,11 @@
 "use client";
 
-// Admin: review partner applications, approve or suspend partners, add and edit partners, and
+// Admin: review partner applications (approve, reject or delete them), suspend partners, add and edit partners, and
 // run the commission program (rules, ledger, payouts, report: components/admin/partners).
 
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Trash2, XCircle } from "lucide-react";
+import { ModalDialog } from "@/components/forms/ModalDialog";
 import { AdminHeader, StaffSignIn } from "@/components/admin/AdminHeader";
 import { CommissionsPanel, CreatePartnerForm, EditPartnerForm, PayoutsPanel, ReportPanel, RulesPanel, type AdminPartner as Partner } from "@/components/admin/partners/PartnerAdminPanels";
 
@@ -17,13 +18,14 @@ const SECTIONS = [
 ] as const;
 type Section = (typeof SECTIONS)[number][0];
 
-const FILTERS = ["ALL", "PENDING", "ACTIVE", "SUSPENDED"] as const;
+const FILTERS = ["ALL", "PENDING", "ACTIVE", "SUSPENDED", "REJECTED"] as const;
 type Filter = (typeof FILTERS)[number];
 
 const STATUS_STYLE: Record<Partner["status"], string> = {
   PENDING: "bg-summit-100 text-obsidian-900",
   ACTIVE: "bg-ocean-50 text-ocean-800",
   SUSPENDED: "bg-red-50 text-red-800",
+  REJECTED: "bg-obsidian-100 text-slate-700",
 };
 const label = (s: string) => s.charAt(0) + s.slice(1).toLowerCase();
 
@@ -38,6 +40,10 @@ export default function AdminPartnersPage() {
   const [section, setSection] = useState<Section>("partners");
   const [editing, setEditing] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  // Reject and Delete ask first (owner, 2026-11-18): Reject keeps the record and emails the
+  // applicant; Delete removes an application with no bookings, commission or payouts.
+  const [confirm, setConfirm] = useState<{ kind: "reject" | "delete"; partner: Partner } | null>(null);
+  const [confirmError, setConfirmError] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -74,8 +80,34 @@ export default function AdminPartnersPage() {
     await load();
   }
 
+  async function confirmAction() {
+    if (!confirm) return;
+    const p = confirm.partner;
+    setBusy(p.id);
+    setConfirmError("");
+    try {
+      const res =
+        confirm.kind === "reject"
+          ? await fetch(`/api/affiliates/admin/${p.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "REJECTED" }) })
+          : await fetch(`/api/affiliates/admin/${p.id}`, { method: "DELETE" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setConfirmError(data.error || `Couldn't ${confirm.kind} ${p.name}.`);
+        return;
+      }
+      setMessage(confirm.kind === "reject" ? `${p.name}'s application was rejected.` : `${p.name} was deleted.`);
+      if (editing === p.id) setEditing(null);
+      setConfirm(null);
+      await load();
+    } catch {
+      setConfirmError("We couldn't reach the server. Please try again.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   const counts = useMemo(() => {
-    const c: Record<Filter, number> = { ALL: 0, PENDING: 0, ACTIVE: 0, SUSPENDED: 0 };
+    const c: Record<Filter, number> = { ALL: 0, PENDING: 0, ACTIVE: 0, SUSPENDED: 0, REJECTED: 0 };
     for (const p of partners ?? []) {
       c.ALL += 1;
       c[p.status] += 1;
@@ -237,7 +269,8 @@ export default function AdminPartnersPage() {
                             <td className="px-6 py-4">
                               <span className={`inline-flex rounded-full px-3 py-1 text-sm ${STATUS_STYLE[p.status]}`}>{label(p.status)}</span>
                             </td>
-                            <td className="space-x-2 whitespace-nowrap px-6 py-4 text-right">
+                            <td className="px-6 py-4">
+                              <div className="flex min-w-[12rem] flex-wrap items-center justify-end gap-2">
                               <button
                                 type="button"
                                 aria-expanded={editing === p.id}
@@ -256,15 +289,44 @@ export default function AdminPartnersPage() {
                                   Suspend <span className="sr-only">{p.name}</span>
                                 </button>
                               ) : (
-                                <button
-                                  type="button"
-                                  disabled={busy === p.id}
-                                  onClick={() => setStatus(p, "ACTIVE")}
-                                  className="inline-flex h-10 items-center rounded-full bg-ocean-600 px-4 text-sm text-white hover:bg-ocean-700 disabled:opacity-60"
-                                >
-                                  {p.status === "PENDING" ? "Approve" : "Reactivate"} <span className="sr-only">{p.name}</span>
-                                </button>
+                                <>
+                                  {p.status === "PENDING" && (
+                                    <button
+                                      type="button"
+                                      disabled={busy === p.id}
+                                      onClick={() => {
+                                        setConfirmError("");
+                                        setConfirm({ kind: "reject", partner: p });
+                                      }}
+                                      className="inline-flex h-10 items-center rounded-full border border-red-200 px-4 text-sm text-red-700 hover:bg-red-50 disabled:opacity-60"
+                                    >
+                                      Reject <span className="sr-only">{p.name}</span>
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    disabled={busy === p.id}
+                                    onClick={() => setStatus(p, "ACTIVE")}
+                                    className="inline-flex h-10 items-center rounded-full bg-ocean-600 px-4 text-sm text-white hover:bg-ocean-700 disabled:opacity-60"
+                                  >
+                                    {p.status === "SUSPENDED" ? "Reactivate" : "Approve"} <span className="sr-only">{p.name}</span>
+                                  </button>
+                                </>
                               )}
+                              <button
+                                type="button"
+                                disabled={busy === p.id}
+                                onClick={() => {
+                                  setConfirmError("");
+                                  setConfirm({ kind: "delete", partner: p });
+                                }}
+                                aria-label={`Delete ${p.name}`}
+                                title="Delete"
+                                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-obsidian-900/10 text-slate-600 hover:border-red-200 hover:bg-red-50 hover:text-red-700 disabled:opacity-60"
+                              >
+                                <Trash2 className="h-4 w-4" aria-hidden="true" />
+                              </button>
+                              </div>
                             </td>
                           </tr>
                           {editing === p.id && (
@@ -291,6 +353,56 @@ export default function AdminPartnersPage() {
           </div>
         )}
       </div>
+      <ModalDialog
+        open={!!confirm}
+        onClose={() => setConfirm(null)}
+        title={confirm?.kind === "reject" ? "Reject this application?" : "Delete this partner?"}
+        icon={
+          <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-red-700">
+            {confirm?.kind === "reject" ? <XCircle className="h-6 w-6" aria-hidden="true" /> : <Trash2 className="h-6 w-6" aria-hidden="true" />}
+          </span>
+        }
+        actions={
+          <>
+            <button
+              type="button"
+              onClick={() => setConfirm(null)}
+              className="inline-flex h-11 items-center rounded-full border border-obsidian-900/10 px-5 text-sm text-obsidian-900 hover:bg-obsidian-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={!!confirm && busy === confirm.partner.id}
+              onClick={confirmAction}
+              className="inline-flex h-11 items-center rounded-full bg-red-700 px-5 text-sm text-white hover:bg-red-800 disabled:opacity-60"
+            >
+              {confirm?.kind === "reject" ? "Reject application" : "Delete permanently"}
+            </button>
+          </>
+        }
+      >
+        {confirm && (
+          <>
+            <p>
+              <span className="text-obsidian-900">{confirm.partner.name}</span> ({confirm.partner.contactName}, {confirm.partner.email})
+            </p>
+            {confirm.kind === "reject" ? (
+              <p>The application is marked rejected and they get an email saying it wasn&apos;t approved. They can&apos;t sign in to the partner portal. You can still approve it later.</p>
+            ) : (
+              <p>
+                The application and its sign-in account are removed for good, so the email can apply again. Partners with bookings, commission or payouts can&apos;t be
+                deleted: reject or suspend them instead.
+              </p>
+            )}
+            {confirmError && (
+              <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-800">
+                {confirmError}
+              </p>
+            )}
+          </>
+        )}
+      </ModalDialog>
     </div>
   );
 }

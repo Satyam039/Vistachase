@@ -15,7 +15,7 @@ import { sendApplicationEmails } from "@/modules/affiliates/partner-emails";
 
 export const AFFILIATE_TYPES = ["HOTEL", "AGENT", "CREATOR", "OTHER"] as const;
 export type AffiliateType = (typeof AFFILIATE_TYPES)[number];
-export const AFFILIATE_STATUSES = ["PENDING", "ACTIVE", "SUSPENDED"] as const;
+export const AFFILIATE_STATUSES = ["PENDING", "ACTIVE", "SUSPENDED", "REJECTED"] as const;
 
 function codeBase(name: string) {
   return (
@@ -371,5 +371,49 @@ export async function updateAffiliate(id: string, data: { status?: (typeof AFFIL
     );
     await tx.auditLog.create({ data: { userId: staffId ?? null, action: "PARTNER_UPDATED", entityType: "Affiliate", entityId: id, details: changes as object } });
     return { before, updated };
+  });
+}
+
+/**
+ * Staff removes a partner application for good (owner, 2026-11-18: "reject or delete a partner
+ * request"). Only partners with no history can go: no credited bookings, commission lines or
+ * payouts, so money records are never lost (those partners can be rejected or suspended instead).
+ * The sign-in account made by the application goes too, so the email can apply again, unless the
+ * person also booked as a guest with it: then only the partner record goes and the account
+ * becomes a guest account.
+ */
+export async function deleteAffiliate(id: string, staffId: string) {
+  return prisma.$transaction(async (tx) => {
+    const affiliate = await tx.affiliate.findUnique({
+      where: { id },
+      include: { user: { select: { id: true, email: true, role: true } }, _count: { select: { bookings: true, commissions: true, payouts: true } } },
+    });
+    if (!affiliate) return { success: false as const, status: 404, error: "Partner not found." };
+    const { bookings, commissions, payouts } = affiliate._count;
+    if (bookings + commissions + payouts > 0) {
+      return {
+        success: false as const,
+        status: 409,
+        error: "This partner has bookings, commission or payouts on record, so it can't be deleted. Reject or suspend it instead.",
+      };
+    }
+    const ownBookings = await tx.booking.count({ where: { customerId: affiliate.userId } });
+    const removeAccount = affiliate.user.role === "AFFILIATE" && ownBookings === 0;
+    if (removeAccount) {
+      await tx.user.delete({ where: { id: affiliate.userId } }); // cascades to the partner row, rules and clicks
+    } else {
+      await tx.affiliate.delete({ where: { id } });
+      if (affiliate.user.role === "AFFILIATE") await tx.user.update({ where: { id: affiliate.userId }, data: { role: "CUSTOMER" } });
+    }
+    await tx.auditLog.create({
+      data: {
+        userId: staffId,
+        action: "PARTNER_DELETED",
+        entityType: "Affiliate",
+        entityId: id,
+        details: { name: affiliate.name, code: affiliate.code, email: affiliate.user.email, status: affiliate.status, accountRemoved: removeAccount },
+      },
+    });
+    return { success: true as const, accountRemoved: removeAccount };
   });
 }

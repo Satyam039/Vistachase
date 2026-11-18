@@ -39,6 +39,23 @@ function setAuthCookie(req: Request, res: Response, token: string) {
   });
 }
 
+
+// Partner accounts sign in only once staff approve them (owner, 2026-11-18). The check runs after
+// the password (or code) is right, so it never tells a stranger whether an email has applied, and
+// before a code is emailed. `partnerStatus` lets the sign-in page show the right pop-up.
+const PARTNER_BLOCKED: Record<string, string> = {
+  PENDING: "Your partner account hasn't been approved yet. Our team reviews every application by hand, usually within two business days, and we'll email you as soon as it's approved.",
+  REJECTED: "Your partner application wasn't approved. If you think we've missed something, write to support@vistachase.com.",
+  SUSPENDED: "Your partner account is paused at the moment. Write to support@vistachase.com if you have questions.",
+};
+
+async function partnerApprovalProblem(res: Response, userId: string) {
+  const affiliate = await prisma.affiliate.findUnique({ where: { userId }, select: { status: true } });
+  if (!affiliate || affiliate.status === "ACTIVE") return false;
+  res.status(403).json({ success: false, partnerStatus: affiliate.status, error: PARTNER_BLOCKED[affiliate.status] ?? PARTNER_BLOCKED.PENDING });
+  return true;
+}
+
 router.post("/login", rateLimitMiddleware("login", { maxRequests: 5, windowSeconds: 300 }), async (req, res) => {
   try {
     const { email, password, otp, enforceOtp, expectedPortal } = req.body ?? {};
@@ -99,6 +116,7 @@ router.post("/login", rateLimitMiddleware("login", { maxRequests: 5, windowSecon
           error: "Access denied: this account is not registered as an affiliate partner. Please apply to the partner program or sign in with your partner account.",
         });
       }
+      if (await partnerApprovalProblem(res, user.id)) return;
     }
 
     // If OTP was submitted directly with login credentials
@@ -231,6 +249,7 @@ router.post("/verify-otp", rateLimitMiddleware("verify_otp", { maxRequests: 10, 
           error: "Access denied: this account is not registered as an affiliate partner.",
         });
       }
+      if (await partnerApprovalProblem(res, user.id)) return;
     }
 
     await prisma.user.update({

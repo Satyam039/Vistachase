@@ -6,10 +6,24 @@ How the partner program works today: attribution, the commission ledger, payouts
 
 | Page | Who | What |
 |---|---|---|
-| `/partners` | Public | Program page and application form (name, contact, email, password, type, website, phone). New partners start PENDING. |
+| `/partners` | Public | Program page and application form (name, contact, email, password, type, website, phone with country code: all required, checked in the browser and the API). New partners start PENDING. |
 | `/partners/login` | Partner | Sign in. |
 | `/partners/dashboard` | Partner | Tabs: Overview (paid bookings, guests, value, net commission, pending / approved / paid / reversed, 30-day clicks and conversion), Links (link builder), Bookings, Commissions (statement), Payouts, Profile (business name, contact, phone, website, payout email). No guest names, emails or phone numbers anywhere. |
 | `/admin/partners` | ADMIN | Tabs: Partners (approve, suspend, add, edit fallback rate and payout details), Commission rules, Commissions (approve, manual adjustment), Payouts (draft, mark paid, cancel), Report (period totals, CSV). |
+
+## Sign-in and approval
+
+Partners sign in at `/affiliate/login` with email + password, then the 6-digit code the API emails
+(`POST /api/auth/login` returns `requireOtp`, the page posts the code to `/api/auth/verify-otp`
+with `expectedPortal: "affiliate"`). Only ACTIVE partners get a code: PENDING, REJECTED and
+SUSPENDED partners get a 403 with `partnerStatus` (only after the right password), and the page
+shows an "Approval in progress" / "not approved" / "paused" pop-up. `verify-otp` checks the same.
+
+Staff in Admin → Partners can Approve, Reject (status REJECTED, applicant emailed, can be approved
+later) or Delete an application. Delete (`DELETE /api/affiliates/admin/:id`) works only when the
+partner has no credited bookings, commission lines or payouts; it removes the partner and its
+sign-in account (unless that account also booked as a guest: then the account stays as a guest
+account), and writes a `PARTNER_DELETED` audit row.
 
 ## Attribution
 

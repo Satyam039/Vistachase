@@ -57,6 +57,7 @@ enum AffiliateStatus {
   PENDING
   ACTIVE
   SUSPENDED
+  REJECTED // application turned down by staff (never approved)
 }
 
 enum EnquiryStatus {
@@ -621,7 +622,7 @@ model Affiliate {
   name            String // business or creator name
   type            String             @default("HOTEL") // HOTEL, AGENT, CREATOR, OTHER
   website         String?
-  status          AffiliateStatus    @default(PENDING) // PENDING, ACTIVE, SUSPENDED
+  status          AffiliateStatus    @default(PENDING) // PENDING, ACTIVE, SUSPENDED, REJECTED
   commissionRate  Float              @default(0.1)
   bokunChannelId  String? // Bokun booking channel for this partner (placeholder until API access)
   phone           String?
