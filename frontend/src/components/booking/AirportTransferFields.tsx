@@ -6,8 +6,8 @@
 //
 // Owner, 2026-11-17: the guest chooses Arrival only (airport -> hotel), Departure only (hotel ->
 // airport) or Round trip (airport -> hotel -> airport); a round trip is two transfers. The price is
-// per transfer, one way, by where the guest stays (CAD 850 Banff/Canmore, CAD 895 Lake Louise, up to
-// 12 guests). The prices come from the server (GET /api/bookings/airport-transfer), which prices
+// per transfer, one way, by where the guest stays and the group size (owner's table, 2026-11-18):
+// up to 6 guests CAD 364 Banff/Canmore, CAD 445 Lake Louise; 7 to 12 guests CAD 850 / CAD 895. The prices come from the server (GET /api/bookings/airport-transfer), which prices
 // the booking again with the same table (backend modules/bookings/airport-transfer.ts).
 
 import { useEffect, useState } from "react";
@@ -157,10 +157,10 @@ export function airportTransferError(t: AirportTransferValue): string | null {
   return null;
 }
 
-/** "from CAD $850 per transfer" from the server's prices. */
+/** "from CAD $364 per transfer" from the server's prices. */
 function fromPriceText(prices: AirportTransferPrices | null): string {
   if (!prices || prices.areas.length === 0) return "priced per transfer";
-  const lowest = Math.min(...prices.areas.map((a) => a.perTransfer));
+  const lowest = Math.min(...prices.areas.map((a) => a.perTransferSmallGroup ?? a.perTransfer));
   return `from ${cad(lowest)} per transfer (one way)`;
 }
 
@@ -198,7 +198,11 @@ export function AirportTransferBreakdown({ value, guests, prices }: { value: Air
       <ul className="space-y-0.5">
         {prices.areas.map((a) => (
           <li key={a.area}>
-            Calgary Airport ↔ {a.label}: {cad(a.perTransfer)} per transfer, one way
+            Calgary Airport ↔ {a.label}:{" "}
+            {a.perTransferSmallGroup != null
+              ? `${cad(a.perTransferSmallGroup)} up to ${prices.smallGroupMax} guests, ${cad(a.perTransfer)} for ${prices.smallGroupMax + 1} to ${prices.maxGuests} guests`
+              : cad(a.perTransfer)}{" "}
+            per transfer, one way
           </li>
         ))}
         <li className="pt-1 text-slate-600">Choose your transfer and where you&apos;re staying to see your price. A round trip is two transfers.</li>
@@ -209,7 +213,7 @@ export function AirportTransferBreakdown({ value, guests, prices }: { value: Air
       <dl className="space-y-1">
         <div className="flex justify-between gap-4">
           <dt>
-            {type?.label} · Calgary Airport ↔ {area}
+            {type?.label} · Calgary Airport ↔ {area} · {guests <= prices.smallGroupMax ? `up to ${prices.smallGroupMax}` : `${prices.smallGroupMax + 1} to ${prices.maxGuests}`} guests
           </dt>
           <dd className="tabular-nums">
             {quote.transfers} × {cad(quote.unit)}

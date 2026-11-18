@@ -65,6 +65,7 @@ import { dialCode } from "@/lib/countries";
 import { balanceDueDate, cancellationShort, DEPOSIT_PERCENT, depositAvailable, depositFor, depositPolicy, formatRockiesDate, SEATS_MESSAGE } from "@/lib/policy";
 import { StripeCheckoutForm, stripeConfigured } from "@/components/booking/StripeCheckoutForm";
 import { trackAdsPurchase } from "@/lib/googleAds";
+import { CheckoutLinksInNewTab } from "@/components/booking/CheckoutLinksInNewTab";
 import {
   CreditCard,
   Lock,
@@ -380,7 +381,7 @@ export function BookingCheckoutClient({
 
   const [confirmed, setConfirmed] = useState<ConfirmedBooking | null>(null);
   const [awaitingPayment, setAwaitingPayment] = useState<{ booking: ConfirmedBooking; clientSecret: string; amount: number } | null>(null);
-  // Pay everything now, or the deposit now and the balance 14 days before departure.
+  // Pay everything now, or the deposit now and the balance 7 days before departure.
   const [paymentPlan, setPaymentPlan] = useState<"FULL" | "DEPOSIT">("FULL");
   const [paymentState, setPaymentState] = useState<"pay" | "confirming" | "slow">("pay");
 
@@ -1181,6 +1182,8 @@ export function BookingCheckoutClient({
 
   return (
     <div className="bg-obsidian-50">
+      {/* Every link opens in a new tab until the booking is confirmed (owner, 2026-11-18). */}
+      <CheckoutLinksInNewTab active={!confirmed} />
       <Layout
         height="auto"
         padding={6}

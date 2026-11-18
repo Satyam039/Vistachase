@@ -80,6 +80,19 @@ export interface BokunReservationInput {
   startTimeIds?: number[];
   /** The product's Bókun rate per season (product-map.json), when it has a summer and a winter rate. */
   rateIds?: { summer?: number; winter?: number };
+  /**
+   * One exact Bókun rate (an airport transfer's "up to 6" or "up to 12" rate). Wins over `rateIds`;
+   * refused (BokunUnavailableError) when the slot lists its rates and this one isn't among them.
+   */
+  rateId?: number;
+  /** Book the day's start whatever its clock time (airport transfers: the flight time is in the note). */
+  anyStartThatDay?: boolean;
+  /**
+   * One price for the whole group (an airport transfer). If Bókun prices the chosen rate per person,
+   * the booking goes in with one passenger (the group size is in the note) so Bókun's total stays the
+   * vehicle price.
+   */
+  pricedPerVehicle?: boolean;
   /** Our tour category: PRIVATE books the whole vehicle. */
   category: string;
   date: string; // YYYY-MM-DD
@@ -444,7 +457,9 @@ export async function reserveInBokun(
     client.fetch("GET", `/activity.json/${activityId}?lang=EN&currency=CAD`) as Promise<{ pricingCategories?: BokunCategory[]; bookingQuestions?: BokunQuestion[] } | null>,
   ]);
 
-  const slot = findSlot(Array.isArray(list) ? list : [], input.date, input.time, input.startTimeIds);
+  const slot = input.anyStartThatDay
+    ? (Array.isArray(list) ? list : []).filter((a) => slotDate(a) === input.date && !a.unavailable).sort((a, b) => slotTime(a).localeCompare(slotTime(b)))[0]
+    : findSlot(Array.isArray(list) ? list : [], input.date, input.time, input.startTimeIds);
   const needed = input.category === "PRIVATE" ? 1 : input.adults + input.children;
 
   if (!slot || slot.unavailable) {
@@ -465,8 +480,13 @@ export async function reserveInBokun(
   const seatsLeft = Math.max(0, slot.availabilityCount ?? 0);
   if (slot.soldOut || seatsLeft < needed) throw new BokunUnavailableError(`Bókun has ${seatsLeft} seat(s) left.`);
 
-  const rateId = seasonRateId(input.rateIds, input.date, slot) ?? slot.defaultRateId ?? slot.rates?.[0]?.id;
-  const { passengers, infantsInNote } = buildPassengers(input, (detail?.pricingCategories ?? []).map((c) => ({ id: c.id, title: c.title })));
+  if (input.rateId != null && slot.rates?.length && !slot.rates.some((r) => Number(r.id) === Number(input.rateId))) {
+    throw new BokunUnavailableError(`Bókun product ${input.productBokunId} doesn't offer rate ${input.rateId} on ${input.date} (it offers ${slot.rates.map((r) => r.id).join(", ")}).`);
+  }
+  const rateId = input.rateId ?? seasonRateId(input.rateIds, input.date, slot) ?? slot.defaultRateId ?? slot.rates?.[0]?.id;
+  const perPersonRate = slot.rates?.find((r) => Number(r.id) === Number(rateId))?.pricedPerPerson === true;
+  const party = input.pricedPerVehicle && perPersonRate ? { ...input, adults: 1, children: 0, infants: 0 } : input;
+  const { passengers, infantsInNote } = buildPassengers(party, (detail?.pricingCategories ?? []).map((c) => ({ id: c.id, title: c.title })));
   const bookingDate = slotDate(slot);
   const directBooking = {
     externalBookingReference: input.bookingReference,

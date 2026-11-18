@@ -4,6 +4,7 @@
 // standard fonts: one A4 page, the QR code staff scan at check-in, and the facts the guide needs.
 
 import { airportTransferSummary } from "@/modules/bookings/airport-transfer";
+import { activitiesSummary } from "@/modules/bookings/package-activities";
 import fs from "node:fs";
 import path from "node:path";
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFImage, type PDFPage } from "pdf-lib";
@@ -237,6 +238,7 @@ export async function addVoucherPage(pdf: PDFDocument, booking: VoucherBooking, 
   row("Guests", guests);
   row("Add-ons", booking.items.length ? booking.items.map((i) => (i.quantity > 1 ? `${i.name} x${i.quantity}` : i.name)).join(", ") : null);
   row("Airport transfer", airportTransferSummary(booking.priceSnapshot));
+  row("Add-on activities", activitiesSummary(booking.priceSnapshot));
   row("Special requests", booking.specialRequests);
 
   rule();
@@ -433,6 +435,7 @@ export async function itineraryPdf(bookings: VoucherBooking[], trip: { title: st
   row("Contact", [lead.customerEmail, lead.customerPhone].filter(Boolean).join(" · "));
   row("Guests", guests);
   row("Airport transfer", bookings.map((b) => airportTransferSummary(b.priceSnapshot)).find(Boolean) ?? null);
+  row("Add-on activities", bookings.map((b) => activitiesSummary(b.priceSnapshot)).find(Boolean) ?? null);
   row("Special requests", lead.specialRequests);
 
   rule();

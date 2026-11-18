@@ -21,6 +21,7 @@ import { abortInBokun, BokunUnavailableError, cancelInBokun, confirmInBokun, fin
 import { bokunClient, bokunConnected, bokunIsTestAccount, type BokunApi } from "@/modules/bokun/config";
 import { formatDateOnly, formatTimeOfDay, todayInMountainTime, dateOnly } from "@/lib/utils/time";
 import { PRODUCT_MAP } from "@/modules/tours/product-map";
+import { airportTransferBokun, transferLegs, type TransferLeg } from "@/modules/bookings/airport-transfer";
 
 type Tx = Prisma.TransactionClient;
 
@@ -75,9 +76,12 @@ export async function queueBokunSync(tx: Tx, bookingId: string, to: BookingStatu
   if (!bokunConnected() || (to !== "CONFIRMED" && to !== "CANCELLED")) return;
   const booking = await tx.booking.findUnique({
     where: { id: bookingId },
-    select: { bokunBookingId: true, tourDeparture: { select: { tour: { select: { slug: true, bokunId: true } } } } },
+    select: { bokunBookingId: true, priceSnapshot: true, tourDeparture: { select: { tour: { select: { slug: true, bokunId: true } } } } },
   });
   if (!booking) return;
+
+  // The booking's airport transfer (one Bókun booking per one-way transfer), owner 2026-11-18.
+  await queueTransferSync(tx, bookingId, to, booking.priceSnapshot);
 
   if (to === "CONFIRMED") {
     if (booking.bokunBookingId || !bokunProductId(booking.tourDeparture.tour)) return;
@@ -144,7 +148,11 @@ export async function processBokunSyncTasks(options: { now?: Date; bookingId?: s
     if (claimed.count === 0) continue; // another run took it
     const claimedTask = { ...task, attempts: task.attempts + 1 };
     const outcome =
-      task.operation === "CREATE"
+      task.operation === TRANSFER_CREATE
+        ? await runCreateTransfer(client, claimedTask, now)
+        : task.operation === TRANSFER_CANCEL
+          ? await runCancelTransfer(client, claimedTask, now)
+          : task.operation === "CREATE"
         ? await runCreate(client, claimedTask, now)
         : task.operation === CANCEL_OLD
           ? await runCancelOld(client, claimedTask, now)
@@ -230,7 +238,10 @@ async function runCreate(client: BokunApi, task: BookingSyncTask, now: Date): Pr
     if (!code) code = await reserve();
 
     const paid = booking.payments.filter((p) => p.status === "SUCCEEDED");
-    const paidCents = paid.reduce((sum, p) => sum + p.amount, 0);
+    // The airport transfer goes to Bókun as its own booking(s): the tour's Bókun booking is confirmed
+    // with what was paid for the tour alone.
+    const transferShare = transferLegs(booking.priceSnapshot).reduce((n, leg) => n + legPaidCents(booking, leg), 0);
+    const paidCents = Math.max(0, paid.reduce((sum, p) => sum + p.amount, 0) - transferShare);
     const confirm = (reservation: string) =>
       confirmInBokun(
         client,
@@ -457,9 +468,9 @@ async function failBooking(bookingId: string, note: string) {
   await raiseFlag(bookingId, `${FLAG_PREFIX} not added. ${note}`);
 }
 
-/** One open Bókun flag per booking (Admin → Bookings → Flags). */
-async function raiseFlag(bookingId: string, note: string) {
-  const open = await prisma.bookingFlag.findFirst({ where: { bookingId, status: "OPEN", type: "OTHER", note: { startsWith: FLAG_PREFIX } } });
+/** One open Bókun flag per booking (Admin → Bookings → Flags); the airport transfer has its own. */
+async function raiseFlag(bookingId: string, note: string, prefix = FLAG_PREFIX) {
+  const open = await prisma.bookingFlag.findFirst({ where: { bookingId, status: "OPEN", type: "OTHER", note: { startsWith: prefix } } });
   if (open) {
     await prisma.bookingFlag.update({ where: { id: open.id }, data: { note: note.slice(0, 1000) } });
     return;
@@ -469,8 +480,8 @@ async function raiseFlag(bookingId: string, note: string) {
 }
 
 /** The booking reached Bókun: its open Bókun flags are done. */
-async function resolveFlags(bookingId: string) {
-  await prisma.bookingFlag.updateMany({ where: { bookingId, status: "OPEN", type: "OTHER", note: { startsWith: FLAG_PREFIX } }, data: { status: "RESOLVED", resolvedAt: new Date(), resolution: "Reached Bókun." } });
+async function resolveFlags(bookingId: string, prefix = FLAG_PREFIX) {
+  await prisma.bookingFlag.updateMany({ where: { bookingId, status: "OPEN", type: "OTHER", note: { startsWith: prefix } }, data: { status: "RESOLVED", resolvedAt: new Date(), resolution: "Reached Bókun." } });
 }
 
 /** Tasks left IN_PROGRESS by a run that died. A create that was mid-submit can't be retried blindly. */
@@ -555,4 +566,168 @@ export async function bokunSyncStatus() {
     })),
     lastSeatSync: lastSync ? { at: lastSync.createdAt, status: lastSync.status, details: lastSync.details } : null,
   };
+}
+
+// ---------------------------------------------------------------------------------------------
+// Airport transfers (owner, 2026-11-18): a private booking's Calgary Airport transfer is sent to
+// Bókun as its own booking on the transfer product for where the guest stays (Banff 1356054,
+// Canmore 1356055, Lake Louise 1356058), at the "up to 6" or "up to 12" guests rate, on the flight
+// date. A round trip is two bookings (arrival and departure). Each one-way transfer is a
+// CREATE_TRANSFER task keyed by its leg (BOKUN:<booking>:CREATE_TRANSFER:ARRIVAL); its Bókun code is
+// the task's externalRef. Bókun's externalBookingReference is "<reference>-ARR" / "<reference>-DEP",
+// so a lost answer can be looked up without doubling it. A transfer that can't go in raises its own
+// flag ("Bókun airport transfer: ...") and never blocks the tour's Bókun booking.
+
+export const TRANSFER_CREATE = "CREATE_TRANSFER";
+export const TRANSFER_CANCEL = "CANCEL_TRANSFER";
+const TRANSFER_FLAG = "Bókun airport transfer:";
+const LEG_SUFFIX: Record<TransferLeg["leg"], string> = { ARRIVAL: "ARR", DEPARTURE: "DEP" };
+const transferKey = (bookingId: string, operation: string, leg: TransferLeg["leg"]) => `${PROVIDER}:${bookingId}:${operation}:${leg}`;
+
+/** The part of what the guest paid that belongs to one transfer leg (a deposit pays the same share of each). */
+function legPaidCents(booking: { totalAmount: number; payments: { status: string; amount: number }[] }, leg: TransferLeg) {
+  if (!leg.unitCents || booking.totalAmount <= 0) return 0;
+  const paid = booking.payments.filter((p) => p.status === "SUCCEEDED").reduce((n, p) => n + p.amount, 0);
+  return Math.round((paid * Math.min(leg.unitCents, booking.totalAmount)) / booking.totalAmount);
+}
+
+async function queueTransferSync(tx: Tx, bookingId: string, to: BookingStatus, priceSnapshot: unknown) {
+  const legs = transferLegs(priceSnapshot);
+  if (legs.length === 0) return;
+  if (to === "CONFIRMED") {
+    await tx.bookingSyncTask.createMany({
+      data: legs.map((l) => ({ bookingId, provider: PROVIDER, operation: TRANSFER_CREATE, idempotencyKey: transferKey(bookingId, TRANSFER_CREATE, l.leg), payload: { leg: l.leg } })),
+      skipDuplicates: true,
+    });
+  } else {
+    const creates = await tx.bookingSyncTask.findMany({ where: { bookingId, provider: PROVIDER, operation: TRANSFER_CREATE }, select: { payload: true } });
+    const queued = creates.map((c) => (c.payload as { leg?: TransferLeg["leg"] } | null)?.leg).filter((l): l is TransferLeg["leg"] => Boolean(l));
+    if (queued.length === 0) return;
+    await tx.bookingSyncTask.createMany({
+      data: queued.map((leg) => ({ bookingId, provider: PROVIDER, operation: TRANSFER_CANCEL, idempotencyKey: transferKey(bookingId, TRANSFER_CANCEL, leg), payload: { leg } })),
+      skipDuplicates: true,
+    });
+  }
+  runSoon();
+}
+
+const taskLeg = (task: Pick<BookingSyncTask, "payload">) => (task.payload as { leg?: TransferLeg["leg"] } | null)?.leg;
+
+async function runCreateTransfer(client: BokunApi, task: BookingSyncTask, now: Date): Promise<Outcome> {
+  const booking = await prisma.booking.findUnique({ where: { id: task.bookingId }, include: { pickupStop: true, payments: true } });
+  const legName = taskLeg(task);
+  const leg = booking ? transferLegs(booking.priceSnapshot).find((l) => l.leg === legName) : undefined;
+  if (!booking || !leg) return finish(task, "SKIPPED", "No airport transfer on this booking.");
+  if (booking.status !== "CONFIRMED" && booking.status !== "COMPLETED") return finish(task, "SKIPPED", `Booking was ${booking.status.toLowerCase()} before the transfer reached Bókun.`);
+  const product = airportTransferBokun(leg.area, leg.guests);
+  const reference = `${booking.bookingReference}-${LEG_SUFFIX[leg.leg]}`;
+  const payload = { ...((task.payload as object | null) ?? {}), leg: leg.leg };
+  const stage = (task.payload as { stage?: string } | null)?.stage;
+  let code = task.externalRef;
+  let submitting = false;
+  try {
+    if (stage === "confirmed" && code) return finish(task, "SUCCEEDED", null, code);
+    if (!code && stage === "submitting") {
+      const found = await findInBokun(client, reference);
+      if (found && (found.status === "CONFIRMED" || found.status === "RESERVED")) code = found.code;
+      else if (!found || !found.gone) {
+        throw new StopError(`An earlier attempt got no answer from Bókun while creating the transfer, and Bókun's booking search didn't show it. Look for ${reference} in Bókun before adding it by hand.`);
+      }
+      if (found?.status === "CONFIRMED") {
+        await prisma.bookingSyncTask.update({ where: { id: task.id }, data: { externalRef: code, payload: { ...payload, stage: "confirmed" } } });
+        await resolveFlags(booking.id, TRANSFER_FLAG);
+        return finish(task, "SUCCEEDED", null, code);
+      }
+    }
+    if (!code) {
+      code = await reserveInBokun(
+        client,
+        {
+          bookingReference: reference,
+          productBokunId: product.productId,
+          rateId: product.rateId,
+          anyStartThatDay: true,
+          pricedPerVehicle: true,
+          category: "PRIVATE",
+          date: leg.date,
+          time: leg.time,
+          adults: leg.guests,
+          children: 0,
+          infants: 0,
+          customerName: booking.customerName,
+          customerEmail: booking.customerEmail,
+          customerPhone: booking.customerPhone,
+          country: knownCountry((booking.priceSnapshot as { customerCountry?: unknown } | null)?.customerCountry) ?? countryFromPhone(booking.customerPhone) ?? undefined,
+          pickup: leg.from,
+          specialRequests: `${leg.description} Tour booking ${booking.bookingReference}.`,
+        },
+        async () => {
+          submitting = true;
+          await prisma.bookingSyncTask.update({ where: { id: task.id }, data: { payload: { ...payload, stage: "submitting" } } });
+        },
+      );
+      submitting = false;
+      await prisma.bookingSyncTask.update({ where: { id: task.id }, data: { externalRef: code, payload: { ...payload, stage: "reserved" } } });
+    }
+    const paid = booking.payments.filter((p) => p.status === "SUCCEEDED");
+    await confirmInBokun(
+      client,
+      code,
+      reference,
+      { amount: legPaidCents(booking, leg) / 100, currency: booking.currency, transactionId: paid.find((p) => p.transactionId)?.transactionId ?? undefined },
+      { testAccount: bokunIsTestAccount(), bookingTotal: (leg.unitCents ?? 0) / 100 },
+    );
+    await prisma.bookingSyncTask.update({ where: { id: task.id }, data: { payload: { ...payload, stage: "confirmed" } } });
+    await resolveFlags(booking.id, TRANSFER_FLAG);
+    return finish(task, "SUCCEEDED", null, code);
+  } catch (error) {
+    const message = (error as Error).message.slice(0, 500);
+    const what = `${leg.leg === "ARRIVAL" ? "arrival" : "departure"} transfer on ${leg.date}`;
+    let stop: string | null = null;
+    if (error instanceof StopError) stop = message;
+    else if (error instanceof BokunUnavailableError) stop = `Bókun wouldn't take the ${what}: ${message} Add it in Bókun by hand (the guest booked and paid it on the website).`;
+    else if (error instanceof BokunApiError && error.status < 500) {
+      stop = code
+        ? `the ${what} is reserved in Bókun as ${code}, but Bókun refused the confirmation: ${message} Confirm it in Bókun by hand.`
+        : `Bókun refused the ${what}: ${message} Add it in Bókun by hand, or fix the transfer product in Bókun and press Retry.`;
+    } else if (submitting) {
+      return retryLater(task, `No answer from Bókun while creating the ${what} (${message}); checking Bókun on the next try.`, now);
+    }
+    if (stop || task.attempts >= RETRY_MINUTES.length) {
+      await raiseFlag(booking.id, `${TRANSFER_FLAG} not added. ${stop ?? `Bókun didn't answer after ${task.attempts} tries (${message}).`}`, TRANSFER_FLAG);
+      return finish(task, "FAILED", stop ?? message);
+    }
+    return retryLater(task, message, now);
+  }
+}
+
+async function runCancelTransfer(client: BokunApi, task: BookingSyncTask, now: Date): Promise<Outcome> {
+  const leg = taskLeg(task);
+  if (!leg) return finish(task, "SKIPPED", "No transfer leg.");
+  const create = await prisma.bookingSyncTask.findUnique({ where: { idempotencyKey: transferKey(task.bookingId, TRANSFER_CREATE, leg) } });
+  if (!create) return finish(task, "SKIPPED", "The transfer was never sent to Bókun.");
+  try {
+    if (create.status === "IN_PROGRESS") return retryLater(task, "Waiting for the transfer create to finish.", now);
+    if (create.status === "FAILED") {
+      await raiseFlag(task.bookingId, `${TRANSFER_FLAG} cancelled on the website. It never reached Bókun automatically; if it was added in Bókun by hand, cancel it there too.`, TRANSFER_FLAG);
+      return finish(task, "SKIPPED", "Transfer create had stopped; staff flagged.");
+    }
+    const confirmed = create.status === "SUCCEEDED" && create.externalRef;
+    if (confirmed) {
+      await cancelInBokun(client, create.externalRef!, "Cancelled on vistachase.com");
+      return finish(task, "SUCCEEDED", null, create.externalRef);
+    }
+    if (create.externalRef) await abortInBokun(client, create.externalRef);
+    if (create.status === "PENDING" || create.status === "RETRYABLE_FAILURE") {
+      await prisma.bookingSyncTask.update({ where: { id: create.id }, data: { status: "SKIPPED", lastError: "Booking cancelled before the transfer reached Bókun." } });
+    }
+    return finish(task, "SKIPPED", "Transfer never confirmed in Bókun; nothing to cancel.", create.externalRef ?? null);
+  } catch (error) {
+    const message = (error as Error).message.slice(0, 500);
+    if ((error instanceof BokunApiError && error.status < 500) || task.attempts >= RETRY_MINUTES.length) {
+      await raiseFlag(task.bookingId, `${TRANSFER_FLAG} cancelled on the website but not in Bókun (${message}). Cancel ${create.externalRef ?? "the transfer"} in Bókun by hand.`, TRANSFER_FLAG);
+      return finish(task, "FAILED", message);
+    }
+    return retryLater(task, message, now);
+  }
 }

@@ -18,6 +18,7 @@ import prisma from "@/lib/db/prisma";
 import { getPaymentProvider } from "@/lib/payment/payment.provider";
 import { bookingClosedError } from "@/modules/departures/booking-window";
 import { firstChargeCents } from "@/modules/bookings/deposit";
+import { pricePackageActivities, type PackageActivityInput } from "@/modules/bookings/package-activities";
 import {
   bookingDto,
   confirmPaidBooking,
@@ -43,7 +44,8 @@ export interface TourPackage {
   /**
    * The guest may pay a 20% deposit now and the rest later (owner, 2026-11-11: private tours of two
    * or more days get "continue booking with 20% payment" beside full payment). Each day keeps its
-   * own deposit and balance (deposit.ts), due 14 days before that day, as for a single tour.
+   * own deposit and balance (deposit.ts); every day's balance is due 7 days before the package's
+   * FIRST tour day (owner, 2026-11-18), so the guest pays the whole rest once.
    */
   depositAllowed?: boolean;
 }
@@ -98,7 +100,7 @@ export function packageDiscountFor(pkg: TourPackage, date: string) {
   return inSummer(date) ? pkg.discountPercent : (pkg.winterDiscountPercent ?? pkg.discountPercent);
 }
 
-export interface CreatePackageInput extends Omit<CreateBookingInput, "departureId" | "holdToken" | "promoCode" | "paymentPlan" | "addOns" | "idempotencyKey" | "activityAddOns"> {
+export interface CreatePackageInput extends Omit<CreateBookingInput, "departureId" | "holdToken" | "promoCode" | "paymentPlan" | "addOns" | "idempotencyKey" | "activityAddOns" | "packageActivities"> {
   packageSlug: string;
   /** FULL (default) or a 20% DEPOSIT, for packages with `depositAllowed`. */
   paymentPlan?: "FULL" | "DEPOSIT";
@@ -107,6 +109,8 @@ export interface CreatePackageInput extends Omit<CreateBookingInput, "departureI
   idempotencyKey?: string;
   day4JasperPickup?: string;
   dayPickups?: { pickupStopId?: string; pickupCustomText?: string }[];
+  /** Private journeys: the activities the guest ticked, and who joins each (package-activities.ts). */
+  packageActivities?: PackageActivityInput[];
 }
 
 export interface PackageResult {
@@ -200,6 +204,13 @@ export async function createPackageBooking(input: CreatePackageInput): Promise<P
     (await prisma.tourDeparture.findMany({ where: { id: { in: input.departureIds } }, select: { id: true, date: true } })).map((d) => [d.id, d.date.toISOString().slice(0, 10)]),
   );
 
+  let activities: ReturnType<typeof pricePackageActivities> = [];
+  try {
+    activities = pricePackageActivities(pkg.slug, input.packageActivities ?? [], { adults: input.adultsCount, children: input.childrenCount, infants: input.infantsCount });
+  } catch (error) {
+    return { success: false, error: (error as Error).message };
+  }
+
   const made: NonNullable<BookingResult["booking"]>[] = [];
   const release = async (reason: string) => {
     for (const b of made) await failPendingBooking(b.bookingReference, reason);
@@ -228,6 +239,8 @@ export async function createPackageBooking(input: CreatePackageInput): Promise<P
         paymentPlan: plan,
         // A private journey's airport transfer (both ways) is booked once, with Day 1.
         airportTransfer: i === 0 ? input.airportTransfer : undefined,
+        // So are its activities, priced on the server (package-activities.ts).
+        packageActivities: i === 0 && activities.length > 0 ? activities : undefined,
       },
       { deferPayment: true, discount: { percent: packageDiscountFor(pkg, departureDates.get(departureId) ?? ""), label: pkg.title.toUpperCase() } },
     );
@@ -251,6 +264,16 @@ export async function createPackageBooking(input: CreatePackageInput): Promise<P
         adminNotes: [b.adminNotes, `${pkg.title}, day ${i + 1} of ${references.length}: booked and paid together with ${others}.`].filter(Boolean).join("\n"),
       },
     });
+  }
+
+  // Deposit: every day's balance is due with the first day's (7 days before the first tour day).
+  if (plan === "DEPOSIT") {
+    const dues = stored.map((b) => b.balanceDueAt?.getTime()).filter((t): t is number => t != null);
+    if (dues.length > 0) {
+      const firstDue = new Date(Math.min(...dues));
+      await prisma.booking.updateMany({ where: { bookingReference: { in: references }, paymentPlan: "DEPOSIT" }, data: { balanceDueAt: firstDue } });
+      for (const b of stored) if (b.paymentPlan === "DEPOSIT") b.balanceDueAt = firstDue;
+    }
   }
 
   const ordered = references.map((ref) => stored.find((x) => x.bookingReference === ref)!);

@@ -19,6 +19,7 @@ import { bookingIcs } from "@/modules/bookings/calendar-event";
 import { emailSchema, parseOr400, referenceSchema, z } from "@/lib/security/validate";
 import { airportTransferPriceList, airportTransferSchema } from "@/modules/bookings/airport-transfer";
 import { activityAddOnsSchema, activityGuestsSchema } from "@/modules/bookings/activity-add-ons";
+import { PACKAGE_ACTIVITY_PRICES, packageActivitiesSchema } from "@/modules/bookings/package-activities";
 
 const router = Router();
 
@@ -95,6 +96,8 @@ const packageSchema = z.object({
   specialRequests: z.string().trim().max(1000).optional(),
   // Private journeys: Calgary airport transfer, booked with Day 1 (2+ guests, as for a private tour).
   airportTransfer: airportTransferSchema.optional(),
+  // Private journeys: the optional activities ticked, with who joins each (priced on the server).
+  packageActivities: packageActivitiesSchema.default([]),
   // Private journeys: pay everything, or a 20% deposit now (owner, 2026-11-11).
   paymentPlan: z.enum(["FULL", "DEPOSIT"]).default("FULL"),
 });
@@ -143,6 +146,12 @@ async function readableBooking(req: Request, ref: string, token: string | undefi
 
 // The voucher as a PDF file, with the same access as the voucher itself. In-app browsers (Gmail,
 // WhatsApp) can't print the voucher page, but they can download and open this.
+// Activity prices for the private journeys' checkout (public); null = confirmed by our team.
+router.get("/package-activities", (_req, res) => {
+  res.set("Cache-Control", "public, max-age=300");
+  res.json({ success: true, prices: PACKAGE_ACTIVITY_PRICES });
+});
+
 // Airport transfer prices for the checkout (public): the server prices every booking from the same table.
 router.get("/airport-transfer", (_req, res) => {
   res.set("Cache-Control", "public, max-age=300");

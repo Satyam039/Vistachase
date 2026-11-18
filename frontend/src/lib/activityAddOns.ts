@@ -69,3 +69,120 @@ export function activityGuestsFromQuery(q: { actAdults?: string; actChildren?: s
   const n = (v?: string) => Math.max(0, Math.min(30, Number.parseInt(v ?? "0", 10) || 0));
   return { adults: n(q.actAdults), children: n(q.actChildren), infants: n(q.actInfants) };
 }
+
+/**
+ * Optional activities on the private multi-day journeys (owner's Trello card, 2026-11-18): the guest
+ * picks each activity and how many people join it (adults, children, infants). Tickets are arranged
+ * by the team and paid separately once confirmed (ACTIVITY_ADD_ONS_NOTE); nothing is charged online.
+ */
+export interface PackageActivity {
+  id: string;
+  name: string;
+  detail: string;
+  /** The (i) pop-up: what it is, what's included and useful details. */
+  info: { about: string; includes: string[]; good: string[] };
+}
+
+const SEASON = "Summer only: June 1 to October 10.";
+const ARRANGED = "Tickets booked by our team and timed with your itinerary.";
+
+const ICEFIELD_ADVENTURE: PackageActivity = {
+  id: "columbia-icefield-adventure",
+  name: "Columbia Icefield Adventure",
+  detail: "Ice Explorer onto the Athabasca Glacier and the Columbia Icefield Skywalk (tickets)",
+  info: {
+    about: "Ride an Ice Explorer onto the Athabasca Glacier and step out onto the ice, then walk the glass-floored Columbia Icefield Skywalk above the Sunwapta Valley.",
+    includes: ["Ice Explorer ride with time on the glacier", "Columbia Icefield Skywalk entry", ARRANGED],
+    good: ["On your Icefields Parkway day", "Bring a warm layer and good shoes: it is cold on the ice", SEASON],
+  },
+};
+const BANFF_GONDOLA: PackageActivity = {
+  id: "banff-gondola",
+  name: "Banff Gondola",
+  detail: "Ride up Sulphur Mountain for views over Banff",
+  info: {
+    about: "A gondola ride to the top of Sulphur Mountain, with boardwalks and lookouts over Banff town and six mountain ranges.",
+    includes: ["Return gondola ride", "Time at the summit boardwalk and viewing decks", ARRANGED],
+    good: ["On your Banff day", "Food at the summit is not included", SEASON],
+  },
+};
+const MINNEWANKA_CRUISE: PackageActivity = {
+  id: "lake-minnewanka-cruise",
+  name: "Lake Minnewanka Cruise",
+  detail: "Sightseeing cruise on Banff's largest lake",
+  info: {
+    about: "A narrated sightseeing cruise on Lake Minnewanka, the largest lake in Banff National Park, with mountain views and stories of the area.",
+    includes: ["Sightseeing cruise ticket", ARRANGED],
+    good: ["On your Banff day", "Bring a jacket: it is cooler on the water", SEASON],
+  },
+};
+const MALIGNE_CRUISE: PackageActivity = {
+  id: "maligne-lake-cruise",
+  name: "Maligne Lake Cruise to Spirit Island",
+  detail: "Boat cruise to the Spirit Island viewpoint in Jasper",
+  info: {
+    about: "A boat cruise across Maligne Lake in Jasper National Park to the Spirit Island viewpoint, one of the most photographed places in the Rockies.",
+    includes: ["Cruise ticket with a stop at the Spirit Island viewpoint", ARRANGED],
+    good: ["On your Jasper day", "Bring a jacket: it is cooler on the water", SEASON],
+  },
+};
+
+export const PACKAGE_ACTIVITIES: Record<string, PackageActivity[]> = {
+  "two-day-rockies-explorer-private": [{ ...ICEFIELD_ADVENTURE, detail: "Columbia Icefield Adventure tickets: Ice Explorer onto the Athabasca Glacier and the Skywalk" }],
+  "three-day-rockies-discovery": [ICEFIELD_ADVENTURE, BANFF_GONDOLA, MINNEWANKA_CRUISE],
+  "four-day-rockies-and-jasper": [
+    BANFF_GONDOLA,
+    MINNEWANKA_CRUISE,
+    { ...ICEFIELD_ADVENTURE, name: "Columbia Icefield Adventure (Glacier & Skywalk)" },
+    MALIGNE_CRUISE,
+  ],
+};
+
+/** Per-person prices in cents from the server (GET /api/bookings/package-activities); null = confirmed by our team. */
+export interface PackageActivityPrice {
+  adultCents: number | null;
+  childCents: number | null;
+  infantCents: number | null;
+}
+export type PackageActivityPrices = Record<string, PackageActivityPrice>;
+
+let pricesRequest: Promise<PackageActivityPrices | null> | null = null;
+/** The server's activity prices (fetched once per page). */
+export function loadPackageActivityPrices(): Promise<PackageActivityPrices | null> {
+  pricesRequest ??= fetch("/api/bookings/package-activities")
+    .then((r) => (r.ok ? r.json() : null))
+    .then((j: { prices?: PackageActivityPrices } | null) => j?.prices ?? null)
+    .catch(() => {
+      pricesRequest = null;
+      return null;
+    });
+  return pricesRequest;
+}
+
+/** What an activity costs for these guests (dollars), or null when one of their ages has no price yet. */
+export function packageActivityPrice(prices: PackageActivityPrices | null, id: string, g: ActivityGuests): number | null {
+  const p = prices?.[id];
+  if (!p) return null;
+  let cents = 0;
+  for (const [n, unit] of [
+    [g.adults, p.adultCents],
+    [g.children, p.childCents],
+    [g.infants, p.infantCents],
+  ] as const) {
+    if (n === 0) continue;
+    if (unit == null) return null;
+    cents += n * unit;
+  }
+  return cents / 100;
+}
+
+/** Who joins each chosen activity, by activity id. */
+export type PackageActivityChoice = Record<string, ActivityGuests>;
+
+export const activityGuestCount = (g: ActivityGuests) => g.adults + g.children + g.infants;
+
+/** "Add-on activities requested: Banff Gondola for 2 adults (16–99); Lake Minnewanka Cruise for … (tickets arranged …)." */
+export function packageActivitiesRequestLine(activities: PackageActivity[], chosen: PackageActivityChoice): string {
+  const parts = activities.filter((a) => chosen[a.id]).map((a) => `${a.name} for ${activityGuestsLabel(chosen[a.id]!)}`);
+  return parts.length > 0 ? `Add-on activities requested: ${parts.join("; ")} (tickets arranged by our team, paid separately).` : "";
+}

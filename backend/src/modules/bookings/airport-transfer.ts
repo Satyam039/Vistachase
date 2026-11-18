@@ -8,8 +8,9 @@
 //
 // Price per transfer, one way (owner, 2026-11-17), by where the guest stays ("Where you're staying"):
 //   up to 12 guests: CAD 850 Calgary <-> Banff / Canmore, CAD 895 Calgary <-> Lake Louise.
-//   up to 6 guests: not confirmed yet (SMALL_GROUP_CENTS is null), so the 12-guest price applies to
-//   every group size until the owner confirms it. Set the small-group prices below to turn it on.
+//   up to 6 guests (owner's price table, 2026-11-18): CAD 364 Calgary <-> Banff / Canmore, CAD 445
+//   Calgary <-> Lake Louise (vehicle for 6 with 6 check-in bags). 7 to 12 guests pay the prices above.
+//   Winter prices "vary" in the table: the summer prices apply all year until the owner gives them.
 //   13+ guests: no approved price: not charged, the team confirms it (priceCents null).
 // Replaces the flat CAD 364 per booking (2026-11-11), which charged a round trip as one transfer.
 // The server prices the transfer: the checkout reads these prices from GET /api/bookings/airport-transfer.
@@ -70,8 +71,8 @@ export const AIRPORT_TRANSFER_SMALL_GROUP_MAX = 6;
 
 /** CAD per transfer (one way) for up to 12 guests, in cents (owner, 2026-11-17). */
 export const AIRPORT_TRANSFER_CENTS: Record<AirportArea, number> = { BANFF: 85000, CANMORE: 85000, LAKE_LOUISE: 89500 };
-/** Up to 6 guests: not confirmed by the owner yet. null = the 12-guest price applies. */
-export const SMALL_GROUP_CENTS: Record<AirportArea, number | null> = { BANFF: null, CANMORE: null, LAKE_LOUISE: null };
+/** Up to 6 guests (owner, 2026-11-18). null would mean the 12-guest price applies. */
+export const SMALL_GROUP_CENTS: Record<AirportArea, number | null> = { BANFF: 36400, CANMORE: 36400, LAKE_LOUISE: 44500 };
 
 /** Transfers in the booking: a round trip is two. */
 export function transferCount(type: AirportTransferType): number {
@@ -166,4 +167,75 @@ export function airportTransferSummary(priceSnapshot: unknown): string | null {
     needsDeparture(type) && t.departureDate ? `departure ${t.departureDate} ${t.departureTime ?? ""}`.trim() : null,
   ].filter(Boolean);
   return `${TYPE_LABEL[type]} (${route})${times.length ? `, ${times.join(", ")}` : ""}, ${airportTransferPriceText({ transfers, unitCents })}`;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Bókun (owner's table, 2026-11-18): one transfer product per area, with an "up to 6 guests" and an
+// "up to 12 guests" rate; the owner confirmed (2026-11-18) the first ID of each pair is the "up to 6" rate.
+// Each one-way transfer is its own Bókun booking (modules/bokun/bokun-sync.ts).
+// A Bókun test account has other IDs: BOKUN_PRODUCT_OVERRIDES=airport-transfer-banff:<id>,... points
+// an area at another product, and then Bókun's default rate is used (the live rate IDs don't exist there).
+
+export const AIRPORT_TRANSFER_BOKUN: Record<AirportArea, { productId: string; smallGroupRateId: number; largeGroupRateId: number }> = {
+  BANFF: { productId: "1356054", smallGroupRateId: 2712881, largeGroupRateId: 2712882 },
+  CANMORE: { productId: "1356055", smallGroupRateId: 2712883, largeGroupRateId: 2712886 },
+  LAKE_LOUISE: { productId: "1356058", smallGroupRateId: 2712889, largeGroupRateId: 2712890 },
+};
+
+const OVERRIDE_SLUG: Record<AirportArea, string> = { BANFF: "airport-transfer-banff", CANMORE: "airport-transfer-canmore", LAKE_LOUISE: "airport-transfer-lake-louise" };
+
+function productOverride(area: AirportArea): string | null {
+  for (const pair of (process.env.BOKUN_PRODUCT_OVERRIDES ?? "").split(",")) {
+    const [slug, id] = pair.trim().split(":");
+    if (slug === OVERRIDE_SLUG[area] && id) return id.trim();
+  }
+  return null;
+}
+
+/** The Bókun product and rate for a transfer to/from this area for this many guests. */
+export function airportTransferBokun(area: AirportArea, guests: number): { productId: string; rateId?: number } {
+  const live = AIRPORT_TRANSFER_BOKUN[area];
+  const override = productOverride(area);
+  if (override && override !== live.productId) return { productId: override };
+  return { productId: live.productId, rateId: guests <= AIRPORT_TRANSFER_SMALL_GROUP_MAX ? live.smallGroupRateId : live.largeGroupRateId };
+}
+
+/** One one-way transfer of a booking, as Bókun gets it. */
+export interface TransferLeg {
+  leg: "ARRIVAL" | "DEPARTURE";
+  area: AirportArea;
+  date: string;
+  time: string;
+  from: string;
+  to: string;
+  guests: number;
+  /** What the guest was charged for this transfer, in cents (null: price confirmed by the team). */
+  unitCents: number | null;
+  /** "Arrival transfer: Calgary Airport (YYC) to Fairmont Banff Springs, flight 2027-06-19 14:30, 4 guests." */
+  description: string;
+}
+
+/**
+ * The one-way transfers in a booking's price snapshot (none without an area or the dates). The guest
+ * count is stored with the transfer (`guests`); older bookings without it read the party from the snapshot.
+ */
+export function transferLegs(priceSnapshot: unknown): TransferLeg[] {
+  const snap = priceSnapshot as { airportTransfer?: StoredAirportTransfer & { guests?: number }; party?: { adults?: number; children?: number; infants?: number } } | null;
+  const t = snap?.airportTransfer;
+  if (!t || typeof t !== "object" || !t.area || !t.from || !t.to) return [];
+  const type: AirportTransferType = t.type ?? inferType(t);
+  const party = (snap?.party?.adults ?? 0) + (snap?.party?.children ?? 0) + (snap?.party?.infants ?? 0);
+  const guests = Math.max(1, Number(t.guests ?? party) || 1);
+  const unitCents = t.unitCents ?? (t.priceCents != null ? Math.round(t.priceCents / transferCount(type)) : null);
+  const legs: TransferLeg[] = [];
+  const people = `${guests} guest${guests === 1 ? "" : "s"}`;
+  if (needsArrival(type) && t.arrivalDate && t.arrivalTime) {
+    legs.push({ leg: "ARRIVAL", area: t.area, date: t.arrivalDate, time: t.arrivalTime, from: t.from, to: t.to, guests, unitCents, description: `Arrival transfer: ${t.from} to ${t.to}, flight lands ${t.arrivalDate} ${t.arrivalTime}, ${people}.` });
+  }
+  if (needsDeparture(type) && t.departureDate && t.departureTime) {
+    // A round trip stores the arrival direction (airport -> hotel); the departure leg runs back.
+    const [from, to] = type === "ROUND_TRIP" ? [t.to, t.from] : [t.from, t.to];
+    legs.push({ leg: "DEPARTURE", area: t.area, date: t.departureDate, time: t.departureTime, from, to, guests, unitCents, description: `Departure transfer: ${from} to ${to}, flight leaves ${t.departureDate} ${t.departureTime}, ${people}.` });
+  }
+  return legs;
 }

@@ -314,7 +314,7 @@ export function sharedGroupWording<T>(value: T): T {
 // Applied to every field of the tour (text replacements) plus whole FAQ answers by question, so the
 // fix holds whatever Admin → Content stores. Remove an entry once the record itself is corrected.
 const PAYMENT_ANSWER =
-  "You pay securely online when you book. For departures at least 15 days away you can choose to pay a 20% deposit now and the balance 14 days before your tour.";
+  "You pay securely online when you book. For departures at least 15 days away you can choose to pay a 20% deposit now and the balance 7 days before your tour (for a multi-day journey, 7 days before the first tour day).";
 const PRIVATE_GROUP_ANSWER =
   "Your group has the vehicle and guide to itself, up to 13 guests: a luxury SUV for smaller groups or an executive van for larger ones. The price is per vehicle, not per person.";
 

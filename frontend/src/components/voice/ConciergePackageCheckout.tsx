@@ -11,6 +11,7 @@ import { PackageCheckout, type PackageDay, type PackageStop } from "@/components
 import { PRIVATE_PACKAGES, type PackageConfig } from "@/lib/privateTours";
 import { TWO_DAY_PACKAGE } from "@/lib/sharedTours";
 import { cancellationSentence } from "@/lib/policy";
+import { packageDayIncludes } from "@/lib/packageIncludes";
 
 const SHARED_TWO_DAY: PackageConfig = {
   slug: TWO_DAY_PACKAGE.slug,
@@ -64,10 +65,11 @@ export function ConciergePackageCheckout({ slug }: { slug: string }) {
         ),
       );
       const today = new Date().toISOString().slice(0, 10);
-      const loaded: PackageDay[] = config.days.map((d) => ({
+      const loaded: PackageDay[] = config.days.map((d, i) => ({
         title: d.title,
         label: d.label,
         href: `/${d.slug}`,
+        includes: packageDayIncludes(config.slug, i, d.slug),
         departures: (tours.get(d.slug) ?? [])
           .filter((x) => x.status === "ACTIVE" && x.seatsAvailable > 0 && x.bookable !== false)
           .filter((x) => x.date.slice(0, 10) >= today)

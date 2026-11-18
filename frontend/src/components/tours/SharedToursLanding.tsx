@@ -29,6 +29,7 @@ import { SectionHeading } from "@/components/home/SectionHeading";
 import { PriceTag } from "@/components/pricing/PriceTag";
 import { FaqBrowser } from "@/components/faq/FaqBrowser";
 import { ReviewSlider } from "@/components/reviews/ReviewSlider";
+import { approvedReviewsFor } from "@/lib/reviews/tripadvisorReviews";
 import { AmbientVideo } from "@/components/cinematic/AmbientVideo";
 import { hasPrice, money } from "@/lib/pricing";
 import { fromPrice } from "@/lib/tours";
@@ -211,14 +212,13 @@ export function SharedToursLanding({ tours, reviews }: { tours: TourWithAvailabi
         </ul>
       </section>
 
-      {reviews.length > 0 && (
-        <section aria-labelledby="reviews-heading" className="overflow-hidden py-16 sm:py-20">
-          <div className="mx-auto max-w-7xl px-page">
-            <SectionHeading id="reviews-heading" eyebrow="Guest reviews" title="What guests say" />
-            <ReviewSlider reviews={reviews} />
-          </div>
-        </section>
-      )}
+      {/* Live reviews, then the owner-approved Tripadvisor reviews, shared tours first (owner, 2026-11-18). */}
+      <section aria-labelledby="reviews-heading" className="overflow-hidden py-16 sm:py-20">
+        <div className="mx-auto max-w-7xl px-page">
+          <SectionHeading id="reviews-heading" eyebrow="Guest reviews" title="What guests say" />
+          <ReviewSlider reviews={[...reviews, ...approvedReviewsFor("shared")]} />
+        </div>
+      </section>
 
       {/* Before you book */}
       <section aria-labelledby="faq-heading" className="border-t border-obsidian-900/[0.06] bg-white py-16 sm:py-20">

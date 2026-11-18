@@ -5,14 +5,14 @@ import { cancelBooking, createBooking } from "@/modules/bookings/booking.reposit
 import { dateOnly, timeOfDay } from "@/lib/utils/time";
 import { airportTransferPriceCents, airportTransferSchema, airportTransferSummary } from "@/modules/bookings/airport-transfer";
 
-async function createPrivateDeparture(date: string) {
+async function createPrivateDeparture(date: string, capacity = 6) {
   const tour = await prisma.tour.findFirstOrThrow({ where: { category: "PRIVATE" } });
   return prisma.tourDeparture.create({
     data: { inventorySource: "LOCAL",
       tourId: tour.id,
       date: dateOnly(date),
       departureTime: timeOfDay("08:00"),
-      capacityTotal: 6,
+      capacityTotal: capacity,
       capacityBooked: 0,
       capacityHeld: 0,
       price: 125000, // $1,250 per vehicle, in cents
@@ -125,7 +125,7 @@ describe("Airport transfer with a private tour", () => {
   const transfer = { arrivalDate: "2027-06-19", arrivalTime: "14:30", departureDate: "2027-06-23", departureTime: "18:05", from: "Calgary Airport (YYC)", to: "Fairmont Banff Springs" };
 
   const book = (date: string, extra: Record<string, unknown>, adults = 3) =>
-    createPrivateDeparture(date).then((departure) =>
+    createPrivateDeparture(date, Math.max(6, adults)).then((departure) =>
       createBooking({
         departureId: departure.id,
         customerName: "Flying In",
@@ -139,8 +139,8 @@ describe("Airport transfer with a private tour", () => {
       }),
     );
 
-  it("charges a round trip as two transfers at CAD 850 (Banff), owner 2026-11-17", async () => {
-    const result = await book("2027-06-20", { type: "ROUND_TRIP", area: "BANFF" });
+  it("charges a round trip as two transfers at CAD 850 (Banff, 7 to 12 guests), owner 2026-11-17", async () => {
+    const result = await book("2027-06-20", { type: "ROUND_TRIP", area: "BANFF" }, 8);
     expect(result.success).toBe(true);
     expect(result.booking?.totalAmount).toBe(1250 + 2 * 850);
     const stored = await prisma.booking.findUniqueOrThrow({ where: { bookingReference: result.booking!.bookingReference }, include: { items: true } });
@@ -152,6 +152,7 @@ describe("Airport transfer with a private tour", () => {
       ...transfer,
       type: "ROUND_TRIP",
       area: "BANFF",
+      guests: 8,
       transfers: 2,
       unitCents: 85000,
       priceCents: 170000,
@@ -161,21 +162,21 @@ describe("Airport transfer with a private tour", () => {
     );
   });
 
-  it("charges one transfer for arrival only or departure only (Lake Louise CAD 895)", async () => {
+  it("charges one transfer for arrival only or departure only, up to 6 guests (Lake Louise CAD 445, Canmore CAD 364)", async () => {
     const arrival = await book("2027-06-21", { type: "ARRIVAL", area: "LAKE_LOUISE", departureDate: undefined, departureTime: undefined });
     expect(arrival.success).toBe(true);
-    expect(arrival.booking?.totalAmount).toBe(1250 + 895);
+    expect(arrival.booking?.totalAmount).toBe(1250 + 445);
     const departure = await book("2027-06-22", { type: "DEPARTURE", area: "CANMORE", arrivalDate: undefined, arrivalTime: undefined, from: "Canmore hotel", to: "YYC" });
     expect(departure.success).toBe(true);
-    expect(departure.booking?.totalAmount).toBe(1250 + 850);
+    expect(departure.booking?.totalAmount).toBe(1250 + 364);
     const stored = await prisma.booking.findUniqueOrThrow({ where: { bookingReference: departure.booking!.bookingReference } });
-    expect(stored.specialRequests).toContain("(departure only): from Canmore hotel to YYC, staying in Canmore, departure 2027-06-23 18:05 (CAD 850.00, paid with the tour)");
+    expect(stored.specialRequests).toContain("(departure only): from Canmore hotel to YYC, staying in Canmore, departure 2027-06-23 18:05 (CAD 364.00, paid with the tour)");
   });
 
   it("an older page (no type, both flights) is a round trip", async () => {
     const result = await book("2027-06-24", { area: "LAKE_LOUISE" });
     expect(result.success).toBe(true);
-    expect(result.booking?.totalAmount).toBe(1250 + 2 * 895);
+    expect(result.booking?.totalAmount).toBe(1250 + 2 * 445);
   });
 
   it("needs where the guest stays for the price", async () => {
@@ -184,13 +185,15 @@ describe("Airport transfer with a private tour", () => {
     expect(result.error).toContain("where you're staying");
   });
 
-  it("is priced per transfer by area, 2 to 12 guests (up-to-6 price not confirmed: same price)", () => {
+  it("is priced per transfer by area and group size: up to 6 guests and 7 to 12 (owner, 2026-11-18)", () => {
     const rt = { type: "ROUND_TRIP" as const };
-    expect(airportTransferPriceCents({ ...rt, area: "BANFF" }, 2)).toBe(170000);
-    expect(airportTransferPriceCents({ ...rt, area: "CANMORE" }, 6)).toBe(170000);
+    expect(airportTransferPriceCents({ ...rt, area: "BANFF" }, 2)).toBe(72800);
+    expect(airportTransferPriceCents({ ...rt, area: "CANMORE" }, 6)).toBe(72800);
+    expect(airportTransferPriceCents({ ...rt, area: "CANMORE" }, 7)).toBe(170000);
+    expect(airportTransferPriceCents({ ...rt, area: "LAKE_LOUISE" }, 6)).toBe(89000);
     expect(airportTransferPriceCents({ ...rt, area: "LAKE_LOUISE" }, 12)).toBe(179000);
     expect(airportTransferPriceCents({ type: "ARRIVAL", area: "LAKE_LOUISE" }, 7)).toBe(89500);
-    expect(airportTransferPriceCents({ type: "DEPARTURE", area: "BANFF" }, 4)).toBe(85000);
+    expect(airportTransferPriceCents({ type: "DEPARTURE", area: "BANFF" }, 4)).toBe(36400);
     expect(airportTransferPriceCents({ ...rt, area: "BANFF" }, 13)).toBeNull();
     expect(airportTransferPriceCents({ ...rt, area: "BANFF" }, 1)).toBeNull();
     expect(airportTransferPriceCents({ ...rt }, 4)).toBeNull();

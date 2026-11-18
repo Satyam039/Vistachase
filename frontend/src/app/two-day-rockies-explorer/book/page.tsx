@@ -7,6 +7,7 @@ import type { Metadata } from "next";
 import { ChevronRight } from "lucide-react";
 import { getCheckoutData, getTourBySlug } from "@/lib/api/catalog";
 import { PackageCheckout, type PackageDay } from "@/components/booking/PackageCheckout";
+import { packageDayIncludes } from "@/lib/packageIncludes";
 import { TWO_DAY_PACKAGE } from "@/lib/sharedTours";
 
 export const metadata: Metadata = {
@@ -23,6 +24,7 @@ export default async function TwoDayBookPage() {
     title: d.title,
     label: d.label,
     href: `/${d.slug}`,
+    includes: packageDayIncludes(TWO_DAY_PACKAGE.slug, i, d.slug),
     departures: (tours[i]?.departures ?? [])
       .filter((x) => x.status === "ACTIVE" && x.seatsAvailable > 0)
       .map((x) => ({ id: x.id, date: x.date, departureTime: x.departureTime, seatsAvailable: x.seatsAvailable, capacityTotal: x.capacityTotal, price: x.price, childPrice: x.childPrice, infantPrice: x.infantPrice, currency: x.currency })),
@@ -54,7 +56,7 @@ export default async function TwoDayBookPage() {
         <h1 className="text-balance text-3xl font-light tracking-tight text-obsidian-900 sm:text-5xl">Book the {TWO_DAY_PACKAGE.title}</h1>
         <p className="mt-3 max-w-2xl text-base text-slate-600 sm:text-lg">Both small-group tours, one booking, {Math.round(TWO_DAY_PACKAGE.discount * 100)}% off. Choose a date for each day and pay once.</p>
         <div className="mt-8">
-          <PackageCheckout packageSlug={TWO_DAY_PACKAGE.slug} title={TWO_DAY_PACKAGE.title} discountPercent={Math.round(TWO_DAY_PACKAGE.discount * 100)} days={days} stops={stops} />
+          <PackageCheckout packageSlug={TWO_DAY_PACKAGE.slug} title={TWO_DAY_PACKAGE.title} discountPercent={Math.round(TWO_DAY_PACKAGE.discount * 100)} days={days} stops={stops} wholePage />
         </div>
       </div>
     </div>

@@ -1,7 +1,6 @@
 // Deposit payments (docs/DEPOSITS.md). At checkout the guest pays everything, or a 20% deposit
-// when the departure is at least 15 days away. The balance is due 14 days before departure (the published
-// payment terms) and is
-// paid from the voucher page. A deposit doesn't change the cancellation rules (cancellation-policy.ts):
+// when the departure is at least 15 days away. The balance is due 7 days before departure (owner, 2026-11-18;
+// was 14), and for a package 7 days before its first tour day, and is paid from the voucher page. A deposit doesn't change the cancellation rules (cancellation-policy.ts):
 // an eligible cancellation refunds everything paid, less 20% of the total on a private multi-day
 // package (so a deposit alone is kept there). An unpaid balance never cancels a
 // booking by itself: guests get reminders, and staff get a PAYMENT_DUE flag 72 hours before.
@@ -12,7 +11,7 @@ export const DEPOSIT_PERCENT = 20;
 /** Departures closer than this are paid in full at checkout. */
 export const DEPOSIT_MIN_DAYS_BEFORE = 15;
 /** The balance is due this many days before departure. */
-export const BALANCE_DUE_DAYS_BEFORE = 14;
+export const BALANCE_DUE_DAYS_BEFORE = 7;
 /** First reminder this many days before the balance is due. */
 export const BALANCE_REMINDER_DAYS_BEFORE_DUE = 3;
 /** Still unpaid this close to departure: staff are flagged (also the end of the online refund window). */
