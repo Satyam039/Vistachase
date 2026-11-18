@@ -3,6 +3,7 @@
 // can't be booked, and refunds of one day landing on that day's booking.
 
 import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
+import { activitiesSummary, PACKAGE_ACTIVITY_PRICES } from "@/modules/bookings/package-activities";
 import request from "supertest";
 import Stripe from "stripe";
 import prisma from "@/lib/db/prisma";
@@ -271,5 +272,44 @@ describe("private multi-day journeys", () => {
     const [a, b] = await Promise.all(result.bookings!.map((x) => prisma.booking.findUniqueOrThrow({ where: { bookingReference: x.bookingReference } })));
     expect((a.priceSnapshot as { airportTransfer?: unknown }).airportTransfer).toBeTruthy();
     expect((b.priceSnapshot as { airportTransfer?: unknown }).airportTransfer).toBeUndefined();
+  });
+
+  it("add-on activities: each with its own guests, kept on Day 1, charged only once priced (owner, 2026-11-18)", async () => {
+    setPaymentProviderForTests(browserPays);
+    const days = async (start: number) => [
+      await vehicle("banff-private-tour", `2027-08-${start}`, 175000),
+      await vehicle("banff-private-tour", `2027-08-${start + 1}`, 175000),
+      await vehicle("icefields-jasper-private-tour", `2027-08-${start + 2}`, 175000),
+    ];
+    const chosen = [
+      { id: "banff-gondola", adults: 2, children: 1, infants: 0 },
+      { id: "lake-minnewanka-cruise", adults: 3, children: 0, infants: 0 },
+    ];
+
+    // Not offered with this journey (Maligne is 4-day only), or more people than the party: refused.
+    expect((await createPackageBooking(party(5, "three-day-rockies-discovery", await days(10), { packageActivities: [{ id: "maligne-lake-cruise", adults: 2, children: 0, infants: 0 }] }))).error).toContain("can't be added");
+    expect((await createPackageBooking(party(6, "three-day-rockies-discovery", await days(14), { packageActivities: [{ id: "banff-gondola", adults: 5, children: 0, infants: 0 }] }))).error).toContain("Choose 1 to 4 guests");
+
+    // No price yet: recorded with who joins, total unchanged.
+    const unpriced = await createPackageBooking(party(7, "three-day-rockies-discovery", await days(18), { packageActivities: chosen }));
+    expect(unpriced.success).toBe(true);
+    expect(unpriced.totalAmount).toBe(1575 * 3);
+    const [first, second] = await Promise.all(unpriced.bookings!.slice(0, 2).map((x) => prisma.booking.findUniqueOrThrow({ where: { bookingReference: x.bookingReference } })));
+    expect(activitiesSummary(first.priceSnapshot)).toBe("Banff Gondola for 2 adults, 1 child (price confirmed by our team); Lake Minnewanka Cruise for 3 adults (price confirmed by our team)");
+    expect(first.specialRequests).toContain("Add-on activities: Banff Gondola for 2 adults, 1 child");
+    expect(activitiesSummary(second.priceSnapshot)).toBeNull();
+
+    // Priced: charged with Day 1, never discounted.
+    const saved = { ...PACKAGE_ACTIVITY_PRICES["banff-gondola"]! };
+    PACKAGE_ACTIVITY_PRICES["banff-gondola"] = { adultCents: 8000, childCents: 4000, infantCents: 0 };
+    try {
+      const priced = await createPackageBooking(party(8, "three-day-rockies-discovery", await days(22), { packageActivities: chosen }));
+      expect(priced.totalAmount).toBe(1575 * 3 + 200);
+      const day1 = await prisma.booking.findUniqueOrThrow({ where: { bookingReference: priced.bookings![0]!.bookingReference }, include: { items: true } });
+      expect(day1.items.map((i) => [i.name, i.price])).toContainEqual(["Banff Gondola (activity)", 20000]);
+      expect(activitiesSummary(day1.priceSnapshot)).toContain("Banff Gondola for 2 adults, 1 child (CAD $200)");
+    } finally {
+      PACKAGE_ACTIVITY_PRICES["banff-gondola"] = saved;
+    }
   });
 });

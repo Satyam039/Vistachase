@@ -171,7 +171,8 @@ export function airportTransferSummary(priceSnapshot: unknown): string | null {
 
 // ---------------------------------------------------------------------------------------------
 // Bókun (owner's table, 2026-11-18): one transfer product per area, with an "up to 6 guests" and an
-// "up to 12 guests" rate. Each one-way transfer is its own Bókun booking (modules/bokun/bokun-sync.ts).
+// "up to 12 guests" rate; the owner confirmed (2026-11-18) the first ID of each pair is the "up to 6" rate.
+// Each one-way transfer is its own Bókun booking (modules/bokun/bokun-sync.ts).
 // A Bókun test account has other IDs: BOKUN_PRODUCT_OVERRIDES=airport-transfer-banff:<id>,... points
 // an area at another product, and then Bókun's default rate is used (the live rate IDs don't exist there).
 

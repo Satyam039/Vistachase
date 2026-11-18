@@ -4,6 +4,7 @@
 // fails; the audit log entry STAFF_BOOKING_NOTICE_SENT keeps retries from sending it twice.
 
 import { airportTransferSummary } from "@/modules/bookings/airport-transfer";
+import { activitiesSummary } from "@/modules/bookings/package-activities";
 import prisma from "@/lib/db/prisma";
 import { getEmailProvider } from "@/lib/email/email.provider";
 import { siteUrl } from "@/lib/security/signed-links";
@@ -74,7 +75,8 @@ export async function sendStaffBookingNotice(live: TripBooking[], trip: { title:
       ["Pickup", pickup(lead)],
       ...live.flatMap((b): [string, string][] => {
         const transfer = airportTransferSummary(b.priceSnapshot);
-        return transfer ? [["Airport transfer", transfer]] : [];
+        const activities = activitiesSummary(b.priceSnapshot);
+        return [...(transfer ? ([["Airport transfer", transfer]] as [string, string][]) : []), ...(activities ? ([["Add-on activities", activities]] as [string, string][]) : [])];
       }),
       ["Total", money(total, currency)],
       ["Paid", `${money(paid, currency)}${total > paid ? ` · balance ${money(total - paid, currency)} still due` : ""}`],

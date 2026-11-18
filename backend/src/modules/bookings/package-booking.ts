@@ -18,6 +18,7 @@ import prisma from "@/lib/db/prisma";
 import { getPaymentProvider } from "@/lib/payment/payment.provider";
 import { bookingClosedError } from "@/modules/departures/booking-window";
 import { firstChargeCents } from "@/modules/bookings/deposit";
+import { pricePackageActivities, type PackageActivityInput } from "@/modules/bookings/package-activities";
 import {
   bookingDto,
   confirmPaidBooking,
@@ -99,7 +100,7 @@ export function packageDiscountFor(pkg: TourPackage, date: string) {
   return inSummer(date) ? pkg.discountPercent : (pkg.winterDiscountPercent ?? pkg.discountPercent);
 }
 
-export interface CreatePackageInput extends Omit<CreateBookingInput, "departureId" | "holdToken" | "promoCode" | "paymentPlan" | "addOns" | "idempotencyKey" | "activityAddOns"> {
+export interface CreatePackageInput extends Omit<CreateBookingInput, "departureId" | "holdToken" | "promoCode" | "paymentPlan" | "addOns" | "idempotencyKey" | "activityAddOns" | "packageActivities"> {
   packageSlug: string;
   /** FULL (default) or a 20% DEPOSIT, for packages with `depositAllowed`. */
   paymentPlan?: "FULL" | "DEPOSIT";
@@ -108,6 +109,8 @@ export interface CreatePackageInput extends Omit<CreateBookingInput, "departureI
   idempotencyKey?: string;
   day4JasperPickup?: string;
   dayPickups?: { pickupStopId?: string; pickupCustomText?: string }[];
+  /** Private journeys: the activities the guest ticked, and who joins each (package-activities.ts). */
+  packageActivities?: PackageActivityInput[];
 }
 
 export interface PackageResult {
@@ -201,6 +204,13 @@ export async function createPackageBooking(input: CreatePackageInput): Promise<P
     (await prisma.tourDeparture.findMany({ where: { id: { in: input.departureIds } }, select: { id: true, date: true } })).map((d) => [d.id, d.date.toISOString().slice(0, 10)]),
   );
 
+  let activities: ReturnType<typeof pricePackageActivities> = [];
+  try {
+    activities = pricePackageActivities(pkg.slug, input.packageActivities ?? [], { adults: input.adultsCount, children: input.childrenCount, infants: input.infantsCount });
+  } catch (error) {
+    return { success: false, error: (error as Error).message };
+  }
+
   const made: NonNullable<BookingResult["booking"]>[] = [];
   const release = async (reason: string) => {
     for (const b of made) await failPendingBooking(b.bookingReference, reason);
@@ -229,6 +239,8 @@ export async function createPackageBooking(input: CreatePackageInput): Promise<P
         paymentPlan: plan,
         // A private journey's airport transfer (both ways) is booked once, with Day 1.
         airportTransfer: i === 0 ? input.airportTransfer : undefined,
+        // So are its activities, priced on the server (package-activities.ts).
+        packageActivities: i === 0 && activities.length > 0 ? activities : undefined,
       },
       { deferPayment: true, discount: { percent: packageDiscountFor(pkg, departureDates.get(departureId) ?? ""), label: pkg.title.toUpperCase() } },
     );

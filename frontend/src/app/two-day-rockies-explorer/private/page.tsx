@@ -6,6 +6,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { ChevronRight } from "lucide-react";
 import { PackageBookingSection } from "@/components/booking/PackageBookingSection";
+import { ItineraryDayTabs } from "@/components/tours/ItineraryDayTabs";
+import { TOUR_ITINERARIES } from "@/lib/itineraries";
 import { PACKAGE_DAY_PRICE, PRIVATE_MAX_GUESTS, PRIVATE_PACKAGES } from "@/lib/privateTours";
 
 export const metadata: Metadata = {
@@ -18,6 +20,17 @@ export const metadata: Metadata = {
 };
 
 const cad = (n: number) => `CAD $${n.toLocaleString("en-CA")}`;
+
+// Each day's itinerary (the private day tours'), shown as Day 1 / Day 2 tabs (owner, 2026-11-18).
+const DAYS = PRIVATE_PACKAGES.two.days.map((d, i) => ({
+  dayNumber: i + 1,
+  title: d.title,
+  stops: (TOUR_ITINERARIES[d.slug]?.stops ?? []).map((s) => ({
+    name: s.name.replace(/\s+—\s+Optional Add-On$/i, ""),
+    desc: s.summerOnly ? `${s.text} (June 1 to October 10.)` : s.text,
+    isOptional: /optional add-on/i.test(s.name),
+  })),
+}));
 
 export default function PrivateTwoDayBookPage() {
   return (
@@ -47,6 +60,12 @@ export default function PrivateTwoDayBookPage() {
           <span className="rounded-full bg-white px-3 py-1 ring-1 ring-obsidian-900/10">Winter (Oct 11–May 31): {cad(PACKAGE_DAY_PRICE.winter)} per day per vehicle</span>
         </p>
       </div>
+      <section aria-labelledby="two-day-itinerary" className="mx-auto mt-8 max-w-7xl px-page">
+        <h2 id="two-day-itinerary" className="mb-4 text-2xl font-light tracking-tight text-obsidian-900 sm:text-3xl">
+          Your two days
+        </h2>
+        <ItineraryDayTabs days={DAYS} idPrefix="two-day" />
+      </section>
       <PackageBookingSection config={PRIVATE_PACKAGES.two} heading="Choose your dates" wholePage />
     </div>
   );

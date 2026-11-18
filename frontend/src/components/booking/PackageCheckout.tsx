@@ -37,8 +37,10 @@ import {
   activityGuestCount,
   activityGuestsFor,
   activityGuestsLabel,
+  loadPackageActivityPrices,
   PACKAGE_ACTIVITIES,
-  packageActivitiesRequestLine,
+  packageActivityPrice,
+  type PackageActivityPrices,
   type ActivityGuests,
   type PackageActivityChoice,
 } from "@/lib/activityAddOns";
@@ -195,6 +197,11 @@ export function PackageCheckout({
   // Private journeys: each optional activity and who joins it (owner, 2026-11-18).
   const packageActivities = vehicle ? (PACKAGE_ACTIVITIES[packageSlug] ?? []) : [];
   const [activityChoice, setActivityChoice] = useState<PackageActivityChoice>({});
+  // Per-person activity prices from the server; null price = confirmed by our team, not charged.
+  const [activityPrices, setActivityPrices] = useState<PackageActivityPrices | null>(null);
+  useEffect(() => {
+    if (packageActivities.length > 0) void loadPackageActivityPrices().then(setActivityPrices);
+  }, [packageActivities.length]);
   // "Some days can't be booked" pop-up (owner, 2026-11-18); closed by the guest until the dates change.
   const [unavailableDismissed, setUnavailableDismissed] = useState("");
   const [airport, setAirport] = useState(false);
@@ -256,24 +263,24 @@ export function PackageCheckout({
   // stays, twice for a round trip; added to Day 1, never discounted. The server prices it again.
   const transferQuote = withAirport ? airportTransferQuote(airportTransfer, guests, transferPrices) : null;
   const transferDollars = transferQuote?.total ?? null;
-  const total = lines.reduce((n, l) => n + l.total, 0) + (transferDollars ?? 0) * 100;
+  // Ticked activities: each priced for the guests joining it, added to Day 1 (the server prices them again).
+  const chosenActivityList = vehicle && activities ? packageActivities.filter((a) => activityChoice[a.id]) : [];
+  const activityPriceOf = (id: string) => packageActivityPrice(activityPrices, id, activityChoice[id]!);
+  const activitiesDollars = chosenActivityList.reduce((n, a) => n + (activityPriceOf(a.id) ?? 0), 0);
+  const total = lines.reduce((n, l) => n + l.total, 0) + (transferDollars ?? 0) * 100 + Math.round(activitiesDollars * 100);
   const allPicked = chosen.every(Boolean);
   // 20% deposit: each day's own deposit (the server rounds per day), when every day is 15+ days away.
   const canDeposit = depositAllowed && allPicked && total > 0 && chosen.every((d) => d && depositAvailable(d.date.slice(0, 10), d.departureTime));
   const plan = canDeposit ? paymentPlan : "FULL";
-  const dayTotals = lines.map((l, i) => l.total / 100 + (i === 0 ? (transferDollars ?? 0) : 0));
+  const dayTotals = lines.map((l, i) => l.total / 100 + (i === 0 ? (transferDollars ?? 0) + activitiesDollars : 0));
   const depositNow = Math.round(dayTotals.reduce((n, t) => n + depositFor(t), 0) * 100) / 100;
   const firstDay = chosen.filter(Boolean).map((d) => d!).sort((a, b) => a.date.localeCompare(b.date))[0];
   const balanceDueLabel = firstDay ? formatRockiesDate(balanceDueDate(firstDay.date.slice(0, 10), firstDay.departureTime)) : "";
   const dayWord = days.length === 2 ? "both days" : `all ${days.length} days`;
 
   const phone = phoneLocal.trim() ? `+${dialCode(phoneCountry)} ${phoneLocal.trim()}` : "";
-  const chosenActivityList = packageActivities.filter((a) => activityChoice[a.id]);
-  const activitiesRequestLine = !(vehicle && activities)
-    ? ""
-    : packageActivities.length > 0
-      ? packageActivitiesRequestLine(packageActivities, activityChoice)
-      : activityAddOnsRequestLine([], activityGuests);
+  // Journeys without an activity list still send a request line; listed activities go as data.
+  const activitiesRequestLine = vehicle && activities && packageActivities.length === 0 ? activityAddOnsRequestLine([], activityGuests) : "";
 
   // A day with no date left that fits (sold out, or every free date taken by another day): the
   // whole journey can't be booked online, so a pop-up asks the guest to contact us.
@@ -367,6 +374,7 @@ export function PackageCheckout({
           infantsCount: vehicle ? 0 : infants,
           specialRequests: [requests.trim(), activitiesRequestLine].filter(Boolean).join("\n") || undefined,
           airportTransfer: withAirport ? airportTransferPayload(airportTransfer) : undefined,
+          packageActivities: chosenActivityList.map((a) => ({ id: a.id, ...activityChoice[a.id]! })),
           paymentPlan: plan,
         }),
       });
@@ -523,7 +531,7 @@ export function PackageCheckout({
               <div className="mt-3" {...(show("activities") ? { "data-first-error": true } : {})}>
                 {packageActivities.length > 0 ? (
                   <ActivityAddOnToggle checked={activities} onChange={setActivities}>
-                    <PackageActivityPicker activities={packageActivities} value={activityChoice} onChange={setActivityChoice} partySize={adults} />
+                    <PackageActivityPicker activities={packageActivities} value={activityChoice} onChange={setActivityChoice} partySize={adults} prices={activityPrices} />
                   </ActivityAddOnToggle>
                 ) : (
                   <ActivityAddOnToggle checked={activities} onChange={setActivities} guests={activityGuests} onGuestsChange={setActivityGuests} maxGuests={adults} />
@@ -725,6 +733,17 @@ export function PackageCheckout({
                 <dd>{transferDollars != null ? cad(transferDollars) : guests > (transferPrices?.maxGuests ?? 12) ? "Confirmed by our team" : "Choose above"}</dd>
               </div>
             )}
+            {chosenActivityList.map((a) => {
+              const price = activityPriceOf(a.id);
+              return (
+                <div key={a.id} className="flex justify-between gap-4 text-white/80">
+                  <dt>
+                    {a.name} · {activityGuestsLabel(activityChoice[a.id]!)}
+                  </dt>
+                  <dd className="shrink-0 text-right">{price != null ? cad(price) : "Confirmed by our team"}</dd>
+                </div>
+              );
+            })}
             <div className="flex justify-between border-t border-white/15 pt-3 text-xl">
               <dt>Total</dt>
               <dd>{cad(total / 100)}</dd>
@@ -741,17 +760,8 @@ export function PackageCheckout({
                 </div>
               </>
             )}
-            {chosenActivityList.length > 0 && activities && (
-              <div className="text-sm text-white/70">
-                <p>Add-on activities (arranged by our team, paid separately):</p>
-                <ul className="mt-1 list-disc pl-5">
-                  {chosenActivityList.map((a) => (
-                    <li key={a.id}>
-                      {a.name}: {activityGuestsLabel(activityChoice[a.id]!)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+            {chosenActivityList.some((a) => activityPriceOf(a.id) == null) && (
+              <p className="text-sm text-white/70">Activities marked &ldquo;Confirmed by our team&rdquo; aren&apos;t charged now: we confirm their price with you before your trip.</p>
             )}
             <p className="text-sm text-white/60">Taxes and park admission included.</p>
           </dl>

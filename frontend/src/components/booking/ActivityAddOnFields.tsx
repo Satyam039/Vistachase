@@ -6,16 +6,19 @@
 
 import { Ticket } from "lucide-react";
 import { QuantityInput } from "@/components/forms/QuantityInput";
+import { ActivityInfo } from "@/components/booking/ActivityInfo";
 import {
   ACTIVITY_ADD_ONS,
   ACTIVITY_ADD_ON_PRICE_NOTE,
   ACTIVITY_ADD_ONS_NOTE,
   ACTIVITY_AGE_BANDS,
   activityGuestCount,
+  packageActivityPrice,
   type ActivityAddOnId,
   type ActivityGuests,
   type PackageActivity,
   type PackageActivityChoice,
+  type PackageActivityPrices,
 } from "@/lib/activityAddOns";
 
 /**
@@ -162,17 +165,25 @@ function GuestBands({ guests, onChange, maxGuests, idPrefix }: { guests: Activit
  * The private journeys' optional activities (owner, 2026-11-18): a tick box for each activity the
  * journey offers, and once ticked, how many adults, children and infants join it.
  */
+const priceLine = (dollars: number | null) =>
+  dollars != null
+    ? `CAD $${dollars.toLocaleString("en-CA", { minimumFractionDigits: dollars % 1 ? 2 : 0 })}, added to your total`
+    : "Price confirmed by our team before your trip (not charged now)";
+
 export function PackageActivityPicker({
   activities,
   value,
   onChange,
   partySize,
+  prices,
 }: {
   activities: PackageActivity[];
   value: PackageActivityChoice;
   onChange: (value: PackageActivityChoice) => void;
   /** The party size: no activity can have more guests. */
   partySize: number;
+  /** The server's per-person prices; an activity without one is priced by our team. */
+  prices: PackageActivityPrices | null;
 }) {
   if (activities.length === 0) return null;
   const toggle = (id: string, on: boolean) => {
@@ -189,17 +200,23 @@ export function PackageActivityPicker({
         const guests = value[a.id];
         return (
           <div key={a.id} className={`rounded-xl border ${guests ? "border-ocean-500 ring-1 ring-ocean-500" : "border-slate-200"}`}>
-            <label className="flex min-h-11 cursor-pointer items-start gap-3 p-3">
-              <input type="checkbox" className="mt-0.5 h-4 w-4 shrink-0 accent-ocean-700" checked={Boolean(guests)} onChange={(e) => toggle(a.id, e.target.checked)} />
-              <span className="min-w-0">
-                <span className="block text-sm font-medium text-obsidian-900">{a.name}</span>
-                <span className="block text-xs text-slate-600">{a.detail}</span>
+            <div className="flex items-start gap-1 pr-2">
+              <label className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-start gap-3 p-3">
+                <input type="checkbox" className="mt-0.5 h-4 w-4 shrink-0 accent-ocean-700" checked={Boolean(guests)} onChange={(e) => toggle(a.id, e.target.checked)} />
+                <span className="min-w-0">
+                  <span className="block text-sm font-medium text-obsidian-900">{a.name}</span>
+                  <span className="block text-xs text-slate-600">{a.detail}</span>
+                </span>
+              </label>
+              <span className="pt-2">
+                <ActivityInfo activity={a} />
               </span>
-            </label>
+            </div>
             {guests && (
               <div className="space-y-2 border-t border-slate-200 px-3 pb-3 pt-2">
                 <p className="text-xs text-slate-600">Who joins the {a.name}?</p>
                 <GuestBands guests={guests} onChange={(g) => onChange({ ...value, [a.id]: g })} maxGuests={partySize} idPrefix={`activity-${a.id}`} />
+                <p className="text-xs text-obsidian-900">{priceLine(packageActivityPrice(prices, a.id, guests))}</p>
                 {activityGuestCount(guests) === 0 && (
                   <p role="alert" className="text-xs text-red-700">
                     Add at least one guest for this activity, or untick it.

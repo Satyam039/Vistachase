@@ -80,7 +80,7 @@ A private booking's Calgary Airport transfer (owner, 2026-11-18) goes to Bókun 
 per one-way transfer (a round trip is two: arrival and departure), so a transfer problem never holds up
 the tour's Bókun booking.
 
-| Staying in | Bókun product | Up to 6 guests | 7 to 12 guests |
+| Staying in | Bókun product | Up to 6 guests (confirmed by owner, 2026-11-18) | 7 to 12 guests |
 |---|---|---|---|
 | Banff | 1356054 | rate 2712881 (CAD 364) | rate 2712882 (CAD 850) |
 | Canmore | 1356055 | rate 2712883 (CAD 364) | rate 2712886 (CAD 850) |

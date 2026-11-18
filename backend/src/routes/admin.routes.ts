@@ -3,6 +3,7 @@
 // and recorded in the audit log, and errors never echo internal messages.
 
 import { airportTransferSummary } from "@/modules/bookings/airport-transfer";
+import { activitiesSummary } from "@/modules/bookings/package-activities";
 import { Router, type Request, type Response, type NextFunction } from "express";
 import prisma from "@/lib/db/prisma";
 import { getAuthenticatedStaff } from "@/lib/auth/admin-guard";
@@ -436,6 +437,8 @@ router.get("/bookings/:id", async (req, res, next) => {
         priceSnapshot: undefined,
         // e.g. "Round trip (Calgary Airport (YYC) to Banff and back), ..., 2 x CAD 850.00 = CAD 1,700.00"
         airportTransfer: airportTransferSummary(booking.priceSnapshot),
+        // e.g. "Banff Gondola for 2 adults, 1 child (price confirmed by our team); ..."
+        activities: activitiesSummary(booking.priceSnapshot),
         trip: trip ? await tripSummary(trip) : null,
         // False while EMAIL_PROVIDER/RESEND_API_KEY aren't set: emails are only written to the server log.
         emailDelivery: emailDeliveryConfigured(),

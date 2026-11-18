@@ -29,6 +29,7 @@ import { getEmailProvider } from "@/lib/email/email.provider";
 import { renderMasterEmail } from "@/lib/email/email-template";
 import { isVehicleDeparture, partySizeError, seatedGuests, seatsToReserve } from "@/modules/pricing/departure-pricing";
 import { airportTransferLabel, airportTransferNote, airportTransferSchema, quoteAirportTransfer, type AirportTransferInput } from "@/modules/bookings/airport-transfer";
+import { packageActivitiesNote, type StoredPackageActivity } from "@/modules/bookings/package-activities";
 import { activityAddOnsError, activityAddOnsNote, ACTIVITY_ADD_ONS, type ActivityAddOnId, type ActivityGuests } from "@/modules/bookings/activity-add-ons";
 import { lookupPromo, normalizeCode, type ResolvedPromo } from "@/modules/pricing/promo-codes";
 import { priceBooking, type AddOnChoice } from "@/modules/pricing/booking-pricing";
@@ -74,6 +75,8 @@ export interface CreateBookingInput {
   activityAddOns?: ActivityAddOnId[];
   /** Who joins the activities, with ages; the whole party when not given. */
   activityGuests?: ActivityGuests;
+  /** Private journeys, Day 1 only: the activities chosen, already checked and priced by package-booking.ts. */
+  packageActivities?: StoredPackageActivity[];
 }
 
 /** What the checkout should do next. */
@@ -319,6 +322,15 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
         totals.addOnsCents += transferQuote.unitCents * transferQuote.transfers;
         totals.totalCents += transferQuote.unitCents * transferQuote.transfers;
       }
+      // Private journeys' activities: charged with Day 1 once priced, never discounted.
+      const packageActivities = input.packageActivities ?? [];
+      if (packageActivities.length > 0 && !isVehicle) throw new BookingRefused("Add-on activities can be added to private journeys only.");
+      for (const a of packageActivities) {
+        if (a.priceCents == null) continue;
+        totals.addOns.push({ name: `${a.name} (activity)`, priceCents: a.priceCents, quantity: 1 });
+        totals.addOnsCents += a.priceCents;
+        totals.totalCents += a.priceCents;
+      }
       // Deposit: online checkout only (staff bookings record their own payment), far enough ahead.
       // Package days (deferPayment) take one too; package-booking.ts charges every day's deposit at once.
       const deposit =
@@ -360,6 +372,8 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
         ...(transfer && transferQuote
           ? { airportTransfer: { ...transfer, guests: partySize, transfers: transferQuote.transfers, unitCents: transferQuote.unitCents, priceCents: transferCents } }
           : {}),
+        // Each activity with who joins it; priceCents null = the team confirms the price.
+        ...(packageActivities.length > 0 ? { packageActivities } : {}),
         // Requested, not charged: the price varies and the team confirms it.
         ...(activityAddOns.length > 0
           ? {
@@ -417,9 +431,10 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
           balanceDueAt: deposit?.balanceDueAt ?? null,
           paymentExpiresAt: new Date(now.getTime() + PENDING_PAYMENT_MINUTES * 60_000),
           specialRequests:
-            transfer || activityAddOns.length > 0
+            transfer || activityAddOns.length > 0 || packageActivities.length > 0
               ? [
                   transfer ? airportTransferNote(transfer, partySize) : null,
+                  packageActivities.length > 0 ? packageActivitiesNote(packageActivities) : null,
                   activityAddOns.length > 0
                     ? activityAddOnsNote(activityAddOns, input.activityGuests ?? { adults: input.adultsCount, children: input.childrenCount, infants: input.infantsCount })
                     : null,

@@ -55,6 +55,8 @@ export interface Detail extends Omit<BookingRow, "flags" | "trip"> {
   items: { name: string; price: number; quantity: number }[];
   /** Airport transfer type, route, times and price (from the booking's price snapshot), or null. */
   airportTransfer?: string | null;
+  /** Add-on activities and who joins each, with price or "price confirmed by our team", or null. */
+  activities?: string | null;
   payments: {
     id: string;
     amount: number;
@@ -366,7 +368,13 @@ export function BookingDetail({
                   {booking.airportTransfer}
                 </p>
               )}
-              {booking.items.length === 0 ? (
+              {booking.activities && (
+                <p className="mb-2 text-sm text-obsidian-900">
+                  <span className="text-slate-600">Add-on activities: </span>
+                  {booking.activities}
+                </p>
+              )}
+              {booking.items.length === 0 && !booking.activities && !booking.airportTransfer ? (
                 <p className="text-sm text-slate-600">None.</p>
               ) : (
                 <ul className="space-y-1 text-base">

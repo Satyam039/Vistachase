@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 import { PACKAGE_ITINERARIES } from "@/lib/itineraries";
+import { ItineraryDayTabs } from "@/components/tours/ItineraryDayTabs";
 import { PackageTripJsonLd } from "@/components/seo/PackageTripJsonLd";
 import { PACKAGE_DAY_PRICE, PRIVATE_MAX_GUESTS, PRIVATE_PACKAGES } from "@/lib/privateTours";
 import { PackageBookingSection } from "@/components/booking/PackageBookingSection";
@@ -213,50 +214,7 @@ export default function ThreeDayRockiesDiscoveryPage() {
                 Detailed Itinerary
               </h2>
 
-              <div className="space-y-8">
-                {ITINERARY_DAYS.map((day) => (
-                  <article
-                    key={day.dayNumber}
-                    className="overflow-hidden rounded-none border border-obsidian-900/[0.08] bg-white p-6 sm:p-8 shadow-sm"
-                  >
-                    <div className="border-b border-obsidian-900/[0.08] pb-4">
-                      <span className="text-xs uppercase tracking-[0.24em] font-semibold text-ocean-600">
-                        Day {day.dayNumber}
-                      </span>
-                      <h3 className="mt-1 text-xl sm:text-2xl font-normal text-obsidian-900">
-                        {day.title}
-                      </h3>
-                    </div>
-
-                    <ul className="mt-6 space-y-4 divide-y divide-obsidian-900/[0.05]">
-                      {day.stops.map((stop) => (
-                        <li key={stop.name} className="pt-4 first:pt-0">
-                          <div className="flex items-start gap-2">
-                            <MapPin className="mt-1 h-4 w-4 shrink-0 text-ocean-600" aria-hidden="true" />
-                            <div>
-                              <h4 className="text-base font-medium text-obsidian-900">
-                                {stop.name}
-                                {stop.isOptional && (
-                                  <span className="ml-2 inline-block rounded bg-summit-500/15 px-2 py-0.5 text-xs text-[#78570f] font-normal">
-                                    Optional Add-On
-                                  </span>
-                                )}
-                              </h4>
-                              <p className="mt-1 text-sm font-light leading-relaxed text-slate-600">
-                                {stop.desc}
-                              </p>
-                            </div>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-
-                    <p className="mt-6 pt-4 border-t border-obsidian-900/[0.06] text-xs sm:text-sm text-slate-500 italic">
-                      {day.closing}
-                    </p>
-                  </article>
-                ))}
-              </div>
+              <ItineraryDayTabs days={ITINERARY_DAYS} />
 
               {/* Itinerary Note */}
               <div className="flex items-start gap-3 rounded-2xl bg-amber-500/10 p-5 text-sm text-amber-950 border border-amber-500/20">
