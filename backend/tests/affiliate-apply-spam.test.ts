@@ -13,7 +13,7 @@ const unique = () => `${Date.now()}${Math.floor(Math.random() * 1e6)}`;
 const ip = () => `10.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}`;
 const oldToken = () => issueFormToken(Date.now() - 5_000);
 const apply = (body: Record<string, unknown>) => request(app).post("/api/affiliates/apply").set("X-Forwarded-For", ip()).send(body);
-const base = (email: string) => ({ name: "Rundlestone Lodge", contactName: "Priya Sharma", email, password: "a-long-password", type: "HOTEL" });
+const base = (email: string) => ({ name: "Rundlestone Lodge", contactName: "Priya Sharma", email, password: "a-long-password", type: "HOTEL", website: "https://rundlestone.example.com", phone: "+1 403 555 0100" });
 
 describe("partner application spam guard", () => {
   it("accepts a real application with the page's form token", async () => {

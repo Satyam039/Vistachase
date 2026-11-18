@@ -14,6 +14,7 @@ import {
   AFFILIATE_TYPES,
   applyAffiliate,
   createAffiliateByAdmin,
+  deleteAffiliate,
   getAffiliateDashboard,
   listAffiliates,
   listCommissionLines,
@@ -63,7 +64,7 @@ const notPartner = (res: Response) => res.status(404).json({ success: false, err
 // ---------------------------------------------------------------------------------------------
 // Public
 
-const applySchema = z.object({
+const partnerBase = z.object({
   name: z.string().trim().min(2).max(120),
   contactName: z.string().trim().min(2).max(120),
   email: z.string().trim().email().max(200),
@@ -71,6 +72,13 @@ const applySchema = z.object({
   type: z.enum(AFFILIATE_TYPES),
   website: z.string().trim().url().max(300).optional().or(z.literal("")),
   phone: phone.optional().or(z.literal("")),
+});
+
+// Public applications need every field (owner, 2026-11-18): website and a phone number with its
+// country code ("+1 403 555 0100") as well. Staff adding a partner by hand may leave them blank.
+const applySchema = partnerBase.extend({
+  website: z.string().trim().url().max(300),
+  phone: phone.refine((v) => /^\+\d/.test(v) && v.replace(/\D/g, "").length >= 7, "Enter a phone number with its country code"),
 });
 
 // Apply to the partner program. New partners start PENDING until Vista Chase approves them.
@@ -223,7 +231,7 @@ router.get("/admin", async (req, res) => {
   return res.json({ success: true, affiliates: await listAffiliates() });
 });
 
-const createSchema = applySchema.extend({
+const createSchema = partnerBase.extend({
   status: z.enum(["PENDING", "ACTIVE"]).default("ACTIVE"),
   commissionRate: z.number().min(0).max(0.5).optional(),
 });
@@ -267,6 +275,15 @@ router.patch("/admin/:id", async (req, res) => {
   } catch {
     return res.status(404).json({ success: false, error: "Partner not found." });
   }
+});
+
+// Delete an application or partner with no bookings, commission or payouts (see deleteAffiliate).
+router.delete("/admin/:id", async (req, res) => {
+  const staff = await requireAdmin(req, res);
+  if (!staff) return;
+  const result = await deleteAffiliate(String(req.params.id), staff.userId);
+  if (!result.success) return res.status(result.status).json({ success: false, error: result.error });
+  return res.json(result);
 });
 
 // Commission rules ------------------------------------------------------------------------------

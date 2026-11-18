@@ -56,6 +56,12 @@ export function sendStatusEmail(p: { name: string; email: string; contactName: s
       `Hi ${escapeHtml(p.contactName)},`,
       `The partner account for <strong>${escapeHtml(p.name)}</strong> is paused, so new bookings aren't credited for now. Commission already earned is kept. Reply to this email if you have questions.`,
     ]);
+  } else if (p.status === "REJECTED") {
+    send(p.email, "Your Vista Chase partner application", [
+      `Hi ${escapeHtml(p.contactName)},`,
+      `Thank you for your interest in the Vista Chase partner program. We've reviewed the application for <strong>${escapeHtml(p.name)}</strong> and aren't able to approve it at this time.`,
+      `If you think we've missed something, reply to this email or write to support@vistachase.com.`,
+    ]);
   }
 }
 
