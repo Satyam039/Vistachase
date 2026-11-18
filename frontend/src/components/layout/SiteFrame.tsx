@@ -24,7 +24,7 @@ import { GlobalVoiceAssistantDrawer } from "@/components/voice/GlobalVoiceAssist
 import { MotionRuntime } from "@/components/motion/MotionRuntime";
 import { PortalFrame, portalKindFor } from "@/components/layout/PortalFrame";
 
-const BOOK_HREF = "/banff-highlights-tour";
+const BOOK_HREF = "/#experiences";
 
 // The logo is centred over the whole bar (Bentley style), so the bar is its positioning context.
 // Side padding: 16px on phones and tablets, 36px from 1024px (desktop). The bar's contents stop
@@ -125,6 +125,44 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
     };
   }, [pathname]);
 
+  // Smooth-scroll to the "Choose How You See the Rockies" section when navigating to /#experiences
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const scrollOnHash = () => {
+      if (
+        window.location.hash === "#experiences" ||
+        window.location.hash === "#choose-how-you-see-the-rockies"
+      ) {
+        const el =
+          document.getElementById("experiences") ??
+          document.getElementById("choose-how-you-see-the-rockies");
+        if (el) {
+          window.setTimeout(() => {
+            el.scrollIntoView({ behavior: "smooth" });
+          }, 80);
+        }
+      }
+    };
+    scrollOnHash();
+    window.addEventListener("hashchange", scrollOnHash);
+    return () => window.removeEventListener("hashchange", scrollOnHash);
+  }, [pathname]);
+
+  const handleBookClick = (e: React.MouseEvent<HTMLElement>) => {
+    if (pathname === "/") {
+      const el =
+        document.getElementById("experiences") ??
+        document.getElementById("choose-how-you-see-the-rockies");
+      if (el) {
+        e.preventDefault();
+        el.scrollIntoView({ behavior: "smooth" });
+        if (window.location.hash !== "#experiences") {
+          window.history.pushState(null, "", "/#experiences");
+        }
+      }
+    }
+  };
+
   // The SEO portal (/seo, /seo/*) is a staff workspace with its own frame: no public header,
   // footer, announcement or concierge there. Every other route renders exactly as before.
   if (pathname === "/seo" || pathname?.startsWith("/seo/")) return <>{children}</>;
@@ -202,6 +240,7 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
                   label="BOOK TOURS"
                   variant="ghost"
                   href={BOOK_HREF}
+                  onClick={handleBookClick}
                   icon={<Icon icon={Calendar} size="sm" />}
                   className="vc-book-desktop max-sm:hidden"
                 />
