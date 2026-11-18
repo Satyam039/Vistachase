@@ -36,7 +36,7 @@ import { referringAffiliateId } from "@/modules/affiliates/affiliate.repository"
 import { earnCommission, reverseCommissionForRefund } from "@/modules/affiliates/commission";
 import { sendCommissionEarnedEmail } from "@/modules/affiliates/partner-emails";
 import { checkinLink, signBookingLink, voucherLink } from "@/lib/security/signed-links";
-import { DEPOSIT_PERCENT, DEPOSIT_MIN_DAYS_BEFORE, depositTerms, firstChargeCents, paymentSummary } from "@/modules/bookings/deposit";
+import { BALANCE_DUE_DAYS_BEFORE, DEPOSIT_PERCENT, DEPOSIT_MIN_DAYS_BEFORE, depositTerms, firstChargeCents, paymentSummary } from "@/modules/bookings/deposit";
 import { policyDecision } from "@/modules/bookings/cancellation-policy";
 import { resolveShuttlePickupTime } from "@/modules/shuttles/shuttle-timing";
 import { ADMIN_NOTIFICATION_RECIPIENTS } from "@/modules/bookings/confirmation-email";
@@ -358,7 +358,7 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
         // priceCents null: the team confirms the price (13+ guests); otherwise it is in addOns.
         // type, transfers (2 for a round trip), unitCents (one way) and priceCents (all transfers).
         ...(transfer && transferQuote
-          ? { airportTransfer: { ...transfer, transfers: transferQuote.transfers, unitCents: transferQuote.unitCents, priceCents: transferCents } }
+          ? { airportTransfer: { ...transfer, guests: partySize, transfers: transferQuote.transfers, unitCents: transferQuote.unitCents, priceCents: transferCents } }
           : {}),
         // Requested, not charged: the price varies and the team confirms it.
         ...(activityAddOns.length > 0
@@ -580,7 +580,7 @@ export async function confirmPaidBooking(reference: string, verified?: VerifiedP
 
 /** "Friday, 13 March 2026" in Banff time. */
 export function balanceDueLabel(at: Date | null) {
-  if (!at) return "14 days before departure";
+  if (!at) return `${BALANCE_DUE_DAYS_BEFORE} days before departure`;
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Edmonton", weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(at);
 }
 

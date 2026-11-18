@@ -43,7 +43,8 @@ export interface TourPackage {
   /**
    * The guest may pay a 20% deposit now and the rest later (owner, 2026-11-11: private tours of two
    * or more days get "continue booking with 20% payment" beside full payment). Each day keeps its
-   * own deposit and balance (deposit.ts), due 14 days before that day, as for a single tour.
+   * own deposit and balance (deposit.ts); every day's balance is due 7 days before the package's
+   * FIRST tour day (owner, 2026-11-18), so the guest pays the whole rest once.
    */
   depositAllowed?: boolean;
 }
@@ -251,6 +252,16 @@ export async function createPackageBooking(input: CreatePackageInput): Promise<P
         adminNotes: [b.adminNotes, `${pkg.title}, day ${i + 1} of ${references.length}: booked and paid together with ${others}.`].filter(Boolean).join("\n"),
       },
     });
+  }
+
+  // Deposit: every day's balance is due with the first day's (7 days before the first tour day).
+  if (plan === "DEPOSIT") {
+    const dues = stored.map((b) => b.balanceDueAt?.getTime()).filter((t): t is number => t != null);
+    if (dues.length > 0) {
+      const firstDue = new Date(Math.min(...dues));
+      await prisma.booking.updateMany({ where: { bookingReference: { in: references }, paymentPlan: "DEPOSIT" }, data: { balanceDueAt: firstDue } });
+      for (const b of stored) if (b.paymentPlan === "DEPOSIT") b.balanceDueAt = firstDue;
+    }
   }
 
   const ordered = references.map((ref) => stored.find((x) => x.bookingReference === ref)!);

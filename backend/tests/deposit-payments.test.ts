@@ -96,10 +96,10 @@ afterAll(() => {
 });
 
 describe("deposit terms", () => {
-  it("20% now, balance due 14 days before, only 15+ days ahead", () => {
+  it("20% now, balance due 7 days before, only 15+ days ahead", () => {
     const now = new Date("2027-01-01T12:00:00Z");
     const leaves = new Date("2027-01-20T15:30:00Z");
-    expect(depositTerms(40000, leaves, now)).toEqual({ depositCents: 8000, balanceDueAt: new Date("2027-01-06T15:30:00Z") });
+    expect(depositTerms(40000, leaves, now)).toEqual({ depositCents: 8000, balanceDueAt: new Date("2027-01-13T15:30:00Z") });
     expect(depositTerms(40000, new Date("2027-01-15T12:00:00Z"), now)).toBeNull();
     expect(depositTerms(0, leaves, now)).toBeNull();
   });
@@ -115,7 +115,7 @@ describe("checkout with a deposit", () => {
     const booking = await load(reference);
     expect(booking.status).toBe("CONFIRMED");
     expect(booking.depositAmount).toBe(8000);
-    const due = getMountainTimeInstant(booking.tourDeparture.date, booking.tourDeparture.departureTime).getTime() - 14 * 86_400_000;
+    const due = getMountainTimeInstant(booking.tourDeparture.date, booking.tourDeparture.departureTime).getTime() - 7 * 86_400_000;
     expect(booking.balanceDueAt?.getTime()).toBe(due);
 
     const read = await request(app).get(`/api/bookings?ref=${reference}&t=${signBookingLink(reference, "voucher")}`);

@@ -69,3 +69,45 @@ export function activityGuestsFromQuery(q: { actAdults?: string; actChildren?: s
   const n = (v?: string) => Math.max(0, Math.min(30, Number.parseInt(v ?? "0", 10) || 0));
   return { adults: n(q.actAdults), children: n(q.actChildren), infants: n(q.actInfants) };
 }
+
+/**
+ * Optional activities on the private multi-day journeys (owner's Trello card, 2026-11-18): the guest
+ * picks each activity and how many people join it (adults, children, infants). Tickets are arranged
+ * by the team and paid separately once confirmed (ACTIVITY_ADD_ONS_NOTE); nothing is charged online.
+ */
+export interface PackageActivity {
+  id: string;
+  name: string;
+  detail: string;
+}
+
+const ICEFIELD_ADVENTURE: PackageActivity = {
+  id: "columbia-icefield-adventure",
+  name: "Columbia Icefield Adventure",
+  detail: "Ice Explorer onto the Athabasca Glacier and the Columbia Icefield Skywalk (tickets)",
+};
+const BANFF_GONDOLA: PackageActivity = { id: "banff-gondola", name: "Banff Gondola", detail: "Ride up Sulphur Mountain for views over Banff" };
+const MINNEWANKA_CRUISE: PackageActivity = { id: "lake-minnewanka-cruise", name: "Lake Minnewanka Cruise", detail: "Sightseeing cruise on Banff's largest lake" };
+const MALIGNE_CRUISE: PackageActivity = { id: "maligne-lake-cruise", name: "Maligne Lake Cruise to Spirit Island", detail: "Boat cruise to the Spirit Island viewpoint in Jasper" };
+
+export const PACKAGE_ACTIVITIES: Record<string, PackageActivity[]> = {
+  "two-day-rockies-explorer-private": [{ ...ICEFIELD_ADVENTURE, detail: "Columbia Icefield Adventure tickets: Ice Explorer onto the Athabasca Glacier and the Skywalk" }],
+  "three-day-rockies-discovery": [ICEFIELD_ADVENTURE, BANFF_GONDOLA, MINNEWANKA_CRUISE],
+  "four-day-rockies-and-jasper": [
+    BANFF_GONDOLA,
+    MINNEWANKA_CRUISE,
+    { ...ICEFIELD_ADVENTURE, name: "Columbia Icefield Adventure (Glacier & Skywalk)" },
+    MALIGNE_CRUISE,
+  ],
+};
+
+/** Who joins each chosen activity, by activity id. */
+export type PackageActivityChoice = Record<string, ActivityGuests>;
+
+export const activityGuestCount = (g: ActivityGuests) => g.adults + g.children + g.infants;
+
+/** "Add-on activities requested: Banff Gondola for 2 adults (16–99); Lake Minnewanka Cruise for … (tickets arranged …)." */
+export function packageActivitiesRequestLine(activities: PackageActivity[], chosen: PackageActivityChoice): string {
+  const parts = activities.filter((a) => chosen[a.id]).map((a) => `${a.name} for ${activityGuestsLabel(chosen[a.id]!)}`);
+  return parts.length > 0 ? `Add-on activities requested: ${parts.join("; ")} (tickets arranged by our team, paid separately).` : "";
+}

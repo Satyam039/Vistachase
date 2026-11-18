@@ -74,6 +74,31 @@ Fixed without a person:
 - Bókun didn't answer while creating it: the next try first looks it up in Bókun's booking search by our reference (exact match only). Reserved there: that one is confirmed. Confirmed there: it's marked synced. Lapsed or cancelled there: reserved again. Not shown: it stops for staff (below), so nothing is ever created twice.
 - The server restarted mid-create: same lookup on the next try. A booking always goes to Bókun on its own date and start time; when Bókun doesn't have that start, staff are flagged (it's never moved to another day).
 
+## Airport transfers
+
+A private booking's Calgary Airport transfer (owner, 2026-11-18) goes to Bókun as its own booking, one
+per one-way transfer (a round trip is two: arrival and departure), so a transfer problem never holds up
+the tour's Bókun booking.
+
+| Staying in | Bókun product | Up to 6 guests | 7 to 12 guests |
+|---|---|---|---|
+| Banff | 1356054 | rate 2712881 (CAD 364) | rate 2712882 (CAD 850) |
+| Canmore | 1356055 | rate 2712883 (CAD 364) | rate 2712886 (CAD 850) |
+| Lake Louise | 1356058 | rate 2712889 (CAD 445) | rate 2712890 (CAD 895) |
+
+- Booked on the flight date, on that day's first open start (the flight time, route and group size are
+  in the Bókun booking note). External reference `<booking reference>-ARR` / `-DEP`.
+- Confirmed with the transfer's share of what the guest paid; the tour's Bókun booking is confirmed with
+  the rest. If Bókun prices the chosen rate per person, one passenger is sent so Bókun's total stays the
+  vehicle price.
+- Cancelling the website booking cancels the transfers in Bókun too. A transfer Bókun won't take raises
+  its own flag ("Bókun airport transfer: ...") in Admin → Bookings → Flags; Retry in the Bókun tab sends
+  it again.
+- Code: `modules/bookings/airport-transfer.ts` (products, rates, legs) and `modules/bokun/bokun-sync.ts`
+  (`CREATE_TRANSFER` / `CANCEL_TRANSFER` tasks). A test account points an area at its own product with
+  `BOKUN_PRODUCT_OVERRIDES=airport-transfer-banff:<id>,airport-transfer-canmore:<id>,airport-transfer-lake-louise:<id>`
+  (then Bókun's default rate is used).
+
 ## Changes made in Bókun
 
 Every 15 minutes (and when staff press **Check Bókun now** on a booking) upcoming website bookings that are in Bókun are read back from Bókun (`GET /booking.json/booking/<code>`):

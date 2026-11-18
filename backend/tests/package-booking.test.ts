@@ -10,7 +10,7 @@ import { createApp } from "@/app";
 import { setPaymentProviderForTests, stripeId, type IPaymentProvider } from "@/lib/payment/payment.provider";
 import { createPackageBooking } from "@/modules/bookings/package-booking";
 import { cancelBooking } from "@/modules/bookings/booking.repository";
-import { dateOnly, timeOfDay } from "@/lib/utils/time";
+import { dateOnly, getMountainTimeInstant, timeOfDay } from "@/lib/utils/time";
 
 const refunds: { transactionId: string; amount?: number; metadata?: Record<string, string> }[] = [];
 const browserPays: IPaymentProvider = {
@@ -234,9 +234,12 @@ describe("private multi-day journeys", () => {
     const stored = await prisma.booking.findMany({ where: { bookingReference: { in: refs } }, include: { payments: true } });
     for (const b of stored) {
       expect(b).toMatchObject({ paymentPlan: "DEPOSIT", depositAmount: 31500, totalAmount: 157500 });
-      expect(b.balanceDueAt).toBeTruthy();
       expect(b.payments).toEqual([expect.objectContaining({ amount: 31500, kind: "DEPOSIT", status: "PENDING" })]);
     }
+    // Both balances are due 7 days before the FIRST tour day (owner, 2026-11-18).
+    const firstDep = (await prisma.tourDeparture.findUnique({ where: { id: ids[0] } }))!;
+    const firstDayAt = getMountainTimeInstant(firstDep.date, firstDep.departureTime);
+    for (const b of stored) expect(b.balanceDueAt?.getTime()).toBe(firstDayAt.getTime() - 7 * 86_400_000);
     const intentId = `pi_pkg_${refs[0]}`;
     const app = createApp();
     const paid = signed("payment_intent.succeeded", { id: intentId, object: "payment_intent", amount: 63000, amount_received: 63000, currency: "cad", metadata: { bookingReference: refs[0], kind: "PACKAGE", packageRefs: refs.join(",") } });
@@ -263,8 +266,8 @@ describe("private multi-day journeys", () => {
     const transfer = { type: "ROUND_TRIP" as const, area: "BANFF" as const, arrivalDate: "2027-12-07", arrivalTime: "14:00", departureDate: "2027-12-11", departureTime: "10:00", from: "Calgary Airport", to: "Banff" };
     const result = await createPackageBooking(party(4, "two-day-rockies-explorer-private", ids, { airportTransfer: transfer }));
     expect(result.success).toBe(true);
-    // Round trip to Banff: 2 x CAD 850 (owner, 2026-11-17), charged with Day 1, never discounted.
-    expect(result.totalAmount).toBe(1240 * 2 + 2 * 850);
+    // Round trip to Banff for 4 guests: 2 x CAD 364 (up to 6 guests, owner 2026-11-18), charged with Day 1, never discounted.
+    expect(result.totalAmount).toBe(1240 * 2 + 2 * 364);
     const [a, b] = await Promise.all(result.bookings!.map((x) => prisma.booking.findUniqueOrThrow({ where: { bookingReference: x.bookingReference } })));
     expect((a.priceSnapshot as { airportTransfer?: unknown }).airportTransfer).toBeTruthy();
     expect((b.priceSnapshot as { airportTransfer?: unknown }).airportTransfer).toBeUndefined();

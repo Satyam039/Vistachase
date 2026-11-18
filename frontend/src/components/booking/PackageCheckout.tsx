@@ -17,7 +17,7 @@ import { Banner } from "@astryxdesign/core/Banner";
 import { Button } from "@astryxdesign/core/Button";
 import { TextArea } from "@astryxdesign/core/TextArea";
 import { TextInput } from "@astryxdesign/core/TextInput";
-import { CalendarDays, Check, Lock, Mail, MapPin, Users } from "lucide-react";
+import { CalendarDays, Check, ChevronDown, Lock, Mail, MapPin, Users, X } from "lucide-react";
 import { QuantityInput } from "@/components/forms/QuantityInput";
 import { DepartureCalendar } from "@/components/booking/DepartureCalendar";
 import {
@@ -31,14 +31,24 @@ import {
   useAirportTransferPrices,
   type AirportTransferValue,
 } from "@/components/booking/AirportTransferFields";
-import { ActivityAddOnToggle } from "@/components/booking/ActivityAddOnFields";
-import { activityAddOnsRequestLine, activityGuestsFor, type ActivityGuests } from "@/lib/activityAddOns";
+import { ActivityAddOnToggle, PackageActivityPicker } from "@/components/booking/ActivityAddOnFields";
+import {
+  activityAddOnsRequestLine,
+  activityGuestCount,
+  activityGuestsFor,
+  activityGuestsLabel,
+  PACKAGE_ACTIVITIES,
+  packageActivitiesRequestLine,
+  type ActivityGuests,
+  type PackageActivityChoice,
+} from "@/lib/activityAddOns";
 import { Dropdown } from "@/components/forms/Dropdown";
 import { PhoneField } from "@/components/forms/PhoneField";
 import { dialCode } from "@/lib/countries";
 import { StripeCheckoutForm, stripeConfigured } from "@/components/booking/StripeCheckoutForm";
 import { balanceDueDate, DEPOSIT_PERCENT, depositAvailable, depositFor, formatRockiesDate } from "@/lib/policy";
 import { trackAdsPurchase } from "@/lib/googleAds";
+import { CheckoutLinksInNewTab } from "@/components/booking/CheckoutLinksInNewTab";
 
 export interface PackageDeparture {
   id: string;
@@ -55,12 +65,23 @@ export interface PackageDeparture {
   currency: string;
 }
 
+/** One place or activity of a day, shown under "What this day includes" (owner, 2026-11-18: in place, not a link). */
+export interface PackageDayStop {
+  name: string;
+  desc: string;
+  optional?: boolean;
+  /** Only from June 1 to October 10. */
+  summerOnly?: boolean;
+}
+
 export interface PackageDay {
   title: string;
   label: string;
   /** Product page for the day. */
   href: string;
   departures: PackageDeparture[];
+  /** The day's places and activities, shown in a dropdown under its calendar. */
+  includes?: PackageDayStop[];
 }
 
 export interface PackageStop {
@@ -128,6 +149,7 @@ export function PackageCheckout({
   cancellationNote = "Each day can be cancelled for a full refund up to 24 hours before it starts.",
   depositAllowed = false,
   compact = false,
+  wholePage = false,
 }: {
   packageSlug: string;
   title: string;
@@ -146,8 +168,11 @@ export function PackageCheckout({
   depositAllowed?: boolean;
   /** Inside the AI concierge's chat panel: one narrow column, links open in a new tab (no redirect). */
   compact?: boolean;
+  /** The page is only this checkout (/two-day-rockies-explorer/book, …/private): every link on it opens in a new tab. */
+  wholePage?: boolean;
 }) {
-  const newTab = compact ? ({ target: "_blank", rel: "noopener" } as const) : {};
+  // Every link in the checkout opens in a new tab, so the guest never leaves it (owner, 2026-11-18).
+  const newTab = { target: "_blank", rel: "noopener" } as const;
   const MAX_GUESTS = maxGuests ?? SHARED_MAX_GUESTS;
   const discountOn = (date: string | undefined) => (date && !inSummer(date) && winterDiscountPercent != null ? winterDiscountPercent : discountPercent);
   const [adults, setAdults] = useState(2);
@@ -167,6 +192,11 @@ export function PackageCheckout({
   const [activities, setActivities] = useState(false);
   // Who joins the activities, with ages (owner, 2026-11-11); null until the guest changes it.
   const [activityGuestsPicked, setActivityGuests] = useState<ActivityGuests | null>(null);
+  // Private journeys: each optional activity and who joins it (owner, 2026-11-18).
+  const packageActivities = vehicle ? (PACKAGE_ACTIVITIES[packageSlug] ?? []) : [];
+  const [activityChoice, setActivityChoice] = useState<PackageActivityChoice>({});
+  // "Some days can't be booked" pop-up (owner, 2026-11-18); closed by the guest until the dates change.
+  const [unavailableDismissed, setUnavailableDismissed] = useState("");
   const [airport, setAirport] = useState(false);
   const [airportTransfer, setAirportTransfer] = useState<AirportTransferValue>(EMPTY_AIRPORT_TRANSFER);
   const transferPrices = useAirportTransferPrices();
@@ -238,6 +268,44 @@ export function PackageCheckout({
   const dayWord = days.length === 2 ? "both days" : `all ${days.length} days`;
 
   const phone = phoneLocal.trim() ? `+${dialCode(phoneCountry)} ${phoneLocal.trim()}` : "";
+  const chosenActivityList = packageActivities.filter((a) => activityChoice[a.id]);
+  const activitiesRequestLine = !(vehicle && activities)
+    ? ""
+    : packageActivities.length > 0
+      ? packageActivitiesRequestLine(packageActivities, activityChoice)
+      : activityAddOnsRequestLine([], activityGuests);
+
+  // A day with no date left that fits (sold out, or every free date taken by another day): the
+  // whole journey can't be booked online, so a pop-up asks the guest to contact us.
+  const blockedDays = days.map((_, i) => i).filter((i) => !picks[i] && !days[i].departures.some(fitsDay(i)));
+  const blockedKey = `${blockedDays.join(",")}|${picks.join(",")}|${adults}`;
+  // Only once the guest reaches the booking form (it sits low on the journey pages).
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [formSeen, setFormSeen] = useState(false);
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el || formSeen) return;
+    if (typeof IntersectionObserver === "undefined") {
+      setFormSeen(true);
+      return;
+    }
+    const io = new IntersectionObserver((entries) => entries.some((e) => e.isIntersecting) && setFormSeen(true), { threshold: 0.15 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [formSeen]);
+  const showUnavailable = formSeen && blockedDays.length > 0 && unavailableDismissed !== blockedKey && !awaiting;
+  const unavailableRef = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const dialog = unavailableRef.current;
+    if (!dialog) return;
+    if (showUnavailable && !dialog.open) {
+      try {
+        dialog.showModal();
+      } catch {
+        dialog.setAttribute("open", "");
+      }
+    } else if (!showUnavailable && dialog.open) dialog.close();
+  }, [showUnavailable]);
   const errors = useMemo(() => {
     const e: Record<string, string> = {};
     days.forEach((_, i) => {
@@ -250,10 +318,16 @@ export function PackageCheckout({
     if (isFourDay && !day4JasperPickup.trim()) e.jasperPickup = "Enter your Day 4 Jasper hotel or accommodation address.";
     const transfer = withAirport ? airportTransferError(airportTransfer) : null;
     if (transfer) e.airport = transfer;
-    const activityCount = activityGuests.adults + activityGuests.children + activityGuests.infants;
-    if (vehicle && activities && (activityCount < 1 || activityCount > adults)) e.activities = `Choose 1 to ${adults} guests for the add-on activities.`;
+    if (vehicle && activities && packageActivities.length > 0) {
+      const chosenActivities = Object.values(activityChoice);
+      if (chosenActivities.length === 0) e.activities = "Choose at least one activity, or untick Add-on activities.";
+      else if (chosenActivities.some((g) => activityGuestCount(g) < 1 || activityGuestCount(g) > adults)) e.activities = `Choose 1 to ${adults} guests for each activity.`;
+    } else {
+      const activityCount = activityGuests.adults + activityGuests.children + activityGuests.infants;
+      if (vehicle && activities && (activityCount < 1 || activityCount > adults)) e.activities = `Choose 1 to ${adults} guests for the add-on activities.`;
+    }
     return e;
-  }, [days, picks, name, email, phoneLocal, stopId, customPickup, isFourDay, day4JasperPickup, withAirport, airportTransfer, vehicle, activities, activityGuests, adults]);
+  }, [days, picks, name, email, phoneLocal, stopId, customPickup, isFourDay, day4JasperPickup, withAirport, airportTransfer, vehicle, activities, activityGuests, adults, activityChoice, packageActivities.length]);
   const show = (k: string) => (attempted ? errors[k] : undefined);
   const status = (k: string) => (show(k) ? { type: "error" as const, message: errors[k] } : undefined);
 
@@ -291,7 +365,7 @@ export function PackageCheckout({
           adultsCount: adults,
           childrenCount: vehicle ? 0 : children,
           infantsCount: vehicle ? 0 : infants,
-          specialRequests: [requests.trim(), vehicle && activities ? activityAddOnsRequestLine([], activityGuests) : ""].filter(Boolean).join("\n") || undefined,
+          specialRequests: [requests.trim(), activitiesRequestLine].filter(Boolean).join("\n") || undefined,
           airportTransfer: withAirport ? airportTransferPayload(airportTransfer) : undefined,
           paymentPlan: plan,
         }),
@@ -386,7 +460,52 @@ export function PackageCheckout({
   }
 
   return (
-    <div className={compact ? "grid items-start gap-4" : "grid items-start gap-8 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-12"}>
+    <div ref={rootRef} className={compact ? "grid items-start gap-4" : "grid items-start gap-8 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-12"}>
+      {wholePage && <CheckoutLinksInNewTab />}
+      <dialog
+        ref={unavailableRef}
+        aria-labelledby="package-unavailable-title"
+        onCancel={() => setUnavailableDismissed(blockedKey)}
+        className="w-[min(28rem,calc(100vw-2rem))] rounded-none bg-white p-0 text-obsidian-900 shadow-high backdrop:bg-obsidian-950/60 backdrop:backdrop-blur-sm"
+      >
+        <div className="p-6">
+          <div className="flex items-start justify-between gap-4">
+            <h2 id="package-unavailable-title" className="text-xl font-light">
+              {blockedDays.length === days.length ? `These dates aren't available online` : `We can't fit ${dayWord} online`}
+            </h2>
+            <button
+              type="button"
+              aria-label="Close"
+              onClick={() => setUnavailableDismissed(blockedKey)}
+              className="-mr-2 -mt-2 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-600 hover:bg-obsidian-50"
+            >
+              <X className="h-5 w-5" aria-hidden="true" />
+            </button>
+          </div>
+          <p className="mt-3 text-base text-slate-700">
+            {blockedDays.length === 1
+              ? `There's no free date left for Day ${blockedDays[0] + 1} (${days[blockedDays[0]].title})`
+              : `There are no free dates left for Days ${blockedDays.map((i) => i + 1).join(" and ")}`}
+            {picks.some(Boolean) ? " with the dates you've chosen" : ""}, so the whole {title} can&rsquo;t be booked here right now. Please contact us and we&rsquo;ll help you plan your days.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <a
+              href={requestHref}
+              {...newTab}
+              className="inline-flex h-11 items-center rounded-full bg-obsidian-950 px-6 text-sm text-white hover:bg-obsidian-900"
+            >
+              Contact us
+            </a>
+            <button
+              type="button"
+              onClick={() => setUnavailableDismissed(blockedKey)}
+              className="inline-flex h-11 items-center rounded-full px-6 text-sm text-ocean-700 ring-1 ring-obsidian-900/15 hover:bg-ocean-50"
+            >
+              {picks.some(Boolean) ? "Change my dates" : "Close"}
+            </button>
+          </div>
+        </div>
+      </dialog>
       <div className="space-y-6">
         <Section compact={compact} icon={Users} title="Who's coming">
           {vehicle ? (
@@ -402,7 +521,13 @@ export function PackageCheckout({
                 </div>
               )}
               <div className="mt-3" {...(show("activities") ? { "data-first-error": true } : {})}>
-                <ActivityAddOnToggle checked={activities} onChange={setActivities} guests={activityGuests} onGuestsChange={setActivityGuests} maxGuests={adults} />
+                {packageActivities.length > 0 ? (
+                  <ActivityAddOnToggle checked={activities} onChange={setActivities}>
+                    <PackageActivityPicker activities={packageActivities} value={activityChoice} onChange={setActivityChoice} partySize={adults} />
+                  </ActivityAddOnToggle>
+                ) : (
+                  <ActivityAddOnToggle checked={activities} onChange={setActivities} guests={activityGuests} onGuestsChange={setActivityGuests} maxGuests={adults} />
+                )}
                 {show("activities") && (
                   <p role="alert" className="mt-1.5 text-sm text-red-700">
                     {errors.activities}
@@ -467,9 +592,30 @@ export function PackageCheckout({
                       </p>
                     )}
                   </div>
-                  <Link href={day.href} {...newTab} className="mt-1.5 inline-block text-sm text-ocean-700 underline underline-offset-2">
-                    What this day includes
-                  </Link>
+                  {day.includes && day.includes.length > 0 ? (
+                    <details className="group mt-2 rounded-xl bg-obsidian-50 ring-1 ring-obsidian-900/[0.06]">
+                      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-4 text-sm text-ocean-700 [&::-webkit-details-marker]:hidden">
+                        What this day includes
+                        <ChevronDown className="h-4 w-4 shrink-0 transition-transform group-open:rotate-180" aria-hidden="true" />
+                      </summary>
+                      <ul className="space-y-2.5 px-4 pb-4 text-sm">
+                        {day.includes.map((stop) => (
+                          <li key={stop.name}>
+                            <span className="block text-obsidian-900">
+                              {stop.name}
+                              {stop.optional && <span className="ml-1.5 text-xs text-slate-600">(optional, costs extra)</span>}
+                              {stop.summerOnly && !stop.optional && <span className="ml-1.5 text-xs text-slate-600">(June 1 to October 10)</span>}
+                            </span>
+                            <span className="block text-slate-600">{stop.desc}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
+                  ) : (
+                    <Link href={day.href} {...newTab} className="mt-1.5 inline-block text-sm text-ocean-700 underline underline-offset-2">
+                      What this day includes
+                    </Link>
+                  )}
                 </div>
               );
             })}
@@ -595,6 +741,18 @@ export function PackageCheckout({
                 </div>
               </>
             )}
+            {chosenActivityList.length > 0 && activities && (
+              <div className="text-sm text-white/70">
+                <p>Add-on activities (arranged by our team, paid separately):</p>
+                <ul className="mt-1 list-disc pl-5">
+                  {chosenActivityList.map((a) => (
+                    <li key={a.id}>
+                      {a.name}: {activityGuestsLabel(activityChoice[a.id]!)}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <p className="text-sm text-white/60">Taxes and park admission included.</p>
           </dl>
         ) : (
@@ -622,7 +780,7 @@ export function PackageCheckout({
                   {
                     value: "DEPOSIT",
                     title: `Continue with ${DEPOSIT_PERCENT}% payment · ${cad(depositNow)}`,
-                    detail: `Pay the rest, ${cad(total / 100 - depositNow)}, by ${balanceDueLabel} (14 days before each day) from your vouchers. We email you a reminder.`,
+                    detail: `Pay the rest, ${cad(total / 100 - depositNow)}, by ${balanceDueLabel} (7 days before your first tour day) from your vouchers. We email you a reminder.`,
                   },
                 ] as const
               ).map((option) => (

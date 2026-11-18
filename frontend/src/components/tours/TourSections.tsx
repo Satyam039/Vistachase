@@ -13,6 +13,7 @@ import { Car, Check, CheckCircle2, Clock, MapPin, Plus, Star, X } from "lucide-r
 import { cancellationSentence, cancellationShort } from "@/lib/policy";
 import type { TourSection, TourWithAvailability } from "@/lib/api/types";
 import { ReviewSlider } from "@/components/reviews/ReviewSlider";
+import { approvedReviewsFor } from "@/lib/reviews/tripadvisorReviews";
 import { vehiclesFor } from "@/lib/vehicles";
 import { pickupLabel } from "@/lib/tours";
 
@@ -403,8 +404,13 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
             </span>
           </p>
         )}
-        {reviews && reviews.length > 0 ? (
-          <ReviewSlider reviews={reviews} label={`Reviews of ${tour.title}`} />
+        {reviews && (reviews.length > 0 || !isTicket) ? (
+          // This tour's own reviews first, then the owner-approved Tripadvisor reviews (this kind of
+          // tour first; each card names its tour), so the slider is never empty (owner, 2026-11-18).
+          <ReviewSlider
+            reviews={[...reviews, ...(isTicket ? [] : approvedReviewsFor(isPrivate ? "private" : "shared"))]}
+            label={reviews.length > 0 ? `Reviews of ${tour.title}` : "Guest reviews"}
+          />
         ) : (
           reviews && (
             <p className="text-base text-slate-700">

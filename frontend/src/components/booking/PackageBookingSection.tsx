@@ -7,19 +7,21 @@ import { getCheckoutData, getTourBySlug } from "@/lib/api/catalog";
 import { PackageCheckout, type PackageDay } from "@/components/booking/PackageCheckout";
 import { cancellationSentence, DEPOSIT_PERCENT } from "@/lib/policy";
 import type { PackageConfig } from "@/lib/privateTours";
+import { packageDayIncludes } from "@/lib/packageIncludes";
 
 const inSummer = (date: string) => {
   const md = date.slice(5, 10);
   return md >= "06-01" && md <= "10-10";
 };
 
-export async function PackageBookingSection({ config, heading = "Book your dates" }: { config: PackageConfig; heading?: string }) {
+export async function PackageBookingSection({ config, heading = "Book your dates", wholePage = false }: { config: PackageConfig; heading?: string; wholePage?: boolean }) {
   const slugs = Array.from(new Set(config.days.map((d) => d.slug)));
   const tours = new Map(await Promise.all(slugs.map(async (slug) => [slug, await getTourBySlug(slug).catch(() => null)] as const)));
-  const days: PackageDay[] = config.days.map((d) => ({
+  const days: PackageDay[] = config.days.map((d, i) => ({
     title: d.title,
     label: d.label,
     href: `/${d.slug}`,
+    includes: packageDayIncludes(config.slug, i, d.slug),
     departures: (tours.get(d.slug)?.departures ?? [])
       .filter((x) => x.status === "ACTIVE" && x.seatsAvailable > 0 && (x as any).bookable !== false)
       .filter((x) => new Date(x.date).getTime() >= new Date(new Date().toDateString()).getTime())
@@ -66,6 +68,7 @@ export async function PackageBookingSection({ config, heading = "Book your dates
             maxGuests={config.maxGuests}
             requestHref={`/contact-us?package=${config.slug}`}
             cancellationNote={cancellationSentence(config.vehicle ? "MULTIDAY" : "SHARED")}
+            wholePage={wholePage}
           />
         </div>
       </div>

@@ -47,7 +47,7 @@ export default function PrivateTwoDayBookPage() {
           <span className="rounded-full bg-white px-3 py-1 ring-1 ring-obsidian-900/10">Winter (Oct 11–May 31): {cad(PACKAGE_DAY_PRICE.winter)} per day per vehicle</span>
         </p>
       </div>
-      <PackageBookingSection config={PRIVATE_PACKAGES.two} heading="Choose your dates" />
+      <PackageBookingSection config={PRIVATE_PACKAGES.two} heading="Choose your dates" wholePage />
     </div>
   );
 }

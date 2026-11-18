@@ -83,7 +83,7 @@ const TOPICS: Topic[] = [
     id: "airport",
     patterns: [[/\b(airport|yyc|calgary|transfers?|arrival|flight)\b/, 2]],
     answer: () =>
-      "We arrange Calgary airport transfers with private bookings of two or more tour days (not with a one-day tour or on their own): tick the airport transfer box when you book the package and add your flight, accommodation, guests and luggage. The price is CAD $850 (Banff or Canmore) or CAD $895 (Lake Louise) per one-way transfer; a round trip is two transfers, added to the total at checkout and paid with the tour; the team confirms the arrangements.",
+      "We arrange Calgary airport transfers with private bookings of two or more tour days (not with a one-day tour or on their own): tick the airport transfer box when you book the package and add your flight, accommodation, guests and luggage. The price is per one-way transfer CAD $364 (Banff or Canmore) or CAD $445 (Lake Louise) for up to 6 guests, or CAD $850 (Banff or Canmore) or CAD $895 (Lake Louise) for 7 to 12 guests; a round trip is two transfers, added to the total at checkout and paid with the tour; the team confirms the arrangements.",
   },
   {
     id: "accommodation",

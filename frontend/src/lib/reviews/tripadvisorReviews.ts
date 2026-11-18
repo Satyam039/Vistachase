@@ -86,3 +86,13 @@ export const REVIEW_EXCERPTS: { theme: string; reviewId: string; excerpt: string
   { theme: "Easy travel", reviewId: "ta-r1073305922", excerpt: "We probably could have visited a lot of the tour stops on our own, but it would have taken us much longer, we would have struggled with parking and not gotten as much information." },
   { theme: "Never rushed", reviewId: "ta-r1077864518", excerpt: "He made sure everyone was well taken care of and took us to great photo spots (taking wonderful pictures as well). Small group of people and never felt rushed." },
 ];
+
+/**
+ * The owner-approved reviews for a page about one kind of tour (owner, 2026-11-18: "every tour page
+ * should have enough reviews in the slider"): the reviews of that kind first, then the others. Each
+ * card names the tour it was written about, so a shared-tour review is never shown as a private one.
+ */
+export function approvedReviewsFor(kind: "private" | "shared"): SliderReview[] {
+  const slug = kind === "private" ? "private-tours" : "shared-tours";
+  return [...TRIPADVISOR_REVIEWS.filter((r) => r.tourSlug === slug), ...TRIPADVISOR_REVIEWS.filter((r) => r.tourSlug !== slug)];
+}

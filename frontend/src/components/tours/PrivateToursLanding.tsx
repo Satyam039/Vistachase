@@ -39,7 +39,7 @@ import { ReviewSlider, type SliderReview } from "@/components/reviews/ReviewSlid
 import { FaqBrowser } from "@/components/faq/FaqBrowser";
 import { MediaCard } from "@/components/cards/MediaCard";
 import { CARD_BADGE, CARD_PANEL } from "@/components/cards/MediaCard";
-import { TRIPADVISOR_REVIEWS } from "@/lib/reviews/tripadvisorReviews";
+import { approvedReviewsFor } from "@/lib/reviews/tripadvisorReviews";
 import { fromPrice } from "@/lib/tours";
 import { money } from "@/lib/pricing";
 import type { TourWithAvailability } from "@/lib/api/types";
@@ -61,11 +61,9 @@ export function PrivateToursLanding({
   tours: TourWithAvailability[];
   reviews?: SliderReview[];
 }) {
-  // Combine live reviews with curated TripAdvisor private tour reviews
-  const privateReviews = [
-    ...reviews,
-    ...TRIPADVISOR_REVIEWS.filter((r) => r.tourSlug === "private-tours"),
-  ];
+  // Live reviews, then the owner-approved Tripadvisor reviews: private tours first, then the
+  // shared ones (each card names its tour), so the slider has enough to show (owner, 2026-11-18).
+  const privateReviews = [...reviews, ...approvedReviewsFor("private")];
 
   // Day tours show what checkout charges (their live departures); the packages, booked on request,
   // show the doc's per-day price (lib/privateTours.ts).
@@ -256,8 +254,8 @@ export function PrivateToursLanding({
             <SectionHeading
               id="reviews-heading"
               eyebrow="Guest reviews"
-              title="Stories from Our Private Tours"
-              intro="Read real experiences from travellers who explored the Canadian Rockies with our private driver-guides."
+              title="Stories from Our Guests"
+              intro="Real reviews from travellers who explored the Canadian Rockies with our driver-guides, on private and small-group tours."
             />
             <ReviewSlider reviews={privateReviews} />
           </div>

@@ -11,6 +11,7 @@ import { processBokunSyncTasks, queueUpcomingBookings, retryBokunSync, setBokunA
 import { syncBokunSeats } from "@/modules/bokun/availability-sync";
 import { CALENDAR_DAYS, syncFarCalendarFromBokun } from "@/jobs/tasks";
 import { cancelBooking, createBooking } from "@/modules/bookings/booking.repository";
+import { airportTransferBokun } from "@/modules/bookings/airport-transfer";
 import { createReservationHold } from "@/modules/reservations/reservation.repository";
 import { dateOnly, timeOfDay } from "@/lib/utils/time";
 
@@ -745,5 +746,57 @@ describe("Bókun start time IDs (owner's doc, 2026-11-05)", () => {
   });
   it("fall back to the clock time when Bókun returns none of them (test account)", () => {
     expect(findSlot([{ date: day, startTime: "08:00", startTimeId: 1 }], DAY, "08:00", [4787116])?.startTimeId).toBe(1);
+  });
+});
+
+describe("Airport transfers in Bókun (owner, 2026-11-18)", () => {
+  it("each one-way transfer is its own Bókun booking on the area's product, at the group-size rate, and cancels with the booking", async () => {
+    const dep = await departure(privateTourId, { time: "07:30", capacity: 13 });
+    bokun.slot("1167962", DAY, "07:30", 1);
+    // Banff transfer product: one start a day, rates "up to 6" (2712881) and "up to 12" (2712882).
+    for (const date of ["2035-07-13", "2035-07-16"]) {
+      (bokun.slots["1356054"] ??= []).push({ date: Date.parse(`${date}T00:00:00Z`), startTime: "00:00", startTimeId: 999, availabilityCount: 5, defaultRateId: 2712882, rates: [{ id: 2712881 }, { id: 2712882 }] });
+    }
+    const result = await createBooking({
+      departureId: dep.id,
+      customerName: "Ada Lovelace",
+      customerEmail: "ada.transfer@example.com",
+      customerPhone: "+1 403 555 0100",
+      adultsCount: 4,
+      childrenCount: 0,
+      infantsCount: 0,
+      airportTransfer: { type: "ROUND_TRIP", area: "BANFF", arrivalDate: "2035-07-13", arrivalTime: "14:30", departureDate: "2035-07-16", departureTime: "18:05", from: "Calgary Airport (YYC)", to: "Fairmont Banff Springs" },
+    });
+    expect(result.success).toBe(true);
+    const booking = await prisma.booking.findUniqueOrThrow({ where: { id: result.booking!.id } });
+    expect(booking.totalAmount).toBe(18900 + 2 * 36400);
+    expect((await tasksFor(booking.id)).map((t) => t.operation).sort()).toEqual(["CREATE", "CREATE_TRANSFER", "CREATE_TRANSFER"]);
+
+    await run(booking.id);
+    const submits = bokun.made("/checkout.json/submit").map((c) => c.body.directBooking);
+    expect(submits).toHaveLength(3);
+    const transfers = submits.filter((b) => b.activityBookings[0].activityId === 1356054);
+    expect(transfers.map((b) => [b.externalBookingReference, b.activityBookings[0].rateId, b.activityBookings[0].date])).toEqual(
+      expect.arrayContaining([
+        [`${booking.bookingReference}-ARR`, 2712881, "2035-07-13"],
+        [`${booking.bookingReference}-DEP`, 2712881, "2035-07-16"],
+      ]),
+    );
+    const dep2 = transfers.find((b) => b.externalBookingReference.endsWith("-DEP"))!;
+    expect(dep2.activityBookings[0].note).toContain("Departure transfer: Fairmont Banff Springs to Calgary Airport (YYC), flight leaves 2035-07-16 18:05, 4 guests.");
+    // The tour is confirmed with the tour's price, each transfer with its own.
+    const amounts = bokun.made("/checkout.json/confirm-reserved/").map((c) => c.body.amount).sort((a, b) => a - b);
+    expect(amounts).toEqual([189, 364, 364]);
+    expect((await tasksFor(booking.id)).every((t) => t.status === "SUCCEEDED")).toBe(true);
+
+    await cancelBooking(booking.bookingReference, booking.customerEmail);
+    await run(booking.id);
+    expect(bokun.made("/booking.json/cancel-booking")).toHaveLength(3);
+  });
+
+  it("7 to 12 guests take the 'up to 12' rate; Lake Louise uses its own product", () => {
+    expect(airportTransferBokun("LAKE_LOUISE", 9)).toEqual({ productId: "1356058", rateId: 2712890 });
+    expect(airportTransferBokun("CANMORE", 6)).toEqual({ productId: "1356055", rateId: 2712883 });
+    expect(airportTransferBokun("CANMORE", 7)).toEqual({ productId: "1356055", rateId: 2712886 });
   });
 });

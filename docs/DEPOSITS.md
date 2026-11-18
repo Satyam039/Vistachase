@@ -9,7 +9,7 @@ rules follow the published payment terms on `/privacy-policy-vista-chase`.
 | --- | --- | --- |
 | Deposit | 20% of the total | `DEPOSIT_PERCENT` |
 | Deposit offered when the departure is at least | 15 days away (within 14 days: pay in full) | `DEPOSIT_MIN_DAYS_BEFORE` |
-| Balance due | 14 days before departure | `BALANCE_DUE_DAYS_BEFORE` |
+| Balance due | 7 days before departure (owner, 2026-11-18; a package: 7 days before its first tour day) | `BALANCE_DUE_DAYS_BEFORE` |
 | First reminder | 3 days before the balance is due | `BALANCE_REMINDER_DAYS_BEFORE_DUE` |
 | Staff flag (PAYMENT_DUE) if still unpaid | 72 hours before departure | `BALANCE_OVERDUE_HOURS_BEFORE` |
 | Cancel before the policy deadline | Same as any booking: everything paid, less 20% of the total on a private multi-day package (so a deposit alone is kept there) | `policyDecision` (cancellation-policy.ts) |
@@ -27,7 +27,7 @@ deadline is 24 hours before departure for shared tours and shuttles and 72 hours
 Since 2026-11-11 (owner: "continue booking with 20% payment") the private Two-, Three- and Four-Day
 journeys (`depositAllowed` in `package-booking.ts`) offer the same choice. With `paymentPlan:
 "DEPOSIT"` on `POST /api/bookings/package`, every day is a DEPOSIT booking with its own 20% deposit
-and balance (due 14 days before that day); the one PaymentIntent is for the sum of the deposits, and
+and balance (every day's balance due 7 days before the package's first tour day); the one PaymentIntent is for the sum of the deposits, and
 the webhook confirms all days on that sum. The shared Two-Day Rockies Explorer stays pay-in-full.
 
 ## Flow
