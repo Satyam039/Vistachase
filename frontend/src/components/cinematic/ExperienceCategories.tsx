@@ -97,7 +97,12 @@ export function ExperienceCategories() {
   const cards = withoutHiddenTickets(CATEGORIES);
   const layout = LAYOUT[cards.length] ?? LAYOUT[4];
   return (
-    <section id="experiences" aria-labelledby="experiences-heading" className="bg-white py-20 text-obsidian-900 sm:py-28">
+    <section
+      id="experiences"
+      aria-labelledby="experiences-heading"
+      className="scroll-mt-20 bg-white py-20 text-obsidian-900 sm:scroll-mt-24 sm:py-28"
+    >
+      <div id="choose-how-you-see-the-rockies" className="-translate-y-24 pointer-events-none" aria-hidden="true" />
       <div className="mx-auto max-w-[110rem] px-page">
         <SectionHeading
           id="experiences-heading"

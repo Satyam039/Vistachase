@@ -246,7 +246,25 @@ export function SiteMenu() {
 
           {/* Bottom row: book, call, concierge, contact - mobile stacked & responsive */}
           <div className="flex flex-col gap-3 border-t border-white/[0.08] bg-obsidian-950/90 p-5 backdrop-blur-md sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-6 sm:px-10 lg:px-16 sm:py-6">
-            <Link href="/banff-highlights-tour" className="golden-summit-btn flex h-12 items-center justify-center rounded-full px-6 text-sm font-medium">
+            <Link
+              href="/#experiences"
+              onClick={(e) => {
+                close();
+                if (pathname === "/") {
+                  const el =
+                    document.getElementById("experiences") ??
+                    document.getElementById("choose-how-you-see-the-rockies");
+                  if (el) {
+                    e.preventDefault();
+                    el.scrollIntoView({ behavior: "smooth" });
+                    if (window.location.hash !== "#experiences") {
+                      window.history.pushState(null, "", "/#experiences");
+                    }
+                  }
+                }
+              }}
+              className="golden-summit-btn flex h-12 items-center justify-center rounded-full px-6 text-sm font-medium"
+            >
               Book a tour
             </Link>
             <div className="flex flex-wrap items-center gap-x-5 gap-y-1 pt-1 sm:pt-0">
