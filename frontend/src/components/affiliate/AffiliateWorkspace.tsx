@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Check, Clock, Copy, LogOut, ExternalLink, BarChart2, RefreshCw } from "lucide-react";
 import { Dropdown } from "@/components/forms/Dropdown";
 import { AffiliateHeader } from "./AffiliateHeader";
+import { PartnerProducts } from "./PartnerProducts";
 
 export interface Profile {
   name: string;
@@ -67,7 +68,7 @@ export interface Payout {
   createdAt: string;
 }
 
-export type Tab = "overview" | "referrals" | "bookings" | "commissions" | "payouts" | "reports" | "settings";
+export type Tab = "overview" | "products" | "referrals" | "bookings" | "commissions" | "payouts" | "reports" | "settings";
 
 interface TourOption {
   slug: string;
@@ -262,7 +263,13 @@ export function AffiliateWorkspace({ activeTab = "overview" }: { activeTab?: Tab
 
             {/* Quick Link Generator */}
             <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-              <h2 className="text-lg font-medium text-slate-900">Your Primary Referral Link</h2>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-lg font-medium text-slate-900">Your Primary Referral Link</h2>
+                <Link href="/affiliate/products" className="text-sm text-ocean-700 hover:underline">
+                  Links for every product →
+                </Link>
+              </div>
+              <p className="text-sm text-slate-600">This link opens the home page. To send guests straight to a tour, use its link under Products.</p>
               <div className="flex flex-col sm:flex-row gap-3">
                 <input
                   readOnly
@@ -297,6 +304,9 @@ export function AffiliateWorkspace({ activeTab = "overview" }: { activeTab?: Tab
             </section>
           </div>
         )}
+
+        {/* Products: every product with the partner's own link */}
+        {activeTab === "products" && <PartnerProducts code={data.affiliate.code} />}
 
         {/* Tab 2: Referrals */}
         {activeTab === "referrals" && (

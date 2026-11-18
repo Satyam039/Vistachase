@@ -6,7 +6,8 @@ How the partner program works today: attribution, the commission ledger, payouts
 
 | Page | Who | What |
 |---|---|---|
-| `/partners` | Public | Program page and application form (name, contact, email, password, type, website, phone with country code: all required, checked in the browser and the API). New partners start PENDING. |
+| `/partners`, `/affiliate/register` | Public | Program page and the partner application form (owner's "Vista Chase Partner Application", 2026-11-18): partner details, wire transfer details (Canadian or international bank), payment authorization (checkbox + typed name, dated), plus a portal password. Required fields match the form. Answers go to `Affiliate.application` (JSON); bank details are AES-256-GCM encrypted into `Affiliate.payoutDetails` (key `PARTNER_DATA_KEY`, else derived from `JWT_SECRET`: set `PARTNER_DATA_KEY` before rotating `JWT_SECRET`). Admins see them in Admin → Partners → Edit (`GET /admin/:id/application?bank=1`, audited as `PARTNER_BANK_DETAILS_VIEWED`). New partners start PENDING. |
+| `/affiliate/products` | Partner | Every product (shared, private, multi-day packages, shuttles, collection pages) with the partner's link `<product page>?ref=CODE`; Open starts a new tab. Activity tickets are left out (booked on the operator's site). |
 | `/partners/login` | Partner | Sign in. |
 | `/partners/dashboard` | Partner | Tabs: Overview (paid bookings, guests, value, net commission, pending / approved / paid / reversed, 30-day clicks and conversion), Links (link builder), Bookings, Commissions (statement), Payouts, Profile (business name, contact, phone, website, payout email). No guest names, emails or phone numbers anywhere. |
 | `/admin/partners` | ADMIN | Tabs: Partners (approve, suspend, add, edit fallback rate and payout details), Commission rules, Commissions (approve, manual adjustment), Payouts (draft, mark paid, cancel), Report (period totals, CSV). |

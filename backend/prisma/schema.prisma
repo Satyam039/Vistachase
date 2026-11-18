@@ -627,6 +627,10 @@ model Affiliate {
   bokunChannelId  String? // Bokun booking channel for this partner (placeholder until API access)
   phone           String?
   payoutEmail     String? // where Vista Chase sends the partner's payouts (paid outside the app)
+  /// Partner application form answers (partner details + signed payment authorization), no bank details.
+  application     Json?
+  /// Wire transfer details from the application, AES-256-GCM encrypted (modules/affiliates/partner-application.ts).
+  payoutDetails   String?
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
   bookings        Booking[]

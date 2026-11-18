@@ -13,7 +13,8 @@ import { sendApplicationEmails } from "@/modules/affiliates/partner-emails";
  * Partners see their referred bookings without guest names or contact details.
  */
 
-export const AFFILIATE_TYPES = ["HOTEL", "AGENT", "CREATOR", "OTHER"] as const;
+// AGENCY, ADVISOR, OPERATOR and AFFILIATE come from the partner application form (2026-11-18).
+export const AFFILIATE_TYPES = ["HOTEL", "AGENT", "CREATOR", "OTHER", "AGENCY", "ADVISOR", "OPERATOR", "AFFILIATE"] as const;
 export type AffiliateType = (typeof AFFILIATE_TYPES)[number];
 export const AFFILIATE_STATUSES = ["PENDING", "ACTIVE", "SUSPENDED", "REJECTED"] as const;
 
@@ -44,6 +45,9 @@ export async function applyAffiliate(input: {
   type: AffiliateType;
   website?: string;
   phone?: string;
+  payoutEmail?: string;
+  application?: Prisma.InputJsonValue;
+  payoutDetails?: string;
 }) {
   const email = input.email.toLowerCase().trim();
   if (await prisma.user.findUnique({ where: { email } })) {
@@ -54,7 +58,17 @@ export async function applyAffiliate(input: {
   const affiliate = await prisma.$transaction(async (tx) => {
     const user = await tx.user.create({ data: { email, name: input.contactName, passwordHash, role: "AFFILIATE" } });
     return tx.affiliate.create({
-      data: { userId: user.id, name: input.name, type: input.type, website: input.website || null, phone: input.phone || null, code },
+      data: {
+        userId: user.id,
+        name: input.name,
+        type: input.type,
+        website: input.website || null,
+        phone: input.phone || null,
+        payoutEmail: input.payoutEmail || null,
+        application: input.application,
+        payoutDetails: input.payoutDetails || null,
+        code,
+      },
     });
   });
   sendApplicationEmails({ name: input.name, contactName: input.contactName, email, code: affiliate.code, type: input.type });

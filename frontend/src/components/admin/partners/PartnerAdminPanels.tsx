@@ -305,6 +305,119 @@ export function EditPartnerForm({ partner, onDone, notify }: { partner: AdminPar
   );
 }
 
+// The partner application form answers and wire details (owner, 2026-11-18). Bank details are
+// fetched only when staff press "Show bank details"; each fetch is audited by the API.
+
+const WORK_MODE: Record<string, string> = { BOOK: "Book for guests", REFER: "Refer guests", BOTH: "Both" };
+const BANK_LABELS: [string, string][] = [
+  ["beneficiaryName", "Beneficiary"],
+  ["beneficiaryAddress", "Beneficiary address"],
+  ["currency", "Currency"],
+  ["bankName", "Bank"],
+  ["branchAddress", "Branch address"],
+  ["location", "Bank location"],
+  ["institutionNumber", "Institution number"],
+  ["transitNumber", "Transit number"],
+  ["accountNumber", "Account number"],
+  ["iban", "IBAN / account number"],
+  ["swift", "SWIFT/BIC"],
+  ["routing", "Local routing code"],
+  ["intermediaryBank", "Intermediary bank"],
+  ["intermediarySwift", "Intermediary SWIFT/routing"],
+  ["correspondentReference", "Correspondent / further credit"],
+  ["additionalInstructions", "Additional instructions"],
+];
+
+export function PartnerApplicationDetails({ partnerId }: { partnerId: string }) {
+  const [app, setApp] = useState<Record<string, unknown> | null | undefined>(undefined);
+  const [bank, setBank] = useState<Record<string, string> | null>(null);
+  const [hasBank, setHasBank] = useState(false);
+  const [showBank, setShowBank] = useState(false);
+  const [error, setError] = useState("");
+
+  async function toggleBank() {
+    if (showBank) return setShowBank(false);
+    if (!bank) {
+      const { ok, data } = await call(`/${partnerId}/application?bank=1`);
+      if (!ok) return setError(errorOf(data, "Couldn't load the bank details."));
+      if (data.bankUnreadable) return setError("The bank details can't be read with the current key (was PARTNER_DATA_KEY or JWT_SECRET changed?).");
+      setBank((data.bank as Record<string, string>) ?? null);
+    }
+    setShowBank(true);
+  }
+
+  useEffect(() => {
+    let live = true;
+    void call(`/${partnerId}/application`).then(({ ok, data }) => {
+      if (!live) return;
+      if (!ok) return setError(errorOf(data, "Couldn't load the application."));
+      setApp((data.application as Record<string, unknown>) ?? null);
+      setHasBank(!!data.hasBankDetails);
+    });
+    return () => {
+      live = false;
+    };
+  }, [partnerId]);
+
+  if (app === undefined && !error) return <p className="px-6 pt-5 text-sm text-slate-600">Loading application…</p>;
+  const a = (app ?? {}) as Record<string, unknown>;
+  const auth = (a.authorization ?? {}) as { signatureName?: string; signedAt?: string };
+  const rows: [string, unknown][] = app
+    ? [
+        ["Trading name", a.tradingName],
+        ["Contact role", a.contactRole],
+        ["Mailing address", a.mailingAddress],
+        ["Website / reference", a.websiteOrReference],
+        ["Host agency", a.hostAgency],
+        ["Authorized signer", a.authorizedSigner],
+        ["Works with us by", WORK_MODE[String(a.workMode)] ?? a.workMode],
+        ["Statement email", a.statementEmail],
+        ["Payment authorization", auth.signatureName ? `Signed by ${auth.signatureName}${auth.signedAt ? ` on ${auth.signedAt.slice(0, 10)}` : ""}` : null],
+      ]
+    : [];
+
+  return (
+    <div className="space-y-4 bg-obsidian-50/60 px-6 pt-5">
+      <h3 className="text-base text-obsidian-900">Application</h3>
+      {error && (
+        <p role="alert" className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-800">
+          {error}
+        </p>
+      )}
+      {!app && !error && <p className="text-sm text-slate-600">This partner applied before the application form, or was added by staff.</p>}
+      {app && (
+        <dl className="grid gap-x-6 gap-y-2 text-sm md:grid-cols-3">
+          {rows
+            .filter(([, v]) => v)
+            .map(([k, v]) => (
+              <div key={k}>
+                <dt className="text-slate-600">{k}</dt>
+                <dd className="whitespace-pre-line text-obsidian-900">{String(v)}</dd>
+              </div>
+            ))}
+        </dl>
+      )}
+      {hasBank && (
+        <div className="space-y-2">
+          <button type="button" aria-expanded={showBank} onClick={toggleBank} className="text-sm text-ocean-700 underline underline-offset-2">
+            {showBank ? "Hide bank details" : "Show bank details"}
+          </button>
+          {showBank && bank && (
+            <dl className="grid gap-x-6 gap-y-2 rounded-2xl bg-white p-4 text-sm ring-1 ring-obsidian-900/[0.07] md:grid-cols-3">
+              {BANK_LABELS.filter(([k]) => bank[k]).map(([k, label]) => (
+                <div key={k}>
+                  <dt className="text-slate-600">{label}</dt>
+                  <dd className="whitespace-pre-line font-mono text-obsidian-900">{k === "location" ? (bank[k] === "CANADA" ? "Canada" : "Outside Canada") : bank[k]}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Commission rules ------------------------------------------------------------------------------
 
 const CATEGORIES = ["SHARED", "PRIVATE", "SHUTTLE", "MULTIDAY", "TICKET"];
