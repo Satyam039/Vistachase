@@ -23,10 +23,14 @@ export interface AirportTransferValue {
   arrivalTime: string;
   departureDate: string;
   departureTime: string;
-  /** Where we pick the guest up, e.g. Calgary Airport (YYC). */
+  /** Arrival: where we pick the guest up, e.g. Calgary Airport (YYC). */
   from: string;
-  /** Where we take them, e.g. their hotel. */
+  /** Arrival: where we take them, e.g. their hotel. */
   to: string;
+  /** Departure: where we pick the guest up, e.g. their hotel (owner, 2026-11-19: independent of the arrival). */
+  departureFrom: string;
+  /** Departure: where we take them, e.g. Calgary Airport (YYC). */
+  departureTo: string;
   /** Where the guest stays: sets the price. */
   area: "" | AirportArea;
 }
@@ -39,6 +43,8 @@ export const EMPTY_AIRPORT_TRANSFER: AirportTransferValue = {
   departureTime: "",
   from: "",
   to: "",
+  departureFrom: "",
+  departureTo: "",
   area: "",
 };
 
@@ -126,20 +132,20 @@ export function airportTransferSummaryLabel(t: Pick<AirportTransferValue, "type"
   return `Airport transfer, ${kind} (${quote.transfers} × ${cad(quote.unit)})`;
 }
 
-/** Changes the transfer type; swaps From and Where to when the direction flips (to or from the airport). */
-function withType(value: AirportTransferValue, type: AirportTransferType): AirportTransferValue {
-  const flips = value.type !== "" && (value.type === "DEPARTURE") !== (type === "DEPARTURE");
-  return flips ? { ...value, type, from: value.to, to: value.from } : { ...value, type };
-}
-
-/** What the booking API takes: only the times the chosen transfer needs. */
+/**
+ * What the booking API takes: only the times and places the chosen transfer needs. The server's
+ * from/to is the first leg (the departure's own places for a departure only); a round trip also
+ * sends its departure places.
+ */
 export function airportTransferPayload(t: AirportTransferValue) {
+  const departingOnly = t.type === "DEPARTURE";
   return {
     type: t.type || undefined,
     ...(needsArrival(t.type) ? { arrivalDate: t.arrivalDate, arrivalTime: t.arrivalTime } : {}),
     ...(needsDeparture(t.type) ? { departureDate: t.departureDate, departureTime: t.departureTime } : {}),
-    from: t.from.trim(),
-    to: t.to.trim(),
+    from: (departingOnly ? t.departureFrom : t.from).trim(),
+    to: (departingOnly ? t.departureTo : t.to).trim(),
+    ...(t.type === "ROUND_TRIP" ? { departureFrom: t.departureFrom.trim(), departureTo: t.departureTo.trim() } : {}),
     area: t.area || undefined,
   };
 }
@@ -152,7 +158,8 @@ export function airportTransferError(t: AirportTransferValue): string | null {
   if (t.type === "ROUND_TRIP" && `${t.departureDate} ${t.departureTime}` <= `${t.arrivalDate} ${t.arrivalTime}`) {
     return "Your departure must be after your arrival.";
   }
-  if (t.from.trim().length < 2 || t.to.trim().length < 2) return "Enter where we pick you up and where we take you.";
+  if (needsArrival(t.type) && (t.from.trim().length < 2 || t.to.trim().length < 2)) return "Enter where your arrival transfer is from and where it goes.";
+  if (needsDeparture(t.type) && (t.departureFrom.trim().length < 2 || t.departureTo.trim().length < 2)) return "Enter where your departure transfer is from and where it goes.";
   if (!t.area) return "Choose where you're staying: it sets the transfer price.";
   return null;
 }
@@ -271,7 +278,7 @@ export function AirportTransferDetails({
       />
     </label>
   );
-  const place = (id: "from" | "to", label: string, placeholder: string) => (
+  const place = (id: "from" | "to" | "departureFrom" | "departureTo", label: string, placeholder: string) => (
     <label className="block text-sm text-obsidian-900" htmlFor={`airport-${id}`}>
       {label}
       <input
@@ -289,7 +296,6 @@ export function AirportTransferDetails({
       />
     </label>
   );
-  const departing = value.type === "DEPARTURE";
   return (
     <fieldset className="space-y-3">
       <fieldset>
@@ -305,7 +311,7 @@ export function AirportTransferDetails({
                 name="airport-type"
                 className="mt-0.5 h-4 w-4 shrink-0 accent-ocean-700"
                 checked={value.type === t.id}
-                onChange={() => onChange(withType(value, t.id))}
+                onChange={() => onChange({ ...value, type: t.id })}
               />
               <span>
                 <span className="block text-obsidian-900">{t.label}</span>
@@ -320,27 +326,33 @@ export function AirportTransferDetails({
       </fieldset>
       {value.type && (
         <>
-          <fieldset>
-            <legend className="text-sm font-medium text-obsidian-900">Your flights</legend>
-            <div className="mt-1 grid grid-cols-2 gap-3">
-              {needsArrival(value.type) && (
-                <>
-                  {field("arrivalDate", "Airport arrival date", "date", minDate)}
-                  {field("arrivalTime", "Arrival time", "time")}
-                </>
-              )}
-              {needsDeparture(value.type) && (
-                <>
-                  {field("departureDate", "Airport departure date", "date", (needsArrival(value.type) && value.arrivalDate) || minDate)}
-                  {field("departureTime", "Departure time", "time")}
-                </>
-              )}
-            </div>
-          </fieldset>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {place("from", "From", departing ? "e.g. your hotel in Banff" : "e.g. Calgary Airport (YYC)")}
-            {place("to", "Where to", departing ? "e.g. Calgary Airport (YYC)" : "e.g. your hotel in Banff")}
-          </div>
+          {/* Owner, 2026-11-19: each flight's date and time, then its own From / Where fields right below. */}
+          {needsArrival(value.type) && (
+            <fieldset className="space-y-3">
+              <legend className="text-sm font-medium text-obsidian-900">Airport arrival</legend>
+              <div className="grid grid-cols-2 gap-3">
+                {field("arrivalDate", "Airport arrival date", "date", minDate)}
+                {field("arrivalTime", "Arrival time", "time")}
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {place("from", "From", "e.g. Calgary Airport (YYC)")}
+                {place("to", "Where", "e.g. your hotel in Banff")}
+              </div>
+            </fieldset>
+          )}
+          {needsDeparture(value.type) && (
+            <fieldset className="space-y-3">
+              <legend className="text-sm font-medium text-obsidian-900">Airport departure</legend>
+              <div className="grid grid-cols-2 gap-3">
+                {field("departureDate", "Airport departure date", "date", (needsArrival(value.type) && value.arrivalDate) || minDate)}
+                {field("departureTime", "Departure time", "time")}
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {place("departureFrom", "From", "e.g. your hotel in Banff")}
+                {place("departureTo", "Where to", "e.g. Calgary Airport (YYC)")}
+              </div>
+            </fieldset>
+          )}
         </>
       )}
       <fieldset>

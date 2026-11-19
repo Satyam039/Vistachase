@@ -40,6 +40,12 @@ export const airportTransferSchema = z
     departureTime: optionalTime,
     from: z.string().trim().min(2, "Say where we pick you up").max(160),
     to: z.string().trim().min(2, "Say where we take you").max(160),
+    /**
+     * A round trip's departure leg, entered on its own (owner, 2026-11-19: arrival and departure
+     * locations are independent). Missing (older pages): the arrival route reversed.
+     */
+    departureFrom: z.string().trim().min(2, "Say where we pick you up for your departure").max(160).optional(),
+    departureTo: z.string().trim().min(2, "Say where we take you for your departure").max(160).optional(),
     /** Where the guest stays: sets the price. Required to book (checked when the booking is priced). */
     area: z.enum(["BANFF", "CANMORE", "LAKE_LOUISE"]).optional(),
   })
@@ -129,6 +135,25 @@ export function airportTransferPriceText(quote: Pick<AirportTransferQuote, "tran
   return quote.transfers > 1 ? `${quote.transfers} x ${money(quote.unitCents)} = ${money(quote.unitCents * quote.transfers)}` : money(quote.unitCents);
 }
 
+/**
+ * Where the departure leg runs. Departure only: from/to. Round trip: its own departure fields, or
+ * (older bookings) the arrival route reversed.
+ */
+export function departureRoute(t: { type?: AirportTransferType; from?: string; to?: string; departureFrom?: string; departureTo?: string }): { from: string; to: string } {
+  if (t.type === "ROUND_TRIP") {
+    if (t.departureFrom && t.departureTo) return { from: t.departureFrom, to: t.departureTo };
+    return { from: t.to ?? "", to: t.from ?? "" };
+  }
+  return { from: t.from ?? "", to: t.to ?? "" };
+}
+
+/** "from A to B" for each leg of the transfer. */
+function routeText(t: { type?: AirportTransferType; from?: string; to?: string; departureFrom?: string; departureTo?: string }, type: AirportTransferType): string {
+  if (type !== "ROUND_TRIP") return `${t.from} to ${t.to}`;
+  const back = departureRoute({ ...t, type });
+  return back.from === t.to && back.to === t.from ? `${t.from} to ${t.to} and back` : `arrival ${t.from} to ${t.to}; departure ${back.from} to ${back.to}`;
+}
+
 /** The line staff read in the booking's special requests. */
 export function airportTransferNote(t: AirportTransfer, guests: number): string {
   const quote = quoteAirportTransfer(t, guests);
@@ -140,7 +165,7 @@ export function airportTransferNote(t: AirportTransfer, guests: number): string 
     .filter(Boolean)
     .join(", ");
   const price = quote.unitCents != null ? `${airportTransferPriceText(quote)}, paid with the tour` : "price to be confirmed by Vista Chase";
-  return `Airport transfer requested (${TYPE_LABEL[t.type].toLowerCase()}): from ${t.from} to ${t.to}${area}, ${times} (${price}).`;
+  return `Airport transfer requested (${TYPE_LABEL[t.type].toLowerCase()}): ${((r) => (r.startsWith("arrival ") ? r : `from ${t.from} to ${t.to}`))(routeText(t, t.type))}${area}, ${times} (${price}).`;
 }
 
 /** Stored in priceSnapshot.airportTransfer. */
@@ -161,7 +186,7 @@ export function airportTransferSummary(priceSnapshot: unknown): string | null {
   const type: AirportTransferType = t.type ?? inferType(t);
   const transfers = t.transfers ?? (t.type ? transferCount(type) : 1);
   const unitCents = t.unitCents ?? (t.priceCents != null ? Math.round(t.priceCents / transfers) : null);
-  const route = type === "ROUND_TRIP" ? `${t.from} to ${t.to} and back` : `${t.from} to ${t.to}`;
+  const route = routeText(t, type);
   const times = [
     needsArrival(type) && t.arrivalDate ? `arrival ${t.arrivalDate} ${t.arrivalTime ?? ""}`.trim() : null,
     needsDeparture(type) && t.departureDate ? `departure ${t.departureDate} ${t.departureTime ?? ""}`.trim() : null,
@@ -233,8 +258,7 @@ export function transferLegs(priceSnapshot: unknown): TransferLeg[] {
     legs.push({ leg: "ARRIVAL", area: t.area, date: t.arrivalDate, time: t.arrivalTime, from: t.from, to: t.to, guests, unitCents, description: `Arrival transfer: ${t.from} to ${t.to}, flight lands ${t.arrivalDate} ${t.arrivalTime}, ${people}.` });
   }
   if (needsDeparture(type) && t.departureDate && t.departureTime) {
-    // A round trip stores the arrival direction (airport -> hotel); the departure leg runs back.
-    const [from, to] = type === "ROUND_TRIP" ? [t.to, t.from] : [t.from, t.to];
+    const { from, to } = departureRoute({ ...t, type });
     legs.push({ leg: "DEPARTURE", area: t.area, date: t.departureDate, time: t.departureTime, from, to, guests, unitCents, description: `Departure transfer: ${from} to ${to}, flight leaves ${t.departureDate} ${t.departureTime}, ${people}.` });
   }
   return legs;

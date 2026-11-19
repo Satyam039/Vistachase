@@ -17,7 +17,7 @@ import { Banner } from "@astryxdesign/core/Banner";
 import { Button } from "@astryxdesign/core/Button";
 import { TextArea } from "@astryxdesign/core/TextArea";
 import { TextInput } from "@astryxdesign/core/TextInput";
-import { CalendarDays, Check, ChevronDown, Lock, Mail, MapPin, Users, X } from "lucide-react";
+import { CalendarDays, Check, ChevronDown, Lock, Mail, MapPin, Plane, Ticket, Users, X } from "lucide-react";
 import { QuantityInput } from "@/components/forms/QuantityInput";
 import { DepartureCalendar } from "@/components/booking/DepartureCalendar";
 import {
@@ -522,26 +522,6 @@ export function PackageCheckout({
                 <QuantityInput label="Guests" description="All ages, one private vehicle" value={adults} onChange={setAdults} min={1} max={MAX_GUESTS} />
               </div>
               <p className="mt-3 text-sm text-slate-600">Private, up to {MAX_GUESTS} guests. The price is per vehicle, whatever the group size.</p>
-              {offersAirport && (
-                <div className="mt-4 space-y-3" {...(show("airport") ? { "data-first-error": true } : {})}>
-                  <AirportTransferToggle checked={airport} onChange={setAirport} />
-                  {airport && <AirportTransferDetails value={airportTransfer} onChange={setAirportTransfer} error={show("airport")} guests={guests} />}
-                </div>
-              )}
-              <div className="mt-3" {...(show("activities") ? { "data-first-error": true } : {})}>
-                {packageActivities.length > 0 ? (
-                  <ActivityAddOnToggle checked={activities} onChange={setActivities}>
-                    <PackageActivityPicker activities={packageActivities} value={activityChoice} onChange={setActivityChoice} partySize={adults} prices={activityPrices} />
-                  </ActivityAddOnToggle>
-                ) : (
-                  <ActivityAddOnToggle checked={activities} onChange={setActivities} guests={activityGuests} onGuestsChange={setActivityGuests} maxGuests={adults} />
-                )}
-                {show("activities") && (
-                  <p role="alert" className="mt-1.5 text-sm text-red-700">
-                    {errors.activities}
-                  </p>
-                )}
-              </div>
             </>
           ) : (
             <>
@@ -630,6 +610,38 @@ export function PackageCheckout({
             <p className="text-sm text-slate-600">Accommodation is not included.</p>
           </div>
         </Section>
+
+
+        {/* Owner, 2026-11-19: after the guests come the dates, then the airport transfer, then add-ons. */}
+        {vehicle && offersAirport && (
+          <Section compact={compact} icon={Plane} title="Airport arrival & departure">
+              {offersAirport && (
+                <div className="space-y-3" {...(show("airport") ? { "data-first-error": true } : {})}>
+                  <AirportTransferToggle checked={airport} onChange={setAirport} />
+                  {airport && <AirportTransferDetails value={airportTransfer} onChange={setAirportTransfer} error={show("airport")} guests={guests} />}
+                </div>
+              )}
+          </Section>
+        )}
+
+        {vehicle && (
+          <Section compact={compact} icon={Ticket} title="Add-on activities">
+              <div {...(show("activities") ? { "data-first-error": true } : {})}>
+                {packageActivities.length > 0 ? (
+                  <ActivityAddOnToggle checked={activities} onChange={setActivities}>
+                    <PackageActivityPicker activities={packageActivities} value={activityChoice} onChange={setActivityChoice} partySize={adults} prices={activityPrices} />
+                  </ActivityAddOnToggle>
+                ) : (
+                  <ActivityAddOnToggle checked={activities} onChange={setActivities} guests={activityGuests} onGuestsChange={setActivityGuests} maxGuests={adults} />
+                )}
+                {show("activities") && (
+                  <p role="alert" className="mt-1.5 text-sm text-red-700">
+                    {errors.activities}
+                  </p>
+                )}
+              </div>
+          </Section>
+        )}
 
         <Section compact={compact} icon={Mail} title="Lead guest">
           <div className="space-y-4">
