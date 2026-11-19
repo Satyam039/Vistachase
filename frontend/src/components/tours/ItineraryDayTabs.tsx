@@ -12,8 +12,6 @@ import type { PackageDay } from "@/lib/itineraries";
 /** A day as the tabs show it; the two-day journey's days have no closing line. */
 type TabDay = Omit<PackageDay, "closing"> & { closing?: string };
 
-/** "Day 1 — Banff's Lakes" → "Banff's Lakes". */
-const shortTitle = (title: string) => title.replace(/^Day\s*\d+\s*[—–-]\s*/, "");
 
 export function ItineraryDayTabs({ days, idPrefix = "itinerary" }: { days: TabDay[]; idPrefix?: string }) {
   const [active, setActive] = useState(0);
@@ -61,7 +59,6 @@ export function ItineraryDayTabs({ days, idPrefix = "itinerary" }: { days: TabDa
               }`}
             >
               <span className={`block text-xs uppercase tracking-[0.2em] ${selected ? "text-summit-200" : "text-ocean-600"}`}>Day {d.dayNumber}</span>
-              <span className="hidden max-w-52 truncate text-sm sm:block">{shortTitle(d.title)}</span>
             </button>
           );
         })}

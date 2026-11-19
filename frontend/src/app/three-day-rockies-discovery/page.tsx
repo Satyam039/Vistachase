@@ -216,14 +216,93 @@ export default function ThreeDayRockiesDiscoveryPage() {
 
               <ItineraryDayTabs days={ITINERARY_DAYS} />
 
-              {/* Itinerary Note */}
-              <div className="flex items-start gap-3 rounded-2xl bg-amber-500/10 p-5 text-sm text-amber-950 border border-amber-500/20">
-                <Info className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" aria-hidden="true" />
-                <p>
-                  <strong className="font-semibold">Itinerary note:</strong> The sequence above outlines the planned experiences rather than a fixed driving order. Your guide may rearrange stops around pickup location, attraction reservations, weather and road conditions. Optional activities affect the time available at other stops.
-                </p>
-              </div>
             </section>
+
+          </div>
+
+          {/* Sticky Booking Panel */}
+          <aside
+            className="rounded-none bg-obsidian-950 p-6 text-white sm:p-8 lg:sticky lg:top-[calc(var(--vc-header-h,80px)+24px)] shadow-xl border border-white/10"
+            aria-label="Price and booking"
+          >
+            <div className="border-b border-white/10 pb-5">
+              <span className="text-xs uppercase tracking-[0.2em] text-summit-300">Private Journey</span>
+              <h3 className="mt-1 text-2xl font-light text-white">Three-Day Rockies Discovery</h3>
+              {/* The doc's package price (lib/privateTours.ts): per day per vehicle, summer season only. */}
+              <p className="mt-4 flex items-baseline gap-1.5 text-white">
+                <span className="text-xs text-white/60">From</span>
+                <span className="text-3xl font-light tabular-nums">CAD ${(PACKAGE_DAY_PRICE.summer * 3).toLocaleString("en-CA")}</span>
+                <span className="text-xs text-white/70">per vehicle</span>
+              </p>
+              <dl className="mt-3 space-y-1 text-xs">
+                <div className="flex justify-between gap-3">
+                  <dt className="text-white/60">Summer (Jun 1–Oct 10)</dt>
+                  <dd className="text-summit-200">CAD ${PACKAGE_DAY_PRICE.summer.toLocaleString("en-CA")} per day per vehicle</dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-white/60">Winter (Oct 11–May 31)</dt>
+                  <dd className="text-white/80">Not offered (summer only)</dd>
+                </div>
+              </dl>
+            </div>
+
+            <ul className="mt-6 space-y-3.5 text-sm text-white/85">
+              <li className="flex items-center gap-3">
+                <Clock className="h-4 w-4 text-summit-300 shrink-0" aria-hidden="true" />
+                <span>3 full-day private tours</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <Users className="h-4 w-4 text-summit-300 shrink-0" aria-hidden="true" />
+                <span>Private, up to {PRIVATE_MAX_GUESTS} guests</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <MapPin className="h-4 w-4 text-summit-300 shrink-0" aria-hidden="true" />
+                <span>Doorstep pickup in Banff, Canmore or Lake Louise</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <Plane className="h-4 w-4 text-summit-300 shrink-0" aria-hidden="true" />
+                <span>Airport transfer from CAD $364 per one-way transfer (2+ guests)</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <BedDouble className="h-4 w-4 text-summit-300 shrink-0" aria-hidden="true" />
+                <span>Book accommodation separately</span>
+              </li>
+            </ul>
+
+            <div className="mt-8">
+              <a
+                href="#book"
+                className="golden-summit-btn inline-flex h-12 w-full items-center justify-center gap-2 rounded-full px-6 text-sm font-medium uppercase tracking-[0.14em]"
+              >
+                Book Now <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </a>
+              <p className="mt-3 text-center text-xs text-white/60">
+                Choose your own date for each day, then pay once. {cancellationShort("MULTIDAY")}.
+              </p>
+            </div>
+
+            <div className="mt-6 border-t border-white/10 pt-4 text-center">
+              <p className="text-xs text-white/70">Need assistance planning?</p>
+              <a
+                href="tel:+18257349456"
+                className="mt-1 inline-flex items-center gap-1.5 text-xs text-summit-300 hover:text-white transition-colors"
+              >
+                Call +1 (825) 734-9456
+              </a>
+            </div>
+          </aside>
+        </div>
+        {/* Owner, 2026-11-19: the booking form comes straight after the Day tabs. */}
+        <PackageBookingSection config={PRIVATE_PACKAGES.three} heading="Book the Three-Day Rockies Discovery" />
+        <div className="mx-auto max-w-7xl px-page py-16 sm:py-20">
+          <div className="space-y-12 lg:max-w-[calc((100%-3rem)*1.75/2.75)]">
+            {/* Itinerary Note */}
+            <div className="flex items-start gap-3 rounded-2xl bg-amber-500/10 p-5 text-sm text-amber-950 border border-amber-500/20">
+              <Info className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" aria-hidden="true" />
+              <p>
+                <strong className="font-semibold">Itinerary note:</strong> The day-by-day itinerary above outlines the planned experiences rather than a fixed driving order. Your guide may rearrange stops around pickup location, attraction reservations, weather and road conditions. Optional activities affect the time available at other stops.
+              </p>
+            </div>
 
             {/* Inclusions and Exclusions */}
             <section aria-labelledby="inclusions-heading" className="grid gap-6 sm:grid-cols-2">
@@ -309,80 +388,7 @@ export default function ThreeDayRockiesDiscoveryPage() {
               </ul>
             </section>
           </div>
-
-          {/* Sticky Booking Panel */}
-          <aside
-            className="rounded-none bg-obsidian-950 p-6 text-white sm:p-8 lg:sticky lg:top-[calc(var(--vc-header-h,80px)+24px)] shadow-xl border border-white/10"
-            aria-label="Price and booking"
-          >
-            <div className="border-b border-white/10 pb-5">
-              <span className="text-xs uppercase tracking-[0.2em] text-summit-300">Private Journey</span>
-              <h3 className="mt-1 text-2xl font-light text-white">Three-Day Rockies Discovery</h3>
-              {/* The doc's package price (lib/privateTours.ts): per day per vehicle, summer season only. */}
-              <p className="mt-4 flex items-baseline gap-1.5 text-white">
-                <span className="text-xs text-white/60">From</span>
-                <span className="text-3xl font-light tabular-nums">CAD ${(PACKAGE_DAY_PRICE.summer * 3).toLocaleString("en-CA")}</span>
-                <span className="text-xs text-white/70">per vehicle</span>
-              </p>
-              <dl className="mt-3 space-y-1 text-xs">
-                <div className="flex justify-between gap-3">
-                  <dt className="text-white/60">Summer (Jun 1–Oct 10)</dt>
-                  <dd className="text-summit-200">CAD ${PACKAGE_DAY_PRICE.summer.toLocaleString("en-CA")} per day per vehicle</dd>
-                </div>
-                <div className="flex justify-between gap-3">
-                  <dt className="text-white/60">Winter (Oct 11–May 31)</dt>
-                  <dd className="text-white/80">Not offered (summer only)</dd>
-                </div>
-              </dl>
-            </div>
-
-            <ul className="mt-6 space-y-3.5 text-sm text-white/85">
-              <li className="flex items-center gap-3">
-                <Clock className="h-4 w-4 text-summit-300 shrink-0" aria-hidden="true" />
-                <span>3 full-day private tours</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <Users className="h-4 w-4 text-summit-300 shrink-0" aria-hidden="true" />
-                <span>Private, up to {PRIVATE_MAX_GUESTS} guests</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <MapPin className="h-4 w-4 text-summit-300 shrink-0" aria-hidden="true" />
-                <span>Doorstep pickup in Banff, Canmore or Lake Louise</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <Plane className="h-4 w-4 text-summit-300 shrink-0" aria-hidden="true" />
-                <span>Airport transfer from CAD $364 per one-way transfer (2+ guests)</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <BedDouble className="h-4 w-4 text-summit-300 shrink-0" aria-hidden="true" />
-                <span>Book accommodation separately</span>
-              </li>
-            </ul>
-
-            <div className="mt-8">
-              <a
-                href="#book"
-                className="golden-summit-btn inline-flex h-12 w-full items-center justify-center gap-2 rounded-full px-6 text-sm font-medium uppercase tracking-[0.14em]"
-              >
-                Book Now <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </a>
-              <p className="mt-3 text-center text-xs text-white/60">
-                Choose your own date for each day, then pay once. {cancellationShort("MULTIDAY")}.
-              </p>
-            </div>
-
-            <div className="mt-6 border-t border-white/10 pt-4 text-center">
-              <p className="text-xs text-white/70">Need assistance planning?</p>
-              <a
-                href="tel:+18257349456"
-                className="mt-1 inline-flex items-center gap-1.5 text-xs text-summit-300 hover:text-white transition-colors"
-              >
-                Call +1 (825) 734-9456
-              </a>
-            </div>
-          </aside>
         </div>
-        <PackageBookingSection config={PRIVATE_PACKAGES.three} heading="Book the Three-Day Rockies Discovery" />
       </div>
     </>
   );
