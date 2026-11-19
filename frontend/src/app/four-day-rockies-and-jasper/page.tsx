@@ -221,14 +221,6 @@ export default function FourDayRockiesAndJasperPage() {
                 Detailed Itinerary
               </h2>
 
-              {/* Itinerary Note */}
-              <div className="flex items-start gap-3 rounded-2xl bg-amber-500/10 p-5 text-sm text-amber-950 border border-amber-500/20">
-                <Info className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" aria-hidden="true" />
-                <p>
-                  <strong className="font-semibold">Itinerary note:</strong> Stop order may change around accommodation locations, selected activities, traffic, weather and road access. Optional activities affect the time available elsewhere.
-                </p>
-              </div>
-
               <ItineraryDayTabs days={ITINERARY_DAYS} />
 
             </section>
@@ -311,6 +303,14 @@ export default function FourDayRockiesAndJasperPage() {
         <PackageBookingSection config={PRIVATE_PACKAGES.four} heading="Book the Four-Day Rockies &amp; Jasper" />
         <div className="mx-auto max-w-7xl px-page py-16 sm:py-20">
           <div className="space-y-12 lg:max-w-[calc((100%-3rem)*1.75/2.75)]">
+            {/* Itinerary Note */}
+            <div className="flex items-start gap-3 rounded-2xl bg-amber-500/10 p-5 text-sm text-amber-950 border border-amber-500/20">
+              <Info className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" aria-hidden="true" />
+              <p>
+                <strong className="font-semibold">Itinerary note:</strong> Stop order may change around accommodation locations, selected activities, traffic, weather and road access. Optional activities affect the time available elsewhere.
+              </p>
+            </div>
+
             {/* Inclusions and Exclusions */}
             <section aria-labelledby="inclusions-heading" className="grid gap-6 sm:grid-cols-2">
               <div className="rounded-none bg-white p-6 sm:p-8 border border-obsidian-900/[0.08] shadow-sm">

@@ -214,14 +214,6 @@ export default function ThreeDayRockiesDiscoveryPage() {
                 Detailed Itinerary
               </h2>
 
-              {/* Itinerary Note */}
-              <div className="flex items-start gap-3 rounded-2xl bg-amber-500/10 p-5 text-sm text-amber-950 border border-amber-500/20">
-                <Info className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" aria-hidden="true" />
-                <p>
-                  <strong className="font-semibold">Itinerary note:</strong> The sequence below outlines the planned experiences rather than a fixed driving order. Your guide may rearrange stops around pickup location, attraction reservations, weather and road conditions. Optional activities affect the time available at other stops.
-                </p>
-              </div>
-
               <ItineraryDayTabs days={ITINERARY_DAYS} />
 
             </section>
@@ -304,6 +296,14 @@ export default function ThreeDayRockiesDiscoveryPage() {
         <PackageBookingSection config={PRIVATE_PACKAGES.three} heading="Book the Three-Day Rockies Discovery" />
         <div className="mx-auto max-w-7xl px-page py-16 sm:py-20">
           <div className="space-y-12 lg:max-w-[calc((100%-3rem)*1.75/2.75)]">
+            {/* Itinerary Note */}
+            <div className="flex items-start gap-3 rounded-2xl bg-amber-500/10 p-5 text-sm text-amber-950 border border-amber-500/20">
+              <Info className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" aria-hidden="true" />
+              <p>
+                <strong className="font-semibold">Itinerary note:</strong> The day-by-day itinerary above outlines the planned experiences rather than a fixed driving order. Your guide may rearrange stops around pickup location, attraction reservations, weather and road conditions. Optional activities affect the time available at other stops.
+              </p>
+            </div>
+
             {/* Inclusions and Exclusions */}
             <section aria-labelledby="inclusions-heading" className="grid gap-6 sm:grid-cols-2">
               <div className="rounded-none bg-white p-6 sm:p-8 border border-obsidian-900/[0.08] shadow-sm">
