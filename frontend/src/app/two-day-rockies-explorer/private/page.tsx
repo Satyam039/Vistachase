@@ -6,7 +6,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { ChevronRight } from "lucide-react";
 import { PackageBookingSection } from "@/components/booking/PackageBookingSection";
-import { ItineraryDayTabs } from "@/components/tours/ItineraryDayTabs";
+import { ItineraryDayPanel, ItineraryDayTabList, ItineraryDays } from "@/components/tours/ItineraryDayTabs";
 import { TOUR_ITINERARIES } from "@/lib/itineraries";
 import { PACKAGE_DAY_PRICE, PRIVATE_MAX_GUESTS, PRIVATE_PACKAGES } from "@/lib/privateTours";
 
@@ -60,13 +60,19 @@ export default function PrivateTwoDayBookPage() {
           <span className="rounded-full bg-white px-3 py-1 ring-1 ring-obsidian-900/10">Winter (Oct 11–May 31): {cad(PACKAGE_DAY_PRICE.winter)} per day per vehicle</span>
         </p>
       </div>
+      {/* Owner, 2026-11-19: Day buttons, then the booking form, then the chosen day's itinerary. */}
+      <ItineraryDays days={DAYS} idPrefix="two-day">
       <section aria-labelledby="two-day-itinerary" className="mx-auto mt-8 max-w-7xl px-page">
         <h2 id="two-day-itinerary" className="mb-4 text-2xl font-light tracking-tight text-obsidian-900 sm:text-3xl">
           Your two days
         </h2>
-        <ItineraryDayTabs days={DAYS} idPrefix="two-day" />
+        <ItineraryDayTabList />
       </section>
       <PackageBookingSection config={PRIVATE_PACKAGES.two} heading="Choose your dates" wholePage />
+        <div className="mx-auto max-w-7xl px-page pb-16">
+          <ItineraryDayPanel />
+        </div>
+      </ItineraryDays>
     </div>
   );
 }
