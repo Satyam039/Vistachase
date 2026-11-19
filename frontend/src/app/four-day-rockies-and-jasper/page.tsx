@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 import { PACKAGE_ITINERARIES } from "@/lib/itineraries";
-import { ItineraryDayTabs } from "@/components/tours/ItineraryDayTabs";
+import { ItineraryDayPanel, ItineraryDayTabList, ItineraryDays } from "@/components/tours/ItineraryDayTabs";
 import { PackageTripJsonLd } from "@/components/seo/PackageTripJsonLd";
 import { PACKAGE_DAY_PRICE, PRIVATE_MAX_GUESTS, PRIVATE_PACKAGES } from "@/lib/privateTours";
 import { PackageBookingSection } from "@/components/booking/PackageBookingSection";
@@ -192,8 +192,10 @@ export default function FourDayRockiesAndJasperPage() {
           </div>
         </section>
 
+        {/* Owner, 2026-11-19: Day buttons, then the booking form, then the chosen day's itinerary. */}
+        <ItineraryDays days={ITINERARY_DAYS}>
         {/* Main Content Layout */}
-        <div className="mx-auto grid max-w-7xl items-start gap-12 px-page py-16 sm:py-20 lg:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)]">
+        <div className="mx-auto grid max-w-7xl items-start gap-12 px-page pb-6 pt-16 sm:pt-20 lg:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)]">
           {/* Main Column */}
           <div className="space-y-12">
             {/* Overview */}
@@ -221,7 +223,7 @@ export default function FourDayRockiesAndJasperPage() {
                 Detailed Itinerary
               </h2>
 
-              <ItineraryDayTabs days={ITINERARY_DAYS} />
+              <ItineraryDayTabList />
 
             </section>
 
@@ -299,10 +301,11 @@ export default function FourDayRockiesAndJasperPage() {
             </div>
           </aside>
         </div>
-        {/* Owner, 2026-11-19: the booking form comes straight after the Day tabs. */}
         <PackageBookingSection config={PRIVATE_PACKAGES.four} heading="Book the Four-Day Rockies &amp; Jasper" />
         <div className="mx-auto max-w-7xl px-page py-16 sm:py-20">
           <div className="space-y-12 lg:max-w-[calc((100%-3rem)*1.75/2.75)]">
+            <ItineraryDayPanel />
+
             {/* Itinerary Note */}
             <div className="flex items-start gap-3 rounded-2xl bg-amber-500/10 p-5 text-sm text-amber-950 border border-amber-500/20">
               <Info className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" aria-hidden="true" />
@@ -410,6 +413,7 @@ export default function FourDayRockiesAndJasperPage() {
             </section>
           </div>
         </div>
+        </ItineraryDays>
       </div>
     </>
   );
