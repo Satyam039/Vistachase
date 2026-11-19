@@ -248,28 +248,6 @@ export default function ThreeDayRockiesDiscoveryPage() {
               </dl>
             </div>
 
-            <ul className="mt-6 space-y-3.5 text-sm text-white/85">
-              <li className="flex items-center gap-3">
-                <Clock className="h-4 w-4 text-summit-300 shrink-0" aria-hidden="true" />
-                <span>3 full-day private tours</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <Users className="h-4 w-4 text-summit-300 shrink-0" aria-hidden="true" />
-                <span>Private, up to {PRIVATE_MAX_GUESTS} guests</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <MapPin className="h-4 w-4 text-summit-300 shrink-0" aria-hidden="true" />
-                <span>Doorstep pickup in Banff, Canmore or Lake Louise</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <Plane className="h-4 w-4 text-summit-300 shrink-0" aria-hidden="true" />
-                <span>Airport transfer from CAD $364 per one-way transfer (2+ guests)</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <BedDouble className="h-4 w-4 text-summit-300 shrink-0" aria-hidden="true" />
-                <span>Book accommodation separately</span>
-              </li>
-            </ul>
 
             <div className="mt-8">
               <a
