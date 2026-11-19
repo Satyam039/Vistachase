@@ -9,6 +9,7 @@ import { createApp } from "@/app";
 import { hashPassword, signToken } from "@/lib/auth/auth";
 import { applyAffiliate } from "@/modules/affiliates/affiliate.repository";
 import { issueFormToken } from "@/modules/enquiries/spam";
+import { applicationExtras } from "./helpers-partner-application";
 
 const app = createApp();
 const unique = () => `${Date.now()}${Math.floor(Math.random() * 1e6)}`;
@@ -34,20 +35,56 @@ beforeAll(async () => {
   adminCookie = `vc_token=${signToken({ userId: admin.id, email: admin.email, role: "ADMIN", name: admin.name })}`;
 });
 
-describe("partner application fields", () => {
-  it("requires a website and a phone number with its country code", async () => {
+describe("partner application form", () => {
+  const send = (body: Record<string, unknown>) => request(app).post("/api/affiliates/apply").set("X-Forwarded-For", ip()).send(body);
+  const base = (email: string) => ({
+    name: "Rundlestone Lodge",
+    contactName: "Priya Sharma",
+    email,
+    password: PASSWORD,
+    type: "AGENCY",
+    ...applicationExtras,
+    formToken: issueFormToken(Date.now() - 5_000),
+  });
+
+  it("requires the form's fields, a phone with its country code and the authorization", async () => {
     const email = `fields-${unique()}@example.com`;
-    const body = { name: "Rundlestone Lodge", contactName: "Priya Sharma", email, password: PASSWORD, type: "HOTEL", formToken: issueFormToken(Date.now() - 5_000) };
-    const missing = await request(app).post("/api/affiliates/apply").set("X-Forwarded-For", ip()).send(body);
+    const { contactRole: _r, mailingAddress: _m, ...withoutDetails } = base(email);
+    const missing = await send({ ...withoutDetails, phone: "403 555 0100", authorize: false });
     expect(missing.status).toBe(400);
-    expect(Object.keys(missing.body.fields)).toEqual(expect.arrayContaining(["website", "phone"]));
-    const noCountry = await request(app)
-      .post("/api/affiliates/apply")
-      .set("X-Forwarded-For", ip())
-      .send({ ...body, website: "https://rundlestone.example.com", phone: "403 555 0100" });
-    expect(noCountry.status).toBe(400);
-    expect(Object.keys(noCountry.body.fields)).toEqual(["phone"]);
+    expect(Object.keys(missing.body.fields)).toEqual(expect.arrayContaining(["contactRole", "mailingAddress", "phone", "authorize"]));
+    const badBank = await send({ ...base(email), bank: { ...applicationExtras.bank, transitNumber: "12" } });
+    expect(badBank.status).toBe(400);
+    expect(Object.keys(badBank.body.fields)).toEqual(["bank.transitNumber"]);
     expect(await prisma.user.findUnique({ where: { email } })).toBeNull();
+  });
+
+  it("saves the answers and keeps the bank details encrypted, readable only by an admin", async () => {
+    const email = `form-${unique()}@example.com`;
+    const res = await send(base(email));
+    expect(res.status).toBe(201);
+    const row = await prisma.affiliate.findFirstOrThrow({ where: { user: { email } } });
+    expect(row.type).toBe("AGENCY");
+    expect(row.website).toBe("https://rundlestone.example.com/");
+    expect((row.application as { contactRole: string }).contactRole).toBe("General manager");
+    expect(row.payoutDetails).toMatch(/^v1\./);
+    expect(row.payoutDetails).not.toContain("0012345678");
+
+    const plain = await request(app).get(`/api/affiliates/admin/${row.id}/application`).set({ Cookie: adminCookie, Origin: "http://localhost:3000" });
+    expect(plain.body.hasBankDetails).toBe(true);
+    expect(plain.body.bank).toBeNull();
+    const admin = await request(app).get(`/api/affiliates/admin/${row.id}/application?bank=1`).set({ Cookie: adminCookie, Origin: "http://localhost:3000" });
+    expect(admin.status).toBe(200);
+    expect(admin.body.bank.accountNumber).toBe("0012345678");
+    expect(await prisma.auditLog.findFirst({ where: { action: "PARTNER_BANK_DETAILS_VIEWED", entityId: row.id } })).not.toBeNull();
+    expect((await request(app).get(`/api/affiliates/admin/${row.id}/application`)).status).toBe(403);
+  });
+
+  it("takes international wire details", async () => {
+    const email = `intl-${unique()}@example.com`;
+    const bank = { ...applicationExtras.bank, location: "INTERNATIONAL", currency: "usd", iban: "GB29 NWBK 6016 1331 9268 19", swift: "NWBKGB2L" };
+    const res = await send({ ...base(email), bank });
+    expect(res.status).toBe(201);
   });
 });
 

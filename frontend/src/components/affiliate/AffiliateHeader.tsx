@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { BrandMark } from "@/components/brand/BrandMark";
 import {
   LayoutDashboard,
+  Package,
   Link2,
   Ticket,
   BadgePercent,
@@ -18,6 +19,7 @@ import {
 
 export const AFFILIATE_TABS = [
   { label: "Overview", href: "/affiliate/dashboard", icon: LayoutDashboard },
+  { label: "Products", href: "/affiliate/products", icon: Package },
   { label: "Referrals", href: "/affiliate/referrals", icon: Link2 },
   { label: "Bookings", href: "/affiliate/bookings", icon: Ticket },
   { label: "Commissions", href: "/affiliate/commissions", icon: BadgePercent },

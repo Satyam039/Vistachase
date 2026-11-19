@@ -26,6 +26,7 @@ import {
   updateAffiliateProfile,
 } from "@/modules/affiliates/affiliate.repository";
 import { adjustCommission, approveCommissions } from "@/modules/affiliates/commission";
+import { applicationFields, applicationRecord, decryptBankDetails, encryptBankDetails } from "@/modules/affiliates/partner-application";
 import { cancelPayout, createPayout, listPayouts, markPayoutPaid, payoutDto } from "@/modules/affiliates/payouts";
 import { affiliateReport, reportToCsv } from "@/modules/affiliates/reports";
 import { sendPayoutPaidEmail, sendStatusEmail } from "@/modules/affiliates/partner-emails";
@@ -74,12 +75,24 @@ const partnerBase = z.object({
   phone: phone.optional().or(z.literal("")),
 });
 
-// Public applications need every field (owner, 2026-11-18): website and a phone number with its
-// country code ("+1 403 555 0100") as well. Staff adding a partner by hand may leave them blank.
-const applySchema = partnerBase.extend({
-  website: z.string().trim().url().max(300),
-  phone: phone.refine((v) => /^\+\d/.test(v) && v.replace(/\D/g, "").length >= 7, "Enter a phone number with its country code"),
-});
+// Public applications follow the owner's "Vista Chase Partner Application" form (2026-11-18):
+// partner details, wire transfer details and the signed payment authorization. Required fields
+// match the form ("optional" / "if ..." fields aren't); the phone needs its country code.
+const applySchema = partnerBase
+  .omit({ website: true })
+  .extend({
+    phone: phone.refine((v) => /^\+\d/.test(v) && v.replace(/\D/g, "").length >= 7, "Enter a phone number with its country code"),
+  })
+  .merge(applicationFields);
+
+const asUrl = (value: string) => {
+  try {
+    const url = new URL(/^https?:\/\//i.test(value) ? value : `https://${value}`);
+    return url.hostname.includes(".") && !/\s/.test(value) ? url.toString().slice(0, 300) : undefined;
+  } catch {
+    return undefined;
+  }
+};
 
 // Apply to the partner program. New partners start PENDING until Vista Chase approves them.
 //
@@ -118,11 +131,28 @@ router.post("/apply", rateLimitMiddleware("affiliate_apply", { maxRequests: 3, w
   }
 
   const parsed = applySchema.safeParse(body);
-  if (!parsed.success) return invalid(res, parsed.error);
+  if (!parsed.success) {
+    // Field errors by path ("bank.transitNumber") so the form can mark nested bank fields too.
+    const fields: Record<string, string[]> = {};
+    for (const issue of parsed.error.issues) (fields[issue.path.join(".")] ??= []).push(issue.message);
+    return res.status(400).json({ success: false, error: "Please check the highlighted fields.", fields });
+  }
   const domain = parsed.data.email.toLowerCase().split("@")[1];
   if (domain && !(await hasValidMxRecords(domain))) return quietlyDropped(req, res, `domain ${domain} has no mail server`);
   try {
-    const result = await applyAffiliate(parsed.data);
+    const { bank, ...form } = parsed.data;
+    const result = await applyAffiliate({
+      name: form.name,
+      contactName: form.contactName,
+      email: form.email,
+      password: form.password,
+      type: form.type,
+      phone: form.phone,
+      website: asUrl(form.websiteOrReference),
+      payoutEmail: form.statementEmail,
+      application: applicationRecord(form, req.ip),
+      payoutDetails: encryptBankDetails(bank),
+    });
     if (result.success) void recordSubmission(req, { form: "PARTNER_APPLY", outcome: "ACCEPTED", email: parsed.data.email, name: parsed.data.contactName });
     return res.status(result.success ? 201 : 409).json(result);
   } catch (error) {
@@ -275,6 +305,33 @@ router.patch("/admin/:id", async (req, res) => {
   } catch {
     return res.status(404).json({ success: false, error: "Partner not found." });
   }
+});
+
+// The partner's application answers and wire details, for staff setting up payouts. Admins only;
+// every read of the bank details is written to the audit log.
+router.get("/admin/:id/application", async (req, res) => {
+  const staff = await requireAdmin(req, res);
+  if (!staff) return;
+  const affiliate = await prisma.affiliate.findUnique({
+    where: { id: String(req.params.id) },
+    select: { id: true, application: true, payoutDetails: true, payoutEmail: true },
+  });
+  if (!affiliate) return res.status(404).json({ success: false, error: "Partner not found." });
+  // Bank details only when asked for (?bank=1), so opening a partner doesn't decrypt them.
+  const wantBank = req.query.bank === "1";
+  const bank = wantBank && affiliate.payoutDetails ? decryptBankDetails(affiliate.payoutDetails) : null;
+  if (wantBank && affiliate.payoutDetails) {
+    await prisma.auditLog.create({
+      data: { userId: staff.userId, action: "PARTNER_BANK_DETAILS_VIEWED", entityType: "Affiliate", entityId: affiliate.id, details: { readable: !!bank } },
+    });
+  }
+  return res.json({
+    success: true,
+    application: affiliate.application,
+    hasBankDetails: !!affiliate.payoutDetails,
+    bank,
+    bankUnreadable: wantBank && !!affiliate.payoutDetails && !bank,
+  });
 });
 
 // Delete an application or partner with no bookings, commission or payouts (see deleteAffiliate).

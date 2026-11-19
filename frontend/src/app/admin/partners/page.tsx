@@ -7,7 +7,7 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { RefreshCw, Trash2, XCircle } from "lucide-react";
 import { ModalDialog } from "@/components/forms/ModalDialog";
 import { AdminHeader, StaffSignIn } from "@/components/admin/AdminHeader";
-import { CommissionsPanel, CreatePartnerForm, EditPartnerForm, PayoutsPanel, ReportPanel, RulesPanel, type AdminPartner as Partner } from "@/components/admin/partners/PartnerAdminPanels";
+import { CommissionsPanel, CreatePartnerForm, EditPartnerForm, PartnerApplicationDetails, PayoutsPanel, ReportPanel, RulesPanel, type AdminPartner as Partner } from "@/components/admin/partners/PartnerAdminPanels";
 
 const SECTIONS = [
   ["partners", "Partners"],
@@ -332,6 +332,7 @@ export default function AdminPartnersPage() {
                           {editing === p.id && (
                             <tr>
                               <td colSpan={7} className="p-0">
+                                <PartnerApplicationDetails partnerId={p.id} />
                                 <EditPartnerForm
                                   partner={p}
                                   notify={setMessage}

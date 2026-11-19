@@ -7,18 +7,19 @@ import request from "supertest";
 import prisma from "@/lib/db/prisma";
 import { createApp } from "@/app";
 import { issueFormToken } from "@/modules/enquiries/spam";
+import { applicationExtras } from "./helpers-partner-application";
 
 const app = createApp();
 const unique = () => `${Date.now()}${Math.floor(Math.random() * 1e6)}`;
 const ip = () => `10.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}`;
 const oldToken = () => issueFormToken(Date.now() - 5_000);
 const apply = (body: Record<string, unknown>) => request(app).post("/api/affiliates/apply").set("X-Forwarded-For", ip()).send(body);
-const base = (email: string) => ({ name: "Rundlestone Lodge", contactName: "Priya Sharma", email, password: "a-long-password", type: "HOTEL", website: "https://rundlestone.example.com", phone: "+1 403 555 0100" });
+const base = (email: string) => ({ name: "Rundlestone Lodge", contactName: "Priya Sharma", email, password: "a-long-password", type: "HOTEL", ...applicationExtras });
 
 describe("partner application spam guard", () => {
   it("accepts a real application with the page's form token", async () => {
     const email = `partner.${unique()}@example.com`;
-    const res = await apply({ ...base(email), website: "https://rundlestone.example.com", formToken: oldToken() });
+    const res = await apply({ ...base(email), formToken: oldToken() });
     expect(res.status).toBe(201);
     expect(res.body.affiliate.code).toMatch(/^[A-Z0-9]+$/);
     expect(await prisma.user.findUnique({ where: { email } })).not.toBeNull();
