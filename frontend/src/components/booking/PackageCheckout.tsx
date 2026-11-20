@@ -17,7 +17,7 @@ import { Banner } from "@astryxdesign/core/Banner";
 import { Button } from "@astryxdesign/core/Button";
 import { TextArea } from "@astryxdesign/core/TextArea";
 import { TextInput } from "@astryxdesign/core/TextInput";
-import { CalendarDays, Check, ChevronDown, Lock, Mail, MapPin, Plane, Ticket, Users, X } from "lucide-react";
+import { CalendarDays, Check, ChevronDown, Lock, Mail, MapPin, Plane, Tag, Ticket, Users, X } from "lucide-react";
 import { QuantityInput } from "@/components/forms/QuantityInput";
 import { DepartureCalendar } from "@/components/booking/DepartureCalendar";
 import {
@@ -190,6 +190,31 @@ export function PackageCheckout({
   const isFourDay = days.length === 4 || packageSlug.includes("four-day");
   const [day4JasperPickup, setDay4JasperPickup] = useState("");
   const [requests, setRequests] = useState("");
+  // Promo code (owner, 2026-11-20): taken off on top of the package price. A percent code comes off
+  // every day; a fixed amount comes off Day 1 only. The server checks and prices it again.
+  const [promoInput, setPromoInput] = useState("");
+  const [promoError, setPromoError] = useState("");
+  const [applyingPromo, setApplyingPromo] = useState(false);
+  const [appliedPromo, setAppliedPromo] = useState<{ code: string; percent: number; amountOff: number; message: string } | null>(null);
+  const applyPromo = async () => {
+    setPromoError("");
+    setApplyingPromo(true);
+    try {
+      const res = await fetch("/api/pricing/promo", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ promoCode: promoInput.trim() }) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        setPromoError(data.error || "Invalid promo code");
+        setAppliedPromo(null);
+      } else {
+        setAppliedPromo({ code: data.promoCode, percent: Number(data.discountPercent) || 0, amountOff: Number(data.amountOff) || 0, message: data.message || `Code ${data.promoCode} applied.` });
+        setPromoInput("");
+      }
+    } catch {
+      setPromoError("We couldn't check that code. Please try again.");
+    } finally {
+      setApplyingPromo(false);
+    }
+  };
   // Private journeys: "Add-on activities" (owner, 2026-11-09), arranged by the team and paid separately.
   const [activities, setActivities] = useState(false);
   // Who joins the activities, with ages (owner, 2026-11-11); null until the guest changes it.
@@ -267,12 +292,17 @@ export function PackageCheckout({
   const chosenActivityList = vehicle && activities ? packageActivities.filter((a) => activityChoice[a.id]) : [];
   const activityPriceOf = (id: string) => packageActivityPrice(activityPrices, id, activityChoice[id]!);
   const activitiesDollars = chosenActivityList.reduce((n, a) => n + (activityPriceOf(a.id) ?? 0), 0);
-  const total = lines.reduce((n, l) => n + l.total, 0) + (transferDollars ?? 0) * 100 + Math.round(activitiesDollars * 100);
+  // Each day's promo saving (cents), from the day's package price; never the transfer or activities.
+  const promoCents = lines.map((l, i) =>
+    !appliedPromo ? 0 : appliedPromo.amountOff > 0 ? (i === 0 ? Math.min(Math.round(appliedPromo.amountOff * 100), l.total) : 0) : Math.round((l.total * appliedPromo.percent) / 100),
+  );
+  const promoSaving = promoCents.reduce((n, c) => n + c, 0);
+  const total = lines.reduce((n, l) => n + l.total, 0) - promoSaving + (transferDollars ?? 0) * 100 + Math.round(activitiesDollars * 100);
   const allPicked = chosen.every(Boolean);
   // 20% deposit: each day's own deposit (the server rounds per day), when every day is 15+ days away.
   const canDeposit = depositAllowed && allPicked && total > 0 && chosen.every((d) => d && depositAvailable(d.date.slice(0, 10), d.departureTime));
   const plan = canDeposit ? paymentPlan : "FULL";
-  const dayTotals = lines.map((l, i) => l.total / 100 + (i === 0 ? (transferDollars ?? 0) + activitiesDollars : 0));
+  const dayTotals = lines.map((l, i) => (l.total - promoCents[i]) / 100 + (i === 0 ? (transferDollars ?? 0) + activitiesDollars : 0));
   const depositNow = Math.round(dayTotals.reduce((n, t) => n + depositFor(t), 0) * 100) / 100;
   const firstDay = chosen.filter(Boolean).map((d) => d!).sort((a, b) => a.date.localeCompare(b.date))[0];
   const balanceDueLabel = firstDay ? formatRockiesDate(balanceDueDate(firstDay.date.slice(0, 10), firstDay.departureTime)) : "";
@@ -374,6 +404,7 @@ export function PackageCheckout({
           infantsCount: vehicle ? 0 : infants,
           specialRequests: [requests.trim(), activitiesRequestLine].filter(Boolean).join("\n") || undefined,
           airportTransfer: withAirport ? airportTransferPayload(airportTransfer) : undefined,
+          promoCode: appliedPromo?.code,
           packageActivities: chosenActivityList.map((a) => ({ id: a.id, ...activityChoice[a.id]! })),
           paymentPlan: plan,
         }),
@@ -708,6 +739,34 @@ export function PackageCheckout({
             <TextArea label="Special requests" isOptional rows={3} maxLength={500} value={requests} onChange={setRequests} placeholder="Dietary needs, mobility, celebrations…" />
           </div>
         </Section>
+
+        <Section compact={compact} icon={Tag} title="Promo code">
+          {appliedPromo ? (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-none bg-ocean-50 px-4 py-3 text-sm text-obsidian-900">
+              <p role="status">
+                {appliedPromo.message}
+                {promoSaving > 0 ? ` You save ${cad(promoSaving / 100)}.` : ""}
+              </p>
+              <button type="button" onClick={() => setAppliedPromo(null)} className="min-h-11 text-ocean-700 underline underline-offset-2">
+                Remove <span className="sr-only">promo code {appliedPromo.code}</span>
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <div className="flex items-end gap-2">
+                <div className="min-w-0 flex-1">
+                  <TextInput label="Promo code" isOptional value={promoInput} onChange={setPromoInput} placeholder="Enter your code" autoComplete="off" />
+                </div>
+                <Button label={applyingPromo ? "Checking…" : "Apply"} variant="secondary" isDisabled={!promoInput.trim() || applyingPromo} onClick={applyPromo} />
+              </div>
+              {promoError && (
+                <p role="alert" className="text-sm text-red-700">
+                  {promoError}
+                </p>
+              )}
+            </div>
+          )}
+        </Section>
       </div>
 
       <aside className={compact ? "rounded-none bg-obsidian-950 p-5 text-white" : "rounded-none bg-obsidian-950 p-6 text-white sm:p-8 lg:sticky lg:top-[calc(var(--vc-header-h,80px)+24px)]"} aria-label="Your package">
@@ -756,6 +815,12 @@ export function PackageCheckout({
                 </div>
               );
             })}
+            {appliedPromo && promoSaving > 0 && (
+              <div className="flex justify-between text-summit-200">
+                <dt>Promo {appliedPromo.code}</dt>
+                <dd>−{cad(promoSaving / 100)}</dd>
+              </div>
+            )}
             <div className="flex justify-between border-t border-white/15 pt-3 text-xl">
               <dt>Total</dt>
               <dd>{cad(total / 100)}</dd>

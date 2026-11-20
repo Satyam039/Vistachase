@@ -211,6 +211,12 @@ export interface CreateBookingOptions {
   deferPayment?: boolean;
   /** Server-side discount (package deals), used only when the guest gave no promo code. */
   discount?: { percent: number; label: string };
+  /**
+   * A package's promo code (package-booking.ts), taken off on top of the package price: a percent
+   * code from every day, a fixed-amount code from Day 1 only. `countsUse` on Day 1 only, so one
+   * package uses the code once (promoUses counts priceSnapshot.promo.code).
+   */
+  packagePromo?: { promo: ResolvedPromo; countsUse: boolean };
 }
 
 export async function createBooking(input: CreateBookingInput, options: CreateBookingOptions = {}): Promise<BookingResult> {
@@ -302,6 +308,29 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
         else if (found.reason !== "unknown") throw new BookingRefused(`${found.error} Please remove it and try again.`);
       }
       const totals = priceBooking(departure, { adults: input.adultsCount, children: input.childrenCount, infants: input.infantsCount }, input.addOns, promo, options.discount?.percent);
+      // A package's promo code, after the package price (owner, 2026-11-20).
+      let packagePromo: (ResolvedPromo & { discountCents: number }) | null = null;
+      if (options.packagePromo) {
+        let p = options.packagePromo.promo;
+        if (options.packagePromo.countsUse) {
+          // Checked again under the code's lock, like a single booking, so two guests can't take the last use.
+          await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"promo:" + normalizeCode(p.code)}))`;
+          const found = await lookupPromo(p.code, tx, now);
+          if (!found.ok) throw new BookingRefused(`${found.error} Please remove it and try again.`);
+          p = found.promo;
+        }
+        const left = totals.fareCents - totals.discountCents;
+        const extra = p.amountOffCents
+          ? options.packagePromo.countsUse
+            ? Math.min(p.amountOffCents, left)
+            : 0
+          : Math.round((left * (p.percentOff ?? 0)) / 100);
+        if (extra > 0) {
+          totals.discountCents += extra;
+          totals.totalCents -= extra;
+        }
+        packagePromo = { ...p, discountCents: extra };
+      }
       // Airport transfer (private tours): charged with the tour when it has a price, never discounted.
       const partySize = input.adultsCount + input.childrenCount + input.infantsCount;
       if (input.airportTransfer && partySize < 2) {
@@ -354,8 +383,17 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
         infantUnitCents: isVehicle ? null : departure.infantPrice,
         party: { adults: input.adultsCount, children: input.childrenCount, infants: input.infantsCount },
         fareCents: totals.fareCents,
-        promo:
-          totals.discountCents > 0
+        promo: packagePromo
+          ? options.packagePromo!.countsUse
+            ? {
+                code: packagePromo.code,
+                percent: packagePromo.percentOff ?? 0,
+                ...(packagePromo.amountOffCents ? { amountOffCents: packagePromo.amountOffCents } : {}),
+                promoDiscountCents: packagePromo.discountCents,
+                packageDiscount: { label: options.discount?.label, percent: totals.discountPercent },
+              }
+            : { code: options.discount?.label, percent: totals.discountPercent, packagePromo: { code: packagePromo.code, percent: packagePromo.percentOff ?? 0, promoDiscountCents: packagePromo.discountCents } }
+          : totals.discountCents > 0
             ? promo
               ? { code: promo.code, percent: totals.discountPercent, ...(promo.amountOffCents ? { amountOffCents: promo.amountOffCents } : {}) }
               : { code: options.discount?.label, percent: totals.discountPercent }

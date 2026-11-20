@@ -19,6 +19,32 @@ const quoteSchema = z.object({
   promoCode: z.string().trim().min(1).max(40),
 });
 
+// A promo code on its own (package checkouts, which price several days): what it takes off.
+const promoSchema = z.object({ promoCode: z.string().trim().min(1).max(40) });
+router.post("/promo", rateLimitMiddleware("promo_quote", { maxRequests: 20, windowSeconds: 60 }), async (req, res, next) => {
+  try {
+    const body = parseOr400(promoSchema, req.body, res);
+    if (!body) return;
+    const found = await lookupPromo(body.promoCode);
+    if (!found.ok) {
+      const partner = found.reason === "unknown" ? await findActiveAffiliateByCode(body.promoCode) : null;
+      if (partner) {
+        return res.json({ success: true, promoCode: partner.code, discountPercent: 0, amountOff: 0, isPartnerVoucher: true, message: `Partner code ${partner.code} applied.` });
+      }
+      return res.status(404).json({ success: false, error: found.error });
+    }
+    return res.json({
+      success: true,
+      promoCode: found.promo.code,
+      discountPercent: found.promo.percentOff ?? 0,
+      amountOff: (found.promo.amountOffCents ?? 0) / 100,
+      message: `Code ${found.promo.code} applied: ${promoLabel(found.promo)}.`,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.post("/quote", rateLimitMiddleware("promo_quote", { maxRequests: 20, windowSeconds: 60 }), async (req, res, next) => {
   try {
     const body = parseOr400(quoteSchema, req.body, res);

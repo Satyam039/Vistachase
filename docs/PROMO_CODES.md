@@ -45,3 +45,12 @@ the site: create the same code here.
 
 Code: `backend/src/modules/pricing/promo-codes.ts` (lookup), `backend/src/modules/admin/promo-admin.ts`
 (admin), `backend/src/routes/pricing.routes.ts` (`POST /api/pricing/quote`), migration `9i_promo_codes`.
+
+## Packages (2-, 3- and 4-day)
+
+The package checkout has its own promo box (owner, 2026-11-20). The code comes off **on top of the
+package price**: a percent code from every day, a fixed-amount code from Day 1 only (at most that
+day's package price). Airport transfers and activities are never discounted. One package uses the
+code once: only Day 1's `priceSnapshot.promo.code` carries it (the other days keep the package label
+and note the code under `promo.packagePromo`). The page checks the code with `POST /api/pricing/promo`;
+the server checks it again, under the code's lock, when Day 1 is booked.

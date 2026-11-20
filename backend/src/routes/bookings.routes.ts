@@ -96,6 +96,8 @@ const packageSchema = z.object({
   specialRequests: z.string().trim().max(1000).optional(),
   // Private journeys: Calgary airport transfer, booked with Day 1 (2+ guests, as for a private tour).
   airportTransfer: airportTransferSchema.optional(),
+  // A promo code, taken off on top of the package price; a partner's voucher code credits the partner.
+  promoCode: z.string().trim().max(40).optional(),
   // Private journeys: the optional activities ticked, with who joins each (priced on the server).
   packageActivities: packageActivitiesSchema.default([]),
   // Private journeys: pay everything, or a 20% deposit now (owner, 2026-11-11).
@@ -116,7 +118,7 @@ router.post("/package", rateLimitMiddleware("booking_create", { maxRequests: 5, 
       ...body,
       idempotencyKey: rawKey,
       customerId: user && user.email.toLowerCase() === body.customerEmail ? user.userId : undefined,
-      affiliateCode: typeof req.cookies?.vc_ref === "string" ? req.cookies.vc_ref : undefined,
+      affiliateCode: (typeof req.cookies?.vc_ref === "string" ? req.cookies.vc_ref : undefined) || (body.promoCode ? body.promoCode.trim().toUpperCase() : undefined),
     });
     if (!result.success) return res.status(409).json({ success: false, error: result.error });
     return res.json({ success: true, bookings: result.bookings, totalAmount: result.totalAmount, amountDueNow: result.amountDueNow, currency: result.currency, payment: result.payment ?? null, nextStep: result.nextStep, replayed: result.replayed ?? false });
