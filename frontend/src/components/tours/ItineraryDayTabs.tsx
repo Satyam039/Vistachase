@@ -72,7 +72,16 @@ export function ItineraryDayTabList() {
             aria-selected={selected}
             aria-controls={`${idPrefix}-panel`}
             tabIndex={selected ? 0 : -1}
-            onClick={() => setActive(i)}
+            onClick={() => {
+              setActive(i);
+              // Owner, 2026-11-20: a Day button takes the guest straight to that day's itinerary,
+              // which sits below the booking form. Smooth unless the guest prefers reduced motion.
+              requestAnimationFrame(() => {
+                const panel = document.getElementById(`${idPrefix}-panel`);
+                const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+                panel?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+              });
+            }}
             onKeyDown={onKey}
             className={`min-h-11 shrink-0 border px-4 py-2 text-left transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-600 sm:min-w-40 ${
               selected
