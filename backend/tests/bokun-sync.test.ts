@@ -5,9 +5,9 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import prisma from "@/lib/db/prisma";
 import { BokunApiError } from "@/modules/bokun/bokun.client";
-import { answerErrors, answerQuestions, buildPassengers, findSlot, repairAnswers, seasonRateId } from "@/modules/bokun/bokun-booking";
+import { answerErrors, answerQuestions, BOKUN_NOTE_MAX, buildNoteUpdate, buildPassengers, findSlot, repairAnswers, seasonRateId } from "@/modules/bokun/bokun-booking";
 import { setBokunClientForTests, type BokunApi } from "@/modules/bokun/config";
-import { processBokunSyncTasks, queueUpcomingBookings, retryBokunSync, setBokunAutoRunForTests } from "@/modules/bokun/bokun-sync";
+import { processBokunSyncTasks, queueBokunNoteUpdate, queueUpcomingBookings, retryBokunSync, setBokunAutoRunForTests } from "@/modules/bokun/bokun-sync";
 import { syncBokunSeats } from "@/modules/bokun/availability-sync";
 import { CALENDAR_DAYS, syncFarCalendarFromBokun } from "@/jobs/tasks";
 import { cancelBooking, createBooking } from "@/modules/bookings/booking.repository";
@@ -44,6 +44,10 @@ class FakeBokun {
   codes = 0;
   /** What Bókun's booking search shows (by our reference). */
   inBokun: { externalBookingReference: string; confirmationCode: string; status: string }[] = [];
+  /** Booking notes (REST v2 experience booking notes). */
+  noteIds = 900;
+  failNote: Error | null = null;
+  noteGone = false;
   /** Each failSubmit error, once (then failSubmit applies). */
   failSubmits: Error[] = [];
 
@@ -70,6 +74,13 @@ class FakeBokun {
         }
         if (path.startsWith("/checkout.json/confirm-reserved/") && this.failConfirm.length) throw this.failConfirm.shift();
         if (path.startsWith("/booking.json/cancel-booking") && this.failCancel) throw this.failCancel;
+        if (path.includes("/notes")) {
+          if (this.failNote) throw this.failNote;
+          if (method === "POST") return { id: ++this.noteIds, owner_id: 1, type: "GENERAL", text: body.text };
+          if (method === "PUT" && this.noteGone) throw new BokunApiError(404, "Bókun API Error: 404 Not Found - note not found");
+          return { id: Number(path.split("/").pop()), owner_id: 1, type: "GENERAL", text: body.text };
+        }
+        if (method === "GET" && path.startsWith("/booking.json/booking/")) return { confirmationCode: decodeURIComponent(path.split("/").pop()!), activityBookings: [{ id: 153720548 }] };
         return null;
       },
     } as unknown as BokunApi;
@@ -798,5 +809,115 @@ describe("Airport transfers in Bókun (owner, 2026-11-18)", () => {
     expect(airportTransferBokun("LAKE_LOUISE", 9)).toEqual({ productId: "1356058", rateId: 2712890 });
     expect(airportTransferBokun("CANMORE", 6)).toEqual({ productId: "1356055", rateId: 2712883 });
     expect(airportTransferBokun("CANMORE", 7)).toEqual({ productId: "1356055", rateId: 2712886 });
+  });
+});
+
+describe("staff edits to pickup, phone and requests reach the Bókun booking note (owner, 2026-11-20)", () => {
+  const notes = () => bokun.calls.filter((c) => c.path.includes("/notes"));
+  const inBokun = async () => {
+    const dep = await departure(sharedTourId);
+    bokun.slot("796650", DAY, formatTime(dep.departureTime), 10);
+    const booking = await book(dep);
+    await run(booking.id);
+    expect((await reload(booking.id)).bokunBookingId).toBeTruthy();
+    return booking;
+  };
+  const formatTime = (t: Date) => t.toISOString().slice(11, 16);
+
+  it("builds a note of at most 255 characters with the pickup, phone and requests", () => {
+    const text = buildNoteUpdate({ bookingReference: "VC-2026-10F1D9E4", pickup: "Calgary", customerPhone: "+91 9518031326", specialRequests: "Reservation for Banff gondola" });
+    expect(text).toBe("Updated on vistachase.com (VC-2026-10F1D9E4).\nPickup: Calgary.\nGuest phone: +91 9518031326.\nGuest requests: Reservation for Banff gondola");
+    const long = buildNoteUpdate({ bookingReference: "VC-2026-10F1D9E4", pickup: "Calgary", customerPhone: null, specialRequests: "x".repeat(600) });
+    expect(long.length).toBe(BOKUN_NOTE_MAX);
+    expect(long.endsWith("…")).toBe(true);
+    expect(long).toContain("Guest phone: not given.");
+  });
+
+  it("adds a note to the Bókun booking after a pickup change, then updates that same note on the next change", async () => {
+    const booking = await inBokun();
+    const code = (await reload(booking.id)).bokunBookingId!;
+    await prisma.booking.update({ where: { id: booking.id }, data: { pickupCustomText: "Calgary", pickupTime: "07:30" } });
+    await queueBokunNoteUpdate(booking.id);
+    await run(booking.id);
+    expect(bokun.calls.some((c) => c.method === "GET" && c.path === `/booking.json/booking/${code}`)).toBe(true);
+    expect(notes()).toHaveLength(1);
+    expect(notes()[0]).toMatchObject({ method: "POST", path: "/restapi/v2.0/experienceBooking/153720548/notes", body: { type: "GENERAL" } });
+    expect(notes()[0].body.text).toContain("Pickup: Calgary at 07:30.");
+    const task = (await tasksFor(booking.id)).find((t) => t.operation === "NOTE")!;
+    expect(task.status).toBe("SUCCEEDED");
+    expect(task.externalRef).toBe(`${code}|153720548|${bokun.noteIds}`);
+
+    await prisma.booking.update({ where: { id: booking.id }, data: { specialRequests: "Child seat please" } });
+    await queueBokunNoteUpdate(booking.id);
+    await run(booking.id);
+    expect(notes()).toHaveLength(2);
+    expect(notes()[1]).toMatchObject({ method: "PUT", path: `/restapi/v2.0/experienceBooking/153720548/notes/${bokun.noteIds}` });
+    expect(notes()[1].body.text).toContain("Guest requests: Child seat please");
+
+    // Nothing new: nothing sent.
+    await queueBokunNoteUpdate(booking.id);
+    await run(booking.id);
+    expect(notes()).toHaveLength(2);
+    // The booking itself is untouched.
+    const after = await reload(booking.id);
+    expect(after.bokunBookingId).toBe(code);
+    expect(after.externalSyncStatus).toBe("SYNCED");
+  });
+
+  it("adds a new note when staff deleted the old one in Bókun", async () => {
+    const booking = await inBokun();
+    await prisma.booking.update({ where: { id: booking.id }, data: { pickupCustomText: "Fairmont Chateau Lake Louise" } });
+    await queueBokunNoteUpdate(booking.id);
+    await run(booking.id);
+    bokun.noteGone = true;
+    await prisma.booking.update({ where: { id: booking.id }, data: { pickupCustomText: "Banff Springs" } });
+    await queueBokunNoteUpdate(booking.id);
+    await run(booking.id);
+    expect(notes().map((c) => c.method)).toEqual(["POST", "PUT", "POST"]);
+  });
+
+  it("several quick edits send the latest details once", async () => {
+    const booking = await inBokun();
+    await prisma.booking.update({ where: { id: booking.id }, data: { pickupCustomText: "A" } });
+    await queueBokunNoteUpdate(booking.id);
+    await prisma.booking.update({ where: { id: booking.id }, data: { pickupCustomText: "B" } });
+    await queueBokunNoteUpdate(booking.id);
+    expect((await tasksFor(booking.id)).filter((t) => t.operation === "NOTE")).toHaveLength(1);
+    await run(booking.id);
+    expect(notes()).toHaveLength(1);
+    expect(notes()[0].body.text).toContain("Pickup: B.");
+  });
+
+  it("queues nothing for a booking not sent to Bókun yet (the create carries the new details)", async () => {
+    const dep = await departure(sharedTourId);
+    bokun.slot("796650", DAY, formatTime(dep.departureTime), 10);
+    const booking = await book(dep);
+    await prisma.booking.update({ where: { id: booking.id }, data: { pickupCustomText: "Calgary" } });
+    await queueBokunNoteUpdate(booking.id);
+    expect((await tasksFor(booking.id)).filter((t) => t.operation === "NOTE")).toHaveLength(0);
+    await run(booking.id);
+    const submit = bokun.made("/checkout.json/submit")[0].body;
+    expect(JSON.stringify(submit)).toContain("Pickup: Calgary.");
+  });
+
+  it("flags staff with the new details when Bókun refuses the note, and leaves the booking as it is", async () => {
+    const booking = await inBokun();
+    bokun.failNote = new BokunApiError(403, "Bókun API Error: 403 Forbidden - Insufficient permissions");
+    await prisma.booking.update({ where: { id: booking.id }, data: { pickupCustomText: "Calgary" } });
+    await queueBokunNoteUpdate(booking.id);
+    await run(booking.id);
+    const task = (await tasksFor(booking.id)).find((t) => t.operation === "NOTE")!;
+    expect(task.status).toBe("FAILED");
+    const flags = await prisma.bookingFlag.findMany({ where: { bookingId: booking.id, status: "OPEN" } });
+    expect(flags).toHaveLength(1);
+    expect(flags[0].note).toMatch(/^Bókun note: .*Pickup: Calgary\./);
+    const after = await reload(booking.id);
+    expect(after.externalSyncStatus).toBe("SYNCED");
+
+    // Staff Retry once Bókun allows it: the note goes in and the flag closes; the booking stays SYNCED.
+    bokun.failNote = null;
+    await retryBokunSync(booking.id);
+    expect((await reload(booking.id)).externalSyncStatus).toBe("SYNCED");
+    expect(await prisma.bookingFlag.count({ where: { bookingId: booking.id, status: "OPEN" } })).toBe(0);
   });
 });

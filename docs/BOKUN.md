@@ -99,6 +99,17 @@ the tour's Bókun booking.
   `BOKUN_PRODUCT_OVERRIDES=airport-transfer-banff:<id>,airport-transfer-canmore:<id>,airport-transfer-lake-louise:<id>`
   (then Bókun's default rate is used).
 
+## Pickup, phone and requests changed after booking
+
+Bókun's API can't rewrite the "Note for booking" written when the booking was created. When staff
+change the pickup (stop, hotel/address or time) or special requests (Edit booking), or staff or the
+guest change the phone, a `NOTE` task adds a note to the Bókun booking with the current details
+(`POST /restapi/v2.0/experienceBooking/{id}/notes`, type GENERAL, max 255 characters; the product
+booking id comes from `GET /booking.json/booking/{code}`). Later changes update that same note
+(`PUT .../notes/{noteId}`). Bookings not in Bókun yet need nothing: the create reads the booking
+when it runs. If Bókun refuses, the booking is untouched and staff get a "Bókun note:" flag with the
+text to paste in Bókun; Retry (Admin → Bookings → Bókun) sends it again.
+
 ## Changes made in Bókun
 
 Every 15 minutes (and when staff press **Check Bókun now** on a booking) upcoming website bookings that are in Bókun are read back from Bókun (`GET /booking.json/booking/<code>`):

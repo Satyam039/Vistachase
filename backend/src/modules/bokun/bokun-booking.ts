@@ -217,6 +217,28 @@ export function buildNote(input: BokunReservationInput, infantsInNote: number) {
     .slice(0, 2000);
 }
 
+/** Bókun's note entries hold at most 255 characters (ExperienceBookingNote.text, REST v2). */
+export const BOKUN_NOTE_MAX = 255;
+
+/**
+ * The note added to the Bókun booking when staff (or the guest) change the pickup, phone or
+ * requests after it reached Bókun. Bókun keeps the original "Note for booking"; this one sits under
+ * it with the current details. Kept to BOKUN_NOTE_MAX (the requests are shortened first).
+ */
+export function buildNoteUpdate(input: { bookingReference: string; pickup?: string | null; customerPhone?: string | null; specialRequests?: string | null }) {
+  const head = [
+    `Updated on vistachase.com (${input.bookingReference}).`,
+    `Pickup: ${input.pickup?.trim() || "not given"}.`,
+    `Guest phone: ${input.customerPhone?.trim() || "not given"}.`,
+  ].join("\n");
+  const requests = input.specialRequests?.trim();
+  if (!requests) return head.slice(0, BOKUN_NOTE_MAX);
+  const label = "\nGuest requests: ";
+  const room = BOKUN_NOTE_MAX - head.length - label.length;
+  if (room < 10) return head.slice(0, BOKUN_NOTE_MAX);
+  return `${head}${label}${requests.length > room ? `${requests.slice(0, room - 1)}…` : requests}`;
+}
+
 function splitName(name: string) {
   const [first, ...rest] = name.trim().split(/\s+/);
   return { first: first || name, last: rest.join(" ") || "-" };
