@@ -4,6 +4,7 @@
 
 import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
 import { activitiesSummary, PACKAGE_ACTIVITY_PRICES } from "@/modules/bookings/package-activities";
+import { promoUses } from "@/modules/pricing/promo-codes";
 import request from "supertest";
 import Stripe from "stripe";
 import prisma from "@/lib/db/prisma";
@@ -272,6 +273,38 @@ describe("private multi-day journeys", () => {
     const [a, b] = await Promise.all(result.bookings!.map((x) => prisma.booking.findUniqueOrThrow({ where: { bookingReference: x.bookingReference } })));
     expect((a.priceSnapshot as { airportTransfer?: unknown }).airportTransfer).toBeTruthy();
     expect((b.priceSnapshot as { airportTransfer?: unknown }).airportTransfer).toBeUndefined();
+  });
+
+  it("a promo code comes off on top of the package price and counts as one use (owner, 2026-11-20)", async () => {
+    setPaymentProviderForTests(browserPays);
+    await prisma.promoCode.createMany({
+      data: [
+        { code: "PKGTEN", percentOff: 10, maxUses: 1 },
+        { code: "PKG100", amountOffCents: 10000 },
+      ],
+    });
+    const days = async (start: number) => [
+      await vehicle("banff-private-tour", `2027-09-${String(start).padStart(2, "0")}`, 175000),
+      await vehicle("banff-private-tour", `2027-09-${String(start + 1).padStart(2, "0")}`, 175000),
+      await vehicle("icefields-jasper-private-tour", `2027-09-${String(start + 2).padStart(2, "0")}`, 175000),
+    ];
+
+    // 10% off every day's package price (CAD 1,575 a day).
+    const pct = await createPackageBooking(party(20, "three-day-rockies-discovery", await days(1), { promoCode: "pkgten" }));
+    expect(pct.success).toBe(true);
+    expect(pct.totalAmount).toBe(1417.5 * 3);
+    const stored = await prisma.booking.findMany({ where: { bookingReference: { in: pct.bookings!.map((b) => b.bookingReference) } } });
+    expect(await promoUses("PKGTEN")).toBe(1);
+    expect(stored.filter((b) => (b.priceSnapshot as { promo?: { code?: string } }).promo?.code === "PKGTEN")).toHaveLength(1);
+
+    // Its one use is gone.
+    const again = await createPackageBooking(party(21, "three-day-rockies-discovery", await days(5), { promoCode: "PKGTEN" }));
+    expect(again.success).toBe(false);
+    expect(again.error).toContain("fully used");
+
+    // A fixed amount comes off once, from Day 1.
+    const amount = await createPackageBooking(party(22, "three-day-rockies-discovery", await days(9), { promoCode: "PKG100" }));
+    expect(amount.totalAmount).toBe(1575 * 3 - 100);
   });
 
   it("add-on activities: each with its own guests, kept on Day 1, charged only once priced (owner, 2026-11-18)", async () => {

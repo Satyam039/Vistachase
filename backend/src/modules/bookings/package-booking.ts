@@ -18,6 +18,7 @@ import prisma from "@/lib/db/prisma";
 import { getPaymentProvider } from "@/lib/payment/payment.provider";
 import { bookingClosedError } from "@/modules/departures/booking-window";
 import { firstChargeCents } from "@/modules/bookings/deposit";
+import { lookupPromo, type ResolvedPromo } from "@/modules/pricing/promo-codes";
 import { pricePackageActivities, type PackageActivityInput } from "@/modules/bookings/package-activities";
 import {
   bookingDto,
@@ -100,7 +101,7 @@ export function packageDiscountFor(pkg: TourPackage, date: string) {
   return inSummer(date) ? pkg.discountPercent : (pkg.winterDiscountPercent ?? pkg.discountPercent);
 }
 
-export interface CreatePackageInput extends Omit<CreateBookingInput, "departureId" | "holdToken" | "promoCode" | "paymentPlan" | "addOns" | "idempotencyKey" | "activityAddOns" | "packageActivities"> {
+export interface CreatePackageInput extends Omit<CreateBookingInput, "departureId" | "holdToken" | "promoCode" | "paymentPlan" | "addOns" | "idempotencyKey" | "activityAddOns" | "packageActivities" | "promoCode"> {
   packageSlug: string;
   /** FULL (default) or a 20% DEPOSIT, for packages with `depositAllowed`. */
   paymentPlan?: "FULL" | "DEPOSIT";
@@ -109,6 +110,8 @@ export interface CreatePackageInput extends Omit<CreateBookingInput, "departureI
   idempotencyKey?: string;
   day4JasperPickup?: string;
   dayPickups?: { pickupStopId?: string; pickupCustomText?: string }[];
+  /** A promo code, taken off on top of the package price (owner, 2026-11-20). */
+  promoCode?: string;
   /** Private journeys: the activities the guest ticked, and who joins each (package-activities.ts). */
   packageActivities?: PackageActivityInput[];
 }
@@ -211,6 +214,15 @@ export async function createPackageBooking(input: CreatePackageInput): Promise<P
     return { success: false, error: (error as Error).message };
   }
 
+  // A promo code from the admin list (or PROMO_CODES): checked once here, and again with Day 1 under
+  // the code's lock. A partner's voucher code takes nothing off; it only credits the partner.
+  let packagePromo: ResolvedPromo | null = null;
+  if (input.promoCode?.trim()) {
+    const found = await lookupPromo(input.promoCode);
+    if (found.ok) packagePromo = found.promo;
+    else if (found.reason !== "unknown") return { success: false, error: `${found.error} Please remove it and try again.` };
+  }
+
   const made: NonNullable<BookingResult["booking"]>[] = [];
   const release = async (reason: string) => {
     for (const b of made) await failPendingBooking(b.bookingReference, reason);
@@ -242,7 +254,11 @@ export async function createPackageBooking(input: CreatePackageInput): Promise<P
         // So are its activities, priced on the server (package-activities.ts).
         packageActivities: i === 0 && activities.length > 0 ? activities : undefined,
       },
-      { deferPayment: true, discount: { percent: packageDiscountFor(pkg, departureDates.get(departureId) ?? ""), label: pkg.title.toUpperCase() } },
+      {
+        deferPayment: true,
+        discount: { percent: packageDiscountFor(pkg, departureDates.get(departureId) ?? ""), label: pkg.title.toUpperCase() },
+        ...(packagePromo ? { packagePromo: { promo: packagePromo, countsUse: i === 0 } } : {}),
+      },
     );
     if (!result.success || !result.booking) {
       await release(`${pkg.title}: day ${i + 1} could not be booked`);
