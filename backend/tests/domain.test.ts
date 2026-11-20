@@ -43,7 +43,7 @@ describe("Domain Repositories & Business Logic", () => {
     const departure = await prisma.tourDeparture.create({
       data: { inventorySource: "LOCAL",
         tourId: tour!.id,
-        date: dateOnly("2026-11-20"),
+        date: dateOnly("2030-11-20"),
         departureTime: timeOfDay("07:15"),
         capacityTotal: 10,
         capacityBooked: 0,
@@ -112,7 +112,7 @@ describe("Domain Repositories & Business Logic", () => {
     const departure = await prisma.tourDeparture.create({
       data: { inventorySource: "LOCAL",
         tourId: tour!.id,
-        date: dateOnly("2026-11-25"),
+        date: dateOnly("2030-11-25"),
         departureTime: timeOfDay("09:15"),
         capacityTotal: 10,
         capacityBooked: 0,
