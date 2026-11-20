@@ -132,6 +132,7 @@ const OPERATION: Record<string, string> = {
   CREATE: "Send to Bókun",
   CANCEL: "Cancel in Bókun",
   CANCEL_OLD: "Cancel old date in Bókun",
+  NOTE: "Update note in Bókun",
 };
 const HISTORY_ACTION: Record<string, string> = {
   CHANGE_DATE: "Tour date changed",

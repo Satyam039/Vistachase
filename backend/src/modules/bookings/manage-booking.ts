@@ -14,6 +14,7 @@ import prisma from "@/lib/db/prisma";
 import { z } from "@/lib/security/validate";
 import { formatDateOnly } from "@/lib/utils/time";
 import { guestEmail, opsEmail, titleOf } from "@/modules/admin/booking-requests";
+import { queueBokunNoteUpdate } from "@/modules/bokun/bokun-sync";
 
 const LIVE: BookingStatus[] = ["PENDING_PAYMENT", "CONFIRMED", "PAID_UNSYNCED"];
 const CHANGE_PREFIX = "Change request";
@@ -77,6 +78,8 @@ export async function updateGuestDetails(
     });
     return row;
   });
+  // The guest's phone is in the Bókun booking note: send the new one.
+  if (data.customerPhone) await queueBokunNoteUpdate(booking.id);
   const changes = [
     data.customerName ? `name "${booking.customerName}" to "${data.customerName}"` : null,
     data.customerPhone ? `phone ${booking.customerPhone} to ${data.customerPhone}` : null,

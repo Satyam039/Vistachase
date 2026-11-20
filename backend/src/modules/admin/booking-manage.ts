@@ -15,7 +15,7 @@ import prisma from "@/lib/db/prisma";
 import { dateOnly, formatDateOnly, formatTimeOfDay, getMountainTimeInstant, todayInMountainTime } from "@/lib/utils/time";
 import { releaseBookedSeats, takeBookedSeats } from "@/modules/departures/inventory";
 import { seatsToReserve } from "@/modules/pricing/departure-pricing";
-import { bokunBusy, bokunProductId, queueBokunDateChange } from "@/modules/bokun/bokun-sync";
+import { bokunBusy, bokunProductId, queueBokunDateChange, queueBokunNoteUpdate } from "@/modules/bokun/bokun-sync";
 import { bokunSeatsError } from "@/modules/bokun/bokun-seats";
 import { bokunConnected, bokunIsTestAccount } from "@/modules/bokun/config";
 import { bokunInboundEnabled } from "@/modules/bokun/bokun-inbound";
@@ -257,5 +257,7 @@ export async function updateGuestContact(bookingId: string, input: GuestContactI
     await tx.booking.update({ where: { id: booking.id }, data });
     await staffAudit(tx, staffId, "EDIT_GUEST_DETAILS", "Booking", booking.id, { changes });
   });
+  // The guest's phone is in the Bókun booking note: send the new one.
+  if (data.customerPhone) await queueBokunNoteUpdate(booking.id);
   return { status: 200, changed: Object.keys(data) } as const;
 }

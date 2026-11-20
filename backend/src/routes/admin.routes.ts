@@ -30,7 +30,7 @@ import { emailDeliveryConfigured, getEmailProvider } from "@/lib/email/email.pro
 import { renderMasterEmail } from "@/lib/email/email-template";
 import { bokunAvailabilitySyncEnabled, bokunConfig, bokunConnected, bokunIsTestAccount } from "@/modules/bokun/config";
 import { checkBokunProducts } from "@/modules/bokun/bokun-products";
-import { bokunSyncStatus, processBokunSyncTasks, queueUpcomingBookings, retryBokunSync } from "@/modules/bokun/bokun-sync";
+import { bokunSyncStatus, processBokunSyncTasks, queueBokunNoteUpdate, queueUpcomingBookings, retryBokunSync } from "@/modules/bokun/bokun-sync";
 import { syncBokunSeats } from "@/modules/bokun/availability-sync";
 import { pullBokunChanges } from "@/modules/bokun/bokun-inbound";
 import { bookingOverview, changeBookingDate, dateOptions, updateGuestContact } from "@/modules/admin/booking-manage";
@@ -327,8 +327,12 @@ router.patch("/bookings/:id", async (req, res, next) => {
   try {
     const body = parseOr400(bookingEdit, req.body, res);
     if (!body) return;
+    const before = await prisma.booking.findUnique({ where: { id: String(req.params.id) }, select: { pickupTime: true, pickupStopId: true, pickupCustomText: true, specialRequests: true } });
     const booking = await prisma.booking.update({ where: { id: String(req.params.id) }, data: body, select: bookingSelect });
     await audit(req, "UPDATE_BOOKING", "Booking", booking.id, body);
+    // Pickup or requests changed: the Bókun booking's note follows (bokun-sync.ts, NOTE task).
+    const noteFields = ["pickupTime", "pickupStopId", "pickupCustomText", "specialRequests"] as const;
+    if (before && noteFields.some((k) => body[k] !== undefined && (body[k] ?? null) !== (before[k] ?? null))) await queueBokunNoteUpdate(booking.id);
     res.json({ success: true, booking: { ...booking, totalAmount: booking.totalAmount / 100 } });
   } catch (e) {
     next(e);

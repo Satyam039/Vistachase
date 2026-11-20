@@ -17,7 +17,7 @@ import type { BookingStatus, BookingSyncTask, Prisma } from "@prisma/client";
 import prisma from "@/lib/db/prisma";
 import { countryFromPhone, knownCountry } from "@/lib/utils/phone-country";
 import { BokunApiError } from "@/modules/bokun/bokun.client";
-import { abortInBokun, BokunUnavailableError, cancelInBokun, confirmInBokun, findInBokun, reserveInBokun } from "@/modules/bokun/bokun-booking";
+import { abortInBokun, BokunUnavailableError, buildNoteUpdate, cancelInBokun, confirmInBokun, findInBokun, reserveInBokun } from "@/modules/bokun/bokun-booking";
 import { bokunClient, bokunConnected, bokunIsTestAccount, type BokunApi } from "@/modules/bokun/config";
 import { formatDateOnly, formatTimeOfDay, todayInMountainTime, dateOnly } from "@/lib/utils/time";
 import { PRODUCT_MAP } from "@/modules/tours/product-map";
@@ -152,6 +152,8 @@ export async function processBokunSyncTasks(options: { now?: Date; bookingId?: s
         ? await runCreateTransfer(client, claimedTask, now)
         : task.operation === TRANSFER_CANCEL
           ? await runCancelTransfer(client, claimedTask, now)
+          : task.operation === NOTE
+            ? await runNote(client, claimedTask, now)
           : task.operation === "CREATE"
         ? await runCreate(client, claimedTask, now)
         : task.operation === CANCEL_OLD
@@ -446,6 +448,131 @@ async function runCancelOld(client: BokunApi, task: BookingSyncTask, now: Date):
   }
 }
 
+// ---------------------------------------------------------------------------------------------
+// Pickup / phone / requests changed after the booking reached Bókun (owner 2026-11-20)
+//
+// Bókun's API can't rewrite the "Note for booking" written when the booking was created, so a
+// NOTE task adds a note to the Bókun booking with the current pickup, guest phone and requests
+// (REST v2 experience booking notes). Later edits update that same note rather than adding more.
+// The task reads the booking when it runs, so several quick edits send the latest details once.
+// A refusal never touches the booking itself: staff get a "Bókun note:" flag to update it by hand.
+
+const NOTE = "NOTE";
+const NOTE_FLAG_PREFIX = "Bókun note:";
+
+/** The pickup line, exactly as the create sends it. */
+function pickupLine(booking: { pickupStop: { name: string } | null; pickupCustomText: string | null; pickupTime: string | null }) {
+  const place = booking.pickupStop?.name ?? booking.pickupCustomText ?? "";
+  return [place, booking.pickupTime ? `at ${booking.pickupTime}` : ""].filter(Boolean).join(" ") || null;
+}
+
+/**
+ * Called after staff (or the guest) change the pickup, phone or requests. Queues a note update when
+ * the booking is in Bókun, or is reserved there with the old details. Never throws: the edit itself
+ * is already saved.
+ */
+export async function queueBokunNoteUpdate(bookingId: string) {
+  try {
+    if (!bokunConnected()) return;
+    const booking = await prisma.booking.findUnique({ where: { id: bookingId }, select: { status: true, bokunBookingId: true } });
+    if (!booking || (booking.status !== "CONFIRMED" && booking.status !== "COMPLETED")) return;
+    if (!booking.bokunBookingId) {
+      // Not sent yet: the create reads the booking when it runs, so it carries the new details.
+      // Only a create already reserved in Bókun (with the old note) needs a note after it.
+      const reserved = await prisma.bookingSyncTask.findFirst({
+        where: { bookingId, provider: PROVIDER, operation: "CREATE", status: { in: ["PENDING", "RETRYABLE_FAILURE", "IN_PROGRESS"] }, OR: [{ externalRef: { not: null } }, { status: "IN_PROGRESS" }] },
+        select: { id: true },
+      });
+      if (!reserved) return;
+    }
+    const waiting = await prisma.bookingSyncTask.findFirst({ where: { bookingId, provider: PROVIDER, operation: NOTE, status: { in: ["PENDING", "RETRYABLE_FAILURE"] } } });
+    if (waiting) {
+      await prisma.bookingSyncTask.update({ where: { id: waiting.id }, data: { nextAttemptAt: new Date() } });
+    } else {
+      await prisma.bookingSyncTask.create({
+        data: { bookingId, provider: PROVIDER, operation: NOTE, idempotencyKey: `${PROVIDER}:${bookingId}:${NOTE}:${Date.now()}:${Math.random().toString(36).slice(2, 8)}` },
+      });
+    }
+    runSoon();
+  } catch (error) {
+    console.error(`[bokun] couldn't queue the note update for ${bookingId}:`, (error as Error).message);
+  }
+}
+
+/** The note this booking last put on its Bókun booking: "<code>|<experience booking id>|<note id>". */
+function parseNoteRef(ref: string | null | undefined) {
+  const [code, experienceBookingId, noteId] = (ref ?? "").split("|");
+  return code && experienceBookingId && noteId ? { code, experienceBookingId, noteId } : null;
+}
+
+/** The product (experience) booking inside a Bókun booking, from GET /booking.json/booking/{code}. */
+async function experienceBookingId(client: BokunApi, code: string) {
+  const booking = (await client.fetch("GET", `/booking.json/booking/${encodeURIComponent(code)}`)) as Record<string, unknown> | null;
+  const list = (booking?.activityBookings ?? booking?.productBookings) as Record<string, unknown>[] | undefined;
+  const id = Array.isArray(list) ? (list[0]?.id ?? list[0]?.bookingId) : undefined;
+  if (id == null || !/^\d+$/.test(String(id))) throw new StopError(`Bókun booking ${code} shows no product booking to add the note to.`);
+  return String(id);
+}
+
+async function runNote(client: BokunApi, task: BookingSyncTask, now: Date): Promise<Outcome> {
+  const booking = await prisma.booking.findUnique({
+    where: { id: task.bookingId },
+    select: { id: true, status: true, bookingReference: true, bokunBookingId: true, customerPhone: true, specialRequests: true, pickupCustomText: true, pickupTime: true, pickupStop: { select: { name: true } } },
+  });
+  if (!booking) return finish(task, "SKIPPED", "Booking not found.");
+  if (booking.status !== "CONFIRMED" && booking.status !== "COMPLETED") return finish(task, "SKIPPED", `Booking is ${booking.status.toLowerCase()}.`);
+  const code = booking.bokunBookingId;
+  if (!code) {
+    const pending = await prisma.bookingSyncTask.findFirst({ where: { bookingId: booking.id, provider: PROVIDER, operation: "CREATE", status: { in: ["PENDING", "RETRYABLE_FAILURE", "IN_PROGRESS"] } }, select: { id: true } });
+    if (pending && task.attempts < RETRY_MINUTES.length) return retryLater(task, "Waiting for the booking to reach Bókun.", now);
+    return finish(task, "SKIPPED", "The booking isn't in Bókun.");
+  }
+
+  const text = buildNoteUpdate({ bookingReference: booking.bookingReference, pickup: pickupLine(booking), customerPhone: booking.customerPhone, specialRequests: booking.specialRequests });
+  const last = await prisma.bookingSyncTask.findFirst({
+    where: { bookingId: booking.id, provider: PROVIDER, operation: NOTE, status: "SUCCEEDED", externalRef: { startsWith: `${code}|` } },
+    orderBy: { updatedAt: "desc" },
+  });
+  const lastRef = parseNoteRef(last?.externalRef);
+  if (lastRef && (last?.payload as { text?: string } | null)?.text === text) return finish(task, "SKIPPED", "Bókun already has these details.");
+
+  try {
+    let ref: string | null = null;
+    if (lastRef) {
+      try {
+        await client.fetch("PUT", `/restapi/v2.0/experienceBooking/${lastRef.experienceBookingId}/notes/${lastRef.noteId}`, { text });
+        ref = last!.externalRef;
+      } catch (error) {
+        // The note was deleted in Bókun: add a new one.
+        if (!(error instanceof BokunApiError && error.status === 404)) throw error;
+      }
+    }
+    if (!ref) {
+      const experience = await experienceBookingId(client, code);
+      const created = (await client.fetch("POST", `/restapi/v2.0/experienceBooking/${experience}/notes`, { type: "GENERAL", text })) as { id?: unknown } | null;
+      ref = `${code}|${experience}|${created?.id ?? "?"}`;
+    }
+    await prisma.bookingSyncTask.update({ where: { id: task.id }, data: { payload: { text } } });
+    await prisma.bookingFlag.updateMany({
+      where: { bookingId: booking.id, status: "OPEN", type: "OTHER", note: { startsWith: NOTE_FLAG_PREFIX } },
+      data: { status: "RESOLVED", resolvedAt: new Date(), resolution: "Note updated in Bókun." },
+    });
+    return finish(task, "SUCCEEDED", null, ref);
+  } catch (error) {
+    const message = (error as Error).message.slice(0, 500);
+    const refused = error instanceof StopError || (error instanceof BokunApiError && error.status < 500);
+    if (refused || task.attempts >= RETRY_MINUTES.length) {
+      await raiseFlag(
+        booking.id,
+        `${NOTE_FLAG_PREFIX} the pickup / phone / requests were changed on the website, but the note on Bókun booking ${code} couldn't be updated (${message}). Update it in Bókun by hand: ${text.replace(/\n/g, " ")}`,
+        NOTE_FLAG_PREFIX,
+      );
+      return finish(task, "FAILED", message);
+    }
+    return retryLater(task, message, now);
+  }
+}
+
 async function finish(task: BookingSyncTask, status: "SUCCEEDED" | "FAILED" | "SKIPPED", lastError: string | null, externalRef?: string | null): Promise<Outcome> {
   await prisma.bookingSyncTask.update({
     where: { id: task.id },
@@ -514,7 +641,8 @@ export async function retryBokunSync(bookingId: string) {
       data: { status: "PENDING", attempts: 0, nextAttemptAt: new Date(), lastError: null, ...(stage === "submitting" || stage === "refused" ? { payload: { stage: "retried" } } : {}) },
     });
   }
-  await prisma.booking.update({ where: { id: bookingId }, data: { externalSyncStatus: "PENDING" } });
+  // A note update alone doesn't change whether the booking itself is in Bókun.
+  if (tasks.some((t) => t.operation !== NOTE)) await prisma.booking.update({ where: { id: bookingId }, data: { externalSyncStatus: "PENDING" } });
   const run = await processBokunSyncTasks({ bookingId });
   return { status: 200, run } as const;
 }
