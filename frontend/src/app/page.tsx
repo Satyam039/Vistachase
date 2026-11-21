@@ -55,7 +55,7 @@ const baseMetadata: Metadata = {
 const HERO_FROM_PRICE: Record<string, { from: number; unit?: CategoryOffer["unit"] }> = {
   shared: { from: 220 },
   private: { from: 1240 },
-  shuttles: { from: 130 },
+  shuttles: { from: 108 },
   multiday: { from: 1240, unit: "per day" },
 };
 
