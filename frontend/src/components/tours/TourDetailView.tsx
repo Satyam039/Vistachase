@@ -70,6 +70,9 @@ function formatDeparture(departure: DepartureAvailability) {
 
 const FACT_ICONS = [Clock, Users, MapPin, Coffee];
 
+/** Tour pages that show only the offer price in the price box (owner, 2026-11-21). */
+const NO_STRIKETHROUGH_SLUGS = new Set(["banff-highlights-tour", "banff-yoho-discovery"]);
+
 /** Banff Elite (sister company) plans fully tailored multi-day itineraries; the button shows once its URL is set. */
 const BANFF_ELITE_URL = process.env.NEXT_PUBLIC_BANFF_ELITE_URL || "https://banffelite.com";
 
@@ -297,6 +300,9 @@ export function TourDetailView({
   const isEnquiry = tour.bookingMode === "ENQUIRY";
   const price = fromPrice(tour);
   const unitLabel = priceUnitLabel(tour);
+  // Owner (2026-11-21): Banff & Yoho Discovery shows only its offer price (CAD $220 per guest), with
+  // no struck-through "was" price or "Save %" badge, like its tour cards (TourCard).
+  const noStrikethrough = NO_STRIKETHROUGH_SLUGS.has(tour.slug);
 
   const images = Array.from(new Set([tour.featuredImage, ...tour.galleryImages].filter(Boolean)));
   // Gallery slides (GetYourGuide / Viator): the product's own lead photo first, then the clips of
@@ -578,6 +584,7 @@ export function TourDetailView({
                   currency={tour.currency}
                   unit={tour.category === "TICKET" ? "per ticket" : unitLabel}
                   lead={isEnquiry ? "Tailored quote from" : "From"}
+                  showOriginal={!noStrikethrough}
                 />
                 {/* No sales tax is added at checkout (backend booking-pricing.ts), so prices are tax-inclusive. */}
                 {price > 0 && (
@@ -808,6 +815,7 @@ export function TourDetailView({
             currency={tour.currency}
             unit={tour.category === "TICKET" ? "per ticket" : unitLabel}
             layout="inline"
+            showOriginal={!noStrikethrough}
           />
           <a href="#booking" className="golden-summit-btn inline-flex h-12 shrink-0 items-center rounded-full px-6 text-base">
             {isEnquiry || tour.departures.length === 0 ? "Request a date" : "Check availability"}
