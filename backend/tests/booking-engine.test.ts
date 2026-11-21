@@ -10,7 +10,7 @@ describe("Phase 4: Booking Engine, Holds & Payment Abstraction", () => {
     const departure = await prisma.tourDeparture.create({
       data: { inventorySource: "LOCAL",
         tourId: tour!.id,
-        date: dateOnly("2026-11-21"),
+        date: dateOnly("2030-11-21"),
         departureTime: timeOfDay("06:00"),
         capacityTotal: 10,
         capacityBooked: 0,
@@ -47,7 +47,7 @@ describe("Phase 4: Booking Engine, Holds & Payment Abstraction", () => {
     const departure = await prisma.tourDeparture.create({
       data: { inventorySource: "LOCAL",
         tourId: tour!.id,
-        date: dateOnly("2026-11-22"),
+        date: dateOnly("2030-11-22"),
         departureTime: timeOfDay("07:30"),
         capacityTotal: 10,
         capacityBooked: 0,

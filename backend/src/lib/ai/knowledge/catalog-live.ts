@@ -41,6 +41,8 @@ export interface LiveProduct {
   firstDate: string | null;
   lastDate: string | null;
   image: string | null;
+  bookingMode?: string;
+  bokunId?: string | null;
 }
 
 let cache: { at: number; products: Map<string, LiveProduct>; departures: DepartureRow[] } | null = null;
@@ -55,46 +57,70 @@ async function load() {
   const today = todayInMountainTime();
   const until = new Date(`${today}T00:00:00Z`);
   until.setUTCDate(until.getUTCDate() + HORIZON_DAYS);
-  const slugs = WEBSITE_CATALOG.filter((p) => p.bookIn === "chat").map((p) => p.slug);
-  const tours = await prisma.tour.findMany({ where: { ...conciergeTours(), slug: { in: slugs } }, select: { id: true, slug: true, priceUnit: true, featuredImage: true } });
-  const bySlug = new Map(tours.map((t) => [t.id, t]));
-  const rows = await prisma.tourDeparture.findMany({
-    where: { tourId: { in: tours.map((t) => t.id) }, status: "ACTIVE", date: { gte: dateOnly(today), lte: until }, ...sellableInventoryWhere },
-    select: { id: true, tourId: true, date: true, departureTime: true, price: true, capacityTotal: true, capacityBooked: true, capacityHeld: true },
-    orderBy: [{ date: "asc" }, { departureTime: "asc" }],
-  });
-  const departures: DepartureRow[] = rows.map((d) => ({
-    id: d.id,
-    slug: bySlug.get(d.tourId!)!.slug,
-    date: formatDateOnly(d.date),
-    time: formatTimeOfDay(d.departureTime),
-    price: d.price / 100,
-    seats: Math.max(0, d.capacityTotal - d.capacityBooked - d.capacityHeld),
-  }));
-
   const products = new Map<string, LiveProduct>();
-  for (const t of tours) {
-    const own = departures.filter((d) => d.slug === t.slug);
-    const prices: LiveProduct["prices"] = {};
-    const times: LiveProduct["times"] = {};
-    for (const d of own) {
-      const s = seasonOf(d.date);
-      const p = (prices[s] ??= { min: d.price, max: d.price });
-      p.min = Math.min(p.min, d.price);
-      p.max = Math.max(p.max, d.price);
-      const list = (times[s] ??= []);
-      if (!list.includes(d.time)) list.push(d.time);
-    }
-    for (const list of Object.values(times)) list?.sort();
-    products.set(t.slug, {
-      slug: t.slug,
-      prices,
-      priceUnit: t.priceUnit === "GROUP" ? "per vehicle" : "per guest",
-      times,
-      firstDate: own[0]?.date ?? null,
-      lastDate: own.at(-1)?.date ?? null,
-      image: t.featuredImage || null,
+  let departures: DepartureRow[] = [];
+
+  try {
+    const allSlugs = WEBSITE_CATALOG.map((p) => p.slug);
+    const tours = await prisma.tour.findMany({
+      where: { ...conciergeTours(), slug: { in: allSlugs } },
+      select: { id: true, slug: true, priceUnit: true, featuredImage: true, bookingMode: true, bokunId: true },
     });
+    const bySlug = new Map(tours.map((t) => [t.id, t]));
+    const rows = await prisma.tourDeparture.findMany({
+      where: { tourId: { in: tours.map((t) => t.id) }, status: "ACTIVE", date: { gte: dateOnly(today), lte: until }, ...sellableInventoryWhere },
+      select: { id: true, tourId: true, date: true, departureTime: true, price: true, capacityTotal: true, capacityBooked: true, capacityHeld: true },
+      orderBy: [{ date: "asc" }, { departureTime: "asc" }],
+    });
+    departures = rows.map((d) => ({
+      id: d.id,
+      slug: bySlug.get(d.tourId!)!.slug,
+      date: formatDateOnly(d.date),
+      time: formatTimeOfDay(d.departureTime),
+      price: d.price / 100,
+      seats: Math.max(0, d.capacityTotal - d.capacityBooked - d.capacityHeld),
+    }));
+
+    for (const t of tours) {
+      const own = departures.filter((d) => d.slug === t.slug);
+      const prices: LiveProduct["prices"] = {};
+      const times: LiveProduct["times"] = {};
+      for (const d of own) {
+        const s = seasonOf(d.date);
+        const p = (prices[s] ??= { min: d.price, max: d.price });
+        p.min = Math.min(p.min, d.price);
+        p.max = Math.max(p.max, d.price);
+        const list = (times[s] ??= []);
+        if (!list.includes(d.time)) list.push(d.time);
+      }
+      for (const list of Object.values(times)) list?.sort();
+      products.set(t.slug, {
+        slug: t.slug,
+        prices,
+        priceUnit: t.priceUnit === "GROUP" ? "per vehicle" : "per guest",
+        times,
+        firstDate: own[0]?.date ?? null,
+        lastDate: own.at(-1)?.date ?? null,
+        image: t.featuredImage || null,
+        bookingMode: t.bookingMode,
+        bokunId: t.bokunId,
+      });
+    }
+  } catch (err) {
+    console.warn("[catalog-live] Database read failed; using static fallback for departures and products:", (err as Error).message);
+    // Populate products from WEBSITE_CATALOG defaults so renderCatalogKnowledge() works reliably!
+    for (const p of WEBSITE_CATALOG) {
+      products.set(p.slug, {
+        slug: p.slug,
+        prices: p.packagePrice ? {} : { summer: { min: 220, max: 220 }, winter: { min: 199, max: 199 } },
+        priceUnit: p.type === "PRIVATE" ? "per vehicle" : "per guest",
+        times: { summer: ["08:00"], winter: ["08:00"] },
+        firstDate: null,
+        lastDate: null,
+        image: p.image,
+        bookingMode: p.bookIn === "chat" ? "BOKUN" : "ENQUIRY",
+      });
+    }
   }
   cache = { at: Date.now(), products, departures };
   return cache;
@@ -132,7 +158,13 @@ export async function renderCatalogKnowledge(): Promise<string> {
   const { products } = await load();
   const blocks = WEBSITE_CATALOG.map((p) => {
     const live = products.get(p.slug) ?? null;
-    const times = p.bookIn === "chat" ? timesText(live) : null;
+    const isEnquiry = live?.bookingMode === "ENQUIRY" || (p.bookIn !== "chat" && !live?.bookingMode);
+    const times = !isEnquiry ? timesText(live) : null;
+    const bookDesc = isEnquiry
+      ? `request / enquiry form on page ${p.page} (custom dates, tailored quote)`
+      : p.bookIn === "chat"
+      ? "in this chat (live departures)"
+      : `in this chat: get_tour_details shows the card, the guest taps "Choose dates and book" and picks a date for each day (multi-day package); page ${p.page}`;
     return [
       `### ${p.name} [slug: ${p.slug}] · ${p.type === "SHUTTLE" ? "Lake shuttle" : p.type === "SHARED" ? "Shared small-group" : "Private"} · ${p.days > 1 ? `${p.days} days` : p.duration}`,
       p.overview,
@@ -146,7 +178,7 @@ export async function renderCatalogKnowledge(): Promise<string> {
       `- Not included: ${p.notIncluded.join("; ")}`,
       ...(p.seasonNotes ?? []).map((n) => `- Note: ${n}`),
       `- Cancellation: ${p.cancellation}`,
-      `- Book: ${p.bookIn === "chat" ? "in this chat (live departures)" : 'in this chat: get_tour_details shows the card, the guest taps "Choose dates and book" and picks a date for each day (multi-day package)'}; page ${p.page}`,
+      `- Book: ${bookDesc}`,
     ]
       .filter(Boolean)
       .join("\n");
@@ -207,10 +239,12 @@ function departuresFor(all: DepartureRow[], slug: string, guests: number, from?:
 export async function tourCard(product: WebsiteProduct, opts: { date?: string; guests?: number } = {}): Promise<TourCard> {
   const { products, departures } = await load();
   const live = products.get(product.slug) ?? null;
+  const isEnquiry = live?.bookingMode === "ENQUIRY" || (product.bookIn !== "chat" && !live?.bookingMode);
+  const bookIn: "chat" | "page" = isEnquiry ? "page" : "chat";
   const priceUnit = product.packagePrice?.unit ?? live?.priceUnit ?? "per guest";
   // A vehicle takes the whole party, so its departures need only one free vehicle.
   const seatsNeeded = priceUnit === "per vehicle" ? 1 : opts.guests ?? 1;
-  const deps = product.bookIn === "chat" ? departuresFor(departures, product.slug, seatsNeeded, opts.date) : [];
+  const deps = bookIn === "chat" ? departuresFor(departures, product.slug, seatsNeeded, opts.date) : [];
   const season = opts.date ? seasonOf(opts.date) : null;
   const seasonal = season && live?.prices[season];
   // With a date, "from" is the cheapest of the departures shown for it; otherwise the season's or year's lowest.
@@ -229,7 +263,7 @@ export async function tourCard(product: WebsiteProduct, opts: { date?: string; g
     fromAmount: Number.isFinite(fromAmount) ? fromAmount : null,
     priceUnit,
     page: product.page,
-    bookIn: product.bookIn,
+    bookIn,
     departures: deps.map((d) => ({ id: d.id, date: d.date, time: d.time, seats: d.seats, price: d.price })),
   };
 }
@@ -313,16 +347,28 @@ export async function tourDetail(slug: string, opts: { date?: string; guests?: n
   if (!p) return null;
   const card = await tourCard(p, opts);
   const live = await liveProduct(slug);
+
+  let bokunDetails: any = null;
+  try {
+    const { getBokunTourDetails } = await import("@/modules/bokun/bokun-concierge");
+    bokunDetails = await getBokunTourDetails(slug);
+  } catch {
+    // optional live enrichment
+  }
+
   return {
     ...card,
-    stops: p.stops,
-    included: p.included,
-    notIncluded: p.notIncluded,
-    pickup: p.pickup,
+    stops: bokunDetails?.stops?.length ? bokunDetails.stops : p.stops,
+    included: bokunDetails?.inclusions?.length ? bokunDetails.inclusions : p.included,
+    notIncluded: bokunDetails?.exclusions?.length ? bokunDetails.exclusions : p.notIncluded,
+    pickup: bokunDetails?.pickupPlaces?.length ? bokunDetails.pickupPlaces.join("; ") : p.pickup,
     capacity: p.capacity,
     season: p.season.text,
     seasonNotes: p.seasonNotes ?? [],
     cancellation: p.cancellation,
-    departureTimes: p.bookIn === "chat" ? timesText(live) : null,
+    departureTimes: card.bookIn === "chat" ? timesText(live) : null,
+    pricingCategories: bokunDetails?.pricingCategories,
+    bookingQuestions: bokunDetails?.bookingQuestions,
+    bokunId: bokunDetails?.bokunId ?? live?.bokunId ?? undefined,
   };
 }
