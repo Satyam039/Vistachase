@@ -306,7 +306,7 @@ export async function getBokunBookingDetails(
       currency: localBooking.currency,
       paymentStatus: localBooking.status === "CONFIRMED" ? "PAID" : "PENDING",
       voucherCode: localBooking.voucherCode,
-      voucherUrl: `/booking/${localBooking.bookingReference}/voucher?t=${signBookingLink(localBooking.bookingReference, "voucher")}`,
+      voucherUrl: `/booking/${localBooking.bookingReference}/voucher`,
       trackingToken: localBooking.trackingToken ?? undefined,
       source: "LOCAL",
     };
