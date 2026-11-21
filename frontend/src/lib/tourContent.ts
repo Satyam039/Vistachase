@@ -104,6 +104,8 @@ const CONTENT: Record<string, DocContent> = {
       { match: /how long/i, answer: "About 10 to 11 hours, including travel time. Pickups start at 7:30 AM in Canmore and 8:00 AM in Banff, and you're back around 5:30 PM in Banff and 6:00 PM in Canmore." },
       { match: /what sights/i, answer: "Lake Louise, Moraine Lake (June 1 to October 10), Johnston Canyon, Emerald Lake, the Natural Bridge, Lake Minnewanka, Two Jack Lake, the Lower Spiral Tunnels Viewpoint and Morant's Curve. Stops and their order can change with the season, weather and road conditions." },
       { match: /moraine lake/i, answer: "Moraine Lake is included from June 1 to October 10, with transportation to the lake arranged by Vista Chase. No separate shuttle reservation is needed." },
+      // Owner (2026-11-21): no age restriction; "2 and above" removed.
+      { match: /families and seniors/i, answer: "Absolutely. There is no age restriction, and guests of all ages are welcome. The walking sections are light to moderate, and your guide will tailor stops to suit everyone's comfort level." },
     ],
     addFaqs: [],
   },

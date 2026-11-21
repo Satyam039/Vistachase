@@ -85,11 +85,17 @@ export const TOUR_ITINERARIES: Record<string, TourItinerary> = {
   "banff-highlights-tour": {
     title: "Banff & Yoho Discovery (Shared Tour)",
     duration: "10–11 hours",
-    stops: BANFF_YOHO_STOPS,
+    // Owner (2026-11-21): show the 60-minute lunch stop in Lake Louise Village after the two lakes.
+    stops: [
+      ...BANFF_YOHO_STOPS.slice(0, 2),
+      { name: "Lunch in Lake Louise Village", text: "A 60-minute lunch stop in Lake Louise Village (lunch not included)." },
+      ...BANFF_YOHO_STOPS.slice(2),
+    ],
     steps: [
       { time: "7:30 – 8:00 AM", text: `Pickup in Canmore from about 7:30 AM and in Banff from about 8:00 AM. ${GUIDE_CALL}` },
       { time: "Morning", text: "Lake Louise and Moraine Lake (Moraine Lake from June 1 to October 10)." },
-      { time: "Midday", text: BANFF_YOHO_MIDDAY },
+      // Owner (2026-11-21): the shared tour's lunch stop in Lake Louise is 60 minutes.
+      { time: "Midday", text: BANFF_YOHO_MIDDAY.replace("Lunch stop in Lake Louise Village", "60-minute lunch stop in Lake Louise Village") },
       { time: "Afternoon", text: BANFF_YOHO_AFTERNOON },
       { time: "5:30 – 6:00 PM", text: "Back in Banff around 5:30 PM and Canmore around 6:00 PM." },
     ],
