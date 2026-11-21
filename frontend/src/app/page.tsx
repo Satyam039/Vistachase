@@ -1,6 +1,6 @@
 import React from "react";
 import { ServicesHero, type HeroSlide } from "@/components/cinematic/ServicesHero";
-import { categoryOffer, fromPrice, priceUnitLabel } from "@/lib/tours";
+import { categoryOffer, fromPrice, priceUnitLabel, type CategoryOffer } from "@/lib/tours";
 import { getCategoryExtras, getTours } from "@/lib/api/catalog";
 import type { TourWithAvailability } from "@/lib/api/types";
 import { SERVICES } from "@/lib/services";
@@ -46,6 +46,26 @@ const baseMetadata: Metadata = {
   },
 };
 
+/**
+ * Home hero "From" prices set by the owner (2026-11-21), shown instead of the lowest catalog price.
+ * Display only: checkout, tour pages and the catalog keep their own prices. The unit and the
+ * inclusions still come from the catalog offer; Multi-Day Journeys has no priced tours, so it
+ * gets a plain "per day" offer.
+ */
+const HERO_FROM_PRICE: Record<string, { from: number; unit?: CategoryOffer["unit"] }> = {
+  shared: { from: 220 },
+  private: { from: 1240 },
+  shuttles: { from: 130 },
+  multiday: { from: 1240, unit: "per day" },
+};
+
+function heroOffer(serviceId: string, offer: CategoryOffer | null): CategoryOffer | null {
+  const set = HERO_FROM_PRICE[serviceId];
+  if (!set) return offer;
+  const base = offer ?? { from: set.from, unit: "per person" as const, inclusions: [], maxGuests: null };
+  return { ...base, from: set.from, unit: set.unit ?? base.unit };
+}
+
 export default async function HomePage() {
   cachePublicData();
   let tours: TourWithAvailability[] = [];
@@ -76,7 +96,7 @@ export default async function HomePage() {
     (service) => service.id !== "tickets" && service.category !== "TICKET",
   ).map((service) => ({
     ...service,
-    offer: categoryOffer(tours || [], service.category),
+    offer: heroOffer(service.id, categoryOffer(tours || [], service.category)),
     tours: (tours || [])
       .filter((t) => t.category === service.category)
       .slice(0, 3)
