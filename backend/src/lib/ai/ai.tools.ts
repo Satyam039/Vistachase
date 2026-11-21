@@ -62,32 +62,51 @@ export async function getTourDetails(args: { tourSlugOrBokunId: string }) {
     where: { ...conciergeTours(), OR: [{ slug: args.tourSlugOrBokunId }, { bokunId: args.tourSlugOrBokunId }, { id: args.tourSlugOrBokunId }] },
   });
   if (!tour) return null;
+
+  let bokunDetails: any = null;
+  try {
+    const { getBokunTourDetails } = await import("@/modules/bokun/bokun-concierge");
+    bokunDetails = await getBokunTourDetails(tour.bokunId ?? tour.slug);
+  } catch {
+    // optional live Bókun enrichment
+  }
+
   const base = {
     slug: tour.slug,
-    title: websiteName(tour),
+    title: bokunDetails?.title || websiteName(tour),
     category: tour.category,
     durationHours: tour.durationHours,
     priceFrom: tour.basePrice / 100,
     priceUnit: tour.priceUnit === "GROUP" ? "per vehicle" : "per guest",
     currency: tour.currency,
     page: productPage(tour.slug),
+    bokunId: bokunDetails?.bokunId ?? tour.bokunId ?? undefined,
+    pricingCategories: bokunDetails?.pricingCategories,
+    bookingQuestions: bokunDetails?.bookingQuestions,
   };
   // The four doc tours: their database text is the old Webflow copy. The approved knowledge base
   // has the website's itinerary, inclusions and pickups for them.
   if (DOC_TOUR_SLUGS.has(tour.slug)) {
-    return { ...base, summary: DOC_TOUR_SUMMARY[tour.slug], details: "Itinerary, inclusions and pickups: use the approved knowledge base section for this tour." };
+    return {
+      ...base,
+      summary: bokunDetails?.summary || DOC_TOUR_SUMMARY[tour.slug],
+      inclusions: bokunDetails?.inclusions?.length ? bokunDetails.inclusions : undefined,
+      exclusions: bokunDetails?.exclusions?.length ? bokunDetails.exclusions : undefined,
+      stops: bokunDetails?.stops?.length ? bokunDetails.stops : undefined,
+      details: "Itinerary, inclusions and pickups: use the approved knowledge base section for this tour.",
+    };
   }
   // Structured product knowledgebase: always prefer the live website catalog over old Webflow database copy.
   const cat = catalogEntry(tour.slug);
   if (cat) {
     return {
       ...base,
-      summary: cat.overview,
-      description: cat.overview,
-      stops: cat.stops,
-      inclusions: cat.included,
-      exclusions: cat.notIncluded,
-      pickup: cat.pickup,
+      summary: bokunDetails?.summary || cat.overview,
+      description: bokunDetails?.description || cat.overview,
+      stops: bokunDetails?.stops?.length ? bokunDetails.stops : cat.stops,
+      inclusions: bokunDetails?.inclusions?.length ? bokunDetails.inclusions : cat.included,
+      exclusions: bokunDetails?.exclusions?.length ? bokunDetails.exclusions : cat.notIncluded,
+      pickup: bokunDetails?.pickupPlaces?.length ? bokunDetails.pickupPlaces.join("; ") : cat.pickup,
       capacity: cat.capacity,
       cancellation: cat.cancellation,
       seasonNotes: cat.seasonNotes,
@@ -96,12 +115,14 @@ export async function getTourDetails(args: { tourSlugOrBokunId: string }) {
   }
   return {
     ...base,
-    summary: tour.summary,
-    description: tour.description,
-    inclusions: (tour.inclusions as string[]) || [],
-    exclusions: (tour.exclusions as string[]) || [],
+    summary: bokunDetails?.summary || tour.summary,
+    description: bokunDetails?.description || tour.description,
+    inclusions: bokunDetails?.inclusions?.length ? bokunDetails.inclusions : (tour.inclusions as string[]) || [],
+    exclusions: bokunDetails?.exclusions?.length ? bokunDetails.exclusions : (tour.exclusions as string[]) || [],
     highlights: (tour.highlights as string[]) || [],
     whatToBring: (tour.whatToBring as string[]) || [],
+    stops: bokunDetails?.stops?.length ? bokunDetails.stops : undefined,
+    pickup: bokunDetails?.pickupPlaces?.length ? bokunDetails.pickupPlaces.join("; ") : undefined,
   };
 }
 
@@ -137,9 +158,45 @@ export async function checkAvailability(args: { date: string; tourSlug?: string 
 }
 
 export async function getBooking(args: { bookingReference: string; customerEmail?: string }) {
+  // Query Bókun directly first if configured
+  try {
+    const { getBokunBookingDetails } = await import("@/modules/bokun/bokun-concierge");
+    const bokunBooking = await getBokunBookingDetails(args.bookingReference, args.customerEmail);
+    if (bokunBooking) {
+      return {
+        bookingReference: bokunBooking.bookingReference ?? bokunBooking.confirmationCode,
+        confirmationCode: bokunBooking.confirmationCode,
+        customerName: bokunBooking.customerName,
+        customerEmail: bokunBooking.customerEmail,
+        customerPhone: bokunBooking.customerPhone,
+        tourTitle: bokunBooking.tourTitle,
+        departureDate: bokunBooking.departureDate,
+        departureTime: bokunBooking.departureTime,
+        pickupLocation: bokunBooking.pickupLocation,
+        pickupTime: bokunBooking.pickupTime,
+        totalSeats: bokunBooking.totalSeats,
+        passengerBreakdown: bokunBooking.passengerBreakdown,
+        specialRequests: bokunBooking.specialRequests,
+        notes: bokunBooking.notes,
+        totalAmount: bokunBooking.totalAmount,
+        currency: bokunBooking.currency,
+        status: bokunBooking.status,
+        voucherCode: bokunBooking.voucherCode,
+        voucherUrl: bokunBooking.voucherUrl,
+        trackingToken: bokunBooking.trackingToken,
+        source: bokunBooking.source,
+      };
+    }
+  } catch {
+    // fallback to local prisma query
+  }
+
   const booking = await prisma.booking.findFirst({
     where: {
-      bookingReference: args.bookingReference,
+      OR: [
+        { bookingReference: args.bookingReference },
+        { bokunBookingId: args.bookingReference },
+      ],
       ...(args.customerEmail ? { customerEmail: args.customerEmail } : {}),
     },
     include: {
@@ -157,9 +214,12 @@ export async function getBooking(args: { bookingReference: string; customerEmail
 
   return {
     bookingReference: booking.bookingReference,
+    confirmationCode: booking.bokunBookingId ?? booking.bookingReference,
     customerName: booking.customerName,
+    customerEmail: booking.customerEmail,
+    customerPhone: booking.customerPhone,
     tourTitle: booking.tourDeparture.tour ? websiteName(booking.tourDeparture.tour) : booking.tourDeparture.shuttleRoute?.name,
-    departureDate: booking.tourDeparture.date.toISOString().split('T')[0],
+    departureDate: booking.tourDeparture.date.toISOString().split("T")[0],
     departureTime: formatTimeOfDay(booking.tourDeparture.departureTime),
     pickupLocation: booking.pickupStop?.name || booking.pickupCustomText || "Banff Station",
     pickupTime: booking.pickupTime || formatTimeOfDay(booking.tourDeparture.departureTime),
@@ -167,6 +227,7 @@ export async function getBooking(args: { bookingReference: string; customerEmail
     status: booking.status,
     voucherCode: booking.voucherCode,
     isBoarded: booking.isBoarded,
+    source: "LOCAL",
   };
 }
 

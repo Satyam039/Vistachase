@@ -191,7 +191,13 @@ const CUSTOMER_TOOLS: Anthropic.Tool[] = [
       properties: {
         departureId: { type: "string" },
         pickupStopId: { type: "string", description: "Optional: the pickup stop id from find_pickup that the guest chose" },
+        pickupCustomText: { type: "string", description: "Optional: hotel name or custom lodging address" },
         seats: { type: "integer", minimum: 1, maximum: 13 },
+        adultsCount: { type: "integer", description: "Optional: number of adults" },
+        childrenCount: { type: "integer", description: "Optional: number of children (1-13)" },
+        infantsCount: { type: "integer", description: "Optional: number of infants (0-5)" },
+        specialRequests: { type: "string", description: "Optional: dietary needs, flight numbers, child booster seats, notes" },
+        promoCode: { type: "string", description: "Optional: promo discount code" },
         customerName: { type: "string" },
         customerEmail: { type: "string" },
         customerPhone: { type: "string" },
@@ -201,7 +207,7 @@ const CUSTOMER_TOOLS: Anthropic.Tool[] = [
   },
   {
     name: "lookup_booking",
-    description: "Look up a booking: tour, date, pickup, status, voucher. Requires the reference and the email used to book.",
+    description: "Look up a booking directly from Bókun or local records: tour, date, time, pickup, status, passenger breakdown, notes, voucher. Requires the booking reference (VC-...) or Bókun confirmation code (e.g. VistaChase-108972148) and the booking email.",
     input_schema: {
       type: "object",
       properties: { bookingReference: { type: "string" }, customerEmail: { type: "string" } },
@@ -365,7 +371,20 @@ export async function runConciergeTool(name: string, input: Record<string, any>,
       }
       const r = await executeAiTool(
         "createVoiceReservationHold",
-        { departureId: input.departureId, seatsCount: Number(input.seats), customerName: input.customerName, customerEmail: input.customerEmail, customerPhone: input.customerPhone, pickupStopId: input.pickupStopId },
+        {
+          departureId: input.departureId,
+          seatsCount: Number(input.seats),
+          customerName: input.customerName,
+          customerEmail: input.customerEmail,
+          customerPhone: input.customerPhone,
+          pickupStopId: input.pickupStopId,
+          pickupCustomText: input.pickupCustomText,
+          specialRequests: input.specialRequests,
+          promoCode: input.promoCode,
+          adultsCount: input.adultsCount,
+          childrenCount: input.childrenCount,
+          infantsCount: input.infantsCount,
+        },
         ctx,
       );
       const hold = r.data as any;
@@ -386,54 +405,134 @@ export async function runConciergeTool(name: string, input: Record<string, any>,
           checkoutUrl: hold.checkoutUrl,
           data: {
             type: "hold",
-            departure: { title: dep?.tour ? websiteName(dep.tour) : dep?.shuttleRoute?.name, date: dep ? formatDateOnly(dep.date) : undefined, departureTime: formatTimeOfDay(dep?.departureTime), seats: Number(input.seats), pickup: pickup?.name, price: total, currency: dep?.currency ?? "CAD" },
+            departure: {
+              title: dep?.tour ? websiteName(dep.tour) : dep?.shuttleRoute?.name,
+              date: dep ? formatDateOnly(dep.date) : undefined,
+              departureTime: formatTimeOfDay(dep?.departureTime),
+              seats: Number(input.seats),
+              pickup: pickup?.name ?? input.pickupCustomText,
+              price: total,
+              currency: dep?.currency ?? "CAD",
+            },
           },
         },
         memory: `Seats held (10 min) on departure ${input.departureId} for ${input.seats}; checkout ${hold.checkoutUrl}`,
       };
     }
-    case "lookup_booking":
+    case "lookup_booking": {
+      const ref = String(input.bookingReference ?? "").trim();
+      if (!ref || !email) {
+        return { result: { error: "Both the booking reference or confirmation code and the booking email are required." } };
+      }
+
+      // Query Bókun directly first for live, authoritative booking data
+      try {
+        const { getBokunBookingDetails } = await import("@/modules/bokun/bokun-concierge");
+        const bokunDetails = await getBokunBookingDetails(ref, email);
+        if (bokunDetails) {
+          const isConfirmed = bokunDetails.status === "CONFIRMED" || bokunDetails.status === "RESERVED" || bokunDetails.status === "ARRIVED";
+          return {
+            result: {
+              confirmationCode: bokunDetails.confirmationCode,
+              bookingReference: bokunDetails.bookingReference ?? bokunDetails.confirmationCode,
+              status: bokunDetails.status,
+              tour: bokunDetails.tourTitle,
+              date: bokunDetails.departureDate,
+              departureTime: bokunDetails.departureTime,
+              pickup: bokunDetails.pickupLocation,
+              pickupTime: bokunDetails.pickupTime,
+              guests: bokunDetails.totalSeats,
+              passengerBreakdown: bokunDetails.passengerBreakdown,
+              specialRequests: bokunDetails.specialRequests,
+              notes: bokunDetails.notes,
+              total: bokunDetails.totalAmount,
+              currency: bokunDetails.currency,
+              voucherUrl: bokunDetails.voucherUrl ?? (bokunDetails.bookingReference ? `/booking/${bokunDetails.bookingReference}/voucher` : undefined),
+              source: bokunDetails.source,
+            },
+            card: isConfirmed
+              ? {
+                  data: {
+                    type: "confirmed",
+                    bookingReference: bokunDetails.bookingReference ?? bokunDetails.confirmationCode,
+                    voucherCode: bokunDetails.voucherCode ?? bokunDetails.confirmationCode,
+                    voucherUrl: bokunDetails.voucherUrl ?? (bokunDetails.bookingReference ? `/booking/${bokunDetails.bookingReference}/voucher?t=${signBookingLink(bokunDetails.bookingReference, "voucher")}` : undefined),
+                    tourTitle: bokunDetails.tourTitle,
+                    date: bokunDetails.departureDate,
+                    pickup: bokunDetails.pickupLocation,
+                  },
+                }
+              : undefined,
+            memory: `Verified booking ${bokunDetails.confirmationCode} (${email}): ${bokunDetails.tourTitle} on ${bokunDetails.departureDate}, status ${bokunDetails.status}`,
+          };
+        }
+      } catch {
+        // Fallback to local prisma search
+      }
+
+      // Fallback local Prisma lookup (supporting reference, bokunBookingId, or voucherCode)
+      const booking = await prisma.booking.findFirst({
+        where: {
+          OR: [
+            { bookingReference: { equals: ref, mode: "insensitive" } },
+            { bokunBookingId: { equals: ref, mode: "insensitive" } },
+            { voucherCode: { equals: ref, mode: "insensitive" } },
+          ],
+        },
+        include: { tourDeparture: { include: { tour: true, shuttleRoute: true } }, pickupStop: true },
+      });
+
+      if (!booking || booking.customerEmail.toLowerCase() !== email) {
+        return { result: { error: "No booking matches that reference and email." } };
+      }
+
+      const title = booking.tourDeparture.tour ? websiteName(booking.tourDeparture.tour) : booking.tourDeparture.shuttleRoute?.name;
+      return {
+        result: {
+          bookingReference: booking.bookingReference,
+          confirmationCode: booking.bokunBookingId ?? booking.bookingReference,
+          status: booking.status,
+          tour: title,
+          date: formatDateOnly(booking.tourDeparture.date),
+          departureTime: formatTimeOfDay(booking.tourDeparture.departureTime),
+          pickup: booking.pickupStop?.name ?? booking.pickupCustomText,
+          pickupTime: booking.pickupTime,
+          guests: booking.totalSeats,
+          total: booking.totalAmount / 100,
+          currency: booking.currency,
+          voucherUrl: `/booking/${booking.bookingReference}/voucher`,
+        },
+        card:
+          booking.status === "CONFIRMED"
+            ? {
+                data: {
+                  type: "confirmed",
+                  bookingReference: booking.bookingReference,
+                  voucherCode: booking.voucherCode,
+                  voucherUrl: `/booking/${booking.bookingReference}/voucher?t=${signBookingLink(booking.bookingReference, "voucher")}`,
+                  tourTitle: title,
+                  date: formatDateOnly(booking.tourDeparture.date),
+                  pickup: booking.pickupStop?.name ?? booking.pickupCustomText ?? undefined,
+                },
+              }
+            : undefined,
+        memory: `Verified booking ${booking.bookingReference} (${email}): ${title} on ${booking.tourDeparture.date}, status ${booking.status}`,
+      };
+    }
     case "track_vehicle":
     case "cancel_booking": {
-      const ref = String(input.bookingReference ?? "").trim().toUpperCase();
-      const booking = await prisma.booking.findUnique({
-        where: { bookingReference: ref },
+      const ref = String(input.bookingReference ?? "").trim();
+      const booking = await prisma.booking.findFirst({
+        where: {
+          OR: [
+            { bookingReference: { equals: ref, mode: "insensitive" } },
+            { bokunBookingId: { equals: ref, mode: "insensitive" } },
+          ],
+        },
         include: { tourDeparture: { include: { tour: true, shuttleRoute: true } }, pickupStop: true },
       });
       if (!booking || !email || booking.customerEmail.toLowerCase() !== email) {
         return { result: { error: "No booking matches that reference and email." } };
-      }
-      const title = booking.tourDeparture.tour ? websiteName(booking.tourDeparture.tour) : booking.tourDeparture.shuttleRoute?.name;
-      if (name === "lookup_booking") {
-        return {
-          result: {
-            bookingReference: booking.bookingReference,
-            status: booking.status,
-            tour: title,
-            date: formatDateOnly(booking.tourDeparture.date),
-            departureTime: formatTimeOfDay(booking.tourDeparture.departureTime),
-            pickup: booking.pickupStop?.name ?? booking.pickupCustomText,
-            pickupTime: booking.pickupTime,
-            guests: booking.totalSeats,
-            total: booking.totalAmount,
-            voucherUrl: `/booking/${booking.bookingReference}/voucher`,
-          },
-          card:
-            booking.status === "CONFIRMED"
-              ? {
-                  data: {
-                    type: "confirmed",
-                    bookingReference: booking.bookingReference,
-                    voucherCode: booking.voucherCode,
-                    voucherUrl: `/booking/${booking.bookingReference}/voucher?t=${signBookingLink(booking.bookingReference, "voucher")}`,
-                    tourTitle: title,
-                    date: formatDateOnly(booking.tourDeparture.date),
-                    pickup: booking.pickupStop?.name ?? booking.pickupCustomText ?? undefined,
-                  },
-                }
-              : undefined,
-          memory: `Verified booking ${booking.bookingReference} (${email}): ${title} on ${booking.tourDeparture.date}, status ${booking.status}`,
-        };
       }
       if (name === "track_vehicle") {
         // The guest's email was verified above, so the internal lookup by reference is allowed here.
