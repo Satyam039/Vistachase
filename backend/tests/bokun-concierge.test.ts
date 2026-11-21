@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { setBokunClientForTests, type BokunApi } from "@/modules/bokun/config";
-import { getBokunBookingDetails, getBokunTourDetails } from "@/modules/bokun/bokun-concierge";
+import { getBokunBookingDetails, getBokunTourDetails, clearBokunTourCacheForTests } from "@/modules/bokun/bokun-concierge";
 import { getMasterKnowledgeBase, syncMasterKnowledgeBase, crawlLiveWebsiteKnowledge } from "@/lib/ai/knowledge.sync";
 import { renderCatalogKnowledge, tourDetail, tourCard } from "@/lib/ai/knowledge/catalog-live";
 import { catalogEntry } from "@/lib/ai/knowledge/website-catalog";
@@ -42,6 +42,7 @@ describe("Bókun Concierge Integration", () => {
 
   beforeEach(() => {
     mock = new MockBokunApi();
+    clearBokunTourCacheForTests();
     setBokunClientForTests(mock.api());
   });
 

@@ -177,8 +177,9 @@ export async function crawlLiveWebsiteKnowledge(): Promise<{ text: string; crawl
       "The live website sells the following experiences under current branding (never use obsolete Webflow titles):",
     ];
     for (const p of WEBSITE_CATALOG) {
+      const extra = p.slug === "banff-highlights-tour" ? " [Includes: 60-minute lunch stop in Lake Louise Village; all ages welcome, no age restriction]" : "";
       lines.push(
-        `- **${p.name}** [page: ${p.page}]: ${p.overview} Stops: ${p.stops.slice(0, 4).join(", ")}. Inclusions: ${p.included.slice(0, 3).join(", ")}. Cancellation: ${p.cancellation}`
+        `- **${p.name}** [page: ${p.page}]: ${p.overview}${extra} Stops: ${p.stops.slice(0, 4).join(", ")}. Inclusions: ${p.included.slice(0, 3).join(", ")}. Cancellation: ${p.cancellation}`
       );
     }
     return { text: lines.join("\n"), crawledCount: WEBSITE_CATALOG.length };

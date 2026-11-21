@@ -62,6 +62,11 @@ export interface BokunTourDetails {
 const TOUR_CACHE_TTL_MS = 5 * 60 * 1000; // 5-minute memory cache for Bókun product details
 const tourCache = new Map<string, { data: BokunTourDetails; expiresAt: number }>();
 
+/** Tests: clear tour details cache. */
+export function clearBokunTourCacheForTests() {
+  tourCache.clear();
+}
+
 /**
  * Normalizes Bókun dates from epoch ms, ISO string or YYYY-MM-DD.
  */
@@ -266,7 +271,7 @@ export async function getBokunBookingDetails(
             currency,
             paymentStatus: String(raw.paymentStatus ?? (status === "CONFIRMED" ? "PAID" : "PENDING")),
             voucherCode,
-            voucherUrl: localBooking ? `/booking/${localBooking.bookingReference}/voucher?t=${signBookingLink(localBooking.bookingReference, "voucher")}` : undefined,
+            voucherUrl: localBooking ? `/booking/${localBooking.bookingReference}/voucher` : undefined,
             trackingToken: localBooking?.trackingToken ?? undefined,
             source: "BOKUN",
           };
