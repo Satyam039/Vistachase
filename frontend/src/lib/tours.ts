@@ -89,7 +89,7 @@ export function pickupLabel(text: string) {
  */
 export interface CategoryOffer {
   from: number;
-  unit: "per person" | "per group";
+  unit: "per person" | "per group" | "per day";
   inclusions: string[];
   maxGuests: number | null;
 }
