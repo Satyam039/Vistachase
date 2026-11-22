@@ -35,6 +35,10 @@ import { recordSubmission } from "@/modules/security/visitor-log";
 import { formTokenProblem, looksLikeBotName, verifyTurnstile } from "@/modules/enquiries/spam";
 import { hasValidMxRecords, isSuspiciousEmail, isSyntheticBotName } from "@/lib/security/spam-detector";
 
+import { createPromo, deletePromo, updatePromo, usesByCode } from "@/modules/admin/promo-admin";
+import { PROMO_SCOPES, promoLabel } from "@/modules/pricing/promo-codes";
+import { todayInMountainTime } from "@/lib/utils/time";
+
 const router = Router();
 
 const optionalText = (max: number) => z.string().trim().max(max).optional().or(z.literal(""));
@@ -251,6 +255,111 @@ router.get("/me/payouts", async (req, res) => {
   const payouts = await listPartnerPayouts(targetUserId);
   if (!payouts) return notPartner(res);
   return res.json({ success: true, payouts });
+});
+
+
+// ---------------------------------------------------------------------------------------------
+// Partner coupons (affiliate account → Coupons, owner 2026-11-22). A partner makes their own coupon
+// codes: percent off, start/end date, active or not, and where it applies (shared tours, private
+// tours, shuttles). Guests type them at checkout like any promo code; bookings made with one credit
+// this partner. Percent is capped by PARTNER_COUPON_MAX_PERCENT (default 20).
+
+export const partnerCouponMaxPercent = () => {
+  const n = Number(process.env.PARTNER_COUPON_MAX_PERCENT);
+  return Number.isInteger(n) && n >= 1 && n <= 100 ? n : 20;
+};
+
+const couponDay = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use a date like 2027-06-01.");
+const couponSchema = z
+  .object({
+    code: z.string().trim().regex(/^[A-Za-z0-9_-]{3,40}$/, "Use 3 to 40 letters, numbers, - or _ (no spaces)."),
+    percentOff: z.number().int("Use a whole number.").min(1),
+    startsOn: couponDay.nullable().optional(),
+    endsOn: couponDay.nullable().optional(),
+    isActive: z.boolean().optional(),
+    appliesTo: z.array(z.enum(PROMO_SCOPES)).min(1, "Choose where the coupon applies: shared tours, private tours or shuttles.").max(3),
+  })
+  .strict();
+
+async function partnerForCoupons(req: Request, res: Response) {
+  const user = requirePartnerUser(req, res);
+  if (!user) return null;
+  const affiliate = await prisma.affiliate.findUnique({ where: { userId: await resolveAffiliateUserId(user.userId, user.role) } });
+  if (!affiliate) {
+    notPartner(res);
+    return null;
+  }
+  return affiliate;
+}
+
+const couponInput = (b: Partial<z.infer<typeof couponSchema>>) => ({
+  ...(b.code !== undefined ? { code: b.code } : {}),
+  ...(b.percentOff !== undefined ? { kind: "PERCENT" as const, value: b.percentOff } : {}),
+  ...(b.startsOn !== undefined ? { startsOn: b.startsOn } : {}),
+  ...(b.endsOn !== undefined ? { endsOn: b.endsOn } : {}),
+  ...(b.isActive !== undefined ? { isActive: b.isActive } : {}),
+  ...(b.appliesTo !== undefined ? { appliesTo: b.appliesTo } : {}),
+});
+
+router.get("/me/coupons", async (req, res) => {
+  const affiliate = await partnerForCoupons(req, res);
+  if (!affiliate) return;
+  const rows = await prisma.promoCode.findMany({ where: { affiliateId: affiliate.id }, orderBy: [{ isActive: "desc" }, { createdAt: "desc" }] });
+  const uses = await usesByCode(rows.map((r) => r.code));
+  const now = new Date();
+  return res.json({
+    success: true,
+    maxPercent: partnerCouponMaxPercent(),
+    canCreate: affiliate.status === "ACTIVE",
+    coupons: rows.map((r) => ({
+      id: r.id,
+      code: r.code,
+      percentOff: r.percentOff ?? 0,
+      label: promoLabel(r),
+      isActive: r.isActive,
+      startsOn: r.startsAt ? todayInMountainTime(r.startsAt) : null,
+      endsOn: r.expiresAt ? todayInMountainTime(new Date(r.expiresAt.getTime() - 1)) : null,
+      appliesTo: r.appliesTo.length ? PROMO_SCOPES.filter((x) => r.appliesTo.includes(x)) : [...PROMO_SCOPES],
+      uses: uses.get(r.code)?.live ?? 0,
+      paidBookings: uses.get(r.code)?.paid ?? 0,
+      state: !r.isActive ? "INACTIVE" : r.startsAt && r.startsAt > now ? "SCHEDULED" : r.expiresAt && r.expiresAt <= now ? "EXPIRED" : "ACTIVE",
+    })),
+  });
+});
+
+router.post("/me/coupons", rateLimitMiddleware("partner_coupon", { maxRequests: 30, windowSeconds: 3600 }), async (req, res) => {
+  const affiliate = await partnerForCoupons(req, res);
+  if (!affiliate) return;
+  if (affiliate.status !== "ACTIVE") return res.status(403).json({ success: false, error: "Your partner account must be approved before you can create coupons." });
+  const parsed = couponSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return invalid(res, parsed.error);
+  const max = partnerCouponMaxPercent();
+  if (parsed.data.percentOff > max) return res.status(400).json({ success: false, error: `The discount can be at most ${max}%.` });
+  const result = await createPromo({ ...couponInput(parsed.data), kind: "PERCENT", value: parsed.data.percentOff, code: parsed.data.code, note: `Partner coupon: ${affiliate.name}` }, affiliate.id);
+  if (result.status !== 201) return res.status(result.status).json({ success: false, error: result.error });
+  return res.status(201).json({ success: true, coupon: { id: result.promo.id, code: result.promo.code } });
+});
+
+router.patch("/me/coupons/:id", async (req, res) => {
+  const affiliate = await partnerForCoupons(req, res);
+  if (!affiliate) return;
+  // The code itself can't change once made (guests may already have it).
+  const parsed = couponSchema.omit({ code: true }).partial().safeParse(req.body ?? {});
+  if (!parsed.success) return invalid(res, parsed.error);
+  const max = partnerCouponMaxPercent();
+  if (parsed.data.percentOff !== undefined && parsed.data.percentOff > max) return res.status(400).json({ success: false, error: `The discount can be at most ${max}%.` });
+  if (parsed.data.isActive && affiliate.status !== "ACTIVE") return res.status(403).json({ success: false, error: "Your partner account isn't active, so its coupons can't be turned on." });
+  const result = await updatePromo(String(req.params.id), couponInput(parsed.data), affiliate.id);
+  if (result.status !== 200) return res.status(result.status).json({ success: false, error: result.status === 404 ? "Coupon not found." : result.error });
+  return res.json({ success: true });
+});
+
+router.delete("/me/coupons/:id", async (req, res) => {
+  const affiliate = await partnerForCoupons(req, res);
+  if (!affiliate) return;
+  const result = await deletePromo(String(req.params.id), affiliate.id);
+  if (result.status !== 200) return res.status(404).json({ success: false, error: "Coupon not found." });
+  return res.json({ success: true });
 });
 
 // ---------------------------------------------------------------------------------------------

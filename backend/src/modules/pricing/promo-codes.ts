@@ -14,6 +14,8 @@ export interface ResolvedPromo {
   code: string;
   percentOff: number | null;
   amountOffCents: number | null;
+  /** A partner's own coupon: the partner's referral code, so the booking credits them. */
+  affiliateCode?: string | null;
 }
 
 export type PromoLookup =
@@ -67,9 +69,10 @@ export async function lookupPromo(rawCode: string | null | undefined, db: Db = p
   const code = normalizeCode(rawCode ?? "");
   if (!code) return { ok: false, reason: "unknown", error: "Enter a promo code." };
 
-  const row = await db.promoCode.findUnique({ where: { code } });
+  const row = await db.promoCode.findUnique({ where: { code }, include: { affiliate: { select: { code: true, status: true } } } });
   if (row) {
-    if (!row.isActive) return { ok: false, reason: "inactive", error: "This promo code is no longer active." };
+    // A partner's coupon stops working while the partner isn't active (suspended, rejected).
+    if (!row.isActive || (row.affiliate && row.affiliate.status !== "ACTIVE")) return { ok: false, reason: "inactive", error: "This promo code is no longer active." };
     if (row.startsAt && row.startsAt > now) return { ok: false, reason: "not_started", error: "This promo code isn't active yet." };
     if (row.expiresAt && row.expiresAt <= now) return { ok: false, reason: "expired", error: "This promo code has expired." };
     if (row.maxUses != null && (await promoUses(code, db)) >= row.maxUses) {
@@ -78,7 +81,7 @@ export async function lookupPromo(rawCode: string | null | undefined, db: Db = p
     if (categories && !promoCovers(row.appliesTo, categories)) {
       return { ok: false, reason: "not_applicable", error: `This promo code can't be used for this booking. It works on ${scopeLabel(row.appliesTo)} only.` };
     }
-    return { ok: true, promo: { code, percentOff: row.percentOff, amountOffCents: row.amountOffCents } };
+    return { ok: true, promo: { code, percentOff: row.percentOff, amountOffCents: row.amountOffCents, affiliateCode: row.affiliate?.code ?? null } };
   }
 
   const percent = promoPercent(code);

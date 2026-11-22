@@ -7,7 +7,6 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { RefreshCw, Trash2, XCircle } from "lucide-react";
 import { ModalDialog } from "@/components/forms/ModalDialog";
 import { AdminHeader, StaffSignIn } from "@/components/admin/AdminHeader";
-import { PromoCodesPanel } from "@/components/admin/staff/PromoCodesPanel";
 import { CommissionsPanel, CreatePartnerForm, EditPartnerForm, PartnerApplicationDetails, PayoutsPanel, ReportPanel, RulesPanel, type AdminPartner as Partner } from "@/components/admin/partners/PartnerAdminPanels";
 
 const SECTIONS = [
@@ -16,8 +15,6 @@ const SECTIONS = [
   ["commissions", "Commissions"],
   ["payouts", "Payouts"],
   ["report", "Report"],
-  // Coupon codes guests type at checkout (owner, 2026-11-22: made here, in the partner section).
-  ["coupons", "Coupons"],
 ] as const;
 type Section = (typeof SECTIONS)[number][0];
 
@@ -70,13 +67,6 @@ export default function AdminPartnersPage() {
   useEffect(() => {
     void load();
   }, [load]);
-
-  // /admin/partners?section=coupons (Admin → Coupons and the old Promo codes link land here).
-  useEffect(() => {
-    const wanted = new URLSearchParams(window.location.search).get("section");
-    const found = SECTIONS.find(([id]) => id === wanted);
-    if (found) setSection(found[0]);
-  }, []);
 
   async function setStatus(p: Partner, status: Partner["status"]) {
     setBusy(p.id);
@@ -132,7 +122,7 @@ export default function AdminPartnersPage() {
         current="/admin/partners"
         eyebrow="Staff · Partner program"
         title="Partners"
-        subtitle="Approve applications, set commission rules, record payouts and manage coupon codes. Commission is earned only on paid bookings by active partners."
+        subtitle="Approve applications, set commission rules and record payouts. Commission is earned only on paid bookings by active partners."
         actions={
           <button
             type="button"
@@ -184,7 +174,6 @@ export default function AdminPartnersPage() {
             {section === "commissions" && <CommissionsPanel partners={partners} notify={setMessage} onChange={load} />}
             {section === "payouts" && <PayoutsPanel partners={partners} notify={setMessage} onChange={load} />}
             {section === "report" && <ReportPanel />}
-            {section === "coupons" && <PromoCodesPanel notify={setMessage} role="ADMIN" />}
           </div>
         )}
 

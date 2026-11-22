@@ -4,11 +4,20 @@ Guests type a code on the checkout's **Review & pay** step and press **Apply**. 
 "Code SUMMER10 applied: 10% off. You save CAD 44.00." and the summary and the payment use the
 discounted total. The server prices every booking again, so the browser can't change the discount.
 
-## Creating codes (Admin → Partners → Coupons)
+## Partner coupons (affiliate account → Coupons)
 
-`/admin/partners?section=coupons` (owner, 2026-11-22: coupons are made in the partner section;
-`/admin/coupons` and the old `/admin/promo-codes` redirect there). Admins create, edit, activate,
-deactivate and delete coupons.
+Owner, 2026-11-22: each partner makes their own coupons in their affiliate account
+(`/affiliate/coupons`): coupon code, percentage discount (at most `PARTNER_COUPON_MAX_PERCENT`,
+default 20), start date, end date, Activate/Deactivate, and **Where does it apply** (below). A
+booking made with a partner's coupon is credited to that partner (it beats a referral link), so
+they earn commission as usual. A partner sees and changes only their own coupons; the code can't
+change once made; coupons stop working while the partner is pending, suspended or rejected. They
+are `PromoCode` rows with `affiliateId` set, so staff also see them in Admin → Promo codes and can
+turn one off. API: `GET/POST /api/affiliates/me/coupons`, `PATCH/DELETE /api/affiliates/me/coupons/:id`.
+
+## Creating codes (Admin → Promo codes)
+
+`/admin/promo-codes`. Admins create, edit, turn off and delete codes; operators can see them.
 
 - **Code**: 3–40 letters, numbers, `-` or `_`. Not case-sensitive (`summer10` = `SUMMER10`).
 - **Discount**: percent off (1–100) or a CAD amount off per booking. It comes off the tour fare only,

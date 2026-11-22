@@ -445,7 +445,8 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
           bookingReference,
           idempotencyKey: input.idempotencyKey,
           customerId: input.customerId,
-          affiliateId: await referringAffiliateId(input.affiliateCode, { customerId: input.customerId, customerEmail: input.customerEmail }),
+          // A partner's own coupon credits that partner (it beats a referral link); otherwise the link.
+          affiliateId: await referringAffiliateId((promo ?? packagePromo)?.affiliateCode ?? input.affiliateCode, { customerId: input.customerId, customerEmail: input.customerEmail }),
           customerName: input.customerName,
           customerEmail: input.customerEmail,
           customerPhone: input.customerPhone,
