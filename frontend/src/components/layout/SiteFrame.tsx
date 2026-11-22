@@ -22,6 +22,7 @@ import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { SiteMenu } from "@/components/layout/SiteMenu";
 import { GlobalVoiceAssistantDrawer } from "@/components/voice/GlobalVoiceAssistantDrawer";
 import { MotionRuntime } from "@/components/motion/MotionRuntime";
+import { ReferralLinkKeeper } from "@/components/affiliate/ReferralLinkKeeper";
 import { PortalFrame, portalKindFor } from "@/components/layout/PortalFrame";
 
 const BOOK_HREF = "/#experiences";
@@ -257,6 +258,7 @@ export function SiteFrame({ children }: { children: React.ReactNode }) {
           />
         )}
         <MotionRuntime />
+        <ReferralLinkKeeper />
         {children}
         {!isConcierge && <SiteFooter />}
         <GlobalVoiceAssistantDrawer />

@@ -1,11 +1,13 @@
 import { NextResponse, type NextFetchEvent, type NextRequest } from "next/server";
 import { areaOf, homeForRole, mayOpen, signInFor } from "@/lib/portals";
+import { REF_COOKIE, REF_MAX_AGE_SECONDS, REF_PATTERN, REF_VIEW_COOKIE } from "@/lib/referral";
 
 // Partner referrals: any page opened with ?ref=<code> stores the code for 30 days. Bookings
 // made in that time are credited to the partner (the backend reads the vc_ref cookie and only
 // credits ACTIVE partners). A later partner link replaces an earlier one (last click wins).
+// The code also stays in the address bar while the guest browses (see lib/referral.ts).
 // The landing is also reported to the API as a click for the partner's stats; clicks never earn.
-const REF = /^[A-Za-z0-9]{3,24}$/;
+const REF = REF_PATTERN;
 const BACKEND_URL = (process.env.BACKEND_URL || "http://localhost:4000").replace(/\/$/, "");
 
 function reportClick(request: NextRequest, code: string) {
@@ -142,15 +144,26 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
   const ref = request.nextUrl.searchParams.get("ref");
   const response = NextResponse.next();
   if (ref && REF.test(ref)) {
-    response.cookies.set("vc_ref", ref.toUpperCase(), {
-      maxAge: 60 * 60 * 24 * 30,
-      sameSite: "lax",
+    const code = ref.toUpperCase();
+    const cookie = {
+      maxAge: REF_MAX_AGE_SECONDS,
+      sameSite: "lax" as const,
       // Browsers drop Secure cookies on plain HTTP, so match the scheme the visitor used.
       secure: (request.headers.get("x-forwarded-proto")?.split(",")[0].trim() || request.nextUrl.protocol.replace(":", "")) === "https",
-      httpOnly: true,
       path: "/",
-    });
-    event.waitUntil(reportClick(request, ref.toUpperCase()));
+    };
+    // The site keeps ?ref=<code> in the address while the guest browses (ReferralLinkKeeper), so
+    // the same code arrives again on every reload or shared page. That is not a new click: it must
+    // not restart the 30-day window or count again in the partner's stats.
+    const same = request.cookies.get(REF_COOKIE)?.value === code;
+    if (!same) {
+      response.cookies.set(REF_COOKIE, code, { ...cookie, httpOnly: true });
+      event.waitUntil(reportClick(request, code));
+    }
+    if (!same || request.cookies.get(REF_VIEW_COOKIE)?.value !== code) {
+      // Readable copy, used only to keep the code in the address bar (never trusted for credit).
+      response.cookies.set(REF_VIEW_COOKIE, code, { ...cookie, httpOnly: false });
+    }
   }
   return response;
 }
