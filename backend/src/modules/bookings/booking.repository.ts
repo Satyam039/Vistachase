@@ -303,7 +303,7 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
       let promo: ResolvedPromo | null = null;
       if (input.promoCode?.trim()) {
         await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"promo:" + normalizeCode(input.promoCode)}))`;
-        const found = await lookupPromo(input.promoCode, tx, now);
+        const found = await lookupPromo(input.promoCode, tx, now, [departure.tour?.category]);
         if (found.ok) promo = found.promo;
         else if (found.reason !== "unknown") throw new BookingRefused(`${found.error} Please remove it and try again.`);
       }
@@ -315,7 +315,7 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
         if (options.packagePromo.countsUse) {
           // Checked again under the code's lock, like a single booking, so two guests can't take the last use.
           await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"promo:" + normalizeCode(p.code)}))`;
-          const found = await lookupPromo(p.code, tx, now);
+          const found = await lookupPromo(p.code, tx, now, [departure.tour?.category]);
           if (!found.ok) throw new BookingRefused(`${found.error} Please remove it and try again.`);
           p = found.promo;
         }

@@ -4,15 +4,22 @@ Guests type a code on the checkout's **Review & pay** step and press **Apply**. 
 "Code SUMMER10 applied: 10% off. You save CAD 44.00." and the summary and the payment use the
 discounted total. The server prices every booking again, so the browser can't change the discount.
 
-## Creating codes (Admin → Promo codes)
+## Creating codes (Admin → Partners → Coupons)
 
-`/admin/promo-codes`. Admins create, edit, turn off and delete codes; operators can see them.
+`/admin/partners?section=coupons` (owner, 2026-11-22: coupons are made in the partner section;
+`/admin/coupons` and the old `/admin/promo-codes` redirect there). Admins create, edit, activate,
+deactivate and delete coupons.
 
 - **Code**: 3–40 letters, numbers, `-` or `_`. Not case-sensitive (`summer10` = `SUMMER10`).
 - **Discount**: percent off (1–100) or a CAD amount off per booking. It comes off the tour fare only,
   never off the airport transfer; a fixed amount never takes the fare below 0. A 100% code makes a
   free booking that is confirmed without payment.
-- **First day / Last day** (optional): Banff time, the whole last day included. The day the guest
+- **Where does it apply**: shared tours, private tours and/or shuttles (one, two or all three).
+  Checked when the guest presses Apply and again when the booking is made, by the tour's category;
+  a package counts each day's tour, and every day must be covered. Codes saved before this setting
+  existed (empty list) work everywhere; `PROMO_CODES` setting codes work everywhere. Activity
+  tickets and other categories aren't covered by a limited code.
+- **Start date / End date** (optional): Banff time, the whole last day included. The day the guest
   books counts, not the tour date.
 - **Use limit** (optional): bookings made with the code. Unpaid bookings that expire and cancelled
   or refunded bookings give their use back. Two guests can't both take the last use.

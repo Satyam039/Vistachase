@@ -1,9 +1,11 @@
 "use client";
 
-// Staff promo codes (/admin/promo-codes). A code takes a percent or a CAD amount off the tour fare
+// Staff coupons (/admin/coupons; was "Promo codes"). A code takes a percent or a CAD amount off the tour fare
 // (never off the airport transfer), optionally only between two days (Mountain Time) and only a
 // number of times. Uses count live bookings: an unpaid booking that expires, or a cancelled one,
-// gives its use back. Admins add, edit, turn off and delete codes (the server checks the role).
+// gives its use back. "Where does it apply" limits a code to shared tours, private tours and/or
+// shuttles (the server checks it at Apply and again at booking). Admins add, edit, activate,
+// deactivate and delete codes (the server checks the role).
 
 import { Fragment, useCallback, useEffect, useState, type FormEvent } from "react";
 import { Dropdown } from "@/components/forms/Dropdown";
@@ -11,6 +13,14 @@ import { Chip, Empty, Grid, Loading, Panel, adminApi, dangerBtn, errorOf, field,
 
 type Kind = "PERCENT" | "AMOUNT";
 type State = "LIVE" | "OFF" | "SCHEDULED" | "EXPIRED" | "USED_UP";
+type Scope = "SHARED" | "PRIVATE" | "SHUTTLE";
+
+const SCOPES: { value: Scope; label: string }[] = [
+  { value: "SHARED", label: "Shared tours" },
+  { value: "PRIVATE", label: "Private tours" },
+  { value: "SHUTTLE", label: "Shuttles" },
+];
+const scopeText = (a: Scope[]) => (a.length === SCOPES.length ? "All: shared, private, shuttles" : SCOPES.filter((s) => a.includes(s.value)).map((s) => s.label).join(", "));
 
 interface Promo {
   id: string;
@@ -25,6 +35,7 @@ interface Promo {
   uses: number;
   paidBookings: number;
   note: string;
+  appliesTo: Scope[];
   state: State;
 }
 
@@ -36,8 +47,8 @@ interface SettingCode {
 }
 
 const STATE: Record<State, { label: string; cls: string }> = {
-  LIVE: { label: "Live", cls: "bg-ocean-50 text-ocean-800" },
-  OFF: { label: "Off", cls: "bg-obsidian-100 text-slate-700" },
+  LIVE: { label: "Active", cls: "bg-ocean-50 text-ocean-800" },
+  OFF: { label: "Inactive", cls: "bg-obsidian-100 text-slate-700" },
   SCHEDULED: { label: "Starts later", cls: "bg-amber-50 text-amber-800" },
   EXPIRED: { label: "Expired", cls: "bg-obsidian-100 text-slate-700" },
   USED_UP: { label: "Used up", cls: "bg-obsidian-100 text-slate-700" },
@@ -57,7 +68,7 @@ export function PromoCodesPanel({ notify, role }: { notify: (m: string) => void;
 
   const load = useCallback(async () => {
     const res = await adminApi<{ promos: Promo[]; fromSettings: SettingCode[] }>("/promo-codes");
-    if (!res.ok) return setError(errorOf(res.data, "Couldn't load promo codes."));
+    if (!res.ok) return setError(errorOf(res.data, "Couldn't load coupons."));
     setError("");
     setPromos(res.data.promos ?? []);
     setFromSettings(res.data.fromSettings ?? []);
@@ -73,12 +84,12 @@ export function PromoCodesPanel({ notify, role }: { notify: (m: string) => void;
     const res = await adminApi(`/promo-codes/${p.id}`, "PATCH", { isActive: !p.isActive });
     setBusyId(null);
     if (!res.ok) return setRowError({ id: p.id, message: errorOf(res.data, "Couldn't change this code.") });
-    notify(`${p.code} turned ${p.isActive ? "off" : "on"}.`);
+    notify(`${p.code} ${p.isActive ? "deactivated: guests can't use it now" : "activated"}.`);
     await load();
   }
 
   async function remove(p: Promo) {
-    if (!window.confirm(`Delete ${p.code}? Guests can no longer use it. Bookings already made with it keep their discount.`)) return;
+    if (!window.confirm(`Delete coupon ${p.code}? Guests can no longer use it. Bookings already made with it keep their discount.`)) return;
     setBusyId(p.id);
     setRowError(null);
     const res = await adminApi(`/promo-codes/${p.id}`, "DELETE");
@@ -88,18 +99,18 @@ export function PromoCodesPanel({ notify, role }: { notify: (m: string) => void;
     await load();
   }
 
-  const columns: [string, boolean?][] = [["Code"], ["Discount"], ["Dates"], ["Uses", true], ["Status"], ...(canManage ? ([[""]] as [string][]) : [])];
+  const columns: [string, boolean?][] = [["Code"], ["Discount"], ["Start / end date"], ["Where it applies"], ["Uses", true], ["Status"], ...(canManage ? ([[""]] as [string][]) : [])];
 
   return (
     <>
       <Panel
-        id="promo-codes"
-        title="Promo codes"
-        description="Guests type the code at checkout and press Apply. It takes the discount off the tour price (not off the airport transfer). Codes are not case-sensitive. A use is counted when a booking is made with the code; unpaid bookings that expire and cancelled bookings give their use back."
+        id="coupons"
+        title="Coupons"
+        description="Guests type the coupon code at checkout and press Apply. It takes the discount off the tour price (not off the airport transfer), only on the tour types you choose under Where does it apply. Codes are not case-sensitive. A use is counted when a booking is made with the code; unpaid bookings that expire and cancelled bookings give their use back."
         actions={
           canManage && (
             <button type="button" className={adding ? quietBtn : primaryBtn} aria-expanded={adding} onClick={() => setAdding((a) => !a)}>
-              {adding ? "Close" : "New promo code"}
+              {adding ? "Close" : "New coupon"}
             </button>
           )
         }
@@ -107,11 +118,11 @@ export function PromoCodesPanel({ notify, role }: { notify: (m: string) => void;
         {canManage && adding && (
           <div className="border-b border-obsidian-900/[0.06] bg-obsidian-50/60 px-6 py-5">
             <PromoForm
-              idPrefix="new-promo"
-              submitLabel="Create code"
+              idPrefix="new-coupon"
+              submitLabel="Create coupon"
               onSave={async (body) => {
                 const res = await adminApi("/promo-codes", "POST", body);
-                if (!res.ok) return errorOf(res.data, "Couldn't create the code.");
+                if (!res.ok) return errorOf(res.data, "Couldn't create the coupon.");
                 setAdding(false);
                 notify(`${body.code.toUpperCase()} created. Guests can use it at checkout now.`);
                 await load();
@@ -130,9 +141,9 @@ export function PromoCodesPanel({ notify, role }: { notify: (m: string) => void;
         {!promos ? (
           <Loading />
         ) : promos.length === 0 ? (
-          <Empty>No promo codes yet.{canManage ? " Press New promo code to make one." : ""}</Empty>
+          <Empty>No coupons yet.{canManage ? " Press New coupon to make one." : ""}</Empty>
         ) : (
-          <Grid label="Promo codes" minWidth="min-w-[56rem]" head={columns}>
+          <Grid label="Coupons" minWidth="min-w-[64rem]" head={columns}>
             {promos.map((p) => (
               <Fragment key={p.id}>
                 <tr className={`align-top ${editing === p.id ? "bg-ocean-50/60" : "hover:bg-obsidian-50/60"}`}>
@@ -144,6 +155,7 @@ export function PromoCodesPanel({ notify, role }: { notify: (m: string) => void;
                   <td className="px-6 py-4 text-sm text-slate-700">
                     {!p.startsOn && !p.endsOn ? "Any time" : `${fmtDay(p.startsOn) ?? "Now"} to ${fmtDay(p.endsOn) ?? "no end"}`}
                   </td>
+                  <td className="px-6 py-4 text-sm text-slate-700">{scopeText(p.appliesTo)}</td>
                   <td className="px-6 py-4 text-right tabular-nums">
                     {p.uses}
                     {p.maxUses != null ? ` / ${p.maxUses}` : ""}
@@ -158,8 +170,8 @@ export function PromoCodesPanel({ notify, role }: { notify: (m: string) => void;
                         <button type="button" className={quietBtn} aria-expanded={editing === p.id} onClick={() => setEditing((e) => (e === p.id ? null : p.id))}>
                           {editing === p.id ? "Close" : "Edit"} <span className="sr-only">{p.code}</span>
                         </button>
-                        <button type="button" className={quietBtn} disabled={busyId === p.id} onClick={() => void toggle(p)}>
-                          {p.isActive ? "Turn off" : "Turn on"} <span className="sr-only">{p.code}</span>
+                        <button type="button" className={p.isActive ? quietBtn : primaryBtn} disabled={busyId === p.id} onClick={() => void toggle(p)}>
+                          {p.isActive ? "Deactivate" : "Activate"} <span className="sr-only">{p.code}</span>
                         </button>
                         <button type="button" className={dangerBtn} disabled={busyId === p.id} onClick={() => void remove(p)}>
                           Delete <span className="sr-only">{p.code}</span>
@@ -183,7 +195,7 @@ export function PromoCodesPanel({ notify, role }: { notify: (m: string) => void;
                           submitLabel="Save"
                           onSave={async (body) => {
                             const res = await adminApi(`/promo-codes/${p.id}`, "PATCH", body);
-                            if (!res.ok) return errorOf(res.data, "Couldn't save the code.");
+                            if (!res.ok) return errorOf(res.data, "Couldn't save the coupon.");
                             setEditing(null);
                             notify(`${body.code.toUpperCase()} saved.`);
                             await load();
@@ -204,7 +216,7 @@ export function PromoCodesPanel({ notify, role }: { notify: (m: string) => void;
         <Panel
           id="promo-codes-settings"
           title="Codes from the server settings"
-          description="These come from PROMO_CODES in the server's backend .env and also work at checkout. To change or stop one here, create a code with the same name above (turn it off to stop it)."
+          description="These come from PROMO_CODES in the server's backend .env and work at checkout on every tour type. To change or stop one here, create a coupon with the same code above (deactivate it to stop it)."
         >
           <Grid label="Codes from the server settings" minWidth="min-w-[32rem]" head={[["Code"], ["Discount"], ["Uses", true]]}>
             {fromSettings.map((s) => (
@@ -233,6 +245,7 @@ interface PromoBody {
   endsOn: string | null;
   maxUses: number | null;
   note: string;
+  appliesTo: Scope[];
 }
 
 /** Add/edit form. `onSave` returns an error message, or "" when saved. */
@@ -245,11 +258,14 @@ function PromoForm({ idPrefix: p, initial, submitLabel, onSave }: { idPrefix: st
   const [maxUses, setMaxUses] = useState(initial?.maxUses != null ? String(initial.maxUses) : "");
   const [note, setNote] = useState(initial?.note ?? "");
   const [isActive, setIsActive] = useState(initial?.isActive ?? true);
+  // New coupons start with all three; staff untick what doesn't apply.
+  const [appliesTo, setAppliesTo] = useState<Scope[]>(initial?.appliesTo ?? SCOPES.map((s) => s.value));
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
+    if (appliesTo.length === 0) return setError("Choose where the coupon applies: shared tours, private tours or shuttles.");
     setBusy(true);
     const message = await onSave({
       code: code.trim().toUpperCase(),
@@ -260,6 +276,7 @@ function PromoForm({ idPrefix: p, initial, submitLabel, onSave }: { idPrefix: st
       endsOn: endsOn || null,
       maxUses: maxUses.trim() ? Number(maxUses) : null,
       note: note.trim(),
+      appliesTo,
     });
     setBusy(false);
     setError(message);
@@ -322,13 +339,13 @@ function PromoForm({ idPrefix: p, initial, submitLabel, onSave }: { idPrefix: st
       </div>
       <div>
         <label htmlFor={`${p}-starts`} className={labelCls}>
-          First day (optional)
+          Start date (optional)
         </label>
         <input id={`${p}-starts`} type="date" className={field} value={startsOn} onChange={(e) => setStartsOn(e.target.value)} />
       </div>
       <div>
         <label htmlFor={`${p}-ends`} className={labelCls}>
-          Last day (optional)
+          End date (optional)
         </label>
         <input id={`${p}-ends`} type="date" min={startsOn || undefined} className={field} value={endsOn} onChange={(e) => setEndsOn(e.target.value)} />
       </div>
@@ -338,11 +355,29 @@ function PromoForm({ idPrefix: p, initial, submitLabel, onSave }: { idPrefix: st
         </label>
         <input id={`${p}-note`} maxLength={300} className={field} value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Hotel partner, newsletter" />
       </div>
-      <p className="text-sm text-slate-600 sm:col-span-2 lg:col-span-4">Dates are in Banff time and include the whole last day. The date a guest books on counts, not the tour date.</p>
+      <p className="text-sm text-slate-600 sm:col-span-2 lg:col-span-4">Dates are in Banff time and include the whole end date. The date a guest books on counts, not the tour date.</p>
+      <fieldset className="sm:col-span-2 lg:col-span-4">
+        <legend className={labelCls}>Where does it apply</legend>
+        <div className="mt-1 flex flex-wrap gap-x-6 gap-y-2">
+          {SCOPES.map((s) => (
+            <label key={s.value} htmlFor={`${p}-scope-${s.value}`} className="inline-flex items-center gap-2 text-sm text-slate-700">
+              <input
+                id={`${p}-scope-${s.value}`}
+                type="checkbox"
+                className="h-4 w-4 accent-ocean-600"
+                checked={appliesTo.includes(s.value)}
+                onChange={(e) => setAppliesTo((a) => (e.target.checked ? [...a, s.value] : a.filter((x) => x !== s.value)))}
+              />
+              {s.label}
+            </label>
+          ))}
+        </div>
+        <p className="mt-1 text-sm text-slate-600">Pick one, two or all three. Multi-day packages count as shared or private by their tours.</p>
+      </fieldset>
       <div className="sm:col-span-2 lg:col-span-4">
         <label htmlFor={`${p}-active`} className="inline-flex items-center gap-2 text-sm text-slate-700">
           <input id={`${p}-active`} type="checkbox" className="h-4 w-4 accent-ocean-600" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
-          On: guests can use this code
+          Active: guests can use this coupon
         </label>
       </div>
       {error && (

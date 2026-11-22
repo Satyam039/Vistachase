@@ -8,6 +8,7 @@ import { parseOr400, z } from "@/lib/security/validate";
 import { priceBooking } from "@/modules/pricing/booking-pricing";
 import { lookupPromo, promoLabel } from "@/modules/pricing/promo-codes";
 import { findActiveAffiliateByCode } from "@/modules/affiliates/affiliate.repository";
+import { findPackage, packageCategories } from "@/modules/bookings/package-booking";
 
 const router = Router();
 
@@ -20,12 +21,14 @@ const quoteSchema = z.object({
 });
 
 // A promo code on its own (package checkouts, which price several days): what it takes off.
-const promoSchema = z.object({ promoCode: z.string().trim().min(1).max(40) });
+// `packageSlug` (optional): checks the code's "Where does it apply" against the package's tours.
+const promoSchema = z.object({ promoCode: z.string().trim().min(1).max(40), packageSlug: z.string().trim().max(80).optional() });
 router.post("/promo", rateLimitMiddleware("promo_quote", { maxRequests: 20, windowSeconds: 60 }), async (req, res, next) => {
   try {
     const body = parseOr400(promoSchema, req.body, res);
     if (!body) return;
-    const found = await lookupPromo(body.promoCode);
+    const pkg = body.packageSlug ? findPackage(body.packageSlug) : null;
+    const found = await lookupPromo(body.promoCode, prisma, new Date(), pkg ? await packageCategories(pkg) : undefined);
     if (!found.ok) {
       const partner = found.reason === "unknown" ? await findActiveAffiliateByCode(body.promoCode) : null;
       if (partner) {
@@ -49,7 +52,8 @@ router.post("/quote", rateLimitMiddleware("promo_quote", { maxRequests: 20, wind
   try {
     const body = parseOr400(quoteSchema, req.body, res);
     if (!body) return;
-    const found = await lookupPromo(body.promoCode);
+    const departure = await prisma.tourDeparture.findUnique({ where: { id: body.departureId }, include: { tour: true } });
+    const found = await lookupPromo(body.promoCode, prisma, new Date(), departure ? [departure.tour?.category] : undefined);
     if (!found.ok) {
       // A partner's voucher code: accepted (it credits the partner) but takes nothing off.
       const partner = found.reason === "unknown" ? await findActiveAffiliateByCode(body.promoCode) : null;
@@ -68,7 +72,6 @@ router.post("/quote", rateLimitMiddleware("promo_quote", { maxRequests: 20, wind
       return res.status(404).json({ success: false, error: found.error });
     }
 
-    const departure = await prisma.tourDeparture.findUnique({ where: { id: body.departureId }, include: { tour: true } });
     if (!departure) return res.status(404).json({ success: false, error: "Departure not found" });
 
     const totals = priceBooking(departure, { adults: body.adultsCount, children: body.childrenCount, infants: body.infantsCount }, [], found.promo);

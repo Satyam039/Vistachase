@@ -4,7 +4,7 @@
 
 import prisma from "@/lib/db/prisma";
 import { promoCodes } from "@/modules/pricing/booking-pricing";
-import { normalizeCode, PROMO_USE_STATUSES, promoLabel } from "@/modules/pricing/promo-codes";
+import { normalizeCode, PROMO_SCOPES, PROMO_USE_STATUSES, promoLabel, type PromoScope } from "@/modules/pricing/promo-codes";
 import { dateOnly, getMountainTimeInstant, timeOfDay, todayInMountainTime } from "@/lib/utils/time";
 
 export interface PromoInput {
@@ -18,6 +18,8 @@ export interface PromoInput {
   endsOn?: string | null;
   maxUses?: number | null;
   note?: string;
+  /** Where it can be used: any of SHARED, PRIVATE, SHUTTLE (at least one). */
+  appliesTo?: PromoScope[];
 }
 
 const startOfDay = (day: string, plusDays = 0) => {
@@ -39,6 +41,7 @@ function toData(input: Partial<PromoInput>) {
   if (input.endsOn !== undefined) data.expiresAt = input.endsOn ? startOfDay(input.endsOn, 1) : null;
   if (input.maxUses !== undefined) data.maxUses = input.maxUses;
   if (input.note !== undefined) data.note = input.note;
+  if (input.appliesTo !== undefined) data.appliesTo = PROMO_SCOPES.filter((s) => input.appliesTo!.includes(s));
   return data;
 }
 
@@ -82,6 +85,8 @@ export async function listPromos(now = new Date()) {
       uses: u.live,
       paidBookings: u.paid,
       note: r.note,
+      // Empty (codes made before "Where does it apply" existed) = everywhere.
+      appliesTo: r.appliesTo.length ? PROMO_SCOPES.filter((s) => r.appliesTo.includes(s)) : [...PROMO_SCOPES],
       state,
     };
   });

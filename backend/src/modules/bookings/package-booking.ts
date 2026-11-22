@@ -90,6 +90,12 @@ export const PACKAGES: TourPackage[] = [
 
 export const findPackage = (slug: string) => PACKAGES.find((p) => p.slug === slug) ?? null;
 
+/** Each day's tour category (SHARED / PRIVATE), for a coupon's "Where does it apply". */
+export async function packageCategories(pkg: Pick<TourPackage, "tourSlugs">): Promise<(string | null)[]> {
+  const tours = await prisma.tour.findMany({ where: { slug: { in: pkg.tourSlugs } }, select: { slug: true, category: true } });
+  return pkg.tourSlugs.map((slug) => tours.find((t) => t.slug === slug)?.category ?? null);
+}
+
 /** June 1 to October 10, for a YYYY-MM-DD date (same season as the departure prices). */
 const inSummer = (date: string) => {
   const md = date.slice(5, 10);
@@ -218,7 +224,7 @@ export async function createPackageBooking(input: CreatePackageInput): Promise<P
   // the code's lock. A partner's voucher code takes nothing off; it only credits the partner.
   let packagePromo: ResolvedPromo | null = null;
   if (input.promoCode?.trim()) {
-    const found = await lookupPromo(input.promoCode);
+    const found = await lookupPromo(input.promoCode, prisma, new Date(), await packageCategories(pkg));
     if (found.ok) packagePromo = found.promo;
     else if (found.reason !== "unknown") return { success: false, error: `${found.error} Please remove it and try again.` };
   }

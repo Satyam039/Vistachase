@@ -594,6 +594,8 @@ model PromoCode {
   expiresAt      DateTime?
   maxUses        Int?
   note           String    @default("")
+  /// Where it can be used: "SHARED", "PRIVATE", "SHUTTLE" (tour categories). Empty = everywhere (codes made before 2026-11-22).
+  appliesTo      String[]  @default([])
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 }

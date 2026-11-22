@@ -841,6 +841,8 @@ const promoSchema = z
     endsOn: day.nullable().optional(),
     maxUses: z.number().int().min(1).max(100_000).nullable().optional(),
     note: z.string().trim().max(300).optional(),
+    // "Where does it apply": one, two or all three.
+    appliesTo: z.array(z.enum(["SHARED", "PRIVATE", "SHUTTLE"])).min(1, "Choose where the coupon applies: shared tours, private tours or shuttles.").max(3).optional(),
   })
   .strict();
 

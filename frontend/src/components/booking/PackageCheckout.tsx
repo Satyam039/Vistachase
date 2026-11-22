@@ -200,7 +200,7 @@ export function PackageCheckout({
     setPromoError("");
     setApplyingPromo(true);
     try {
-      const res = await fetch("/api/pricing/promo", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ promoCode: promoInput.trim() }) });
+      const res = await fetch("/api/pricing/promo", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ promoCode: promoInput.trim(), packageSlug }) });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.success) {
         setPromoError(data.error || "Invalid promo code");
