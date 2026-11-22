@@ -4,7 +4,7 @@
 
 import prisma from "@/lib/db/prisma";
 import { promoCodes } from "@/modules/pricing/booking-pricing";
-import { normalizeCode, PROMO_USE_STATUSES, promoLabel } from "@/modules/pricing/promo-codes";
+import { normalizeCode, PROMO_SCOPES, PROMO_USE_STATUSES, promoLabel, type PromoScope } from "@/modules/pricing/promo-codes";
 import { dateOnly, getMountainTimeInstant, timeOfDay, todayInMountainTime } from "@/lib/utils/time";
 
 export interface PromoInput {
@@ -18,6 +18,8 @@ export interface PromoInput {
   endsOn?: string | null;
   maxUses?: number | null;
   note?: string;
+  /** Where it can be used: any of SHARED, PRIVATE, SHUTTLE (at least one). */
+  appliesTo?: PromoScope[];
 }
 
 const startOfDay = (day: string, plusDays = 0) => {
@@ -39,10 +41,11 @@ function toData(input: Partial<PromoInput>) {
   if (input.endsOn !== undefined) data.expiresAt = input.endsOn ? startOfDay(input.endsOn, 1) : null;
   if (input.maxUses !== undefined) data.maxUses = input.maxUses;
   if (input.note !== undefined) data.note = input.note;
+  if (input.appliesTo !== undefined) data.appliesTo = PROMO_SCOPES.filter((s) => input.appliesTo!.includes(s));
   return data;
 }
 
-async function usesByCode(codes: string[]) {
+export async function usesByCode(codes: string[]) {
   if (codes.length === 0) return new Map<string, { live: number; paid: number }>();
   const rows = await prisma.$queryRaw<{ code: string; live: bigint; paid: bigint }[]>`
     SELECT "priceSnapshot"->'promo'->>'code' AS code,
@@ -82,6 +85,8 @@ export async function listPromos(now = new Date()) {
       uses: u.live,
       paidBookings: u.paid,
       note: r.note,
+      // Empty (codes made before "Where does it apply" existed) = everywhere.
+      appliesTo: r.appliesTo.length ? PROMO_SCOPES.filter((s) => r.appliesTo.includes(s)) : [...PROMO_SCOPES],
       state,
     };
   });
@@ -96,18 +101,23 @@ function datesError(input: Partial<PromoInput>, existing?: { startsAt: Date | nu
   return starts && ends && ends <= starts ? "The last day must be on or after the first day." : null;
 }
 
-export async function createPromo(input: PromoInput) {
+export async function createPromo(input: PromoInput, affiliateId?: string) {
   const code = normalizeCode(input.code);
   if (await prisma.promoCode.findUnique({ where: { code } })) return { status: 409, error: `${code} already exists. Edit it instead.` } as const;
+  // Codes from the server setting, and partners' referral codes, can't be taken by a partner coupon.
+  if (affiliateId && (promoCodes().has(code) || (await prisma.affiliate.findUnique({ where: { code } })))) {
+    return { status: 409, error: `${code} is already taken. Choose another code.` } as const;
+  }
   const bad = datesError(input);
   if (bad) return { status: 400, error: bad } as const;
-  const promo = await prisma.promoCode.create({ data: toData({ ...input, code }) as never });
+  const promo = await prisma.promoCode.create({ data: { ...(toData({ ...input, code }) as object), ...(affiliateId ? { affiliateId } : {}) } as never });
   return { status: 201, promo } as const;
 }
 
-export async function updatePromo(id: string, input: Partial<PromoInput>) {
+export async function updatePromo(id: string, input: Partial<PromoInput>, affiliateId?: string) {
   const existing = await prisma.promoCode.findUnique({ where: { id } });
-  if (!existing) return { status: 404, error: "Promo code not found" } as const;
+  // A partner edits only their own coupons.
+  if (!existing || (affiliateId && existing.affiliateId !== affiliateId)) return { status: 404, error: "Promo code not found" } as const;
   if (input.code !== undefined && normalizeCode(input.code) !== existing.code) {
     if (await prisma.promoCode.findUnique({ where: { code: normalizeCode(input.code) } })) return { status: 409, error: `${normalizeCode(input.code)} already exists.` } as const;
   }
@@ -119,9 +129,9 @@ export async function updatePromo(id: string, input: Partial<PromoInput>) {
 }
 
 /** Deleting is safe: bookings keep the code and discount in their price snapshot. */
-export async function deletePromo(id: string) {
+export async function deletePromo(id: string, affiliateId?: string) {
   const existing = await prisma.promoCode.findUnique({ where: { id } });
-  if (!existing) return { status: 404, error: "Promo code not found" } as const;
+  if (!existing || (affiliateId && existing.affiliateId !== affiliateId)) return { status: 404, error: "Promo code not found" } as const;
   await prisma.promoCode.delete({ where: { id } });
   return { status: 200, promo: existing } as const;
 }

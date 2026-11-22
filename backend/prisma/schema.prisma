@@ -149,7 +149,7 @@ model User {
   resetToken          String?
   resetTokenExpiry    DateTime?
   loginOtp            String?
-  loginOtpExpiry     DateTime?
+  loginOtpExpiry      DateTime?
   pendingEmail        String?
   emailChangeToken    String?
   emailChangeExpiry   DateTime?
@@ -585,17 +585,24 @@ model MediaAsset {
 /// amountOffCents is set. Uses are counted from bookings that carry the code (Booking.priceSnapshot),
 /// so an unpaid, expired or cancelled booking gives its use back.
 model PromoCode {
-  id             String    @id @default(cuid())
-  code           String    @unique // stored upper-case
+  id             String     @id @default(cuid())
+  code           String     @unique // stored upper-case
   percentOff     Int?
   amountOffCents Int?
-  isActive       Boolean   @default(true)
+  isActive       Boolean    @default(true)
   startsAt       DateTime?
   expiresAt      DateTime?
   maxUses        Int?
-  note           String    @default("")
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  note           String     @default("")
+  /// Where it can be used: "SHARED", "PRIVATE", "SHUTTLE" (tour categories). Empty = everywhere (codes made before 2026-11-22).
+  appliesTo      String[]   @default([])
+  /// A partner's own coupon (made in their affiliate account): bookings with it credit this partner.
+  affiliateId    String?
+  affiliate      Affiliate? @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@index([affiliateId])
 }
 
 model AuditLog {
@@ -638,6 +645,7 @@ model Affiliate {
   commissions     CommissionLedger[]
   payouts         AffiliatePayout[]
   clicks          AffiliateClick[]
+  coupons         PromoCode[]
 
   @@index([status])
 }

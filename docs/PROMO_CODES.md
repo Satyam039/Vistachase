@@ -4,6 +4,17 @@ Guests type a code on the checkout's **Review & pay** step and press **Apply**. 
 "Code SUMMER10 applied: 10% off. You save CAD 44.00." and the summary and the payment use the
 discounted total. The server prices every booking again, so the browser can't change the discount.
 
+## Partner coupons (affiliate account → Coupons)
+
+Owner, 2026-11-22: each partner makes their own coupons in their affiliate account
+(`/affiliate/coupons`): coupon code, percentage discount (at most `PARTNER_COUPON_MAX_PERCENT`,
+default 20), start date, end date, Activate/Deactivate, and **Where does it apply** (below). A
+booking made with a partner's coupon is credited to that partner (it beats a referral link), so
+they earn commission as usual. A partner sees and changes only their own coupons; the code can't
+change once made; coupons stop working while the partner is pending, suspended or rejected. They
+are `PromoCode` rows with `affiliateId` set, so staff also see them in Admin → Promo codes and can
+turn one off. API: `GET/POST /api/affiliates/me/coupons`, `PATCH/DELETE /api/affiliates/me/coupons/:id`.
+
 ## Creating codes (Admin → Promo codes)
 
 `/admin/promo-codes`. Admins create, edit, turn off and delete codes; operators can see them.
@@ -12,7 +23,12 @@ discounted total. The server prices every booking again, so the browser can't ch
 - **Discount**: percent off (1–100) or a CAD amount off per booking. It comes off the tour fare only,
   never off the airport transfer; a fixed amount never takes the fare below 0. A 100% code makes a
   free booking that is confirmed without payment.
-- **First day / Last day** (optional): Banff time, the whole last day included. The day the guest
+- **Where does it apply**: shared tours, private tours and/or shuttles (one, two or all three).
+  Checked when the guest presses Apply and again when the booking is made, by the tour's category;
+  a package counts each day's tour, and every day must be covered. Codes saved before this setting
+  existed (empty list) work everywhere; `PROMO_CODES` setting codes work everywhere. Activity
+  tickets and other categories aren't covered by a limited code.
+- **Start date / End date** (optional): Banff time, the whole last day included. The day the guest
   books counts, not the tour date.
 - **Use limit** (optional): bookings made with the code. Unpaid bookings that expire and cancelled
   or refunded bookings give their use back. Two guests can't both take the last use.

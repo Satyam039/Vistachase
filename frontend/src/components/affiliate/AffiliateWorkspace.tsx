@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Check, Clock, Copy, LogOut, ExternalLink, BarChart2, RefreshCw } from "lucide-react";
 import { Dropdown } from "@/components/forms/Dropdown";
 import { AffiliateHeader } from "./AffiliateHeader";
+import { PartnerCoupons } from "@/components/affiliate/PartnerCoupons";
 import { PartnerProducts } from "./PartnerProducts";
 
 export interface Profile {
@@ -68,7 +69,7 @@ export interface Payout {
   createdAt: string;
 }
 
-export type Tab = "overview" | "products" | "referrals" | "bookings" | "commissions" | "payouts" | "reports" | "settings";
+export type Tab = "overview" | "products" | "referrals" | "coupons" | "bookings" | "commissions" | "payouts" | "reports" | "settings";
 
 interface TourOption {
   slug: string;
@@ -361,6 +362,8 @@ export function AffiliateWorkspace({ activeTab = "overview" }: { activeTab?: Tab
         )}
 
         {/* Tab 3: Bookings */}
+        {activeTab === "coupons" && <PartnerCoupons />}
+
         {activeTab === "bookings" && <BookingsPanel />}
 
         {/* Tab 4: Commissions */}

@@ -20,11 +20,11 @@ let day = 0;
 const cookieFor = (u: { id: string; email: string; role: string; name: string }) =>
   `vc_token=${signToken({ userId: u.id, email: u.email, role: u.role as never, name: u.name })}`;
 
-async function departure(capacityTotal = 8) {
+async function departure(capacityTotal = 8, forTour = tourId) {
   day += 1;
   const date = new Date(Date.UTC(2028, 4, 1 + day)).toISOString().slice(0, 10);
   return prisma.tourDeparture.create({
-    data: { tourId, date: dateOnly(date), departureTime: timeOfDay("08:30"), capacityTotal, price: 20000, childPrice: 10000, status: "ACTIVE", inventorySource: "LOCAL" },
+    data: { tourId: forTour, date: dateOnly(date), departureTime: timeOfDay("08:30"), capacityTotal, price: 20000, childPrice: 10000, status: "ACTIVE", inventorySource: "LOCAL" },
   });
 }
 
@@ -50,7 +50,9 @@ const unpaid: IPaymentProvider = {
 };
 
 const create = (body: Record<string, unknown>) => request(app).post("/api/admin/promo-codes").set("Cookie", adminCookie).send(body);
-const quote = (departureId: string, promoCode: string) => request(app).post("/api/pricing/quote").send({ departureId, adultsCount: 2, promoCode });
+// Each test checks from its own address, so the Apply rate limit (20 a minute) never trips.
+let ip = 0;
+const quote = (departureId: string, promoCode: string) => request(app).post("/api/pricing/quote").set("X-Forwarded-For", `198.51.100.${ip}`).send({ departureId, adultsCount: 2, promoCode });
 
 beforeAll(async () => {
   const admin = await prisma.user.findFirstOrThrow({ where: { role: "ADMIN" } });
@@ -60,7 +62,10 @@ beforeAll(async () => {
   tourId = (await prisma.tour.findFirstOrThrow({ where: { category: "SHARED", bookingMode: "BOKUN" } })).id;
 });
 
-afterEach(() => setPaymentProviderForTests(null));
+afterEach(() => {
+  setPaymentProviderForTests(null);
+  ip += 1;
+});
 
 describe("promo codes", () => {
   it("an admin creates a percent code; Apply succeeds and the booking is charged the discounted price", async () => {
@@ -152,6 +157,55 @@ describe("promo codes", () => {
     expect((await quote(dep.id, "BANFF10")).status).toBe(404);
     await request(app).delete(`/api/admin/promo-codes/${off.body.promo.id}`).set("Cookie", adminCookie);
     expect((await quote(dep.id, "BANFF10")).status).toBe(200);
+  });
+
+  it("Where does it apply: a code works only on the chosen shared tours, private tours and shuttles", async () => {
+    const shuttleTour = await prisma.tour.findFirstOrThrow({ where: { category: "SHUTTLE" } });
+    const privateTour = await prisma.tour.findFirstOrThrow({ where: { category: "PRIVATE" } });
+    expect((await create({ code: "NOWHERE", kind: "PERCENT", value: 10, appliesTo: [] })).status).toBe(400);
+    const made = await create({ code: "SHUTTLE20", kind: "PERCENT", value: 20, appliesTo: ["SHUTTLE"] });
+    expect(made.status).toBe(201);
+    expect(made.body.promo.appliesTo).toEqual(["SHUTTLE"]);
+    await create({ code: "PRIVSHUT", kind: "PERCENT", value: 10, appliesTo: ["SHUTTLE", "PRIVATE"] });
+    await create({ code: "ALL3", kind: "PERCENT", value: 10, appliesTo: ["PRIVATE", "SHARED", "SHUTTLE"] });
+
+    const shared = await departure();
+    const shuttle = await departure(12, shuttleTour.id);
+    const priv = await departure(1, privateTour.id);
+
+    // Shuttle-only code: refused on a shared tour (Apply and booking), accepted on a shuttle.
+    const sharedQuote = await quote(shared.id, "shuttle20");
+    expect(sharedQuote.status).toBe(404);
+    expect(sharedQuote.body.error).toMatch(/works on shuttles only/);
+    const refused = await createBooking(guest(shared.id, 20, "SHUTTLE20"));
+    expect(refused.success).toBe(false);
+    expect(refused.error).toMatch(/shuttles only/);
+    expect((await quote(shuttle.id, "SHUTTLE20")).body).toMatchObject({ success: true, discountPercent: 20 });
+    const ok = await createBooking(guest(shuttle.id, 21, "SHUTTLE20"));
+    expect(ok.success).toBe(true);
+    const b = await prisma.booking.findUniqueOrThrow({ where: { id: ok.booking!.id } });
+    expect((b.priceSnapshot as { promo?: { code?: string } }).promo?.code).toBe("SHUTTLE20");
+
+    // Two of three.
+    expect((await quote(priv.id, "PRIVSHUT")).status).toBe(200);
+    expect((await quote(shuttle.id, "PRIVSHUT")).status).toBe(200);
+    expect((await quote(shared.id, "PRIVSHUT")).body.error).toMatch(/private tours and shuttles only/);
+    // All three, and codes saved before this setting (empty list) work everywhere.
+    for (const d of [shared, shuttle, priv]) expect((await quote(d.id, "ALL3")).status).toBe(200);
+    const legacy = await prisma.promoCode.create({ data: { code: "LEGACY5", percentOff: 5 } });
+    expect(legacy.appliesTo).toEqual([]);
+    for (const d of [shared, shuttle, priv]) expect((await quote(d.id, "LEGACY5")).status).toBe(200);
+    const list = await request(app).get("/api/admin/promo-codes").set("Cookie", adminCookie);
+    expect(list.body.promos.find((p: { code: string }) => p.code === "LEGACY5").appliesTo).toEqual(["SHARED", "PRIVATE", "SHUTTLE"]);
+
+    // Editing where it applies; a package checks every day's tour.
+    const edited = await request(app).patch(`/api/admin/promo-codes/${made.body.promo.id}`).set("Cookie", adminCookie).send({ appliesTo: ["SHARED"] });
+    expect(edited.body.promo.appliesTo).toEqual(["SHARED"]);
+    expect((await quote(shared.id, "SHUTTLE20")).status).toBe(200);
+    const pkgShared = await request(app).post("/api/pricing/promo").set("X-Forwarded-For", "198.51.100.250").send({ promoCode: "SHUTTLE20", packageSlug: "two-day-rockies-explorer" });
+    expect(pkgShared.status).toBe(200);
+    const pkgPrivate = await request(app).post("/api/pricing/promo").set("X-Forwarded-For", "198.51.100.250").send({ promoCode: "SHUTTLE20", packageSlug: "two-day-rockies-explorer-private" });
+    expect(pkgPrivate.status).toBe(404);
   });
 
   it("only admins create, edit and delete; values and dates are checked", async () => {
