@@ -75,6 +75,56 @@ export const TRIPADVISOR_REVIEWS: SliderReview[] = [
   },
 ];
 
+// Four more Tripadvisor reviews of the Private Customizable Banff Tour the owner sent on 2026-11-22
+// ("yeh review add kar private wale me"), copied word for word. The owner's paste had no link to each
+// review, so each one links to Vista Chase's Tripadvisor reviews page instead. Shown on private
+// tour pages (approvedReviewsFor), not in the home page slider.
+const TA_VISTA_CHASE_REVIEWS =
+  "https://www.tripadvisor.ca/Attraction_Review-g154911-d26518659-Reviews-Vista_Chase-Banff_Banff_National_Park_Alberta.html";
+
+export const PRIVATE_TOUR_TRIPADVISOR_REVIEWS: SliderReview[] = [
+  {
+    id: "ta-private-cardiffgirl78",
+    authorName: "cardiffgirl78",
+    title: "Great tour & Itiel was the best tour guide!",
+    body: "Itiel was the best tour guide we have ever had! He was funny, friendly and extremely knowledgeable. We seen amazing sites and cannot thank or recommend him and his hard work enough. 5 starts well and truly deserved!",
+    date: "Oct 2026",
+    tourTitle: "Private tour",
+    tourSlug: "private-tours",
+    source: TA(TA_VISTA_CHASE_REVIEWS),
+  },
+  {
+    id: "ta-private-larraine79",
+    authorName: "Larraine79",
+    title: "A great way to see Banff!",
+    body: "A luxurious small passenger van, a personable and knowledgeable guide, and breathtaking lakes and mountains, what more could you ask for? Itiel, our guide, was wonderful and very understanding of those who were slower or wanted to refrain from the 1 or 2 parts that were a little more challenging and showed us options that worked better (but didn’t hamper the others on the tour). All in all, such a great way to see so much all in one day. Plus we didn’t have to deal with all of the parking issues at the often crowded parking lots. Highly recommend if you want an easy way to see a lot in a short amount of time!",
+    date: "Oct 2026",
+    tourTitle: "Private tour",
+    tourSlug: "private-tours",
+    source: TA(TA_VISTA_CHASE_REVIEWS),
+  },
+  {
+    id: "ta-private-cullenshereford",
+    authorName: "CullensHereford",
+    title: "Fantastic Tour Experience!",
+    body: "My husband & 2 daughters were visiting Banff for the first time and booked Vista Chase for a private Banff tour. I had requested Liam as our private tour guide after reading some excellent reviews about him and he didn't disappoint with our private tour experience.\nLiam was knowledgeable, friendly, passionate, full of energy and accommodating - it was like going on a tour with a family member. Liam knew all the best spots for photo opportunities and we packed so much in our day, visiting lots of lakes and tourist attractions. Whilst on a bear spotting hunt, we were extremely fortunate to have seen 2 wolves. We had such a great time that we booked Liam again to accompany us for a trip to the beautiful Moraine Lake and hiked up the Larch Valley trail for some breathtaking views. The icing on the cake was seeing Mum Grizzly Bear with her 3 cubs, crossing the road near Lake Minnewanka. Our signature phrase of the day was 'Bear Necessities' Thank you Liam for making our tour experience extra special. You are a credit to Vista Chase Tours!",
+    date: "Sep 2026",
+    tourTitle: "Private tour",
+    tourSlug: "private-tours",
+    source: TA(TA_VISTA_CHASE_REVIEWS),
+  },
+  {
+    id: "ta-private-jennifer-n",
+    authorName: "Jennifer N",
+    title: "Great tour for 'must see' spots and hidden gems",
+    body: "This private tour was well worth the money. We had two couples in a large van. We got to see so many wonderful spots throughout the day, both 'must see' spots and hidden gems. The itinerary was set, but we were able to adjust the timing at each stop to accommodate our needs and move how fast we wanted to go and see what we wanted to see. The tour guide - Michaela - was phenomenal. She was very personable and provided additional information about each stop. She also was nice enough to provide us with other tips and suggestions for the rest of our week in the area.",
+    date: "Sep 2026",
+    tourTitle: "Private tour",
+    tourSlug: "private-tours",
+    source: TA(TA_VISTA_CHASE_REVIEWS),
+  },
+];
+
 /**
  * The four short excerpts the home page shows beside the review summary (doc: "four real review
  * excerpts, covering your guides, small-group experience and ease of travel"). Each excerpt is cut
@@ -94,5 +144,6 @@ export const REVIEW_EXCERPTS: { theme: string; reviewId: string; excerpt: string
  */
 export function approvedReviewsFor(kind: "private" | "shared"): SliderReview[] {
   const slug = kind === "private" ? "private-tours" : "shared-tours";
-  return [...TRIPADVISOR_REVIEWS.filter((r) => r.tourSlug === slug), ...TRIPADVISOR_REVIEWS.filter((r) => r.tourSlug !== slug)];
+  const all = [...PRIVATE_TOUR_TRIPADVISOR_REVIEWS, ...TRIPADVISOR_REVIEWS];
+  return [...all.filter((r) => r.tourSlug === slug), ...all.filter((r) => r.tourSlug !== slug)];
 }
