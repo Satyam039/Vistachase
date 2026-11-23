@@ -12,50 +12,10 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { Check, Copy, ExternalLink } from "lucide-react";
-import { docTitleAndSummary } from "@/lib/tourContent";
-import { TWO_DAY_PACKAGE } from "@/lib/sharedTours";
-import { PRIVATE_PACKAGES } from "@/lib/privateTours";
-
-interface ApiTour {
-  slug: string;
-  title: string;
-  category: string;
-  featuredImage?: string | null;
-  basePrice?: number;
-}
-
-interface Product {
-  path: string;
-  title: string;
-  image?: string | null;
-}
-
-const GROUPS: { id: string; title: string }[] = [
-  { id: "SHARED", title: "Shared tours" },
-  { id: "PRIVATE", title: "Private tours" },
-  { id: "MULTIDAY", title: "Multi-day tours" },
-  { id: "SHUTTLE", title: "Shuttles" },
-  { id: "PAGES", title: "Collection pages" },
-];
-
-/** Multi-day packages that have their own pages (not catalog rows). */
-const PACKAGES: Product[] = [
-  { path: TWO_DAY_PACKAGE.href, title: TWO_DAY_PACKAGE.title, image: TWO_DAY_PACKAGE.images[0]?.src },
-  { path: "/two-day-rockies-explorer/private", title: PRIVATE_PACKAGES.two.title, image: "/media/photos/moraine-lake-classic.webp" },
-  { path: `/${PRIVATE_PACKAGES.three.slug}`, title: PRIVATE_PACKAGES.three.title, image: "/media/photos/athabasca-glacier.webp" },
-  { path: `/${PRIVATE_PACKAGES.four.slug}`, title: PRIVATE_PACKAGES.four.title, image: "/media/photos/athabasca-glacier.webp" },
-];
-
-const PAGES: Product[] = [
-  { path: "/", title: "Home page" },
-  { path: "/shared-tours", title: "All shared tours" },
-  { path: "/private-tours", title: "All private tours" },
-  { path: "/multi-day-tour-package-for-banff", title: "All multi-day tours" },
-  { path: "/shuttles", title: "Moraine Lake & Lake Louise shuttles" },
-];
+import { COLLECTION_PAGES, referralLink, tourGroups, type ReferralTour } from "@/lib/affiliateLinks";
 
 export function PartnerProducts({ code }: { code: string }) {
-  const [tours, setTours] = useState<ApiTour[] | null>(null);
+  const [tours, setTours] = useState<ReferralTour[] | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [origin, setOrigin] = useState("https://www.vistachase.com");
 
@@ -67,16 +27,12 @@ export function PartnerProducts({ code }: { code: string }) {
       .catch(() => setTours([]));
   }, []);
 
-  const groups = useMemo(() => {
-    const by: Record<string, Product[]> = { SHARED: [], PRIVATE: [], MULTIDAY: [...PACKAGES], SHUTTLE: [], PAGES };
-    for (const t of tours ?? []) {
-      if (!(t.category in by) || t.category === "PAGES") continue;
-      by[t.category].push({ path: `/${t.slug}`, title: docTitleAndSummary(t.slug)?.title ?? t.title, image: t.featuredImage });
-    }
-    return GROUPS.map((g) => ({ ...g, products: by[g.id] ?? [] })).filter((g) => g.products.length);
-  }, [tours]);
+  const groups = useMemo(
+    () => [...tourGroups(tours ?? []), { id: "PAGES", title: "Collection pages", pages: COLLECTION_PAGES }],
+    [tours],
+  );
 
-  const linkFor = (path: string) => `${origin}${path}?ref=${encodeURIComponent(code)}`;
+  const linkFor = (path: string) => referralLink(origin, path, code);
 
   async function copy(path: string) {
     try {
@@ -105,7 +61,7 @@ export function PartnerProducts({ code }: { code: string }) {
           <div key={g.id} className="space-y-3">
             <h2 className="text-lg font-light text-slate-900">{g.title}</h2>
             <ul className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 bg-white">
-              {g.products.map((p) => (
+              {g.pages.map((p) => (
                 <li key={p.path} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
                   <div className="flex min-w-0 flex-1 items-center gap-4">
                     {p.image ? (
