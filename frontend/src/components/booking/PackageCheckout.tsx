@@ -48,7 +48,7 @@ import { Dropdown } from "@/components/forms/Dropdown";
 import { PhoneField } from "@/components/forms/PhoneField";
 import { dialCode } from "@/lib/countries";
 import { StripeCheckoutForm, stripeConfigured } from "@/components/booking/StripeCheckoutForm";
-import { balanceDueDate, DEPOSIT_PERCENT, depositAvailable, depositFor, formatRockiesDate } from "@/lib/policy";
+import { balanceDueDate, DEPOSIT_PERCENT, depositAvailable, depositFor, formatCancellationDeadline, formatRockiesDate } from "@/lib/policy";
 import { trackAdsPurchase } from "@/lib/googleAds";
 import { CheckoutLinksInNewTab } from "@/components/booking/CheckoutLinksInNewTab";
 
@@ -127,13 +127,27 @@ const timeLabel = (time: string) => {
 };
 
 /** A day's fare in cents with the package discount, rounded the way the server rounds. */
-function dayCents(d: PackageDeparture | undefined, adults: number, children: number, infants: number, discountPercent: number, vehicle = false) {
+function dayCents(d: PackageDeparture | undefined, adults: number, children: number, infants: number, discountPercent: number, vehicle = false, isIcefield = false) {
   if (!d) return { fare: 0, discount: 0, total: 0 };
+  let adultPrice = d.price;
+  let childPrice = d.childPrice ?? d.price;
+  let infantPrice = d.infantPrice != null ? d.infantPrice : 0;
+  if (!vehicle && isIcefield) {
+    if (inSummer(d.date)) {
+      adultPrice = 320;
+      childPrice = 280;
+      infantPrice = 170;
+    } else {
+      adultPrice = 220;
+      childPrice = 220;
+      infantPrice = 170;
+    }
+  }
   const fare = vehicle
     ? Math.round(d.price * 100)
-    : Math.round(d.price * 100) * adults +
-      Math.round((d.childPrice ?? d.price) * 100) * children +
-      (d.infantPrice != null ? Math.round(d.infantPrice * 100) * infants : 0);
+    : Math.round(adultPrice * 100) * adults +
+      Math.round(childPrice * 100) * children +
+      Math.round(infantPrice * 100) * infants;
   const discount = Math.round((fare * discountPercent) / 100);
   return { fare, discount, total: fare - discount };
 }
@@ -148,7 +162,7 @@ export function PackageCheckout({
   vehicle = false,
   maxGuests,
   requestHref = `/contact-us?package=${packageSlug}`,
-  cancellationNote = "Each day can be cancelled for a full refund up to 24 hours before it starts.",
+  cancellationNote = "Cancel the entire package at least 24 hours before your first scheduled tour for a full refund. This deadline applies to the whole package, not separately to each day.",
   depositAllowed = false,
   compact = false,
   wholePage = false,
@@ -187,6 +201,11 @@ export function PackageCheckout({
   const [phoneLocal, setPhoneLocal] = useState("");
   const [stopId, setStopId] = useState("");
   const [customPickup, setCustomPickup] = useState("");
+  const [samePickup, setSamePickup] = useState(true);
+  const [tourPickups, setTourPickups] = useState<{ stopId: string; customPickup: string }[]>(() =>
+    days.map(() => ({ stopId: "", customPickup: "" })),
+  );
+  const [childSeatRequested, setChildSeatRequested] = useState(false);
   const isFourDay = days.length === 4 || packageSlug.includes("four-day");
   const [day4JasperPickup, setDay4JasperPickup] = useState("");
   const [requests, setRequests] = useState("");
@@ -281,9 +300,31 @@ export function PackageCheckout({
     return (d: PackageDeparture) => d.seatsAvailable >= seatsFor(d) && !taken.has(d.date.slice(0, 10));
   };
 
-  const lines = chosen.map((d) => dayCents(d, adults, children, infants, discountOn(d?.date), vehicle));
+  const isIcefieldsDay = (day: PackageDay) =>
+    day.href.toLowerCase().includes("icefields") || day.title.toLowerCase().includes("icefield");
+
+  const lines = chosen.map((d, i) =>
+    dayCents(d, adults, children, infants, discountOn(d?.date), vehicle, isIcefieldsDay(days[i])),
+  );
   const fare = lines.reduce((n, l) => n + l.fare, 0);
   const saving = lines.reduce((n, l) => n + l.discount, 0);
+
+  const icefieldsIndex = days.findIndex(isIcefieldsDay);
+  const icefieldsChosen = icefieldsIndex >= 0 ? chosen[icefieldsIndex] : null;
+  const showWinterIcefieldsNotice = Boolean(icefieldsChosen && !inSummer(icefieldsChosen.date));
+
+  const allPicked = chosen.every(Boolean);
+
+  const pickedList = days.map((day, i) => ({
+    day,
+    departure: chosen[i],
+    index: i,
+    line: lines[i],
+  }));
+
+  const displayList = allPicked
+    ? [...pickedList].sort((a, b) => (a.departure && b.departure ? a.departure.date.localeCompare(b.departure.date) : 0))
+    : pickedList;
   // The transfer (owner, 2026-11-17): the server's price per one-way transfer by where the guest
   // stays, twice for a round trip; added to Day 1, never discounted. The server prices it again.
   const transferQuote = withAirport ? airportTransferQuote(airportTransfer, guests, transferPrices) : null;
@@ -298,7 +339,6 @@ export function PackageCheckout({
   );
   const promoSaving = promoCents.reduce((n, c) => n + c, 0);
   const total = lines.reduce((n, l) => n + l.total, 0) - promoSaving + (transferDollars ?? 0) * 100 + Math.round(activitiesDollars * 100);
-  const allPicked = chosen.every(Boolean);
   // 20% deposit: each day's own deposit (the server rounds per day), when every day is 15+ days away.
   const canDeposit = depositAllowed && allPicked && total > 0 && chosen.every((d) => d && depositAvailable(d.date.slice(0, 10), d.departureTime));
   const plan = canDeposit ? paymentPlan : "FULL";
@@ -345,13 +385,21 @@ export function PackageCheckout({
   }, [showUnavailable]);
   const errors = useMemo(() => {
     const e: Record<string, string> = {};
-    days.forEach((_, i) => {
-      if (!picks[i]) e[`day${i}`] = "Choose a date for this tour.";
+    days.forEach((day, i) => {
+      if (!picks[i]) e[`day${i}`] = `Choose a date for ${day.title}.`;
     });
     if (name.trim().length < 2) e.name = "Enter the lead guest's full name.";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) e.email = "Enter a valid email address.";
     if (phoneLocal.replace(/\D/g, "").length < 6) e.phone = "Enter a mobile number for pickup-day updates.";
-    if (!stopId && !customPickup.trim()) e.stop = isFourDay ? "Choose your pickup hotel for Days 1–3, or enter your accommodation." : "Choose your pickup hotel, or tell us where you're staying.";
+    if (samePickup || isFourDay) {
+      if (!stopId && !customPickup.trim()) e.stop = isFourDay ? "Choose your pickup hotel for Days 1–3, or enter your accommodation." : "Choose your pickup hotel, or tell us where you're staying in Banff or Canmore.";
+    } else {
+      days.forEach((day, i) => {
+        if (!tourPickups[i]?.stopId && !tourPickups[i]?.customPickup.trim()) {
+          e[`stop_${i}`] = `Choose a pickup hotel or enter accommodation for ${day.title}.`;
+        }
+      });
+    }
     if (isFourDay && !day4JasperPickup.trim()) e.jasperPickup = "Enter your Day 4 Jasper hotel or accommodation address.";
     const transfer = withAirport ? airportTransferError(airportTransfer) : null;
     if (transfer) e.airport = transfer;
@@ -364,7 +412,33 @@ export function PackageCheckout({
       if (vehicle && activities && (activityCount < 1 || activityCount > adults)) e.activities = `Choose 1 to ${adults} guests for the add-on activities.`;
     }
     return e;
-  }, [days, picks, name, email, phoneLocal, stopId, customPickup, isFourDay, day4JasperPickup, withAirport, airportTransfer, vehicle, activities, activityGuests, adults, activityChoice, packageActivities.length]);
+  }, [days, picks, name, email, phoneLocal, samePickup, stopId, customPickup, tourPickups, isFourDay, day4JasperPickup, withAirport, airportTransfer, vehicle, activities, activityGuests, adults, activityChoice, packageActivities.length]);
+
+  const missingFieldList = useMemo(() => {
+    const list: string[] = [];
+    days.forEach((day, i) => {
+      if (!picks[i]) list.push(`Date for ${day.title}`);
+    });
+    if (name.trim().length < 2) list.push("Lead guest full name");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) list.push("Valid email address");
+    if (phoneLocal.replace(/\D/g, "").length < 6) list.push("Mobile phone number");
+    if (samePickup || isFourDay) {
+      if (!stopId && !customPickup.trim()) list.push("Pickup accommodation in Banff or Canmore");
+    } else {
+      days.forEach((day, i) => {
+        if (!tourPickups[i]?.stopId && !tourPickups[i]?.customPickup.trim()) {
+          list.push(`Pickup accommodation for ${day.title}`);
+        }
+      });
+    }
+    if (isFourDay && !day4JasperPickup.trim()) list.push("Day 4 Jasper pickup address");
+    if (withAirport) {
+      const transfer = airportTransferError(airportTransfer);
+      if (transfer) list.push(`Airport transfer: ${transfer}`);
+    }
+    return list;
+  }, [days, picks, name, email, phoneLocal, samePickup, stopId, customPickup, tourPickups, isFourDay, day4JasperPickup, withAirport, airportTransfer]);
+
   const show = (k: string) => (attempted ? errors[k] : undefined);
   const status = (k: string) => (show(k) ? { type: "error" as const, message: errors[k] } : undefined);
 
@@ -373,6 +447,11 @@ export function PackageCheckout({
     setError("");
     if (Object.keys(errors).length > 0) {
       document.querySelector("[data-first-error]")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    const unavailableTour = chosen.find((d) => !d || d.seatsAvailable < seatsFor(d));
+    if (unavailableTour) {
+      setError("One or more of the selected tour dates no longer has enough seats for your party. Please select an available date.");
       return;
     }
     if (!keyRef.current) keyRef.current = `pkg-${crypto.randomUUID()}`;
@@ -398,11 +477,17 @@ export function PackageCheckout({
                 { pickupStopId: stopId || undefined, pickupCustomText: customPickup.trim() || undefined },
                 { pickupCustomText: day4JasperPickup.trim() },
               ]
-            : undefined,
+            : samePickup
+              ? days.map(() => ({ pickupStopId: stopId || undefined, pickupCustomText: customPickup.trim() || undefined }))
+              : tourPickups.map((p) => ({ pickupStopId: p.stopId || undefined, pickupCustomText: p.customPickup.trim() || undefined })),
           adultsCount: adults,
           childrenCount: vehicle ? 0 : children,
           infantsCount: vehicle ? 0 : infants,
-          specialRequests: [requests.trim(), activitiesRequestLine].filter(Boolean).join("\n") || undefined,
+          specialRequests: [
+            requests.trim(),
+            childSeatRequested ? "Complimentary child seat / booster requested (requires advance confirmation by team)" : "",
+            activitiesRequestLine,
+          ].filter(Boolean).join("\n") || undefined,
           airportTransfer: withAirport ? airportTransferPayload(airportTransfer) : undefined,
           promoCode: appliedPromo?.code,
           packageActivities: chosenActivityList.map((a) => ({ id: a.id, ...activityChoice[a.id]! })),
@@ -470,8 +555,7 @@ export function PackageCheckout({
           {confirmed.map((b, i) => (
             <li key={b.bookingReference} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-obsidian-50 px-4 py-3">
               <span>
-                <span className="block text-sm uppercase tracking-[0.18em] text-ocean-700">Day {i + 1}</span>
-                <span className="block text-base text-obsidian-900">{days[i].title}</span>
+                <span className="block text-base font-medium text-obsidian-900">{days[i].title}</span>
                 <span className="block text-sm text-slate-600">
                   {chosen[i] ? `${dayLabel(chosen[i]!.date)} · ${timeLabel(chosen[i]!.departureTime)} · ` : ""}
                   {b.bookingReference}
@@ -499,7 +583,7 @@ export function PackageCheckout({
   }
 
   return (
-    <div ref={rootRef} className={compact ? "grid items-start gap-4" : "grid items-start gap-8 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-12"}>
+    <div ref={rootRef} className={compact ? "grid items-start gap-4 pb-28" : "grid items-start gap-8 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-12 pb-28 lg:pb-36"}>
       {wholePage && <CheckoutLinksInNewTab />}
       <dialog
         ref={unavailableRef}
@@ -523,8 +607,8 @@ export function PackageCheckout({
           </div>
           <p className="mt-3 text-base text-slate-700">
             {blockedDays.length === 1
-              ? `There's no free date left for Day ${blockedDays[0] + 1} (${days[blockedDays[0]].title})`
-              : `There are no free dates left for Days ${blockedDays.map((i) => i + 1).join(" and ")}`}
+              ? `There's no free date left for ${days[blockedDays[0]].title}`
+              : `There are no free dates left for ${blockedDays.map((i) => days[i].title).join(" and ")}`}
             {picks.some(Boolean) ? " with the dates you've chosen" : ""}, so the whole {title} can&rsquo;t be booked here right now. Please contact us and we&rsquo;ll help you plan your days.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
@@ -561,7 +645,22 @@ export function PackageCheckout({
                 <QuantityInput label="Youth" description="Ages 6–15" value={children} onChange={setChildren} min={0} max={MAX_GUESTS - adults - infants} />
                 <QuantityInput label="Infants" description="Ages 0–5, take a seat" value={infants} onChange={setInfants} min={0} max={Math.min(4, MAX_GUESTS - adults - children)} />
               </div>
-              <p className="mt-3 text-sm text-slate-600">Small groups on each tour, with more time with your guide.</p>
+              <p className="mt-3 text-sm font-medium text-obsidian-900">Maximum 12 guests per vehicle each day.</p>
+              <p className="mt-1 text-sm text-slate-600">Small groups on each tour, with more time with your guide.</p>
+              {(children > 0 || infants > 0) && (
+                <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-obsidian-900/10 bg-obsidian-50/70 p-3.5 transition-colors hover:bg-obsidian-50">
+                  <input
+                    type="checkbox"
+                    checked={childSeatRequested}
+                    onChange={(e) => setChildSeatRequested(e.target.checked)}
+                    className="mt-1 h-4 w-4 shrink-0 rounded border-obsidian-900/20 text-ocean-700 focus:ring-ocean-500"
+                  />
+                  <span className="flex flex-col gap-0.5 text-sm">
+                    <span className="font-medium text-obsidian-900">Request complimentary child seat or booster</span>
+                    <span className="text-slate-600">Complimentary child seats and boosters are available in limited supply and require advance confirmation by our team.</span>
+                  </span>
+                </label>
+              )}
             </>
           )}
         </Section>
@@ -569,16 +668,23 @@ export function PackageCheckout({
         <Section compact={compact} icon={CalendarDays} title="Choose your dates">
           <div className="space-y-6">
             <p className="text-sm text-slate-600">
-              Pick the date you want for each day. They don&rsquo;t have to be in a row, but each day is a full-day tour, so every day needs its own date.
+              Choose an available date for each tour, in either order. Dates do not need to be consecutive, but each tour must have a different date.
             </p>
+            {showWinterIcefieldsNotice && (
+              <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 shadow-sm" role="status">
+                <p className="font-semibold text-amber-950">Winter itinerary notice</p>
+                <p className="mt-1">
+                  Abraham Lake replaces Ice Explorer and Skywalk; guests bring lunch or request a morning food stop.
+                </p>
+              </div>
+            )}
             {days.map((day, i) => {
               const fits = fitsDay(i);
               const open = day.departures.some(fits);
               return (
                 <div key={`${day.title}-${i}`} {...(show(`day${i}`) ? { "data-first-error": true } : {})}>
-                  <p className="text-sm uppercase tracking-[0.18em] text-ocean-700">Day {i + 1}</p>
-                  <p className="text-lg text-obsidian-900">
-                    {day.title} <span className="text-sm text-slate-600">· {day.label}</span>
+                  <p className="text-lg font-medium text-obsidian-900">
+                    {day.title} <span className="text-sm font-normal text-slate-600">· {day.label}</span>
                   </p>
                   <div className="mt-2">
                     {open || picks[i] ? (
@@ -691,31 +797,90 @@ export function PackageCheckout({
         </Section>
 
         <Section compact={compact} icon={MapPin} title="Pickup">
-          <div className="space-y-4" {...(show("stop") || show("jasperPickup") ? { "data-first-error": true } : {})}>
-            {stops.length > 0 && (
-              <Dropdown
-                label={isFourDay ? "Pickup hotel for Days 1–3 (Banff, Canmore, Lake Louise)" : `Pickup hotel (same for ${dayWord})`}
-                labelClassName="mb-1.5 block text-sm text-obsidian-900"
-                options={stops.map((s) => ({ value: s.id, label: s.name, description: `${s.town} · ${s.address}` }))}
-                value={stopId}
-                onChange={setStopId}
-                searchable
-                searchPlaceholder="Search hotels"
-                placeholder="Choose your hotel"
-                invalid={Boolean(show("stop"))}
-              />
+          <div className="space-y-4" {...(show("stop") || show("jasperPickup") || Object.keys(errors).some((k) => k.startsWith("stop_")) ? { "data-first-error": true } : {})}>
+            {days.length > 1 && !isFourDay && (
+              <label className="flex cursor-pointer items-center gap-2.5 text-sm font-medium text-obsidian-900">
+                <input
+                  type="checkbox"
+                  checked={samePickup}
+                  onChange={(e) => setSamePickup(e.target.checked)}
+                  className="h-4 w-4 rounded border-obsidian-900/20 text-ocean-700 focus:ring-ocean-500"
+                />
+                <span>Same pickup for both tours</span>
+              </label>
             )}
-            <TextInput
-              label={isFourDay ? "Staying somewhere else for Days 1–3?" : "Staying somewhere else?"}
-              isOptional
-              value={customPickup}
-              onChange={setCustomPickup}
-              placeholder="Hotel name or address in Banff, Canmore, or Lake Louise"
-            />
-            {show("stop") && (
-              <p role="alert" className="text-sm text-red-700">
-                {errors.stop}
-              </p>
+
+            {samePickup || isFourDay ? (
+              <>
+                {stops.length > 0 && (
+                  <Dropdown
+                    label={isFourDay ? "Pickup hotel for Days 1–3 (Banff or Canmore)" : `Pickup hotel (Banff or Canmore)`}
+                    labelClassName="mb-1.5 block text-sm text-obsidian-900"
+                    options={stops.map((s) => ({ value: s.id, label: s.name, description: `${s.town} · ${s.address}` }))}
+                    value={stopId}
+                    onChange={setStopId}
+                    searchable
+                    searchPlaceholder="Search hotels"
+                    placeholder="Choose your hotel"
+                    invalid={Boolean(show("stop"))}
+                  />
+                )}
+                <TextInput
+                  label={isFourDay ? "Staying somewhere else for Days 1–3?" : "Staying somewhere else?"}
+                  isOptional
+                  value={customPickup}
+                  onChange={setCustomPickup}
+                  placeholder="Hotel name or address in Banff or Canmore"
+                  description="Unlisted locations require team confirmation."
+                />
+                {show("stop") && (
+                  <p role="alert" className="text-sm text-red-700">
+                    {errors.stop}
+                  </p>
+                )}
+              </>
+            ) : (
+              <div className="space-y-5 pt-1">
+                {days.map((day, i) => (
+                  <div key={`tour-pickup-${day.title}-${i}`} className="rounded-xl border border-obsidian-900/10 bg-obsidian-50/50 p-4 space-y-3">
+                    <p className="text-sm font-semibold text-obsidian-900">Pickup for {day.title}</p>
+                    {stops.length > 0 && (
+                      <Dropdown
+                        label="Pickup hotel"
+                        labelClassName="mb-1.5 block text-xs text-obsidian-900"
+                        options={stops.map((s) => ({ value: s.id, label: s.name, description: `${s.town} · ${s.address}` }))}
+                        value={tourPickups[i]?.stopId ?? ""}
+                        onChange={(val) =>
+                          setTourPickups((prev) =>
+                            prev.map((p, j) => (j === i ? { ...p, stopId: val } : p)),
+                          )
+                        }
+                        searchable
+                        searchPlaceholder="Search hotels"
+                        placeholder="Choose your hotel"
+                        invalid={Boolean(show(`stop_${i}`))}
+                      />
+                    )}
+                    <TextInput
+                      label="Staying somewhere else for this tour?"
+                      isOptional
+                      value={tourPickups[i]?.customPickup ?? ""}
+                      onChange={(val) =>
+                        setTourPickups((prev) =>
+                          prev.map((p, j) => (j === i ? { ...p, customPickup: val } : p)),
+                        )
+                      }
+                      placeholder="Hotel name or address in Banff or Canmore"
+                      description="Unlisted locations require team confirmation."
+                    />
+                    {show(`stop_${i}`) && (
+                      <p role="alert" className="text-sm text-red-700">
+                        {errors[`stop_${i}`]}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
             )}
 
             {isFourDay && (
@@ -772,15 +937,17 @@ export function PackageCheckout({
       <aside className={compact ? "rounded-none bg-obsidian-950 p-5 text-white" : "rounded-none bg-obsidian-950 p-6 text-white sm:p-8 lg:sticky lg:top-[calc(var(--vc-header-h,80px)+24px)]"} aria-label="Your package">
         <p className="text-sm uppercase tracking-[0.22em] text-summit-300">{title}</p>
         <ul className="mt-5 space-y-4">
-          {days.map((day, i) => (
-            <li key={day.title} className="border-b border-white/10 pb-4">
-              <p className="text-base text-white">
-                Day {i + 1}: {day.title}
+          {displayList.map((item) => (
+            <li key={item.day.title} className="border-b border-white/10 pb-4">
+              <p className="text-base font-medium text-white">
+                {item.day.title}
               </p>
-              <p className="text-sm text-white/70">{chosen[i] ? `${dayLabel(chosen[i]!.date)} · ${timeLabel(chosen[i]!.departureTime)}` : "Date not chosen yet"}</p>
-              {chosen[i] && (
+              <p className="text-sm text-white/70">
+                {item.departure ? `${dayLabel(item.departure.date)} · ${timeLabel(item.departure.departureTime)}` : "Date not chosen yet"}
+              </p>
+              {item.departure && (
                 <p className="mt-1 text-sm text-white/70">
-                  {cad(lines[i].fare / 100)} {vehicle ? "per vehicle" : `for ${guests} ${guests === 1 ? "guest" : "guests"}`}
+                  {cad(item.line.fare / 100)} · {vehicle ? "per vehicle" : `${adults} adult${adults > 1 ? "s" : ""}${children > 0 ? `, ${children} youth` : ""}${infants > 0 ? `, ${infants} infant${infants > 1 ? "s" : ""}` : ""}`}
                 </p>
               )}
             </li>
@@ -789,12 +956,12 @@ export function PackageCheckout({
         {allPicked ? (
           <dl className="mt-4 space-y-2 text-base">
             <div className="flex justify-between text-white/80">
-              <dt>{days.length === 2 ? "Both tours" : `All ${days.length} days`}</dt>
+              <dt>Regular subtotal</dt>
               <dd>{cad(fare / 100)}</dd>
             </div>
             {saving > 0 && (
               <div className="flex justify-between text-summit-200">
-                <dt>{vehicle ? "Package price" : `Package saving (${discountPercent}%)`}</dt>
+                <dt>10% package savings already applied</dt>
                 <dd>−{cad(saving / 100)}</dd>
               </div>
             )}
@@ -821,9 +988,9 @@ export function PackageCheckout({
                 <dd>−{cad(promoSaving / 100)}</dd>
               </div>
             )}
-            <div className="flex justify-between border-t border-white/15 pt-3 text-xl">
+            <div className="flex justify-between border-t border-white/15 pt-3 text-xl font-light">
               <dt>Total</dt>
-              <dd>{cad(total / 100)}</dd>
+              <dd>{cad(total / 100)} CAD</dd>
             </div>
             {plan === "DEPOSIT" && (
               <>
@@ -840,11 +1007,18 @@ export function PackageCheckout({
             {chosenActivityList.some((a) => activityPriceOf(a.id) == null) && (
               <p className="text-sm text-white/70">Activities marked &ldquo;Confirmed by our team&rdquo; aren&apos;t charged now: we confirm their price with you before your trip.</p>
             )}
-            <p className="text-sm text-white/60">Taxes and park admission included.</p>
+            <p className="text-sm text-white/60">Taxes, park admission and mandatory fees included.</p>
+            {firstDay && (
+              <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3.5 text-xs text-white/80 space-y-1">
+                <p className="font-semibold text-white">Cancellation deadline:</p>
+                <p className="text-summit-200">{formatCancellationDeadline(firstDay.date, firstDay.departureTime, 24)} (Alberta local time)</p>
+                <p className="text-white/60">Cancel the entire package at least 24 hours before your first scheduled tour for a full refund. This deadline applies to the whole package, not separately to each day.</p>
+              </div>
+            )}
           </dl>
         ) : (
           <p className="mt-4 text-sm text-white/70">
-            {vehicle ? `Choose a date for each day to see your total.` : `Choose both dates to see your total with ${discountPercent}% off.`}
+            {vehicle ? `Choose a date for each day to see your total.` : `Choose an available date for each tour to see your total with 10% savings.`}
           </p>
         )}
 
@@ -894,6 +1068,16 @@ export function PackageCheckout({
         )}
 
         <div className="mt-6">
+          {attempted && missingFieldList.length > 0 && (
+            <div role="alert" className="mb-4 rounded-xl border border-red-500/40 bg-red-950/40 p-4 text-xs text-red-200">
+              <p className="font-semibold text-white">Please complete the required details before payment:</p>
+              <ul className="mt-1.5 list-disc pl-4 space-y-0.5 text-white/80">
+                {missingFieldList.map((m) => (
+                  <li key={m}>{m}</li>
+                ))}
+              </ul>
+            </div>
+          )}
           {awaiting ? (
             confirming === "no" ? (
               stripeConfigured ? (
@@ -911,17 +1095,31 @@ export function PackageCheckout({
               </p>
             )
           ) : (
-            <Button label={submitting ? "Booking your dates…" : "Continue to payment"} variant="primary" width="100%" isLoading={submitting} onClick={submit} />
+            <Button
+              label={submitting ? "Booking your dates…" : !allPicked ? "Select tour dates to continue" : "Continue to payment"}
+              variant="primary"
+              width="100%"
+              isDisabled={!allPicked || submitting}
+              isLoading={submitting}
+              onClick={submit}
+            />
           )}
           {error && (
             <p role="alert" className="mt-3 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-800">
               {error}
             </p>
           )}
-          <p className="mt-4 flex items-start gap-2 text-sm text-white/60">
-            <Lock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-            {plan === "DEPOSIT" ? `One secure ${DEPOSIT_PERCENT}% deposit payment for ${dayWord}.` : `One secure payment for ${dayWord}.`} {cancellationNote}
-          </p>
+          <div className="mt-4 space-y-2 text-sm text-white/75">
+            <p className="flex items-start gap-2">
+              <Lock className="mt-0.5 h-4 w-4 shrink-0 text-summit-300" aria-hidden="true" />
+              <span>
+                One secure payment for both tours, with 10% savings already included. Cancel the entire package at least 24 hours before your first scheduled tour for a full refund. This deadline applies to the whole package, not separately to each day.
+              </span>
+            </p>
+            <p className="pl-6 text-xs leading-relaxed text-white/60">
+              Neither booked day will be cancelled because of minimum passenger numbers. Weather, road closures or other events beyond our control may still affect departures. Meals and accommodation are not included.
+            </p>
+          </div>
         </div>
       </aside>
     </div>

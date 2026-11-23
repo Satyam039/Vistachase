@@ -24,12 +24,14 @@ const SECTIONS: LegalSection[] = [
           head: ["Booking type", "Cancellation deadline", "Refund"],
           rows: [
             ["Shared tours and shuttles", "At least 24 hours before departure", "Full refund"],
+            ["Two-Day Rockies Explorer — shared package", "At least 24 hours before the first scheduled tour", "Full package refund"],
             ["Private single-day tours", "At least 72 hours before departure", "Full refund"],
             ["Private packages of two or more days", "At least 72 hours before the first tour starts", "80% refund; 20% non-refundable"],
             ["Any booking cancelled after its deadline, or a no-show", "—", "No refund"],
           ],
         },
       },
+      "The Two-Day Rockies Explorer is a shared-tour package. The private multi-day package’s 72-hour deadline and 20% non-refundable portion do not apply.",
       "For private multi-day packages, the non-refundable portion is 20% of the total package price, not 20% of an instalment.",
       "If only the 20% deposit has been paid when an eligible multi-day cancellation is received, that deposit is retained and there is no payment to refund.",
       "Separately identified optional activities may have their own cancellation conditions, as disclosed before purchase. The same amount will not be deducted twice.",
@@ -85,15 +87,36 @@ const SECTIONS: LegalSection[] = [
     ],
   },
   {
-    title: "7. Third-Party Activities",
+    title: "7. Two-Day Rockies Explorer",
+    blocks: [
+      { sub: "Dates and tour order" },
+      "Guests may select available dates in either order. The tours do not need to take place on consecutive days.",
+      { sub: "Guest cancellation" },
+      "Cancel the entire package at least 24 hours before the earliest scheduled tour departure for a full refund. This deadline applies to the whole package and does not restart before the second tour. Later cancellations and no-shows are non-refundable.",
+      { sub: "Keeping only one tour" },
+      "Before the cancellation deadline, guests who wish to keep only one tour should cancel the package and book the preferred standalone tour at its applicable price, subject to availability.",
+      { sub: "Minimum passenger numbers" },
+      "Confirmed Two-Day Rockies Explorer bookings will not have either day cancelled because of minimum passenger numbers. Events beyond our control may still affect operations.",
+      { sub: "If Vista Chase cancels one day" },
+      "We refund the cancelled tour’s full standalone price for the booked guest category and travel season, rather than its discounted package allocation.",
+      { sub: "If Vista Chase cancels both days" },
+      "We refund the total package amount paid. Total refunds will not exceed the amount paid.",
+      { sub: "Individual attraction disruptions" },
+      "Cancellation of an attraction is different from cancellation of an entire tour day. The activity-specific refund terms apply.",
+    ],
+  },
+  {
+    title: "8. Third-Party Activities",
     blocks: [
       "Optional attractions may include gondolas, cruises, canoe rentals, Ice Explorer and Skywalk experiences.",
       "Any activity-specific cancellation deadline or non-refundable charge must be disclosed before purchase. Refunds for those separately identified items follow the applicable disclosed conditions and law.",
       "Where a provider cancels an activity, we will explain the available alternatives and pass on any refund due to you.",
+      { sub: "Included Ice Explorer and Skywalk activities" },
+      "On applicable summer shared departures, these tickets are included in the tour price, including the Icefields day of the Two-Day Rockies Explorer. If Pursuit cancels an activity, any ticket refund Vista Chase receives from Pursuit will be passed to the guest. If Pursuit does not refund the ticket, Vista Chase will not refund that ticket amount, subject to applicable statutory rights. An activity cancellation does not automatically qualify for a full-tour or full-package refund.",
     ],
   },
   {
-    title: "8. If Vista Chase Cancels",
+    title: "9. If Vista Chase Cancels",
     blocks: [
       "If Vista Chase cancels an entire experience before it starts, we will offer an alternative where available or a refund of amounts paid to us for that cancelled experience.",
       "A guest-cancellation penalty, including a private package’s 20% non-refundable portion, will not be retained merely because Vista Chase cancels the entire service.",
@@ -101,37 +124,36 @@ const SECTIONS: LegalSection[] = [
     ],
   },
   {
-    title: "9. Weather, Closures and Delays",
+    title: "10. Weather, Closures and Delays",
     blocks: [
       "Rain, cloud, cold temperatures or disappointing visibility do not automatically qualify a guest for a refund when the service can operate safely.",
-      "We may adjust routes or stops for safety, weather, traffic, park restrictions or road closures. If we cancel the service, Section 8 applies.",
+      "We may adjust routes or stops for safety, weather, traffic, park restrictions or road closures. If we cancel the service, Section 9 applies.",
       "If the tour operates but you cannot attend because of a flight cancellation or another personal travel disruption, the normal guest-cancellation rules apply, subject to applicable law.",
     ],
   },
   {
-    title: "10. Refund Processing",
+    title: "11. Refund Processing",
     blocks: [
       "Approved refunds are normally initiated within 5–10 business days to the original payment method. Your bank or payment provider may require additional time to display the credit.",
       "Currency conversion and exchange-rate differences are controlled by the relevant payment provider.",
     ],
   },
   {
-    title: "11. Payment Schedule",
+    title: "12. Payment Schedule",
     blocks: [
       "The required deposit, balance and payment deadlines are stated at checkout or in your written quotation.",
       "A deposit payment does not change the cancellation deadline or the non-refundable portion stated for your booking.",
     ],
   },
   {
-    title: "12. Travel Insurance and Statutory Rights",
+    title: "13. Travel Insurance and Statutory Rights",
     blocks: [
       "Consider travel insurance covering cancellation, medical needs and unexpected travel disruption.",
       "Nothing in this policy limits rights or remedies that cannot legally be excluded.",
     ],
   },
   {
-    // The document numbers this section 12 as well; numbered 13 here so the contents list reads in order.
-    title: "13. Agent-Made Reservations",
+    title: "14. Agent-Made Reservations",
     blocks: [
       "For bookings made through an agent, contact the agent promptly to request cancellation or changes. The agent must submit the request to Vista Chase through the authorised booking system or designated contact channel.",
       "Unless different terms were expressly agreed in writing, Vista Chase’s product-specific cancellation deadlines apply when the request reaches Vista Chase.",

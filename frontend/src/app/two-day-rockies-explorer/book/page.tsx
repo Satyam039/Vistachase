@@ -35,8 +35,8 @@ export default async function TwoDayBookPage() {
 
   return (
     <div className="bg-obsidian-50 text-obsidian-900">
-      <div className="mx-auto max-w-7xl px-page pb-16 pt-[calc(var(--vc-nav-open-h,100px)+1.5rem)] sm:pb-20">
-        <nav aria-label="Breadcrumb" className="mb-4">
+      <div className="mx-auto max-w-7xl px-page pb-20 pt-[calc(var(--vc-header-h,72px)+1rem)] sm:pb-24 sm:pt-[calc(var(--vc-header-h,80px)+1.25rem)]">
+        <nav aria-label="Breadcrumb" className="mb-3">
           <ol className="flex flex-wrap items-center gap-1.5 text-sm text-slate-600">
             <li>
               <Link href="/shared-tours" className="hover:text-obsidian-900 hover:underline">Small-group tours</Link>
@@ -54,8 +54,8 @@ export default async function TwoDayBookPage() {
           </ol>
         </nav>
         <h1 className="text-balance text-3xl font-light tracking-tight text-obsidian-900 sm:text-5xl">Book the {TWO_DAY_PACKAGE.title}</h1>
-        <p className="mt-3 max-w-2xl text-base text-slate-600 sm:text-lg">Both small-group tours, one booking, {Math.round(TWO_DAY_PACKAGE.discount * 100)}% off. Choose a date for each day and pay once.</p>
-        <div className="mt-8">
+        <p className="mt-2.5 max-w-2xl text-base text-slate-600 sm:text-lg">Both small-group tours, one booking, {Math.round(TWO_DAY_PACKAGE.discount * 100)}% off. Choose a date for each tour and pay once.</p>
+        <div className="mt-6 sm:mt-8">
           <PackageCheckout packageSlug={TWO_DAY_PACKAGE.slug} title={TWO_DAY_PACKAGE.title} discountPercent={Math.round(TWO_DAY_PACKAGE.discount * 100)} days={days} stops={stops} wholePage />
         </div>
       </div>
