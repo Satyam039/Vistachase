@@ -39,7 +39,7 @@ const SECTIONS = [
 ] as const;
 
 /** Stops that only open part of the year (doc: write "Seasonal" beside Moraine Lake). */
-const SEASONAL_PLACE = /moraine lake|ice explorer|skywalk/i;
+const SEASONAL_PLACE = /moraine lake|ice explorer|skywalk|abraham lake/i;
 
 
 // Imported live-site copy packs several lines into one paragraph ("Doorstep Pickup – we collect
@@ -208,7 +208,7 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
             <ul className="grid gap-3 rounded-none border border-slate-200/80 bg-white p-6 sm:grid-cols-2" aria-label={isTicket ? "Highlights" : "Places you'll discover"}>
               {tour.highlights.map((h) => {
                 const seasonalPlace = SEASONAL_PLACE.test(h);
-                const name = seasonalPlace ? h.replace(/\s*\((summer|seasonal)\)\s*$/i, "") : h;
+                const name = seasonalPlace ? h.replace(/\s*\((summer|winter|seasonal)\)\s*$/i, "") : h;
                 return (
                   <li key={h} className="flex items-start gap-3 text-base text-slate-800">
                     <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-ocean-600" aria-hidden="true" />

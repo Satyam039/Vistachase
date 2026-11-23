@@ -12,6 +12,15 @@
 // compile it as it is.
 
 export const GUIDE_CALL = "Your guide contacts you the evening before, between 6 and 9 PM, to confirm your exact pickup time.";
+/** Booking terms the Columbia Icefield Adventure page lists (owner, 2026-11-23); page only, not in booking PDFs. */
+export const ICEFIELD_PAGE_TERMS = [
+  "Two seasonal itineraries: From June 1 to October 10 the tour includes the Ice Explorer and Skywalk at the Columbia Icefield. From October 11 to May 31 it visits Abraham Lake instead; the glacier activities are not part of the winter tour.",
+  "Group size: A maximum of 12 guests per departure.",
+  "What to wear in winter: Suitable winter footwear and warm clothing; ice cleats are provided wherever required.",
+  "Minimum numbers: Each departure needs at least four passengers. If your departure doesn't reach four, we let you know at least one week before and offer alternatives or a full refund.",
+  "Date changes: Changes requested at least 24 hours before departure are free, subject to availability.",
+];
+
 export const PRIVATE_PICKUP = "Doorstep pickup at your accommodation in Banff, Canmore or Lake Louise, at a time agreed with you before the tour.";
 
 export interface ItineraryStep {
@@ -45,6 +54,11 @@ export interface TourItinerary {
    * confirmed and staff are flagged, instead of listing stops that won't be visited.
    */
   winterRouteToBeConfirmed?: boolean;
+  /**
+   * The tour's own October 11 – May 31 itinerary, when it has one (the Columbia Icefield
+   * Adventure's Abraham Lake route). Booking PDFs for winter dates use it instead of the summer one.
+   */
+  winter?: { stops: ItineraryStop[]; steps: ItineraryStep[]; notes: string[] };
 }
 
 /** June 1 to October 10, for a YYYY-MM-DD date: Moraine Lake and the Icefield activities. */
@@ -81,6 +95,29 @@ const ICEFIELD_STOPS: ItineraryStop[] = [
   { name: "Columbia Icefield Skywalk", text: "Experience dramatic views over the Sunwapta Valley from a glass-floored walkway. Seasonal activity.", summerOnly: true },
 ];
 
+/** Vista Chase calls the day before (owner, 2026-11-23, Columbia Icefield Adventure page). */
+const VC_DAY_BEFORE_CALL = "Vista Chase contacts you the day before your tour to confirm your pickup time and location and to share your driver-guide's name and contact details.";
+
+// Columbia Icefield Adventure (shared), owner's page changes of 2026-11-23: a summer and a winter
+// itinerary (the page also explains the waterfall replacement route and Pursuit ticket refunds).
+const ICEFIELD_SUMMER_STOPS: ItineraryStop[] = [
+  ...ICEFIELD_STOPS.slice(0, 4),
+  { name: "Columbia Icefield Ice Explorer", text: "Ride a specially designed vehicle onto the Athabasca Glacier. Included from June 1 to October 10; our team arranges your tickets and activity times.", summerOnly: true },
+  { name: "Columbia Icefield Skywalk", text: "Dramatic views over the Sunwapta Valley from a glass-floored walkway. Included from June 1 to October 10. Allow about 2½ hours for both activities combined.", summerOnly: true },
+  { name: "Lunch at the Columbia Icefield Centre", text: "A one-hour lunch break, separate from the activities. Buy lunch at the Centre or bring a packed lunch (lunch not included).", summerOnly: true },
+];
+
+const ICEFIELD_WINTER_STOPS: ItineraryStop[] = [
+  ICEFIELD_STOPS[0],
+  { ...ICEFIELD_STOPS[1], name: "Crowfoot Glacier Lookout" },
+  { ...ICEFIELD_STOPS[2], text: "Enjoy the famous lake from its panoramic viewpoint. Approximately 30 minutes, including a short uphill walk that may be snowy or icy." },
+  ICEFIELD_STOPS[3],
+  {
+    name: "Abraham Lake",
+    text: "Normally about 30–45 minutes, or up to 90 minutes when lunch is taken here. When the lake is frozen and your guide judges conditions suitable, you may walk onto the ice to look for frozen bubbles; otherwise enjoy a shoreline walk and photographs. Bubbles and ice access are not guaranteed. Ice cleats are provided wherever required.",
+  },
+];
+
 export const TOUR_ITINERARIES: Record<string, TourItinerary> = {
   "banff-highlights-tour": {
     title: "Banff & Yoho Discovery (Shared Tour)",
@@ -109,28 +146,41 @@ export const TOUR_ITINERARIES: Record<string, TourItinerary> = {
   },
   "shared-tours-icefields-jasper": {
     title: "Columbia Icefield Adventure (Shared Tour)",
-    duration: "9–11 hours",
-    stops: ICEFIELD_STOPS,
+    duration: "9–11 hours (up to 12 hours on the waterfall replacement itinerary)",
+    stops: ICEFIELD_SUMMER_STOPS,
     steps: [
-      { time: "7:30 – 8:00 AM", text: `Pickup in Canmore from about 7:30 AM and in Banff from about 8:00 AM. ${GUIDE_CALL}` },
+      { time: "7:30 – 8:00 AM", text: `Pickup in Canmore from about 7:30 AM and in Banff from about 8:00 AM. ${VC_DAY_BEFORE_CALL}` },
       { time: "Morning", text: ICEFIELD_MORNING },
-      { time: "Midday", text: "Columbia Icefield: the Ice Explorer onto the Athabasca Glacier and the Skywalk (June 1 to October 10). Lunch stop at the Columbia Icefield Centre (lunch not included)." },
+      { time: "Midday", text: "Columbia Icefield: the Ice Explorer onto the Athabasca Glacier and the Skywalk (June 1 to October 10; about 2½ hours for both, at times our team arranges), plus a one-hour lunch break at the Columbia Icefield Centre (lunch not included)." },
       { time: "Afternoon", text: "Scenic drive back along the Icefields Parkway." },
       { time: "Evening", text: "Back in Banff and Canmore. Traffic, weather and road conditions can affect return times." },
     ],
     pickup: [
       "Complimentary pickup and drop-off are available at designated locations in Canmore and Banff.",
-      "Pickup generally begins around 7:30 AM in Canmore and 8:00 AM in Banff. Your guide will contact you the evening before departure to confirm your exact pickup time and meeting instructions.",
+      `Pickup generally begins around 7:30 AM in Canmore and 8:00 AM in Banff. ${VC_DAY_BEFORE_CALL}`,
       "Please be ready at your confirmed pickup location a few minutes before the scheduled time.",
     ],
-    // "Important Information" from the owner's doc (2026-11-04).
+    // "Important Information" from the owner's doc (2026-11-04), with the 2026-11-23 page changes.
     seasonal: [
-      "Seasonal activities: The Columbia Icefield Ice Explorer and Skywalk are included on departures operating from June 1 to October 10. Outside these dates, these activities are unavailable and the sightseeing itinerary is adjusted. Our team confirms the winter route for your date.",
+      "Activity disruption: If the Icefield activities can't operate, the tour visits Athabasca Falls and Sunwapta Falls instead (up to 12 hours; no Jasper town visit). Ice Explorer and Skywalk ticket refunds follow Pursuit's decision: any refund Pursuit gives Vista Chase is passed to you, and an attraction cancellation doesn't automatically qualify for a full-tour refund.",
       "Weather and road conditions: Stops, routes and their order may change due to weather, road closures or operational requirements.",
-      "What to bring: Dress in layers and bring a warm jacket, comfortable walking shoes and water. Temperatures at the Columbia Icefield can be significantly colder than in Banff.",
+      "What to bring: Dress in layers and bring a warm jacket, comfortable walking shoes and water. Temperatures along the Icefields Parkway can be significantly colder than in Banff.",
       "Wildlife: Wildlife sightings are possible but cannot be guaranteed.",
     ],
-    winterRouteToBeConfirmed: true,
+    winter: {
+      stops: ICEFIELD_WINTER_STOPS,
+      steps: [
+        { time: "7:30 – 8:00 AM", text: `Pickup in Canmore from about 7:30 AM and in Banff from about 8:00 AM. ${VC_DAY_BEFORE_CALL}` },
+        { time: "Morning", text: "Bow Lake, Crowfoot Glacier Lookout, Peyto Lake and Waterfowl Lakes. On request, a quick morning stop in Lake Louise Village to buy food." },
+        { time: "Midday", text: "Abraham Lake, normally about 30–45 minutes (up to 90 minutes when lunch is taken there). Bring a packed lunch; there is no scheduled restaurant stop." },
+        { time: "Afternoon", text: "Scenic drive back to Banff and Canmore." },
+        { time: "Evening", text: "Back in Banff and Canmore. Traffic, weather and road conditions can affect return times." },
+      ],
+      notes: [
+        "Winter itinerary (October 11 to May 31): Abraham Lake replaces the Columbia Icefield Centre experience. The Ice Explorer and Skywalk are not part of the winter tour.",
+        "Ice cleats are provided wherever required. Your guide decides whether conditions are suitable for walking onto the ice.",
+      ],
+    },
   },
   "banff-private-tour": {
     title: "Banff & Yoho Discovery (Private Tour)",

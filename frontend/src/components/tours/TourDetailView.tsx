@@ -25,7 +25,8 @@ import {
 } from "lucide-react";
 import { Dropdown } from "@/components/forms/Dropdown";
 import { DepartureCalendar } from "@/components/booking/DepartureCalendar";
-import { docQuickFacts } from "@/lib/tourContent";
+import { docPanelExtras, docQuickFacts } from "@/lib/tourContent";
+import { ComboOffer, SeasonPrices } from "@/components/tours/SeasonPrices";
 import { PriceTag } from "@/components/pricing/PriceTag";
 import { ActivityAddOnToggle } from "@/components/booking/ActivityAddOnFields";
 import { activityGuestsFor, type ActivityGuests } from "@/lib/activityAddOns";
@@ -70,8 +71,9 @@ function formatDeparture(departure: DepartureAvailability) {
 
 const FACT_ICONS = [Clock, Users, MapPin, Coffee];
 
-/** Tour pages that show only the offer price in the price box (owner, 2026-11-21). */
-const NO_STRIKETHROUGH_SLUGS = new Set(["banff-highlights-tour", "banff-yoho-discovery"]);
+/** Tour pages that show only the offer price in the price box (owner, 2026-11-21; Columbia Icefield
+ *  Adventure 2026-11-23: the struck "$264 / Save 17%" is not an approved promotion). */
+const NO_STRIKETHROUGH_SLUGS = new Set(["banff-highlights-tour", "banff-yoho-discovery", "shared-tours-icefields-jasper"]);
 
 /** Banff Elite (sister company) plans fully tailored multi-day itineraries; the button shows once its URL is set. */
 const BANFF_ELITE_URL = process.env.NEXT_PUBLIC_BANFF_ELITE_URL || "https://banffelite.com";
@@ -303,6 +305,7 @@ export function TourDetailView({
   // Owner (2026-11-21): Banff & Yoho Discovery shows only its offer price (CAD $220 per guest), with
   // no struck-through "was" price or "Save %" badge, like its tour cards (TourCard).
   const noStrikethrough = NO_STRIKETHROUGH_SLUGS.has(tour.slug);
+  const panelExtras = docPanelExtras(tour.slug);
 
   const images = Array.from(new Set([tour.featuredImage, ...tour.galleryImages].filter(Boolean)));
   // Gallery slides (GetYourGuide / Viator): the product's own lead photo first, then the clips of
@@ -586,11 +589,17 @@ export function TourDetailView({
                   lead={isEnquiry ? "Tailored quote from" : "From"}
                   showOriginal={!noStrikethrough}
                 />
+                {panelExtras.priceSeasons && <SeasonPrices departures={tour.departures} currency={tour.currency} />}
                 {/* No sales tax is added at checkout (backend booking-pricing.ts), so prices are tax-inclusive. */}
                 {price > 0 && (
                   <p className="mt-1.5 text-sm text-slate-600">
                     {`Taxes included. ${isEnquiry ? "We confirm your total with your quote." : "Your total is shown before you pay."}`}
                   </p>
+                )}
+                {panelExtras.comboOffer && (
+                  <div className="mt-2">
+                    <ComboOffer />
+                  </div>
                 )}
               </div>
 

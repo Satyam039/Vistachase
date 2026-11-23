@@ -20,7 +20,7 @@ import { PRIVATE_FAQS, PRIVATE_OPTIONS } from "@/lib/privateTours";
 import { cancellationSentence } from "@/lib/policy";
 import { activityTicket } from "@/lib/activityTickets";
 import { SHUTTLE_CAPACITY } from "@/lib/shuttleSchedule";
-import { TOUR_ITINERARIES } from "@/lib/itineraries";
+import { ICEFIELD_PAGE_TERMS, TOUR_ITINERARIES } from "@/lib/itineraries";
 
 interface DocContent {
   title: string;
@@ -42,6 +42,14 @@ interface DocContent {
   quickFacts?: { label: string; value: string }[];
   /** Pickup & Meeting Points paragraphs, when the doc gives them. */
   pickup?: string[];
+  /** Labelled itinerary sections (e.g. Summer / Winter), replacing the single "Stop by Stop". */
+  itinerary?: { heading: string; body?: string[]; stops?: { name: string; text: string }[] }[];
+  /** The page's whole FAQ list, replacing the product's own FAQs. */
+  onlyFaqs?: TourFaq[];
+  /** Show the summer and winter prices in the booking panel. */
+  priceSeasons?: boolean;
+  /** Link the Two-Day Rockies Explorer (both shared tours, 10% off) from the booking panel. */
+  comboOffer?: boolean;
 }
 
 
@@ -61,6 +69,77 @@ const PRIVATE_GOOD_TO_KNOW = [
   "The day is yours: your guide can linger, skip or reorder stops around your group's interests",
   "Short easy-to-moderate walks; tell us before booking if anyone in your group has mobility concerns",
   "Summer traffic, long weekends and events can extend the day",
+];
+
+// Columbia Icefield Adventure (shared): owner's page changes and FAQs, 2026-11-23.
+const ICEFIELD_DURATION = "9–11 hours (up to 12 on the waterfall replacement route)";
+const ICEFIELD_GROUP = "Small group, maximum 12 guests";
+const ICEFIELD_WALKING =
+  "Walking at the sightseeing stops includes an uphill walk to the Peyto Lake viewpoint, and winter surfaces may be snowy or icy";
+const ICEFIELD_VEHICLE_ACCESS =
+  "Our vehicles have no wheelchair ramp, so guests must be able to transfer into a vehicle seat; we can carry folding wheelchairs and walkers. In summer the Ice Explorer and Skywalk also involve boarding the attraction's own vehicles. Contact us before booking with any mobility needs so we can discuss the stops and check accessibility arrangements for the included attractions";
+const ICEFIELD_CHILD_SEATS =
+  "Guests of all ages are welcome and every child, including an infant, takes a seat. Contact us before booking with each child's age, height and weight so we can confirm child-seat arrangements; don't assume a child seat is supplied on a shared tour";
+const ICEFIELD_FAQS: TourFaq[] = [
+  {
+    question: "What is included in the tour price?",
+    answer:
+      "Your tour includes a driver-guide, transportation, pickup and drop-off in Banff or Canmore, park admission, drinking water, taxes and mandatory fees. From June 1 to October 10, Ice Explorer and Skywalk tickets are included. From October 11 to May 31, the tour visits Abraham Lake instead, with ice cleats provided wherever required. Meals, optional gratuities and personal expenses are extra.",
+  },
+  {
+    question: "Are Ice Explorer and Skywalk tickets included?",
+    answer:
+      "Yes, both are included on departures from June 1 to October 10. Our team arranges your tickets and activity times, so you do not need to book them separately. Allow approximately 2½ hours for both activities combined, plus a separate one-hour lunch break at Columbia Icefield Centre.",
+  },
+  {
+    question: "How long is the Columbia Icefield Adventure?",
+    answer:
+      "Allow approximately 9–11 hours from pickup to drop-off. If the glacier activities cannot operate and we use the Athabasca Falls and Sunwapta Falls replacement itinerary, the tour can take up to 12 hours. Return times depend on traffic and road conditions.",
+  },
+  {
+    question: "What happens in winter when the Icefields attractions are closed?",
+    answer:
+      "From October 11 to May 31, Abraham Lake replaces the Columbia Icefield Centre experience. Bow Lake, Crowfoot Glacier Lookout, Peyto Lake and Waterfowl Lakes remain on the itinerary. Ice Explorer and Skywalk are not part of the winter tour.",
+  },
+  {
+    question: "Do I need to bring food?",
+    answer:
+      "Lunch is not included. In summer, we stop at Columbia Icefield Centre for one hour, where you can purchase lunch or eat a packed lunch.\n\nIn winter, bring a packed lunch or request a quick morning stop in Lake Louise Village to purchase food. There is no scheduled restaurant lunch stop. You can eat at Abraham Lake, and eating inside the vehicle is permitted on this winter tour.",
+  },
+  {
+    question: "Does this tour visit Jasper town?",
+    answer:
+      "No. The standard summer itinerary visits the Columbia Icefield in Jasper National Park but does not continue to Jasper town. The waterfall replacement itinerary travels farther along the Parkway without adding a Jasper town visit. Winter departures follow the Abraham Lake itinerary.",
+  },
+  {
+    question: "Are frozen bubbles and walking on Abraham Lake guaranteed?",
+    answer:
+      "No. Bubble visibility depends on ice, snow and weather conditions. When the lake is frozen and your guide determines conditions are suitable, you may walk onto the ice to look for bubbles. If the lake is not frozen, enjoy a shoreline walk and photographs. Ice access is not guaranteed.",
+  },
+  {
+    question: "How long do we spend at Abraham Lake?",
+    answer: "The stop normally lasts approximately 30–45 minutes. When we include a lunch break there, it may extend to up to 90 minutes.",
+  },
+  {
+    question: "What happens if Columbia Icefield Adventure cannot operate?",
+    answer:
+      "Our replacement itinerary visits Athabasca Falls and Sunwapta Falls, with lunch remaining at Columbia Icefield Centre. This can extend the tour to up to 12 hours. The replacement route remains subject to weather, road access and operational conditions.",
+  },
+  {
+    question: "Will I receive a refund if an included attraction is cancelled?",
+    answer:
+      "Refunds for disrupted Ice Explorer or Skywalk activities follow Pursuit's refund decision. Any ticket refund Vista Chase receives from Pursuit will be passed to you. If Pursuit does not refund the ticket, Vista Chase will not refund that ticket amount. An attraction cancellation does not automatically qualify for a full-tour refund.",
+  },
+  {
+    question: "How much walking is involved on this tour?",
+    answer:
+      "The itinerary includes walking at sightseeing stops, including an uphill walk to the Peyto Lake viewpoint. Winter surfaces may be snowy or icy. Please contact us before booking if you have mobility concerns so we can discuss the stops and check accessibility arrangements for the included attractions.",
+  },
+  {
+    question: "Can I combine this tour with Banff & Yoho Discovery?",
+    answer:
+      "Yes. Our two-day combined product includes both shared tours with 10% savings. Choose the combined product when booking to receive the offer.",
+  },
 ];
 
 const CONTENT: Record<string, DocContent> = {
@@ -109,65 +188,83 @@ const CONTENT: Record<string, DocContent> = {
     ],
     addFaqs: [],
   },
+  // Owner's page changes and 12 FAQs of 2026-11-23 ("Improve tour page: Columbia Icefield Adventure").
   [ICEFIELD.slug]: {
     title: ICEFIELD.title,
     summary:
-      "Journey along the Icefields Parkway, with scenic lake stops, the Ice Explorer and Columbia Icefield Skywalk, in a small group with pickup in Banff & Canmore.",
+      "Journey along the Icefields Parkway, with scenic lake stops, the Ice Explorer and Columbia Icefield Skywalk in summer and Abraham Lake in winter, in a small group of up to 12 guests with pickup in Banff & Canmore.",
     // Overview from the owner's doc (2026-11-04, Columbia Icefield Adventure page).
     description:
       "Discover one of Canada's most spectacular mountain highways on a small-group journey through the heart of the Canadian Rockies. Travel along the legendary Icefields Parkway, surrounded by towering peaks, turquoise lakes, ancient glaciers and breathtaking alpine scenery.\nWith a knowledgeable local guide, comfortable transportation and thoughtfully planned stops, experience the remarkable landscapes of Banff and Jasper National Parks at a relaxed, enjoyable pace.",
     facts: [
-      { label: "Duration", value: "9–11 hours" },
+      { label: "Duration", value: ICEFIELD_DURATION },
       { label: "Entry fees", value: "Park admission included" },
-      { label: "Small group", value: "Small-group tour" },
+      { label: "Small group", value: ICEFIELD_GROUP },
     ],
-    highlights: ICEFIELD.stops,
+    highlights: [...ICEFIELD.stops, "Abraham Lake (winter)"],
     inclusions: [
-      "Professional local guide",
-      "Air-conditioned vehicle",
-      "Bottled water",
-      "Park admission",
-      "Ice Explorer tickets (June 1 to October 10)",
-      "Columbia Icefield Skywalk tickets (June 1 to October 10)",
+      "Professional local driver-guide",
+      "Transportation in an air-conditioned vehicle",
       "Pickup and drop-off in Banff and Canmore",
-      "Taxes and required fees",
+      "Park admission",
+      "Drinking water",
+      "Ice Explorer and Skywalk tickets (June 1 to October 10): our team arranges your tickets and activity times",
+      "Ice cleats wherever required (October 11 to May 31)",
+      "Taxes and mandatory fees",
     ],
-    exclusions: ["Lunch (stop at the Columbia Icefield Centre)", "Gratuities", "Personal expenses"],
+    exclusions: ["Meals (summer lunch break at the Columbia Icefield Centre; packed lunch in winter)", "Optional gratuities", "Personal expenses"],
     goodToKnow: [
-      "A moderate level of fitness is needed",
-      "Not wheelchair accessible; strollers are fine",
-      "Not recommended for travellers with back problems, who are pregnant, or with heart problems or other serious medical conditions",
-      "Bring an extra warm layer for the glacier",
+      ICEFIELD_WALKING,
+      ICEFIELD_VEHICLE_ACCESS,
+      ICEFIELD_CHILD_SEATS,
+      "Bring an extra warm layer: the Icefields Parkway is colder than Banff, and winter surfaces may be snowy or icy",
     ],
-    // Stop descriptions from the owner's doc (2026-11-04).
     stops: TOUR_ITINERARIES[ICEFIELD.slug].stops,
     steps: TOUR_ITINERARIES[ICEFIELD.slug].steps,
-    // "Important Information" from the owner's doc (2026-11-04).
-    seasonal: TOUR_ITINERARIES[ICEFIELD.slug].seasonal,
-    // Quick facts and pickup text from the owner's doc (2026-11-04).
+    // Summer and winter itineraries, labelled (page change 2).
+    itinerary: [
+      { heading: "Summer: June 1 – October 10", body: ["Includes the Ice Explorer and Skywalk at the Columbia Icefield, with a separate one-hour lunch break at the Columbia Icefield Centre."], stops: TOUR_ITINERARIES[ICEFIELD.slug].stops },
+      {
+        heading: "Winter: October 11 – May 31",
+        body: [
+          "Abraham Lake replaces the Columbia Icefield Centre experience; the Ice Explorer and Skywalk are not part of the winter tour. Bring a packed lunch, or ask for a quick morning stop in Lake Louise Village to buy food. There is no scheduled restaurant lunch stop; you can eat at Abraham Lake, and eating inside the vehicle is permitted on this winter tour.",
+        ],
+        stops: TOUR_ITINERARIES[ICEFIELD.slug].winter!.stops,
+      },
+      {
+        heading: "If the glacier activities can't operate",
+        body: [
+          "Our replacement itinerary continues along the Icefields Parkway to Athabasca Falls and Sunwapta Falls, with lunch remaining at the Columbia Icefield Centre. This can extend the tour to up to 12 hours and remains subject to weather, road access and operational conditions. It does not add a visit to Jasper town.",
+          "Refunds for disrupted Ice Explorer or Skywalk activities follow Pursuit's refund decision. Any ticket refund Vista Chase receives from Pursuit is passed to you; if Pursuit does not refund the ticket, Vista Chase does not refund that ticket amount. An attraction cancellation does not automatically qualify for a full-tour refund.",
+        ],
+      },
+    ],
+    seasonal: [
+      ...TOUR_ITINERARIES[ICEFIELD.slug].seasonal.slice(0, 2),
+      ...ICEFIELD_PAGE_TERMS,
+      ...TOUR_ITINERARIES[ICEFIELD.slug].seasonal.slice(2),
+      `Walking: ${ICEFIELD_WALKING}.`,
+      `Vehicle access: ${ICEFIELD_VEHICLE_ACCESS}.`,
+      `Children: ${ICEFIELD_CHILD_SEATS}.`,
+    ],
+    // Quick facts and pickup text from the owner's doc (2026-11-04), updated 2026-11-23.
     quickFacts: [
-      { label: "Duration", value: "9–11 hours" },
-      { label: "Group size", value: "Small group" },
+      { label: "Duration", value: ICEFIELD_DURATION },
+      { label: "Group size", value: ICEFIELD_GROUP },
       { label: "Park admission", value: "Included" },
-      { label: "Operating season", value: "Year round · route varies by season" },
+      { label: "Operating season", value: "Year round · summer and winter itineraries" },
       // Banff & Canmore only, like the pickup section (owner's AI training doc, 2026-11-11, flagged the
       // Lake Louise mismatch). Shared tours never pick up in Lake Louise (owner PDF, 2026-11-14).
       { label: "Hotel pickups", value: "Canmore & Banff" },
-      { label: "Tickets included", value: "Columbia Icefield Adventure (June 1 – October 10)" },
+      { label: "Tickets included", value: "Ice Explorer & Skywalk (June 1 – October 10)" },
     ],
     pickup: TOUR_ITINERARIES[ICEFIELD.slug].pickup,
-    faqs: [
-      { match: /how long/i, answer: "About 9 to 11 hours. Pickups start at 7:30 AM in Canmore and 8:00 AM in Banff; your exact pickup time is confirmed before your tour." },
-      { match: /what.s included/i, answer: "Park admission, a professional local guide, an air-conditioned vehicle, bottled water, pickup in Banff and Canmore, and the Ice Explorer and Skywalk tickets from June 1 to October 10." },
-      { match: /ice explorer and skywalk/i, answer: "Yes, from June 1 to October 10. Both are included in the tour price during that season." },
-      { match: /bring food/i, answer: "Lunch is not included. We stop at the Columbia Icefield Centre, where you can buy lunch, or bring your own." },
-    ],
-    addFaqs: [
-      {
-        question: "Does this tour visit Jasper town?",
-        answer: "No. This tour travels along the Icefields Parkway as far as the Columbia Icefield for the glacier adventure and Skywalk. It does not continue to Jasper town.",
-      },
-    ],
+    faqs: [],
+    addFaqs: [],
+    onlyFaqs: ICEFIELD_FAQS,
+    // Seasonal prices in the booking panel (page change 1) and the two-day offer (page change 13).
+    priceSeasons: true,
+    comboOffer: true,
   },
 };
 
@@ -248,6 +345,12 @@ function withPolicyFaq(tour: TourWithAvailability): TourWithAvailability {
 export function docTitleAndSummary(slug: string): { title: string; summary: string } | null {
   const c = CONTENT[slug];
   return c ? { title: c.title, summary: c.summary } : null;
+}
+
+/** Booking-panel extras the owner's doc sets for a tour page: seasonal prices, the two-day offer. */
+export function docPanelExtras(slug: string): { priceSeasons: boolean; comboOffer: boolean } {
+  const c = CONTENT[slug];
+  return { priceSeasons: Boolean(c?.priceSeasons), comboOffer: Boolean(c?.comboOffer) };
 }
 
 export function docQuickFacts(slug: string): { label: string; value: string }[] | null {
@@ -458,14 +561,21 @@ export function withDocContent(tour: TourWithAvailability): TourWithAvailability
         section("Before You Go", { items: c.goodToKnow }),
       ],
     },
-    { label: "Inclusions", sections: [section("Stop by Stop", { stops: c.stops, note: "Stops, their order and time at each may change with the season, weather and road conditions." })] },
+    {
+      label: "Inclusions",
+      sections: c.itinerary
+        ? c.itinerary.map((x, i, all) =>
+            section(x.heading, { body: x.body ?? [], stops: x.stops ?? [], note: i === all.length - 1 ? "Stops, their order and time at each may change with the season, weather and road conditions." : null }),
+          )
+        : [section("Stop by Stop", { stops: c.stops, note: "Stops, their order and time at each may change with the season, weather and road conditions." })],
+    },
     // The doc (2026-11-04) removed the "Your Day" timeline from the page; its pickup times still
     // feed the Pickup & Meeting Points section (TourSections reads a "Pickup" tab).
     { label: "Pickup", sections: [section("Pickup times", { steps: c.steps, body: c.pickup ?? [] })] },
     { label: "Seasonal", sections: [section("Important Information", { items: c.seasonal })] },
   ];
 
-  const faqs = [
+  const faqs = c.onlyFaqs ?? [
     ...tour.faqs.map((f) => {
       const hit = c.faqs.find((r) => r.match.test(f.question));
       return hit ? { ...f, answer: hit.answer } : f;
