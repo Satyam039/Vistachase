@@ -87,9 +87,21 @@ describe("booking itinerary = the website's itinerary for exactly what was booke
       expect(winter.itinerary.stops.map((s) => s.name)).not.toContain("Moraine Lake");
       expect(winter.itinerary.notes[0]).toMatch(/June 1 to October 10 only/);
     }
+    // The shared Icefield tour has its own winter route (Abraham Lake, owner 2026-11-23).
     const icefieldWinter = bookingItinerary(day("shared-tours-icefields-jasper", "SHARED", "2027-01-20"));
-    expect(icefieldWinter.ok).toBe(false);
-    if (!icefieldWinter.ok) expect(icefieldWinter.guestNote).toMatch(/Our team will confirm your detailed itinerary/);
+    expect(icefieldWinter.ok).toBe(true);
+    if (icefieldWinter.ok) {
+      const names = icefieldWinter.itinerary.stops.map((s) => s.name);
+      expect(names).toContain("Abraham Lake");
+      expect(names.join(" ")).not.toMatch(/Ice Explorer|Skywalk|Icefield Centre/);
+      expect(icefieldWinter.itinerary.source).toBe("tour:shared-tours-icefields-jasper:winter");
+    }
+    const icefieldSummer = bookingItinerary(day("shared-tours-icefields-jasper", "SHARED", "2027-07-20"));
+    expect(icefieldSummer.ok && icefieldSummer.itinerary.stops.map((s) => s.name)).not.toContain("Abraham Lake");
+    // The private Icefield tour's winter route is still confirmed by the team.
+    const privateWinter = bookingItinerary(day("icefields-jasper-private-tour", "PRIVATE", "2027-01-20"));
+    expect(privateWinter.ok).toBe(false);
+    if (!privateWinter.ok) expect(privateWinter.guestNote).toMatch(/Our team will confirm your detailed itinerary/);
   });
 
   it("uses each journey day's own itinerary for the Three- and Four-Day journeys", () => {
@@ -145,8 +157,15 @@ describe("booking itinerary = the website's itinerary for exactly what was booke
       expect(email!.text).not.toContain(otherRoute);
     }
 
-    // A winter shared Icefield date: no made-up route; the guest is told, staff get a flag.
-    const dep = await departure("shared-tours-icefields-jasper", "2028-01-18");
+    // A winter shared Icefield date gets the Abraham Lake itinerary.
+    const winterDep = await departure("shared-tours-icefields-jasper", "2028-01-18");
+    await createBooking(guest("itin.cia-winter@example.com", winterDep.id, { pickupCustomText: "Moxy Banff" }));
+    const winterEmail = confirmationFor("itin.cia-winter@example.com");
+    expect(winterEmail!.text).toContain("Abraham Lake");
+    expect(winterEmail!.text).not.toContain("Our team will confirm your detailed itinerary");
+
+    // A product with no itinerary for the date: no made-up route; the guest is told, staff get a flag.
+    const dep = await departure("winter-special", "2028-01-18");
     const { booking } = await createBooking(guest("itin.winter@example.com", dep.id, { pickupCustomText: "Moxy Banff" }));
     const email = confirmationFor("itin.winter@example.com");
     expect(email!.text).toContain("Our team will confirm your detailed itinerary");

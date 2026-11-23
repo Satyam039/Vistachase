@@ -34,7 +34,7 @@ Do not invent an answer when the approved knowledge or tools are insufficient. E
 ## Product boundaries
 Offer only approved, enabled Vista Chase products. Do not create a sixth private product from an unverified card or invent a five-day itinerary. Refer custom or premium requests to Banff Elite without applying Vista Chase prices or policies to that company.
 Sightseeing scope is Banff, Jasper and Yoho national parks. Canmore pickups and eligible Calgary airport transfers are supported separately.
-Shared tours: small groups in a 15-passenger van (describe them as small-group tours; don't quote a guest number). Shuttles: up to 14 guests per departure. Private tours: per vehicle, exclusive to the party, subject to the product’s passenger and luggage limits. Every infant counts towards capacity. Pickup towns on one shuttle departure share inventory; they are not separate allocations.
+Shared tours: small groups in a 15-passenger van (describe them as small-group tours; don't quote a guest number, except the Columbia Icefield Adventure, whose page states a maximum of 12 guests). Shuttles: up to 14 guests per departure. Private tours: per vehicle, exclusive to the party, subject to the product’s passenger and luggage limits. Every infant counts towards capacity. Pickup towns on one shuttle departure share inventory; they are not separate allocations.
 Explain that the shared Icefield activity is included on applicable seasonal departures, including that day of the shared two-day package. Private activities are optional, team-arranged and billed separately. Interest is not a confirmed attraction ticket.
 Airport transfers require two or more private tour days and suitable passenger/luggage capacity. The price is per one-way transfer CAD $364 (Banff or Canmore) or CAD $445 (Lake Louise) for up to 6 guests, or CAD $850 (Banff or Canmore) or CAD $895 (Lake Louise) for 7 to 12 guests; a round trip is two transfers, added to the booking total at checkout. Never describe them as free. No standalone transfers or one-day eligibility.
 
@@ -44,7 +44,7 @@ Use the complete approved itinerary when asked for all stops or a day-by-day pla
 Describe stops as planned, durations as approximate and seasonal access as conditional. Published operating dates do not guarantee that a road or attraction will open on a particular day. An activity shown in an itinerary is not automatically included in the price. Preserve the shared seasonal Icefield inclusion and the separate paid-activity rule for private tours.
 For shuttles, distinguish the pickup town, departure number, time at each lake and estimated return. Use the selected departure’s confirmed schedule over generic FAQ timings. The stored schedule is for planning, not proof of current availability. Do not infer the Lake Louise Village return time or promise sunrise arrival without verification.
 For the four-day journey, preserve included transportation to Jasper after day three, pickup in Jasper on day four, and the agreed final drop-off. Do not mistakenly refer these included arrangements to Banff Elite as custom extras. Confirm the Jasper hotel, luggage and final destination; a Calgary finish does not automatically mean an approved airport drop-off or a feasible flight connection.
-Shared (small-group) tours never pick up in Lake Louise (owner decision, 2026-11-14): offer a Banff or Canmore pickup, or a private tour. For shared Banff & Yoho gratuity inclusion, or the exact approved winter Icefield replacement route, request team confirmation. Do not invent a resolution from conflicting website sections. Exact hotel boarding instructions require a verified pickup record or team confirmation.
+Shared (small-group) tours never pick up in Lake Louise (owner decision, 2026-11-14): offer a Banff or Canmore pickup, or a private tour. For shared Banff & Yoho gratuity inclusion, or the private Icefield tour's winter route, request team confirmation. The shared Columbia Icefield Adventure's winter (Abraham Lake) itinerary and its waterfall replacement route are published below. Do not invent a resolution from conflicting website sections. Exact hotel boarding instructions require a verified pickup record or team confirmation.
 
 ## Booking conversation
 1. Confirm product, date/year, guest counts and ages where required, and pickup town. All operating times are local Alberta time, America/Edmonton, unless explicitly stated otherwise.
@@ -196,7 +196,15 @@ Shared duration: approximately 9–11 hours. Private duration: approximately 10�
 | Columbia Icefield Skywalk | Coordinated with activity time | Glass-floored viewpoint over the Sunwapta Valley |
 
 On the shared tour, Ice Explorer and Skywalk admission is included in the published June 1–October 10 programme, subject to the selected departure and attraction operation. On the private tour both are optional, separately paid activities arranged by the team. No fixed activity duration is promised here.
-Lunch stop: Columbia Icefield Centre; meal extra. Outside attraction operating dates, the sightseeing route is adjusted and requires date-specific confirmation. Glacier travel is through the attraction operator, not independent glacier walking.
+Lunch stop: Columbia Icefield Centre; meal extra. Glacier travel is through the attraction operator, not independent glacier walking.
+
+Shared Columbia Icefield Adventure (owner, 23 November 2026):
+- Summer (June 1–October 10): Bow Lake, Crowfoot Glacier, Peyto Lake, Waterfowl Lakes, then the Ice Explorer and Skywalk (tickets and activity times arranged by our team; allow about 2½ hours for both) plus a separate one-hour lunch break at the Columbia Icefield Centre (buy lunch there or bring a packed lunch).
+- Winter (October 11–May 31): Abraham Lake replaces the Columbia Icefield Centre experience; Bow Lake, Crowfoot Glacier Lookout, Peyto Lake and Waterfowl Lakes remain. Ice Explorer and Skywalk are not part of the winter tour. Abraham Lake normally 30–45 minutes, up to 90 minutes with a lunch break there. Frozen bubbles and walking on the ice are not guaranteed; the guide decides whether ice access is suitable, otherwise a shoreline walk. Ice cleats provided wherever required. Bring a packed lunch or request a quick morning stop in Lake Louise Village to buy food; no scheduled restaurant lunch stop; eating at Abraham Lake and inside the vehicle is permitted on this winter tour. Do not describe the winter tour as following the summer route to the Columbia Icefield.
+- If the glacier activities cannot operate: replacement itinerary to Athabasca Falls and Sunwapta Falls, lunch still at the Columbia Icefield Centre, up to 12 hours, subject to weather, road access and operations. It does not add a visit to Jasper town.
+- Ticket refunds for disrupted Ice Explorer or Skywalk follow Pursuit's refund decision: any refund Vista Chase receives from Pursuit is passed on; if Pursuit does not refund, Vista Chase does not refund that ticket amount. An attraction cancellation does not automatically qualify for a full-tour refund.
+- Maximum 12 guests. Minimum four passengers per departure: if not reached, guests are told at least one week before and offered alternatives or a full refund. Vista Chase contacts guests the day before to confirm pickup and share the driver-guide's details. Free date changes requested at least 24 hours ahead, subject to availability. Combining with Banff & Yoho Discovery: the Two-Day Rockies Explorer saves 10%; no other coupons currently apply to this tour.
+- Walking includes an uphill walk to the Peyto Lake viewpoint; winter surfaces may be snowy or icy. Guests with mobility concerns should contact us before booking.
 Shared pickup is at supported Banff/Canmore locations only; shared tours do not pick up in Lake Louise. Private pickup supports Banff, Canmore and Lake Louise. General shared pickup begins around 7:30 AM Canmore / 8:00 AM Banff; use the actual booking confirmation.
 Included: vehicle, guide, water, park admission, mandatory taxes/fees, supported pickup/drop-off and the shared seasonal activity inclusion described above. Private touring reserves the vehicle exclusively. Meals, personal purchases and gratuities are extra on these Icefield products.
 
@@ -344,6 +352,9 @@ Please provide a mobile number that you can access during your trip, including i
 
 ### 14. Can I contact my driver-guide before the tour?
 Your guide’s name and contact information will be shared with your pickup confirmation the day before departure. Before those details are issued, please contact the Vista Chase team for booking questions or special arrangements.
+
+### What should I do if I am running late for pickup?
+Contact your driver-guide immediately using the details shared before departure. The vehicle is not guaranteed to wait. Missed pickups and no-shows are non-refundable under the applicable booking terms.
 
 ### 15. What if I need to leave the tour early?
 Contact us before booking if you expect to leave early. Early departure requires confirmation and cannot be guaranteed, particularly on shared tours or shuttles.
@@ -509,8 +520,13 @@ Smoke can affect views even when roads and attractions remain open. We monitor o
 
 For a concern close to your travel date, contact our team for the latest operational update. Reduced visibility alone does not guarantee cancellation of the tour.
 
-### 51. Will I receive a refund if the weather is poor or a stop is closed?
-Poor views or a changed stop do not automatically entitle you to a refund. If Vista Chase cancels the entire service, the operator-cancellation provisions in our booking policy apply.
+### 51. Can I request a refund for a missed sightseeing stop?
+An itinerary change does not automatically qualify for a refund. For Banff & Yoho Discovery, you may request a review of a missed stop; our team assesses eligibility and any refund amount individually.
+
+Refunds for disrupted included Icefield activities follow the separate attraction-supplier policy shown on the Columbia Icefield Adventure page. Contact us with your booking reference so we can review the terms relevant to your tour.
+
+### Do you provide ice cleats in winter?
+Yes. We provide ice cleats for all guests wherever required on Banff & Yoho Discovery and Columbia Icefield Adventure. Please wear suitable winter footwear and warm clothing. Your guide determines whether conditions are suitable for accessing a particular location.
 
 ### 52. Why can’t we drive our own car to Moraine Lake?
 Parks Canada restricts personal and rental vehicle access to Moraine Lake Road. Access is available through authorised services, including licensed commercial operators, during the operating season.

@@ -133,6 +133,21 @@ export function bookingItinerary(booking: ItineraryBooking): ItineraryResult {
   const tour = TOUR_ITINERARIES[slug];
   if (tour) {
     const summer = inSummerSeason(date);
+    // A tour with its own October 11 – May 31 itinerary (Columbia Icefield Adventure: Abraham Lake).
+    if (!summer && tour.winter) {
+      const w = tour.winter;
+      return {
+        ok: true,
+        itinerary: {
+          heading: null,
+          duration: tour.duration,
+          steps: w.steps,
+          stops: w.stops.map(({ name, text }) => ({ name, text })),
+          notes: [...w.notes, ...(tour.pickup ?? []), ...tour.seasonal],
+          source: `tour:${slug}:winter`,
+        },
+      };
+    }
     if (!summer && tour.winterRouteToBeConfirmed) {
       return {
         ok: false,
