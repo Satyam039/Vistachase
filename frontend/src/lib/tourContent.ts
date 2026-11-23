@@ -223,7 +223,7 @@ const CONTENT: Record<string, DocContent> = {
     steps: TOUR_ITINERARIES[ICEFIELD.slug].steps,
     // Summer and winter itineraries, labelled (page change 2).
     itinerary: [
-      { heading: "Summer: June 1 – October 10", body: ["Includes the Ice Explorer and Skywalk at the Columbia Icefield, with a separate one-hour lunch break at the Columbia Icefield Centre."], stops: TOUR_ITINERARIES[ICEFIELD.slug].stops },
+      { heading: "Summer: June 1 – October 10", body: ["Includes the Ice Explorer and Skywalk at the Columbia Icefield, with a separate one-hour lunch break at the Columbia Icefield Centre. The tour turns back at the Columbia Icefield and does not visit Jasper town."], stops: TOUR_ITINERARIES[ICEFIELD.slug].stops },
       {
         heading: "Winter: October 11 – May 31",
         body: [
@@ -234,7 +234,7 @@ const CONTENT: Record<string, DocContent> = {
       {
         heading: "If the glacier activities can't operate",
         body: [
-          "Our replacement itinerary continues along the Icefields Parkway to Athabasca Falls and Sunwapta Falls, with lunch remaining at the Columbia Icefield Centre. This can extend the tour to up to 12 hours and remains subject to weather, road access and operational conditions. It does not add a visit to Jasper town.",
+          "Our replacement itinerary continues along the Icefields Parkway to Athabasca Falls and Sunwapta Falls, with lunch remaining at the Columbia Icefield Centre. This can extend the tour to up to 12 hours and remains subject to weather, road access and operational conditions. The tour does not visit Jasper town, even when this contingency route continues to the waterfalls.",
           "Refunds for disrupted Ice Explorer or Skywalk activities follow Pursuit's refund decision. Any ticket refund Vista Chase receives from Pursuit is passed to you; if Pursuit does not refund the ticket, Vista Chase does not refund that ticket amount. An attraction cancellation does not automatically qualify for a full-tour refund.",
         ],
       },

@@ -162,7 +162,7 @@ export const TOUR_ITINERARIES: Record<string, TourItinerary> = {
     ],
     // "Important Information" from the owner's doc (2026-11-04), with the 2026-11-23 page changes.
     seasonal: [
-      "Activity disruption: If the Icefield activities can't operate, the tour visits Athabasca Falls and Sunwapta Falls instead (up to 12 hours; no Jasper town visit). Ice Explorer and Skywalk ticket refunds follow Pursuit's decision: any refund Pursuit gives Vista Chase is passed to you, and an attraction cancellation doesn't automatically qualify for a full-tour refund.",
+      "Activity disruption: If the Icefield activities can't operate, the tour visits Athabasca Falls and Sunwapta Falls instead (up to 12 hours; the tour does not visit Jasper town). Ice Explorer and Skywalk ticket refunds follow Pursuit's decision: any refund Pursuit gives Vista Chase is passed to you, and an attraction cancellation doesn't automatically qualify for a full-tour refund.",
       "Weather and road conditions: Stops, routes and their order may change due to weather, road closures or operational requirements.",
       "What to bring: Dress in layers and bring a warm jacket, comfortable walking shoes and water. Temperatures along the Icefields Parkway can be significantly colder than in Banff.",
       "Wildlife: Wildlife sightings are possible but cannot be guaranteed.",
