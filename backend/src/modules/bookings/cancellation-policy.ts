@@ -67,13 +67,18 @@ export async function policyDecision(booking: PolicyBooking, at = new Date()): P
   const terms = cancellationTerms(category, privatePackage);
 
   let startsAt = getMountainTimeInstant(booking.tourDeparture.date, booking.tourDeparture.departureTime);
-  // A package's cutoff is the first tour day's; it doesn't restart for each day.
-  if (trip && (privatePackage || category === "MULTIDAY") && trip.reference !== booking.bookingReference) {
-    const first = await prisma.booking.findUnique({
-      where: { bookingReference: trip.reference },
+  // A package's cutoff is the earliest scheduled tour departure; it does not restart for each day.
+  if (trip && trip.references.length > 1) {
+    const packageDepartures = await prisma.booking.findMany({
+      where: { bookingReference: { in: trip.references } },
       select: { tourDeparture: { select: { date: true, departureTime: true } } },
     });
-    if (first) startsAt = getMountainTimeInstant(first.tourDeparture.date, first.tourDeparture.departureTime);
+    const instants = packageDepartures.map((p) =>
+      getMountainTimeInstant(p.tourDeparture.date, p.tourDeparture.departureTime).getTime(),
+    );
+    if (instants.length > 0) {
+      startsAt = new Date(Math.min(...instants));
+    }
   }
 
   const hoursLeft = (startsAt.getTime() - at.getTime()) / 3_600_000;

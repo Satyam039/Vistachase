@@ -18,7 +18,7 @@ import prisma from "@/lib/db/prisma";
 import { getEmailProvider } from "@/lib/email/email.provider";
 import { renderMasterEmail } from "@/lib/email/email-template";
 import { voucherLink } from "@/lib/security/signed-links";
-import { formatDateOnly, formatTimeOfDay } from "@/lib/utils/time";
+import { formatDateOnly, formatTimeOfDay, getMountainTimeInstant } from "@/lib/utils/time";
 import { itineraryPdf } from "@/modules/bookings/voucher-pdf";
 import { DEPOSIT_PERCENT, paidCents } from "@/modules/bookings/deposit";
 import { balanceDueLabel } from "@/modules/bookings/booking.repository";
@@ -55,6 +55,12 @@ function clock(hhmm: string | null) {
   return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
 }
 
+function inSummerDate(d: Date) {
+  const iso = formatDateOnly(d);
+  const md = iso.slice(5, 10);
+  return md >= "06-01" && md <= "10-10";
+}
+
 function dayLines(b: TripBooking) {
   const d = b.tourDeparture;
   const isShuttle = Boolean(
@@ -75,8 +81,15 @@ function dayLines(b: TripBooking) {
     isShuttle,
   });
   const pickup = pickupTime ? `${clock(pickupTime)}${place ? ` at ${place}` : ""}` : (place ?? "Pickup details to follow by email");
+  const seasonal = d.tour?.slug?.includes("icefields")
+    ? (inSummerDate(d.date)
+        ? "Includes Columbia Icefield Glacier Adventure (Ice Explorer) & Skywalk"
+        : "Winter itinerary: visits Abraham Lake (guests bring packed lunch or request morning food stop)")
+    : d.tour?.slug?.includes("banff")
+      ? (inSummerDate(d.date) ? "Includes seasonal Moraine Lake transportation" : "Winter itinerary with alternative stops")
+      : null;
   // The website's current itinerary for exactly this booking (tour-itinerary.ts).
-  return { title, date: longDate(d.date), time, pickup, itinerary: bookingItinerary(b) };
+  return { title, date: longDate(d.date), time, pickup, seasonal, itinerary: bookingItinerary(b) };
 }
 
 export const MISSING_ITINERARY_FLAG = "Itinerary missing";
@@ -166,20 +179,38 @@ export async function sendConfirmationEmail(reference: string, options: { force?
             <p style="margin: 0; color: #257780; font-size: 13px; font-weight: bold;">${multi ? `Day ${d.day} · ` : ""}${escapeHtml(d.date)}</p>
             <p style="margin: 4px 0 0; font-weight: bold;">${escapeHtml(d.title)}</p>
             <p style="margin: 4px 0 0; color: #5d6168; font-size: 14px;">${d.time ? `Departs ${d.time} · ` : ""}Pickup: ${escapeHtml(d.pickup)}</p>
+            ${d.seasonal ? `<p style="margin: 4px 0 0; color: #b45309; font-size: 13px; font-weight: 500;">${escapeHtml(d.seasonal)}</p>` : ""}
             ${itineraryHtml(d.itinerary)}
             <p style="margin: 8px 0 0; font-size: 14px;"><a href="${d.link}" style="color: #257780;">${multi ? `Day ${d.day} voucher (${d.reference})` : "Open your voucher"}</a>${multi ? ` · <a href="${escapeHtml(d.google)}" style="color: #257780;">Add day ${d.day} to Google Calendar</a>` : ""}</p>
           </td></tr>`,
       )
       .join("");
     const balance = total - paid;
+    const totalFare = live.reduce((n, b) => n + (((b.priceSnapshot as { fareCents?: number })?.fareCents) ?? b.totalAmount), 0);
+    const totalDiscount = live.reduce((n, b) => n + (((b.priceSnapshot as { discountCents?: number })?.discountCents) ?? 0), 0);
+
     // Airport transfer (booked with Day 1): type, route and price, e.g. "Round trip (...), 2 x CAD 850.00 = CAD 1,700.00".
     const transfer = live.map((b) => airportTransferSummary(b.priceSnapshot)).find(Boolean) ?? null;
     // Add-on activities (booked with Day 1) and who joins each, e.g. "Banff Gondola for 2 adults (price confirmed by our team)".
     const activities = live.map((b) => activitiesSummary(b.priceSnapshot)).find(Boolean) ?? null;
     const deposit = live.find((b) => b.paymentPlan === "DEPOSIT");
     const dueBy = balance > 0 && deposit ? ` by ${balanceDueLabel(deposit.balanceDueAt)}` : "";
-    // Booking & Cancellation Policy for this product (cancellation-policy.ts); a deposit doesn't change it.
-    const policy = `${termsSentence(cancellationTerms(lead.tourDeparture.tour?.category, multi))}${deposit && balance > 0 ? ` You paid a ${DEPOSIT_PERCENT}% deposit: pay the balance from your voucher.` : ""}`;
+
+    const terms = cancellationTerms(lead.tourDeparture.tour?.category, multi);
+    let startsAt = getMountainTimeInstant(lead.tourDeparture.date, lead.tourDeparture.departureTime);
+    if (multi) {
+      const instants = live.map((b) => getMountainTimeInstant(b.tourDeparture.date, b.tourDeparture.departureTime).getTime());
+      if (instants.length > 0) startsAt = new Date(Math.min(...instants));
+    }
+    const cutoffInstant = new Date(startsAt.getTime() - terms.cutoffHours * 3600_000);
+    const deadlineDateStr = cutoffInstant.toLocaleDateString("en-CA", { timeZone: "America/Edmonton", weekday: "short", month: "short", day: "numeric", year: "numeric" });
+    const deadlineTimeStr = new Intl.DateTimeFormat("en-US", { timeZone: "America/Edmonton", hour: "numeric", minute: "2-digit", timeZoneName: "short" }).format(cutoffInstant);
+    const deadlineLabel = `${deadlineDateStr} at ${deadlineTimeStr}`;
+
+    const isSharedPackage = (lead.tourDeparture.tour?.category === "SHARED" || (trip?.title && trip.title.toLowerCase().includes("two-day") && !trip.title.toLowerCase().includes("private"))) && multi;
+    const policy = isSharedPackage
+      ? `Cancellation deadline: ${deadlineLabel}. Cancel the entire package at least 24 hours before your first scheduled tour for a full refund. This deadline applies to the whole package, not separately to each day. Later guest cancellations and no-shows are non-refundable.`
+      : `${termsSentence(terms)} (Cancellation deadline: ${deadlineLabel}).${deposit && balance > 0 ? ` You paid a ${DEPOSIT_PERCENT}% deposit: pay the balance from your voucher.` : ""}`;
 
     const text = [
       `Your Vista Chase booking ${tripReference} is confirmed.`,
@@ -187,9 +218,13 @@ export async function sendConfirmationEmail(reference: string, options: { force?
       `Guests: ${lead.totalSeats}`,
       ...(transfer ? [`Airport transfer: ${transfer}`] : []),
       ...(activities ? [`Add-on activities: ${activities}`] : []),
+      ...(multi && totalDiscount > 0 ? [`Price breakdown: Regular subtotal ${money(totalFare, currency)}, 10% package savings -${money(totalDiscount, currency)}, Total ${money(total, currency)} (taxes, park admission and mandatory fees included).`] : []),
       `Total ${money(total, currency)}, paid ${money(paid, currency)}${balance > 0 ? `, balance due ${money(balance, currency)}${dueBy}` : ""}.`,
       "",
-      ...days.flatMap((d) => [`${multi ? `Day ${d.day}: ` : ""}${d.date}, ${d.title}${d.time ? `, departs ${d.time}` : ""}. Pickup: ${d.pickup}. Voucher: ${d.link}`, ...itineraryText(d.itinerary)]),
+      ...days.flatMap((d) => [
+        `${multi ? `Day ${d.day}: ` : ""}${d.date}, ${d.title}${d.time ? `, departs ${d.time}` : ""}. Pickup: ${d.pickup}.${d.seasonal ? ` (${d.seasonal})` : ""} Voucher: ${d.link}`,
+        ...itineraryText(d.itinerary),
+      ]),
       "",
       policy,
       `Manage booking (change name or phone, ask for another date, cancel): ${manageLink}`,
@@ -205,6 +240,7 @@ export async function sendConfirmationEmail(reference: string, options: { force?
           <tr><td style="padding:4px 0;color:#6b7280;">Guests:</td><td style="padding:4px 0;">${lead.totalSeats}</td></tr>
           ${transfer ? `<tr><td style="padding:4px 0;color:#6b7280;vertical-align:top;">Airport transfer:</td><td style="padding:4px 0;">${escapeHtml(transfer)}</td></tr>` : ""}
           ${activities ? `<tr><td style="padding:4px 0;color:#6b7280;vertical-align:top;">Add-on activities:</td><td style="padding:4px 0;">${escapeHtml(activities)}</td></tr>` : ""}
+          ${multi && totalDiscount > 0 ? `<tr><td style="padding:4px 0;color:#6b7280;vertical-align:top;">Price breakdown:</td><td style="padding:4px 0;">Regular subtotal: ${money(totalFare, currency)}<br />10% package savings: -${money(totalDiscount, currency)}<br /><strong>Total: ${money(total, currency)}</strong> (Taxes and mandatory fees included)</td></tr>` : ""}
           <tr><td style="padding:4px 0;color:#6b7280;">Payment:</td><td style="padding:4px 0;">Total: ${money(total, currency)} · Paid: ${money(paid, currency)}${balance > 0 ? ` · <span style="color:#b91c1c;">Balance due: ${money(balance, currency)}${dueBy}</span>` : ""}</td></tr>
         </table>
         <table role="presentation" style="width:100%;border-collapse:collapse;margin-top:12px;">${dayHtml}</table>

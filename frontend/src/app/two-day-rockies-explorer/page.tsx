@@ -15,6 +15,8 @@ import { fromPrice } from "@/lib/tours";
 import { PICKUP_TIMES, TWO_DAY_PACKAGE, packagePrice } from "@/lib/sharedTours";
 import { PackageTripJsonLd } from "@/components/seo/PackageTripJsonLd";
 import { cachePublicData } from "@/lib/api/cachePolicy";
+import { FaqBrowser } from "@/components/faq/FaqBrowser";
+import { TWO_DAY_ROCKIES_EXPLORER_FAQS } from "@/lib/twoDayPackageFaqs";
 
 // Rendered once and served from cache, refreshed in the background at most every minute, instead of
 // on every request (fix recheck, 10 Nov 2026, N2/R2: 2.7-10 s responses and 5xx under a crawl).
@@ -164,6 +166,49 @@ export default async function TwoDayRockiesExplorerPage() {
           </p>
         </aside>
       </div>
+
+      {/* Frequently Asked Questions */}
+      <section aria-labelledby="package-faq-heading" className="border-t border-obsidian-900/[0.08] bg-white py-16 sm:py-24">
+        <div className="mx-auto max-w-4xl px-page">
+          <div className="mb-10 text-center" data-reveal>
+            <p className="mb-3 text-xs uppercase tracking-[0.24em] text-ocean-700">Need to know</p>
+            <h2 id="package-faq-heading" className="text-balance text-3xl font-light tracking-tight text-obsidian-900 sm:text-4xl">
+              Frequently Asked Questions
+            </h2>
+            <p className="mx-auto mt-3 max-w-2xl text-base text-slate-600">
+              Everything you need to know about the Two-Day Rockies Explorer shared tour package.
+            </p>
+          </div>
+          <div data-reveal>
+            <FaqBrowser compact topics={[]} items={TWO_DAY_ROCKIES_EXPLORER_FAQS} />
+          </div>
+          <div className="mt-10 rounded-2xl bg-obsidian-50 p-6 text-center text-sm text-slate-600">
+            Have questions about luggage, child seats, payments or vehicle accessibility? Visit our{" "}
+            <Link href="/faq" className="font-medium text-ocean-700 underline underline-offset-4">
+              main FAQ page
+            </Link>
+            .
+          </div>
+        </div>
+      </section>
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: TWO_DAY_ROCKIES_EXPLORER_FAQS.map((faq) => ({
+              "@type": "Question",
+              name: faq.q,
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: faq.a,
+              },
+            })),
+          }),
+        }}
+      />
     </div>
   );
 }

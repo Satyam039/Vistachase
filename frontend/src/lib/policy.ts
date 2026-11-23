@@ -90,6 +90,14 @@ export const depositFor = (total: number) => Math.round((Math.round(total * 100)
 export const formatRockiesDate = (at: Date | string) =>
   new Date(at).toLocaleDateString("en-CA", { timeZone: ROCKIES_TZ, weekday: "short", month: "short", day: "numeric", year: "numeric" });
 
+/** Format cancellation deadline in Alberta local time (e.g. "Thu, Jun 17, 2027 at 8:00 AM MDT") */
+export function formatCancellationDeadline(date: string, time = "08:00", cutoffHours = 24): string {
+  const cutoff = new Date(departureInstant(date, time).getTime() - cutoffHours * 3600_000);
+  const dateStr = cutoff.toLocaleDateString("en-CA", { timeZone: ROCKIES_TZ, weekday: "short", month: "short", day: "numeric", year: "numeric" });
+  const timeParts = new Intl.DateTimeFormat("en-US", { timeZone: ROCKIES_TZ, hour: "numeric", minute: "2-digit", timeZoneName: "short" }).format(cutoff);
+  return `${dateStr} at ${timeParts}`;
+}
+
 /** A deposit doesn't change the cancellation rules (policy section 11). */
 export const depositPolicy = (category?: string | null, multiDay = false) =>
   `Paying a ${DEPOSIT_PERCENT}% deposit doesn't change the cancellation rules: ${cancellationSentence(category, multiDay).replace(/^C/, "c")}`;

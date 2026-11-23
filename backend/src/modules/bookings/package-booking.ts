@@ -175,12 +175,13 @@ async function replayPackage(input: CreatePackageInput): Promise<PackageResult |
   };
 }
 
-/** Checks the departures belong to the package's tours, in order, on different days, and are open. */
-async function packageError(pkg: TourPackage, departureIds: string[]): Promise<string | null> {
+/** Checks the departures belong to the package's tours, in order, on different days, and are open with enough seats. */
+async function packageError(pkg: TourPackage, departureIds: string[], party?: { adults: number; children: number; infants: number }): Promise<string | null> {
   if (departureIds.length !== pkg.tourSlugs.length) return `Choose a date for each of the ${pkg.tourSlugs.length} tours.`;
   if (new Set(departureIds).size !== departureIds.length) return "Choose a different departure for each tour.";
   const departures = await prisma.tourDeparture.findMany({ where: { id: { in: departureIds } }, include: { tour: { select: { slug: true, title: true } } } });
   const dates = new Set<string>();
+  const isPrivate = pkg.slug.includes("private");
   for (const [i, id] of departureIds.entries()) {
     const d = departures.find((x) => x.id === id);
     if (!d || d.tour?.slug !== pkg.tourSlugs[i]) return `Day ${i + 1}: that departure isn't part of the ${pkg.title}. Please choose the date again.`;
@@ -188,6 +189,13 @@ async function packageError(pkg: TourPackage, departureIds: string[]): Promise<s
     if (closed) return `Day ${i + 1} (${d.tour.title}): ${closed}`;
     const day = d.date.toISOString().slice(0, 10);
     if (pkg.summerOnly && !inSummer(day)) return `Day ${i + 1}: the ${pkg.title} runs from June 1 to October 10 only.`;
+    if (party) {
+      const seatsAvailable = Math.max(0, d.capacityTotal - d.capacityBooked - d.capacityHeld);
+      const seatsNeeded = isPrivate ? d.capacityTotal : party.adults + party.children + (d.infantPrice != null ? party.infants : 0);
+      if (seatsAvailable < seatsNeeded) {
+        return `Day ${i + 1} (${d.tour?.title ?? pkg.title}) only has ${seatsAvailable} seats available, but your party requires ${seatsNeeded}.`;
+      }
+    }
     dates.add(day);
   }
   if (dates.size !== departureIds.length) return "The tours are full-day trips, so they need to be on different days.";
@@ -205,7 +213,7 @@ export async function createPackageBooking(input: CreatePackageInput): Promise<P
   const replay = await replayPackage(input);
   if (replay) return replay;
 
-  const invalid = await packageError(pkg, input.departureIds);
+  const invalid = await packageError(pkg, input.departureIds, { adults: input.adultsCount, children: input.childrenCount, infants: input.infantsCount });
   if (invalid) return { success: false, error: invalid };
   const plan = input.paymentPlan === "DEPOSIT" ? "DEPOSIT" : "FULL";
   if (plan === "DEPOSIT" && !pkg.depositAllowed) return { success: false, error: `The ${pkg.title} is paid in full at booking.` };
