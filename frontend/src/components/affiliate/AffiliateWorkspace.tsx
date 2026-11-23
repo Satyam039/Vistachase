@@ -7,6 +7,7 @@ import { Dropdown } from "@/components/forms/Dropdown";
 import { AffiliateHeader } from "./AffiliateHeader";
 import { PartnerCoupons } from "@/components/affiliate/PartnerCoupons";
 import { PartnerProducts } from "./PartnerProducts";
+import { referralGroups, referralLink, type ReferralDestination, type ReferralPost, type ReferralTour } from "@/lib/affiliateLinks";
 
 export interface Profile {
   name: string;
@@ -71,11 +72,6 @@ export interface Payout {
 
 export type Tab = "overview" | "products" | "referrals" | "coupons" | "bookings" | "commissions" | "payouts" | "reports" | "settings";
 
-interface TourOption {
-  slug: string;
-  title: string;
-}
-
 const money = (n: number) => `$${n.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const SITE = typeof window !== "undefined" ? window.location.origin : "https://www.vistachase.com";
 const day = (iso: string | null) => (iso ? iso.slice(0, 10) : "");
@@ -91,8 +87,10 @@ const PAGE_SIZE = 25;
 export function AffiliateWorkspace({ activeTab = "overview" }: { activeTab?: Tab }) {
   const [data, setData] = useState<Dashboard | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "signed-out" | "not-partner">("loading");
-  const [tours, setTours] = useState<TourOption[]>([]);
-  const [target, setTarget] = useState("");
+  const [tours, setTours] = useState<ReferralTour[]>([]);
+  const [destinations, setDestinations] = useState<ReferralDestination[]>([]);
+  const [posts, setPosts] = useState<ReferralPost[]>([]);
+  const [target, setTarget] = useState("/");
   const [copied, setCopied] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
 
@@ -109,11 +107,28 @@ export function AffiliateWorkspace({ activeTab = "overview" }: { activeTab?: Tab
     void loadDashboard();
     fetch("/api/tours")
       .then((r) => r.json())
-      .then((d) => setTours((d.tours ?? []).map((t: TourOption) => ({ slug: t.slug, title: t.title }))))
+      .then((d) => setTours(d.tours ?? []))
       .catch(() => setTours([]));
+    fetch("/api/destinations")
+      .then((r) => r.json())
+      .then((d) => setDestinations(d.destinations ?? []))
+      .catch(() => setDestinations([]));
+    fetch("/api/seo/public/blog")
+      .then((r) => r.json())
+      .then((d) => setPosts(d.posts ?? []))
+      .catch(() => setPosts([]));
   }, [loadDashboard]);
 
-  const link = useMemo(() => (data ? `${SITE}/${target}?ref=${data.affiliate.code}` : ""), [data, target]);
+  const link = useMemo(() => (data ? referralLink(SITE, target, data.affiliate.code) : ""), [data, target]);
+  // Every public page a partner can link to (owner, 2026-11-23: not only the home page), each
+  // option labelled with its group so the list reads Shared tours, Private tours, Blog posts…
+  const targetOptions = useMemo(
+    () =>
+      referralGroups(tours, destinations, posts).flatMap((g) =>
+        g.pages.map((p) => ({ value: p.path, label: p.path === "/" ? "Homepage (/)" : p.title, description: `${g.title} · ${p.path}` })),
+      ),
+    [tours, destinations, posts],
+  );
 
   async function copy() {
     await navigator.clipboard.writeText(link);
@@ -315,7 +330,7 @@ export function AffiliateWorkspace({ activeTab = "overview" }: { activeTab?: Tab
             <div>
               <h1 className="text-2xl font-light text-slate-900">Referral Link Generator</h1>
               <p className="mt-1 text-sm text-slate-500">
-                Generate customized partner links for specific tours, destinations, or the general site.
+                Generate customized partner links for any page: tours, shuttles, multi-day packages, destinations, blog posts or the general site.
               </p>
             </div>
 
@@ -325,9 +340,9 @@ export function AffiliateWorkspace({ activeTab = "overview" }: { activeTab?: Tab
                 label="Destination Page"
                 value={target}
                 onChange={setTarget}
-                searchable={tours.length > 8}
-                searchPlaceholder="Search experiences"
-                options={[{ value: "", label: "Homepage (/)" }, ...tours.map((t) => ({ value: t.slug, label: t.title }))]}
+                searchable
+                searchPlaceholder="Search tours, destinations, blog posts"
+                options={targetOptions}
               />
 
               <div className="space-y-2">
