@@ -127,6 +127,10 @@ export const BUILT_IN_REDIRECTS: Record<string, string> = {
   "/partners": "/affiliates",
   // Old cancellation-policy address; the policy lives at the Webflow URL.
   "/cancellation-policy": "/privacy-policy-vista-chase",
+  // Owner, 23 Nov 2026: both answered 404 (old Webflow duplicates Google still knows about). Each goes
+  // to the live page it copied, so the old address stops showing as a broken link.
+  "/blog-post/moraine-lake-access-rules-parking-2026": "/blog-post/moraine-lake-access-rules-parking",
+  "/winter-special-copy": "/winter-special",
 };
 
 export async function activeRedirectMap() {
