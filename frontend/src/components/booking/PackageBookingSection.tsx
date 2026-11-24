@@ -14,7 +14,24 @@ const inSummer = (date: string) => {
   return md >= "06-01" && md <= "10-10";
 };
 
-export async function PackageBookingSection({ config, heading = "Book your dates", wholePage = false }: { config: PackageConfig; heading?: string; wholePage?: boolean }) {
+export async function PackageBookingSection({
+  config,
+  heading = "Book your dates",
+  wholePage = false,
+  intro,
+  cancellationNote,
+  guestNote,
+  datesNote,
+}: {
+  config: PackageConfig;
+  heading?: string;
+  wholePage?: boolean;
+  /** Replaces the line under the heading. */
+  intro?: string;
+  cancellationNote?: string;
+  guestNote?: string;
+  datesNote?: string;
+}) {
   const slugs = Array.from(new Set(config.days.map((d) => d.slug)));
   const tours = new Map(await Promise.all(slugs.map(async (slug) => [slug, await getTourBySlug(slug).catch(() => null)] as const)));
   const days: PackageDay[] = config.days.map((d, i) => ({
@@ -51,9 +68,13 @@ export async function PackageBookingSection({ config, heading = "Book your dates
           {heading}
         </h2>
         <p className="mt-3 max-w-2xl text-base text-slate-600">
-          {config.vehicle ? "One private vehicle and guide for your group each day. " : ""}
-          Choose the date you want for each day, then pay once for the whole {config.title}
-          {config.vehicle ? `, in full or with a ${DEPOSIT_PERCENT}% deposit now` : ""}.
+          {intro ?? (
+            <>
+              {config.vehicle ? "One private vehicle and guide for your group each day. " : ""}
+              Choose the date you want for each day, then pay once for the whole {config.title}
+              {config.vehicle ? `, in full or with a ${DEPOSIT_PERCENT}% deposit now` : ""}.
+            </>
+          )}
         </p>
         <div className="mt-8">
           <PackageCheckout
@@ -67,8 +88,11 @@ export async function PackageBookingSection({ config, heading = "Book your dates
             depositAllowed={config.vehicle}
             maxGuests={config.maxGuests}
             requestHref={`/contact-us?package=${config.slug}`}
-            cancellationNote={cancellationSentence(config.vehicle ? "MULTIDAY" : "SHARED")}
+            cancellationNote={cancellationNote ?? config.cancellationNote ?? cancellationSentence(config.vehicle ? "MULTIDAY" : "SHARED")}
             wholePage={wholePage}
+            consecutive={config.consecutive}
+            guestNote={guestNote ?? config.guestNote}
+            datesNote={datesNote ?? config.datesNote}
           />
         </div>
       </div>

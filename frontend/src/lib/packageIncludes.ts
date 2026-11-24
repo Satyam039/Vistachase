@@ -11,7 +11,7 @@ export function packageDayIncludes(packageSlug: string, index: number, tourSlug:
   const journey = PACKAGE_ITINERARIES[packageSlug as keyof typeof PACKAGE_ITINERARIES];
   if (journey) {
     const day = journey[index];
-    return day?.stops.map((s) => ({ name: s.name.replace(/\s+—\s+Optional Add-On$/i, ""), desc: s.desc, optional: s.isOptional }));
+    return day?.stops.map((s) => ({ name: s.name.replace(/\s+—\s+Optional( Add-On| Combined Experience)$/i, ""), desc: s.desc, optional: s.isOptional }));
   }
   const tour = TOUR_ITINERARIES[tourSlug];
   return tour?.stops.map((s) => ({

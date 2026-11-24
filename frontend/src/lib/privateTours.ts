@@ -23,7 +23,7 @@ export const PRIVATE_INTRO = {
   body1:
     "Choose a private Banff and Yoho day, a Columbia Icefield adventure, or combine both in a two-day package. Explore further with three and four-day options, with activities selected at checkout.",
   body2:
-    "For journeys of up to three days, stay in Banff, Canmore or Lake Louise. The four-day itinerary includes an overnight stop in Jasper after day three; accommodation arrangements are detailed with each package.",
+    "For journeys of up to three days, stay in Banff, Canmore or Lake Louise. The four-day package includes a guest-booked overnight in Jasper after your Icefields-to-Jasper tour; accommodation arrangements are detailed with each package.",
   stats: [
     { value: "6", label: "Private Options" },
     { value: "1–4", label: "Days" },
@@ -40,6 +40,8 @@ export const PRIVATE_INTRO = {
 // booked online from those same departures with the package price (PRIVATE_PACKAGES below).
 export const PRIVATE_MAX_GUESTS = 13;
 export const PACKAGE_DAY_PRICE = { summer: 1575, winter: 1240 };
+/** Four-Day Rockies & Jasper (owner, 2026-11-24): up to 14 guests, 12–13 recommended for comfort. */
+export const FOUR_DAY_MAX_GUESTS = 14;
 
 /**
  * A package booked in one checkout (components/booking/PackageBookingSection.tsx). Must match
@@ -56,7 +58,25 @@ export interface PackageConfig {
   summerOnly?: boolean;
   vehicle?: boolean;
   maxGuests?: number;
+  /** Pairs of days [i, j] that must be booked on consecutive dates (day j the day after day i). */
+  consecutive?: [number, number][];
+  /** Checkout copy overrides (Four-Day, owner 2026-11-24). */
+  cancellationNote?: string;
+  guestNote?: string;
+  datesNote?: string;
 }
+
+/** The Four-Day package's confirmed cancellation policy (owner, 2026-11-24), shown everywhere on its page. */
+export const FOUR_DAY_CANCELLATION = {
+  short:
+    "Cancel at least 72 hours before your earliest booked service for an 80% refund. The remaining 20% of the total package price is non-refundable.",
+  paragraphs: [
+    "Cancel at least 72 hours before your earliest booked service for an 80% refund. The remaining 20% of the total package price is non-refundable.",
+    "If an arrival transfer comes before your tours, the deadline runs from that transfer’s scheduled pickup. Otherwise, it runs from your first tour. Later guest cancellations and voluntarily unused services are non-refundable. Deadlines use local Alberta time.",
+    "Changes may be requested at any time, subject to availability and confirmation. Requests do not extend the cancellation deadline or make unused services refundable.",
+    "If Vista Chase cancels one tour day, we refund the amount paid for that day without retaining the guest-cancellation penalty. If Vista Chase cancels the entire package, the package amount paid is refunded. Separately invoiced attractions follow their disclosed operator terms.",
+  ],
+};
 
 const BANFF_DAY = "banff-private-tour";
 const ICEFIELD_DAY = "icefields-jasper-private-tour";
@@ -90,16 +110,24 @@ export const PRIVATE_PACKAGES: Record<"two" | "three" | "four", PackageConfig> =
   four: {
     slug: "four-day-rockies-and-jasper",
     title: "Four-Day Rockies & Jasper",
+    // Owner, 2026-11-24: tour names, not fixed Day 1-4. The Banff and Lake Louise/Yoho tours take any
+    // free dates; Icefields Parkway to Jasper and Jasper Highlights & Return run on consecutive dates
+    // (`consecutive`), and all four dates differ. Same order as backend package-booking.ts.
     days: [
-      { slug: BANFF_DAY, title: "Banff & Surrounding Viewpoints", label: "Private · Banff" },
+      { slug: BANFF_DAY, title: "Banff Lakes & Viewpoints", label: "Private · Banff" },
       { slug: BANFF_DAY, title: "Lake Louise, Moraine Lake & Yoho", label: "Private · Lake Louise & Yoho" },
-      { slug: ICEFIELD_DAY, title: "Icefields Parkway to Jasper", label: "Private · Icefields Parkway" },
-      { slug: ICEFIELD_DAY, title: "Jasper Highlights & Return Transfer", label: "Private · Jasper" },
+      { slug: ICEFIELD_DAY, title: "Icefields Parkway to Jasper", label: "Private · Icefields Parkway, about 10 hours" },
+      { slug: ICEFIELD_DAY, title: "Jasper Highlights & Return", label: "Private · Jasper, about 10–12 hours" },
     ],
     discountPercent: 10,
     summerOnly: true,
     vehicle: true,
-    maxGuests: PRIVATE_MAX_GUESTS,
+    maxGuests: FOUR_DAY_MAX_GUESTS,
+    consecutive: [[2, 3]],
+    cancellationNote: `${FOUR_DAY_CANCELLATION.short} If an arrival transfer comes before your tours, the deadline runs from its scheduled pickup; otherwise from your first tour. Alberta local time.`,
+    guestNote: "Private, up to 14 guests; 12–13 recommended for comfort. One price per private van, whatever the group size.",
+    datesNote:
+      "Choose an available date for each tour. Banff Lakes & Viewpoints and Lake Louise, Moraine Lake & Yoho can be on any free dates. Icefields Parkway to Jasper and Jasper Highlights & Return run on consecutive dates, with your Jasper overnight between them. All four dates must differ.",
   },
 };
 
@@ -114,6 +142,13 @@ export interface PrivateTourOption {
   pickup: string;
   activities: string;
   airportTransfers: string;
+  /** Optional rows (Four-Day, owner 2026-11-24). */
+  finalDropoff?: string;
+  group?: string;
+  scheduling?: string;
+  /** Replaces the summer/winter price rows, e.g. "Summer only: June 1–October 10". */
+  seasonLabel?: string;
+  savings?: string;
   accommodation?: string;
   itinerary?: string;
   pricing?: string;
@@ -230,21 +265,22 @@ export const PRIVATE_OPTIONS: PrivateTourOption[] = [
     id: "four-day-rockies-jasper",
     slug: "four-day-rockies-and-jasper",
     title: "Four-Day Rockies & Jasper",
-    description: "Extend the three-day journey into Jasper, with Maligne Lake, dramatic waterfalls and a return to your chosen destination.",
-    duration: "4 days",
+    // Owner's product card, 2026-11-24.
+    description: "Explore Banff, Yoho and the Icefields Parkway, then stay overnight in Jasper for Maligne Valley and waterfall sightseeing before your return.",
+    duration: "4 private tours",
     transport: "Private Vehicle & Guide",
-    suggestedStay: "Canmore/Banff/Lake Louise (Jasper stay after day 3)",
-    pickup: "Doorstep Pickup Included",
-    activities: "Optional Activities at Checkout",
-    airportTransfers: "From CAD $364 per transfer, with 2+ tour days",
+    suggestedStay: "Banff or Canmore, plus a guest-booked Jasper overnight between the two linked Jasper tours",
+    pickup: "Banff/Canmore for the outbound tours; Jasper for the return tour",
+    finalDropoff: "Banff, Canmore or Lake Louise included; Calgary extra",
+    group: "Up to 14 guests; 12–13 recommended for comfort",
+    scheduling: "Flexible Banff/Yoho dates; consecutive Icefields-to-Jasper and Jasper return dates",
+    activities: "Optional experiences; tickets invoiced separately",
+    airportTransfers: "Available at extra cost; Calgary–Banff/Canmore from CAD $364 one way for up to six passengers",
     accommodation: "Booked separately by you",
     priceFrom: PACKAGE_DAY_PRICE.summer * 4,
     priceUnit: "per vehicle",
-    priceNote: "CAD $1,575 per day. June 1 – October 10 only. Private, up to 13 guests.",
-    seasonalPricing: {
-      summer: "CAD $1,575/day ($6,300)",
-      winter: "Summer only (Jun 1 – Oct 10)",
-    },
+    seasonLabel: "Summer only: June 1–October 10",
+    savings: "10% included · Save CAD $700 on the four-tour price",
     buttonLabel: "View Itinerary",
     buttonHref: "/four-day-rockies-and-jasper",
     image: "/media/photos/maligne-lake-cruise-panoramic-card.webp",
@@ -312,7 +348,7 @@ export const PRIVATE_FAQS = [
   },
   {
     q: "Where should we stay?",
-    a: "For tours of up to three days, you can stay in Banff, Canmore or Lake Louise. The four-day journey requires accommodation in Jasper after day three.",
+    a: "For tours of up to three days, you can stay in Banff, Canmore or Lake Louise. The four-day package needs a guest-booked night in Jasper town after your Icefields-to-Jasper tour, with Banff or Canmore for the Banff-based tours.",
   },
   {
     q: "Are attraction tickets included?",

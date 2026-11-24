@@ -134,7 +134,10 @@ export function ConciergePackageCheckout({ slug }: { slug: string }) {
         depositAllowed={config.vehicle}
         maxGuests={config.maxGuests}
         requestHref={`/contact-us?package=${config.slug}`}
-        cancellationNote={cancellationSentence(config.vehicle ? "MULTIDAY" : "SHARED")}
+        cancellationNote={config.cancellationNote ?? cancellationSentence(config.vehicle ? "MULTIDAY" : "SHARED")}
+        consecutive={config.consecutive}
+        guestNote={config.guestNote}
+        datesNote={config.datesNote}
       />
     </section>
   );
