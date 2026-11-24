@@ -14,6 +14,7 @@ export const ACTIVITY_ADD_ONS = {
   "columbia-icefield-skywalk": "Columbia Icefield Skywalk",
   "ice-explorer": "Ice Explorer Experience",
   "maligne-lake-cruise": "Maligne Lake Cruise",
+  "ice-explorer-skywalk": "Ice Explorer + Skywalk (combined experience)",
 } as const;
 
 export type ActivityAddOnId = keyof typeof ACTIVITY_ADD_ONS;
@@ -22,8 +23,32 @@ export type ActivityAddOnId = keyof typeof ACTIVITY_ADD_ONS;
 export const ADD_ONS_BY_TOUR: Record<string, ActivityAddOnId[]> = {
   "banff-highlights-tour": ["lake-minnewanka-cruise"],
   "banff-private-tour": ["lake-minnewanka-cruise"],
-  "icefields-jasper-private-tour": ["columbia-icefield-skywalk", "ice-explorer"],
+  // Owner, 2026-11-24: one combined experience on the private tour, never Ice Explorer or Skywalk
+  // on their own. Requested with a participant count; tickets are invoiced separately.
+  "icefields-jasper-private-tour": ["ice-explorer-skywalk"],
 };
+
+/** Add-ons booked as one ticket request for a number of participants (not priced by age). */
+export const COMBINED_ADD_ONS: ReadonlySet<ActivityAddOnId> = new Set(["ice-explorer-skywalk"]);
+
+/** Participants for a combined add-on: at least one, never more than the party. */
+export const activityParticipantsSchema = z.number().int().min(1).max(30);
+
+/** Why the participant count can't be accepted, if it can't. */
+export function activityParticipantsError(ids: ActivityAddOnId[], participants: number | undefined, partySize: number): string | null {
+  if (!ids.some((id) => COMBINED_ADD_ONS.has(id))) return null;
+  if (participants == null || participants < 1) return "Enter how many guests would like Ice Explorer + Skywalk.";
+  if (participants > partySize) return `Ice Explorer + Skywalk can be requested for up to ${partySize} ${partySize === 1 ? "guest" : "guests"}, your group size.`;
+  return null;
+}
+
+/**
+ * The staff line for a combined ticket request: a request, not a confirmed reservation; tickets are
+ * arranged by staff and invoiced separately, outside the tour payment.
+ */
+export function combinedAddOnNote(id: ActivityAddOnId, participants: number, partySize: number): string {
+  return `TICKET REQUEST (not a confirmed reservation): ${ACTIVITY_ADD_ONS[id]} for ${participants} of ${partySize} ${partySize === 1 ? "guest" : "guests"}. Staff to arrange tickets and send a separate invoice; not included in the private tour payment.`;
+}
 
 const IDS = Object.keys(ACTIVITY_ADD_ONS) as [ActivityAddOnId, ...ActivityAddOnId[]];
 export const activityAddOnsSchema = z.array(z.enum(IDS)).max(IDS.length);

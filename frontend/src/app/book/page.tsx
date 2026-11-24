@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 export default async function BookPage({
   searchParams: searchParamsPromise,
 }: {
-  searchParams: Promise<{ departureId?: string; holdToken?: string; pickupStopId?: string; guests?: string; adults?: string; children?: string; infants?: string; airport?: string; activities?: string; actAdults?: string; actChildren?: string; actInfants?: string }>;
+  searchParams: Promise<{ departureId?: string; holdToken?: string; pickupStopId?: string; guests?: string; adults?: string; children?: string; infants?: string; airport?: string; activities?: string; actAdults?: string; actChildren?: string; actInfants?: string; actParticipants?: string }>;
 }) {
   const searchParams = await searchParamsPromise;
   const checkout = await getCheckoutData(searchParams.departureId);
@@ -65,6 +65,7 @@ export default async function BookPage({
       initialInfants={Number.parseInt(searchParams.infants ?? "", 10) || undefined}
       initialActivities={searchParams.activities === "1"}
       initialActivityGuests={activityGuestsFromQuery(searchParams)}
+      initialActivityParticipants={Number.parseInt(searchParams.actParticipants ?? "", 10) || undefined}
     />
   );
 }

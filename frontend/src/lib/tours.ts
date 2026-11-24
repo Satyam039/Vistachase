@@ -17,6 +17,22 @@ export function isVehicleTour(tour: TourWithAvailability) {
   return tour?.category === "PRIVATE";
 }
 
+/**
+ * Private tours whose passenger van takes more guests than the departure's listed seats (owner,
+ * 2026-11-24: Private Columbia Icefield Adventure, up to 14, 12–13 recommended for comfort). The
+ * whole vehicle is still booked. Mirror: backend/src/modules/departures/schedule-rules.ts.
+ */
+export const PRIVATE_VEHICLE_MAX_GUESTS: Record<string, number> = {
+  "icefields-jasper-private-tour": 14,
+};
+/** The group-size line for those tours, the same in the badge, facts, card and booking panel. */
+export const PRIVATE_VAN_GROUP_TEXT = "Private, up to 14 guests; 12–13 recommended for comfort";
+
+/** Guests a private departure takes: its seats, or the tour's larger van limit. */
+export function vehicleSeats(slug: string | null | undefined, capacityTotal: number): number {
+  return Math.max(capacityTotal, PRIVATE_VEHICLE_MAX_GUESTS[slug ?? ""] ?? 0);
+}
+
 /** "Price from" unit label: private tours and packages are priced per group. */
 export function priceUnitLabel(tour: TourWithAvailability) {
   return tour?.priceUnit === "GROUP" ? "per group" : "per guest";
@@ -33,6 +49,7 @@ export function durationLabel(tour: TourWithAvailability) {
  */
 export function groupLabel(tour: TourWithAvailability) {
   if (tour?.category === "TICKET") return "Individual tickets";
+  if (tour?.category === "PRIVATE" && PRIVATE_VEHICLE_MAX_GUESTS[tour.slug]) return PRIVATE_VAN_GROUP_TEXT;
   if (tour?.category === "PRIVATE" || (Array.isArray(tour?.vehicleOptions) && tour.vehicleOptions.length > 0)) {
     const seats = tour?.departures?.length ? Math.max(...tour.departures.map((d) => d.capacityTotal ?? 13)) : 13;
     return `Private, up to ${Math.min(13, seats)} guests`;
@@ -62,7 +79,7 @@ export const CATEGORY_LABEL: Record<string, string> = {
 export function departureFits(tour: TourWithAvailability, departure: TourWithAvailability["departures"][number], seats: number) {
   if (!departure) return false;
   return isVehicleTour(tour)
-    ? departure.seatsAvailable >= departure.capacityTotal && seats <= departure.capacityTotal
+    ? departure.seatsAvailable >= departure.capacityTotal && seats <= vehicleSeats(tour.slug, departure.capacityTotal)
     : departure.seatsAvailable >= seats;
 }
 

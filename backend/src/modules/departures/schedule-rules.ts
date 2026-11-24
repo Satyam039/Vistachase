@@ -46,5 +46,14 @@ export const SHUTTLE_CAPACITY = 14;
 /** Guests per private day-tour vehicle (Banff & Yoho and Columbia Icefield private): "up to 13". */
 export const PRIVATE_VEHICLE_CAPACITY = 13;
 
+/**
+ * Private tours whose passenger van takes more guests than the departure's listed seats (owner,
+ * 2026-11-24: Private Columbia Icefield Adventure, up to 14 guests, 12–13 recommended). The whole
+ * vehicle is still reserved; departures keep their seat count. Mirror: frontend/src/lib/tours.ts.
+ */
+export const PRIVATE_VEHICLE_MAX_GUESTS: Record<string, number> = {
+  "icefields-jasper-private-tour": 14,
+};
+
 /** Most seats a shared tour departure offers: one 15-passenger van (owner, 2026-11-12). */
 export const SHARED_CAPACITY = 15;

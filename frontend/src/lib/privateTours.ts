@@ -195,16 +195,19 @@ export const PRIVATE_OPTIONS: PrivateTourOption[] = [
     id: "columbia-icefield-private",
     slug: "icefields-jasper-private-tour",
     title: "Columbia Icefield Adventure",
-    description: "Discover Bow Lake, Peyto Lake and the Icefields Parkway, travelling as far as the Columbia Icefield.",
-    duration: "1 day",
+    // Owner's tour card changes, 2026-11-24.
+    description:
+      "Discover Bow Lake, Peyto Lake and the Icefields Parkway with your own guide and van. Columbia Icefield in summer; Abraham Lake in winter.",
+    duration: "1 day · approximately 10–12 hours",
     transport: "Private Vehicle & Guide",
     suggestedStay: "Canmore/Banff/Lake Louise",
     pickup: "Doorstep Pickup Included",
-    activities: "Optional Activities at Checkout",
+    group: "Up to 14 guests; 12–13 recommended for comfort",
+    activities: "Summer Ice Explorer + Skywalk: optional combined experience, invoiced separately.",
     airportTransfers: "From CAD $364 per transfer, with 2+ tour days",
     priceFrom: 0,
     priceUnit: "per vehicle",
-    priceNote: "Jun 1–Oct 10: CAD $1,750. Oct 11–May 31: CAD $1,240, on an adjusted winter route. Private, up to 13 guests.",
+    priceNote: "Jun 1–Oct 10: CAD $1,750. Oct 11–May 31: CAD $1,240, visiting Abraham Lake. Private, up to 14 guests.",
     seasonalPricing: {
       summer: "CAD $1,750 per vehicle",
       winter: "CAD $1,240 per vehicle",

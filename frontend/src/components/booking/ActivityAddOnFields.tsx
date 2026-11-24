@@ -12,6 +12,7 @@ import {
   ACTIVITY_ADD_ON_PRICE_NOTE,
   ACTIVITY_ADD_ONS_NOTE,
   ACTIVITY_AGE_BANDS,
+  COMBINED_ADD_ON,
   activityGuestCount,
   packageActivityPrice,
   type ActivityAddOnId,
@@ -95,6 +96,73 @@ export function ActivityAddOnToggle({
             </p>
           )}
         </fieldset>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Private Columbia Icefield Adventure (owner, 2026-11-24): Ice Explorer + Skywalk as one combined
+ * optional experience. The guest says how many in the group join (1 to the group size); it can't be
+ * requested on winter dates; it is recorded for staff as a ticket request, invoiced separately.
+ */
+export function CombinedAddOnControl({
+  checked,
+  onChange,
+  participants,
+  onParticipantsChange,
+  maxGuests,
+  available,
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  participants: number;
+  onParticipantsChange: (n: number) => void;
+  /** The group size: participants can't be more. */
+  maxGuests: number;
+  /** False on winter dates (October 11 – May 31), or before a summer date is chosen. */
+  available: boolean;
+}) {
+  const on = checked && available;
+  const count = Math.max(1, Math.min(participants, maxGuests));
+  return (
+    <div
+      className={`rounded-2xl border bg-white text-sm ${on ? "border-ocean-500 ring-1 ring-ocean-500" : "border-slate-200"} ${available ? "" : "bg-slate-50"}`}
+      data-testid="combined-add-on"
+    >
+      <label className={`flex items-start gap-3 p-4 ${available ? "cursor-pointer" : "cursor-not-allowed"}`}>
+        <input
+          type="checkbox"
+          className="mt-0.5 h-4 w-4 shrink-0 accent-ocean-700"
+          checked={on}
+          disabled={!available}
+          aria-describedby="combined-add-on-note"
+          onChange={(e) => onChange(e.target.checked)}
+        />
+        <span className="min-w-0">
+          <span className="flex items-center gap-1.5 font-medium text-obsidian-900">
+            <Ticket className="h-4 w-4 shrink-0 text-ocean-700" aria-hidden="true" />
+            {COMBINED_ADD_ON.title}
+          </span>
+          <span id="combined-add-on-note" className="mt-0.5 block text-xs text-slate-600">
+            {available ? COMBINED_ADD_ON.body : COMBINED_ADD_ON.winter}
+          </span>
+        </span>
+      </label>
+      {on && (
+        <div className="space-y-2 border-t border-slate-200 px-4 pb-4 pt-3">
+          <QuantityInput
+            label="Participating guests"
+            description={`Up to ${maxGuests} ${maxGuests === 1 ? "guest" : "guests"}, your group size`}
+            value={count}
+            onChange={onParticipantsChange}
+            min={1}
+            max={maxGuests}
+          />
+          <p className="rounded-xl bg-summit-100 px-3 py-2 text-xs text-obsidian-900 ring-1 ring-summit-300">
+            <span className="font-medium">Ticket request</span> · {COMBINED_ADD_ON.request}
+          </p>
+        </div>
       )}
     </div>
   );

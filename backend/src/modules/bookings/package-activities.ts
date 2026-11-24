@@ -127,10 +127,22 @@ export function packageActivitiesNote(list: StoredPackageActivity[]): string {
  * emails: a private journey's chosen activities, or a day tour's requested add-ons.
  */
 export function activitiesSummary(priceSnapshot: unknown): string | null {
-  const snap = priceSnapshot as { packageActivities?: StoredPackageActivity[]; activityAddOns?: { name: string }[] } | null;
+  const snap = priceSnapshot as {
+    packageActivities?: StoredPackageActivity[];
+    activityAddOns?: { name: string; status?: string; participants?: number }[];
+  } | null;
   if (Array.isArray(snap?.packageActivities) && snap.packageActivities.length > 0) return packageActivitiesText(snap.packageActivities);
   if (Array.isArray(snap?.activityAddOns) && snap.activityAddOns.length > 0) {
-    return `${snap.activityAddOns.map((a) => a.name).join(", ")} (price confirmed by our team)`;
+    // A combined ticket request (Private Columbia Icefield: Ice Explorer + Skywalk) says it is a
+    // request for N guests, not a confirmed reservation, invoiced separately.
+    const requests = snap.activityAddOns.filter((a) => a.status === "REQUESTED");
+    const others = snap.activityAddOns.filter((a) => a.status !== "REQUESTED");
+    return [
+      ...requests.map(
+        (a) => `${a.name}: ticket request for ${a.participants ?? "?"} ${a.participants === 1 ? "guest" : "guests"} (not yet a confirmed reservation; tickets invoiced separately)`,
+      ),
+      ...(others.length > 0 ? [`${others.map((a) => a.name).join(", ")} (price confirmed by our team)`] : []),
+    ].join("; ");
   }
   return null;
 }

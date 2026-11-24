@@ -15,6 +15,7 @@ import type { TourSection, TourWithAvailability } from "@/lib/api/types";
 import { ReviewSlider } from "@/components/reviews/ReviewSlider";
 import { approvedReviewsFor } from "@/lib/reviews/tripadvisorReviews";
 import { vehiclesFor } from "@/lib/vehicles";
+import { docCancellationExtra, docHidesVehicles } from "@/lib/tourContent";
 import { pickupLabel } from "@/lib/tours";
 
 interface Review {
@@ -172,7 +173,9 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
   const timeline = itinerary ?? tab(tour, /^pickup$/i);
   const seasonal = tab(tour, /^seasonal$/i);
   const overviewSections = (overview?.sections ?? []).filter((s) => !/price (in|ex)cludes/i.test(s.heading));
-  const vehicles = vehiclesFor(tour);
+  // Private Columbia Icefield (owner, 2026-11-24): no vehicle options section.
+  const vehicles = docHidesVehicles(tour.slug) ? [] : vehiclesFor(tour);
+  const cancellationExtra = docCancellationExtra(tour.slug);
   const pickupStep = timeline?.sections.flatMap((s) => s.steps).find((s) => /pick ?up/i.test(s.text));
   // The doc's own Pickup & Drop-off text, where it gives one (lib/tourContent.ts).
   const pickupText = tab(tour, /^pickup$/i)?.sections.flatMap((s) => s.body) ?? [];
@@ -382,6 +385,9 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
               <li>{cancellationSentence(tour.category)}</li>
               <li>The deadline is counted from the start time in your confirmation, in Alberta time.</li>
               <li>Late arrivals, missed pickups and no-shows aren&rsquo;t refunded.</li>
+              {cancellationExtra.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
               <li>Approved refunds are normally sent to your original payment method within 5–10 business days.</li>
             </ul>
             <Link href="/privacy-policy-vista-chase" className="inline-flex min-h-11 items-center underline underline-offset-4">

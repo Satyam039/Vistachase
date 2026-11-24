@@ -111,7 +111,9 @@ export function TourCard({
     tour.slug === "banff-highlights-tour" ||
     tour.slug === "shared-tours-icefields-jasper" ||
     tour.slug === "banff-yoho-discovery" ||
-    tour.slug === "columbia-icefield-adventure";
+    tour.slug === "columbia-icefield-adventure" ||
+    // Private Columbia Icefield Adventure (owner, 2026-11-24): no approved promotion.
+    tour.slug === "icefields-jasper-private-tour";
 
   const seasonal =
     tour.slug === "banff-highlights-tour" || tour.slug === "banff-yoho-discovery"

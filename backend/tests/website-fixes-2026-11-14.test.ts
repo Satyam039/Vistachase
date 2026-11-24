@@ -76,7 +76,7 @@ describe("booking itinerary = the website's itinerary for exactly what was booke
     expect(sources[1].stops.map((s) => s.name)).not.toContain("Emerald Lake");
     expect(sources[0].stops.map((s) => s.name)).toContain("Emerald Lake");
     // Private Icefield: the activities are optional add-ons, as on its page.
-    expect(sources[3].stops.some((s) => s.name === "Columbia Icefield Skywalk — Optional Add-On")).toBe(true);
+    expect(sources[3].stops.some((s) => s.name === "Ice Explorer + Skywalk — optional combined experience")).toBe(true);
     expect(experienceTitle({ tour: { slug: "shared-tours-icefields-jasper", title: "Old Webflow name" } })).toBe("Columbia Icefield Adventure (Shared Tour)");
   });
 
@@ -98,10 +98,14 @@ describe("booking itinerary = the website's itinerary for exactly what was booke
     }
     const icefieldSummer = bookingItinerary(day("shared-tours-icefields-jasper", "SHARED", "2027-07-20"));
     expect(icefieldSummer.ok && icefieldSummer.itinerary.stops.map((s) => s.name)).not.toContain("Abraham Lake");
-    // The private Icefield tour's winter route is still confirmed by the team.
+    // The private Icefield tour has its own winter itinerary too (owner, 2026-11-24): Abraham Lake.
     const privateWinter = bookingItinerary(day("icefields-jasper-private-tour", "PRIVATE", "2027-01-20"));
-    expect(privateWinter.ok).toBe(false);
-    if (!privateWinter.ok) expect(privateWinter.guestNote).toMatch(/Our team will confirm your detailed itinerary/);
+    expect(privateWinter.ok).toBe(true);
+    if (privateWinter.ok) {
+      expect(privateWinter.itinerary.stops.map((s) => s.name)).toContain("Abraham Lake");
+      expect(privateWinter.itinerary.stops.map((s) => s.name).join(" ")).not.toMatch(/Ice Explorer|Skywalk/);
+      expect(privateWinter.itinerary.source).toBe("tour:icefields-jasper-private-tour:winter");
+    }
   });
 
   it("uses each journey day's own itinerary for the Three- and Four-Day journeys", () => {
@@ -140,7 +144,7 @@ describe("booking itinerary = the website's itinerary for exactly what was booke
       { slug: "banff-highlights-tour", email: "itin.by@example.com", expect: "Lake Louise and Moraine Lake (Moraine Lake from June 1 to October 10)." },
       { slug: "shared-tours-icefields-jasper", email: "itin.cia@example.com", expect: "Bow Lake, Crowfoot Glacier, Peyto Lake and Waterfowl Lakes along the Icefields Parkway." },
       { slug: "banff-private-tour", email: "itin.pby@example.com", expect: "Drop-off at your accommodation. The day runs about 10 to 12 hours, depending on your pace." },
-      { slug: "icefields-jasper-private-tour", email: "itin.pcia@example.com", expect: "Columbia Icefield, with the optional Ice Explorer and Skywalk in season." },
+      { slug: "icefields-jasper-private-tour", email: "itin.pcia@example.com", expect: "Columbia Icefield: the optional Ice Explorer + Skywalk combined experience" },
     ];
     for (const c of cases) {
       const dep = await departure(c.slug, "2028-07-12", "08:00", c.slug.includes("private") ? 175000 : 22000);
