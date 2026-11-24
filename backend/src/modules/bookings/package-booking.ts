@@ -57,6 +57,8 @@ export interface TourPackage {
   maxGuests?: number;
   /** Tours (0-based) whose pickup must be in Banff or Canmore, never Lake Louise. */
   banffCanmorePickupDays?: number[];
+  /** Airport transfers priced online only to Banff or Canmore; Lake Louise goes through Special Requests (Three-Day, 2026-11-24). */
+  banffCanmoreTransferOnly?: boolean;
 }
 
 export const PACKAGES: TourPackage[] = [
@@ -79,8 +81,14 @@ export const PACKAGES: TourPackage[] = [
   {
     slug: "three-day-rockies-discovery",
     title: "Three-Day Rockies Discovery",
-    // Day 1 Banff, Day 2 Lake Louise, Moraine Lake & Yoho, Day 3 Icefields Parkway.
+    // Three private tours (owner, 2026-11-24), named by tour, not Day 1-3: on three different dates in
+    // any order, June 1 - October 10. Up to 14 guests. Pickups in Banff or Canmore (each tour may use
+    // its own address); Lake Louise airport transfers are requested through Special Requests.
     tourSlugs: ["banff-private-tour", "banff-private-tour", "icefields-jasper-private-tour"],
+    dayTitles: ["Banff Lakes & Viewpoints", "Lake Louise, Moraine Lake & Yoho", "Icefields Parkway & Columbia Icefield"],
+    maxGuests: 14,
+    banffCanmorePickupDays: [0, 1, 2],
+    banffCanmoreTransferOnly: true,
     discountPercent: 10,
     depositAllowed: true,
     summerOnly: true,
@@ -276,8 +284,19 @@ export async function createPackageBooking(input: CreatePackageInput): Promise<P
     const stopIds = pkg.banffCanmorePickupDays.map((i) => input.dayPickups?.[i]?.pickupStopId ?? input.pickupStopId).filter((x): x is string => Boolean(x));
     if (stopIds.length > 0) {
       const lakeLouise = await prisma.shuttleStop.findFirst({ where: { id: { in: stopIds }, town: { contains: "Lake Louise", mode: "insensitive" } }, select: { id: true } });
-      if (lakeLouise) return { success: false, error: "Pickups for the Banff, Lake Louise/Yoho and Icefields-to-Jasper tours are from Banff or Canmore. Please choose a Banff or Canmore hotel." };
+      if (lakeLouise) {
+        return {
+          success: false,
+          error:
+            pkg.slug === "four-day-rockies-and-jasper"
+              ? "Pickups for the Banff, Lake Louise/Yoho and Icefields-to-Jasper tours are from Banff or Canmore. Please choose a Banff or Canmore hotel."
+              : `Pickups for all ${pkg.tourSlugs.length === 3 ? "three" : pkg.tourSlugs.length} tours are from Banff or Canmore. Please choose a Banff or Canmore hotel.`,
+        };
+      }
     }
+  }
+  if (pkg.banffCanmoreTransferOnly && input.airportTransfer?.area === "LAKE_LOUISE") {
+    return { success: false, error: `Airport transfers with the ${pkg.title} are booked online to Banff or Canmore. For Lake Louise, add it in Special requests or contact our team to confirm.` };
   }
   if (pkg.dayTitles && pkg.slug === "four-day-rockies-and-jasper" && !input.finalDestination) {
     return { success: false, error: "Choose where your Jasper Highlights & Return tour finishes: Banff, Canmore or Lake Louise (included), or Calgary (extra cost)." };

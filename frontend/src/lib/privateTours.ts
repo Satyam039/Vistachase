@@ -1,4 +1,5 @@
 import { isVisibleLink } from "@/lib/activityTickets";
+import { THREE_DAY_CANCELLATION } from "@/lib/threeDayContent";
 // Copy and structure for the Private Tours page and multi-day private journeys,
 // from the owner's change-tracking specification (Private Tour Page section).
 
@@ -42,6 +43,8 @@ export const PRIVATE_MAX_GUESTS = 14;
 export const PACKAGE_DAY_PRICE = { summer: 1575, winter: 1240 };
 /** Four-Day Rockies & Jasper (owner, 2026-11-24): up to 14 guests, 12–13 recommended for comfort. */
 export const FOUR_DAY_MAX_GUESTS = 14;
+/** Three-Day Rockies Discovery (owner, 2026-11-24): up to 14 guests, 12–13 recommended for comfort. */
+export const THREE_DAY_MAX_GUESTS = 14;
 
 /**
  * A package booked in one checkout (components/booking/PackageBookingSection.tsx). Must match
@@ -62,6 +65,16 @@ export interface PackageConfig {
   consecutive?: [number, number][];
   /** Checkout copy overrides (Four-Day, owner 2026-11-24). */
   cancellationNote?: string;
+  /** Pickups in Banff or Canmore only, each tour may use its own address (Three-Day, owner 2026-11-24). */
+  banffCanmorePickup?: boolean;
+  /** Airport transfers priced online to Banff or Canmore only; Lake Louise via Special requests. */
+  banffCanmoreTransferOnly?: boolean;
+  /** Each activity requested with its own participant count, no generic "Add-on activities" box. */
+  directActivities?: boolean;
+  /** Replace the shared-tour pickup start times with "confirmed before each tour". */
+  hidePickupTimes?: boolean;
+  /** An arrival transfer before the tours starts the cancellation deadline. */
+  arrivalStartsDeadline?: boolean;
   guestNote?: string;
   datesNote?: string;
 }
@@ -97,15 +110,26 @@ export const PRIVATE_PACKAGES: Record<"two" | "three" | "four", PackageConfig> =
   three: {
     slug: "three-day-rockies-discovery",
     title: "Three-Day Rockies Discovery",
+    // Owner, 2026-11-24: tour names, not Day 1-3; three different dates in any order, June 1 -
+    // October 10; up to 14 guests; Banff/Canmore pickups. Same order as backend package-booking.ts.
     days: [
-      { slug: BANFF_DAY, title: "Banff's Lakes, Viewpoints & Mountain Scenery", label: "Private · Banff" },
-      { slug: BANFF_DAY, title: "Lake Louise, Moraine Lake & Yoho", label: "Private · Lake Louise & Yoho" },
-      { slug: ICEFIELD_DAY, title: "Icefields Parkway, Glaciers & Scenic Lakes", label: "Private · Icefields Parkway" },
+      { slug: BANFF_DAY, title: "Banff Lakes & Viewpoints", label: "Private · Banff, about 10 hours" },
+      { slug: BANFF_DAY, title: "Lake Louise, Moraine Lake & Yoho", label: "Private · Lake Louise & Yoho, about 10 hours" },
+      { slug: ICEFIELD_DAY, title: "Icefields Parkway & Columbia Icefield", label: "Private · Icefields Parkway, about 10 hours" },
     ],
     discountPercent: 10,
     summerOnly: true,
     vehicle: true,
-    maxGuests: PRIVATE_MAX_GUESTS,
+    maxGuests: THREE_DAY_MAX_GUESTS,
+    banffCanmorePickup: true,
+    banffCanmoreTransferOnly: true,
+    directActivities: true,
+    hidePickupTimes: true,
+    arrivalStartsDeadline: true,
+    cancellationNote: `${THREE_DAY_CANCELLATION.short} If an arrival transfer comes before your tours, the deadline runs from its scheduled pickup; otherwise from your first tour. Alberta local time.`,
+    guestNote: "Private, up to 14 guests; 12–13 recommended for comfort. One price per private van, whatever the group size.",
+    datesNote:
+      "Choose a different available date for each tour, in any order. Dates can be consecutive or separated by other days in your stay. All three tours must fall between June 1 and October 10.",
   },
   four: {
     slug: "four-day-rockies-and-jasper",
@@ -146,6 +170,8 @@ export interface PrivateTourOption {
   /** Optional rows (Four-Day, owner 2026-11-24). */
   finalDropoff?: string;
   scheduling?: string;
+  /** "Dates" row (Three-Day, owner 2026-11-24). */
+  dates?: string;
   /** Replaces the summer/winter price rows, e.g. "Summer only: June 1–October 10". */
   seasonLabel?: string;
   savings?: string;
@@ -245,21 +271,20 @@ export const PRIVATE_OPTIONS: PrivateTourOption[] = [
     id: "three-day-rockies-discovery",
     slug: "three-day-rockies-discovery",
     title: "Three-Day Rockies Discovery",
-    description: "Explore Banff’s highlights, Lake Louise, Moraine Lake, Yoho and the Columbia Icefield across three days.",
+    // Owner's product card, 2026-11-24.
+    description: "Three private adventures covering Banff, Lake Louise, Moraine Lake, Yoho and the Icefields Parkway—with flexible dates and 10% summer savings.",
     duration: "3 days",
     transport: "Private Vehicle & Guide",
-    suggestedStay: "Canmore/Banff/Lake Louise",
-    pickup: "Doorstep Pickup Included",
-    activities: "Optional Activities at Checkout",
-    airportTransfers: "From CAD $364 per transfer, with 2+ tour days",
+    suggestedStay: "Banff or Canmore",
+    pickup: "Doorstep pickup and drop-off in Banff or Canmore",
+    group: "Up to 14 guests; 12–13 recommended for comfort",
+    dates: "Three different available dates, in any order",
+    activities: "Optional experiences; tickets invoiced separately",
+    airportTransfers: "From CAD $364 per one-way transfer for up to six passengers",
     accommodation: "Booked separately by you",
     priceFrom: PACKAGE_DAY_PRICE.summer * 3,
     priceUnit: "per vehicle",
-    priceNote: "CAD $1,575 per day. June 1 – October 10 only. Private, up to 13 guests.",
-    seasonalPricing: {
-      summer: "CAD $1,575/day ($4,725)",
-      winter: "Summer only (Jun 1 – Oct 10)",
-    },
+    seasonLabel: "Summer only: June 1–October 10",
     buttonLabel: "View Itinerary",
     buttonHref: "/three-day-rockies-discovery",
     image: "/media/photos/bow-lake-dock-sunrise.webp",

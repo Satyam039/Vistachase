@@ -1,7 +1,7 @@
 // Optional activities on the private multi-day journeys (owner's spec, 2026-11-18): the guest ticks
 // each activity and says how many adults, children and infants join it. Nothing is ticked for them.
 //   2-day: Columbia Icefield Adventure
-//   3-day: Columbia Icefield Adventure, Banff Gondola, Lake Minnewanka Cruise
+//   3-day: Banff Gondola, Lake Minnewanka Cruise, Ice Explorer + Skywalk (one combined experience)
 //   4-day: Banff Gondola, Lake Minnewanka Cruise, Ice Explorer + Skywalk (one combined experience),
 //          Maligne Lake Cruise to Spirit Island
 // Each activity is priced here per adult, child and infant. While a price is null (the owner hasn't
@@ -37,12 +37,13 @@ const NAMES: Record<string, string> = {
 /** The activities each private journey offers, in the order the page lists them. */
 export const PACKAGE_ACTIVITY_IDS: Record<string, string[]> = {
   "two-day-rockies-explorer-private": ["columbia-icefield-adventure"],
-  "three-day-rockies-discovery": ["columbia-icefield-adventure", "banff-gondola", "lake-minnewanka-cruise"],
+  // Owner, 2026-11-24: Banff tour (gondola, Minnewanka cruise), then the combined glacier experience.
+  "three-day-rockies-discovery": ["banff-gondola", "lake-minnewanka-cruise", "columbia-icefield-adventure"],
   "four-day-rockies-and-jasper": ["banff-gondola", "lake-minnewanka-cruise", "columbia-icefield-adventure", "maligne-lake-cruise"],
 };
 
 export const packageActivityName = (packageSlug: string, id: string) =>
-  packageSlug === "four-day-rockies-and-jasper" && id === "columbia-icefield-adventure" ? "Ice Explorer + Skywalk (combined glacier experience)" : (NAMES[id] ?? id);
+  (packageSlug === "four-day-rockies-and-jasper" || packageSlug === "three-day-rockies-discovery") && id === "columbia-icefield-adventure" ? "Ice Explorer + Skywalk (combined glacier experience)" : (NAMES[id] ?? id);
 
 export const packageActivitiesSchema = z
   .array(

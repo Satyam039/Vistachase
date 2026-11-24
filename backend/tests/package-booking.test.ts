@@ -281,6 +281,31 @@ describe("private multi-day journeys", () => {
     expect(result.error).toContain("Banff or Canmore");
   });
 
+  it("three-day (owner, 2026-11-24): any order, different dates, 14 guests, Banff/Canmore pickups and transfers, tour names in errors", async () => {
+    setPaymentProviderForTests(browserPays);
+    const llStop = await prisma.shuttleStop.create({ data: { name: "Test Lake Louise Inn", town: "Lake Louise", address: "2 Village Rd", latitude: 51.42, longitude: -116.18, instructions: "Front door" } });
+    // Icefields before Banff is fine (any order); 14 guests fit the van.
+    const ids = [
+      await vehicle("banff-private-tour", "2027-09-20", 175000),
+      await vehicle("banff-private-tour", "2027-09-12", 175000),
+      await vehicle("icefields-jasper-private-tour", "2027-09-08", 175000),
+    ];
+    const lakeLouise = await createPackageBooking(party(46, "three-day-rockies-discovery", ids, { pickupStopId: llStop.id }));
+    expect(lakeLouise.success).toBe(false);
+    expect(lakeLouise.error).toContain("all three tours are from Banff or Canmore");
+    const llTransfer = await createPackageBooking(
+      party(47, "three-day-rockies-discovery", ids, { airportTransfer: { type: "ARRIVAL", area: "LAKE_LOUISE", arrivalDate: "2027-09-07", arrivalTime: "14:00", from: "Calgary Airport", to: "Lake Louise" } }),
+    );
+    expect(llTransfer.error).toContain("Special requests");
+    expect((await createPackageBooking(party(49, "three-day-rockies-discovery", ids, { adultsCount: 15 }))).error).toContain("up to 14 guests");
+    const fourteen = await createPackageBooking(party(48, "three-day-rockies-discovery", ids, { adultsCount: 14 }));
+    expect(fourteen.success).toBe(true);
+    // Errors name the tour, never a blank or "Day N".
+    const winter = await vehicle("icefields-jasper-private-tour", "2027-11-03", 124000);
+    const off = await createPackageBooking(party(50, "three-day-rockies-discovery", [await vehicle("banff-private-tour", "2027-08-01", 175000), await vehicle("banff-private-tour", "2027-08-03", 175000), winter]));
+    expect(off.error).toMatch(/^Icefields Parkway & Columbia Icefield: /);
+  });
+
   it("private journeys can be paid with a 20% deposit; the webhook confirms both days on the deposits (owner, 2026-11-11)", async () => {
     setPaymentProviderForTests(browserPays);
     const ids = [await vehicle("banff-private-tour", "2027-08-02", 175000), await vehicle("icefields-jasper-private-tour", "2027-08-04", 175000)];

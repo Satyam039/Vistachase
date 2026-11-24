@@ -151,7 +151,17 @@ const MALIGNE_CRUISE: PackageActivity = {
 
 export const PACKAGE_ACTIVITIES: Record<string, PackageActivity[]> = {
   "two-day-rockies-explorer-private": [{ ...ICEFIELD_ADVENTURE, detail: "Columbia Icefield Adventure tickets: Ice Explorer onto the Athabasca Glacier and the Skywalk" }],
-  "three-day-rockies-discovery": [ICEFIELD_ADVENTURE, BANFF_GONDOLA, MINNEWANKA_CRUISE],
+  // Owner, 2026-11-24: the Banff tour's gondola and Minnewanka cruise, then one combined glacier experience.
+  "three-day-rockies-discovery": [
+    { ...BANFF_GONDOLA, info: { ...BANFF_GONDOLA.info, good: ["On your Banff Lakes & Viewpoints tour", "Food at the summit is not included", SEASON] } },
+    { ...MINNEWANKA_CRUISE, info: { ...MINNEWANKA_CRUISE.info, good: ["On your Banff Lakes & Viewpoints tour", "Bring a jacket: it is cooler on the water", SEASON] } },
+    {
+      ...ICEFIELD_ADVENTURE,
+      name: "Ice Explorer + Skywalk (combined glacier experience)",
+      detail: "One combined ticket on your Icefields Parkway tour: Ice Explorer onto the Athabasca Glacier and the Skywalk",
+      info: { ...ICEFIELD_ADVENTURE.info, good: ["On your Icefields Parkway & Columbia Icefield tour", "Ice Explorer and Skywalk can't be chosen separately", "Bring a warm layer and good shoes: it is cold on the ice", SEASON] },
+    },
+  ],
   "four-day-rockies-and-jasper": [
     BANFF_GONDOLA,
     MINNEWANKA_CRUISE,

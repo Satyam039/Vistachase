@@ -12,6 +12,8 @@
 //   Calgary <-> Lake Louise (vehicle for 6 with 6 check-in bags). 7 to 12 guests pay the prices above.
 //   Winter prices "vary" in the table: the summer prices apply all year until the owner gives them.
 //   13+ guests: no approved price: not charged, the team confirms it (priceCents null).
+//   Owner, 2026-11-24 (Three-Day page): the larger category is 7 to 14 passengers for Banff / Canmore
+//   at the same CAD 850; Lake Louise stays up to 12 (larger Lake Louise groups: the team confirms).
 // Replaces the flat CAD 364 per booking (2026-11-11), which charged a round trip as one transfer.
 // The server prices the transfer: the checkout reads these prices from GET /api/bookings/airport-transfer.
 // The details are kept in the booking's price snapshot, as a booking item ("x2" for a round trip) and
@@ -71,8 +73,10 @@ const needsDeparture = (type: AirportTransferType) => type !== "ARRIVAL";
 export const AREA_LABEL: Record<AirportArea, string> = { BANFF: "Banff", CANMORE: "Canmore", LAKE_LOUISE: "Lake Louise" };
 export const TYPE_LABEL: Record<AirportTransferType, string> = { ARRIVAL: "Arrival only", DEPARTURE: "Departure only", ROUND_TRIP: "Round trip" };
 
-/** The largest group the approved prices cover. */
-export const AIRPORT_TRANSFER_MAX_GUESTS = 12;
+/** The largest group the approved prices cover (Banff / Canmore: 7 to 14 at the larger price, owner 2026-11-24). */
+export const AIRPORT_TRANSFER_MAX_GUESTS = 14;
+/** Largest priced group per area: Lake Louise has no approved price above 12. */
+export const AIRPORT_TRANSFER_AREA_MAX_GUESTS: Record<AirportArea, number> = { BANFF: 14, CANMORE: 14, LAKE_LOUISE: 12 };
 export const AIRPORT_TRANSFER_SMALL_GROUP_MAX = 6;
 
 /** CAD per transfer (one way) for up to 12 guests, in cents (owner, 2026-11-17). */
@@ -85,9 +89,9 @@ export function transferCount(type: AirportTransferType): number {
   return type === "ROUND_TRIP" ? 2 : 1;
 }
 
-/** One transfer's price in cents, or null when there is no approved price (no area, under 2 or over 12 guests). */
+/** One transfer's price in cents, or null when there is no approved price (no area, under 2, or over the area's maximum). */
 export function airportTransferUnitCents(area: AirportArea | undefined, guests: number): number | null {
-  if (!area || guests < 2 || guests > AIRPORT_TRANSFER_MAX_GUESTS) return null;
+  if (!area || guests < 2 || guests > AIRPORT_TRANSFER_AREA_MAX_GUESTS[area]) return null;
   const small = guests <= AIRPORT_TRANSFER_SMALL_GROUP_MAX ? SMALL_GROUP_CENTS[area] : null;
   return small ?? AIRPORT_TRANSFER_CENTS[area];
 }
@@ -118,6 +122,7 @@ export function airportTransferPriceList() {
     label: AREA_LABEL[area],
     perTransfer: AIRPORT_TRANSFER_CENTS[area] / 100,
     perTransferSmallGroup: SMALL_GROUP_CENTS[area] == null ? null : SMALL_GROUP_CENTS[area]! / 100,
+    maxGuests: AIRPORT_TRANSFER_AREA_MAX_GUESTS[area],
   }));
   return { currency: "CAD", minGuests: 2, maxGuests: AIRPORT_TRANSFER_MAX_GUESTS, smallGroupMax: AIRPORT_TRANSFER_SMALL_GROUP_MAX, areas };
 }

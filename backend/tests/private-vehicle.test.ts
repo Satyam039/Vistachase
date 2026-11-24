@@ -194,7 +194,10 @@ describe("Airport transfer with a private tour", () => {
     expect(airportTransferPriceCents({ ...rt, area: "LAKE_LOUISE" }, 12)).toBe(179000);
     expect(airportTransferPriceCents({ type: "ARRIVAL", area: "LAKE_LOUISE" }, 7)).toBe(89500);
     expect(airportTransferPriceCents({ type: "DEPARTURE", area: "BANFF" }, 4)).toBe(36400);
-    expect(airportTransferPriceCents({ ...rt, area: "BANFF" }, 13)).toBeNull();
+    // Owner, 2026-11-24: Banff / Canmore's larger category is 7 to 14; Lake Louise is priced up to 12.
+    expect(airportTransferPriceCents({ ...rt, area: "BANFF" }, 14)).toBe(170000);
+    expect(airportTransferPriceCents({ ...rt, area: "BANFF" }, 15)).toBeNull();
+    expect(airportTransferPriceCents({ ...rt, area: "LAKE_LOUISE" }, 13)).toBeNull();
     expect(airportTransferPriceCents({ ...rt, area: "BANFF" }, 1)).toBeNull();
     expect(airportTransferPriceCents({ ...rt }, 4)).toBeNull();
   });
