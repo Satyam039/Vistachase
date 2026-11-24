@@ -26,11 +26,25 @@ const ConciergeChat = dynamic(() => loadChat().then((m) => m.ConciergeChat), {
 export function GlobalVoiceAssistantDrawer() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [initialPrompt, setInitialPrompt] = useState<string | null>(null);
   const launcher = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
 
   // Close on route change (e.g. a link inside the chat).
   useEffect(() => setOpen(false), [pathname]);
+
+  // Listen for programmatic open events (e.g. Banff Elite "Request Personalised Tours")
+  useEffect(() => {
+    const handleOpen = (e: Event) => {
+      const detail = (e as CustomEvent<{ topic?: string; starterMessage?: string }>).detail;
+      if (detail?.starterMessage) {
+        setInitialPrompt(detail.starterMessage);
+      }
+      setOpen(true);
+    };
+    window.addEventListener("vc:open-concierge", handleOpen);
+    return () => window.removeEventListener("vc:open-concierge", handleOpen);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -72,6 +86,7 @@ export function GlobalVoiceAssistantDrawer() {
 
   function close() {
     setOpen(false);
+    setInitialPrompt(null);
     requestAnimationFrame(() => launcher.current?.focus());
   }
 
@@ -107,7 +122,7 @@ export function GlobalVoiceAssistantDrawer() {
             aria-label="Vista Chase AI concierge"
             className="relative flex h-full w-full flex-col overflow-hidden bg-white shadow-[0_30px_80px_-20px_rgba(12,31,33,0.45)] sm:max-w-[440px] sm:rounded-none sm:ring-1 sm:ring-obsidian-900/10 motion-safe:animate-[fadeUp_350ms_ease-out]"
           >
-            <ConciergeChat variant="panel" onClose={close} />
+            <ConciergeChat variant="panel" onClose={close} initialPrompt={initialPrompt || undefined} />
           </div>
         </div>
       )}

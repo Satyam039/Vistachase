@@ -92,7 +92,15 @@ type SpeechRecognitionLike = {
   onend: (() => void) | null;
 };
 
-export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page"; onClose?: () => void }) {
+export function ConciergeChat({
+  variant,
+  onClose,
+  initialPrompt,
+}: {
+  variant: "panel" | "page";
+  onClose?: () => void;
+  initialPrompt?: string;
+}) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [liveTranscript, setLiveTranscript] = useState("");
@@ -503,6 +511,17 @@ export function ConciergeChat({ variant, onClose }: { variant: "panel" | "page";
     [messages, session, voice, speak, stopSpeaking, language, currentSessionId, userPersona, knowledgeGraph, thinkingMode, stagedFiles, clearSpeechTimers, clientLocation],
   );
   sendRef.current = send;
+
+  const initialSentRef = useRef(false);
+  useEffect(() => {
+    if (initialPrompt && !initialSentRef.current && messages.length === 0 && voice === "idle") {
+      initialSentRef.current = true;
+      const t = setTimeout(() => {
+        sendRef.current(initialPrompt);
+      }, 50);
+      return () => clearTimeout(t);
+    }
+  }, [initialPrompt, messages.length, voice]);
 
   // Voice input (browser speech recognition). Owner's PDF (2026-11-14): words were misheard or
   // missed, and what was heard wasn't always sent. Now:

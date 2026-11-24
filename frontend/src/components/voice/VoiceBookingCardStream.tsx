@@ -13,9 +13,22 @@ import { ConciergeSeatMap, type SeatInfo } from "./ConciergeSeatMap";
 import { ConciergeCheckout } from "./ConciergeCheckout";
 import { CHAT_PACKAGES, ConciergePackageCheckout } from "./ConciergePackageCheckout";
 import { ConciergeTourCards, ConciergeTourDetail, type TourCardData, type TourDetailData } from "./ConciergeTourCards";
+import { BanffEliteEnquiryCard, type BanffEliteEnquiryData } from "./BanffEliteEnquiryCard";
 
 export interface VoiceCardData {
-  type?: "availability" | "pickups" | "hold" | "confirmed" | "tracking" | "tour" | "tours" | "choices" | "seat_map";
+  type?:
+    | "availability"
+    | "pickups"
+    | "hold"
+    | "confirmed"
+    | "tracking"
+    | "tour"
+    | "tours"
+    | "choices"
+    | "seat_map"
+    | "banff_elite_enquiry_form"
+    | "banff_elite_enquiry_summary"
+    | "banff_elite_enquiry_result";
   /** "tours": recommended tours as cards. */
   tours?: TourCardData[];
   /** "tour": one tour opened from the knowledgebase. */
@@ -74,6 +87,10 @@ export interface VoiceCardData {
   driver?: string;
   licensePlate?: string;
   trackingToken?: string;
+  enquiry?: BanffEliteEnquiryData;
+  success?: boolean;
+  message?: string;
+  error?: string;
 }
 
 interface VoiceBookingCardStreamProps {
@@ -315,6 +332,41 @@ export function VoiceBookingCardStream({ data, checkoutUrl, hasSafetyRefusal, on
             seats={data.seats}
             onSelectSeats={onSelectSeats}
           />
+        </div>
+      )}
+
+      {(data?.type === "banff_elite_enquiry_form" || data?.type === "banff_elite_enquiry_summary") && (
+        <div className="mt-2 w-full">
+          <BanffEliteEnquiryCard initialData={data.enquiry} />
+        </div>
+      )}
+
+      {data?.type === "banff_elite_enquiry_result" && (
+        <div className="mt-2 w-full">
+          {data.success ? (
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-5 text-obsidian-900 shadow-sm" aria-live="polite">
+              <div className="flex items-start gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-800">
+                  <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-emerald-950">Enquiry Sent</p>
+                  <p className="mt-1 text-sm leading-relaxed text-emerald-900">
+                    Your enquiry has been sent. The Banff Elite team will contact you within 24 hours.
+                  </p>
+                  <p className="mt-3 text-xs text-emerald-800/80">
+                    Sent to support@vistachase.com and support@banffelite.com.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-rose-200 bg-rose-50/80 p-4 text-rose-950" aria-live="polite">
+              <p className="text-sm leading-relaxed">
+                {data.message || data.error || "Your enquiry couldn’t be sent. Please try again or email support@banffelite.com."}
+              </p>
+            </div>
+          )}
         </div>
       )}
     </div>
