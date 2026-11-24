@@ -26,27 +26,40 @@ function faresFor(departures: DepartureAvailability[]): Fares | null {
   };
 }
 
-export function SeasonPrices({ departures, currency, perVehicle = false }: { departures: DepartureAvailability[]; currency: string; perVehicle?: boolean }) {
+export function SeasonPrices({
+  departures,
+  currency,
+  isVehicle = false,
+  perVehicle = false,
+  unitLabel = "per van",
+}: {
+  departures: DepartureAvailability[];
+  currency: string;
+  isVehicle?: boolean;
+  perVehicle?: boolean;
+  unitLabel?: string;
+}) {
+  const vehicle = isVehicle || perVehicle;
   const seasons = [
     { label: "Summer", dates: "June 1 – October 10", fares: faresFor(departures.filter((d) => inSummerSeason(d.date))) },
     { label: "Winter", dates: "October 11 – May 31", fares: faresFor(departures.filter((d) => !inSummerSeason(d.date))) },
   ].filter((s): s is typeof s & { fares: Fares } => s.fares != null);
   if (seasons.length === 0) return null;
   return (
-    <dl className="mt-3 space-y-2 text-sm text-slate-700" aria-label={perVehicle ? "Seasonal prices per van" : "Seasonal prices per guest"}>
+    <dl className="mt-3 space-y-2 text-sm text-slate-700" aria-label={vehicle ? `Seasonal prices ${unitLabel}` : "Seasonal prices per guest"}>
       {seasons.map((s) => (
         <div key={s.label} className="rounded-none bg-obsidian-50 px-3 py-2">
           <dt className="text-obsidian-900">
             {s.label} <span className="text-slate-600">· {s.dates}</span>
           </dt>
-          {perVehicle ? (
-            // Private tours: one price per van, whatever the group size.
-            <dd>{money(s.fares.adult, currency)} per van</dd>
+          {vehicle ? (
+            // Private tours: one price per vehicle/van, whatever the group size.
+            <dd>{money(s.fares.adult, currency)} {unitLabel}</dd>
           ) : (
-          <dd>
-            Adult (16–99) {money(s.fares.adult, currency)} · Youth (6–15) {money(s.fares.youth, currency)}
-            {s.fares.infant != null ? ` · Infant (0–5) ${money(s.fares.infant, currency)}` : " · Infants (0–5) free on a lap"}
-          </dd>
+            <dd>
+              Adult (16–99) {money(s.fares.adult, currency)} · Youth (6–15) {money(s.fares.youth, currency)}
+              {s.fares.infant != null ? ` · Infant (0–5) ${money(s.fares.infant, currency)}` : " · Infants (0–5) free on a lap"}
+            </dd>
           )}
         </div>
       ))}

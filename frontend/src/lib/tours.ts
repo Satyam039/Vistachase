@@ -35,11 +35,13 @@ export function vehicleSeats(slug: string | null | undefined, capacityTotal: num
 
 /** "Price from" unit label: private tours and packages are priced per group. */
 export function priceUnitLabel(tour: TourWithAvailability) {
+  if (tour?.slug === "banff-private-tour") return "per van";
   return tour?.priceUnit === "GROUP" ? "per group" : "per guest";
 }
 
 /** Duration as the product page states it ("9-11 hours"), falling back to the hours figure. */
 export function durationLabel(tour: TourWithAvailability) {
+  if (tour?.slug === "banff-private-tour") return "10–12 hours";
   return tour?.facts?.find((f) => /duration/i.test(f.label))?.value ?? `${tour?.durationHours ?? 8} hours`;
 }
 
@@ -48,11 +50,12 @@ export function durationLabel(tour: TourWithAvailability) {
  * date is, like the winter SUV's 6); shared tours say "Small group", never a number (owner, 2026-11-11).
  */
 export function groupLabel(tour: TourWithAvailability) {
+  if (tour?.slug === "banff-private-tour") return "Up to 14 guests";
   if (tour?.category === "TICKET") return "Individual tickets";
   if (tour?.category === "PRIVATE" && PRIVATE_VEHICLE_MAX_GUESTS[tour.slug]) return PRIVATE_VAN_GROUP_TEXT;
   if (tour?.category === "PRIVATE" || (Array.isArray(tour?.vehicleOptions) && tour.vehicleOptions.length > 0)) {
     const seats = tour?.departures?.length ? Math.max(...tour.departures.map((d) => d.capacityTotal ?? 13)) : 13;
-    return `Private, up to ${Math.min(13, seats)} guests`;
+    return `Private, up to ${Math.min(14, seats)} guests`;
   }
   if (tour?.category === "SHARED") return "Small group";
   if (tour?.category === "SHUTTLE") return `Max ${SHUTTLE_CAPACITY} guests`;

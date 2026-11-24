@@ -22,6 +22,7 @@ export const ICEFIELD_PAGE_TERMS = [
 ];
 
 export const PRIVATE_PICKUP = "Doorstep pickup at your accommodation in Banff, Canmore or Lake Louise, at a time agreed with you before the tour.";
+export const PRIVATE_BANFF_CANMORE_PICKUP = "Doorstep pickup at your accommodation in Banff or Canmore. Your guide contacts you the evening before your tour, normally between 6 and 9 PM, to confirm the exact pickup time and arrangements.";
 
 export interface ItineraryStep {
   time: string;
@@ -118,6 +119,32 @@ const ICEFIELD_WINTER_STOPS: ItineraryStop[] = [
   },
 ];
 
+const PRIVATE_BANFF_YOHO_STOPS: ItineraryStop[] = [
+  { name: "Lake Louise", text: "About 1 hour beside the famous lake below Victoria Glacier." },
+  { name: "Moraine Lake", text: "About 1 hour in the Valley of the Ten Peaks. Moraine Lake transportation is included from June 1 to October 10.", summerOnly: true },
+  { name: "Lunch in Lake Louise Village", text: "A planned break to purchase lunch or enjoy your own packed lunch. Food is not included." },
+  { name: "Emerald Lake", text: "About 30 minutes on the shore of Yoho's best-known lake." },
+  { name: "Natural Bridge", text: "About 15 minutes where the Kicking Horse River cuts through the rock." },
+  { name: "Lower Spiral Tunnels Viewpoint", text: "About 15 minutes at the railway's famous loop tunnels.", summerOnly: true },
+  { name: "Morant's Curve", text: "About 15 minutes at the classic Bow River railway view, with a drive along the Bow Valley Parkway." },
+  { name: "Johnston Canyon", text: "About 1 hour on the canyon walkways toward the falls." },
+  { name: "Lake Minnewanka", text: "About 20 minutes beside Banff's largest lake." },
+  { name: "Two Jack Lake", text: "About 15 minutes for reflections of Mount Rundle." },
+];
+
+const PRIVATE_BANFF_YOHO_WINTER_STOPS: ItineraryStop[] = [
+  { name: "Lake Louise", text: "About 1 hour beside the famous lake below Victoria Glacier." },
+  { name: "Bow Lake", text: "A scenic lakeside stop surrounded by towering peaks and glacier-fed waters. Approximately 30 minutes." },
+  { name: "Peyto Lake", text: "Enjoy the famous turquoise lake from its panoramic viewpoint. Approximately 30 minutes, including a short uphill walk." },
+  { name: "Lunch in Lake Louise Village", text: "A planned break to purchase lunch or enjoy your own packed lunch. Food is not included." },
+  { name: "Emerald Lake", text: "About 30 minutes on the shore of Yoho's best-known lake." },
+  { name: "Natural Bridge", text: "About 15 minutes where the Kicking Horse River cuts through the rock." },
+  { name: "Morant's Curve", text: "About 15 minutes at the classic Bow River railway view, with a drive along the Bow Valley Parkway." },
+  { name: "Johnston Canyon", text: "About 1 hour on the canyon walkways toward the falls." },
+  { name: "Lake Minnewanka", text: "About 20 minutes beside Banff's largest lake." },
+  { name: "Two Jack Lake", text: "About 15 minutes for reflections of Mount Rundle." },
+];
+
 export const TOUR_ITINERARIES: Record<string, TourItinerary> = {
   "banff-highlights-tour": {
     title: "Banff & Yoho Discovery (Shared Tour)",
@@ -183,25 +210,47 @@ export const TOUR_ITINERARIES: Record<string, TourItinerary> = {
     },
   },
   "banff-private-tour": {
-    title: "Banff & Yoho Discovery (Private Tour)",
-    duration: "About 10 to 12 hours, door to door",
-    stops: BANFF_YOHO_STOPS.map((s) =>
-      s.name === "Moraine Lake" ? { ...s, text: "About 1 hour in the Valley of the Ten Peaks, during its operating season (usually June to early October)." } : s,
-    ),
+    title: "Private Banff & Yoho Discovery",
+    duration: "Approximately 10–12 hours",
+    stops: PRIVATE_BANFF_YOHO_STOPS,
     steps: [
-      { time: "Morning", text: `${PRIVATE_PICKUP} ${GUIDE_CALL}` },
-      { time: "Morning", text: "Lake Louise and Moraine Lake (Moraine Lake during its operating season)." },
-      { time: "Midday", text: BANFF_YOHO_MIDDAY },
-      { time: "Afternoon", text: BANFF_YOHO_AFTERNOON },
-      { time: "Evening", text: "Drop-off at your accommodation. The day runs about 10 to 12 hours, depending on your pace." },
+      { time: "Morning", text: PRIVATE_BANFF_CANMORE_PICKUP },
+      { time: "Morning", text: "Lake Louise and Moraine Lake (Moraine Lake during its operating season, June 1–October 10)." },
+      { time: "Midday", text: "Lunch stop in Lake Louise Village (food not included), then Emerald Lake, Natural Bridge and Morant's Curve." },
+      { time: "Afternoon", text: "Johnston Canyon, Lake Minnewanka and Two Jack Lake." },
+      { time: "Evening", text: "Drop-off at your accommodation in Banff or Canmore. Allow approximately 10–12 hours for the tour." },
+    ],
+    pickup: [
+      "Doorstep pickup and drop-off are available in Banff and Canmore only.",
+      "Select a listed pickup location when booking, or enter your requested accommodation or address in the custom field. Custom requests must be within Banff or Canmore and are subject to confirmation.",
+      "Your guide contacts you the evening before your tour, normally between 6 and 9 PM, to confirm the exact pickup time and arrangements.",
     ],
     seasonal: [
-      "Price per vehicle, up to 13 guests: CAD $1,750 from June 1 to October 10, all-inclusive (tax, park entry and Moraine Lake entry fees); CAD $1,240 from October 11 to May 31.",
-      "Moraine Lake: during its operating season (usually June to early October); access arrangements depend on your vehicle and are explained before booking.",
-      "The route varies by season: your guide adjusts stops to road and weather conditions.",
-      "Weather: mountain conditions change quickly, so dress in layers and wear comfortable shoes.",
-      "Wildlife sightings are possible but can't be guaranteed.",
+      "Summer price: CAD $1,750 per van, June 1–October 10.",
+      "Winter price: CAD $1,240 per van, October 11–May 31.",
+      "Prices cover your private group of up to 14 guests and include taxes and mandatory fees.",
+      "We recommend 12–13 guests for extra comfort.",
+      "Allow approximately 10–12 hours for the tour.",
+      "Moraine Lake transportation is included during its operating season. Depending on arrangements, your group may remain in the same van or transfer to another van; transportation remains private.",
+      "No separate Moraine Lake shuttle reservation is required.",
+      "The guide manages on-the-day itinerary adjustments within the planned route and scheduled return time.",
+      "Seasonal access, weather and road conditions may affect stops.",
+      "Wildlife sightings cannot be guaranteed.",
     ],
+    winter: {
+      stops: PRIVATE_BANFF_YOHO_WINTER_STOPS,
+      steps: [
+        { time: "Morning", text: PRIVATE_BANFF_CANMORE_PICKUP },
+        { time: "Morning", text: "Lake Louise, Bow Lake and Peyto Lake." },
+        { time: "Midday", text: "Lunch break in Lake Louise Village (food not included), then Emerald Lake, Natural Bridge and Morant's Curve." },
+        { time: "Afternoon", text: "Johnston Canyon, Lake Minnewanka and Two Jack Lake." },
+        { time: "Evening", text: "Drop-off at your accommodation in Banff or Canmore. Allow approximately 10–12 hours for the tour." },
+      ],
+      notes: [
+        "Winter itinerary (October 11–May 31): Bow Lake and Peyto Lake replace Moraine Lake and Lower Spiral Tunnels Viewpoint.",
+        "All stops remain subject to weather, road access and operating conditions.",
+      ],
+    },
   },
   // Private Columbia Icefield Adventure, owner's page changes of 2026-11-24: Ice Explorer + Skywalk as
   // one combined optional experience (about 2½ hours, invoiced separately), a separate Icefield

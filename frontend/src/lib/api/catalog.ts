@@ -60,7 +60,7 @@ export async function getTours(options?: {
 }
 
   // Graceful fallback to authoritative catalog
-  return visibleTours(FALLBACK_TOURS).filter((t) => {
+  return visibleTours(FALLBACK_TOURS).map(withDocContent).filter((t) => {
     if (options?.category && t.category !== options.category) return false;
     if (options?.destinationSlug && t.destination.slug !== options.destinationSlug) return false;
     if (options?.isFeatured !== undefined && t.isFeatured !== options.isFeatured) return false;
@@ -82,7 +82,8 @@ export async function getTourBySlug(slug: string): Promise<TourWithAvailability 
 
   // Only a matching tour: product pages live at top-level URLs, so an unknown slug must 404.
   if (!fallbackAllowed()) return null;
-  return FALLBACK_TOURS.find((t) => t.slug === slug) ?? null;
+  const match = FALLBACK_TOURS.find((t) => t.slug === slug);
+  return match ? withDocContent(match) : null;
 }
 
 export async function getShuttleRoutes(): Promise<ShuttleWithDepartures[]> {

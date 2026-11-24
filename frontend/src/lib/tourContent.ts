@@ -27,6 +27,9 @@ interface DocContent {
   title: string;
   summary: string;
   description: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  itineraryNote?: string;
   /** Replaces facts with the same label; other facts stay. */
   facts: { label: string; value: string }[];
   highlights: string[];
@@ -52,7 +55,6 @@ interface DocContent {
   /** Link the Two-Day Rockies Explorer (both shared tours, 10% off) from the booking panel. */
   comboOffer?: boolean;
   /** Browser/SEO title, over the imported metaTitle (and meta description = summary). */
-  metaTitle?: string;
   /** Guests the booking panel and checkout take (a larger private van). */
   maxGroupSize?: number;
   /** Leave out the "Your vehicle options" section (photos, models, SUV/executive options). */
@@ -277,31 +279,174 @@ const CONTENT: Record<string, DocContent> = {
   },
 };
 
+export const BANFF_PRIVATE_FAQS: TourFaq[] = [
+  {
+    question: "Is a private tour in Banff worth it?",
+    answer: "A private tour gives your group its own van and dedicated driver-guide, with doorstep pickup in Banff or Canmore. You follow a planned sightseeing route, with flexibility to adjust stops and pacing with your guide during the day.",
+  },
+  {
+    question: "Can you visit Moraine Lake on a private tour?",
+    answer: "Yes. Moraine Lake is included during its operating season, normally June 1–October 10, subject to road access and conditions. All required transportation is included, and you do not need a separate shuttle reservation.\n\nDepending on the day’s arrangements, you may travel in your tour van or transfer to another van. Your group’s transportation remains private.",
+  },
+  {
+    question: "How long is our private tour of Banff?",
+    answer: "Allow approximately 10–12 hours from pickup to drop-off. Time spent at individual stops can be adjusted with your guide within the scheduled tour day. Traffic, weather and road conditions may affect your return time.",
+  },
+  {
+    question: "What is included in a Banff private tour?",
+    answer: "Your tour includes a private passenger van, a dedicated driver-guide, doorstep pickup and drop-off in Banff or Canmore, required national park admission, bottled water, taxes and mandatory fees.\n\nSeasonal Moraine Lake transportation is also included. Lunch, the optional Lake Minnewanka cruise, gratuities and personal expenses cost extra.",
+  },
+  {
+    question: "Can you customize stops on a private Banff tour?",
+    answer: "You can discuss changes to stops and time spent at each location with your guide on the day. For example, you may spend longer at Lake Louise or skip a stop that does not interest your group.\n\nThe tour has a planned route and scheduled return time. Spending longer at one location may require shortening or skipping another. To experience the full itinerary, follow your guide’s recommended timing.\n\nFor a stay planned individually with a specialist before travel, including a tailored itinerary across several days, contact our sister company, Banff Elite.",
+  },
+  {
+    question: "What is the best time to visit Moraine Lake?",
+    answer: "Moraine Lake is normally visited from June 1–October 10, subject to seasonal road access and conditions. Your guide determines the visit time as part of the day’s route. This tour does not promise a sunrise visit or a particular crowd level.",
+  },
+  {
+    question: "How many people can join a private tour?",
+    answer: "The van has 15 seats: one for your driver-guide and space for up to 14 guests. We recommend 12–13 guests for extra comfort, but your private group can book all 14 passenger seats.\n\nThe van is exclusively for your group, and pricing is per vehicle, not per person.",
+  },
+  {
+    question: "Are meals included in a private tour?",
+    answer: "No. We stop for lunch in Lake Louise Village, where you can purchase food or enjoy your own packed lunch. Bottled water is included.",
+  },
+  {
+    question: "What happens if the weather is bad?",
+    answer: "Your guide may adjust the route, stop order or timing to suit weather and road conditions. Some locations may be inaccessible.\n\nIf Vista Chase must cancel the tour because of a wildfire, highway closure or another disruption, you receive a full refund.",
+  },
+  {
+    question: "How do private tours avoid the crowds?",
+    answer: "Your guide can adjust the order and timing of stops where practical. However, popular attractions are shared with other visitors, and a private tour does not guarantee quiet locations, priority entry or freedom from queues.",
+  },
+  {
+    question: "How much does the private tour cost?",
+    answer: "The price is in Canadian dollars per van:\n\nJune 1–October 10: CAD $1,750.\n\nOctober 11–May 31: CAD $1,240.\n\nThese prices cover your private group of up to 14 guests and include taxes and mandatory fees. Lunch and optional activities are extra.",
+  },
+  {
+    question: "Which places will we visit?",
+    answer: "The planned summer itinerary includes Lake Louise, Moraine Lake, Johnston Canyon, Emerald Lake, the Natural Bridge, Lake Minnewanka, Two Jack Lake, Lower Spiral Tunnels Viewpoint and Morant’s Curve, with a lunch stop in Lake Louise Village.\n\nStops, their order and time at each may change because of conditions or adjustments agreed with your guide.",
+  },
+  {
+    question: "Does this tour operate in winter?",
+    answer: "Yes. The tour follows a seasonal itinerary. Bow Lake and Peyto Lake replace Moraine Lake and Lower Spiral Tunnels Viewpoint when those seasonal stops are unavailable.\n\nYour guide may make further adjustments for weather, road access and conditions.",
+  },
+  {
+    question: "Where can we be picked up and dropped off?",
+    answer: "Doorstep pickup and drop-off are available in Banff and Canmore only.\n\nChoose a listed pickup location when booking, or enter your accommodation or requested address in the custom field. Custom pickup requests must be within Banff or Canmore and are subject to confirmation.\n\nLake Louise pickup is not offered for this tour.",
+  },
+  {
+    question: "When will we receive our exact pickup time?",
+    answer: "Your guide contacts you the evening before your tour, normally between 6 and 9 PM, to confirm the exact pickup time and arrangements. Please be ready at the confirmed location and time.",
+  },
+  {
+    question: "Can we add a Lake Minnewanka cruise?",
+    answer: "Yes, subject to the cruise’s seasonal operation and ticket availability. Select the optional cruise during checkout, or contact us well in advance so our team can arrange tickets.\n\nCruise admission costs extra. Its scheduled departure and duration must fit within your tour day, so your guide may need to adjust other sightseeing stops.",
+  },
+  {
+    question: "Is the tour suitable for children, seniors and guests with mobility needs?",
+    answer: "Guests of all ages are welcome. Walking requirements vary by stop, and some paths may include uneven ground, steps or slippery surfaces.\n\nThe private tour follows the same child-seat and accessibility arrangements as our shared Banff & Yoho tour. Tell us about children needing seats or anyone with mobility needs before booking so our team can confirm suitable arrangements. Your guide can discuss shorter walks or skipped stops with your group.",
+  },
+  {
+    question: "What should we bring?",
+    answer: "Bring comfortable walking shoes, layers, a weatherproof jacket, sun protection and personal essentials. Mountain weather can change quickly. Bring a packed lunch if you prefer not to purchase food during the Lake Louise Village stop.",
+  },
+  {
+    question: "What is the cancellation policy?",
+    answer: "Cancel at least 72 hours before your confirmed departure time for a full refund. Cancellations with less than 72 hours’ notice, missed pickups and no-shows are non-refundable.\n\nThe deadline uses local Alberta time. Approved refunds are normally returned to the original payment method within 5–10 business days.",
+  },
+  {
+    question: "Can we reschedule our private tour?",
+    answer: "You can request a date change at least 72 hours before your scheduled departure. Changes depend on availability and are confirmed only when accepted by Vista Chase.",
+  },
+  {
+    question: "Can our tour be cancelled because there are too few guests?",
+    answer: "No. This is a private booking for your group, so a minimum passenger requirement does not apply.\n\nDisruptions such as wildfires or highway closures may still require cancellation. If Vista Chase cancels your tour, you receive a full refund.",
+  },
+  {
+    question: "Can we request a luxury SUV or a fully tailored holiday?",
+    answer: "Vista Chase operates this tour in a private passenger van. For premium vehicle options or a holiday curated with a specialist around your dates, interests and pace, contact our sister company, Banff Elite.",
+  },
+];
+
 CONTENT[PRIVATE_BANFF_YOHO.slug!] = {
-  title: PRIVATE_BANFF_YOHO.title,
-  summary:
-    "Explore Lake Louise, Moraine Lake and the highlights of Banff and Yoho with your own guide and vehicle. Doorstep pickup in Banff, Canmore & Lake Louise.",
+  metaTitle: "Private Banff & Yoho Discovery Tour | Vista Chase",
+  metaDescription:
+    "Explore Banff and Yoho with your own driver-guide and private van. Doorstep pickup in Banff or Canmore. Up to 14 guests, with seasonal itineraries.",
+  title: "Private Banff & Yoho Discovery",
+  summary: "Your group. Your guide. A full day exploring Banff and Yoho.",
   description:
-    "The same full day as our award-winning Banff & Yoho tour, just for your group: Lake Louise, Moraine Lake, Johnston Canyon, Emerald Lake and the Natural Bridge, with Lake Minnewanka, Two Jack Lake, the Spiral Tunnels and Morant's Curve.\nYour driver-guide picks you up at your door and shapes the pace around you. Park admission is included, and Moraine Lake access is arranged during its operating season.",
-  facts: [
-    { label: "Entry fees", value: "Park admission included" },
-    { label: "Pickup", value: "Doorstep pickup included" },
-    { label: "Operation", value: "Year round · route varies by season" },
-    { label: "Group", value: "Private, up to 13 guests" },
+    "Explore the highlights of Banff and Yoho National Parks with a dedicated driver-guide and a passenger van exclusively for your group.\n\nThe summer itinerary includes Lake Louise, Moraine Lake, Johnston Canyon, Emerald Lake, the Natural Bridge, Lake Minnewanka, Two Jack Lake, Lower Spiral Tunnels Viewpoint and Morant’s Curve.\n\nIn winter, Bow Lake and Peyto Lake replace Moraine Lake and Lower Spiral Tunnels Viewpoint.\n\nEnjoy doorstep pickup and drop-off in Banff or Canmore, with required park admission and seasonal Moraine Lake transportation included. Discuss small changes to stops and pacing with your guide during the day, within the planned route and scheduled return time.",
+  quickFacts: [
+    { label: "Duration", value: "Approximately 10–12 hours" },
+    { label: "Pickup & drop-off", value: "Doorstep service in Banff or Canmore" },
+    { label: "Group size", value: "Private, up to 14 guests; 12–13 recommended for comfort" },
+    { label: "Pricing", value: "Per private van" },
+    { label: "Cancellation", value: "Full refund with at least 72 hours’ notice" },
   ],
-  highlights: BANFF_YOHO.stops,
-  inclusions: [...PRIVATE_INCLUSIONS, "Moraine Lake access arrangements during its operating season"],
-  exclusions: ["Lunch (stop in Lake Louise Village)", "Third-party activities such as the Banff Gondola, lake cruises and canoe rentals", "Gratuities", "Personal expenses"],
-  goodToKnow: PRIVATE_GOOD_TO_KNOW,
+  facts: [
+    { label: "Duration", value: "Approximately 10–12 hours" },
+    { label: "Pickup & drop-off", value: "Doorstep service in Banff or Canmore" },
+    { label: "Group size", value: "Private, up to 14 guests; 12–13 recommended for comfort" },
+    { label: "Pricing", value: "Per private van" },
+    { label: "Cancellation", value: "Full refund with at least 72 hours’ notice" },
+  ],
+  highlights: [
+    "Lake Louise",
+    "Moraine Lake (summer)",
+    "Bow Lake (winter)",
+    "Peyto Lake (winter)",
+    "Johnston Canyon",
+    "Emerald Lake",
+    "Natural Bridge",
+    "Lake Minnewanka",
+    "Two Jack Lake",
+    "Lower Spiral Tunnels Viewpoint (summer)",
+    "Morant’s Curve",
+  ],
+  inclusions: [
+    "Private passenger van exclusively for your group.",
+    "Dedicated driver-guide.",
+    "Doorstep pickup and drop-off in Banff or Canmore.",
+    "Required national park admission fees.",
+    "Seasonal Moraine Lake transportation, including any required private van transfer.",
+    "Bottled water.",
+    "Taxes and mandatory fees.",
+  ],
+  exclusions: [
+    "Lunch.",
+    "Optional Lake Minnewanka cruise admission.",
+    "Gratuities.",
+    "Personal expenses.",
+  ],
+  goodToKnow: [
+    "Discuss small changes to stops and pacing with your guide during the day, within the planned route and scheduled return time.",
+    "Guests of all ages are welcome. Walking requirements vary by stop, and some paths may include uneven ground, steps or slippery surfaces.",
+    "The private tour follows the same child-seat and accessibility arrangements as our shared Banff & Yoho tour. Tell us about children needing seats or anyone with mobility needs before booking so our team can confirm suitable arrangements.",
+    "Bring comfortable walking shoes, layers, a weatherproof jacket, sun protection and personal essentials. Mountain weather can change quickly.",
+  ],
   stops: TOUR_ITINERARIES[PRIVATE_BANFF_YOHO.slug!].stops,
   steps: TOUR_ITINERARIES[PRIVATE_BANFF_YOHO.slug!].steps,
-  seasonal: TOUR_ITINERARIES[PRIVATE_BANFF_YOHO.slug!].seasonal,
-  faqs: [
-    { match: /how long/i, answer: "About 10 to 12 hours, door to door. Your pickup time is agreed with you before the tour, and the pace is set around your group." },
-    { match: /what is included/i, answer: PRIVATE_INCLUDED },
-    { match: /moraine lake on a private/i, answer: PRIVATE_MORAINE },
+  itinerary: [
+    {
+      heading: "Seasonal itinerary",
+      body: [
+        "Summer: June 1–October 10. Moraine Lake is included when its road is open.",
+        "Winter: October 11–May 31. Bow Lake and Peyto Lake replace Moraine Lake and Lower Spiral Tunnels Viewpoint.",
+        "All stops remain subject to weather, road access and operating conditions.",
+      ],
+      stops: TOUR_ITINERARIES[PRIVATE_BANFF_YOHO.slug!].stops,
+    },
   ],
+  itineraryNote:
+    "This is a planned sightseeing itinerary. Stops, their order and approximate visit times may change with conditions. You may discuss longer visits or skipped stops with your guide, but extra time at one location may require shortening or missing another to stay within the scheduled tour day. Follow your guide’s recommended timing to experience the full route.",
+  pickup: TOUR_ITINERARIES[PRIVATE_BANFF_YOHO.slug!].pickup,
+  seasonal: TOUR_ITINERARIES[PRIVATE_BANFF_YOHO.slug!].seasonal,
+  faqs: [],
   addFaqs: [],
+  onlyFaqs: BANFF_PRIVATE_FAQS,
+  priceSeasons: true,
 };
 
 // Private Columbia Icefield Adventure: the owner's page changes, add-on control and FAQs of 2026-11-24
@@ -744,9 +889,13 @@ export function withDocContent(tour: TourWithAvailability): TourWithAvailability
       label: "Inclusions",
       sections: c.itinerary
         ? c.itinerary.map((x, i, all) =>
-            section(x.heading, { body: x.body ?? [], stops: x.stops ?? [], note: i === all.length - 1 ? "Stops, their order and time at each may change with the season, weather and road conditions." : null }),
+            section(x.heading, {
+              body: x.body ?? [],
+              stops: x.stops ?? [],
+              note: i === all.length - 1 ? (c.itineraryNote ?? "Stops, their order and time at each may change with the season, weather and road conditions.") : null,
+            }),
           )
-        : [section("Stop by Stop", { stops: c.stops, note: "Stops, their order and time at each may change with the season, weather and road conditions." })],
+        : [section("Stop by Stop", { stops: c.stops, note: c.itineraryNote ?? "Stops, their order and time at each may change with the season, weather and road conditions." })],
     },
     // The doc (2026-11-04) removed the "Your Day" timeline from the page; its pickup times still
     // feed the Pickup & Meeting Points section (TourSections reads a "Pickup" tab).
@@ -767,6 +916,8 @@ export function withDocContent(tour: TourWithAvailability): TourWithAvailability
     title: c.title,
     summary: c.summary,
     description: c.description,
+    ...(c.metaTitle ? { metaTitle: c.metaTitle } : {}),
+    ...(c.metaDescription ? { metaDescription: c.metaDescription } : {}),
     facts,
     highlights: c.highlights,
     inclusions: c.inclusions,

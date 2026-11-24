@@ -461,7 +461,7 @@ function PrivateTourCard({
               <dd className="font-medium text-right text-white">{option.pickup}</dd>
             </div>
 
-            {/* Four-Day extra rows (owner, 2026-11-24). */}
+            {/* Four-Day extra rows (owner, 2026-11-24) & private group row. */}
             {(
               [
                 { label: "Final drop-off", value: option.finalDropoff, icon: Plane },
@@ -562,10 +562,14 @@ function PrivateTourCard({
                   <div>
                     <div className="flex items-baseline gap-1.5">
                       <span className="text-xs text-white/55">From</span>
-                      <span className="text-2xl font-light tabular-nums text-white">{money(calculatedPrice)}</span>
-                      <span className="text-xs text-white/70">per vehicle</span>
+                      <span className="text-2xl font-light tabular-nums text-white">{money(calculatedPrice > 0 ? calculatedPrice : option.priceFrom)}</span>
+                      <span className="text-xs text-white/70">{option.priceUnit}</span>
                     </div>
-                    <p className="mt-0.5 text-xs text-white/55">Taxes and required fees included</p>
+                    <p className="mt-0.5 text-xs text-white/55">
+                      {option.id === "banff-yoho-private"
+                        ? "Taxes and mandatory fees included. Optional Lake Minnewanka cruise costs extra."
+                        : "Taxes and required fees included"}
+                    </p>
                     {option.seasonLabel || option.savings ? (
                       <div className="mt-2.5 space-y-1 rounded-lg bg-white/[0.04] p-2.5 text-xs">
                         {option.savings && (

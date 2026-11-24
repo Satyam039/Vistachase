@@ -127,7 +127,7 @@ export const FALLBACK_TOURS: TourWithAvailability[] = ([
   {
     id: "banff-private-tour",
     slug: "banff-private-tour",
-    title: "Luxury Private SUV Tour: Banff & Lake Louise",
+    title: "Private Banff & Yoho Discovery",
     category: "PRIVATE",
     durationHours: 11,
     summary:
@@ -164,7 +164,7 @@ export const FALLBACK_TOURS: TourWithAvailability[] = ([
     basePrice: 1240,
     currency: "CAD",
     minGroupSize: 1,
-    maxGroupSize: 6,
+    maxGroupSize: 14,
     isFeatured: true,
     rating: 5.0,
     reviewCount: 215,
@@ -179,11 +179,24 @@ export const FALLBACK_TOURS: TourWithAvailability[] = ([
         date: "2026-10-15",
         departureTime: "08:00",
         returnTime: "19:00",
-        capacityTotal: 6,
+        capacityTotal: 14,
         capacityBooked: 0,
         capacityHeld: 0,
-        seatsAvailable: 6,
+        seatsAvailable: 14,
         price: 1240,
+        currency: "CAD",
+        status: "ACTIVE",
+      },
+      {
+        id: "dep-pv-02",
+        date: "2026-07-15",
+        departureTime: "08:00",
+        returnTime: "19:00",
+        capacityTotal: 14,
+        capacityBooked: 0,
+        capacityHeld: 0,
+        seatsAvailable: 14,
+        price: 1750,
         currency: "CAD",
         status: "ACTIVE",
       },
@@ -409,7 +422,7 @@ export const FALLBACK_DESTINATIONS: DestinationSummary[] = [
       "Experience Banff National Park with luxury private SUV tours, guaranteed lake shuttles, and local expert guides.",
     tours: [
       { id: "banff-highlights-tour", title: "Lake Louise, Moraine Lake & Banff Highlights Tour", slug: "banff-highlights-tour", basePrice: 220 },
-      { id: "banff-private-tour", title: "Luxury Private SUV Tour: Banff & Lake Louise", slug: "banff-private-tour", basePrice: 1240 },
+      { id: "banff-private-tour", title: "Private Banff & Yoho Discovery", slug: "banff-private-tour", basePrice: 1240 },
     ],
   },
   {
@@ -428,7 +441,7 @@ export const FALLBACK_DESTINATIONS: DestinationSummary[] = [
       "Guaranteed commercial shuttle access and private luxury tours to Moraine Lake and Lake Louise.",
     tours: [
       { id: "banff-highlights-tour", title: "Lake Louise, Moraine Lake & Banff Highlights Tour", slug: "banff-highlights-tour", basePrice: 220 },
-      { id: "banff-private-tour", title: "Luxury Private SUV Tour: Banff & Lake Louise", slug: "banff-private-tour", basePrice: 1240 },
+      { id: "banff-private-tour", title: "Private Banff & Yoho Discovery", slug: "banff-private-tour", basePrice: 1240 },
     ],
   },
   {

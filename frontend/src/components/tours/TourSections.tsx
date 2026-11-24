@@ -9,7 +9,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Car, Check, CheckCircle2, Clock, MapPin, Plus, Star, X } from "lucide-react";
+import { ArrowUpRight, Car, Check, CheckCircle2, Clock, MapPin, Plus, Star, Users, X } from "lucide-react";
 import { cancellationSentence, cancellationShort } from "@/lib/policy";
 import type { TourSection, TourWithAvailability } from "@/lib/api/types";
 import { ReviewSlider } from "@/components/reviews/ReviewSlider";
@@ -300,7 +300,19 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
             Find your hotel&apos;s pickup point
           </Link>
         </div>
-        {vehicles.length > 0 && (
+        {tour.slug === "banff-private-tour" ? (
+          <div className="space-y-4 pt-4">
+            <h3 className="flex items-center gap-2 text-xl font-light text-obsidian-900">
+              <Users className="h-5 w-5 text-ocean-600" aria-hidden="true" />
+              Your private group
+            </h3>
+            <div className="rounded-none border border-slate-200/80 bg-white p-6 text-base leading-relaxed text-slate-700">
+              <p>
+                Travel in a passenger van reserved exclusively for your group. The van has 15 seats, accommodating up to 14 guests plus your driver-guide. We recommend 12–13 guests for extra comfort.
+              </p>
+            </div>
+          </div>
+        ) : vehicles.length > 0 ? (
           <div className="space-y-4 pt-4">
             <h3 className="flex items-center gap-2 text-xl font-light text-obsidian-900">
               <Car className="h-5 w-5 text-ocean-600" aria-hidden="true" />
@@ -340,7 +352,7 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
               ))}
             </ul>
           </div>
-        )}
+        ) : null}
       </section>
 
       <section id="important-information" aria-labelledby="important-information-heading" className="space-y-4">
@@ -367,8 +379,45 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
       </section>
 
       <section id="cancellation" aria-labelledby="cancellation-heading" className="space-y-4">
-        <SectionHeading id="cancellation">Cancellation</SectionHeading>
-        {isTicket ? (
+        <SectionHeading id="cancellation">
+          {tour.slug === "banff-private-tour" ? "Cancellation and rescheduling" : "Cancellation"}
+        </SectionHeading>
+        {tour.slug === "banff-private-tour" ? (
+          <div className="space-y-6 rounded-none bg-emerald-50/70 p-6 text-base text-emerald-950 ring-1 ring-emerald-200 sm:p-7">
+            <div className="space-y-2">
+              <h3 className="flex items-center gap-2 text-lg font-medium text-emerald-950">
+                <CheckCircle2 className="h-5 w-5 text-emerald-700 shrink-0" aria-hidden="true" />
+                Cancellation
+              </h3>
+              <p className="text-slate-800 leading-relaxed">
+                Cancel at least 72 hours before your confirmed departure time for a full refund. Cancellations with less than 72 hours’ notice, missed pickups and no-shows are non-refundable. Deadlines use local Alberta time.
+              </p>
+              <p className="text-sm text-slate-600">
+                Approved refunds are normally returned to the original payment method within 5–10 business days.
+              </p>
+            </div>
+
+            <div className="border-t border-emerald-200/80 pt-4 space-y-2">
+              <h3 className="text-lg font-medium text-emerald-950">Rescheduling</h3>
+              <p className="text-slate-800 leading-relaxed">
+                Request a date change at least 72 hours before departure. Changes are subject to availability and confirmation by Vista Chase.
+              </p>
+            </div>
+
+            <div className="border-t border-emerald-200/80 pt-4 space-y-2">
+              <h3 className="text-lg font-medium text-emerald-950">Cancellation by Vista Chase</h3>
+              <p className="text-slate-800 leading-relaxed">
+                No minimum passenger requirement applies to this private tour. If Vista Chase must cancel your tour, including because of wildfire, highway closure or another disruption, you receive a full refund.
+              </p>
+            </div>
+
+            <div className="border-t border-emerald-200/80 pt-4">
+              <Link href="/privacy-policy-vista-chase" className="inline-flex min-h-11 items-center underline underline-offset-4 text-emerald-900 font-medium">
+                Read the full cancellation policy
+              </Link>
+            </div>
+          </div>
+        ) : isTicket ? (
           <div className="space-y-3 rounded-none bg-white p-6 text-base text-slate-700 ring-1 ring-obsidian-900/[0.07]">
             <p>Tickets are run by the attraction operator and follow their own cancellation rules, which we confirm with your request.</p>
             <Link href="/privacy-policy-vista-chase" className="inline-flex min-h-11 items-center text-ocean-700 underline underline-offset-4">
@@ -396,6 +445,34 @@ export function TourSections({ tour }: { tour: TourWithAvailability }) {
           </div>
         )}
       </section>
+
+      {/* Banff Elite referral */}
+      {tour.slug === "banff-private-tour" && (
+        <aside aria-label="Banff Elite referral" className="rounded-none border border-white/[0.12] bg-[#12161a] p-6 text-white sm:p-7">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
+            <div className="space-y-1.5 max-w-xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-summit-300">
+                Sister Company · Premium Custom Holidays
+              </p>
+              <h3 className="text-xl font-light tracking-wide text-white">
+                Looking for a fully tailored Rockies stay?
+              </h3>
+              <p className="text-sm leading-relaxed text-white/75">
+                Our sister company, Banff Elite, offers personal planning around your dates, interests and pace, with premium vehicle options.
+              </p>
+            </div>
+            <a
+              href="https://banffelite.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="golden-summit-btn inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-full px-6 text-xs uppercase tracking-[0.14em] font-medium self-start sm:self-center text-obsidian-900"
+            >
+              <span>Plan with Banff Elite</span>
+              <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+            </a>
+          </div>
+        </aside>
+      )}
 
 
       <section id="reviews" aria-labelledby="reviews-heading" className="space-y-6">
