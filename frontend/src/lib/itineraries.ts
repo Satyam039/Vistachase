@@ -203,27 +203,60 @@ export const TOUR_ITINERARIES: Record<string, TourItinerary> = {
       "Wildlife sightings are possible but can't be guaranteed.",
     ],
   },
+  // Private Columbia Icefield Adventure, owner's page changes of 2026-11-24: Ice Explorer + Skywalk as
+  // one combined optional experience (about 2½ hours, invoiced separately), a separate Icefield
+  // Centre lunch break, and a winter itinerary with Abraham Lake. Page copy: lib/tourContent.ts.
   "icefields-jasper-private-tour": {
-    title: "Columbia Icefield Adventure (Private Tour)",
-    duration: "About 10 to 12 hours, door to door",
-    stops: ICEFIELD_STOPS.map((s) =>
-      /ice explorer|skywalk/i.test(s.name) ? { ...s, name: `${s.name} — Optional Add-On`, text: s.text.replace("Included from June 1 to October 10.", "Seasonal; admission costs extra.") } : s,
-    ),
+    title: "Private Columbia Icefield Adventure (Private Tour)",
+    duration: "Approximately 10–12 hours, pickup to drop-off",
+    stops: [
+      ...ICEFIELD_STOPS.slice(0, 4),
+      {
+        name: "Ice Explorer + Skywalk — optional combined experience",
+        text: "Ride the Ice Explorer onto the Athabasca Glacier and walk the glass-floored Columbia Icefield Skywalk. Offered together only, June 1 to October 10, at extra cost: our team arranges tickets and sends a separate invoice. Allow approximately 2½ hours combined; the day's sightseeing is planned around your reserved activity times.",
+        summerOnly: true,
+      },
+      {
+        name: "Lunch at the Columbia Icefield Centre",
+        text: "A lunch break at the Centre, additional to the approximately 2½-hour attraction time. Buy lunch there or bring your own (lunch not included).",
+        summerOnly: true,
+      },
+    ],
     steps: [
       { time: "Morning", text: `${PRIVATE_PICKUP} ${GUIDE_CALL}` },
       { time: "Morning", text: ICEFIELD_MORNING },
-      { time: "Midday", text: "Columbia Icefield, with the optional Ice Explorer and Skywalk in season. Lunch stop at the Columbia Icefield Centre (lunch not included)." },
+      { time: "Midday", text: "Columbia Icefield: the optional Ice Explorer + Skywalk combined experience (about 2½ hours, if booked) and a lunch break at the Columbia Icefield Centre (lunch not included)." },
       { time: "Afternoon", text: "Scenic drive back along the Icefields Parkway." },
-      { time: "Evening", text: "Drop-off at your accommodation. Traffic, weather and road conditions can affect return times." },
+      { time: "Evening", text: "Drop-off at your accommodation in Banff, Canmore or Lake Louise. Traffic, weather and road conditions can affect return times." },
     ],
     seasonal: [
-      "Price per vehicle, up to 13 guests: CAD $1,750 from June 1 to October 10; CAD $1,240 from October 11 to May 31.",
-      "Ice Explorer and Skywalk: June 1 to October 10, optional and at extra cost.",
-      "From October 11 to May 31 the glacier activities don't run and the route is adjusted; our team confirms the route for your date.",
-      "Pack an extra warm layer for the Columbia Icefield.",
+      "Price per private van, up to 14 guests (12–13 recommended for comfort): CAD $1,750 from June 1 to October 10; CAD $1,240 from October 11 to May 31, including taxes and mandatory fees.",
+      "Two seasonal itineraries: From June 1 to October 10 the tour travels to the Columbia Icefield. From October 11 to May 31 it visits Abraham Lake instead of the Columbia Icefield experience, and Ice Explorer and Skywalk are unavailable.",
+      "Ice Explorer + Skywalk: An optional combined experience (June 1 to October 10), approximately 2½ hours. Request it when booking with the number of participating guests; our team arranges tickets and sends a separate invoice. Tickets are not included in the private tour payment.",
+      "Flexible sightseeing: Discuss stops and pacing with your guide. Reserved Ice Explorer and Skywalk times must be respected, so longer visits or an optional walk may mean other stops are shortened or skipped.",
+      "If the glacier experience is cancelled: If the tour still runs, the replacement itinerary visits Athabasca Falls and Sunwapta Falls. Attraction refunds follow the operator's policy. If Vista Chase cancels the entire tour, you receive a full refund.",
       "Wildlife sightings are possible but can't be guaranteed.",
     ],
-    winterRouteToBeConfirmed: true,
+    winter: {
+      stops: [
+        ...ICEFIELD_WINTER_STOPS.slice(0, 4),
+        {
+          name: "Abraham Lake",
+          text: "Lunch is planned here: bring a packed lunch, or ask for a morning stop in Lake Louise Village to buy food. When the lake is frozen and your guide judges conditions suitable, you may walk onto the ice to look for frozen bubbles; otherwise enjoy a shoreline walk and photographs. Lake access and bubble visibility depend on conditions.",
+        },
+      ],
+      steps: [
+        { time: "Morning", text: `${PRIVATE_PICKUP} ${GUIDE_CALL}` },
+        { time: "Morning", text: "Optional food stop in Lake Louise Village (on request), then Bow Lake, Crowfoot Glacier Lookout, Peyto Lake and Waterfowl Lakes along the Icefields Parkway." },
+        { time: "Midday", text: "Abraham Lake, with lunch (packed or bought in Lake Louise Village)." },
+        { time: "Evening", text: "Drop-off at your accommodation in Banff, Canmore or Lake Louise. Traffic, weather and road conditions can affect return times." },
+      ],
+      notes: [
+        "Winter itinerary (October 11 to May 31): Abraham Lake replaces the Columbia Icefield experience; Ice Explorer and Skywalk are unavailable.",
+        "Lunch: Bring a packed lunch or request a morning stop in Lake Louise Village to buy food. Lunch is planned at Abraham Lake.",
+        "Lake access and frozen-bubble visibility depend on ice, snow and weather conditions and your guide's assessment.",
+      ],
+    },
   },
 };
 

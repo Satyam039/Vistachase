@@ -18,7 +18,7 @@ import { tripBookings, tripOf, tripSummary } from "@/modules/bookings/trip";
 import { bookingIcs } from "@/modules/bookings/calendar-event";
 import { emailSchema, parseOr400, referenceSchema, z } from "@/lib/security/validate";
 import { airportTransferPriceList, airportTransferSchema } from "@/modules/bookings/airport-transfer";
-import { activityAddOnsSchema, activityGuestsSchema } from "@/modules/bookings/activity-add-ons";
+import { activityAddOnsSchema, activityGuestsSchema, activityParticipantsSchema } from "@/modules/bookings/activity-add-ons";
 import { PACKAGE_ACTIVITY_PRICES, packageActivitiesSchema } from "@/modules/bookings/package-activities";
 
 const router = Router();
@@ -46,6 +46,8 @@ const createSchema = z.object({
   airportTransfer: airportTransferSchema.optional(),
   activityAddOns: activityAddOnsSchema.default([]),
   activityGuests: activityGuestsSchema.optional(),
+  // Combined Ice Explorer + Skywalk request (Private Columbia Icefield): how many guests join.
+  activityParticipants: activityParticipantsSchema.optional(),
 });
 
 router.post("/", rateLimitMiddleware("booking_create", { maxRequests: 5, windowSeconds: 60 }), async (req, res, next) => {

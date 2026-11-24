@@ -30,7 +30,7 @@ import { renderMasterEmail } from "@/lib/email/email-template";
 import { isVehicleDeparture, partySizeError, seatedGuests, seatsToReserve } from "@/modules/pricing/departure-pricing";
 import { airportTransferLabel, airportTransferNote, airportTransferSchema, quoteAirportTransfer, type AirportTransferInput } from "@/modules/bookings/airport-transfer";
 import { packageActivitiesNote, type StoredPackageActivity } from "@/modules/bookings/package-activities";
-import { activityAddOnsError, activityAddOnsNote, ACTIVITY_ADD_ONS, type ActivityAddOnId, type ActivityGuests } from "@/modules/bookings/activity-add-ons";
+import { activityAddOnsError, activityAddOnsNote, activityParticipantsError, combinedAddOnNote, COMBINED_ADD_ONS, ACTIVITY_ADD_ONS, type ActivityAddOnId, type ActivityGuests } from "@/modules/bookings/activity-add-ons";
 import { lookupPromo, normalizeCode, type ResolvedPromo } from "@/modules/pricing/promo-codes";
 import { priceBooking, type AddOnChoice } from "@/modules/pricing/booking-pricing";
 import { referringAffiliateId } from "@/modules/affiliates/affiliate.repository";
@@ -75,6 +75,8 @@ export interface CreateBookingInput {
   activityAddOns?: ActivityAddOnId[];
   /** Who joins the activities, with ages; the whole party when not given. */
   activityGuests?: ActivityGuests;
+  /** Combined add-ons (Ice Explorer + Skywalk): how many guests join; at most the party. */
+  activityParticipants?: number;
   /** Private journeys, Day 1 only: the activities chosen, already checked and priced by package-booking.ts. */
   packageActivities?: StoredPackageActivity[];
 }
@@ -277,6 +279,10 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
       const activityAddOns = Array.from(new Set(input.activityAddOns ?? []));
       const addOnRefusal = activityAddOnsError(activityAddOns, departure.tour?.slug, formatDateOnly(departure.date));
       if (addOnRefusal) throw new BookingRefused(addOnRefusal);
+      const participantsRefusal = activityParticipantsError(activityAddOns, input.activityParticipants, totalSeats);
+      if (participantsRefusal) throw new BookingRefused(participantsRefusal);
+      const combinedAddOns = activityAddOns.filter((id) => COMBINED_ADD_ONS.has(id));
+      const ageAddOns = activityAddOns.filter((id) => !COMBINED_ADD_ONS.has(id));
       const reservedSeats = seatsToReserve(departure, totalSeats);
 
       // The hold is claimed once: a second request with the same hold finds it no longer ACTIVE.
@@ -417,7 +423,13 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
         // Requested, not charged: the price varies and the team confirms it.
         ...(activityAddOns.length > 0
           ? {
-              activityAddOns: activityAddOns.map((id) => ({ id, name: ACTIVITY_ADD_ONS[id], priceCents: null })),
+              // A combined add-on is a ticket request (status REQUESTED) for a number of participants,
+              // invoiced separately by staff; it never becomes part of the tour payment.
+              activityAddOns: activityAddOns.map((id) =>
+                COMBINED_ADD_ONS.has(id)
+                  ? { id, name: ACTIVITY_ADD_ONS[id], priceCents: null, status: "REQUESTED", participants: input.activityParticipants, invoicedSeparately: true }
+                  : { id, name: ACTIVITY_ADD_ONS[id], priceCents: null },
+              ),
               ...(input.activityGuests ? { activityGuests: input.activityGuests } : {}),
             }
           : {}),
@@ -476,8 +488,9 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
               ? [
                   transfer ? airportTransferNote(transfer, partySize) : null,
                   packageActivities.length > 0 ? packageActivitiesNote(packageActivities) : null,
-                  activityAddOns.length > 0
-                    ? activityAddOnsNote(activityAddOns, input.activityGuests ?? { adults: input.adultsCount, children: input.childrenCount, infants: input.infantsCount })
+                  ...combinedAddOns.map((id) => combinedAddOnNote(id, input.activityParticipants ?? 0, totalSeats)),
+                  ageAddOns.length > 0
+                    ? activityAddOnsNote(ageAddOns, input.activityGuests ?? { adults: input.adultsCount, children: input.childrenCount, infants: input.infantsCount })
                     : null,
                   input.specialRequests,
                 ]

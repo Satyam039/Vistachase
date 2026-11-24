@@ -17,6 +17,7 @@
 import type { TourFaq, TourTab, TourWithAvailability } from "@/lib/api/types";
 import { BANFF_YOHO, ICEFIELD } from "@/lib/sharedTours";
 import { PRIVATE_FAQS, PRIVATE_OPTIONS } from "@/lib/privateTours";
+import { PRIVATE_VAN_GROUP_TEXT, PRIVATE_VEHICLE_MAX_GUESTS } from "@/lib/tours";
 import { cancellationSentence } from "@/lib/policy";
 import { activityTicket } from "@/lib/activityTickets";
 import { SHUTTLE_CAPACITY } from "@/lib/shuttleSchedule";
@@ -50,6 +51,14 @@ interface DocContent {
   priceSeasons?: boolean;
   /** Link the Two-Day Rockies Explorer (both shared tours, 10% off) from the booking panel. */
   comboOffer?: boolean;
+  /** Browser/SEO title, over the imported metaTitle (and meta description = summary). */
+  metaTitle?: string;
+  /** Guests the booking panel and checkout take (a larger private van). */
+  maxGroupSize?: number;
+  /** Leave out the "Your vehicle options" section (photos, models, SUV/executive options). */
+  hideVehicles?: boolean;
+  /** Extra lines in the page's Cancellation section. */
+  cancellationExtra?: string[];
 }
 
 
@@ -295,36 +304,194 @@ CONTENT[PRIVATE_BANFF_YOHO.slug!] = {
   addFaqs: [],
 };
 
+// Private Columbia Icefield Adventure: the owner's page changes, add-on control and FAQs of 2026-11-24
+// (FAQs 8 and 9 merged, as the owner suggested). Itinerary data: lib/itineraries.ts.
+const PRIVATE_ICEFIELD_DURATION = "Approximately 10–12 hours";
+const PRIVATE_ICEFIELD_FAQS: TourFaq[] = [
+  {
+    question: "How long is a private Icefields Parkway tour?",
+    answer:
+      "Allow approximately 10–12 hours from pickup to drop-off, including the combined Ice Explorer and Skywalk experience when booked. The attraction experience takes approximately 2½ hours, with additional time for lunch. Traffic, weather and road conditions may affect return times.",
+  },
+  {
+    question: "Can you visit the Athabasca Glacier and Skywalk on a day tour?",
+    answer:
+      "Yes. From June 1–October 10, you can request the combined Ice Explorer and Skywalk experience at extra cost, subject to availability. Both attractions are offered together; individual selection is unavailable. Your sightseeing schedule is coordinated around the reserved activity times.",
+  },
+  {
+    question: "What stops are included in the private Columbia Icefield Adventure?",
+    answer:
+      "The planned summer route includes Bow Lake, Crowfoot Glacier, Peyto Lake, Waterfowl Lakes and the Columbia Icefield Centre. Ice Explorer and Skywalk are an optional combined experience.\n\nIn winter, Abraham Lake replaces the Columbia Icefield experience. Stops and their order may change with conditions.",
+  },
+  {
+    question: "Is lunch included on this tour?",
+    answer:
+      "No. In summer, you can purchase lunch at the Columbia Icefield Centre or bring your own food to eat there. Lunch time is additional to the approximately 2½-hour attraction experience.\n\nIn winter, bring a packed lunch or request a morning stop in Lake Louise Village to buy food. Lunch is planned at Abraham Lake.",
+  },
+  {
+    question: "When is the best time to visit the Icefields Parkway?",
+    answer:
+      "Choose June 1–October 10 if you want the option of booking Ice Explorer and Skywalk. From October 11–May 31, this tour follows its winter itinerary, with Abraham Lake replacing the Columbia Icefield experience. Scenery and access vary with conditions.",
+  },
+  {
+    question: "What happens if weather or road conditions affect this tour?",
+    answer:
+      "Your guide may adjust stops, timing or the route. If Vista Chase must cancel the entire tour, you receive a full refund. If the tour still operates but the glacier attraction experience is cancelled, the replacement itinerary visits Athabasca Falls and Sunwapta Falls; attraction refunds follow the operator’s policy.",
+  },
+  {
+    question: "How many people can join a private Icefields Parkway tour?",
+    answer:
+      "The private passenger van accommodates up to 14 guests plus the driver-guide. We recommend 12–13 guests for extra comfort. The van is exclusively for your group, and the tour price is per van.",
+  },
+  {
+    question: "Can we end the tour in Jasper or visit Jasper town?",
+    answer:
+      "No. Jasper town is not a scheduled stop or drop-off for this day tour. The standard summer tour travels along the Icefields Parkway to the Columbia Icefield, then returns to Banff, Canmore or Lake Louise. For an itinerary continuing to Jasper, explore the Four-Day Rockies & Jasper product or contact the team about an appropriate journey.",
+  },
+  {
+    question: "How do we request and pay for the glacier experience?",
+    answer:
+      "Select the combined Ice Explorer and Skywalk add-on when booking and enter how many guests will participate. Our staff arrange tickets and send a separate invoice for payment. Tickets cost extra and are not included in the private van price.",
+  },
+  {
+    question: "Does everyone in our group have to book Ice Explorer and Skywalk?",
+    answer:
+      "No. Only the guests who want to participate need tickets. Enter their number when booking. Other members of your group can spend time at the Icefield Centre or discuss suitable independent activities with the team.",
+  },
+  {
+    question: "What can we do if we do not book the glacier experience?",
+    answer:
+      "You can explore the Icefield Centre, have lunch, visit the Glacier Gallery when open, or consider an independent walk such as the Toe of the Athabasca Glacier trail or Wilcox Red Chairs viewpoint.\n\nNo replacement sightseeing tour is provided simply because you decline the attractions. Discuss walking plans and any trailhead transport in advance, and follow the guide’s agreed pickup time.",
+  },
+  {
+    question: "Can our guide take us to a nearby hiking trailhead?",
+    answer:
+      "Yes. Request trailhead drop-off and pickup in advance so the guide can coordinate it with the day’s schedule. Walks depend on conditions, your group’s abilities and the available time. Transport arrangements do not mean a guided hike is included.",
+  },
+  {
+    question: "How flexible is the private itinerary?",
+    answer:
+      "You can discuss changes to sightseeing stops and pacing with your guide. However, reserved Ice Explorer and Skywalk times must be respected. Longer visits or an optional walk may require other stops to be shortened or skipped within the scheduled tour day.",
+  },
+  {
+    question: "What replaces the glacier experience in winter?",
+    answer:
+      "Abraham Lake replaces the Columbia Icefield experience. Ice Explorer and Skywalk are unavailable on the winter itinerary. Frozen bubbles and access onto the lake depend on conditions and the guide’s assessment.",
+  },
+  {
+    question: "What happens if the glacier attractions are cancelled?",
+    answer:
+      "If the tour continues, the replacement itinerary visits Athabasca Falls and Sunwapta Falls. Any attraction-ticket refund depends on the attraction operator’s policy and the refund received. Cancellation of an attraction does not automatically mean cancellation or a full refund of the private tour.",
+  },
+  {
+    question: "How much does the private tour cost?",
+    answer:
+      "The price is CAD $1,750 per van for June 1–October 10, or CAD $1,240 for October 11–May 31, including taxes and mandatory fees. The combined Ice Explorer and Skywalk experience and lunch cost extra.",
+  },
+  {
+    question: "Can this private tour pick us up in Lake Louise?",
+    answer:
+      "Yes. Doorstep pickup and drop-off are available in Banff, Canmore and Lake Louise. Your exact pickup arrangements are confirmed before departure.",
+  },
+  {
+    question: "What are the cancellation and rescheduling rules for this private tour?",
+    answer:
+      "Cancel at least 72 hours before your confirmed departure time for a full refund. Later guest cancellations and no-shows are non-refundable.\n\nRescheduling requests also require at least 72 hours’ notice and depend on availability and confirmation. Deadlines use local Alberta time.",
+  },
+  {
+    question: "Can this private tour be cancelled because our group is too small?",
+    answer:
+      "No minimum passenger requirement applies to your private booking. Disruptions such as wildfires or highway closures may still affect operation. If Vista Chase cancels the entire tour, you receive a full refund.",
+  },
+];
+
 CONTENT[PRIVATE_ICEFIELD.slug!] = {
-  title: PRIVATE_ICEFIELD.title,
+  title: "Private Columbia Icefield Adventure",
+  metaTitle: "Private Columbia Icefield Adventure Tour | Vista Chase",
   summary:
-    "Journey along the Icefields Parkway to the Columbia Icefield with your own guide and vehicle, stopping at Bow Lake, Peyto Lake and Waterfowl Lakes. Doorstep pickup included.",
+    "Travel the Icefields Parkway with your own driver-guide and private van: the Columbia Icefield in summer, Abraham Lake in winter. Up to 14 guests (12–13 recommended for comfort), with doorstep pickup and drop-off in Banff, Canmore & Lake Louise.",
   description:
-    "The same full day as our Columbia Icefield Adventure, just for your group: Bow Lake, Crowfoot Glacier, Peyto Lake and Waterfowl Lakes along the Icefields Parkway, as far as the Columbia Icefield.\nAdd the Ice Explorer onto the Athabasca Glacier and the Columbia Icefield Skywalk if you'd like (admission extra, summer season). This day tour returns to Banff, Canmore or Lake Louise and does not continue to Jasper town.",
+    "Travel the Icefields Parkway with your own driver-guide and private van, stopping at Bow Lake, Crowfoot Glacier, Peyto Lake and Waterfowl Lakes on the way to the Columbia Icefield. From June 1 to October 10 you can add Ice Explorer and Skywalk as one combined optional experience, with tickets invoiced separately.\nIn winter (October 11 to May 31) the tour visits Abraham Lake instead of the Columbia Icefield experience. Your guide shapes the stops and pacing around your group, but sightseeing flexibility has to fit around any reserved attraction times. This day tour returns to Banff, Canmore or Lake Louise and does not continue to Jasper town.",
   facts: [
+    { label: "Duration", value: PRIVATE_ICEFIELD_DURATION },
     { label: "Entry fees", value: "Park admission included" },
-    { label: "Pickup", value: "Doorstep pickup included" },
-    { label: "Group", value: "Private, up to 13 guests" },
+    { label: "Pickup", value: "Doorstep pickup and drop-off included" },
+    { label: "Group", value: PRIVATE_VAN_GROUP_TEXT },
   ],
-  highlights: [...ICEFIELD.stops.filter((s) => !/ice explorer|skywalk/i.test(s)), "Columbia Icefield (Ice Explorer and Skywalk optional)"],
-  inclusions: PRIVATE_INCLUSIONS,
-  exclusions: ["Ice Explorer and Columbia Icefield Skywalk admission (optional)", "Lunch (stop at the Columbia Icefield Centre)", "Gratuities", "Personal expenses"],
-  goodToKnow: [...PRIVATE_GOOD_TO_KNOW, "Bring an extra warm layer for the glacier"],
+  quickFacts: [
+    { label: "Duration", value: PRIVATE_ICEFIELD_DURATION },
+    { label: "Group size", value: PRIVATE_VAN_GROUP_TEXT },
+    { label: "Pickup & drop-off", value: "Doorstep in Banff, Canmore or Lake Louise" },
+    { label: "Operating season", value: "Year round · Columbia Icefield in summer, Abraham Lake in winter" },
+    { label: "Park admission", value: "Included" },
+    { label: "Ice Explorer + Skywalk", value: "Optional combined experience (June 1 – October 10), invoiced separately" },
+  ],
+  highlights: [...ICEFIELD.stops.filter((s) => !/ice explorer|skywalk/i.test(s)), "Ice Explorer + Skywalk (optional, summer)", "Abraham Lake (winter)"],
+  inclusions: [
+    "Private passenger van for your group, up to 14 guests",
+    "A dedicated driver-guide",
+    "Doorstep pickup in Banff, Canmore or Lake Louise",
+    "Drop-off at your accommodation in Banff, Canmore or Lake Louise",
+    "Required national park admission fees",
+    "Bottled water",
+    "Taxes and other mandatory fees charged by authorities",
+  ],
+  exclusions: [
+    "Ice Explorer + Skywalk tickets (optional combined experience, invoiced separately)",
+    "Lunch (Columbia Icefield Centre in summer; packed lunch or Lake Louise Village stop in winter)",
+    "Gratuities",
+    "Personal expenses",
+  ],
+  goodToKnow: [
+    "Discuss stops and pacing with your guide; reserved Ice Explorer and Skywalk times must be respected",
+    "Short easy-to-moderate walks; tell us before booking if anyone in your group has mobility concerns",
+    "Bring an extra warm layer: the Icefields Parkway is colder than Banff",
+  ],
   stops: TOUR_ITINERARIES[PRIVATE_ICEFIELD.slug!].stops,
   steps: TOUR_ITINERARIES[PRIVATE_ICEFIELD.slug!].steps,
-  seasonal: TOUR_ITINERARIES[PRIVATE_ICEFIELD.slug!].seasonal,
-  faqs: [
-    { match: /how long/i, answer: "About 10 to 12 hours, door to door. Your pickup time is agreed with you before the tour." },
-    { match: /athabasca glacier and skywalk/i, answer: "Yes, in season, as optional add-ons at extra cost: the Ice Explorer onto the Athabasca Glacier and the glass-floored Columbia Icefield Skywalk. Ask us when you book and we'll time the day around them." },
-    { match: /what stops/i, answer: "Bow Lake, Crowfoot Glacier, Peyto Lake, Waterfowl Lakes and the Columbia Icefield, with the Ice Explorer and Skywalk as options. Your guide can add or skip stops around your group's interests, weather and road conditions." },
-    { match: /lunch/i, answer: "Lunch isn't included. We stop at the Columbia Icefield Centre, where you can buy lunch, or bring your own." },
-    { match: /end the tour in jasper/i, answer: "This day tour returns to Banff, Canmore or Lake Louise. To continue to Jasper, see our Four-Day Rockies & Jasper journey or contact us for a custom plan." },
-  ],
-  addFaqs: [
+  itinerary: [
     {
-      question: "Does this tour visit Jasper town?",
-      answer: "No. This tour travels along the Icefields Parkway as far as the Columbia Icefield. It does not continue to Jasper town.",
+      heading: "Summer: June 1 – October 10",
+      body: [
+        "Ice Explorer and Skywalk are one combined optional experience, approximately 2½ hours together, requested when booking and invoiced separately. Lunch at the Columbia Icefield Centre is additional to the attraction time. Sightseeing stops and pacing are flexible, but they fit around your reserved attraction times.",
+      ],
+      stops: TOUR_ITINERARIES[PRIVATE_ICEFIELD.slug!].stops,
     },
+    {
+      heading: "Winter: October 11 – May 31",
+      body: [
+        "Abraham Lake replaces the Columbia Icefield experience; Ice Explorer and Skywalk are unavailable. Bring a packed lunch or request a morning food stop in Lake Louise Village; lunch is planned at Abraham Lake. Lake access and frozen-bubble visibility depend on conditions.",
+      ],
+      stops: TOUR_ITINERARIES[PRIVATE_ICEFIELD.slug!].winter!.stops,
+    },
+    {
+      heading: "If you don't book the glacier experience",
+      body: [
+        "Guests who decline the attractions can explore the Columbia Icefield Centre, have lunch, visit the Glacier Gallery when open, or take an optional independent walk, such as the Toe of the Athabasca Glacier trail or the Wilcox Red Chairs viewpoint.",
+        "No replacement sightseeing itinerary is provided because the attractions are declined. Trailhead drop-off and pickup can be requested in advance and coordinated with your guide; transport does not mean a guided hike is included.",
+      ],
+    },
+    {
+      heading: "If the glacier attractions are cancelled",
+      body: [
+        "If the tour still runs but the glacier attraction experience is cancelled, the replacement itinerary visits Athabasca Falls and Sunwapta Falls. Attraction-ticket refunds follow the operator's policy and the refund received; an attraction cancellation does not automatically mean cancellation or a full refund of the private tour.",
+      ],
+    },
+  ],
+  seasonal: TOUR_ITINERARIES[PRIVATE_ICEFIELD.slug!].seasonal,
+  pickup: [
+    "Doorstep pickup and drop-off at your accommodation in Banff, Canmore or Lake Louise. Your exact pickup arrangements are confirmed before departure.",
+  ],
+  faqs: [],
+  addFaqs: [],
+  onlyFaqs: PRIVATE_ICEFIELD_FAQS,
+  priceSeasons: true,
+  maxGroupSize: PRIVATE_VEHICLE_MAX_GUESTS[PRIVATE_ICEFIELD.slug!],
+  hideVehicles: true,
+  cancellationExtra: [
+    "Rescheduling requests need at least 72 hours’ notice and are subject to availability and confirmation.",
+    "No minimum passenger requirement applies to your private booking.",
+    "If Vista Chase cancels the entire tour, you receive a full refund.",
   ],
 };
 
@@ -351,6 +518,16 @@ export function docTitleAndSummary(slug: string): { title: string; summary: stri
 export function docPanelExtras(slug: string): { priceSeasons: boolean; comboOffer: boolean } {
   const c = CONTENT[slug];
   return { priceSeasons: Boolean(c?.priceSeasons), comboOffer: Boolean(c?.comboOffer) };
+}
+
+/** The doc hides the vehicle section on this tour's page (Private Columbia Icefield, 2026-11-24). */
+export function docHidesVehicles(slug: string): boolean {
+  return Boolean(CONTENT[slug]?.hideVehicles);
+}
+
+/** Extra Cancellation-section lines the doc sets for this tour. */
+export function docCancellationExtra(slug: string): string[] {
+  return CONTENT[slug]?.cancellationExtra ?? [];
 }
 
 export function docQuickFacts(slug: string): { label: string; value: string }[] | null {
@@ -525,7 +702,9 @@ export function withDocContent(tour: TourWithAvailability): TourWithAvailability
   const photos = TOUR_PHOTOS[tour.slug];
   if (photos) tour = { ...tour, featuredImage: photos[0], galleryImages: photos.slice(1) };
   if ((tour.category === "PRIVATE" || tour.category === "MULTIDAY") && tour.facts?.some((f) => OLD_PRIVATE_GROUP.test(f.value))) {
-    tour = { ...tour, facts: tour.facts.map((f) => (OLD_PRIVATE_GROUP.test(f.value) ? { ...f, value: PRIVATE_GROUP_TEXT } : f)) };
+    // A larger van (Private Columbia Icefield: 14) keeps its own wording.
+    const group = PRIVATE_VEHICLE_MAX_GUESTS[tour.slug] ? PRIVATE_VAN_GROUP_TEXT : PRIVATE_GROUP_TEXT;
+    tour = { ...tour, facts: tour.facts.map((f) => (OLD_PRIVATE_GROUP.test(f.value) ? { ...f, value: group } : f)) };
   }
   const c = CONTENT[tour.slug];
   if (!c) return withPolicyFaq(tour);
@@ -594,5 +773,7 @@ export function withDocContent(tour: TourWithAvailability): TourWithAvailability
     exclusions: c.exclusions,
     tabs,
     faqs,
+    ...(c.metaTitle ? { metaTitle: c.metaTitle, metaDescription: c.summary } : {}),
+    ...(c.maxGroupSize ? { maxGroupSize: c.maxGroupSize } : {}),
   });
 }

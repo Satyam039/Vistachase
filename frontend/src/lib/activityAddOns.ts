@@ -8,6 +8,7 @@ export const ACTIVITY_ADD_ONS = {
   "columbia-icefield-skywalk": "Columbia Icefield Skywalk",
   "ice-explorer": "Ice Explorer Experience",
   "maligne-lake-cruise": "Maligne Lake Cruise",
+  "ice-explorer-skywalk": "Ice Explorer + Skywalk (combined experience)",
 } as const;
 
 export type ActivityAddOnId = keyof typeof ACTIVITY_ADD_ONS;
@@ -15,8 +16,29 @@ export type ActivityAddOnId = keyof typeof ACTIVITY_ADD_ONS;
 const ADD_ONS_BY_TOUR: Record<string, ActivityAddOnId[]> = {
   "banff-highlights-tour": ["lake-minnewanka-cruise"],
   "banff-private-tour": ["lake-minnewanka-cruise"],
-  "icefields-jasper-private-tour": ["columbia-icefield-skywalk", "ice-explorer"],
+  // Owner, 2026-11-24: one combined experience on the private tour (CombinedAddOnControl).
+  "icefields-jasper-private-tour": ["ice-explorer-skywalk"],
 };
+
+/**
+ * Private Columbia Icefield Adventure (owner, 2026-11-24): Ice Explorer + Skywalk as one combined
+ * optional experience, requested for a number of participants (up to the group size), summer dates
+ * only. A ticket request, not a confirmed reservation: staff arrange tickets and invoice separately.
+ */
+export const COMBINED_ADD_ON = {
+  id: "ice-explorer-skywalk" as const,
+  title: "Ice Explorer + Skywalk \u2014 combined optional experience",
+  body:
+    "Select how many guests in your group would like to participate. Both attractions are offered together; separate selection is unavailable. Our team arranges tickets and sends a separate invoice for payment. Attraction tickets are not included in your private tour payment.",
+  request:
+    "This is a ticket request, not a confirmed reservation. We confirm availability and activity times with you, then send the invoice.",
+  winter: "Unavailable for winter dates (October 11 \u2013 May 31). Choose a date from June 1 to October 10 to request it.",
+};
+
+/** The tour's combined add-on, when it has one (the participant-count control replaces the generic one). */
+export function combinedAddOnFor(tourSlug: string | null | undefined): typeof COMBINED_ADD_ON | null {
+  return tourSlug && (ADD_ONS_BY_TOUR[tourSlug] ?? []).includes(COMBINED_ADD_ON.id) ? COMBINED_ADD_ON : null;
+}
 
 /** Add-ons this tour offers on this date (YYYY-MM-DD…). */
 export function activityAddOnsFor(tourSlug: string | null | undefined, date: string): ActivityAddOnId[] {

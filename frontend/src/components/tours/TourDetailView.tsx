@@ -28,8 +28,10 @@ import { DepartureCalendar } from "@/components/booking/DepartureCalendar";
 import { docPanelExtras, docQuickFacts } from "@/lib/tourContent";
 import { ComboOffer, SeasonPrices } from "@/components/tours/SeasonPrices";
 import { PriceTag } from "@/components/pricing/PriceTag";
-import { ActivityAddOnToggle } from "@/components/booking/ActivityAddOnFields";
-import { activityGuestsFor, type ActivityGuests } from "@/lib/activityAddOns";
+import { ActivityAddOnToggle, CombinedAddOnControl } from "@/components/booking/ActivityAddOnFields";
+import { activityGuestsFor, combinedAddOnFor, type ActivityGuests } from "@/lib/activityAddOns";
+import { inSummerSeason } from "@/lib/itineraries";
+import { PRIVATE_VEHICLE_MAX_GUESTS, PRIVATE_VAN_GROUP_TEXT, vehicleSeats } from "@/lib/tours";
 import { groupEnquiryHref } from "@/lib/experiences";
 import { cancellationShort, SEATS_MESSAGE } from "@/lib/policy";
 import { Rail } from "@/components/motion/Rail";
@@ -73,7 +75,13 @@ const FACT_ICONS = [Clock, Users, MapPin, Coffee];
 
 /** Tour pages that show only the offer price in the price box (owner, 2026-11-21; Columbia Icefield
  *  Adventure 2026-11-23: the struck "$264 / Save 17%" is not an approved promotion). */
-const NO_STRIKETHROUGH_SLUGS = new Set(["banff-highlights-tour", "banff-yoho-discovery", "shared-tours-icefields-jasper"]);
+const NO_STRIKETHROUGH_SLUGS = new Set([
+  "banff-highlights-tour",
+  "banff-yoho-discovery",
+  "shared-tours-icefields-jasper",
+  // Private Columbia Icefield Adventure (owner, 2026-11-24): no approved promotion either.
+  "icefields-jasper-private-tour",
+]);
 
 /** Banff Elite (sister company) plans fully tailored multi-day itineraries; the button shows once its URL is set. */
 const BANFF_ELITE_URL = process.env.NEXT_PUBLIC_BANFF_ELITE_URL || "https://banffelite.com";
@@ -322,7 +330,12 @@ export function TourDetailView({
   const bookableDepartures = tour.departures.filter((d) => departureFits(tour, d, 1));
   const [selectedDepartureId, setSelectedDepartureId] = useState(bookableDepartures[0]?.id ?? "");
   const currentDeparture = tour.departures.find((d) => d.id === selectedDepartureId);
-  const maxAvailableSeats = isVehicle ? currentDeparture?.capacityTotal : currentDeparture?.seatsAvailable;
+  // A private van may take more guests than the departure's listed seats (Private Columbia Icefield: 14).
+  const maxAvailableSeats = isVehicle
+    ? currentDeparture
+      ? vehicleSeats(tour.slug, currentDeparture.capacityTotal)
+      : undefined
+    : currentDeparture?.seatsAvailable;
   const maxPartySize = Math.max(1, Math.min(maxAvailableSeats ?? tour.maxGroupSize, tour.maxGroupSize));
   const [guests, setPartySize] = useState(2);
   const partySize = Math.min(guests, maxPartySize);
@@ -346,6 +359,14 @@ export function TourDetailView({
   const [activities, setActivities] = useState(false);
   // Who joins the activities, with ages (owner, 2026-11-11); null until the guest changes it.
   const [activityGuests, setActivityGuests] = useState<ActivityGuests | null>(null);
+  // Private Columbia Icefield (owner, 2026-11-24): Ice Explorer + Skywalk as one combined experience,
+  // for a number of participants, summer dates only; a ticket request invoiced separately.
+  const combined = offersActivities ? combinedAddOnFor(tour.slug) : null;
+  const combinedAvailable = Boolean(currentDeparture && inSummerSeason(currentDeparture.date));
+  const [participantsWanted, setParticipants] = useState<number | null>(null);
+  const participants = Math.max(1, Math.min(participantsWanted ?? partySize, partySize));
+  const combinedRequested = Boolean(combined && activities && combinedAvailable);
+  const vanGroupText = PRIVATE_VEHICLE_MAX_GUESTS[tour.slug] ? PRIVATE_VAN_GROUP_TEXT : null;
 
   // FAQ accordion state
 
@@ -589,7 +610,8 @@ export function TourDetailView({
                   lead={isEnquiry ? "Tailored quote from" : "From"}
                   showOriginal={!noStrikethrough}
                 />
-                {panelExtras.priceSeasons && <SeasonPrices departures={tour.departures} currency={tour.currency} />}
+                {panelExtras.priceSeasons && <SeasonPrices departures={tour.departures} currency={tour.currency} perVehicle={isVehicle} />}
+                {vanGroupText && <p className="mt-2 text-sm text-slate-700">{vanGroupText}. One price per private van.</p>}
                 {/* No sales tax is added at checkout (backend booking-pricing.ts), so prices are tax-inclusive. */}
                 {price > 0 && (
                   <p className="mt-1.5 text-sm text-slate-600">
@@ -657,9 +679,18 @@ export function TourDetailView({
                         value={partySize}
                         max={maxPartySize}
                         onChange={setPartySize}
-                        hint={`Vehicle seats up to ${maxPartySize}`}
+                        hint={vanGroupText ? `Up to ${maxPartySize} guests; 12–13 recommended` : `Vehicle seats up to ${maxPartySize}`}
                       />
-                      {offersActivities && (
+                      {combined ? (
+                        <CombinedAddOnControl
+                          checked={activities}
+                          onChange={setActivities}
+                          participants={participants}
+                          onParticipantsChange={setParticipants}
+                          maxGuests={partySize}
+                          available={combinedAvailable}
+                        />
+                      ) : offersActivities && (
                         <ActivityAddOnToggle
                           checked={activities}
                           onChange={setActivities}
@@ -718,12 +749,20 @@ export function TourDetailView({
                           <span>Private vehicle flat rate</span>
                           <span>{money(calculatedTotal)}</span>
                         </div>
-                        {offersActivities && activities && (
-                          <div className="flex items-center justify-between gap-3 text-slate-600">
-                            <span>Add-on activities</span>
-                            <span className="text-right">Paid separately once confirmed</span>
-                          </div>
-                        )}
+                        {combined
+                          ? combinedRequested && (
+                              <div className="flex items-center justify-between gap-3 text-slate-600">
+                                <span>{`Ice Explorer + Skywalk request (${participants} ${participants === 1 ? "guest" : "guests"})`}</span>
+                                <span className="text-right">Invoiced separately</span>
+                              </div>
+                            )
+                          : offersActivities &&
+                            activities && (
+                              <div className="flex items-center justify-between gap-3 text-slate-600">
+                                <span>Add-on activities</span>
+                                <span className="text-right">Paid separately once confirmed</span>
+                              </div>
+                            )}
                       </>
                     ) : (
                       <>
@@ -759,7 +798,11 @@ export function TourDetailView({
                         ...(isVehicle
                           ? {
                               guests: String(partySize),
-                              ...(offersActivities && activities
+                              ...(combined
+                                ? combinedRequested
+                                  ? { activities: "1", actParticipants: String(participants) }
+                                  : {}
+                                : offersActivities && activities
                                 ? (() => {
                                     const g = activityGuests ?? activityGuestsFor(partySize);
                                     return { activities: "1", actAdults: String(g.adults), actChildren: String(g.children), actInfants: String(g.infants) };
