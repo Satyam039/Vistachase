@@ -3,6 +3,7 @@ import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
 import { Router } from "express";
 import { z } from "zod";
 import { createEnquiry } from "@/modules/enquiries/enquiry.repository";
+import { processBanffEliteEnquiry } from "@/modules/enquiries/banff-elite-enquiry";
 import { STAYING_IN_OPTIONS } from "@/modules/enquiries/staying-in";
 import {
   enquiryDateErrors,
@@ -103,6 +104,15 @@ router.post("/", rateLimitMiddleware("enquiry_create", { maxRequests: 5, windowS
   });
   void recordSubmission(req, { form: "ENQUIRY", outcome: "ACCEPTED", email: data.email, name: data.name });
   return res.status(201).json({ success: true, id: result.id });
+});
+
+// POST /api/enquiries/banff-elite: Banff Elite personalised tour enquiry
+router.post("/banff-elite", rateLimitMiddleware("banff_elite_enquiry", { maxRequests: 10, windowSeconds: 600 }), async (req, res) => {
+  const result = await processBanffEliteEnquiry(req.body);
+  if (!result.success) {
+    return res.status(result.status || 400).json(result);
+  }
+  return res.status(200).json(result);
 });
 
 export default router;
