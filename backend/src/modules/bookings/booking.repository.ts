@@ -217,6 +217,8 @@ export interface CreateBookingOptions {
    * package uses the code once (promoUses counts priceSnapshot.promo.code).
    */
   packagePromo?: { promo: ResolvedPromo; countsUse: boolean };
+  /** A private package's vehicle limit when above the departure's seats (Four-Day: 14 guests). */
+  vehicleMaxGuests?: number;
 }
 
 export async function createBooking(input: CreateBookingInput, options: CreateBookingOptions = {}): Promise<BookingResult> {
@@ -266,7 +268,7 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
         throw new BookingRefused("This experience is booked on request. Please send us an enquiry.");
       }
 
-      const partyError = partySizeError(departure, totalSeats);
+      const partyError = partySizeError(departure, totalSeats, options.vehicleMaxGuests);
       if (partyError) throw new BookingRefused(partyError);
 
       // Capacity: shared departures take one seat per guest, private ones the whole vehicle

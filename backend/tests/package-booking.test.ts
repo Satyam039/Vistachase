@@ -224,6 +224,63 @@ describe("private multi-day journeys", () => {
     expect((await createPackageBooking(party(3, "four-day-rockies-and-jasper", wrongOrder))).success).toBe(false);
   });
 
+  it("four-day (owner, 2026-11-24): Jasper tours on consecutive dates, other tours any free date, all four dates different", async () => {
+    setPaymentProviderForTests(browserPays);
+    const banff = await vehicle("banff-private-tour", "2027-07-20", 175000);
+    const yoho = await vehicle("banff-private-tour", "2027-07-14", 175000);
+    const icefields = await vehicle("icefields-jasper-private-tour", "2027-07-16", 175000);
+    const jasperGap = await vehicle("icefields-jasper-private-tour", "2027-07-18", 175000);
+    const jasperNext = await vehicle("icefields-jasper-private-tour", "2027-07-17", 175000);
+    const final = { finalDestination: { area: "CANMORE" } };
+
+    const gap = await createPackageBooking(party(41, "four-day-rockies-and-jasper", [banff, yoho, icefields, jasperGap], final));
+    expect(gap.success).toBe(false);
+    expect(gap.error).toContain("Jasper Highlights & Return must be the day after Icefields Parkway to Jasper");
+
+    const noFinal = await createPackageBooking(party(42, "four-day-rockies-and-jasper", [banff, yoho, icefields, jasperNext]));
+    expect(noFinal).toMatchObject({ success: false });
+    expect(noFinal.error).toContain("finishes");
+
+    // Up to 14 guests in the van, more than the day tour's 13 seats; Banff after the Jasper tours is fine.
+    const ok = await createPackageBooking(
+      party(43, "four-day-rockies-and-jasper", [banff, yoho, icefields, jasperNext], {
+        adultsCount: 14,
+        finalDestination: { area: "CALGARY_AIRPORT", address: "Flight AC123 at 19:30" },
+        dayPickups: [{ pickupCustomText: "Canmore Inn" }, { pickupCustomText: "Canmore Inn" }, { pickupCustomText: "Canmore Inn" }, { pickupCustomText: "Jasper: Whistlers Inn" }],
+      }),
+    );
+    expect(ok.success).toBe(true);
+    expect(ok.totalAmount).toBe(6300);
+    const stored = await prisma.booking.findMany({ where: { bookingReference: { in: ok.bookings!.map((b) => b.bookingReference) } } });
+    const last = stored.find((b) => b.bookingReference === ok.bookings![3].bookingReference)!;
+    expect(last.pickupCustomText).toBe("Jasper: Whistlers Inn");
+    expect(last.specialRequests).toContain("Final drop-off: Calgary Airport (extra-cost request");
+    expect(stored.find((b) => b.bookingReference === ok.bookings![0].bookingReference)!.specialRequests ?? "").not.toContain("Final drop-off");
+
+    const fifteen = await createPackageBooking(
+      party(44, "four-day-rockies-and-jasper", [
+        await vehicle("banff-private-tour", "2027-08-20", 175000),
+        await vehicle("banff-private-tour", "2027-08-21", 175000),
+        await vehicle("icefields-jasper-private-tour", "2027-08-22", 175000),
+        await vehicle("icefields-jasper-private-tour", "2027-08-23", 175000),
+      ], { adultsCount: 15, ...final }),
+    );
+    expect(fifteen.error).toContain("up to 14 guests");
+  });
+
+  it("four-day: the outbound tours can't pick up in Lake Louise", async () => {
+    const stop = await prisma.shuttleStop.create({ data: { name: "Test Lake Louise Lodge", town: "Lake Louise", address: "1 Lake Louise Dr", latitude: 51.42, longitude: -116.18, instructions: "Front door" } });
+    const ids = [
+      await vehicle("banff-private-tour", "2027-09-01", 175000),
+      await vehicle("banff-private-tour", "2027-09-02", 175000),
+      await vehicle("icefields-jasper-private-tour", "2027-09-03", 175000),
+      await vehicle("icefields-jasper-private-tour", "2027-09-04", 175000),
+    ];
+    const result = await createPackageBooking(party(45, "four-day-rockies-and-jasper", ids, { pickupStopId: stop.id, finalDestination: { area: "LAKE_LOUISE" } }));
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("Banff or Canmore");
+  });
+
   it("private journeys can be paid with a 20% deposit; the webhook confirms both days on the deposits (owner, 2026-11-11)", async () => {
     setPaymentProviderForTests(browserPays);
     const ids = [await vehicle("banff-private-tour", "2027-08-02", 175000), await vehicle("icefields-jasper-private-tour", "2027-08-04", 175000)];

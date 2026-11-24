@@ -102,6 +102,17 @@ const packageSchema = z.object({
   packageActivities: packageActivitiesSchema.default([]),
   // Private journeys: pay everything, or a 20% deposit now (owner, 2026-11-11).
   paymentPlan: z.enum(["FULL", "DEPOSIT"]).default("FULL"),
+  // Each tour's own pickup, in package order (Four-Day: Banff/Canmore for the outbound tours, the
+  // Jasper accommodation for the return tour). Before 2026-11-24 these were dropped by this schema.
+  dayPickups: z
+    .array(z.object({ pickupStopId: z.string().max(64).optional(), pickupCustomText: z.string().trim().max(200).optional() }))
+    .max(5)
+    .optional(),
+  day4JasperPickup: z.string().trim().max(200).optional(),
+  // Four-Day: where the return tour finishes (Banff, Canmore or Lake Louise included; Calgary extra).
+  finalDestination: z
+    .object({ area: z.enum(["BANFF", "CANMORE", "LAKE_LOUISE", "CALGARY", "CALGARY_AIRPORT"]), address: z.string().trim().max(200).optional() })
+    .optional(),
 });
 
 // A package (modules/bookings/package-booking.ts): one booking per day, one payment for all of them.

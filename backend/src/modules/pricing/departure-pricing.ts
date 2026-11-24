@@ -51,10 +51,13 @@ export function fareSubtotal(departure: PricedDeparture, adults: number, childre
 }
 
 /** Problem with the party size for this departure, if any. */
-export function partySizeError(departure: PricedDeparture, guests: number): string | null {
+export function partySizeError(departure: PricedDeparture, guests: number, vehicleMaxGuests?: number): string | null {
   if (guests < 1) return "At least one guest is required.";
-  if (isVehicleDeparture(departure) && guests > departure.capacityTotal) {
-    return `This private vehicle seats up to ${departure.capacityTotal} guests.`;
+  // A private package may take more guests than the day tour's listed seats (Four-Day: up to 14 in
+  // the passenger van); the whole vehicle is still reserved either way.
+  const vehicleMax = Math.max(departure.capacityTotal, vehicleMaxGuests ?? 0);
+  if (isVehicleDeparture(departure) && guests > vehicleMax) {
+    return `This private vehicle seats up to ${vehicleMax} guests.`;
   }
   return null;
 }

@@ -89,7 +89,7 @@ const TOPICS: Topic[] = [
     id: "accommodation",
     patterns: [[/\b(accommodation|hotels? (included|booking)|book (a|our|the) hotel|where (should|to) (we|i) stay|overnight|lodging)\b/, 2]],
     answer: () =>
-      "Accommodation isn't included in any tour: you choose and book your own. For tours of up to three days you can stay in Banff, Canmore or Lake Louise; the four-day journey needs a night in Jasper after day three.",
+      "Accommodation isn't included in any tour: you choose and book your own. For tours of up to three days you can stay in Banff, Canmore or Lake Louise; the four-day package needs Banff or Canmore for the Banff-based tours and a guest-booked night in Jasper after the Icefields-to-Jasper tour.",
   },
   {
     id: "multiday",

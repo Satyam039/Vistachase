@@ -2,7 +2,7 @@
 // each activity and says how many adults, children and infants join it. Nothing is ticked for them.
 //   2-day: Columbia Icefield Adventure
 //   3-day: Columbia Icefield Adventure, Banff Gondola, Lake Minnewanka Cruise
-//   4-day: Banff Gondola, Lake Minnewanka Cruise, Columbia Icefield Adventure (Glacier & Skywalk),
+//   4-day: Banff Gondola, Lake Minnewanka Cruise, Ice Explorer + Skywalk (one combined experience),
 //          Maligne Lake Cruise to Spirit Island
 // Each activity is priced here per adult, child and infant. While a price is null (the owner hasn't
 // given it yet) the activity is recorded as "price confirmed by our team" and not charged; once all
@@ -42,7 +42,7 @@ export const PACKAGE_ACTIVITY_IDS: Record<string, string[]> = {
 };
 
 export const packageActivityName = (packageSlug: string, id: string) =>
-  packageSlug === "four-day-rockies-and-jasper" && id === "columbia-icefield-adventure" ? "Columbia Icefield Adventure (Glacier & Skywalk)" : (NAMES[id] ?? id);
+  packageSlug === "four-day-rockies-and-jasper" && id === "columbia-icefield-adventure" ? "Ice Explorer + Skywalk (combined glacier experience)" : (NAMES[id] ?? id);
 
 export const packageActivitiesSchema = z
   .array(

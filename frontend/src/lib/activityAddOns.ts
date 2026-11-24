@@ -133,8 +133,14 @@ export const PACKAGE_ACTIVITIES: Record<string, PackageActivity[]> = {
   "four-day-rockies-and-jasper": [
     BANFF_GONDOLA,
     MINNEWANKA_CRUISE,
-    { ...ICEFIELD_ADVENTURE, name: "Columbia Icefield Adventure (Glacier & Skywalk)" },
-    MALIGNE_CRUISE,
+    // Owner, 2026-11-24: one combined experience, never Ice Explorer or Skywalk on their own.
+    {
+      ...ICEFIELD_ADVENTURE,
+      name: "Ice Explorer + Skywalk (combined glacier experience)",
+      detail: "One combined ticket on your Icefields-to-Jasper tour: Ice Explorer onto the Athabasca Glacier and the Skywalk",
+      info: { ...ICEFIELD_ADVENTURE.info, good: ["On your Icefields Parkway to Jasper tour", "Ice Explorer and Skywalk can't be chosen separately", "Bring a warm layer and good shoes: it is cold on the ice", SEASON] },
+    },
+    { ...MALIGNE_CRUISE, info: { ...MALIGNE_CRUISE.info, good: ["On your Jasper Highlights & Return tour", "Spirit Island is seen only on the cruise, not from the lakeshore stop", SEASON] } },
   ],
 };
 
