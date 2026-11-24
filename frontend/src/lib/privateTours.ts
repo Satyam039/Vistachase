@@ -38,7 +38,7 @@ export const PRIVATE_INTRO = {
 // June 1 – October 10, winter October 11 – May 31. The day tours are charged from their departures
 // (backend scripts/seed-departures.ts and migration 9g_private_seasonal_prices); the packages are
 // booked online from those same departures with the package price (PRIVATE_PACKAGES below).
-export const PRIVATE_MAX_GUESTS = 13;
+export const PRIVATE_MAX_GUESTS = 14;
 export const PACKAGE_DAY_PRICE = { summer: 1575, winter: 1240 };
 
 /**
@@ -112,6 +112,7 @@ export interface PrivateTourOption {
   transport: string;
   suggestedStay: string;
   pickup: string;
+  group?: string;
   activities: string;
   airportTransfers: string;
   accommodation?: string;
@@ -136,22 +137,23 @@ export const PRIVATE_OPTIONS: PrivateTourOption[] = [
   {
     id: "banff-yoho-private",
     slug: "banff-private-tour",
-    title: "Banff & Yoho Discovery",
-    description: "Iconic lakes, Johnston Canyon and the mountain scenery of Banff and Yoho, experienced privately.",
-    duration: "1 day",
-    transport: "Private Vehicle & Guide",
-    suggestedStay: "Canmore/Banff/Lake Louise",
-    pickup: "Doorstep Pickup Included",
-    activities: "Optional Activities at Checkout",
-    airportTransfers: "From CAD $364 per transfer, with 2+ tour days",
-    priceFrom: 0,
-    priceUnit: "per vehicle",
-    priceNote: "Jun 1–Oct 10: CAD $1,750, all-inclusive (tax, park and Moraine Lake entry). Oct 11–May 31: CAD $1,240. Private, up to 13 guests.",
+    title: "Private Banff & Yoho Discovery",
+    description: "Explore iconic lakes, Johnston Canyon and the highlights of Banff and Yoho with your own driver-guide and private van.",
+    duration: "1 full day · approximately 10–12 hours",
+    transport: "Private passenger van & driver-guide",
+    suggestedStay: "Banff or Canmore",
+    pickup: "Doorstep pickup in Banff or Canmore",
+    group: "Up to 14 guests · 12–13 recommended for comfort",
+    activities: "Optional Lake Minnewanka cruise",
+    airportTransfers: "Available with 2+ tour days (from CAD $364)",
+    priceFrom: 1240,
+    priceUnit: "per van",
+    priceNote: "Summer: CAD $1,750 per van · Winter: CAD $1,240 per van. Taxes and mandatory fees included. Optional Lake Minnewanka cruise costs extra.",
     seasonalPricing: {
-      summer: "CAD $1,750 per vehicle",
-      winter: "CAD $1,240 per vehicle",
+      summer: "CAD $1,750 per van",
+      winter: "CAD $1,240 per van",
     },
-    buttonLabel: "View Itinerary",
+    buttonLabel: "View Private Tour",
     buttonHref: "/banff-private-tour",
     image: "/media/photos/lake-louise-chateau-view.webp",
     imageAlt: "Lake Louise below Victoria Glacier in Banff National Park",

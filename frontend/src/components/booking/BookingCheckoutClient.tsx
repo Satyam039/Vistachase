@@ -304,9 +304,16 @@ export function BookingCheckoutClient({
   // Stored and sent as one international number, e.g. "+1 403 555 0192".
   const customerPhone = phoneLocal.trim() ? `+${dialCode(phoneCountry)} ${phoneLocal.trim()}` : "";
 
+  // Private tour & stop filtering
+  const isBanffPrivate = departure.tour?.slug === "banff-private-tour";
+  const availableStops = useMemo(
+    () => (isBanffPrivate ? stops.filter((s) => !s.town.toLowerCase().includes("lake louise")) : stops),
+    [isBanffPrivate, stops],
+  );
+
   // Pickup & extras
   const [pickupStopId, setPickupStopId] = useState(
-    (initialPickupStopId && stops.some((s) => s.id === initialPickupStopId) ? initialPickupStopId : stops[0]?.id) ?? "",
+    (initialPickupStopId && availableStops.some((s) => s.id === initialPickupStopId) ? initialPickupStopId : availableStops[0]?.id) ?? "",
   );
   const [customPickup, setCustomPickup] = useState("");
   const [specialRequests, setSpecialRequests] = useState("");
@@ -635,7 +642,7 @@ export function BookingCheckoutClient({
   const dueNow = plan === "DEPOSIT" ? depositNow : total;
   const balanceDueLabel = formatRockiesDate(balanceDueDate(departure.date, departure.departureTime));
 
-  const selectedStop = stops.find((stop) => stop.id === pickupStopId);
+  const selectedStop = availableStops.find((stop) => stop.id === pickupStopId);
   const experienceTitle =
     departure.tour?.title ||
     departure.shuttleRoute?.name ||
@@ -678,12 +685,17 @@ export function BookingCheckoutClient({
 
     const pickup: Record<string, string> = {};
     if (!pickupStopId && !customPickup.trim())
-      pickup.stop = "Choose a pickup hotel or enter where you're staying.";
+      pickup.stop = isBanffPrivate
+        ? "Choose a pickup location or enter where you're staying in Banff or Canmore."
+        : "Choose a pickup hotel or enter where you're staying.";
 
     return [party, contact, pickup, {}];
   }, [
+    isBanffPrivate,
     totalSeats,
     seatCapacity,
+    liveSeatsAvailable,
+    holdToken,
     isVehicle,
     airport,
     airportTransfer,
@@ -870,7 +882,9 @@ export function BookingCheckoutClient({
   const holdEndsSoon =
     remainingSeconds > 0 && remainingSeconds <= HOLD_WARNING_SECONDS;
   const holdLabel = isVehicle
-    ? "Vehicle held"
+    ? isBanffPrivate
+      ? "Private van held"
+      : "Vehicle held"
     : `${holdSeats} ${holdSeats === 1 ? "seat" : "seats"} held`;
   const holdUntil = holdExpiresAt
     ? new Date(holdExpiresAt).toLocaleTimeString("en-CA", {
@@ -907,7 +921,9 @@ export function BookingCheckoutClient({
     />
   ) : (
     <Text type="supporting" color="secondary">
-      {cancellationShort(departure.tour?.category ?? "SHUTTLE")} · Instant digital boarding pass
+      {isBanffPrivate
+        ? "Free cancellation with at least 72 hours’ notice · Instant digital boarding pass"
+        : `${cancellationShort(departure.tour?.category ?? "SHUTTLE")} · Instant digital boarding pass`}
     </Text>
   );
 
@@ -952,7 +968,9 @@ export function BookingCheckoutClient({
         <SummaryRow
           label={
             isVehicle
-              ? `Private vehicle · up to ${departure.capacityTotal} guests`
+              ? isBanffPrivate
+                ? "Private van flat rate"
+                : `Private vehicle · up to ${departure.capacityTotal} guests`
               : hasChildPrice || hasInfantFare
                 ? `Fare · ${fareLabel}`
                 : `Fare · ${totalSeats} × ${money(departure.price)}`
@@ -1261,7 +1279,9 @@ export function BookingCheckoutClient({
                                   label={
                                     isVehicle
                                       ? seatCapacity > 0
-                                        ? `Whole vehicle · up to ${seatCapacity} guests`
+                                        ? isBanffPrivate
+                                          ? `Whole private van · up to ${seatCapacity} guests`
+                                          : `Whole vehicle · up to ${seatCapacity} guests`
                                         : "Vehicle already booked"
                                       : SEATS_MESSAGE
                                   }
@@ -1312,6 +1332,12 @@ export function BookingCheckoutClient({
                                 guests={activityGuests}
                                 onGuestsChange={setActivityGuests}
                                 maxGuests={totalSeats}
+                                label={isBanffPrivate ? "Add a Lake Minnewanka cruise — optional" : undefined}
+                                note={
+                                  isBanffPrivate
+                                    ? "Cruise admission costs extra and is subject to seasonal operation and ticket availability. Select this option when booking, or contact us well in advance so our team can arrange tickets. Cruise timing may require changes to other sightseeing stops. We'll arrange tickets on your behalf and collect payment separately once confirmed."
+                                    : undefined
+                                }
                               />
                               {currentErrors.activities && <FieldStatus type="error" variant="detached" message={currentErrors.activities} />}
                               {wantsActivities && <ActivityAddOnFields offered={offeredAddOns} value={activityAddOns} onChange={setActivityAddOns} />}
@@ -1372,17 +1398,19 @@ export function BookingCheckoutClient({
                           <VStack gap={1}>
                             <Heading level={2}>Pickup & extras</Heading>
                             <Text type="supporting" color="secondary">
-                              {departure.tour?.category === "SHARED"
-                                ? "Complimentary pickup at hotels in Banff and Canmore. Small-group tours don't pick up in Lake Louise."
-                                : "Complimentary door-to-door pickup across Banff, Canmore and Lake Louise."}
+                              {isBanffPrivate
+                                ? "Doorstep pickup and drop-off are available in Banff and Canmore only. Select a listed pickup location, or enter your requested accommodation or address in Banff or Canmore."
+                                : departure.tour?.category === "SHARED"
+                                  ? "Complimentary pickup at hotels in Banff and Canmore. Small-group tours don't pick up in Lake Louise."
+                                  : "Complimentary door-to-door pickup across Banff, Canmore and Lake Louise."}
                             </Text>
                           </VStack>
                           <FormLayout defaultOptionality="required">
                             <div>
                               <Dropdown
-                                label="Pickup hotel"
+                                label={isBanffPrivate ? "Pickup location — Banff or Canmore" : "Pickup hotel"}
                                 labelClassName="mb-1.5 block text-sm text-obsidian-900"
-                                options={stops.map((stop) => ({
+                                options={availableStops.map((stop) => ({
                                   value: stop.id,
                                   label: stop.name,
                                   description: `${stop.town} · ${stop.address}`,
@@ -1390,8 +1418,8 @@ export function BookingCheckoutClient({
                                 value={pickupStopId}
                                 onChange={setPickupStopId}
                                 searchable
-                                searchPlaceholder="Search hotels"
-                                placeholder="Choose your hotel"
+                                searchPlaceholder={isBanffPrivate ? "Search locations" : "Search hotels"}
+                                placeholder={isBanffPrivate ? "Choose a listed location" : "Choose your hotel"}
                                 invalid={Boolean(currentErrors.stop)}
                                 describedBy={currentErrors.stop ? "pickup-stop-error" : undefined}
                               />
@@ -1409,11 +1437,15 @@ export function BookingCheckoutClient({
                               />
                             )}
                             <TextInput
-                              label="Staying somewhere else?"
+                              label={isBanffPrivate ? "Other pickup address — optional" : "Staying somewhere else?"}
                               isOptional
                               value={customPickup}
                               onChange={setCustomPickup}
-                              placeholder="Airbnb address or room number"
+                              placeholder={
+                                isBanffPrivate
+                                  ? "Enter your accommodation or requested address in Banff or Canmore. Subject to confirmation."
+                                  : "Airbnb address or room number"
+                              }
                             />
                             <TextArea
                               label="Special requests"

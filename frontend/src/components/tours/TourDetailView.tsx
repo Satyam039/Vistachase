@@ -73,7 +73,13 @@ const FACT_ICONS = [Clock, Users, MapPin, Coffee];
 
 /** Tour pages that show only the offer price in the price box (owner, 2026-11-21; Columbia Icefield
  *  Adventure 2026-11-23: the struck "$264 / Save 17%" is not an approved promotion). */
-const NO_STRIKETHROUGH_SLUGS = new Set(["banff-highlights-tour", "banff-yoho-discovery", "shared-tours-icefields-jasper"]);
+const NO_STRIKETHROUGH_SLUGS = new Set([
+  "banff-highlights-tour",
+  "banff-yoho-discovery",
+  "shared-tours-icefields-jasper",
+  "columbia-icefield-adventure",
+  "banff-private-tour",
+]);
 
 /** Banff Elite (sister company) plans fully tailored multi-day itineraries; the button shows once its URL is set. */
 const BANFF_ELITE_URL = process.env.NEXT_PUBLIC_BANFF_ELITE_URL || "https://banffelite.com";
@@ -323,7 +329,10 @@ export function TourDetailView({
   const [selectedDepartureId, setSelectedDepartureId] = useState(bookableDepartures[0]?.id ?? "");
   const currentDeparture = tour.departures.find((d) => d.id === selectedDepartureId);
   const maxAvailableSeats = isVehicle ? currentDeparture?.capacityTotal : currentDeparture?.seatsAvailable;
-  const maxPartySize = Math.max(1, Math.min(maxAvailableSeats ?? tour.maxGroupSize, tour.maxGroupSize));
+  const maxPartySize =
+    tour.slug === "banff-private-tour"
+      ? 14
+      : Math.max(1, Math.min(maxAvailableSeats ?? tour.maxGroupSize, tour.maxGroupSize));
   const [guests, setPartySize] = useState(2);
   const partySize = Math.min(guests, maxPartySize);
   // Per-guest departures take adults (16–99), youth (6–15) and infants (0–5) separately: youth pay
@@ -424,7 +433,17 @@ export function TourDetailView({
   const instant = tour.bookingMode === "BOKUN" && tour.departures.length > 0;
   const docFacts = docQuickFacts(tour.slug);
   const quickHighlights: { label: string; value: string; icon: ComponentType<{ className?: string }> }[] = docFacts
-    ? docFacts.map((f, i) => ({ ...f, icon: [Clock, Users, CheckCircle2, Calendar, MapPin, CheckCircle2][i % 6] }))
+    ? docFacts.map((f, i) => {
+        const lower = f.label.toLowerCase();
+        let icon: ComponentType<{ className?: string }> = CheckCircle2;
+        if (/duration/i.test(lower)) icon = Clock;
+        else if (/pickup/i.test(lower)) icon = MapPin;
+        else if (/group/i.test(lower)) icon = Users;
+        else if (/pricing/i.test(lower)) icon = Calendar;
+        else if (/cancellation/i.test(lower)) icon = CheckCircle2;
+        else icon = [Clock, Users, CheckCircle2, Calendar, MapPin, CheckCircle2][i % 6];
+        return { ...f, icon };
+      })
     : [
     { label: "Duration", value: durationLabel(tour), icon: Clock },
     {
@@ -585,11 +604,18 @@ export function TourDetailView({
                 <PriceTag
                   price={price}
                   currency={tour.currency}
-                  unit={tour.category === "TICKET" ? "per ticket" : unitLabel}
-                  lead={isEnquiry ? "Tailored quote from" : "From"}
+                  unit={tour.category === "TICKET" ? "per ticket" : tour.slug === "banff-private-tour" ? "per private van" : unitLabel}
+                  lead={isEnquiry ? "Tailored quote from" : tour.slug === "banff-private-tour" ? "Private van flat rate" : "From"}
                   showOriginal={!noStrikethrough}
                 />
-                {panelExtras.priceSeasons && <SeasonPrices departures={tour.departures} currency={tour.currency} />}
+                {panelExtras.priceSeasons && (
+                  <SeasonPrices
+                    departures={tour.departures}
+                    currency={tour.currency}
+                    isVehicle={isVehicle}
+                    unitLabel={tour.slug === "banff-private-tour" ? "per van" : "per vehicle"}
+                  />
+                )}
                 {/* No sales tax is added at checkout (backend booking-pricing.ts), so prices are tax-inclusive. */}
                 {price > 0 && (
                   <p className="mt-1.5 text-sm text-slate-600">
@@ -657,7 +683,12 @@ export function TourDetailView({
                         value={partySize}
                         max={maxPartySize}
                         onChange={setPartySize}
-                        hint={`Vehicle seats up to ${maxPartySize}`}
+                        label={tour.slug === "banff-private-tour" ? "Guests — maximum 14" : undefined}
+                        hint={
+                          tour.slug === "banff-private-tour"
+                            ? "12–13 guests recommended for extra comfort. Your group has the van exclusively."
+                            : `Vehicle seats up to ${maxPartySize}`
+                        }
                       />
                       {offersActivities && (
                         <ActivityAddOnToggle
@@ -666,6 +697,12 @@ export function TourDetailView({
                           guests={activityGuests ?? activityGuestsFor(partySize)}
                           onGuestsChange={setActivityGuests}
                           maxGuests={partySize}
+                          label={tour.slug === "banff-private-tour" ? "Add a Lake Minnewanka cruise — optional" : undefined}
+                          note={
+                            tour.slug === "banff-private-tour"
+                              ? "Cruise admission costs extra and is subject to seasonal operation and ticket availability. Select this option when booking, or contact us well in advance so our team can arrange tickets. Cruise timing may require changes to other sightseeing stops. We'll arrange tickets on your behalf and collect payment separately once confirmed."
+                              : undefined
+                          }
                         />
                       )}
                     </>
@@ -715,7 +752,7 @@ export function TourDetailView({
                     {isVehicle ? (
                       <>
                         <div className="flex items-center justify-between text-slate-600">
-                          <span>Private vehicle flat rate</span>
+                          <span>{tour.slug === "banff-private-tour" ? "Private van flat rate" : "Private vehicle flat rate"}</span>
                           <span>{money(calculatedTotal)}</span>
                         </div>
                         {offersActivities && activities && (
@@ -789,7 +826,11 @@ export function TourDetailView({
               <div className="pt-3 border-t border-slate-100 space-y-1 text-xs text-slate-600">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" aria-hidden="true" />
-                  <span>{cancellationShort(tour.category)}</span>
+                  <span>
+                    {tour.slug === "banff-private-tour"
+                      ? "Full refund when cancelled at least 72 hours before departure."
+                      : cancellationShort(tour.category)}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-ocean-600 shrink-0" aria-hidden="true" />
@@ -822,7 +863,8 @@ export function TourDetailView({
           <PriceTag
             price={price}
             currency={tour.currency}
-            unit={tour.category === "TICKET" ? "per ticket" : unitLabel}
+            unit={tour.category === "TICKET" ? "per ticket" : tour.slug === "banff-private-tour" ? "per private van" : unitLabel}
+            lead={isEnquiry ? "Tailored quote from" : tour.slug === "banff-private-tour" ? "Private van flat rate" : "From"}
             layout="inline"
             showOriginal={!noStrikethrough}
           />

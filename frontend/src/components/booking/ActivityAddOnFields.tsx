@@ -32,6 +32,8 @@ export function ActivityAddOnToggle({
   guests,
   onGuestsChange,
   maxGuests = 13,
+  label = "Add-on activities",
+  note = ACTIVITY_ADD_ONS_NOTE,
   children,
 }: {
   checked: boolean;
@@ -41,6 +43,8 @@ export function ActivityAddOnToggle({
   onGuestsChange?: (guests: ActivityGuests) => void;
   /** The party size: the three counts together can't be more. */
   maxGuests?: number;
+  label?: string;
+  note?: string;
   /** Shown under the note once ticked, in place of the guest pickers (the package activity list). */
   children?: React.ReactNode;
 }) {
@@ -66,9 +70,9 @@ export function ActivityAddOnToggle({
         <span className="min-w-0">
           <span className="flex items-center gap-1.5 font-medium text-obsidian-900">
             <Ticket className="h-4 w-4 text-ocean-700" aria-hidden="true" />
-            Add-on activities
+            {label}
           </span>
-          <span className="mt-0.5 block text-xs text-slate-600">{ACTIVITY_ADD_ONS_NOTE}</span>
+          <span className="mt-0.5 block text-xs text-slate-600">{note}</span>
         </span>
       </label>
       {checked && children && <div className="border-t border-slate-200 px-4 pb-4 pt-3">{children}</div>}

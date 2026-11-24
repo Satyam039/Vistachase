@@ -96,14 +96,14 @@ export function TourCard({
   priority?: boolean;
 }) {
   const TitleTag = headingLevel === 2 ? "h2" : "h3";
-  const unitLabel = tour.priceUnit === "GROUP" ? "group" : tour.category === "TICKET" ? "ticket" : "guest";
+  const unitLabel = tour.slug === "banff-private-tour" ? "van" : tour.priceUnit === "GROUP" ? "group" : tour.category === "TICKET" ? "ticket" : "guest";
   const status = availability(tour, seats, date);
   const price = fromPrice(tour);
   // Tickets are booked on the operator's site: the card goes straight there (no ticket page here).
   const ticket = activityTicket(tour.slug, tour.category);
   const award = AWARD_BADGE[tour.slug];
   // Short visible form of the policy; screen readers get the full wording.
-  const cancelLabel = cancellationBadge(tour.category);
+  const cancelLabel = tour.slug === "banff-private-tour" ? "Free cancellation (72h)" : cancellationBadge(tour.category);
   // Every tour and shuttle in the catalog picks up in Banff and Canmore; tickets have no pickup.
   const pickup = tour.category !== "TICKET";
 
@@ -111,7 +111,8 @@ export function TourCard({
     tour.slug === "banff-highlights-tour" ||
     tour.slug === "shared-tours-icefields-jasper" ||
     tour.slug === "banff-yoho-discovery" ||
-    tour.slug === "columbia-icefield-adventure";
+    tour.slug === "columbia-icefield-adventure" ||
+    tour.slug === "banff-private-tour";
 
   const seasonal =
     tour.slug === "banff-highlights-tour" || tour.slug === "banff-yoho-discovery"
@@ -202,7 +203,11 @@ export function TourCard({
             <span className="inline-flex items-center gap-1">
               <CheckCircle2 className="h-3 w-3 shrink-0 text-summit-300" aria-hidden="true" />
               <span aria-hidden="true">{cancelLabel}</span>
-              <span className="sr-only">{cancellationShort(tour.category)}.</span>
+              <span className="sr-only">
+                {tour.slug === "banff-private-tour"
+                  ? "Free cancellation with at least 72 hours’ notice."
+                  : `${cancellationShort(tour.category)}.`}
+              </span>
             </span>
             <span className={`inline-flex items-center gap-1 ${status.variant === "error" ? "text-red-300" : ""}`}>
               <CalendarDays className="h-3 w-3 shrink-0 text-summit-300" aria-hidden="true" />
@@ -232,11 +237,19 @@ export function TourCard({
                   showOriginal={!isExcludedStrikethrough}
                 />
               </div>
-              {hasPrice(price) && <p className="mt-0.5 text-xs text-white/55">Taxes and required fees included</p>}
+              {hasPrice(price) && (
+                <p className="mt-0.5 text-xs text-white/55">
+                  {tour.slug === "banff-private-tour" ? "Taxes and mandatory fees included" : "Taxes and required fees included"}
+                </p>
+              )}
               {seasonal && (
                 <div className="mt-1 flex flex-wrap gap-x-2.5 gap-y-0.5 text-[11px] text-white/60">
-                  <span>Summer: <strong className="font-medium text-summit-200">{seasonal.summer}</strong></span>
-                  <span>Winter: <strong className="font-medium text-white/80">{seasonal.winter}</strong></span>
+                  <span>
+                    Summer: <strong className="font-medium text-summit-200">{seasonal.summer}</strong>
+                  </span>
+                  <span>
+                    · Winter: <strong className="font-medium text-white/80">{seasonal.winter}</strong>
+                  </span>
                 </div>
               )}
             </div>
