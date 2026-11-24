@@ -57,7 +57,7 @@ export function ItineraryDayTabList() {
   };
 
   return (
-    <div role="tablist" aria-label="Itinerary by day" className="flex gap-2 overflow-x-auto pb-1">
+    <div role="tablist" aria-label={days.some((d) => d.tabLabel) ? "Itinerary by tour" : "Itinerary by day"} className="flex gap-2 overflow-x-auto pb-1">
       {days.map((d, i) => {
         const selected = i === active;
         return (
@@ -89,7 +89,7 @@ export function ItineraryDayTabList() {
                 : "border-obsidian-900/[0.12] bg-white text-obsidian-900 [@media(hover:hover)]:hover:border-ocean-600 [@media(hover:hover)]:hover:bg-ocean-50"
             }`}
           >
-            <span className={`block text-xs uppercase tracking-[0.2em] ${selected ? "text-summit-200" : "text-ocean-600"}`}>Day {d.dayNumber}</span>
+            <span className={`block text-xs uppercase tracking-[0.2em] ${selected ? "text-summit-200" : "text-ocean-600"}`}>{d.tabLabel ?? `Day ${d.dayNumber}`}</span>
           </button>
         );
       })}
@@ -112,7 +112,7 @@ export function ItineraryDayPanel({ className = "" }: { className?: string }) {
     >
       <div className="border-b border-obsidian-900/[0.08] pb-4">
         <span className="text-xs uppercase tracking-[0.24em] text-ocean-600">
-          Day {day.dayNumber} of {days.length}
+          {day.eyebrow ?? `Day ${day.dayNumber} of ${days.length}`}
         </span>
         <h3 className="mt-1 text-xl font-normal text-obsidian-900 sm:text-2xl">{day.title}</h3>
       </div>

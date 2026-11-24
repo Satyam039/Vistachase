@@ -461,14 +461,23 @@ function PrivateTourCard({
               <dd className="font-medium text-right text-white">{option.pickup}</dd>
             </div>
 
-            {option.group && (
-              <div className="flex items-start justify-between gap-3">
-                <dt className="flex items-center gap-1.5 text-white/50">
-                  <Users className="h-3.5 w-3.5 text-summit-300 shrink-0" aria-hidden="true" />
-                  <span>Group</span>
-                </dt>
-                <dd className="font-medium text-right text-white">{option.group}</dd>
-              </div>
+            {/* Four-Day extra rows (owner, 2026-11-24) & private group row. */}
+            {(
+              [
+                { label: "Final drop-off", value: option.finalDropoff, icon: Plane },
+                { label: "Group", value: option.group, icon: Users },
+                { label: "Scheduling", value: option.scheduling, icon: Calendar },
+              ] as const
+            ).map((row) =>
+              row.value ? (
+                <div key={row.label} className="flex items-start justify-between gap-3">
+                  <dt className="flex shrink-0 items-center gap-1.5 text-white/50">
+                    <row.icon className="h-3.5 w-3.5 text-summit-300 shrink-0" aria-hidden="true" />
+                    <span>{row.label}</span>
+                  </dt>
+                  <dd className="font-medium text-right text-white">{row.value}</dd>
+                </div>
+              ) : null,
             )}
 
             <div className="flex items-start justify-between gap-3">
@@ -561,7 +570,22 @@ function PrivateTourCard({
                         ? "Taxes and mandatory fees included. Optional Lake Minnewanka cruise costs extra."
                         : "Taxes and required fees included"}
                     </p>
-                    {option.seasonalPricing ? (
+                    {option.seasonLabel || option.savings ? (
+                      <div className="mt-2.5 space-y-1 rounded-lg bg-white/[0.04] p-2.5 text-xs">
+                        {option.savings && (
+                          <div className="flex items-start justify-between gap-3 text-white/80">
+                            <span className="shrink-0 text-white/55">Savings:</span>
+                            <span className="text-right font-medium text-summit-200">{option.savings}</span>
+                          </div>
+                        )}
+                        {option.seasonLabel && (
+                          <div className="flex items-start justify-between gap-3 text-white/80">
+                            <span className="shrink-0 text-white/55">Season:</span>
+                            <span className="text-right font-medium text-white">{option.seasonLabel}</span>
+                          </div>
+                        )}
+                      </div>
+                    ) : option.seasonalPricing ? (
                       <div className="mt-2.5 space-y-1 rounded-lg bg-white/[0.04] p-2.5 text-xs">
                         <div className="flex items-center justify-between text-white/80">
                           <span className="text-white/55">Summer Price:</span>

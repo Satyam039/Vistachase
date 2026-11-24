@@ -5,7 +5,7 @@ import { activityAddOnsError, activityAddOnsFor, activityAddOnsNote } from "@/mo
 describe("activity add-ons", () => {
   it("offers each tour only the activities on its itinerary, in summer", () => {
     expect(activityAddOnsFor("banff-highlights-tour", "2027-07-01")).toEqual(["lake-minnewanka-cruise"]);
-    expect(activityAddOnsFor("icefields-jasper-private-tour", "2027-07-01")).toEqual(["columbia-icefield-skywalk", "ice-explorer"]);
+    expect(activityAddOnsFor("icefields-jasper-private-tour", "2027-07-01")).toEqual(["ice-explorer-skywalk"]);
     expect(activityAddOnsFor("shared-tours-icefields-jasper", "2027-07-01")).toEqual([]);
     expect(activityAddOnsFor("banff-highlights-tour", "2027-01-15")).toEqual([]);
   });

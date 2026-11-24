@@ -18,7 +18,7 @@ import { tripBookings, tripOf, tripSummary } from "@/modules/bookings/trip";
 import { bookingIcs } from "@/modules/bookings/calendar-event";
 import { emailSchema, parseOr400, referenceSchema, z } from "@/lib/security/validate";
 import { airportTransferPriceList, airportTransferSchema } from "@/modules/bookings/airport-transfer";
-import { activityAddOnsSchema, activityGuestsSchema } from "@/modules/bookings/activity-add-ons";
+import { activityAddOnsSchema, activityGuestsSchema, activityParticipantsSchema } from "@/modules/bookings/activity-add-ons";
 import { PACKAGE_ACTIVITY_PRICES, packageActivitiesSchema } from "@/modules/bookings/package-activities";
 
 const router = Router();
@@ -46,6 +46,8 @@ const createSchema = z.object({
   airportTransfer: airportTransferSchema.optional(),
   activityAddOns: activityAddOnsSchema.default([]),
   activityGuests: activityGuestsSchema.optional(),
+  // Combined Ice Explorer + Skywalk request (Private Columbia Icefield): how many guests join.
+  activityParticipants: activityParticipantsSchema.optional(),
 });
 
 router.post("/", rateLimitMiddleware("booking_create", { maxRequests: 5, windowSeconds: 60 }), async (req, res, next) => {
@@ -102,6 +104,17 @@ const packageSchema = z.object({
   packageActivities: packageActivitiesSchema.default([]),
   // Private journeys: pay everything, or a 20% deposit now (owner, 2026-11-11).
   paymentPlan: z.enum(["FULL", "DEPOSIT"]).default("FULL"),
+  // Each tour's own pickup, in package order (Four-Day: Banff/Canmore for the outbound tours, the
+  // Jasper accommodation for the return tour). Before 2026-11-24 these were dropped by this schema.
+  dayPickups: z
+    .array(z.object({ pickupStopId: z.string().max(64).optional(), pickupCustomText: z.string().trim().max(200).optional() }))
+    .max(5)
+    .optional(),
+  day4JasperPickup: z.string().trim().max(200).optional(),
+  // Four-Day: where the return tour finishes (Banff, Canmore or Lake Louise included; Calgary extra).
+  finalDestination: z
+    .object({ area: z.enum(["BANFF", "CANMORE", "LAKE_LOUISE", "CALGARY", "CALGARY_AIRPORT"]), address: z.string().trim().max(200).optional() })
+    .optional(),
 });
 
 // A package (modules/bookings/package-booking.ts): one booking per day, one payment for all of them.

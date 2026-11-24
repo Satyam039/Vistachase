@@ -252,27 +252,60 @@ export const TOUR_ITINERARIES: Record<string, TourItinerary> = {
       ],
     },
   },
+  // Private Columbia Icefield Adventure, owner's page changes of 2026-11-24: Ice Explorer + Skywalk as
+  // one combined optional experience (about 2½ hours, invoiced separately), a separate Icefield
+  // Centre lunch break, and a winter itinerary with Abraham Lake. Page copy: lib/tourContent.ts.
   "icefields-jasper-private-tour": {
-    title: "Columbia Icefield Adventure (Private Tour)",
-    duration: "About 10 to 12 hours, door to door",
-    stops: ICEFIELD_STOPS.map((s) =>
-      /ice explorer|skywalk/i.test(s.name) ? { ...s, name: `${s.name} — Optional Add-On`, text: s.text.replace("Included from June 1 to October 10.", "Seasonal; admission costs extra.") } : s,
-    ),
+    title: "Private Columbia Icefield Adventure (Private Tour)",
+    duration: "Approximately 10–12 hours, pickup to drop-off",
+    stops: [
+      ...ICEFIELD_STOPS.slice(0, 4),
+      {
+        name: "Ice Explorer + Skywalk — optional combined experience",
+        text: "Ride the Ice Explorer onto the Athabasca Glacier and walk the glass-floored Columbia Icefield Skywalk. Offered together only, June 1 to October 10, at extra cost: our team arranges tickets and sends a separate invoice. Allow approximately 2½ hours combined; the day's sightseeing is planned around your reserved activity times.",
+        summerOnly: true,
+      },
+      {
+        name: "Lunch at the Columbia Icefield Centre",
+        text: "A lunch break at the Centre, additional to the approximately 2½-hour attraction time. Buy lunch there or bring your own (lunch not included).",
+        summerOnly: true,
+      },
+    ],
     steps: [
       { time: "Morning", text: `${PRIVATE_PICKUP} ${GUIDE_CALL}` },
       { time: "Morning", text: ICEFIELD_MORNING },
-      { time: "Midday", text: "Columbia Icefield, with the optional Ice Explorer and Skywalk in season. Lunch stop at the Columbia Icefield Centre (lunch not included)." },
+      { time: "Midday", text: "Columbia Icefield: the optional Ice Explorer + Skywalk combined experience (about 2½ hours, if booked) and a lunch break at the Columbia Icefield Centre (lunch not included)." },
       { time: "Afternoon", text: "Scenic drive back along the Icefields Parkway." },
-      { time: "Evening", text: "Drop-off at your accommodation. Traffic, weather and road conditions can affect return times." },
+      { time: "Evening", text: "Drop-off at your accommodation in Banff, Canmore or Lake Louise. Traffic, weather and road conditions can affect return times." },
     ],
     seasonal: [
-      "Price per vehicle, up to 13 guests: CAD $1,750 from June 1 to October 10; CAD $1,240 from October 11 to May 31.",
-      "Ice Explorer and Skywalk: June 1 to October 10, optional and at extra cost.",
-      "From October 11 to May 31 the glacier activities don't run and the route is adjusted; our team confirms the route for your date.",
-      "Pack an extra warm layer for the Columbia Icefield.",
+      "Price per private van, up to 14 guests (12–13 recommended for comfort): CAD $1,750 from June 1 to October 10; CAD $1,240 from October 11 to May 31, including taxes and mandatory fees.",
+      "Two seasonal itineraries: From June 1 to October 10 the tour travels to the Columbia Icefield. From October 11 to May 31 it visits Abraham Lake instead of the Columbia Icefield experience, and Ice Explorer and Skywalk are unavailable.",
+      "Ice Explorer + Skywalk: An optional combined experience (June 1 to October 10), approximately 2½ hours. Request it when booking with the number of participating guests; our team arranges tickets and sends a separate invoice. Tickets are not included in the private tour payment.",
+      "Flexible sightseeing: Discuss stops and pacing with your guide. Reserved Ice Explorer and Skywalk times must be respected, so longer visits or an optional walk may mean other stops are shortened or skipped.",
+      "If the glacier experience is cancelled: If the tour still runs, the replacement itinerary visits Athabasca Falls and Sunwapta Falls. Attraction refunds follow the operator's policy. If Vista Chase cancels the entire tour, you receive a full refund.",
       "Wildlife sightings are possible but can't be guaranteed.",
     ],
-    winterRouteToBeConfirmed: true,
+    winter: {
+      stops: [
+        ...ICEFIELD_WINTER_STOPS.slice(0, 4),
+        {
+          name: "Abraham Lake",
+          text: "Lunch is planned here: bring a packed lunch, or ask for a morning stop in Lake Louise Village to buy food. When the lake is frozen and your guide judges conditions suitable, you may walk onto the ice to look for frozen bubbles; otherwise enjoy a shoreline walk and photographs. Lake access and bubble visibility depend on conditions.",
+        },
+      ],
+      steps: [
+        { time: "Morning", text: `${PRIVATE_PICKUP} ${GUIDE_CALL}` },
+        { time: "Morning", text: "Optional food stop in Lake Louise Village (on request), then Bow Lake, Crowfoot Glacier Lookout, Peyto Lake and Waterfowl Lakes along the Icefields Parkway." },
+        { time: "Midday", text: "Abraham Lake, with lunch (packed or bought in Lake Louise Village)." },
+        { time: "Evening", text: "Drop-off at your accommodation in Banff, Canmore or Lake Louise. Traffic, weather and road conditions can affect return times." },
+      ],
+      notes: [
+        "Winter itinerary (October 11 to May 31): Abraham Lake replaces the Columbia Icefield experience; Ice Explorer and Skywalk are unavailable.",
+        "Lunch: Bring a packed lunch or request a morning stop in Lake Louise Village to buy food. Lunch is planned at Abraham Lake.",
+        "Lake access and frozen-bubble visibility depend on ice, snow and weather conditions and your guide's assessment.",
+      ],
+    },
   },
 };
 
@@ -290,6 +323,10 @@ export interface PackageStop {
 export interface PackageDay {
   dayNumber: number;
   title: string;
+  /** Tab text instead of "Day N" (Four-Day, owner 2026-11-24: tour names, not a fixed day order). */
+  tabLabel?: string;
+  /** Line above the title instead of "Day N of M". */
+  eyebrow?: string;
   stops: PackageStop[];
   closing: string;
 }
@@ -345,25 +382,33 @@ export const PACKAGE_ITINERARIES: Record<"three-day-rockies-discovery" | "four-d
     },
   ],
   "four-day-rockies-and-jasper": [
+    // Owner, 2026-11-24: four private tours named by tour, not Day 1–4. Banff and Lake Louise/Yoho on
+    // any free dates; Icefields Parkway to Jasper and Jasper Highlights & Return on consecutive dates.
+    // dayNumber is the tour's place in the booking (package-booking.ts), not a date order.
     {
       dayNumber: 1,
-      title: "Day 1 — Discover Banff",
+      title: "Banff Lakes & Viewpoints",
+      tabLabel: "Banff",
+      eyebrow: "Private tour · Banff",
       stops: [
         { name: "Bow Falls", desc: "Enjoy views of the Bow River cascading through a scenic setting close to Banff town." },
         { name: "Surprise Corner", desc: "Photograph the Fairmont Banff Springs hotel from a viewpoint above the river." },
         { name: "Hoodoos Trail Viewpoint", desc: "Discover unusual rock formations and broad views across the Bow Valley." },
         { name: "Lake Minnewanka", desc: "Spend time beside an expansive lake surrounded by rugged mountain scenery." },
+        { name: "Lake Minnewanka Cruise — Optional Add-On", desc: "Join a sightseeing cruise on Banff’s largest lake. Tickets cost extra, depend on operation and availability, and are arranged by our team and invoiced separately.", isOptional: true },
         { name: "Two Jack Lake", desc: "Enjoy a peaceful lakeside stop and opportunities to photograph the surrounding peaks." },
         { name: "Cascade Ponds", desc: "Pause among calm ponds and footbridges beneath Cascade Mountain." },
         { name: "Johnston Canyon", desc: "Explore canyon paths and walkways toward the Lower Falls, with the walk adapted to conditions and your group’s ability." },
-        { name: "Banff Gondola — Optional Add-On", desc: "Ride to Sulphur Mountain’s summit area for sweeping views across Banff and the surrounding ranges. Admission costs extra.", isOptional: true },
+        { name: "Banff Gondola — Optional Add-On", desc: "Ride to Sulphur Mountain’s summit area for sweeping views across Banff and the surrounding ranges. Tickets cost extra and are invoiced separately.", isOptional: true },
         { name: "Lunch in Banff Town", desc: "Choose from local cafés and restaurants. Lunch is purchased separately." },
       ],
-      closing: "Return to your accommodation in Banff, Canmore or Lake Louise.",
+      closing: "Return to your accommodation in Banff or Canmore.",
     },
     {
       dayNumber: 2,
-      title: "Day 2 — Iconic Lakes & Yoho",
+      title: "Lake Louise, Moraine Lake & Yoho",
+      tabLabel: "Lake Louise & Yoho",
+      eyebrow: "Private tour · Lake Louise & Yoho",
       stops: [
         { name: "Moraine Lake — Seasonal Access", desc: "Visit the lake beneath the Valley of the Ten Peaks, with access transportation arranged by Vista Chase." },
         { name: "Lake Louise", desc: "Enjoy the lakeshore and its memorable mountain-and-glacier backdrop." },
@@ -371,47 +416,52 @@ export const PACKAGE_ITINERARIES: Record<"three-day-rockies-discovery" | "four-d
         { name: "Natural Bridge", desc: "Watch the Kicking Horse River surge through sculpted rock channels." },
         { name: "Takakkaw Falls — Seasonal Access", desc: "Admire a towering waterfall in Yoho Valley, subject to road access and conditions." },
         { name: "Spiral Tunnels Viewpoint — When Accessible", desc: "Hear the story of this mountain railway engineering achievement. Train sightings depend on railway movements." },
+        { name: "Morant’s Curve", desc: "Stop at the famous viewpoint above the Bow River, where the railway curves beneath the peaks. Train sightings depend on railway movements." },
         { name: "Bow Valley Parkway — Scenic Drive", desc: "Travel through forested mountain scenery where the route is open and practical for the day." },
         { name: "Lunch in Lake Louise Village", desc: "Stop to purchase lunch during the day’s exploration." },
       ],
-      closing: "Return to your accommodation. Prepare your luggage for the following morning’s departure to Jasper.",
+      closing: "Return to your accommodation in Banff or Canmore.",
     },
     {
       dayNumber: 3,
-      title: "Day 3 — Icefields Parkway to Jasper",
+      title: "Icefields Parkway to Jasper",
+      tabLabel: "Icefields to Jasper",
+      eyebrow: "Private tour · about 10 hours",
       stops: [
         { name: "Bow Lake", desc: "Begin your parkway sightseeing beside a glacier-fed lake framed by mountain peaks." },
         { name: "Peyto Lake", desc: "Walk to the viewpoint for a striking view of the lake and surrounding valley." },
         { name: "Crowfoot Glacier Lookout", desc: "Stop for glacier views and an introduction to the changing mountain landscape." },
         { name: "Waterfowl Lakes", desc: "Enjoy a scenic pause beside the parkway’s mountain-framed lakes." },
-        { name: "Big Bend Viewpoint", desc: "Look across a sweeping valley and the parkway’s dramatic mountain curves." },
-        { name: "Athabasca Glacier & Columbia Icefield Area", desc: "Discover one of the journey’s most impressive glacier landscapes. Glacier travel is available through the optional Ice Explorer." },
-        { name: "Ice Explorer — Optional Add-On", desc: "Board a specialised glacier vehicle for an organised visit onto the Athabasca Glacier. Admission costs extra.", isOptional: true },
-        { name: "Columbia Icefield Skywalk — Optional Add-On", desc: "Step onto a glass-floored walkway with views into the Sunwapta Valley. Admission costs extra.", isOptional: true },
+        { name: "Big Bend — Scenery Along the Drive", desc: "Watch for the parkway’s sweeping curve and the valley views below as you drive. This is scenery along the route, not a scheduled stop." },
+        { name: "Athabasca Glacier & Columbia Icefield Area", desc: "Discover one of the journey’s most impressive glacier landscapes. Glacier travel is available through the optional Ice Explorer + Skywalk experience." },
+        { name: "Ice Explorer + Skywalk — Optional Combined Experience", desc: "Board a specialised glacier vehicle onto the Athabasca Glacier, then walk the glass-floored Skywalk above the Sunwapta Valley. One combined experience: the two can’t be chosen separately. Tickets cost extra and are invoiced separately.", isOptional: true },
         { name: "Lunch at the Columbia Icefield Centre", desc: "Purchase lunch before continuing north." },
         { name: "Continue to Jasper", desc: "Travel onward through Jasper National Park and finish at your booked accommodation in Jasper town." },
       ],
-      closing: "Overnight: Jasper. Accommodation must be booked directly by guests and is not included.",
+      closing: "Allow about 10 hours. Overnight in Jasper after your Icefields-to-Jasper tour: guests book and pay for this night themselves. Jasper Highlights & Return runs the next day.",
     },
     {
       dayNumber: 4,
-      title: "Day 4 — Maligne Valley, Waterfalls & Your Return Journey",
+      title: "Jasper Highlights & Return",
+      tabLabel: "Jasper & Return",
+      eyebrow: "Private tour · about 10–12 hours",
       stops: [
+        { name: "Pickup in Jasper", desc: "Your driver-guide collects you from your Jasper accommodation, the morning after your Icefields-to-Jasper tour." },
         { name: "Medicine Lake", desc: "Pause beside a lake known for its changing water levels and mountain setting." },
         { name: "Maligne Lake", desc: "Discover the lakeshore and surrounding peaks, with time to appreciate one of Jasper’s signature landscapes." },
         {
-          name: "Maligne Lake Cruise toward Spirit Island — Optional Add-On",
-          desc: "Choose a scenic cruise with views of Spirit Island and the surrounding mountains. Tickets cost extra and are subject to seasonal operation and availability. Spirit Island views are part of the cruise experience, rather than the standard lakeshore stop.",
+          name: "Maligne Lake Cruise to Spirit Island — Optional Add-On",
+          desc: "Choose a scenic cruise with views of Spirit Island and the surrounding mountains. Tickets cost extra, are invoiced separately and depend on seasonal operation and availability. Spirit Island is part of the cruise, not the standard lakeshore stop.",
           isOptional: true,
         },
-        { name: "Maligne Canyon — Only If Reopened", desc: "If officially reopened and safe to visit for your departure, explore the canyon’s dramatic limestone scenery. While closed, it is excluded and your guide will adjust the day’s sightseeing." },
+        { name: "Maligne Canyon — Only If Reopened", desc: "If officially reopened and suitable for your departure, explore the canyon’s dramatic limestone scenery. While closed, it is excluded and your guide will adjust the day’s sightseeing." },
         { name: "Lunch in Jasper Town", desc: "Enjoy a break to purchase lunch before travelling south." },
         { name: "Athabasca Falls", desc: "See the powerful Athabasca River rush through a narrow rocky gorge, with viewing paths and photo opportunities." },
         { name: "Sunwapta Falls", desc: "Pause at a striking waterfall surrounded by forest and mountain scenery." },
-        { name: "Return Along the Icefields Parkway", desc: "Continue south to your prearranged final destination: Banff, Lake Louise, Canmore or Calgary." },
+        { name: "Return Along the Icefields Parkway", desc: "Continue south to your final destination: Banff, Canmore or Lake Louise, included." },
       ],
       closing:
-        "Day four includes substantial driving, especially for a Calgary finish. Departure time, attraction reservations and sightseeing stops will be coordinated around your final destination. Discuss any same-day flight with us before booking it.",
+        "Allow about 10–12 hours for Jasper sightseeing and the return to Banff or Canmore. Traffic, conditions and reserved activities may affect timing. This timing does not include Calgary: a Calgary or Calgary Airport drop-off costs extra and must be arranged separately in advance.",
     },
   ],
 };

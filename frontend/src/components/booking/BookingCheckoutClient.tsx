@@ -57,8 +57,9 @@ import {
   EMPTY_AIRPORT_TRANSFER,
   type AirportTransferValue,
 } from "@/components/booking/AirportTransferFields";
-import { ActivityAddOnFields, ActivityAddOnToggle } from "@/components/booking/ActivityAddOnFields";
-import { ACTIVITY_ADD_ONS, activityAddOnsFor, activityAddOnsRequestLine, activityGuestsFor, type ActivityAddOnId, type ActivityGuests } from "@/lib/activityAddOns";
+import { ActivityAddOnFields, ActivityAddOnToggle, CombinedAddOnControl } from "@/components/booking/ActivityAddOnFields";
+import { ACTIVITY_ADD_ONS, activityAddOnsFor, activityAddOnsRequestLine, activityGuestsFor, combinedAddOnFor, type ActivityAddOnId, type ActivityGuests } from "@/lib/activityAddOns";
+import { vehicleSeats } from "@/lib/tours";
 import { Dropdown } from "@/components/forms/Dropdown";
 import { PhoneField } from "@/components/forms/PhoneField";
 import { dialCode } from "@/lib/countries";
@@ -229,6 +230,7 @@ export function BookingCheckoutClient({
   initialInfants,
   initialActivities = false,
   initialActivityGuests,
+  initialActivityParticipants,
 }: {
   departure: DepartureData;
   stops: StopData[];
@@ -246,6 +248,8 @@ export function BookingCheckoutClient({
   initialActivities?: boolean;
   /** Who joins the add-on activities, chosen on the tour page (?actAdults=&actChildren=&actInfants=). */
   initialActivityGuests?: ActivityGuests | null;
+  /** Combined Ice Explorer + Skywalk participants from the tour page (?actParticipants=). */
+  initialActivityParticipants?: number;
 }) {
   // The responsive variant changes rendered order, so measure the host rather than the viewport.
   const hostRef = useRef<HTMLElement | null>(null);
@@ -271,12 +275,16 @@ export function BookingCheckoutClient({
   const [step, setStep] = useState(0);
   const [attempted, setAttempted] = useState<ReadonlySet<number>>(new Set());
 
-  // Party
+  // Party. A free private van may take more guests than its listed seats (Private Columbia Icefield: 14).
+  const initialSeats =
+    departure.tour?.category === "PRIVATE" && departure.seatsAvailable >= departure.capacityTotal
+      ? vehicleSeats(departure.tour?.slug, departure.capacityTotal)
+      : departure.seatsAvailable;
   const [adults, setAdults] = useState(
-    Math.max(1, Math.min(initialAdults ?? initialGuests ?? 2, departure.seatsAvailable)),
+    Math.max(1, Math.min(initialAdults ?? initialGuests ?? 2, initialSeats)),
   );
   const [children, setChildren] = useState(() =>
-    initialAdults ? Math.max(0, Math.min(initialChildren ?? 0, departure.seatsAvailable - Math.min(initialAdults, departure.seatsAvailable))) : 0,
+    initialAdults ? Math.max(0, Math.min(initialChildren ?? 0, initialSeats - Math.min(initialAdults, initialSeats))) : 0,
   );
   const [infants, setInfants] = useState(() => Math.max(0, Math.min(initialInfants ?? 0, MAX_INFANTS)));
   // Airport transfer (private tours only): no price yet, so it doesn't change the total.
@@ -292,7 +300,16 @@ export function BookingCheckoutClient({
   // tickets and collects payment separately, so it only adds a line to the special requests.
   const isPrivate = departure.tour?.category === "PRIVATE";
   const [wantsActivities, setWantsActivities] = useState(initialActivities && isPrivate);
-  const chosenAddOns = activityAddOns.filter((id) => offeredAddOns.includes(id) && (!isPrivate || wantsActivities));
+  // Private Columbia Icefield (owner, 2026-11-24): Ice Explorer + Skywalk as one combined ticket
+  // request for a number of participants (up to the group), summer dates only, invoiced separately.
+  const combined = isPrivate ? combinedAddOnFor(departure.tour?.slug) : null;
+  const combinedAvailable = Boolean(combined && offeredAddOns.includes(combined.id));
+  const [participantsWanted, setParticipants] = useState<number>(() => Math.max(1, initialActivityParticipants ?? adults));
+  const chosenAddOns = combined
+    ? wantsActivities && offeredAddOns.includes(combined.id)
+      ? [combined.id]
+      : []
+    : activityAddOns.filter((id) => offeredAddOns.includes(id) && (!isPrivate || wantsActivities));
   // Who joins the activities, with ages (owner, 2026-11-11). Starts as the whole party, as adults.
   const [activityGuests, setActivityGuests] = useState<ActivityGuests>(() => initialActivityGuests ?? activityGuestsFor(adults));
 
@@ -428,9 +445,10 @@ export function BookingCheckoutClient({
   const totalSeats = adults + children + seatedInfants;
   const vehicleIsFree =
     Boolean(holdToken) || liveSeatsAvailable >= departure.capacityTotal;
+  const vanSeats = vehicleSeats(departure.tour?.slug, departure.capacityTotal);
   const seatCapacity = isVehicle
     ? vehicleIsFree
-      ? departure.capacityTotal
+      ? vanSeats
       : 0
     : liveSeatsAvailable + (holdToken ? holdSeats : 0);
   const remainingSeconds = holdToken
@@ -669,7 +687,11 @@ export function BookingCheckoutClient({
     }
     const airportError = airport && totalSeats >= 2 ? airportTransferError(airportTransfer) : null;
     if (airportError) party.airport = airportError;
-    if (isPrivate && wantsActivities && activityGuests.adults + activityGuests.children + activityGuests.infants < 1) {
+    if (combined) {
+      if (wantsActivities && combinedAvailable && (participantsWanted < 1 || participantsWanted > totalSeats)) {
+        party.activities = `Ice Explorer + Skywalk can be requested for 1 to ${totalSeats} ${totalSeats === 1 ? "guest" : "guests"}, your group size.`;
+      }
+    } else if (isPrivate && wantsActivities && activityGuests.adults + activityGuests.children + activityGuests.infants < 1) {
       party.activities = "Add at least one guest for the add-on activities.";
     } else if (isPrivate && wantsActivities && activityGuests.adults + activityGuests.children + activityGuests.infants > totalSeats) {
       party.activities = `The add-on activities can be for up to ${totalSeats} ${totalSeats === 1 ? "guest" : "guests"}, your party size.`;
@@ -702,6 +724,9 @@ export function BookingCheckoutClient({
     isPrivate,
     wantsActivities,
     activityGuests,
+    combined,
+    combinedAvailable,
+    participantsWanted,
     customerName,
     customerEmail,
     phoneLocal,
@@ -762,12 +787,14 @@ export function BookingCheckoutClient({
           childrenCount: children,
           infantsCount: infants,
           specialRequests:
-            [specialRequests.trim(), isPrivate && wantsActivities ? activityAddOnsRequestLine(chosenAddOns.map((id) => ACTIVITY_ADD_ONS[id]), activityGuests) : ""]
+            // The combined ticket request's staff line is written by the server (activity-add-ons.ts).
+            [specialRequests.trim(), isPrivate && wantsActivities && !combined ? activityAddOnsRequestLine(chosenAddOns.map((id) => ACTIVITY_ADD_ONS[id]), activityGuests) : ""]
               .filter(Boolean)
               .join("\n") || undefined,
           airportTransfer: airport ? airportTransferPayload(airportTransfer) : undefined,
           activityAddOns: chosenAddOns,
-          activityGuests: isPrivate && wantsActivities ? activityGuests : undefined,
+          activityGuests: isPrivate && wantsActivities && !combined ? activityGuests : undefined,
+          activityParticipants: combined && chosenAddOns.length > 0 ? Math.min(participantsWanted, totalSeats) : undefined,
           promoCode: appliedPromo?.code,
           paymentPlan: plan,
         }),
@@ -807,7 +834,7 @@ export function BookingCheckoutClient({
       const freshSeats = await refreshAvailability();
       const currentAvailable = freshSeats ?? liveSeatsAvailable;
       const currentCapacity = isVehicle
-        ? (vehicleIsFree ? departure.capacityTotal : 0)
+        ? (vehicleIsFree ? vanSeats : 0)
         : currentAvailable + (holdToken ? holdSeats : 0);
       if (currentCapacity <= 0) {
         markAttempted([0]);
@@ -958,10 +985,16 @@ export function BookingCheckoutClient({
           />
         )}
         {airport && transferPrice == null && <SummaryRow label="Airport transfer" value={AIRPORT_TRANSFER_PRICE_NOTE} />}
-        {chosenAddOns.length > 0 && (
+        {combined && chosenAddOns.length > 0 && (
+          <SummaryRow
+            label={`Ice Explorer + Skywalk ticket request · ${Math.min(participantsWanted, totalSeats)} ${Math.min(participantsWanted, totalSeats) === 1 ? "guest" : "guests"}`}
+            value="Invoiced separately"
+          />
+        )}
+        {!combined && chosenAddOns.length > 0 && (
           <SummaryRow label={chosenAddOns.map((id) => ACTIVITY_ADD_ONS[id]).join(", ")} value="Price confirmed by our team" />
         )}
-        {isPrivate && wantsActivities && chosenAddOns.length === 0 && <SummaryRow label="Add-on activities" value="Paid separately once confirmed" />}
+        {!combined && isPrivate && wantsActivities && chosenAddOns.length === 0 && <SummaryRow label="Add-on activities" value="Paid separately once confirmed" />}
       </VStack>
       <Divider />
       <VStack gap={2}>
@@ -970,7 +1003,7 @@ export function BookingCheckoutClient({
             isVehicle
               ? isBanffPrivate
                 ? "Private van flat rate"
-                : `Private vehicle · up to ${departure.capacityTotal} guests`
+                : `Private vehicle · up to ${vanSeats} guests`
               : hasChildPrice || hasInfantFare
                 ? `Fare · ${fareLabel}`
                 : `Fare · ${totalSeats} × ${money(departure.price)}`
@@ -1324,7 +1357,19 @@ export function BookingCheckoutClient({
                               message={currentErrors.seats}
                             />
                           )}
-                          {isPrivate ? (
+                          {combined ? (
+                            <>
+                              <CombinedAddOnControl
+                                checked={wantsActivities}
+                                onChange={setWantsActivities}
+                                participants={Math.min(participantsWanted, Math.max(1, totalSeats))}
+                                onParticipantsChange={setParticipants}
+                                maxGuests={Math.max(1, totalSeats)}
+                                available={combinedAvailable}
+                              />
+                              {currentErrors.activities && <FieldStatus type="error" variant="detached" message={currentErrors.activities} />}
+                            </>
+                          ) : isPrivate ? (
                             <>
                               <ActivityAddOnToggle
                                 checked={wantsActivities}

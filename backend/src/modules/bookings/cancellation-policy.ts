@@ -12,7 +12,7 @@
 // they keep the 72-hour full-refund rule. Times are Mountain Time (getMountainTimeInstant).
 
 import prisma from "@/lib/db/prisma";
-import { getMountainTimeInstant } from "@/lib/utils/time";
+import { getMountainTimeInstant, wallClockInstant } from "@/lib/utils/time";
 import { tripOf } from "@/modules/bookings/trip";
 
 export interface CancellationTerms {
@@ -38,6 +38,19 @@ export function termsSentence(terms: CancellationTerms) {
   return terms.keepPercent > 0
     ? `Cancel at least ${terms.cutoffHours} hours before the first tour day for an 80% refund; ${terms.keepPercent}% of the total price is non-refundable. No refund after that.`
     : `Free cancellation up to ${terms.cutoffHours} hours before departure. No refund after that.`;
+}
+
+/** Packages whose deadline runs from an earlier arrival transfer (owner's Four-Day policy, 2026-11-24). */
+export const ARRIVAL_DEADLINE_PACKAGE = "four-day-rockies-and-jasper";
+
+const packageSlugOf = (priceSnapshot: unknown) => (priceSnapshot as { package?: { slug?: unknown } } | null)?.package?.slug;
+
+/** The arrival transfer's scheduled pickup (flight arrival, Mountain Time) stored with a booking, if any. */
+export function arrivalPickupInstant(priceSnapshot: unknown): Date | null {
+  const t = (priceSnapshot as { airportTransfer?: { type?: string; arrivalDate?: string; arrivalTime?: string } } | null)?.airportTransfer;
+  if (!t?.arrivalDate || !t.arrivalTime || t.type === "DEPARTURE") return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(t.arrivalDate) || !/^\d{2}:\d{2}$/.test(t.arrivalTime)) return null;
+  return wallClockInstant(t.arrivalDate, t.arrivalTime, "America/Edmonton");
 }
 
 export interface PolicyBooking {
@@ -71,11 +84,19 @@ export async function policyDecision(booking: PolicyBooking, at = new Date()): P
   if (trip && trip.references.length > 1) {
     const packageDepartures = await prisma.booking.findMany({
       where: { bookingReference: { in: trip.references } },
-      select: { tourDeparture: { select: { date: true, departureTime: true } } },
+      select: { priceSnapshot: true, tourDeparture: { select: { date: true, departureTime: true } } },
     });
     const instants = packageDepartures.map((p) =>
       getMountainTimeInstant(p.tourDeparture.date, p.tourDeparture.departureTime).getTime(),
     );
+    // Four-Day Rockies & Jasper (owner, 2026-11-24): an arrival transfer booked before the tours
+    // starts the deadline from that transfer's scheduled pickup (the flight's arrival time).
+    if (packageSlugOf(booking.priceSnapshot) === ARRIVAL_DEADLINE_PACKAGE) {
+      for (const p of packageDepartures) {
+        const arrival = arrivalPickupInstant(p.priceSnapshot);
+        if (arrival) instants.push(arrival.getTime());
+      }
+    }
     if (instants.length > 0) {
       startsAt = new Date(Math.min(...instants));
     }

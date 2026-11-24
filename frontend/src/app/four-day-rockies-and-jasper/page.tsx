@@ -26,9 +26,11 @@ import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 import { PACKAGE_ITINERARIES } from "@/lib/itineraries";
 import { ItineraryDayPanel, ItineraryDayTabList, ItineraryDays } from "@/components/tours/ItineraryDayTabs";
 import { PackageTripJsonLd } from "@/components/seo/PackageTripJsonLd";
-import { PACKAGE_DAY_PRICE, PRIVATE_MAX_GUESTS, PRIVATE_PACKAGES } from "@/lib/privateTours";
+import { FOUR_DAY_MAX_GUESTS, PRIVATE_PACKAGES } from "@/lib/privateTours";
 import { PackageBookingSection } from "@/components/booking/PackageBookingSection";
-import { cancellationShort } from "@/lib/policy";
+import { BALANCE_DUE_DAYS, DEPOSIT_MIN_DAYS, DEPOSIT_PERCENT } from "@/lib/policy";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { FOUR_DAY_CANCELLATION, FOUR_DAY_FAQS, FOUR_DAY_INTRO, FOUR_DAY_LUGGAGE, FOUR_DAY_PRICE, FOUR_DAY_PRICING } from "@/lib/fourDayContent";
 import { cachePublicData } from "@/lib/api/cachePolicy";
 
 // Rendered once and served from cache, refreshed in the background at most every minute, instead of
@@ -39,57 +41,56 @@ export const revalidate = 60;
 export const metadata: Metadata = {
   title: "Four-Day Rockies & Jasper Private Tour | Vista Chase",
   description:
-    "Four private days of lakes, waterfalls and glaciers with your own driver-guide, on to Jasper, finishing in Banff, Lake Louise, Canmore or Calgary.",
+    "Four private tours: Banff, Lake Louise & Yoho, the Icefields Parkway to Jasper, then Jasper sightseeing and your return. Private van and driver-guide, 10% savings, summer only.",
   alternates: { canonical: "/four-day-rockies-and-jasper" },
 };
 
+const cad = (n: number) => `CAD $${n.toLocaleString("en-CA")}`;
+
+// Owner's Trello card, 2026-11-24: no fixed four-day sequence, 14 guests, Banff/Canmore pickup,
+// Banff/Canmore/Lake Louise drop-off included and Calgary extra.
 const SPECS = [
-  { label: "Duration", value: "Four-day private journey", icon: Clock },
-  { label: "Experience", value: "Private, exclusively for your group", icon: Users },
-  { label: "Starting pickup", value: "Your accommodation in Banff, Canmore or Lake Louise", icon: MapPin },
-  { label: "Final drop-off", value: "Banff, Lake Louise, Canmore or Calgary, as arranged", icon: Plane },
-  { label: "Pricing", value: "Per vehicle, according to your selected vehicle capacity", icon: Car },
-  { label: "Park admission", value: "Included", icon: Check },
-  { label: "Activities", value: "Optional extras selected at checkout", icon: Sparkles },
-  { label: "Accommodation", value: "Booked directly by guests; Jasper stay required after day three", icon: BedDouble },
-  { label: "Airport transfers", value: "From CAD $364 per transfer", icon: Plane },
-  { label: "Availability", value: "Seasonal; available dates shown when booking", icon: Calendar },
+  { label: "Tours", value: "Four private tours; Jasper tours on consecutive dates", icon: Clock },
+  { label: "Group", value: `Up to ${FOUR_DAY_MAX_GUESTS} guests; 12–13 recommended for comfort`, icon: Users },
+  { label: "Starting pickup", value: "Banff or Canmore; Jasper for the return tour", icon: MapPin },
+  { label: "Final drop-off", value: "Banff, Canmore or Lake Louise included; Calgary extra", icon: Plane },
+  { label: "Pricing", value: `${cad(FOUR_DAY_PRICE.total)} per private van, 10% savings included`, icon: Car },
 ];
 
-// Day-by-day itinerary: lib/itineraries.ts (shared with the booking PDF).
+// Tour-by-tour itinerary: lib/itineraries.ts (shared with the booking PDF).
 const ITINERARY_DAYS = PACKAGE_ITINERARIES["four-day-rockies-and-jasper"];
 
 const INCLUSIONS = [
-  "Private vehicle for your group during the four-day journey.",
-  "A dedicated driver-guide.",
-  "Doorstep pickup from your starting accommodation in Banff, Canmore or Lake Louise.",
-  "Sightseeing transportation throughout the planned itinerary.",
-  "Transfer to your booked Jasper accommodation after day three.",
-  "Pickup from your Jasper accommodation on day four.",
-  "Final drop-off in Banff, Lake Louise, Canmore or Calgary, as agreed when booking.",
+  "A private van and driver-guide for each of the four tours.",
+  "Pickup from your accommodation in Banff or Canmore for the Banff, Lake Louise/Yoho and Icefields-to-Jasper tours.",
+  "Sightseeing transportation throughout each tour’s planned itinerary.",
+  "Drop-off at your booked Jasper accommodation at the end of your Icefields-to-Jasper tour.",
+  "Pickup from your Jasper accommodation for the Jasper Highlights & Return tour.",
+  "Final drop-off in Banff, Canmore or Lake Louise, as arranged when booking.",
   "Required national park admission fees.",
   "Moraine Lake access arrangements when included in the operating itinerary.",
   "Taxes and other mandatory fees charged by authorities for the included tour services.",
+  "10% package savings: CAD $700 off the four-tour price.",
 ];
 
 const EXCLUSIONS = [
-  "Accommodation, including the required Jasper overnight stay.",
+  "Accommodation, including your Jasper night between the Icefields-to-Jasper and Jasper return tours.",
   "Lunch, breakfast, dinner and personal purchases.",
-  "Optional third-party activities, including the Banff Gondola, lake cruises, canoe rentals, Ice Explorer and Skywalk.",
-  "Airport transfers outside the agreed itinerary unless separately arranged and added.",
+  "Optional activities: Banff Gondola, Lake Minnewanka cruise, Ice Explorer + Skywalk and Maligne Lake cruise. Tickets are invoiced separately.",
+  "Calgary drop-off, including Calgary Airport, and other airport transfers: extra cost, arranged separately.",
   "Gratuities.",
 ];
 
 const IMPORTANT_INFO = [
-  "Your vehicle and driver-guide are exclusive to your group. Third-party attractions may be shared with other visitors.",
-  "Activity tickets are optional extras and depend on availability and operating schedules.",
-  "Maligne Canyon is included only if officially reopened for your departure.",
+  "Your van and driver-guide are exclusive to your group. Third-party attractions may be shared with other visitors.",
+  "Up to 14 guests per van; 12–13 is recommended for comfort.",
+  "Allow about 10 hours for Icefields-to-Jasper, and 10–12 hours for Jasper sightseeing and the return to Banff or Canmore. This timing does not include Calgary.",
+  "Activity tickets are optional extras and depend on operation, availability and the day’s schedule.",
+  "Maligne Canyon is included only if officially reopened and suitable for your departure.",
   "Seasonal roads and attractions affect access to Moraine Lake, Takakkaw Falls and other itinerary locations.",
   "Walking may involve steps, slopes and uneven surfaces. Discuss accessibility requirements before booking.",
   "Bring walking shoes, weatherproof layers and additional warm clothing for the glacier area.",
   "Wildlife sightings and clear mountain views cannot be guaranteed.",
-  "Vehicle selection must accommodate both passengers and luggage.",
-  "Moraine Lake transportation arrangements depend on the vehicle booked and may involve a shuttle transfer.",
 ];
 
 export default function FourDayRockiesAndJasperPage() {
@@ -106,6 +107,13 @@ export default function FourDayRockiesAndJasperPage() {
         days={PRIVATE_PACKAGES.four.days.map((d) => d.title)}
         touristType="Private Group"
         crumbs={[{ name: "Home", path: "/" }, { name: "Multi-day tours", path: "/multi-day-tour-package-for-banff" }, { name: PRIVATE_PACKAGES.four.title }]}
+      />
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: FOUR_DAY_FAQS.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a.join("\n") } })),
+        }}
       />
       <div className="bg-obsidian-50 text-obsidian-900">
         {/* Hero */}
@@ -157,7 +165,7 @@ export default function FourDayRockiesAndJasperPage() {
             </nav>
 
             <span className="mb-3 inline-block rounded-full bg-summit-500/20 px-3.5 py-1 text-xs font-medium uppercase tracking-[0.2em] text-summit-300 ring-1 ring-summit-400/30 backdrop-blur-md">
-              Private Tour · 4 Days
+              Private Tours · Four Experiences
             </span>
 
             <h1 className="text-balance text-[clamp(2.25rem,8vw,4.5rem)] font-light leading-[1.05] tracking-tight text-white motion-safe:animate-[fadeUp_900ms_ease-out]">
@@ -167,7 +175,7 @@ export default function FourDayRockiesAndJasperPage() {
               Private Banff, Yoho, Columbia Icefield &amp; Jasper Tour
             </p>
             <p className="mx-auto mt-5 max-w-3xl text-base sm:text-lg font-light leading-relaxed text-slate-100">
-              Explore further across four days of lakes, waterfalls, mountain roads and glacier scenery. Travel privately with your own driver-guide, continue to Jasper after day three, and finish in Banff, Lake Louise, Canmore or Calgary.
+              {FOUR_DAY_INTRO.headline}
             </p>
           </div>
         </section>
@@ -196,25 +204,27 @@ export default function FourDayRockiesAndJasperPage() {
         <ItineraryDays days={ITINERARY_DAYS}>
         {/* Main Content Layout */}
         <div className="mx-auto grid max-w-7xl items-start gap-12 px-page pb-6 pt-16 sm:pt-20 lg:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)]">
-          {/* Main Column */}
-          <div className="space-y-12">
+          {/* Main Column (min-w-0: the tour tabs scroll sideways instead of widening the column on phones) */}
+          <div className="min-w-0 space-y-12">
             {/* Overview */}
             <section aria-labelledby="overview-heading" className="space-y-4">
               <h2 id="overview-heading" className="text-2xl sm:text-3xl font-light tracking-tight text-obsidian-900">
                 Overview
               </h2>
-              <p className="text-base sm:text-lg font-light leading-relaxed text-slate-700">
-                Experience the variety of the Canadian Rockies on a private four-day journey through Banff, Yoho and Jasper national parks.
-              </p>
-              <p className="text-base sm:text-lg font-light leading-relaxed text-slate-700">
-                Begin with Banff’s lakes and viewpoints, discover Lake Louise, Moraine Lake and Yoho, then follow the Icefields Parkway to the Columbia Icefield. Continue to Jasper for an overnight stay before exploring Maligne Valley and the waterfalls along your return route.
-              </p>
-              <p className="text-base sm:text-lg font-light leading-relaxed text-slate-700">
-                Personalise your experience with optional activities such as the Banff Gondola, Ice Explorer, Skywalk and a Maligne Lake cruise toward Spirit Island. Your driver-guide coordinates the journey around your selected experiences and the day’s conditions.
-              </p>
-              <p className="text-base sm:text-lg font-light leading-relaxed text-slate-700">
-                Guests book their own accommodation, including a required stay in Jasper after day three.
-              </p>
+              <p className="text-lg sm:text-xl font-light text-obsidian-900">{FOUR_DAY_INTRO.headline}</p>
+              {FOUR_DAY_INTRO.paragraphs.map((p) => (
+                <p key={p} className="text-base sm:text-lg font-light leading-relaxed text-slate-700">
+                  {p}
+                </p>
+              ))}
+              <div className="border-l-2 border-summit-500 bg-white p-5">
+                <h3 className="text-sm uppercase tracking-[0.18em] text-ocean-600">Pricing</h3>
+                {FOUR_DAY_PRICING.map((p) => (
+                  <p key={p} className="mt-2 text-base font-light leading-relaxed text-slate-700">
+                    {p}
+                  </p>
+                ))}
+              </div>
             </section>
 
             {/* Daily Itinerary */}
@@ -222,6 +232,7 @@ export default function FourDayRockiesAndJasperPage() {
               <h2 id="itinerary-heading" className="text-2xl sm:text-3xl font-light tracking-tight text-obsidian-900">
                 Detailed Itinerary
               </h2>
+              <p className="text-sm text-slate-600">Choose a tour to see its stops. The Banff and Lake Louise/Yoho tours can be on any available dates; Icefields Parkway to Jasper and Jasper Highlights &amp; Return run on consecutive dates.</p>
 
               <ItineraryDayTabList />
 
@@ -237,24 +248,27 @@ export default function FourDayRockiesAndJasperPage() {
             <div className="border-b border-white/10 pb-5">
               <span className="text-xs uppercase tracking-[0.2em] text-summit-300">Private Journey</span>
               <h3 className="mt-1 text-2xl font-light text-white">Four-Day Rockies &amp; Jasper</h3>
-              {/* The doc's package price (lib/privateTours.ts): per day per vehicle, summer season only. */}
-              <p className="mt-4 flex items-baseline gap-1.5 text-white">
-                <span className="text-xs text-white/60">From</span>
-                <span className="text-3xl font-light tabular-nums">CAD ${(PACKAGE_DAY_PRICE.summer * 4).toLocaleString("en-CA")}</span>
-                <span className="text-xs text-white/70">per vehicle</span>
+              {/* Owner, 2026-11-24: the package price per private van (PACKAGE_DAY_PRICE.summer x 4). */}
+              <p className="mt-4 flex flex-wrap items-baseline gap-1.5 text-white">
+                <span className="text-3xl font-light tabular-nums">{cad(FOUR_DAY_PRICE.total)}</span>
+                <span className="text-xs text-white/70">per private van, all four tours</span>
               </p>
+              <p className="mt-1 text-xs text-white/60">Taxes, mandatory fees and 10% savings included</p>
               <dl className="mt-3 space-y-1 text-xs">
                 <div className="flex justify-between gap-3">
-                  <dt className="text-white/60">Summer (Jun 1–Oct 10)</dt>
-                  <dd className="text-summit-200">CAD ${PACKAGE_DAY_PRICE.summer.toLocaleString("en-CA")} per day per vehicle</dd>
+                  <dt className="text-white/60">Savings</dt>
+                  <dd className="text-right text-summit-200">10% included · Save {cad(FOUR_DAY_PRICE.saving)} on the four-tour price</dd>
                 </div>
                 <div className="flex justify-between gap-3">
-                  <dt className="text-white/60">Winter (Oct 11–May 31)</dt>
-                  <dd className="text-white/80">Not offered (summer only)</dd>
+                  <dt className="text-white/60">Group</dt>
+                  <dd className="text-right text-white/80">Up to {FOUR_DAY_MAX_GUESTS} guests; 12–13 recommended</dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-white/60">Season</dt>
+                  <dd className="text-right text-white/80">Summer only: June 1–October 10</dd>
                 </div>
               </dl>
             </div>
-
 
             <div className="mt-8">
               <a
@@ -264,7 +278,7 @@ export default function FourDayRockiesAndJasperPage() {
                 Book Now <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </a>
               <p className="mt-3 text-center text-xs text-white/60">
-                Choose your own date for each day, then pay once. {cancellationShort("MULTIDAY")}.
+                Choose a date for each tour, then pay once. {FOUR_DAY_CANCELLATION.short}
               </p>
             </div>
 
@@ -279,7 +293,11 @@ export default function FourDayRockiesAndJasperPage() {
             </div>
           </aside>
         </div>
-        <PackageBookingSection config={PRIVATE_PACKAGES.four} heading="Book the Four-Day Rockies &amp; Jasper" />
+        <PackageBookingSection
+          config={PRIVATE_PACKAGES.four}
+          heading="Book the Four-Day Rockies & Jasper"
+          intro={`One private van and driver-guide for each tour. Choose a date for each of the four tours, then pay once, in full or with a ${DEPOSIT_PERCENT}% deposit when every tour is at least ${DEPOSIT_MIN_DAYS} days away.`}
+        />
         <div className="mx-auto max-w-7xl px-page py-16 sm:py-20">
           <div className="space-y-12 lg:max-w-[calc((100%-3rem)*1.75/2.75)]">
             <ItineraryDayPanel />
@@ -288,7 +306,7 @@ export default function FourDayRockiesAndJasperPage() {
             <div className="flex items-start gap-3 rounded-2xl bg-amber-500/10 p-5 text-sm text-amber-950 border border-amber-500/20">
               <Info className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" aria-hidden="true" />
               <p>
-                <strong className="font-semibold">Itinerary note:</strong> Stop order may change around accommodation locations, selected activities, traffic, weather and road access. Optional activities affect the time available elsewhere.
+                <strong className="font-semibold">Itinerary note:</strong> Stop order may change around accommodation locations, selected activities, traffic, weather and road access. Optional activities affect the time available elsewhere. Timings do not include a Calgary drop-off.
               </p>
             </div>
 
@@ -333,17 +351,29 @@ export default function FourDayRockiesAndJasperPage() {
                   <span>Pickup &amp; Drop-Off</span>
                 </h3>
                 <p className="mt-3 text-sm sm:text-base leading-relaxed text-slate-600 font-light">
-                  Your journey begins with doorstep pickup from your accommodation in Banff, Canmore or Lake Louise. Provide your accommodation details and chosen final destination when booking.
+                  The Banff, Lake Louise/Yoho and Icefields-to-Jasper tours start with pickup from your accommodation in Banff or Canmore. The Jasper Highlights &amp; Return tour picks you up from your Jasper accommodation. When booking, give us your Banff or Canmore address for each of these tours, your Jasper accommodation and your final destination.
                 </p>
                 <p className="mt-2 text-sm sm:text-base leading-relaxed text-slate-600 font-light">
-                  On day three, bring your luggage for the overnight stay in Jasper. Please tell us your luggage requirements before selecting a vehicle so there is suitable space for your group and bags.
+                  Final drop-off in Banff, Canmore or Lake Louise is included. Calgary, including the airport, requires a separate arrangement and an extra charge, confirmed by our team before your trip.
                 </p>
                 <p className="mt-2 text-sm sm:text-base leading-relaxed text-slate-600 font-light">
-                  Your guide will be assigned the day before your tour, with contact details shared once confirmed. We aim to provide the same guide throughout the journey, subject to availability and operational requirements.
+                  Your guide will be assigned the day before your tour, with contact details shared once confirmed. We aim to provide the same guide throughout, subject to availability and operational requirements.
                 </p>
                 <p className="mt-2 text-sm text-ocean-700 font-medium">
-                  Additional airport transfers can be arranged alongside this package. Any Calgary Airport drop-off must be agreed in advance, with sufficient time allowed for the journey.
+                  Airport transfers are available at extra cost: Calgary–Banff/Canmore from CAD $364 one way for up to six passengers.
                 </p>
+              </div>
+
+              <div className="rounded-none bg-white p-6 sm:p-8 border border-obsidian-900/[0.08]">
+                <h3 className="text-xl font-normal text-obsidian-900 flex items-center gap-2">
+                  <Car className="h-5 w-5 text-ocean-600" />
+                  <span>Luggage</span>
+                </h3>
+                {FOUR_DAY_LUGGAGE.map((p) => (
+                  <p key={p} className="mt-3 text-sm sm:text-base leading-relaxed text-slate-600 font-light">
+                    {p}
+                  </p>
+                ))}
               </div>
 
               <div className="rounded-none bg-white p-6 sm:p-8 border border-obsidian-900/[0.08]">
@@ -357,15 +387,15 @@ export default function FourDayRockiesAndJasperPage() {
                 <ul className="mt-2 space-y-1 text-sm text-slate-700 font-light">
                   <li className="flex items-start gap-2">
                     <span className="text-ocean-600" aria-hidden="true">•</span>
-                    <span><strong>Before and during days one and two:</strong> Stay in Banff, Canmore or Lake Louise.</span>
+                    <span><strong>Banff-based tours:</strong> Stay in Banff or Canmore around the Banff Lakes &amp; Viewpoints, Lake Louise/Yoho and Icefields-to-Jasper tours.</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-ocean-600" aria-hidden="true">•</span>
-                    <span><strong>After day three:</strong> Stay in Jasper town.</span>
+                    <span><strong>After your Icefields-to-Jasper tour:</strong> Stay in Jasper town. You book this night yourself; Jasper Highlights &amp; Return picks you up there the next morning.</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-ocean-600" aria-hidden="true">•</span>
-                    <span><strong>After day four:</strong> Arrange accommodation at your final destination if required.</span>
+                    <span><strong>After your Jasper return tour:</strong> Arrange accommodation at your final destination if required.</span>
                   </li>
                 </ul>
                 <p className="mt-3 text-xs uppercase tracking-wider text-amber-800 font-medium bg-amber-50 p-2.5 rounded-lg border border-amber-200">
@@ -388,6 +418,47 @@ export default function FourDayRockiesAndJasperPage() {
                   </li>
                 ))}
               </ul>
+            </section>
+
+            {/* Cancellation policy (owner, 2026-11-24), the same everywhere on this page and at checkout. */}
+            <section aria-labelledby="cancellation-heading" className="rounded-none bg-white p-6 sm:p-8 border border-obsidian-900/[0.08]">
+              <h3 id="cancellation-heading" className="text-xl font-normal text-obsidian-900 flex items-center gap-2">
+                <FileText className="h-5 w-5 text-ocean-600" />
+                <span>Cancellation Policy</span>
+              </h3>
+              {FOUR_DAY_CANCELLATION.paragraphs.map((p) => (
+                <p key={p} className="mt-3 text-sm sm:text-base leading-relaxed text-slate-600 font-light">
+                  {p}
+                </p>
+              ))}
+              <h4 className="mt-5 text-base font-normal text-obsidian-900">Paying with a deposit</h4>
+              <p className="mt-2 text-sm sm:text-base leading-relaxed text-slate-600 font-light">
+                When every tour is at least {DEPOSIT_MIN_DAYS} days away, you can pay {DEPOSIT_PERCENT}% at booking and the rest {BALANCE_DUE_DAYS} days before your first tour, from your vouchers; we email you a reminder. Otherwise the full amount is paid at booking. The non-refundable portion is {DEPOSIT_PERCENT}% of the total package price, regardless of instalments paid, so a cancellation after paying only the deposit is not refunded.
+              </p>
+            </section>
+
+            {/* FAQs (owner, 2026-11-24) */}
+            <section aria-labelledby="faq-heading" className="space-y-4">
+              <h2 id="faq-heading" className="text-2xl sm:text-3xl font-light tracking-tight text-obsidian-900">
+                Frequently Asked Questions
+              </h2>
+              <div className="divide-y divide-obsidian-900/[0.08] border-y border-obsidian-900/[0.08] bg-white">
+                {FOUR_DAY_FAQS.map((f) => (
+                  <details key={f.q} className="group px-5 sm:px-6">
+                    <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 py-4 text-base text-obsidian-900 [&::-webkit-details-marker]:hidden">
+                      {f.q}
+                      <ChevronRight className="h-4 w-4 shrink-0 text-ocean-600 transition-transform group-open:rotate-90" aria-hidden="true" />
+                    </summary>
+                    <div className="space-y-2 pb-5 text-sm sm:text-base font-light leading-relaxed text-slate-600">
+                      {f.a.map((p) => (
+                        <p key={p} className="whitespace-pre-line">
+                          {p}
+                        </p>
+                      ))}
+                    </div>
+                  </details>
+                ))}
+              </div>
             </section>
           </div>
         </div>

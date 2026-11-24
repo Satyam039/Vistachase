@@ -57,6 +57,7 @@ const FORM_LABEL: Record<string, string> = {
   ENQUIRY: "Enquiry",
   SIGNUP: "Account signup",
   PARTNER_APPLY: "Partner application",
+  BANFF_ELITE: "Banff Elite enquiry",
   CHAT: "Concierge chat",
   LIVE_CHAT: "Live chat",
   CHAT_HANDOFF: "Chat → support",

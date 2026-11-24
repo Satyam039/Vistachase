@@ -5,7 +5,7 @@
 
 import { z } from "zod";
 import prisma from "@/lib/db/prisma";
-import { getEmailProvider } from "@/lib/email/email.provider";
+import { emailDeliveryConfigured, getEmailProvider } from "@/lib/email/email.provider";
 import { escapeHtml, renderMasterEmail } from "@/lib/email/email-template";
 
 export const BANFF_ELITE_SUCCESS_MESSAGE =
@@ -55,14 +55,18 @@ export interface BanffEliteEnquiryResult {
   fields?: Record<string, string[]>;
 }
 
-// In-memory cache for duplicate prevention (10-minute deduplication window).
+// Duplicate prevention (10-minute window). The same enquiry sent again (same email, phone and
+// details) is answered with the first result instead of a second email. Checked in memory, against
+// requests still being sent, and in the Enquiry table so it also holds after an API restart.
+const DEDUPE_WINDOW_MS = 10 * 60_000;
+const BANFF_ELITE_TOUR_SLUG = "premium-custom-banff-elite";
 const recentSubmissions = new Map<string, { timestamp: number; result: BanffEliteEnquiryResult }>();
+const inFlight = new Map<string, Promise<BanffEliteEnquiryResult>>();
 
 /** Purge expired entries older than 10 minutes */
 function cleanupSubmissions(now = Date.now()) {
-  const windowMs = 10 * 60_000;
   for (const [key, item] of recentSubmissions.entries()) {
-    if (now - item.timestamp > windowMs) {
+    if (now - item.timestamp > DEDUPE_WINDOW_MS) {
       recentSubmissions.delete(key);
     }
   }
@@ -71,6 +75,7 @@ function cleanupSubmissions(now = Date.now()) {
 /** Clear deduplication cache (useful for tests) */
 export function clearBanffEliteSubmissionCache() {
   recentSubmissions.clear();
+  inFlight.clear();
 }
 
 /** Process and send a Banff Elite personalised tour enquiry */
@@ -96,20 +101,7 @@ export async function processBanffEliteEnquiry(rawInput: unknown): Promise<Banff
   const guestsVal = data.guests != null && data.guests !== "" ? String(data.guests) : "";
   const daysVal = data.tourDays != null && data.tourDays !== "" ? String(data.tourDays) : "";
 
-  // 2. Duplicate prevention
-  const dedupeKey =
-    data.idempotencyKey ||
-    `${data.email.toLowerCase()}:${data.phone.replace(/\D/g, "")}:${data.travelDates || ""}:${vehicle}`;
-
-  const cached = recentSubmissions.get(dedupeKey);
-  if (cached && now - cached.timestamp < 10 * 60_000) {
-    return {
-      ...cached.result,
-      duplicate: true,
-    };
-  }
-
-  // 3. Format email and message contents
+  // 2. Format email and message contents
   const lines = [
     "BANFF ELITE PERSONALISED TOUR ENQUIRY",
     "=====================================",
@@ -130,6 +122,51 @@ export async function processBanffEliteEnquiry(rawInput: unknown): Promise<Banff
   ];
 
   const fullText = lines.join("\n");
+
+  // 3. Duplicate prevention: the key is the enquiry itself (a client-sent idempotencyKey is ignored,
+  // since a new key per click would defeat it). Changed details count as a new enquiry.
+  const dedupeKey = `${data.email.toLowerCase()}|${data.phone.replace(/\D/g, "")}|${fullText}`;
+  const cached = recentSubmissions.get(dedupeKey);
+  if (cached && now - cached.timestamp < DEDUPE_WINDOW_MS) return { ...cached.result, duplicate: true };
+  const pending = inFlight.get(dedupeKey);
+  if (pending) {
+    const first = await pending;
+    return first.success ? { ...first, duplicate: true } : first;
+  }
+  // Registered before any await, so a second click that arrives meanwhile waits for this one.
+  const run = (async (): Promise<BanffEliteEnquiryResult> => {
+    try {
+      const saved = await prisma.enquiry.findFirst({
+        where: {
+          tourSlug: BANFF_ELITE_TOUR_SLUG,
+          email: { equals: data.email, mode: "insensitive" },
+          message: fullText,
+          createdAt: { gte: new Date(now - DEDUPE_WINDOW_MS) },
+        },
+        select: { id: true },
+      });
+      if (saved) return { success: true, message: BANFF_ELITE_SUCCESS_MESSAGE, enquiryId: saved.id, duplicate: true };
+    } catch (err) {
+      console.warn("[BanffElite] Duplicate check skipped:", (err as Error).message);
+    }
+    return sendAndSave(data, { fullText, guestsVal, places, vehicle, daysVal });
+  })();
+  inFlight.set(dedupeKey, run);
+  try {
+    const result = await run;
+    if (result.success) recentSubmissions.set(dedupeKey, { timestamp: now, result: { ...result, duplicate: undefined } });
+    return result;
+  } finally {
+    inFlight.delete(dedupeKey);
+  }
+}
+
+/** Emails the team (both inboxes) and saves the enquiry; success only when the email really went out. */
+async function sendAndSave(
+  data: BanffEliteEnquiryPayload,
+  f: { fullText: string; guestsVal: string; places: string; vehicle: string; daysVal: string },
+): Promise<BanffEliteEnquiryResult> {
+  const { fullText, guestsVal, places, vehicle, daysVal } = f;
 
   const emailHtml = `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:16px;border-collapse:collapse;font-size:14px;color:#1e293b;">
@@ -159,7 +196,13 @@ export async function processBanffEliteEnquiry(rawInput: unknown): Promise<Banff
     disclaimer: "This enquiry was submitted through the Vista Chase website & AI concierge.",
   });
 
-  // 4. Send email to support@vistachase.com and support@banffelite.com
+  // 4. Send email to support@vistachase.com and support@banffelite.com. Without a real email
+  // provider (EMAIL_PROVIDER/RESEND_API_KEY or SMTP) the console provider only logs and reports
+  // success, so the guest would be told it was sent when nobody received it: refuse instead.
+  if (!emailDeliveryConfigured()) {
+    console.error("[BanffElite] Email delivery is not configured; enquiry not sent.");
+    return { success: false, error: BANFF_ELITE_FAILURE_MESSAGE, status: 503 };
+  }
   let emailSent = false;
   try {
     const emailResult = await getEmailProvider().sendEmail({
@@ -192,7 +235,7 @@ export async function processBanffEliteEnquiry(rawInput: unknown): Promise<Banff
         name: data.name,
         email: data.email,
         phone: data.phone,
-        tourSlug: "premium-custom-banff-elite",
+        tourSlug: BANFF_ELITE_TOUR_SLUG,
         guests: Number.isFinite(numGuests) && numGuests > 0 ? numGuests : undefined,
         message: fullText,
         status: "NEW",
@@ -204,14 +247,5 @@ export async function processBanffEliteEnquiry(rawInput: unknown): Promise<Banff
     console.warn("[BanffElite] Database persistence warning (handled gracefully):", (dbErr as Error).message);
   }
 
-  const successResult: BanffEliteEnquiryResult = {
-    success: true,
-    message: BANFF_ELITE_SUCCESS_MESSAGE,
-    enquiryId,
-  };
-
-  // Cache for duplicate prevention
-  recentSubmissions.set(dedupeKey, { timestamp: now, result: successResult });
-
-  return successResult;
+  return { success: true, message: BANFF_ELITE_SUCCESS_MESSAGE, enquiryId };
 }

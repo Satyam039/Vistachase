@@ -1,3 +1,5 @@
+import { PRIVATE_VEHICLE_MAX_GUESTS } from "@/modules/departures/schedule-rules";
+
 /**
  * How a departure is sold.
  *
@@ -14,7 +16,7 @@ interface PricedDeparture {
   /** Per-infant (0–5) price (cents). Set: infants pay it and take a seat. Null: free on a lap. */
   infantPrice?: number | null;
   capacityTotal: number;
-  tour?: { category: string } | null;
+  tour?: { category: string; slug?: string | null } | null;
 }
 
 export function isVehicleDeparture(departure: PricedDeparture): boolean {
@@ -51,10 +53,14 @@ export function fareSubtotal(departure: PricedDeparture, adults: number, childre
 }
 
 /** Problem with the party size for this departure, if any. */
-export function partySizeError(departure: PricedDeparture, guests: number): string | null {
+export function partySizeError(departure: PricedDeparture, guests: number, vehicleMaxGuests?: number): string | null {
   if (guests < 1) return "At least one guest is required.";
-  if (isVehicleDeparture(departure) && guests > departure.capacityTotal) {
-    return `This private vehicle seats up to ${departure.capacityTotal} guests.`;
+  // A private package may take more guests than the day tour's listed seats (Four-Day: up to 14 in
+  // the passenger van); the whole vehicle is still reserved either way.
+  // Some private day tours also take more (PRIVATE_VEHICLE_MAX_GUESTS: Private Columbia Icefield, 14).
+  const vehicleMax = Math.max(departure.capacityTotal, vehicleMaxGuests ?? 0, PRIVATE_VEHICLE_MAX_GUESTS[departure.tour?.slug ?? ""] ?? 0);
+  if (isVehicleDeparture(departure) && guests > vehicleMax) {
+    return `This private vehicle seats up to ${vehicleMax} guests.`;
   }
   return null;
 }

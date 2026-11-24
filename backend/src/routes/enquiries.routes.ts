@@ -3,7 +3,7 @@ import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
 import { Router } from "express";
 import { z } from "zod";
 import { createEnquiry } from "@/modules/enquiries/enquiry.repository";
-import { processBanffEliteEnquiry } from "@/modules/enquiries/banff-elite-enquiry";
+import { BANFF_ELITE_FAILURE_MESSAGE, BANFF_ELITE_SUCCESS_MESSAGE, banffEliteSchema, processBanffEliteEnquiry } from "@/modules/enquiries/banff-elite-enquiry";
 import { STAYING_IN_OPTIONS } from "@/modules/enquiries/staying-in";
 import {
   enquiryDateErrors,
@@ -107,8 +107,35 @@ router.post("/", rateLimitMiddleware("enquiry_create", { maxRequests: 5, windowS
 });
 
 // POST /api/enquiries/banff-elite: Banff Elite personalised tour enquiry
+// Same bot checks as the contact form (honeypot, signed form token, random names, suspicious email,
+// optional Turnstile); repeats are caught by the handler's duplicate check. A bot gets a normal-looking success and nothing is sent;
+// a person who was just too quick (or left the form open a day) gets the retry message.
 router.post("/banff-elite", rateLimitMiddleware("banff_elite_enquiry", { maxRequests: 10, windowSeconds: 600 }), async (req, res) => {
-  const result = await processBanffEliteEnquiry(req.body);
+  const body = (req.body ?? {}) as Record<string, unknown>;
+  const parsed = banffEliteSchema.safeParse(body);
+  if (parsed.success) {
+    const { name, email } = parsed.data;
+    const drop = (reason: string) => {
+      console.warn(`[banff-elite] dropped as spam: ${reason}`);
+      void recordSubmission(req, { form: "BANFF_ELITE", outcome: "SPAM", reason, email, name });
+      return res.status(200).json({ success: true, message: BANFF_ELITE_SUCCESS_MESSAGE });
+    };
+    if (typeof body.website === "string" && body.website.trim()) return drop("honeypot filled");
+    if (looksLikeBotName(name) || isSyntheticBotName(name)) return drop("random-string name");
+    if (isSuspiciousEmail(email)) return drop("suspicious email address");
+    const tokenProblem = formTokenProblem(body.formToken);
+    if (tokenProblem === "form sent too fast" || tokenProblem === "stale form token") {
+      void recordSubmission(req, { form: "BANFF_ELITE", outcome: "REFUSED", reason: tokenProblem, email, name });
+      return res.status(400).json({ success: false, error: BANFF_ELITE_FAILURE_MESSAGE, retry: true });
+    }
+    if (tokenProblem) return drop(tokenProblem);
+    if (!(await verifyTurnstile(typeof body.turnstileToken === "string" ? body.turnstileToken : undefined, req.ip))) {
+      void recordSubmission(req, { form: "BANFF_ELITE", outcome: "REFUSED", reason: "security check failed", email, name });
+      return res.status(400).json({ success: false, error: "Please complete the security check and send again." });
+    }
+  }
+  const result = await processBanffEliteEnquiry(body);
+  if (result.success && !result.duplicate) void recordSubmission(req, { form: "BANFF_ELITE", outcome: "ACCEPTED", email: parsed.data?.email, name: parsed.data?.name });
   if (!result.success) {
     return res.status(result.status || 400).json(result);
   }

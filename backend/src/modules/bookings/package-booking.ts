@@ -49,6 +49,14 @@ export interface TourPackage {
    * FIRST tour day (owner, 2026-11-18), so the guest pays the whole rest once.
    */
   depositAllowed?: boolean;
+  /** Each tour's name, for messages (default "Day N"). */
+  dayTitles?: string[];
+  /** Pairs of tours [i, j] that must run on consecutive dates (tour j the day after tour i). */
+  consecutive?: [number, number][];
+  /** Most guests in the private vehicle when more than the departure's seats (Four-Day: 14). */
+  maxGuests?: number;
+  /** Tours (0-based) whose pickup must be in Banff or Canmore, never Lake Louise. */
+  banffCanmorePickupDays?: number[];
 }
 
 export const PACKAGES: TourPackage[] = [
@@ -80,8 +88,15 @@ export const PACKAGES: TourPackage[] = [
   {
     slug: "four-day-rockies-and-jasper",
     title: "Four-Day Rockies & Jasper",
-    // Day 1 Banff, Day 2 Lake Louise, Moraine Lake & Yoho, Day 3 Icefields Parkway to Jasper, Day 4 Jasper and return.
+    // Four private tours (owner, 2026-11-24): Banff Lakes & Viewpoints and Lake Louise, Moraine Lake &
+    // Yoho on any free dates; Icefields Parkway to Jasper and Jasper Highlights & Return on consecutive
+    // dates (Jasper overnight between them); all four dates differ. Up to 14 guests. Pickups for the
+    // three outbound tours in Banff or Canmore; the return tour picks up in Jasper.
     tourSlugs: ["banff-private-tour", "banff-private-tour", "icefields-jasper-private-tour", "icefields-jasper-private-tour"],
+    dayTitles: ["Banff Lakes & Viewpoints", "Lake Louise, Moraine Lake & Yoho", "Icefields Parkway to Jasper", "Jasper Highlights & Return"],
+    consecutive: [[2, 3]],
+    maxGuests: 14,
+    banffCanmorePickupDays: [0, 1, 2],
     discountPercent: 10,
     depositAllowed: true,
     summerOnly: true,
@@ -89,6 +104,28 @@ export const PACKAGES: TourPackage[] = [
 ];
 
 export const findPackage = (slug: string) => PACKAGES.find((p) => p.slug === slug) ?? null;
+
+/** "Icefields Parkway to Jasper", or "Day 3" for a package without tour names. */
+export const packageDayName = (pkg: Pick<TourPackage, "dayTitles">, index: number) => pkg.dayTitles?.[index] ?? `Day ${index + 1}`;
+
+/** The day after a YYYY-MM-DD date. */
+const nextDay = (date: string) => {
+  const [y, m, d] = date.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + 1)).toISOString().slice(0, 10);
+};
+
+/** Why these dates (one per tour, YYYY-MM-DD, in package order) break the package's date rules, or null. */
+export function packageDateRuleError(pkg: TourPackage, dates: string[]): string | null {
+  if (new Set(dates).size !== dates.length) {
+    return pkg.dayTitles ? `Each of the ${dates.length} tours needs a different date.` : "The tours are full-day trips, so they need to be on different days.";
+  }
+  for (const [a, b] of pkg.consecutive ?? []) {
+    if (dates[a] && dates[b] && nextDay(dates[a]) !== dates[b]) {
+      return `${packageDayName(pkg, b)} must be the day after ${packageDayName(pkg, a)}, with your overnight stay in Jasper between them. Please choose consecutive dates.`;
+    }
+  }
+  return null;
+}
 
 /** Each day's tour category (SHARED / PRIVATE), for a coupon's "Where does it apply". */
 export async function packageCategories(pkg: Pick<TourPackage, "tourSlugs">): Promise<(string | null)[]> {
@@ -120,6 +157,22 @@ export interface CreatePackageInput extends Omit<CreateBookingInput, "departureI
   promoCode?: string;
   /** Private journeys: the activities the guest ticked, and who joins each (package-activities.ts). */
   packageActivities?: PackageActivityInput[];
+  /** Four-Day: where the return tour finishes (Banff, Canmore or Lake Louise included; Calgary extra). */
+  finalDestination?: { area: "BANFF" | "CANMORE" | "LAKE_LOUISE" | "CALGARY" | "CALGARY_AIRPORT"; address?: string };
+}
+
+const FINAL_AREA_LABEL: Record<NonNullable<CreatePackageInput["finalDestination"]>["area"], string> = {
+  BANFF: "Banff (included)",
+  CANMORE: "Canmore (included)",
+  LAKE_LOUISE: "Lake Louise (included)",
+  CALGARY: "Calgary (extra-cost request: price and timing to be confirmed by our team)",
+  CALGARY_AIRPORT: "Calgary Airport (extra-cost request: price and flight timing to be confirmed by our team)",
+};
+
+/** "Final drop-off: Canmore (included), 123 Main St." for the return tour's special requests. */
+export function finalDestinationLine(f: CreatePackageInput["finalDestination"]): string | null {
+  if (!f) return null;
+  return `Final drop-off: ${FINAL_AREA_LABEL[f.area]}${f.address?.trim() ? `, ${f.address.trim()}` : ""}.`;
 }
 
 export interface PackageResult {
@@ -175,31 +228,33 @@ async function replayPackage(input: CreatePackageInput): Promise<PackageResult |
   };
 }
 
-/** Checks the departures belong to the package's tours, in order, on different days, and are open with enough seats. */
+/** Checks the departures belong to the package's tours, in order, on different days (and consecutive where required), and are open with enough seats. */
 async function packageError(pkg: TourPackage, departureIds: string[], party?: { adults: number; children: number; infants: number }): Promise<string | null> {
   if (departureIds.length !== pkg.tourSlugs.length) return `Choose a date for each of the ${pkg.tourSlugs.length} tours.`;
   if (new Set(departureIds).size !== departureIds.length) return "Choose a different departure for each tour.";
   const departures = await prisma.tourDeparture.findMany({ where: { id: { in: departureIds } }, include: { tour: { select: { slug: true, title: true } } } });
-  const dates = new Set<string>();
-  const isPrivate = pkg.slug.includes("private");
+  const dates: string[] = [];
+  const isPrivate = pkg.slug.includes("private") || Boolean(pkg.depositAllowed);
   for (const [i, id] of departureIds.entries()) {
+    const name = packageDayName(pkg, i);
     const d = departures.find((x) => x.id === id);
-    if (!d || d.tour?.slug !== pkg.tourSlugs[i]) return `Day ${i + 1}: that departure isn't part of the ${pkg.title}. Please choose the date again.`;
+    if (!d || d.tour?.slug !== pkg.tourSlugs[i]) return `${name}: that departure isn't part of the ${pkg.title}. Please choose the date again.`;
     const closed = bookingClosedError(d);
-    if (closed) return `Day ${i + 1} (${d.tour.title}): ${closed}`;
+    if (closed) return `${pkg.dayTitles ? name : `${name} (${d.tour.title})`}: ${closed}`;
     const day = d.date.toISOString().slice(0, 10);
-    if (pkg.summerOnly && !inSummer(day)) return `Day ${i + 1}: the ${pkg.title} runs from June 1 to October 10 only.`;
+    if (pkg.summerOnly && !inSummer(day)) return `${name}: the ${pkg.title} runs from June 1 to October 10 only.`;
     if (party) {
       const seatsAvailable = Math.max(0, d.capacityTotal - d.capacityBooked - d.capacityHeld);
       const seatsNeeded = isPrivate ? d.capacityTotal : party.adults + party.children + (d.infantPrice != null ? party.infants : 0);
       if (seatsAvailable < seatsNeeded) {
-        return `Day ${i + 1} (${d.tour?.title ?? pkg.title}) only has ${seatsAvailable} seats available, but your party requires ${seatsNeeded}.`;
+        return isPrivate
+          ? `${name}: the private vehicle is no longer free on that date. Please choose another date for ${name}.`
+          : `${pkg.dayTitles ? name : `${name} (${d.tour?.title ?? pkg.title})`} only has ${seatsAvailable} seats available, but your party requires ${seatsNeeded}.`;
       }
     }
-    dates.add(day);
+    dates.push(day);
   }
-  if (dates.size !== departureIds.length) return "The tours are full-day trips, so they need to be on different days.";
-  return null;
+  return packageDateRuleError(pkg, dates);
 }
 
 /**
@@ -215,6 +270,18 @@ export async function createPackageBooking(input: CreatePackageInput): Promise<P
 
   const invalid = await packageError(pkg, input.departureIds, { adults: input.adultsCount, children: input.childrenCount, infants: input.infantsCount });
   if (invalid) return { success: false, error: invalid };
+  const partySize = input.adultsCount + input.childrenCount + input.infantsCount;
+  if (pkg.maxGuests && partySize > pkg.maxGuests) return { success: false, error: `The ${pkg.title} takes up to ${pkg.maxGuests} guests.` };
+  if (pkg.banffCanmorePickupDays?.length) {
+    const stopIds = pkg.banffCanmorePickupDays.map((i) => input.dayPickups?.[i]?.pickupStopId ?? input.pickupStopId).filter((x): x is string => Boolean(x));
+    if (stopIds.length > 0) {
+      const lakeLouise = await prisma.shuttleStop.findFirst({ where: { id: { in: stopIds }, town: { contains: "Lake Louise", mode: "insensitive" } }, select: { id: true } });
+      if (lakeLouise) return { success: false, error: "Pickups for the Banff, Lake Louise/Yoho and Icefields-to-Jasper tours are from Banff or Canmore. Please choose a Banff or Canmore hotel." };
+    }
+  }
+  if (pkg.dayTitles && pkg.slug === "four-day-rockies-and-jasper" && !input.finalDestination) {
+    return { success: false, error: "Choose where your Jasper Highlights & Return tour finishes: Banff, Canmore or Lake Louise (included), or Calgary (extra cost)." };
+  }
   const plan = input.paymentPlan === "DEPOSIT" ? "DEPOSIT" : "FULL";
   if (plan === "DEPOSIT" && !pkg.depositAllowed) return { success: false, error: `The ${pkg.title} is paid in full at booking.` };
   const departureDates = new Map(
@@ -258,7 +325,11 @@ export async function createPackageBooking(input: CreatePackageInput): Promise<P
         adultsCount: input.adultsCount,
         childrenCount: input.childrenCount,
         infantsCount: input.infantsCount,
-        specialRequests: input.specialRequests,
+        // The final drop-off goes with the last tour (the Four-Day's Jasper Highlights & Return).
+        specialRequests:
+          i === input.departureIds.length - 1 && input.finalDestination
+            ? [input.specialRequests, finalDestinationLine(input.finalDestination)].filter(Boolean).join("\n")
+            : input.specialRequests,
         affiliateCode: input.affiliateCode,
         departureId,
         idempotencyKey: dayKey(input.idempotencyKey, i + 1),
@@ -271,12 +342,13 @@ export async function createPackageBooking(input: CreatePackageInput): Promise<P
       {
         deferPayment: true,
         discount: { percent: packageDiscountFor(pkg, departureDates.get(departureId) ?? ""), label: pkg.title.toUpperCase() },
+        ...(pkg.maxGuests ? { vehicleMaxGuests: pkg.maxGuests } : {}),
         ...(packagePromo ? { packagePromo: { promo: packagePromo, countsUse: i === 0 } } : {}),
       },
     );
     if (!result.success || !result.booking) {
-      await release(`${pkg.title}: day ${i + 1} could not be booked`);
-      return { success: false, error: `Day ${i + 1}: ${result.error ?? "this departure can't be booked."}` };
+      await release(`${pkg.title}: ${packageDayName(pkg, i)} could not be booked`);
+      return { success: false, error: `${packageDayName(pkg, i)}: ${result.error ?? "this departure can't be booked."}` };
     }
     made.push(result.booking);
   }
@@ -291,7 +363,7 @@ export async function createPackageBooking(input: CreatePackageInput): Promise<P
       where: { id: b.id },
       data: {
         priceSnapshot: { ...(b.priceSnapshot as object), package: { slug: pkg.slug, title: pkg.title, day: i + 1, references, discountPercent: packageDiscountFor(pkg, departureDates.get(input.departureIds[i]) ?? "") } },
-        adminNotes: [b.adminNotes, `${pkg.title}, day ${i + 1} of ${references.length}: booked and paid together with ${others}.`].filter(Boolean).join("\n"),
+        adminNotes: [b.adminNotes, `${pkg.title}, ${pkg.dayTitles ? `${packageDayName(pkg, i)} (tour ${i + 1} of ${references.length})` : `day ${i + 1} of ${references.length}`}: booked and paid together with ${others}.`].filter(Boolean).join("\n"),
       },
     });
   }
