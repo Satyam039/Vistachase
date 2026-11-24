@@ -143,7 +143,7 @@ describe("booking itinerary = the website's itinerary for exactly what was booke
     const cases = [
       { slug: "banff-highlights-tour", email: "itin.by@example.com", expect: "Lake Louise and Moraine Lake (Moraine Lake from June 1 to October 10)." },
       { slug: "shared-tours-icefields-jasper", email: "itin.cia@example.com", expect: "Bow Lake, Crowfoot Glacier, Peyto Lake and Waterfowl Lakes along the Icefields Parkway." },
-      { slug: "banff-private-tour", email: "itin.pby@example.com", expect: "Drop-off at your accommodation. The day runs about 10 to 12 hours, depending on your pace." },
+      { slug: "banff-private-tour", email: "itin.pby@example.com", expect: "Drop-off at your accommodation in Banff or Canmore. Allow approximately 10–12 hours for the tour." },
       { slug: "icefields-jasper-private-tour", email: "itin.pcia@example.com", expect: "Columbia Icefield: the optional Ice Explorer + Skywalk combined experience" },
     ];
     for (const c of cases) {

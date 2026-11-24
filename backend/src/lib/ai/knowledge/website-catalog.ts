@@ -136,7 +136,7 @@ export const WEBSITE_CATALOG: WebsiteProduct[] = [
   },
   {
     slug: "banff-private-tour",
-    name: "Banff & Yoho Discovery – Private",
+    name: "Private Banff & Yoho Discovery",
     type: "PRIVATE",
     days: 1,
     page: "/banff-private-tour",
