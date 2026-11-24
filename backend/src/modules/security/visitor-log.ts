@@ -20,7 +20,7 @@ import net from "node:net";
 import type { NextFunction, Request, Response } from "express";
 import prisma from "@/lib/db/prisma";
 
-export type FormKind = "ENQUIRY" | "SIGNUP" | "PARTNER_APPLY" | "CHAT" | "LIVE_CHAT" | "CHAT_HANDOFF" | "BLOCKED_REQUEST";
+export type FormKind = "ENQUIRY" | "SIGNUP" | "PARTNER_APPLY" | "BANFF_ELITE" | "CHAT" | "LIVE_CHAT" | "CHAT_HANDOFF" | "BLOCKED_REQUEST";
 export type Outcome = "ACCEPTED" | "SPAM" | "REFUSED" | "BLOCKED";
 
 const RETENTION_DAYS = 180;

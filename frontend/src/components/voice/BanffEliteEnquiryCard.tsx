@@ -5,10 +5,11 @@
 // Collects required contact details (name, email, phone with country code)
 // and optional planning fields. Guests can submit contact details only.
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ArrowRight, CheckCircle2, ChevronDown, ChevronUp, Sparkles, AlertCircle, Car, Shield } from "lucide-react";
 import { PhoneField } from "@/components/forms/PhoneField";
 import { dialCode } from "@/lib/countries";
+import { TURNSTILE_SITE_KEY, useFormToken, useTurnstile } from "@/lib/spamGuard";
 
 export interface BanffEliteEnquiryData {
   name?: string;
@@ -45,6 +46,11 @@ export function BanffEliteEnquiryCard({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  // Same spam checks as the contact form: signed form token, honeypot, optional Turnstile.
+  const formToken = useFormToken();
+  const turnstileBox = useRef<HTMLDivElement>(null);
+  const turnstile = useTurnstile(turnstileBox);
+  const honeypot = useRef<HTMLInputElement>(null);
 
   const fullPhone = () => {
     const raw = phoneRaw.trim();
@@ -76,6 +82,15 @@ export function BanffEliteEnquiryCard({
     setSuccessMsg(null);
 
     if (!validate()) return;
+    if (!formToken.token) {
+      formToken.reload();
+      setErrorMsg("Your enquiry couldn’t be sent. Please try again or email support@banffelite.com.");
+      return;
+    }
+    if (TURNSTILE_SITE_KEY && !turnstile.token) {
+      setErrorMsg("Please complete the security check below.");
+      return;
+    }
 
     setLoading(true);
     const phone = fullPhone();
@@ -90,14 +105,19 @@ export function BanffEliteEnquiryCard({
       placesOfInterest: placesOfInterest.trim() || undefined,
       preferredVehicle: preferredVehicle || undefined,
       paceAndRequests: paceAndRequests.trim() || undefined,
-      idempotencyKey: `be_${email.trim()}_${Date.now()}`,
     };
 
     try {
       const res = await fetch("/api/enquiries/banff-elite", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        // The server spots a repeat of the same enquiry itself (same email, phone and details).
+        body: JSON.stringify({
+          ...payload,
+          website: honeypot.current?.value ?? "",
+          formToken: formToken.token,
+          turnstileToken: turnstile.token || undefined,
+        }),
       });
 
       const data = await res.json().catch(() => null);
@@ -107,6 +127,9 @@ export function BanffEliteEnquiryCard({
         setSuccessMsg(msg);
         onSubmitSuccess?.(payload);
       } else {
+        // Sent too quickly or the form was open too long: a fresh token makes the next try work.
+        if (data?.retry) formToken.reload();
+        turnstile.reset();
         const msg = data?.error || "Your enquiry couldn’t be sent. Please try again or email support@banffelite.com.";
         setErrorMsg(msg);
       }
@@ -340,6 +363,16 @@ export function BanffEliteEnquiryCard({
             </div>
           )}
         </div>
+
+        {/* Honeypot for bots: hidden from people and assistive technology. */}
+        <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
+          <label>
+            Website
+            <input ref={honeypot} name="website" tabIndex={-1} autoComplete="off" />
+          </label>
+        </div>
+
+        {TURNSTILE_SITE_KEY && <div ref={turnstileBox} />}
 
         {/* Submit Button */}
         <div className="pt-2">
