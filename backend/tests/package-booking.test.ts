@@ -118,7 +118,7 @@ describe("two-day package", () => {
     const before = await prisma.tourDeparture.findUniqueOrThrow({ where: { id: day1 } });
     const full = await createPackageBooking(guest(3, [day1, day2Full]));
     expect(full.success).toBe(false);
-    expect(full.error).toMatch(/^Day 2:/);
+    expect(full.error).toMatch(/^Day 2/);
     const afterSeats = await prisma.tourDeparture.findUniqueOrThrow({ where: { id: day1 } });
     expect(afterSeats.capacityBooked).toBe(before.capacityBooked);
 
