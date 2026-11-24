@@ -23,8 +23,28 @@ import type { Preferences } from "@/lib/ai/knowledge/catalog-live";
 
 type Prefs = Preferences & { dateLabel?: string };
 
-type Topic = "price" | "dates" | "details" | "pickup" | "lookup" | "track";
-type State = SessionState & { topic?: Topic; englishNotice?: boolean; consult?: Prefs & { asked?: "date" | "guests" | "style" | "days" }; trip?: { date?: string; guests?: number } };
+type Topic = "price" | "dates" | "details" | "pickup" | "lookup" | "track" | "banff_elite";
+
+export interface BanffEliteEnquiryState {
+  name?: string;
+  email?: string;
+  phone?: string;
+  guests?: string | number;
+  travelDates?: string;
+  tourDays?: string | number;
+  placesOfInterest?: string;
+  preferredVehicle?: string;
+  paceAndRequests?: string;
+  step?: "intro" | "details" | "confirm" | "submitted";
+}
+
+type State = SessionState & {
+  topic?: Topic;
+  englishNotice?: boolean;
+  consult?: Prefs & { asked?: "date" | "guests" | "style" | "days" };
+  trip?: { date?: string; guests?: number };
+  banffElite?: BanffEliteEnquiryState;
+};
 type Reply = { message: string; data?: Record<string, unknown>; checkoutUrl?: string; hasSafetyRefusal?: boolean };
 
 const REFERENCE = /\bVC-\d{4}-[A-Z0-9]{4,}\b/i;
@@ -357,6 +377,138 @@ const POLICY =
 const CAN_DO =
   "I can tell you about our tours, shuttles and prices, check dates with free seats, find your hotel pickup, answer questions like what's included, what to bring, ages, lunch or airport transfers, explain the cancellation policy, and look up a booking with its reference and email.";
 
+const BANFF_ELITE_TRIGGER = /\b(banff elite|personalised tour|personalized tour|bespoke tour|custom tour|custom journey|personalize|customise|request personalised tours|request personalized tours)\b/i;
+const CONFIRM_WORDS = /\b(yes|send|submit|confirm|go ahead|please send|looks good|send it|send enquiry)\b/i;
+
+async function handleBanffEliteFallback(
+  text: string,
+  userTurns: ChatMessage[],
+  state: State,
+  ctx: ToolExecutionContext,
+): Promise<Reply | null> {
+  const lower = text.toLowerCase();
+  const isTrigger = BANFF_ELITE_TRIGGER.test(lower);
+  if (!isTrigger && !state.banffElite) return null;
+
+  const be = (state.banffElite = state.banffElite || {});
+  state.topic = "banff_elite";
+
+  // 1. Extract details from the text
+  const emailMatch = text.match(EMAIL)?.[0];
+  if (emailMatch) be.email = emailMatch.trim();
+
+  const phoneMatch = text.match(/(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}|\+\d{1,3}[-\s]?\d{6,14}/)?.[0];
+  if (phoneMatch) be.phone = phoneMatch.trim();
+
+  const nameMatch =
+    text.match(/(?:my name is|i'm|i am|name[:\s]+)([a-zA-Z\s]{2,40})/i)?.[1]?.trim() ??
+    text.match(/^([a-zA-Z]{2,20}\s+[a-zA-Z]{2,20})$/)?.[1]?.trim();
+  if (nameMatch && !/banff|elite|vista|tour|help/i.test(nameMatch)) be.name = nameMatch;
+
+  const guestsMatch = text.match(/(\d+)\s*(?:guests?|people|passengers?|adults?|travelers?|travellers?)/i)?.[1];
+  if (guestsMatch) be.guests = parseInt(guestsMatch, 10);
+
+  const daysMatch = text.match(/(\d+)\s*(?:days?|day tour)/i)?.[1];
+  if (daysMatch) be.tourDays = parseInt(daysMatch, 10);
+
+  if (/\bluxury suv\b/i.test(lower)) be.preferredVehicle = "luxury SUV";
+  else if (/\bluxury van\b/i.test(lower)) be.preferredVehicle = "luxury van";
+  else if (/\bhelp me choose\b/i.test(lower)) be.preferredVehicle = "help me choose";
+
+  const dateMention = mentionedDate(text);
+  if (dateMention) be.travelDates = dateMention;
+  else {
+    const timeMatch = text.match(/\b(in\s+(?:january|february|march|april|may|june|july|august|september|october|november|december|summer|winter|spring|autumn|fall))\b/i)?.[1];
+    if (timeMatch) be.travelDates = timeMatch;
+  }
+
+  // Check if user is confirming submission of complete details
+  const hasRequired = !!(be.name && be.email && be.phone);
+  if (hasRequired && be.step === "confirm" && CONFIRM_WORDS.test(lower)) {
+    const res = (await runConciergeTool("submit_banff_elite_enquiry", { ...be }, ctx)).result as any;
+    if (res?.success) {
+      state.banffElite = undefined;
+      return {
+        message: "Your enquiry has been sent. The Banff Elite team will contact you within 24 hours.",
+        data: {
+          type: "banff_elite_enquiry_result",
+          success: true,
+          message: "Your enquiry has been sent. The Banff Elite team will contact you within 24 hours.",
+        },
+      };
+    } else {
+      return {
+        message: "Your enquiry couldn’t be sent. Please try again or email support@banffelite.com.",
+        data: {
+          type: "banff_elite_enquiry_result",
+          success: false,
+          error: "Your enquiry couldn’t be sent. Please try again or email support@banffelite.com.",
+        },
+      };
+    }
+  }
+
+  // If all required fields are present, show brief enquiry summary and ask whether the guest wants it sent
+  if (hasRequired) {
+    be.step = "confirm";
+    const summaryLines = [
+      "Here is a summary of your enquiry:",
+      `• Contact Name: ${be.name}`,
+      `• Email: ${be.email}`,
+      `• Phone: ${be.phone}`,
+      be.guests ? `• Number of Guests: ${be.guests}` : null,
+      be.travelDates ? `• Travel Dates / Timeframe: ${be.travelDates}` : null,
+      be.tourDays ? `• Number of Tour Days: ${be.tourDays}` : null,
+      be.preferredVehicle ? `• Preferred Vehicle: ${be.preferredVehicle}` : null,
+      be.placesOfInterest ? `• Interests: ${be.placesOfInterest}` : null,
+      be.paceAndRequests ? `• Pace & Requests: ${be.paceAndRequests}` : null,
+      "",
+      "Vehicle options (luxury SUV or luxury van) have different prices, and the Banff Elite team provides the quote after consultation. Scope is tours only; hotels and restaurants are not arranged.",
+      "",
+      "Would you like me to send this enquiry to the Banff Elite team?",
+    ].filter((l): l is string => l !== null);
+
+    return {
+      message: summaryLines.join("\n"),
+      data: {
+        type: "banff_elite_enquiry_summary",
+        enquiry: be,
+      },
+    };
+  }
+
+  // Missing required contact fields - collect only missing details
+  be.step = "details";
+  const missing: string[] = [];
+  if (!be.name) missing.push("main contact name");
+  if (!be.email) missing.push("email address");
+  if (!be.phone) missing.push("phone number (including country code)");
+
+  const isFirstGreeting =
+    userTurns.length <= 1 || (!state.banffElite?.name && !state.banffElite?.email && !state.banffElite?.phone);
+
+  if (isFirstGreeting) {
+    return {
+      message:
+        "Banff Elite is Vista Chase’s sister company for personalised tour itineraries. Choose a luxury SUV or luxury van, with options priced according to your vehicle and tour requirements.\n\n" +
+        "You can explore [banffelite.com](https://banffelite.com) or submit an enquiry here. Vehicle options have different prices, and the Banff Elite team provides the quote after consultation. Scope is tours only; hotels and restaurants are not arranged.\n\n" +
+        `To get started, please provide your ${missing.join(", ")}. You can submit contact details only, or also share optional planning details (number of guests, travel dates, tour days, places of interest, vehicle preference, or preferred pace).`,
+      data: {
+        type: "banff_elite_enquiry_form",
+        enquiry: be,
+      },
+    };
+  }
+
+  return {
+    message: `Thanks. Please provide your ${missing.join(" and ")} so we can complete your enquiry. (You can submit contact details only without completing the planning questions).`,
+    data: {
+      type: "banff_elite_enquiry_form",
+      enquiry: be,
+    },
+  };
+}
+
 /** Answers the latest message from real data, or says it can't. */
 export async function answerWithoutModel(messages: ChatMessage[], previous: State | undefined, ctx: ToolExecutionContext, language?: string): Promise<ConciergeResponse> {
   const state: State = { ...(previous ?? {}) };
@@ -371,6 +523,10 @@ export async function answerWithoutModel(messages: ChatMessage[], previous: Stat
     if (/\b(human|real person|live agent|live chat|an agent|representative|(talk|speak) to (a person|someone|staff))\b/.test(lower)) {
       return { message: `Tap "Chat with a live agent" below to chat with our support team here, or ${CONTACT}.`, data: { type: "handoff" } };
     }
+
+    // Banff Elite personalised tour enquiry flow
+    const banffEliteReply = await handleBanffEliteFallback(text, userTurns, state, ctx);
+    if (banffEliteReply) return banffEliteReply;
 
     // A departure the guest names: show it with its in-chat "Book" button.
     const picked = text.match(/^I choose the departure on (\d{4}-\d{2}-\d{2}) at (\d{2}:\d{2})/);

@@ -31,6 +31,7 @@ import { websiteName } from "./concierge.catalog";
 import { recommendTours, tourDetail } from "./knowledge/catalog-live";
 import { extractAndEvolvePersona, formatPersonaContextForPrompt, type UserPersona, type UserKnowledgeGraph } from "./user.persona";
 import { signBookingLink, voucherLink } from "@/lib/security/signed-links";
+import { processBanffEliteEnquiry } from "@/modules/enquiries/banff-elite-enquiry";
 
 export const CARD_NUMBER = /\b(?:\d[ -]*?){13,19}\b/;
 export const PROMPT_INJECTION_REGEX =
@@ -246,6 +247,31 @@ const CUSTOMER_TOOLS: Anthropic.Tool[] = [
         vehicleType: { type: "string", enum: ["sprinter_12", "suv_7"], description: "Type of vehicle: sprinter_12 (Mercedes Sprinter 12-seater) or suv_7 (Luxury 7-seat SUV)." },
         departureId: { type: "string", description: "Optional specific departure ID to query actual booked seats." },
       },
+    },
+  },
+  {
+    name: "submit_banff_elite_enquiry",
+    description:
+      "Submit a personalised tour enquiry to Banff Elite and Vista Chase. Use this ONLY after the guest explicitly confirms they want to send the enquiry, and you have at minimum their name, email, and phone number (including country code). Optional planning details (guests, travel dates/timeframe, number of tour days, places/experiences of interest, preferred vehicle: 'luxury SUV', 'luxury van', or 'help me choose', and pace/additional requests) should be included if provided. Returns a clear success or failure message.",
+    input_schema: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Main contact full name (required)" },
+        email: { type: "string", description: "Valid email address (required)" },
+        phone: { type: "string", description: "Reachable phone number including country code (required)" },
+        guests: { type: "number", description: "Optional: Number of guests" },
+        travelDates: { type: "string", description: "Optional: Travel dates or approximate timeframe" },
+        tourDays: { type: "number", description: "Optional: Number of tour days" },
+        placesOfInterest: { type: "string", description: "Optional: Places and experiences of interest" },
+        preferredVehicle: {
+          type: "string",
+          enum: ["luxury SUV", "luxury van", "help me choose"],
+          description: "Optional: Preferred vehicle type",
+        },
+        paceAndRequests: { type: "string", description: "Optional: Preferred pace and additional requests" },
+        idempotencyKey: { type: "string", description: "Optional: Deduplication key" },
+      },
+      required: ["name", "email", "phone"],
     },
   },
 ];
@@ -553,6 +579,22 @@ export async function runConciergeTool(name: string, input: Record<string, any>,
         result: {
           message: "No seat selection options for customers. Vista Chase does not offer individual seat selection. All vehicles feature comfortable, spacious seating with panoramic windows and USB-C charging; guests simply reserve their party size and follow whatever checkout steps are available.",
         },
+      };
+    }
+    case "submit_banff_elite_enquiry": {
+      const result = await processBanffEliteEnquiry(input);
+      return {
+        result,
+        card: {
+          data: {
+            type: "banff_elite_enquiry_result" as any,
+            success: result.success,
+            message: result.message || result.error,
+          },
+        },
+        memory: result.success
+          ? `Submitted Banff Elite enquiry for ${input.name} (${input.email}, ${input.phone})`
+          : undefined,
       };
     }
     default: {

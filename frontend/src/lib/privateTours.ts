@@ -115,6 +115,9 @@ export interface PrivateTourOption {
   activities: string;
   airportTransfers: string;
   accommodation?: string;
+  itinerary?: string;
+  pricing?: string;
+  scope?: string;
   priceFrom: number;
   priceUnit: string;
   priceNote?: string;
@@ -250,20 +253,23 @@ export const PRIVATE_OPTIONS: PrivateTourOption[] = [
   {
     id: "premium-custom-banff-elite",
     title: "Your Rockies, Your Way",
-    description: "A stay designed around your dates, interests and pace by our premium sister company, Banff Elite.",
-    duration: "Tailored to your stay",
-    transport: "Premium SUVs & executive vans",
-    suggestedStay: "Tailored to itinerary",
+    description:
+      "Banff Elite is Vista Chase’s sister company for personalised tour itineraries. Choose a luxury SUV or luxury van, with options priced according to your vehicle and tour requirements.",
+    duration: "Personalised itinerary",
+    transport: "Luxury SUVs and luxury vans",
+    suggestedStay: "Personalised around your interests and preferred pace",
+    itinerary: "Personalised around your interests and preferred pace",
+    pricing: "Personalised quote after consultation",
+    scope: "Tours only; hotels and restaurants are not arranged",
     pickup: "Doorstep pickup",
-    activities: "Selected around your preferences",
-    airportTransfers: "Arranged with your journey",
-    accommodation: "Booked directly by you",
+    activities: "Tours and experiences personalised to you",
+    airportTransfers: "Tours only; hotels and restaurants are not arranged",
     priceFrom: 0,
-    priceUnit: "Personalised quote",
-    buttonLabel: "Plan with Banff Elite",
-    buttonHref: process.env.NEXT_PUBLIC_BANFF_ELITE_URL || "https://banffelite.com",
+    priceUnit: "Personalised quote after consultation",
+    buttonLabel: "Explore Banff Elite",
+    buttonHref: "https://banffelite.com",
     image: "/media/photos/emerald-lake-island.webp",
-    imageAlt: "Custom tailored Canadian Rockies journey by Banff Elite",
+    imageAlt: "Personalised Canadian Rockies tour itineraries by Banff Elite",
     isCustomPartner: true,
   },
 ];
@@ -294,7 +300,7 @@ export const PRIVATE_FAQS = [
   },
   {
     q: "Can we customise our itinerary?",
-    a: "We can adjust stops and pacing around your interests where the route, travel time and conditions allow. For a fully bespoke premium journey, our sister company Banff Elite can plan your stay.",
+    a: "We can adjust stops and pacing around your interests where the route, travel time and conditions allow. For personalised tour itineraries, our sister company Banff Elite can plan your journey.",
   },
   {
     q: "Can you arrange airport transfers?",
