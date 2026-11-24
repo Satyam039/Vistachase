@@ -55,6 +55,9 @@ function clock(hhmm: string | null) {
   return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
 }
 
+const SHARED_ICEFIELD_SLUGS = new Set(["shared-tours-icefields-jasper"]);
+const MORAINE_SLUGS = new Set(["banff-highlights-tour", "banff-private-tour"]);
+
 function inSummerDate(d: Date) {
   const iso = formatDateOnly(d);
   const md = iso.slice(5, 10);
@@ -81,11 +84,15 @@ function dayLines(b: TripBooking) {
     isShuttle,
   });
   const pickup = pickupTime ? `${clock(pickupTime)}${place ? ` at ${place}` : ""}` : (place ?? "Pickup details to follow by email");
-  const seasonal = d.tour?.slug?.includes("icefields")
+  // Only the tours whose published content says so (frontend lib/tourContent.ts): the shared
+  // Icefield tour includes Ice Explorer + Skywalk in summer (on private tours they are an extra), and
+  // the Banff & Yoho tours include Moraine Lake access in summer. Any other slug gets no line.
+  const slug = d.tour?.slug ?? "";
+  const seasonal = SHARED_ICEFIELD_SLUGS.has(slug)
     ? (inSummerDate(d.date)
         ? "Includes Columbia Icefield Glacier Adventure (Ice Explorer) & Skywalk"
         : "Winter itinerary: visits Abraham Lake (guests bring packed lunch or request morning food stop)")
-    : d.tour?.slug?.includes("banff")
+    : MORAINE_SLUGS.has(slug)
       ? (inSummerDate(d.date) ? "Includes seasonal Moraine Lake transportation" : "Winter itinerary with alternative stops")
       : null;
   // The website's current itinerary for exactly this booking (tour-itinerary.ts).
