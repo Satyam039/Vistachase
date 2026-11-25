@@ -467,6 +467,7 @@ function PrivateTourCard({
                 { label: "Final drop-off", value: option.finalDropoff, icon: Plane },
                 { label: "Group", value: option.group, icon: Users },
                 { label: "Scheduling", value: option.scheduling, icon: Calendar },
+                { label: "Dates", value: option.dates, icon: Calendar },
               ] as const
             ).map((row) =>
               row.value ? (

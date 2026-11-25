@@ -187,6 +187,11 @@ export function PackageCheckout({
   guestNote,
   datesNote,
   cancellationCutoffHours,
+  banffCanmorePickup = false,
+  banffCanmoreTransferOnly = false,
+  directActivities = false,
+  hidePickupTimes = false,
+  arrivalStartsDeadline = false,
 }: {
   packageSlug: string;
   title: string;
@@ -215,6 +220,16 @@ export function PackageCheckout({
   datesNote?: string;
   /** Hours before the first service the cancellation deadline falls (default: 72 private, 24 shared). */
   cancellationCutoffHours?: number;
+  /** Three-Day (owner, 2026-11-24): every tour picks up in Banff or Canmore, never Lake Louise. */
+  banffCanmorePickup?: boolean;
+  /** Airport transfers booked online to Banff or Canmore only; Lake Louise through Special requests. */
+  banffCanmoreTransferOnly?: boolean;
+  /** Each activity is requested on its own with a participant count (no generic "Add-on activities" box). */
+  directActivities?: boolean;
+  /** Don't show the shared tours' 7:30/8:00 pickup start times (not confirmed for private packages). */
+  hidePickupTimes?: boolean;
+  /** An arrival transfer before the tours starts the cancellation deadline (Four-Day always does). */
+  arrivalStartsDeadline?: boolean;
 }) {
   // Every link in the checkout opens in a new tab, so the guest never leaves it (owner, 2026-11-18).
   const newTab = { target: "_blank", rel: "noopener" } as const;
@@ -242,7 +257,8 @@ export function PackageCheckout({
   const [finalAddress, setFinalAddress] = useState("");
   // The outbound tours (all but the Jasper return) pick up in Banff or Canmore, never Lake Louise.
   const outboundDays = isFourDay ? days.map((_, i) => i).slice(0, -1) : [];
-  const pickupStops = isFourDay ? stops.filter((st) => !/lake louise/i.test(st.town)) : stops;
+  const banffCanmoreOnly = isFourDay || banffCanmorePickup;
+  const pickupStops = banffCanmoreOnly ? stops.filter((st) => !/lake louise/i.test(st.town)) : stops;
   const cutoffHours = cancellationCutoffHours ?? (vehicle ? 72 : 24);
   const [requests, setRequests] = useState("");
   // Promo code (owner, 2026-11-20): taken off on top of the package price. A percent code comes off
@@ -399,7 +415,9 @@ export function PackageCheckout({
   const transferQuote = withAirport ? airportTransferQuote(airportTransfer, guests, transferPrices) : null;
   const transferDollars = transferQuote?.total ?? null;
   // Ticked activities: each priced for the guests joining it, added to Day 1 (the server prices them again).
-  const chosenActivityList = vehicle && activities ? packageActivities.filter((a) => activityChoice[a.id]) : [];
+  // Direct activity requests (Three-Day): the requests themselves are the choice, no outer tick box.
+  const activitiesOn = directActivities ? Object.keys(activityChoice).length > 0 : activities;
+  const chosenActivityList = vehicle && activitiesOn ? packageActivities.filter((a) => activityChoice[a.id]) : [];
   const activityPriceOf = (id: string) => packageActivityPrice(activityPrices, id, activityChoice[id]!);
   const activitiesDollars = chosenActivityList.reduce((n, a) => n + (activityPriceOf(a.id) ?? 0), 0);
   // Each day's promo saving (cents), from the day's package price; never the transfer or activities.
@@ -421,7 +439,7 @@ export function PackageCheckout({
   // The cancellation deadline runs from the first booked service: for the Four-Day, an arrival
   // transfer before the tours (its pickup, the flight's arrival time), otherwise the first tour.
   const arrivalFirst =
-    isFourDay && withAirport && airportTransfer.type !== "DEPARTURE" && airportTransfer.arrivalDate && airportTransfer.arrivalTime && firstDay
+    (isFourDay || arrivalStartsDeadline) && withAirport && airportTransfer.type !== "DEPARTURE" && airportTransfer.arrivalDate && airportTransfer.arrivalTime && firstDay
       ? `${airportTransfer.arrivalDate} ${airportTransfer.arrivalTime}` < `${firstDay.date.slice(0, 10)} ${firstDay.departureTime.slice(0, 5)}`
       : false;
   const deadlineFrom = arrivalFirst ? { date: airportTransfer.arrivalDate!, time: airportTransfer.arrivalTime! } : firstDay ? { date: firstDay.date.slice(0, 10), time: firstDay.departureTime } : null;
@@ -484,7 +502,7 @@ export function PackageCheckout({
     if (isFourDay && !finalArea) e.finalArea = `Choose where ${days[days.length - 1].title} finishes.`;
     const transfer = withAirport ? airportTransferError(airportTransfer) : null;
     if (transfer) e.airport = transfer;
-    if (vehicle && activities && packageActivities.length > 0) {
+    if (vehicle && activitiesOn && packageActivities.length > 0) {
       const chosenActivities = Object.values(activityChoice);
       if (chosenActivities.length === 0) e.activities = "Choose at least one activity, or untick Add-on activities.";
       else if (chosenActivities.some((g) => activityGuestCount(g) < 1 || activityGuestCount(g) > adults)) e.activities = `Choose 1 to ${adults} guests for each activity.`;
@@ -494,7 +512,7 @@ export function PackageCheckout({
     }
     return e;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- outboundDays follows isFourDay and days
-  }, [days, picks, name, email, phoneLocal, samePickup, stopId, customPickup, tourPickups, isFourDay, day4JasperPickup, finalArea, withAirport, airportTransfer, vehicle, activities, activityGuests, adults, activityChoice, packageActivities.length]);
+  }, [days, picks, name, email, phoneLocal, samePickup, stopId, customPickup, tourPickups, isFourDay, day4JasperPickup, finalArea, withAirport, airportTransfer, vehicle, activities, activitiesOn, activityGuests, adults, activityChoice, packageActivities.length]);
 
   const missingFieldList = useMemo(() => {
     const list: string[] = [];
@@ -847,7 +865,17 @@ export function PackageCheckout({
               {offersAirport && (
                 <div className="space-y-3" {...(show("airport") ? { "data-first-error": true } : {})}>
                   <AirportTransferToggle checked={airport} onChange={setAirport} />
-                  {airport && <AirportTransferDetails value={airportTransfer} onChange={setAirportTransfer} error={show("airport")} guests={guests} />}
+                  {airport && (
+                    <AirportTransferDetails
+                      value={airportTransfer}
+                      onChange={setAirportTransfer}
+                      error={show("airport")}
+                      guests={guests}
+                      {...(banffCanmoreTransferOnly
+                        ? { areas: ["BANFF", "CANMORE"] as const, areaNote: "Staying in Lake Louise? Add your transfer request in Special requests or contact our team to confirm it." }
+                        : {})}
+                    />
+                  )}
                 </div>
               )}
           </Section>
@@ -856,7 +884,14 @@ export function PackageCheckout({
         {vehicle && (
           <Section compact={compact} icon={Ticket} title="Add-on activities">
               <div {...(show("activities") ? { "data-first-error": true } : {})}>
-                {packageActivities.length > 0 ? (
+                {directActivities && packageActivities.length > 0 ? (
+                  <div className="space-y-3">
+                    <p className="text-sm text-slate-600">
+                      Request any optional experience below and say how many guests join it. Our team arranges the tickets and sends a separate invoice: nothing is charged now, and requests are not confirmed reservations. Reserved activities may mean other stops are shortened or skipped.
+                    </p>
+                    <PackageActivityPicker activities={packageActivities} value={activityChoice} onChange={setActivityChoice} partySize={adults} prices={activityPrices} />
+                  </div>
+                ) : packageActivities.length > 0 ? (
                   <ActivityAddOnToggle checked={activities} onChange={setActivities}>
                     <PackageActivityPicker activities={packageActivities} value={activityChoice} onChange={setActivityChoice} partySize={adults} prices={activityPrices} />
                   </ActivityAddOnToggle>
@@ -908,7 +943,7 @@ export function PackageCheckout({
                     ? `Same Banff or Canmore pickup for all ${["", "one", "two", "three", "four"][outboundDays.length] ?? outboundDays.length} tours`
                     : days.length === 2
                       ? "Same pickup for both tours"
-                      : `Same pickup for all ${days.length} tours`}
+                      : `Same pickup for all ${numberWord} tours`}
                 </span>
               </label>
             )}
@@ -917,7 +952,7 @@ export function PackageCheckout({
               <>
                 {pickupStops.length > 0 && (
                   <Dropdown
-                    label={isFourDay ? "Pickup hotel in Banff or Canmore" : `Pickup hotel (Banff or Canmore)`}
+                    label={banffCanmoreOnly ? "Pickup hotel in Banff or Canmore" : `Pickup hotel (Banff or Canmore)`}
                     labelClassName="mb-1.5 block text-sm text-obsidian-900"
                     options={pickupStops.map((s) => ({ value: s.id, label: s.name, description: `${s.town} · ${s.address}` }))}
                     value={stopId}
@@ -950,7 +985,7 @@ export function PackageCheckout({
                     <p className="text-sm font-semibold text-obsidian-900">Pickup for {day.title}</p>
                     {pickupStops.length > 0 && (
                       <Dropdown
-                        label={isFourDay ? "Pickup hotel in Banff or Canmore" : "Pickup hotel"}
+                        label={banffCanmoreOnly ? "Pickup hotel in Banff or Canmore" : "Pickup hotel"}
                         labelClassName="mb-1.5 block text-xs text-obsidian-900"
                         options={pickupStops.map((s) => ({ value: s.id, label: s.name, description: `${s.town} · ${s.address}` }))}
                         value={tourPickups[i]?.stopId ?? ""}
@@ -1041,7 +1076,11 @@ export function PackageCheckout({
               </div>
             )}
 
-            <p className="text-sm text-slate-600">Pickups start at 7:30 AM in Canmore and 8:00 AM in Banff. We confirm your exact pickup time before each tour.</p>
+            <p className="text-sm text-slate-600">
+              {hidePickupTimes
+                ? `Pickup and drop-off are in Banff or Canmore. You can use a different confirmed address for each tour; untick the box above to enter them. We confirm your exact pickup time before each tour.`
+                : "Pickups start at 7:30 AM in Canmore and 8:00 AM in Banff. We confirm your exact pickup time before each tour."}
+            </p>
             <TextArea label="Special requests" isOptional rows={3} maxLength={500} value={requests} onChange={setRequests} placeholder={isFourDay ? "Luggage, dietary needs, mobility, celebrations…" : "Dietary needs, mobility, celebrations…"} />
           </div>
         </Section>
@@ -1165,7 +1204,7 @@ export function PackageCheckout({
           </dl>
         ) : (
           <p className="mt-4 text-sm text-white/70">
-            {vehicle ? `Choose a date for each day to see your total.` : `Choose an available date for each tour to see your total with 10% savings.`}
+            {vehicle ? `Choose a date for each tour to see your total.` : `Choose an available date for each tour to see your total with 10% savings.`}
           </p>
         )}
 

@@ -52,7 +52,7 @@ describe("product knowledgebase", () => {
   it("puts live prices and departure times in the concierge's knowledge, never old Webflow names", async () => {
     const text = await renderCatalogKnowledge();
     expect(text).toContain("### Banff & Yoho Discovery [slug: banff-highlights-tour]");
-    expect(text).toMatch(/Banff & Yoho Discovery – Private[^#]*CAD \$1,750 per vehicle June 1–Oct 10/);
+    expect(text).toMatch(/Private Banff & Yoho Discovery[^#]*CAD \$1,750 per vehicle June 1–Oct 10/);
     expect(text).toContain("8:00 AM");
     expect(text).not.toContain("Our Best Selling Banff Shared Tour");
     expect(text).not.toContain("Standard Banff Private Best Selling Tour");

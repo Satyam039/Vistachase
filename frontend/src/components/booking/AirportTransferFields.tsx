@@ -7,7 +7,7 @@
 // Owner, 2026-11-17: the guest chooses Arrival only (airport -> hotel), Departure only (hotel ->
 // airport) or Round trip (airport -> hotel -> airport); a round trip is two transfers. The price is
 // per transfer, one way, by where the guest stays and the group size (owner's table, 2026-11-18):
-// up to 6 guests CAD 364 Banff/Canmore, CAD 445 Lake Louise; 7 to 12 guests CAD 850 / CAD 895. The prices come from the server (GET /api/bookings/airport-transfer), which prices
+// up to 6 guests CAD 364 Banff/Canmore, CAD 445 Lake Louise; 7 to 12 guests CAD 850 / CAD 895 (Banff/Canmore up to 14 from 2026-11-24). The prices come from the server (GET /api/bookings/airport-transfer), which prices
 // the booking again with the same table (backend modules/bookings/airport-transfer.ts).
 
 import { useEffect, useState } from "react";
@@ -56,7 +56,8 @@ export interface AirportTransferPrices {
   minGuests: number;
   maxGuests: number;
   smallGroupMax: number;
-  areas: { area: AirportArea; label: string; perTransfer: number; perTransferSmallGroup: number | null }[];
+  /** maxGuests: the area's largest priced group (Banff/Canmore 14, Lake Louise 12; owner 2026-11-24). */
+  areas: { area: AirportArea; label: string; perTransfer: number; perTransferSmallGroup: number | null; maxGuests?: number }[];
 }
 
 const TYPES: { id: AirportTransferType; label: string; route: string }[] = [
@@ -114,7 +115,7 @@ export interface AirportTransferQuote {
 export function airportTransferQuote(t: Pick<AirportTransferValue, "type" | "area">, guests: number, prices: AirportTransferPrices | null): AirportTransferQuote | null {
   if (!prices || !t.type || !t.area || guests < prices.minGuests || guests > prices.maxGuests) return null;
   const row = prices.areas.find((a) => a.area === t.area);
-  if (!row) return null;
+  if (!row || guests > (row.maxGuests ?? prices.maxGuests)) return null;
   const unit = (guests <= prices.smallGroupMax ? row.perTransferSmallGroup : null) ?? row.perTransfer;
   const transfers = t.type === "ROUND_TRIP" ? 2 : 1;
   return { transfers, unit, total: unit * transfers };
@@ -193,7 +194,19 @@ export function AirportTransferToggle({ checked, onChange }: { checked: boolean;
 }
 
 /** The price breakdown shown under the transfer details. */
-export function AirportTransferBreakdown({ value, guests, prices }: { value: AirportTransferValue; guests: number; prices: AirportTransferPrices | null }) {
+export function AirportTransferBreakdown({
+  value,
+  guests,
+  prices,
+  areas,
+}: {
+  value: AirportTransferValue;
+  guests: number;
+  prices: AirportTransferPrices | null;
+  /** Only these areas are offered (Three-Day: Banff and Canmore). */
+  areas?: readonly AirportArea[];
+}) {
+  const shown = prices ? prices.areas.filter((a) => !areas || areas.includes(a.area)) : [];
   const quote = airportTransferQuote(value, guests, prices);
   const area = AREAS.find((a) => a.id === value.area)?.label;
   const type = TYPES.find((t) => t.id === value.type);
@@ -203,11 +216,11 @@ export function AirportTransferBreakdown({ value, guests, prices }: { value: Air
   else if (!value.type || !value.area)
     body = (
       <ul className="space-y-0.5">
-        {prices.areas.map((a) => (
+        {shown.map((a) => (
           <li key={a.area}>
             Calgary Airport ↔ {a.label}:{" "}
             {a.perTransferSmallGroup != null
-              ? `${cad(a.perTransferSmallGroup)} up to ${prices.smallGroupMax} guests, ${cad(a.perTransfer)} for ${prices.smallGroupMax + 1} to ${prices.maxGuests} guests`
+              ? `${cad(a.perTransferSmallGroup)} up to ${prices.smallGroupMax} guests, ${cad(a.perTransfer)} for ${prices.smallGroupMax + 1} to ${a.maxGuests ?? prices.maxGuests} guests`
               : cad(a.perTransfer)}{" "}
             per transfer, one way
           </li>
@@ -220,7 +233,7 @@ export function AirportTransferBreakdown({ value, guests, prices }: { value: Air
       <dl className="space-y-1">
         <div className="flex justify-between gap-4">
           <dt>
-            {type?.label} · Calgary Airport ↔ {area} · {guests <= prices.smallGroupMax ? `up to ${prices.smallGroupMax}` : `${prices.smallGroupMax + 1} to ${prices.maxGuests}`} guests
+            {type?.label} · Calgary Airport ↔ {area} · {guests <= prices.smallGroupMax ? `up to ${prices.smallGroupMax}` : `${prices.smallGroupMax + 1} to ${prices.areas.find((a) => a.area === value.area)?.maxGuests ?? prices.maxGuests}`} guests
           </dt>
           <dd className="tabular-nums">
             {quote.transfers} × {cad(quote.unit)}
@@ -252,6 +265,8 @@ export function AirportTransferDetails({
   error,
   minDate,
   guests,
+  areas,
+  areaNote,
 }: {
   value: AirportTransferValue;
   onChange: (value: AirportTransferValue) => void;
@@ -259,6 +274,10 @@ export function AirportTransferDetails({
   minDate?: string;
   /** Party size, for the price. */
   guests: number;
+  /** Only these "Where you're staying" areas (Three-Day, owner 2026-11-24: Banff and Canmore). */
+  areas?: readonly AirportArea[];
+  /** Under the areas, e.g. how to ask for a Lake Louise transfer. */
+  areaNote?: string;
 }) {
   const prices = useAirportTransferPrices();
   const set = (key: keyof AirportTransferValue) => (e: React.ChangeEvent<HTMLInputElement>) => onChange({ ...value, [key]: e.target.value });
@@ -358,7 +377,7 @@ export function AirportTransferDetails({
       <fieldset>
         <legend className="text-sm text-obsidian-900">Where you&apos;re staying</legend>
         <div className="mt-1 flex flex-wrap gap-2">
-          {AREAS.map((a) => (
+          {AREAS.filter((a) => !areas || areas.includes(a.id)).map((a) => (
             <label
               key={a.id}
               className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border px-3 text-sm ${value.area === a.id ? "border-ocean-500 ring-1 ring-ocean-500" : "border-slate-300"}`}
@@ -375,7 +394,8 @@ export function AirportTransferDetails({
           ))}
         </div>
       </fieldset>
-      <AirportTransferBreakdown value={value} guests={guests} prices={prices} />
+      {areaNote && <p className="text-xs text-slate-600">{areaNote}</p>}
+      <AirportTransferBreakdown value={value} guests={guests} prices={prices} areas={areas} />
       {error && (
         <p id="airport-transfer-error" role="alert" className="text-sm text-red-700">
           {error}

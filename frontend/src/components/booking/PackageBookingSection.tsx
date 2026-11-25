@@ -93,6 +93,11 @@ export async function PackageBookingSection({
             consecutive={config.consecutive}
             guestNote={guestNote ?? config.guestNote}
             datesNote={datesNote ?? config.datesNote}
+            banffCanmorePickup={config.banffCanmorePickup}
+            banffCanmoreTransferOnly={config.banffCanmoreTransferOnly}
+            directActivities={config.directActivities}
+            hidePickupTimes={config.hidePickupTimes}
+            arrivalStartsDeadline={config.arrivalStartsDeadline}
           />
         </div>
       </div>
