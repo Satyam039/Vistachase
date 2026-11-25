@@ -39,15 +39,20 @@ describe("fareFor (owner's doc Pricing, 2026-11-04)", () => {
     expect(fareFor(schedule("icefields-jasper-private-tour"), "08:00", "2027-11-01").price).toBe(124000);
   });
 
-  it("prices each shuttle departure on its own, the same for every age", () => {
+  it("prices each shuttle departure on its own, the same for every age, and runs June 1–Oct 12", () => {
     const fullDay = schedule("full-day-at-lake-louise-and-moraine-lake");
     const sunrise = schedule("sunrise-shuttle-to-moraine-lake-and-lake-louise");
     const at = (item: typeof fullDay, time: string) => fareFor(item, item.times.find((t) => typeof t !== "string" && t.time === time)!, "2027-07-01");
-    expect(at(sunrise, "03:15")).toEqual({ price: 13000, childPrice: 13000, infantPrice: 13000 });
+    expect(at(sunrise, "03:15")).toEqual({ price: 13500, childPrice: 13500, infantPrice: 13500 });
+    expect(at(sunrise, "04:15")).toEqual({ price: 13500, childPrice: 13500, infantPrice: 13500 });
     expect(at(fullDay, "06:30").price).toBe(12000);
     expect(at(fullDay, "10:15").price).toBe(12000);
     expect(at(fullDay, "11:30").price).toBe(10800);
     expect(at(fullDay, "16:45").price).toBe(10800);
+    expect(fullDay.seasonEndsMonth).toBe(10);
+    expect(fullDay.seasonEndMonthDay).toBe("10-12");
+    expect(sunrise.seasonEndsMonth).toBe(10);
+    expect(sunrise.seasonEndMonthDay).toBe("10-12");
   });
 });
 

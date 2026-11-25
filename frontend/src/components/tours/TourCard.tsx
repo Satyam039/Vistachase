@@ -149,7 +149,7 @@ export function TourCard({
               </span>
             )}
             {tour.category === "SHUTTLE" && (
-              <span className={CARD_BADGE}>Guaranteed lake access</span>
+              <span className={CARD_BADGE}>Moraine &amp; Louise shuttle</span>
             )}
           </div>
         </div>

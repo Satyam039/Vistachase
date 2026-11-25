@@ -63,7 +63,8 @@ import { vehicleSeats } from "@/lib/tours";
 import { Dropdown } from "@/components/forms/Dropdown";
 import { PhoneField } from "@/components/forms/PhoneField";
 import { dialCode } from "@/lib/countries";
-import { balanceDueDate, cancellationShort, DEPOSIT_PERCENT, depositAvailable, depositFor, depositPolicy, formatRockiesDate, SEATS_MESSAGE } from "@/lib/policy";
+import { balanceDueDate, cancellationShort, cancellationTerms, DEPOSIT_PERCENT, depositAvailable, depositFor, depositPolicy, formatCancellationDeadline, formatRockiesDate, SEATS_MESSAGE } from "@/lib/policy";
+import { clock, clockRange, resolveShuttlePickupTime, SHUTTLE_PRODUCT_NAME, shuttleDepartureForTime } from "@/lib/shuttleSchedule";
 import { StripeCheckoutForm, stripeConfigured } from "@/components/booking/StripeCheckoutForm";
 import { trackAdsPurchase } from "@/lib/googleAds";
 import { CheckoutLinksInNewTab } from "@/components/booking/CheckoutLinksInNewTab";
@@ -77,6 +78,43 @@ import {
   UserRound,
   Users,
 } from "lucide-react";
+
+const OUTSIDE_BANFF_CANMORE = /\b(lake\s*louise|calgary|jasper|golden|field|revelstoke|edmonton|airdrie|cochrane|radium|invermere)\b/i;
+
+const SHUTTLE_CHECKOUT_INFO = [
+  {
+    title: "Service",
+    body: "This is a shuttle service, not a guided tour. Guests explore independently and must follow their booked schedule. Switching departures or skipping a leg requires team approval.",
+  },
+  {
+    title: "Food and drinks",
+    body: "Park admission and bottled water are included. Meals and hot drinks are not included. Packed food is welcome for consumption during lake stops. Eating onboard is not permitted; water is allowed.",
+  },
+  {
+    title: "Timing",
+    body: "Be ready at your confirmed pickup point 10 minutes before departure. Visit and return times are approximate and may change due to traffic, road conditions or unexpected disruptions.",
+  },
+  {
+    title: "Samson Mall pickup notice",
+    body: "Parking is not provided. Do not leave your vehicle in village public parking, day-use areas or Samson Mall customer parking while using the shuttle. Guests staying in Banff or Canmore should board there.",
+  },
+  {
+    title: "Rescheduling",
+    body: "Request rescheduling at least 24 hours before departure, subject to availability and confirmation.",
+  },
+  {
+    title: "Minimum passengers",
+    body: "Four passengers are required. If minimum numbers require cancellation, guests are contacted at least one week ahead and offered an alternative or full refund. Bookings made within seven days are protected from minimum-passenger cancellation. Major disruptions may still affect operation.",
+  },
+  {
+    title: "Closures",
+    body: "If Parks Canada closes one lake but the shuttle operates, no refund applies for the missed lake. If Vista Chase cancels the entire departure, guests receive a full refund.",
+  },
+  {
+    title: "Missed lake pickup",
+    body: "Contact your driver or Vista Chase support immediately. Later transportation depends on availability and is not guaranteed.",
+  },
+] as const;
 
 export interface DepartureData {
   id: string;
@@ -333,6 +371,7 @@ export function BookingCheckoutClient({
     (initialPickupStopId && availableStops.some((s) => s.id === initialPickupStopId) ? initialPickupStopId : availableStops[0]?.id) ?? "",
   );
   const [customPickup, setCustomPickup] = useState("");
+  const [childSeatRequested, setChildSeatRequested] = useState(false);
   const [specialRequests, setSpecialRequests] = useState("");
 
   // 10-minute seat hold
@@ -660,14 +699,53 @@ export function BookingCheckoutClient({
   const dueNow = plan === "DEPOSIT" ? depositNow : total;
   const balanceDueLabel = formatRockiesDate(balanceDueDate(departure.date, departure.departureTime));
 
+  const isShuttle = Boolean(
+    departure.shuttleRoute ||
+    departure.tour?.category === "SHUTTLE" ||
+    departure.tour?.slug?.includes("shuttle"),
+  );
+  const shuttleDep = isShuttle ? shuttleDepartureForTime(departure.departureTime) : undefined;
   const selectedStop = availableStops.find((stop) => stop.id === pickupStopId);
-  const experienceTitle =
-    departure.tour?.title ||
-    departure.shuttleRoute?.name ||
-    "Canadian Rockies tour";
-  const experienceSubtitle = departure.shuttleRoute
-    ? `${departure.shuttleRoute.origin} → ${departure.shuttleRoute.destination}`
-    : "Guaranteed access to Lake Louise & Moraine Lake";
+  const selectedPickupTime24 = isShuttle
+    ? resolveShuttlePickupTime({
+        departureTime: departure.departureTime,
+        town: selectedStop?.town,
+        stopName: selectedStop?.name,
+        isShuttle: true,
+      })
+    : null;
+  const departureDisplayTime = departure.departureTime.includes(":")
+    ? clock(departure.departureTime.slice(0, 5))
+    : departure.departureTime;
+  const selectedPickupDisplayTime = selectedPickupTime24
+    ? clock(selectedPickupTime24)
+    : departureDisplayTime;
+  const cancellationDeadlineLabel = formatCancellationDeadline(
+    departure.date,
+    departure.departureTime,
+    cancellationTerms(departure.tour?.category ?? (isShuttle ? "SHUTTLE" : undefined)).cutoffHours,
+  );
+  const childSeatOrRequestStatus =
+    childSeatRequested && specialRequests.trim()
+      ? "Child seat & special requests submitted — pending team confirmation"
+      : childSeatRequested
+        ? "Child seat / booster requested — pending team confirmation"
+        : specialRequests.trim()
+          ? "Special request noted — subject to team confirmation"
+          : "None requested (child seats require advance confirmation)";
+
+  const experienceTitle = isShuttle
+    ? SHUTTLE_PRODUCT_NAME
+    : departure.tour?.title ||
+      departure.shuttleRoute?.name ||
+      "Canadian Rockies tour";
+  const experienceSubtitle = isShuttle
+    ? shuttleDep
+      ? `Departure ${shuttleDep.number} · ${departureDisplayTime} (Banff base)`
+      : departure.shuttleRoute
+        ? `${departure.shuttleRoute.origin} → ${departure.shuttleRoute.destination}`
+        : "Lake Louise & Moraine Lake access subject to operating conditions"
+    : "Lake Louise & Moraine Lake access subject to road closures & operating conditions";
 
   // ── Validation ─────────────────────────────────────────────────────────────
 
@@ -706,14 +784,18 @@ export function BookingCheckoutClient({
       contact.phone = "Enter a mobile number for pickup-day updates.";
 
     const pickup: Record<string, string> = {};
-    if (!pickupStopId && !customPickup.trim())
-      pickup.stop = isBanffPrivate
-        ? "Choose a pickup location or enter where you're staying in Banff or Canmore."
-        : "Choose a pickup hotel or enter where you're staying.";
+    if (isPrivate) {
+      if (!pickupStopId && !customPickup.trim()) {
+        pickup.stop = "Choose a pickup location or enter where you're staying in Banff or Canmore.";
+      } else if (customPickup.trim() && OUTSIDE_BANFF_CANMORE.test(customPickup)) {
+        pickup.stop = "Custom pickup addresses on private tours are available in Canmore and Banff only.";
+      }
+    } else if (!pickupStopId) {
+      pickup.stop = "Choose a listed pickup location.";
+    }
 
     return [party, contact, pickup, {}];
   }, [
-    isBanffPrivate,
     totalSeats,
     seatCapacity,
     liveSeatsAvailable,
@@ -782,13 +864,17 @@ export function BookingCheckoutClient({
           customerPhone: customerPhone.trim(),
           customerCountry: phoneCountry,
           pickupStopId: pickupStopId || undefined,
-          pickupCustomText: customPickup.trim() || undefined,
+          pickupCustomText: isPrivate ? customPickup.trim() || undefined : undefined,
           adultsCount: adults,
           childrenCount: children,
           infantsCount: infants,
           specialRequests:
             // The combined ticket request's staff line is written by the server (activity-add-ons.ts).
-            [specialRequests.trim(), isPrivate && wantsActivities && !combined ? activityAddOnsRequestLine(chosenAddOns.map((id) => ACTIVITY_ADD_ONS[id]), activityGuests) : ""]
+            [
+              childSeatRequested ? "Complimentary child seat / booster requested (requires advance confirmation by team)" : "",
+              specialRequests.trim(),
+              isPrivate && wantsActivities && !combined ? activityAddOnsRequestLine(chosenAddOns.map((id) => ACTIVITY_ADD_ONS[id]), activityGuests) : "",
+            ]
               .filter(Boolean)
               .join("\n") || undefined,
           airportTransfer: airport ? airportTransferPayload(airportTransfer) : undefined,
@@ -973,17 +1059,38 @@ export function BookingCheckoutClient({
       </HStack>
       <VStack gap={2}>
         <SummaryRow label="Date" value={formatDate(departure.date)} />
-        <SummaryRow label="Departs" value={departure.departureTime} />
+        <SummaryRow
+          label={shuttleDep ? "Departure" : "Departs"}
+          value={shuttleDep ? `Departure ${shuttleDep.number} · ${departureDisplayTime}` : departureDisplayTime}
+        />
         <SummaryRow
           label="Party"
           value={partyLabel(adults, children, infants)}
         />
-        {(selectedStop || customPickup.trim()) && (
+        {(selectedStop || (isPrivate && customPickup.trim())) && (
           <SummaryRow
-            label="Pickup"
-            value={customPickup.trim() || selectedStop?.name || ""}
+            label="Pickup location"
+            value={selectedStop ? `${selectedStop.name} (${selectedStop.town})` : customPickup.trim()}
           />
         )}
+        {isShuttle && selectedStop && (
+          <SummaryRow
+            label="Pickup time"
+            value={`${selectedPickupDisplayTime} (local Alberta time)`}
+          />
+        )}
+        {shuttleDep && (
+          <>
+            <SummaryRow label="Moraine Lake" value={clockRange(shuttleDep.moraine)} />
+            <SummaryRow label="Lake Louise" value={clockRange(shuttleDep.louise)} />
+            <SummaryRow
+              label="Est. return"
+              value={`Samson Mall ${clock(shuttleDep.returnSamson)} · Banff ${clock(shuttleDep.returnBanff)} · Canmore ${clock(shuttleDep.returnCanmore)}`}
+            />
+          </>
+        )}
+        <SummaryRow label="Free cancel until" value={cancellationDeadlineLabel} />
+        <SummaryRow label="Seats & requests" value={childSeatOrRequestStatus} />
         {airport && transferPrice == null && <SummaryRow label="Airport transfer" value={AIRPORT_TRANSFER_PRICE_NOTE} />}
         {combined && chosenAddOns.length > 0 && (
           <SummaryRow
@@ -1170,19 +1277,38 @@ export function BookingCheckoutClient({
           <Divider />
           <VStack gap={2}>
             <SummaryRow
-              label="Date"
-              value={`${formatDate(departure.date)} · ${departure.departureTime}`}
+              label={shuttleDep ? "Service" : "Date"}
+              value={shuttleDep ? `${SHUTTLE_PRODUCT_NAME} · Departure ${shuttleDep.number} (${departureDisplayTime})` : `${formatDate(departure.date)} · ${departureDisplayTime}`}
             />
+            {shuttleDep && <SummaryRow label="Date" value={formatDate(departure.date)} />}
             <SummaryRow
               label="Party"
               value={partyLabel(adults, children, infants)}
             />
-            {selectedStop && (
+            {(selectedStop || (isPrivate && customPickup.trim())) && (
               <SummaryRow
-                label="Pickup"
-                value={`${selectedStop.name} (${selectedStop.town})`}
+                label={isShuttle ? "Pickup location & time" : "Pickup"}
+                value={
+                  selectedStop
+                    ? `${selectedStop.name} (${selectedStop.town})${isShuttle ? ` · ${selectedPickupDisplayTime} MT` : ""}`
+                    : customPickup.trim()
+                }
               />
             )}
+            {shuttleDep && (
+              <>
+                <SummaryRow
+                  label="Lake meeting times"
+                  value={`Moraine Lake ${clockRange(shuttleDep.moraine)} · Lake Louise ${clockRange(shuttleDep.louise)}`}
+                />
+                <SummaryRow
+                  label="Estimated return"
+                  value={`Samson Mall ${clock(shuttleDep.returnSamson)} · Banff ${clock(shuttleDep.returnBanff)} · Canmore ${clock(shuttleDep.returnCanmore)}`}
+                />
+              </>
+            )}
+            <SummaryRow label="Free cancel until" value={cancellationDeadlineLabel} />
+            <SummaryRow label="Child seat & requests" value={childSeatOrRequestStatus} />
             {confirmed.paymentPlan === "DEPOSIT" ? (
               <>
                 <SummaryRow label="Deposit paid" value={`${money(confirmed.depositAmount ?? 0)}`} />
@@ -1252,8 +1378,10 @@ export function BookingCheckoutClient({
                       {experienceTitle}
                     </h1>
                     <p className="mt-1.5 text-base text-slate-600">
-                      {formatDate(departure.date)} · Departs{" "}
-                      {departure.departureTime}
+                      {formatDate(departure.date)} ·{" "}
+                      {shuttleDep
+                        ? `Departure ${shuttleDep.number} · Pickup ${selectedPickupDisplayTime} (Departs Banff ${departureDisplayTime})`
+                        : `Departs ${departureDisplayTime}`}
                     </p>
                   </div>
                 </StackItem>
@@ -1289,9 +1417,11 @@ export function BookingCheckoutClient({
                           <VStack gap={2} hAlign="start">
                             <Heading level={2}>Who&apos;s coming?</Heading>
                             <Text type="supporting" color="secondary">
-                              {infantsPay
-                                ? "Infants (0–5) take a seat and pay the infant fare."
-                                : "Infants (0–5) ride free on a lap."}
+                              {isShuttle
+                                ? "Adults, children and infants pay the same fare. Every passenger requires a seat."
+                                : infantsPay
+                                  ? "Infants (0–5) take a seat and pay the infant fare."
+                                  : "Infants (0–5) ride free on a lap."}
                             </Text>
                             {seatCapacity <= 0 ? (
                               <div className="w-full rounded-xl border border-red-300 bg-red-50 p-3.5 text-sm font-medium text-red-800" role="alert">
@@ -1445,15 +1575,23 @@ export function BookingCheckoutClient({
                             <Text type="supporting" color="secondary">
                               {isBanffPrivate
                                 ? "Doorstep pickup and drop-off are available in Banff and Canmore only. Select a listed pickup location, or enter your requested accommodation or address in Banff or Canmore."
-                                : departure.tour?.category === "SHARED"
-                                  ? "Complimentary pickup at hotels in Banff and Canmore. Small-group tours don't pick up in Lake Louise."
-                                  : "Complimentary door-to-door pickup across Banff, Canmore and Lake Louise."}
+                                : isPrivate
+                                  ? "Select a listed pickup hotel, or enter a custom address in Canmore or Banff (subject to confirmation)."
+                                  : isShuttle
+                                    ? "Choose a listed pickup point in Canmore, Banff or Lake Louise Village (Samson Mall). Custom addresses are not available for shuttles."
+                                    : "Complimentary pickup at listed hotels in Banff and Canmore. Small-group tours don't pick up in Lake Louise and custom addresses are not available."}
                             </Text>
                           </VStack>
                           <FormLayout defaultOptionality="required">
                             <div>
                               <Dropdown
-                                label={isBanffPrivate ? "Pickup location — Banff or Canmore" : "Pickup hotel"}
+                                label={
+                                  isBanffPrivate
+                                    ? "Pickup location — Banff or Canmore"
+                                    : isShuttle
+                                      ? "Pickup location (listed stops only)"
+                                      : "Pickup hotel (listed stops only)"
+                                }
                                 labelClassName="mb-1.5 block text-sm text-obsidian-900"
                                 options={availableStops.map((stop) => ({
                                   value: stop.id,
@@ -1463,8 +1601,8 @@ export function BookingCheckoutClient({
                                 value={pickupStopId}
                                 onChange={setPickupStopId}
                                 searchable
-                                searchPlaceholder={isBanffPrivate ? "Search locations" : "Search hotels"}
-                                placeholder={isBanffPrivate ? "Choose a listed location" : "Choose your hotel"}
+                                searchPlaceholder={isBanffPrivate || isShuttle ? "Search locations" : "Search hotels"}
+                                placeholder={isBanffPrivate || isShuttle ? "Choose a listed location" : "Choose your hotel"}
                                 invalid={Boolean(currentErrors.stop)}
                                 describedBy={currentErrors.stop ? "pickup-stop-error" : undefined}
                               />
@@ -1477,21 +1615,51 @@ export function BookingCheckoutClient({
                             {selectedStop && (
                               <Banner
                                 status="info"
-                                title="Meeting point"
-                                description={selectedStop.instructions}
+                                title={
+                                  isShuttle
+                                    ? `Pickup time: ${selectedPickupDisplayTime} (local Alberta time) — Meeting point`
+                                    : "Meeting point"
+                                }
+                                description={
+                                  isShuttle
+                                    ? `${selectedStop.instructions} Be ready at your confirmed pickup point 10 minutes before departure.`
+                                    : selectedStop.instructions
+                                }
                               />
                             )}
-                            <TextInput
-                              label={isBanffPrivate ? "Other pickup address — optional" : "Staying somewhere else?"}
-                              isOptional
-                              value={customPickup}
-                              onChange={setCustomPickup}
-                              placeholder={
-                                isBanffPrivate
-                                  ? "Enter your accommodation or requested address in Banff or Canmore. Subject to confirmation."
-                                  : "Airbnb address or room number"
-                              }
-                            />
+                            {isShuttle && /samson|lake\s*louise/i.test(`${selectedStop?.name ?? ""} ${selectedStop?.town ?? ""}`) && (
+                              <Banner
+                                status="warning"
+                                title="Samson Mall pickup notice"
+                                description="Parking is not provided. Do not leave your vehicle in village public parking, day-use areas or Samson Mall customer parking while using the shuttle. Guests staying in Banff or Canmore should board there."
+                              />
+                            )}
+                            {isPrivate && (
+                              <TextInput
+                                label="Other pickup address — optional (Canmore & Banff only)"
+                                isOptional
+                                value={customPickup}
+                                onChange={setCustomPickup}
+                                placeholder="Enter your accommodation or requested address in Canmore or Banff. Subject to confirmation."
+                                description="Custom pickup addresses on private tours are accepted for Canmore and Banff only and require team confirmation."
+                              />
+                            )}
+                            <label className="flex items-start gap-3 rounded-xl border border-obsidian-900/10 bg-obsidian-50/70 p-3.5 text-sm cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={childSeatRequested}
+                                onChange={(e) => setChildSeatRequested(e.target.checked)}
+                                className="mt-0.5 h-4 w-4 accent-ocean-700"
+                              />
+                              <span className="space-y-0.5">
+                                <span className="block font-medium text-obsidian-900">
+                                  Request complimentary child seat or booster
+                                </span>
+                                <span className="block text-xs text-slate-600">
+                                  Limited availability — requires advance confirmation by our team. Please share child&apos;s age and seat type below.
+                                </span>
+                              </span>
+                            </label>
                             <TextArea
                               label="Special requests"
                               isOptional
@@ -1499,7 +1667,7 @@ export function BookingCheckoutClient({
                               maxLength={500}
                               value={specialRequests}
                               onChange={setSpecialRequests}
-                              placeholder="Anniversary trip, window seat, dietary needs…"
+                              placeholder="Child's age & seat type, accessibility needs, or other requests (subject to team confirmation)…"
                             />
                           </FormLayout>
                         </VStack>
@@ -1516,6 +1684,10 @@ export function BookingCheckoutClient({
                           <Card padding={4}>
                             <VStack gap={2}>
                               <SummaryRow
+                                label="Product"
+                                value={shuttleDep ? `${experienceTitle} · Departure ${shuttleDep.number} (${departureDisplayTime})` : experienceTitle}
+                              />
+                              <SummaryRow
                                 label="Lead guest"
                                 value={customerName.trim()}
                               />
@@ -1528,16 +1700,51 @@ export function BookingCheckoutClient({
                                 value={customerPhone.trim()}
                               />
                               <SummaryRow
-                                label="Pickup"
+                                label={isShuttle ? "Pickup location & time" : "Pickup"}
                                 value={
-                                  customPickup.trim() ||
+                                  (isPrivate && customPickup.trim()) ||
                                   (selectedStop
-                                    ? `${selectedStop.name} (${selectedStop.town})`
+                                    ? `${selectedStop.name} (${selectedStop.town})${selectedStop.address ? `, ${selectedStop.address}` : ""}${isShuttle ? ` · Pickup at ${selectedPickupDisplayTime} MT` : ""}`
                                     : "")
                                 }
                               />
+                              {shuttleDep && (
+                                <>
+                                  <SummaryRow
+                                    label="Lake meeting times"
+                                    value={`Moraine Lake ${clockRange(shuttleDep.moraine)} · Lake Louise ${clockRange(shuttleDep.louise)}`}
+                                  />
+                                  <SummaryRow
+                                    label="Estimated return"
+                                    value={`Samson Mall ${clock(shuttleDep.returnSamson)} · Banff ${clock(shuttleDep.returnBanff)} · Canmore ${clock(shuttleDep.returnCanmore)}`}
+                                  />
+                                </>
+                              )}
+                              <SummaryRow
+                                label="Cancellation deadline"
+                                value={cancellationDeadlineLabel}
+                              />
+                              <SummaryRow
+                                label="Child seat & requests"
+                                value={childSeatOrRequestStatus}
+                              />
                             </VStack>
                           </Card>
+                          {isShuttle && (
+                            <Card padding={4}>
+                              <VStack gap={3}>
+                                <Text weight="semibold">Important shuttle information</Text>
+                                <div className="grid gap-3 sm:grid-cols-2">
+                                  {SHUTTLE_CHECKOUT_INFO.map((item) => (
+                                    <div key={item.title} className="space-y-0.5 text-xs">
+                                      <p className="font-semibold text-obsidian-900">{item.title}</p>
+                                      <p className="leading-relaxed text-slate-600">{item.body}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              </VStack>
+                            </Card>
+                          )}
                           {/* No card details are collected on this page. A real integration mounts the payment
                           provider's PCI-compliant fields here instead of raw inputs. */}
                           <Card padding={4}>

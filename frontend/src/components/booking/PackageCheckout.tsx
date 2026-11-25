@@ -102,6 +102,8 @@ interface BookingRef {
   status: string;
 }
 
+const OUTSIDE_BANFF_CANMORE = /\b(lake\s*louise|calgary|jasper|golden|field|revelstoke|edmonton|airdrie|cochrane|radium|invermere)\b/i;
+
 const SHARED_MAX_GUESTS = 12;
 
 /** June 1 to October 10 (the summer season of the prices and discounts). */
@@ -489,12 +491,23 @@ export function PackageCheckout({
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) e.email = "Enter a valid email address.";
     if (phoneLocal.replace(/\D/g, "").length < 6) e.phone = "Enter a mobile number for pickup-day updates.";
     if (samePickup) {
-      if (!stopId && !customPickup.trim()) e.stop = isFourDay ? "Choose your Banff or Canmore pickup hotel, or enter your accommodation address." : "Choose your pickup hotel, or tell us where you're staying in Banff or Canmore.";
+      if (!stopId && (!vehicle || !customPickup.trim())) {
+        e.stop = vehicle
+          ? "Choose your Banff or Canmore pickup hotel, or enter your accommodation address in Canmore or Banff."
+          : "Choose your listed Banff or Canmore pickup hotel.";
+      } else if (vehicle && customPickup.trim() && OUTSIDE_BANFF_CANMORE.test(customPickup)) {
+        e.stop = "Custom pickup addresses on private tours are available in Canmore and Banff only.";
+      }
     } else {
       days.forEach((day, i) => {
         if (isFourDay && !outboundDays.includes(i)) return;
-        if (!tourPickups[i]?.stopId && !tourPickups[i]?.customPickup.trim()) {
-          e[`stop_${i}`] = `Choose a pickup hotel or enter accommodation for ${day.title}.`;
+        const p = tourPickups[i];
+        if (!p?.stopId && (!vehicle || !p?.customPickup.trim())) {
+          e[`stop_${i}`] = vehicle
+            ? `Choose a pickup hotel or enter a Canmore/Banff accommodation for ${day.title}.`
+            : `Choose a listed pickup hotel for ${day.title}.`;
+        } else if (vehicle && p?.customPickup.trim() && OUTSIDE_BANFF_CANMORE.test(p.customPickup)) {
+          e[`stop_${i}`] = `Custom pickup addresses on private tours are available in Canmore and Banff only.`;
         }
       });
     }
@@ -523,12 +536,14 @@ export function PackageCheckout({
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) list.push("Valid email address");
     if (phoneLocal.replace(/\D/g, "").length < 6) list.push("Mobile phone number");
     if (samePickup) {
-      if (!stopId && !customPickup.trim()) list.push("Pickup accommodation in Banff or Canmore");
+      if (!stopId && (!vehicle || !customPickup.trim())) {
+        list.push(vehicle ? "Pickup accommodation in Banff or Canmore" : "Listed pickup hotel in Banff or Canmore");
+      }
     } else {
       days.forEach((day, i) => {
         if (isFourDay && !outboundDays.includes(i)) return;
-        if (!tourPickups[i]?.stopId && !tourPickups[i]?.customPickup.trim()) {
-          list.push(`Pickup accommodation for ${day.title}`);
+        if (!tourPickups[i]?.stopId && (!vehicle || !tourPickups[i]?.customPickup.trim())) {
+          list.push(`Pickup hotel for ${day.title}`);
         }
       });
     }
@@ -576,7 +591,7 @@ export function PackageCheckout({
           customerPhone: phone,
           customerCountry: phoneCountry,
           pickupStopId: stopId || undefined,
-          pickupCustomText: customPickup.trim() || undefined,
+          pickupCustomText: vehicle ? customPickup.trim() || undefined : undefined,
           day4JasperPickup: isFourDay ? day4JasperPickup.trim() : undefined,
           finalDestination: isFourDay && finalArea ? { area: finalArea, address: finalAddress.trim() || undefined } : undefined,
           dayPickups: isFourDay
@@ -584,12 +599,12 @@ export function PackageCheckout({
                 !outboundDays.includes(i)
                   ? { pickupCustomText: `Jasper: ${day4JasperPickup.trim()}` }
                   : samePickup
-                    ? { pickupStopId: stopId || undefined, pickupCustomText: customPickup.trim() || undefined }
-                    : { pickupStopId: tourPickups[i]?.stopId || undefined, pickupCustomText: tourPickups[i]?.customPickup.trim() || undefined },
+                    ? { pickupStopId: stopId || undefined, pickupCustomText: vehicle ? customPickup.trim() || undefined : undefined }
+                    : { pickupStopId: tourPickups[i]?.stopId || undefined, pickupCustomText: vehicle ? tourPickups[i]?.customPickup.trim() || undefined : undefined },
               )
             : samePickup
-              ? days.map(() => ({ pickupStopId: stopId || undefined, pickupCustomText: customPickup.trim() || undefined }))
-              : tourPickups.map((p) => ({ pickupStopId: p.stopId || undefined, pickupCustomText: p.customPickup.trim() || undefined })),
+              ? days.map(() => ({ pickupStopId: stopId || undefined, pickupCustomText: vehicle ? customPickup.trim() || undefined : undefined }))
+              : tourPickups.map((p) => ({ pickupStopId: p.stopId || undefined, pickupCustomText: vehicle ? p.customPickup.trim() || undefined : undefined })),
           adultsCount: adults,
           childrenCount: vehicle ? 0 : children,
           infantsCount: vehicle ? 0 : infants,
@@ -963,14 +978,16 @@ export function PackageCheckout({
                     invalid={Boolean(show("stop"))}
                   />
                 )}
-                <TextInput
-                  label="Staying somewhere else?"
-                  isOptional
-                  value={customPickup}
-                  onChange={setCustomPickup}
-                  placeholder="Hotel name or address in Banff or Canmore"
-                  description="Unlisted locations require team confirmation."
-                />
+                {vehicle && (
+                  <TextInput
+                    label="Staying somewhere else? (Canmore & Banff only)"
+                    isOptional
+                    value={customPickup}
+                    onChange={setCustomPickup}
+                    placeholder="Hotel name or address in Canmore or Banff"
+                    description="Private tours only: custom pickup addresses are available in Canmore and Banff and require team confirmation."
+                  />
+                )}
                 {show("stop") && (
                   <p role="alert" className="text-sm text-red-700">
                     {errors.stop}
@@ -1000,18 +1017,20 @@ export function PackageCheckout({
                         invalid={Boolean(show(`stop_${i}`))}
                       />
                     )}
-                    <TextInput
-                      label="Staying somewhere else for this tour?"
-                      isOptional
-                      value={tourPickups[i]?.customPickup ?? ""}
-                      onChange={(val) =>
-                        setTourPickups((prev) =>
-                          prev.map((p, j) => (j === i ? { ...p, customPickup: val } : p)),
-                        )
-                      }
-                      placeholder="Hotel name or address in Banff or Canmore"
-                      description="Unlisted locations require team confirmation."
-                    />
+                    {vehicle && (
+                      <TextInput
+                        label="Staying somewhere else for this tour? (Canmore & Banff only)"
+                        isOptional
+                        value={tourPickups[i]?.customPickup ?? ""}
+                        onChange={(val) =>
+                          setTourPickups((prev) =>
+                            prev.map((p, j) => (j === i ? { ...p, customPickup: val } : p)),
+                          )
+                        }
+                        placeholder="Hotel name or address in Canmore or Banff"
+                        description="Private tours only: Canmore and Banff addresses require team confirmation."
+                      />
+                    )}
                     {show(`stop_${i}`) && (
                       <p role="alert" className="text-sm text-red-700">
                         {errors[`stop_${i}`]}

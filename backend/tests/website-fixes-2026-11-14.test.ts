@@ -146,9 +146,11 @@ describe("booking itinerary = the website's itinerary for exactly what was booke
       { slug: "banff-private-tour", email: "itin.pby@example.com", expect: "Drop-off at your accommodation in Banff or Canmore. Allow approximately 10–12 hours for the tour." },
       { slug: "icefields-jasper-private-tour", email: "itin.pcia@example.com", expect: "Columbia Icefield: the optional Ice Explorer + Skywalk combined experience" },
     ];
+    const banffStop = await prisma.shuttleStop.findFirstOrThrow({ where: { town: "Banff", isActive: true } });
     for (const c of cases) {
       const dep = await departure(c.slug, "2028-07-12", "08:00", c.slug.includes("private") ? 175000 : 22000);
-      const { booking } = await createBooking(guest(c.email, dep.id, { pickupCustomText: "Moxy Banff" }));
+      const pickup = c.slug.includes("private") ? { pickupCustomText: "Moxy Banff" } : { pickupStopId: banffStop.id };
+      const { booking } = await createBooking(guest(c.email, dep.id, pickup));
       expect(booking?.status).toBe("CONFIRMED");
       const email = confirmationFor(c.email);
       expect(email, c.slug).toBeTruthy();
@@ -163,7 +165,7 @@ describe("booking itinerary = the website's itinerary for exactly what was booke
 
     // A winter shared Icefield date gets the Abraham Lake itinerary.
     const winterDep = await departure("shared-tours-icefields-jasper", "2028-01-18");
-    await createBooking(guest("itin.cia-winter@example.com", winterDep.id, { pickupCustomText: "Moxy Banff" }));
+    await createBooking(guest("itin.cia-winter@example.com", winterDep.id, { pickupStopId: banffStop.id }));
     const winterEmail = confirmationFor("itin.cia-winter@example.com");
     expect(winterEmail!.text).toContain("Abraham Lake");
     expect(winterEmail!.text).not.toContain("Our team will confirm your detailed itinerary");
@@ -174,7 +176,7 @@ describe("booking itinerary = the website's itinerary for exactly what was booke
     const { id: _id, slug: _slug, ...winter } = await prisma.tour.findUniqueOrThrow({ where: { slug: "winter-special" } });
     await prisma.tour.upsert({ where: { slug: "no-itinerary-test-tour" }, update: {}, create: { ...(winter as any), slug: "no-itinerary-test-tour", bokunId: null } });
     const dep = await departure("no-itinerary-test-tour", "2028-01-18");
-    const { booking } = await createBooking(guest("itin.winter@example.com", dep.id, { pickupCustomText: "Moxy Banff" }));
+    const { booking } = await createBooking(guest("itin.winter@example.com", dep.id, { pickupStopId: banffStop.id }));
     const email = confirmationFor("itin.winter@example.com");
     expect(email!.text).toContain("Our team will confirm your detailed itinerary");
     expect(email!.text).not.toContain("Ice Explorer onto the Athabasca Glacier and the Skywalk (June 1");
@@ -202,13 +204,15 @@ describe("booking itinerary = the website's itinerary for exactly what was booke
   it("sends a shuttle its departure's timetable", async () => {
     const tour = await prisma.tour.findUniqueOrThrow({ where: { slug: "sunrise-shuttle-to-moraine-lake-and-lake-louise" } });
     const dep = await prisma.tourDeparture.create({
-      data: { inventorySource: "LOCAL", tourId: tour.id, date: dateOnly("2028-07-05"), departureTime: timeOfDay("04:15"), capacityTotal: 14, price: 13000, status: "ACTIVE" },
+      data: { inventorySource: "LOCAL", tourId: tour.id, date: dateOnly("2028-07-05"), departureTime: timeOfDay("04:15"), capacityTotal: 14, price: 13500, status: "ACTIVE" },
     });
     const stop = await prisma.shuttleStop.findFirstOrThrow({ where: { town: "Canmore", isActive: true } });
     await createBooking(guest("itin.shuttle@example.com", dep.id, { pickupStopId: stop.id }));
     const email = confirmationFor("itin.shuttle@example.com");
+    expect(email!.text).toContain("Moraine Lake & Lake Louise Shuttle");
     expect(email!.text).toContain("Departure 2 · Early Morning");
     expect(email!.text).toContain("5:30–7:00 AM: Moraine Lake");
+    expect(email!.text).toContain("Samson Mall 9:45 AM");
     if (process.env.SAVE_ITINERARY_DIR) fs.writeFileSync(path.join(process.env.SAVE_ITINERARY_DIR, "shuttle.pdf"), email!.attachments![0].content);
   });
 });

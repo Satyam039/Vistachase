@@ -17,6 +17,7 @@ import {
   departuresFor,
   firstShuttleDate,
   inSeason,
+  shuttleFareCad,
   type ShuttleDeparture,
   type ShuttlePickup,
 } from "@/lib/shuttleSchedule";
@@ -147,13 +148,13 @@ export function ShuttleDayPlanner({ today, live, fromPrice }: { today: string; l
           Compare pickup times, time at each lake and your estimated return. Every departure includes both lakes and round-trip transportation.
         </p>
         <p className="mt-4 text-sm text-obsidian-900" aria-live="polite">
-          {departures.length > 0 ? `${departures.length} departures on ${longDate(date)} from ${pickupLabel}` : `${longDate(date)}: the shuttle runs June to September.`}
+          {departures.length > 0 ? `${departures.length} departures on ${longDate(date)} from ${pickupLabel}` : `${longDate(date)}: the shuttle operates June 1 to October 12.`}
         </p>
       </div>
 
       {departures.length === 0 ? (
         <div className="mx-auto mt-8 max-w-xl rounded-none bg-white p-6 text-center ring-1 ring-obsidian-900/[0.07]">
-          <p className="text-base text-slate-700">Shuttles operate June to September. Pick a date in season to see departures.</p>
+          <p className="text-base text-slate-700">Shuttles operate June 1 to October 12. Pick a date in season to see departures.</p>
           {!inSeason(today) && (
             <button type="button" onClick={() => setDate(firstShuttleDate(today))} className="mt-4 text-base text-ocean-700 underline underline-offset-4">
               Show {longDate(firstShuttleDate(today))}
@@ -164,7 +165,7 @@ export function ShuttleDayPlanner({ today, live, fromPrice }: { today: string; l
         <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
           {departures.map((d) => {
             const match = liveFor(d);
-            const price = match?.price ?? fromPrice;
+            const price = match?.price ?? shuttleFareCad(d.number) ?? fromPrice;
             const href = bookHref(d);
             const banffTime = d.pickup.banff || "03:15";
             const canmoreTime = d.pickup.canmore || calculateCanmorePickup(banffTime);
@@ -177,8 +178,9 @@ export function ShuttleDayPlanner({ today, live, fromPrice }: { today: string; l
               ["Samson Mall pickup", clock(samsonTime)],
               ["Moraine Lake visit", clockRange(d.moraine)],
               ["Lake Louise visit", clockRange(d.louise)],
-              ["Estimated Banff return", clock(d.returnBanff)],
-              ["Estimated Canmore return", clock(d.returnCanmore)],
+              ["Est. Samson Mall return", clock(d.returnSamson)],
+              ["Est. Banff return", clock(d.returnBanff)],
+              ["Est. Canmore return", clock(d.returnCanmore)],
             ];
             const highlight = { canmore: "Canmore pickup", banff: "Banff pickup", samson: "Samson Mall pickup" }[pickup];
             return (
@@ -202,13 +204,15 @@ export function ShuttleDayPlanner({ today, live, fromPrice }: { today: string; l
                 </dl>
                 <p className="mt-3 flex items-center gap-1.5 text-sm text-slate-600">
                   <Users className="h-4 w-4 text-ocean-600" aria-hidden="true" />
-                  Small-group transportation
+                  Small-group shuttle · no guide onboard
                 </p>
                 <div className="mt-auto pt-5">
                   {price != null && (
                     <p className="text-base text-obsidian-900">
-                      {match ? "" : "From "}CAD ${price} per person
-                      <span className="block text-xs text-slate-600">Taxes and required fees included</span>
+                      CAD ${price} per person
+                      <span className="block text-xs text-slate-600">
+                        Same fare for adults, children &amp; infants · Taxes included
+                      </span>
                     </p>
                   )}
                   <Link
@@ -228,7 +232,7 @@ export function ShuttleDayPlanner({ today, live, fromPrice }: { today: string; l
       )}
 
       <p className="mx-auto mt-8 max-w-3xl text-center text-sm text-slate-600">
-        All times are local Alberta time. Return times are approximate and may vary with traffic and road conditions.
+        All times are local Alberta time. Be ready 10 minutes before departure. Return times are approximate and may vary with traffic and road conditions.
       </p>
     </div>
   );

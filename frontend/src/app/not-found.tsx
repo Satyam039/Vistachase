@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 const LINKS = [
   { icon: Users, label: "Shared tours", body: "Small-group day tours from Banff and Canmore", href: "/shared-tours" },
   { icon: Compass, label: "Private tours", body: "Your own vehicle, guide and pace", href: "/private-tours" },
-  { icon: Bus, label: "Moraine Lake shuttles", body: "Guaranteed access, sunrise departures", href: "/shuttles" },
+  { icon: Bus, label: "Moraine Lake & Lake Louise Shuttle", body: "June 1–October 12 departures", href: "/shuttles" },
   { icon: MapPin, label: "Destinations", body: "Lakes, towns and parkways to explore", href: "/destinations" },
 ];
 

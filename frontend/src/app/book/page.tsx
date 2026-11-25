@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: true },
   title: "Secure Booking & Checkout | Vista Chase Canadian Rockies",
   description:
-    "Complete your reservation for Lake Louise, Moraine Lake shuttles, and luxury private tours with guaranteed access.",
+    "Complete your reservation for the Moraine Lake & Lake Louise Shuttle, small-group tours, and luxury private tours.",
   alternates: {
     canonical: "/book",
   },

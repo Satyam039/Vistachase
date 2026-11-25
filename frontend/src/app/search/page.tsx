@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   // Checkout and search results have no search value of their own; keep them out of the index.
   robots: { index: false, follow: true },
   title: "Search Canadian Rockies Tours & Shuttles | Vista Chase",
-  description: "Find real-time departures, live seat availability, and guaranteed Moraine Lake tours across Banff and the Rockies.",
+  description: "Find real-time departures, live seat availability, and Moraine Lake & Lake Louise shuttles and tours across Banff and the Rockies.",
   alternates: {
     canonical: "/search",
   },

@@ -171,8 +171,8 @@ Private tours reserve the vehicle and driver-guide exclusively for the booking p
 Guests book and pay for their own hotels. Spirit Island is reached through the optional Maligne Lake cruise; it is not a standard lakeshore viewpoint. Specific attractions and access depend on seasonal operation and official restrictions.
 
 ## Moraine Lake and Lake Louise shuttles
-Shuttles provide transportation and time for independent exploration. Pickup points serve Canmore, Banff and Lake Louise Village. Up to 14 guests travel on each shuttle departure. Seven departure options are offered during June and July, with five during August and September; the selected date’s operating calendar determines available departures.
-Lake visit durations, pickup and return times depend on the selected departure. Guests must follow their booked lake pickup times. A sunrise-labelled service cannot guarantee clear skies or visible sunrise.
+Shuttles provide transportation only (not a guided tour) with time for independent exploration. Listed pickup points only in Canmore, Banff and Lake Louise Village (Samson Mall) — no custom pickup addresses. Up to 14 guests travel on each shuttle departure (minimum 4 passengers required). Operating season is June 1–October 12 (departures 1–7 June 1–July 31; departures 2–6 August 1–October 12). Prices (CAD per person, same fare for adults, children and infants; every passenger requires a seat): departures 1–2 $135, departures 3–4 $120, departures 5–7 $108.
+Lake visit durations, pickup and return times follow the booked departure schedule. Guests must follow their booked schedule; switching departures or skipping a leg requires team approval. Access remains subject to road closures, Parks Canada restrictions and operating conditions. A sunrise-labelled departure cannot guarantee clear skies or visible sunrise.
 Booking: https://www.vistachase.com/shuttles
 
 ## Prices and booking details
@@ -265,20 +265,20 @@ Luggage: vans have rear luggage space, normally one checked bag and personal ite
 Cancellation: cancel at least 72 hours before the earliest booked service for an 80% refund; 20% of the total package price is non-refundable, regardless of instalments paid. An earlier arrival transfer starts the deadline; otherwise the first tour. Later cancellations and voluntarily unused services are non-refundable; Alberta time. Change requests don't extend the deadline. If Vista Chase cancels one tour day, the amount paid for that day (normally CAD $1,575) is refunded without the penalty; if Vista Chase cancels the whole package, the amount paid is refunded. Deposit: 20% at booking when every tour is 15+ days away, balance due 7 days before the first tour.
 
 ### Lake shuttle schedule and inclusions
-Both lakes and round-trip transportation are included, along with required Parks Canada entry/road permits, a local guide, bottled water and a hot drink. Lake visits are independent exploration, not a promise of an escorted hike. Meals and lake activities cost extra. Maximum capacity is 14 guests per shuttle departure.
-The following is the published departure-card schedule reviewed on 10 November 2026, for planning only. Actual date-specific booking and pickup confirmation control. All times use local Alberta time. Returns are approximate. Departures 1–7 are planned for June–July; departures 2–6 for August–September.
+Product name: Moraine Lake & Lake Louise Shuttle (one shuttle product across departures 1–7). This is a shuttle service, not a guided tour. Park admission and bottled water are included; meals and hot drinks are not included. Packed food is welcome for consumption during lake stops; eating onboard is not permitted (water is allowed). Maximum capacity is 14 guests per departure; minimum 4 passengers required (bookings within 7 days are protected from minimum-passenger cancellation; otherwise contacted 1+ week ahead for an alternative or full refund). If Parks Canada closes one lake while the shuttle operates, no refund applies for the missed lake; if Vista Chase cancels the entire departure, guests receive a full refund. Rescheduling requests require at least 24 hours' notice, subject to availability and confirmation. Be ready 10 minutes before departure; times are local Alberta time and visit/return times are approximate.
+Departures 1–7 operate June 1–July 31; departures 2–6 operate August 1–October 12. Fares (CAD per person, taxes/fees included; same fare for adults, children and infants): Dep 1–2 $135, Dep 3–4 $120, Dep 5–7 $108.
 
-| Departure | Canmore pickup | Banff pickup | Lake Louise Village / Samson Mall | Moraine Lake visit | Lake Louise visit | Banff return | Canmore return |
-|---|---|---|---|---|---|---|---|
-| 1 | 2:45 AM | 3:15 AM | 3:55 AM | 4:30–6:00 AM | 6:30–8:00 AM | 9:00 AM | 9:30 AM |
-| 2 | 3:45 AM | 4:15 AM | 4:55 AM | 5:30–7:00 AM | 7:30–9:30 AM | 10:30 AM | 11:00 AM |
-| 3 | 6:00 AM | 6:30 AM | 7:10 AM | 7:30–9:00 AM | 9:30 AM–12:00 PM | 1:00 PM | 1:30 PM |
-| 4 | 9:45 AM | 10:15 AM | 10:55 AM | 11:15 AM–12:45 PM | 1:15–2:45 PM | 3:45 PM | 4:15 PM |
-| 5 | 11:00 AM | 11:30 AM | 12:10 PM | 12:30–2:15 PM | 2:45–5:00 PM | 6:00 PM | 6:30 PM |
-| 6 | 1:30 PM | 2:00 PM | 2:40 PM | 3:00–4:30 PM | 5:00–7:30 PM | 8:30 PM | 9:00 PM |
-| 7 | 4:15 PM | 4:45 PM | 5:25 PM | 5:45–7:00 PM | 7:30–9:00 PM | 10:00 PM | 10:30 PM |
+| Departure | Canmore pickup | Banff pickup | Lake Louise Village / Samson Mall | Moraine Lake visit | Lake Louise visit | Samson Mall return (est.) | Banff return (est.) | Canmore return (est.) |
+|---|---|---|---|---|---|---|---|---|
+| 1 | 2:45 AM | 3:15 AM | 3:55 AM | 4:30–6:00 AM | 6:30–8:00 AM | 8:15 AM | 9:00 AM | 9:30 AM |
+| 2 | 3:45 AM | 4:15 AM | 4:55 AM | 5:30–7:00 AM | 7:30–9:30 AM | 9:45 AM | 10:30 AM | 11:00 AM |
+| 3 | 6:00 AM | 6:30 AM | 7:10 AM | 7:30–9:00 AM | 9:30 AM–12:00 PM | 12:15 PM | 1:00 PM | 1:30 PM |
+| 4 | 9:45 AM | 10:15 AM | 10:55 AM | 11:15 AM–12:45 PM | 1:15–2:45 PM | 3:00 PM | 3:45 PM | 4:15 PM |
+| 5 | 11:00 AM | 11:30 AM | 12:10 PM | 12:30–2:15 PM | 2:45–5:00 PM | 5:15 PM | 6:00 PM | 6:30 PM |
+| 6 | 1:30 PM | 2:00 PM | 2:40 PM | 3:00–4:30 PM | 5:00–7:30 PM | 7:45 PM | 8:30 PM | 9:00 PM |
+| 7 | 4:15 PM | 4:45 PM | 5:25 PM | 5:45–7:00 PM | 7:30–9:00 PM | 9:15 PM | 10:00 PM | 10:30 PM |
 
-Lake Louise Village return timing needs confirmation for the chosen departure. A Samson Mall pickup does not establish permission to park there. An early-morning departure is not a guarantee of sunrise arrival or clear views; verify the chosen date and service.
+Samson Mall pickup notice: parking is not provided in village public parking, day-use areas or Samson Mall customer parking. Guests staying in Banff or Canmore should board there. If you miss the shuttle at a lake, contact your driver or Vista Chase support immediately; later transportation depends on availability and is not guaranteed. An early-morning departure is not a guarantee of sunrise visibility or clear views.
 
 ### Preparing for pickup and sightseeing
 Be at the confirmed pickup point 10 minutes early. Use https://www.vistachase.com/pickup-finder to locate the supported hotel meeting point; exact hotel boarding instructions must be confirmed for the booked service. Do not assume a hotel listed for one product supports every product.

@@ -790,16 +790,28 @@ const CORRECTIONS: Record<string, Correction> = {
     ],
     faqs: [{ match: /pay in full when i book/i, answer: PAYMENT_ANSWER }],
   },
-  // The shuttle timetable (lib/shuttleSchedule.ts, owner's doc) runs June–September, with sunrise
-  // pickups from 2:45 AM (Canmore) to 4:55 AM (Samson Mall).
+  // The shuttle timetable (lib/shuttleSchedule.ts, owner's doc) runs June 1–October 12 (dep 1–7 through July 31; dep 2–6 Aug 1–Oct 12),
+  // with pickups starting 2:45 AM (Canmore) / 3:15 AM (Banff) / 3:55 AM (Samson Mall).
   "sunrise-shuttle-to-moraine-lake-and-lake-louise": {
     text: [
-      ["Operating from May to mid-October", "Operating from June to September"],
-      ["operates from May to mid-October", "operates from June to September"],
-      ["Operates June 1 – October 1 only.", "Operates June 1 – September 30 only."],
-      ['"June–October"', '"June–September"'],
+      ["Operating from May to mid-October", "Operating June 1 to October 12"],
+      ["operates from May to mid-October", "operates June 1 to October 12"],
+      ["Operates June 1 – October 1 only.", "Operates June 1 – October 12 only."],
+      ['"June–October"', '"June 1–October 12"'],
+      ['"June–September"', '"June 1–October 12"'],
       ['"4:00 - 6:00 AM"', '"2:45 - 4:55 AM"'],
       ['"Stop 2 (1 hr)"', '"Stop 2 (1.5–2 hr)"'],
+      ["A professional local guide", "Parks Canada admission fees"],
+      ["Bottled water and a hot drink", "Bottled water onboard"],
+      ["Guaranteed Moraine Lake", "Arranged Moraine Lake"],
+    ],
+  },
+  "full-day-at-lake-louise-and-moraine-lake": {
+    text: [
+      ["June–September", "June 1–October 12"],
+      ["A professional local guide", "Parks Canada admission fees"],
+      ["Bottled water and a hot drink", "Bottled water onboard"],
+      ["Guaranteed Moraine Lake", "Arranged Moraine Lake"],
     ],
   },
 };

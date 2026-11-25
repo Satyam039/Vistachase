@@ -56,7 +56,7 @@ const CATEGORY = {
   SHARED: { label: "Shared tours", href: "/shared-tours", sub: "Small-group tours" },
   PRIVATE: { label: "Private tours", href: "/private-tours", sub: "Private, up to 13 guests" },
   MULTIDAY: { label: "Multi-Day Journeys", href: "/search?category=MULTIDAY" },
-  SHUTTLE: { label: "Lake shuttles", href: "/shuttles", sub: "Guaranteed lake access · hotel pickup" },
+  SHUTTLE: { label: "Lake shuttles", href: "/shuttles", sub: "Seasonal lake access · listed pickups" },
   TICKET: { label: "Activity tickets", href: "/banff-activity-tickets", sub: "Timed around your tour" },
 } as const;
 

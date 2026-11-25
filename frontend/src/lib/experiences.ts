@@ -192,22 +192,23 @@ export function buildExperienceTabs(tours: TourWithAvailability[]): ExperienceTa
   const shuttles: ExperienceCard[] = SHUTTLE_DEPARTURES.map((d, i) => {
     const product = bySlug(d.number <= 2 ? SUNRISE_SHUTTLE : DAY_SHUTTLE);
     const time = d.pickup.banff ?? "";
+    const fallbackCad = d.number <= 2 ? 135 : d.number <= 4 ? 120 : 108;
     return linkCard(
       "SHUTTLE",
       {
         key: `shuttle-${d.number}`,
         href: "/shuttles#departures",
         image: SHUTTLE_PHOTOS[i % SHUTTLE_PHOTOS.length],
-        badge: d.number <= 2 ? "Sunrise shuttle" : "Day shuttle",
-        eyebrow: "Moraine Lake & Lake Louise",
-        title: `DEPARTURE ${d.number}: ${d.name.toUpperCase()} – SHUTTLE`,
+        badge: "Lake shuttle",
+        eyebrow: "Moraine Lake & Lake Louise Shuttle",
+        title: `DEPARTURE ${d.number}: ${d.name.toUpperCase()}`,
         facts: [
           { icon: Clock, text: `Banff ${clock(d.pickup.banff!)} · Canmore ${clock(d.pickup.canmore!)}` },
-          { icon: CalendarDays, text: LATE_SEASON_DEPARTURES.includes(d.number) ? "June–September" : "June–July" },
+          { icon: CalendarDays, text: LATE_SEASON_DEPARTURES.includes(d.number) ? "June 1–October 12" : "June 1–July 31" },
         ],
-        note: `Moraine Lake ${clockRange(d.moraine)} · Lake Louise ${clockRange(d.louise)}`,
-        price: price(d.number <= 2 ? SUNRISE_SHUTTLE : DAY_SHUTTLE),
-        unit: "per guest",
+        note: `Moraine ${clockRange(d.moraine)} · Louise ${clockRange(d.louise)} · Est. Samson Mall return ${clock(d.returnSamson)}`,
+        price: price(d.number <= 2 ? SUNRISE_SHUTTLE : DAY_SHUTTLE) ?? fallbackCad,
+        unit: "per person (all ages)",
         noPrice: "Price on request",
       },
       // This departure's own time on the date (or on any date).

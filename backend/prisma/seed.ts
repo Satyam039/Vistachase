@@ -232,11 +232,11 @@ async function main() {
   const routeSunrise = await prisma.shuttleRoute.create({
     data: {
       slug: "moraine-lake-sunrise-shuttle",
-      name: "Moraine Lake Sunrise Shuttle",
-      origin: "Banff / Canmore",
-      destination: "Moraine Lake & Rockpile",
-      description: "Guaranteed sunrise departure arriving before first light. Witness the iconic pink and golden alpine glow reflecting off the Ten Peaks with hot coffee and cocoa.",
-      notes: "Private vehicle road is closed by Parks Canada. Guaranteed commercial access.",
+      name: "Moraine Lake & Lake Louise Shuttle",
+      origin: "Banff / Canmore / Samson Mall",
+      destination: "Moraine Lake & Lake Louise",
+      description: "Early-morning shuttle departure to Moraine Lake and Lake Louise with bottled water and park admission included.",
+      notes: "Private vehicle road is closed by Parks Canada. Access subject to road closures and operating conditions.",
     },
   });
 

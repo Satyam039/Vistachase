@@ -27,6 +27,7 @@ import { bookingIcs, googleCalendarLink, icsLink } from "@/modules/bookings/cale
 import { resolveShuttlePickupTime } from "@/modules/shuttles/shuttle-timing";
 import { bookingItinerary, experienceTitle, type ItineraryResult } from "@/modules/bookings/tour-itinerary";
 import { sendStaffBookingNotice } from "@/modules/bookings/staff-booking-notice";
+import { clockRange, shuttleDepartureForTime } from "@site/shuttleSchedule";
 
 export const ADMIN_NOTIFICATION_RECIPIENTS = {
   to: "support@vistachase.com",
@@ -74,6 +75,11 @@ function dayLines(b: TripBooking) {
   );
   const title = experienceTitle(d);
   const time = clock(formatTimeOfDay(d.departureTime));
+  const shuttleDep = isShuttle ? shuttleDepartureForTime(formatTimeOfDay(d.departureTime)) : undefined;
+  const departureLabel = shuttleDep ? `Departure ${shuttleDep.number} · ${time}` : time;
+  const shuttleSummary = shuttleDep
+    ? `Moraine Lake ${clockRange(shuttleDep.moraine)} · Lake Louise ${clockRange(shuttleDep.louise)} · Est. return: Samson Mall ${clock(shuttleDep.returnSamson)}, Banff ${clock(shuttleDep.returnBanff)}, Canmore ${clock(shuttleDep.returnCanmore)}`
+    : null;
   const place = b.pickupStop?.name || b.pickupCustomText;
   const pickupTime = resolveShuttlePickupTime({
     departureTime: formatTimeOfDay(d.departureTime),
@@ -83,7 +89,7 @@ function dayLines(b: TripBooking) {
     storedPickupTime: b.pickupTime,
     isShuttle,
   });
-  const pickup = pickupTime ? `${clock(pickupTime)}${place ? ` at ${place}` : ""}` : (place ?? "Pickup details to follow by email");
+  const pickup = pickupTime ? `${clock(pickupTime)} MT${place ? ` at ${place}` : ""}` : (place ?? "Pickup details to follow by email");
   // Only the tours whose published content says so (frontend lib/tourContent.ts): the shared
   // Icefield tour includes Ice Explorer + Skywalk in summer (on private tours they are an extra), and
   // the Banff & Yoho tours include Moraine Lake access in summer. Any other slug gets no line.
@@ -96,7 +102,7 @@ function dayLines(b: TripBooking) {
       ? (inSummerDate(d.date) ? "Includes seasonal Moraine Lake transportation" : "Winter itinerary with alternative stops")
       : null;
   // The website's current itinerary for exactly this booking (tour-itinerary.ts).
-  return { title, date: longDate(d.date), time, pickup, seasonal, itinerary: bookingItinerary(b) };
+  return { title, date: longDate(d.date), time, departureLabel, shuttleSummary, pickup, seasonal, itinerary: bookingItinerary(b) };
 }
 
 export const MISSING_ITINERARY_FLAG = "Itinerary missing";
@@ -185,13 +191,17 @@ export async function sendConfirmationEmail(reference: string, options: { force?
           <tr><td style="padding: 12px 0; border-top: 1px solid #e1e1db;">
             <p style="margin: 0; color: #257780; font-size: 13px; font-weight: bold;">${multi ? `Day ${d.day} · ` : ""}${escapeHtml(d.date)}</p>
             <p style="margin: 4px 0 0; font-weight: bold;">${escapeHtml(d.title)}</p>
-            <p style="margin: 4px 0 0; color: #5d6168; font-size: 14px;">${d.time ? `Departs ${d.time} · ` : ""}Pickup: ${escapeHtml(d.pickup)}</p>
+            <p style="margin: 4px 0 0; color: #5d6168; font-size: 14px;">${d.departureLabel ? `Departs ${escapeHtml(d.departureLabel)} · ` : ""}Pickup: ${escapeHtml(d.pickup)}</p>
+            ${d.shuttleSummary ? `<p style="margin: 4px 0 0; color: #3f4650; font-size: 13px;">${escapeHtml(d.shuttleSummary)}</p>` : ""}
             ${d.seasonal ? `<p style="margin: 4px 0 0; color: #b45309; font-size: 13px; font-weight: 500;">${escapeHtml(d.seasonal)}</p>` : ""}
             ${itineraryHtml(d.itinerary)}
             <p style="margin: 8px 0 0; font-size: 14px;"><a href="${d.link}" style="color: #257780;">${multi ? `Day ${d.day} voucher (${d.reference})` : "Open your voucher"}</a>${multi ? ` · <a href="${escapeHtml(d.google)}" style="color: #257780;">Add day ${d.day} to Google Calendar</a>` : ""}</p>
           </td></tr>`,
       )
       .join("");
+    const requestStatus = lead.specialRequests?.trim()
+      ? `${lead.specialRequests.trim()} (requires advance confirmation by our team)`
+      : "None requested (complimentary child seats/boosters require advance confirmation)";
     const balance = total - paid;
     const totalFare = live.reduce((n, b) => n + (((b.priceSnapshot as { fareCents?: number })?.fareCents) ?? b.totalAmount), 0);
     const totalDiscount = live.reduce((n, b) => n + (((b.priceSnapshot as { discountCents?: number })?.discountCents) ?? 0), 0);
@@ -223,13 +233,15 @@ export async function sendConfirmationEmail(reference: string, options: { force?
       `Your Vista Chase booking ${tripReference} is confirmed.`,
       `${multi ? "Trip" : "Experience"}: ${title}${multi ? ` (${live.length} days)` : ""}`,
       `Guests: ${lead.totalSeats}`,
+      `Free cancellation deadline (Alberta local time): ${deadlineLabel}`,
+      `Child seat & special requests: ${requestStatus}`,
       ...(transfer ? [`Airport transfer: ${transfer}`] : []),
       ...(activities ? [`Add-on activities: ${activities}`] : []),
       ...(multi && totalDiscount > 0 ? [`Price breakdown: Regular subtotal ${money(totalFare, currency)}, 10% package savings -${money(totalDiscount, currency)}, Total ${money(total, currency)} (taxes, park admission and mandatory fees included).`] : []),
       `Total ${money(total, currency)}, paid ${money(paid, currency)}${balance > 0 ? `, balance due ${money(balance, currency)}${dueBy}` : ""}.`,
       "",
       ...days.flatMap((d) => [
-        `${multi ? `Day ${d.day}: ` : ""}${d.date}, ${d.title}${d.time ? `, departs ${d.time}` : ""}. Pickup: ${d.pickup}.${d.seasonal ? ` (${d.seasonal})` : ""} Voucher: ${d.link}`,
+        `${multi ? `Day ${d.day}: ` : ""}${d.date}, ${d.title}${d.departureLabel ? `, ${d.departureLabel}` : ""}. Pickup: ${d.pickup}.${d.shuttleSummary ? ` Schedule: ${d.shuttleSummary}.` : ""}${d.seasonal ? ` (${d.seasonal})` : ""} Voucher: ${d.link}`,
         ...itineraryText(d.itinerary),
       ]),
       "",
@@ -245,6 +257,8 @@ export async function sendConfirmationEmail(reference: string, options: { force?
           <tr><td style="padding:4px 0;width:140px;color:#6b7280;">Booking reference:</td><td style="padding:4px 0;font-weight:600;color:#14363a;">${escapeHtml(tripReference)}</td></tr>
           <tr><td style="padding:4px 0;color:#6b7280;">${multi ? "Trip" : "Experience"}:</td><td style="padding:4px 0;font-weight:600;">${escapeHtml(title)}${multi ? ` (${live.length} days)` : ""}</td></tr>
           <tr><td style="padding:4px 0;color:#6b7280;">Guests:</td><td style="padding:4px 0;">${lead.totalSeats}</td></tr>
+          <tr><td style="padding:4px 0;color:#6b7280;">Cancellation deadline:</td><td style="padding:4px 0;">${escapeHtml(deadlineLabel)}</td></tr>
+          <tr><td style="padding:4px 0;color:#6b7280;vertical-align:top;">Child seat &amp; requests:</td><td style="padding:4px 0;">${escapeHtml(requestStatus)}</td></tr>
           ${transfer ? `<tr><td style="padding:4px 0;color:#6b7280;vertical-align:top;">Airport transfer:</td><td style="padding:4px 0;">${escapeHtml(transfer)}</td></tr>` : ""}
           ${activities ? `<tr><td style="padding:4px 0;color:#6b7280;vertical-align:top;">Add-on activities:</td><td style="padding:4px 0;">${escapeHtml(activities)}</td></tr>` : ""}
           ${multi && totalDiscount > 0 ? `<tr><td style="padding:4px 0;color:#6b7280;vertical-align:top;">Price breakdown:</td><td style="padding:4px 0;">Regular subtotal: ${money(totalFare, currency)}<br />10% package savings: -${money(totalDiscount, currency)}<br /><strong>Total: ${money(total, currency)}</strong> (Taxes and mandatory fees included)</td></tr>` : ""}
@@ -259,7 +273,7 @@ export async function sendConfirmationEmail(reference: string, options: { force?
           <a href="${escapeHtml(days[0].google)}" style="display:inline-block;border:1px solid #257780;color:#257780;text-decoration:none;padding:8px 14px;font-size:12px;font-weight:600;border-radius:6px;margin:0 4px 6px;">Google Calendar${multi ? " (Day 1)" : ""}</a>
         </p>
       </div>
-      <p style="margin:16px 0 4px;font-size:13px;color:#4b5563;text-align:center;">Be at your pickup point 10 minutes early and show your voucher to your guide, printed or on your phone.</p>
+      <p style="margin:16px 0 4px;font-size:13px;color:#4b5563;text-align:center;">Be at your pickup point 10 minutes early and show your voucher to your driver or guide, printed or on your phone.</p>
       <p style="margin:4px 0 0;font-size:12px;color:#6b7280;text-align:center;">${escapeHtml(policy)}</p>
     `;
 

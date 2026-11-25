@@ -214,6 +214,7 @@ export interface BookingDetail {
   trackingToken?: string | null;
   pickupCustomText: string | null;
   pickupTime?: string | null;
+  specialRequests?: string | null;
   adultsCount?: number;
   childrenCount?: number;
   infantsCount?: number;

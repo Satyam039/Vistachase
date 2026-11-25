@@ -370,7 +370,7 @@ export function SiteFooter() {
       {/* 5. Bottom bar */}
       <div className="mx-auto flex max-w-7xl flex-col gap-4 px-page pb-[calc(6.5rem+var(--vc-bottom-bar-h,0px))] pt-6 lg:flex-row lg:items-center lg:justify-between">
         <p className="text-sm text-white/65">
-          © {year} Vista Chase Tours Ltd. · 121 Bow Meadows Crescent #110, Canmore, AB · Prices in CAD
+          © {year} Vista Chase Tours Ltd. · Prices in CAD
         </p>
         <div className="flex flex-col items-end gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-x-6 sm:gap-y-3">
           <ul className="flex flex-wrap items-center justify-end gap-x-5 gap-y-2 text-sm">

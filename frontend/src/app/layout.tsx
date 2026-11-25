@@ -18,7 +18,7 @@ import { BUSINESS_ADDRESS, BUSINESS_TELEPHONE, DEFAULT_SHARE_IMAGE, ORGANIZATION
 export const metadata: Metadata = {
   title: "Vista Chase | Luxury Private Tours & Shuttles in Banff & Rockies",
   description:
-    "Banff's premier tour operator. TripAdvisor #6 Best Experience in Canada. Guaranteed shuttles to Moraine Lake & Lake Louise, luxury private SUV tours & multi-day packages.",
+    "Banff's premier tour operator. TripAdvisor #6 Best Experience in Canada. Moraine Lake & Lake Louise shuttles, luxury private SUV tours & multi-day packages.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://www.vistachase.com"),
   // Browser icons: the gold horse emblem, served by the backend (backend/media/brand).
   icons: {
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
   // own, telling Google those pages are copies of the homepage. Each page sets its own.
   openGraph: {
     title: "Vista Chase | Banff & Canadian Rockies Tours & Shuttles",
-    description: "Guaranteed access to Moraine Lake & Lake Louise, luxury private tours, and Canadian Rockies adventures.",
+    description: "Shuttle and tour access to Moraine Lake & Lake Louise (subject to operating conditions), luxury private tours, and Canadian Rockies adventures.",
     url: "https://www.vistachase.com",
     siteName: "Vista Chase",
     type: "website",
@@ -45,7 +45,7 @@ const jsonLd = {
   "@type": "TouristInformationCenter",
   "@id": ORGANIZATION_ID,
   "name": "Vista Chase",
-  "description": "Explore Banff, Moraine Lake & Lake Louise with Vista Chase. Luxury private tours, small groups & guaranteed shuttles.",
+  "description": "Explore Banff, Moraine Lake & Lake Louise with Vista Chase. Luxury private tours, small groups & scheduled lake shuttles.",
   "url": "https://www.vistachase.com",
   "telephone": BUSINESS_TELEPHONE,
   "priceRange": "$$",
