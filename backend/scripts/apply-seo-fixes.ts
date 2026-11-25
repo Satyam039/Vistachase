@@ -24,6 +24,9 @@
 //    with the built-in target, and the page row this script published again is archived again.
 //    Redirects this script saved that point at a retired address are pointed at its new target, so
 //    nothing redirects twice. Redirects or page rows staff changed themselves stay.
+// 5c. Changed targets: a redirect this script saved whose built-in target has since changed (owner
+//    2026-11-25: winter tours to the shared Icefield tour, shuttle pages to a departure on /shuttles)
+//    is pointed at the new target, unless staff edited it themselves.
 // 6. Blog post text (prisma/catalog/blog-fixes-2026-11.json, owner 13 Nov 2026): exact sentence swaps
 //    that replace retired tour names, old prices and old group sizes in 20 imported posts. A fix only
 //    replaces its own old text, so passages staff have rewritten in the SEO portal are left alone.
@@ -158,6 +161,35 @@ async function retiredAgain() {
     repointed++;
   }
   console.log(`Retired again: ${redirectsToSwitchOn.length} redirects switched on, ${pagesToArchive.length} page rows archived, ${repointed} redirects re-pointed.`);
+}
+
+async function changedTargets() {
+  const rows = await prisma.seoRedirect.findMany({
+    where: { active: true, source: "IMPORT", note: SCRIPT_REDIRECT_NOTE, fromPath: { in: Object.keys(BUILT_IN_REDIRECTS) } },
+    select: { id: true, fromPath: true, toPath: true },
+  });
+  const stale = rows.filter((r) => BUILT_IN_REDIRECTS[r.fromPath] !== r.toPath);
+  if (!stale.length) return;
+  const edits = await prisma.auditLog.findMany({
+    where: { entityType: "SeoRedirect", entityId: { in: stale.map((r) => r.id) }, action: "SEO_REDIRECT_UPDATED" },
+    select: { entityId: true, details: true },
+  });
+  const staffEdited = new Set(edits.filter((e) => (e.details as { script?: string } | null)?.script !== "apply-seo-fixes").map((e) => e.entityId));
+  let changed = 0;
+  for (const r of stale) {
+    if (staffEdited.has(r.id)) continue;
+    const toPath = BUILT_IN_REDIRECTS[r.fromPath];
+    if (dryRun) {
+      console.log(`  would point ${r.fromPath} at ${toPath} instead of ${r.toPath}`);
+      continue;
+    }
+    await prisma.$transaction(async (tx) => {
+      await tx.seoRedirect.update({ where: { id: r.id }, data: { toPath } });
+      await tx.auditLog.create({ data: { action: "SEO_REDIRECT_UPDATED", entityType: "SeoRedirect", entityId: r.id, details: { fromPath: r.fromPath, toPath, previousToPath: r.toPath, reason: "Built-in target changed (owner, 2026-11-25)", script: "apply-seo-fixes" } } });
+    });
+    changed++;
+  }
+  console.log(`Changed targets: ${changed} redirects re-pointed.`);
 }
 
 async function redirects() {
@@ -307,6 +339,7 @@ async function blogTextFixes() {
 async function main() {
   await restoredTours();
   await retiredAgain();
+  await changedTargets();
   await redirects();
   await metaFixes("seoTitle", fixes.titles);
   await metaFixes("metaDescription", fixes.descriptions);

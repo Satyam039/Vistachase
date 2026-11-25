@@ -133,7 +133,10 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
   const redirect = await findRedirect(request.nextUrl.pathname, event);
   if (redirect && redirect[0].startsWith("/") && !redirect[0].startsWith("//")) {
     const target = request.nextUrl.clone();
-    target.pathname = redirect[0]; // the query string (utm, ref) is kept
+    // The query string (utm, ref) is kept; a #fragment in the target (a departure on /shuttles) is set as the hash.
+    const [pathname, hash] = redirect[0].split("#", 2);
+    target.pathname = pathname;
+    if (hash) target.hash = hash;
     return NextResponse.redirect(target, redirect[1]);
   }
 

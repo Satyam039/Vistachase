@@ -5,7 +5,7 @@
 // five in August–September) so guests can compare time at each lake. A card books online when a
 // live departure exists for that date and pickup time; otherwise it opens a prefilled request.
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, CalendarDays, Clock, MapPin, Users } from "lucide-react";
 import {
@@ -47,6 +47,12 @@ export function ShuttleDayPlanner({ today, live, fromPrice }: { today: string; l
   const [chosen, setChosen] = useState<number | null>(null);
 
   const departures = useMemo(() => departuresFor(date), [date]);
+  // A link to one departure (/shuttles#shuttle-departure-3, where the old shuttle product pages
+  // redirect) selects that card.
+  useEffect(() => {
+    const n = Number(/^#shuttle-departure-(\d)$/.exec(window.location.hash)?.[1]);
+    if (n) setChosen(n);
+  }, []);
   const pickupLabel = SHUTTLE_PICKUPS.find((p) => p.id === pickup)!.short;
 
   const liveFor = (d: ShuttleDeparture) => {
