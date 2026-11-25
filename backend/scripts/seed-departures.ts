@@ -301,14 +301,14 @@ const cleanupDates = (days: CleanupDays = {}) => ({
 });
 
 /**
- * Takes today's and future dates of tours taken off the website (REMOVED_TOUR_SLUGS) off sale,
- * unless one of our bookings or an active hold is on it. Those few are listed so staff can move
- * or look after the guest.
+ * Takes today's and future dates of tours taken off the website (REMOVED_TOUR_SLUGS) off sale.
+ * A date one of our bookings or an active hold is on stays for that guest, but its free seats are
+ * closed (seats = booked + held), so nothing more can be sold; those dates are listed for staff.
  */
 export async function retireRemovedTourDepartures(days: CleanupDays = {}) {
   const deps = await prisma.tourDeparture.findMany({
     where: { tour: { slug: { in: REMOVED_TOUR_SLUGS } }, date: cleanupDates(days), status: { not: "CANCELLED" } },
-    select: { id: true, date: true, departureTime: true, tour: { select: { slug: true } } },
+    select: { id: true, date: true, departureTime: true, capacityTotal: true, capacityBooked: true, capacityHeld: true, tour: { select: { slug: true } } },
   });
   let cancelled = 0;
   const kept: string[] = [];
@@ -319,6 +319,8 @@ export async function retireRemovedTourDepartures(days: CleanupDays = {}) {
     ]);
     if (booked > 0 || held > 0) {
       kept.push(`${d.tour?.slug} ${formatDateOnly(d.date)} ${formatTimeOfDay(d.departureTime)}`);
+      const taken = d.capacityBooked + d.capacityHeld;
+      if (d.capacityTotal > taken) await prisma.tourDeparture.update({ where: { id: d.id }, data: { capacityTotal: taken } });
       continue;
     }
     await prisma.tourDeparture.update({ where: { id: d.id }, data: { status: "CANCELLED" } });
