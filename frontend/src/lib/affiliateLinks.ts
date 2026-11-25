@@ -10,6 +10,7 @@
 import { docTitleAndSummary } from "@/lib/tourContent";
 import { TWO_DAY_PACKAGE } from "@/lib/sharedTours";
 import { PRIVATE_PACKAGES } from "@/lib/privateTours";
+import { tourPagePath } from "@/lib/retiredTours";
 
 export interface ReferralPage {
   path: string;
@@ -81,7 +82,7 @@ export function tourGroups(tours: ReferralTour[]): ReferralGroup[] {
   const by: Record<string, ReferralPage[]> = { SHARED: [], PRIVATE: [], MULTIDAY: [...PACKAGE_PAGES], SHUTTLE: [] };
   const seen = new Set(PACKAGE_PAGES.map((p) => p.path));
   for (const t of tours) {
-    const path = `/${t.slug}`;
+    const path = tourPagePath(t.slug);
     if (!(t.category in by) || seen.has(path)) continue;
     seen.add(path);
     by[t.category].push({ path, title: docTitleAndSummary(t.slug)?.title ?? t.title, image: t.featuredImage });

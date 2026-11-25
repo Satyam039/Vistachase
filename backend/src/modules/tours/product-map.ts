@@ -52,18 +52,24 @@ export const PRODUCT_MAP = (productMap.products as MappedProduct[]).map((p) => {
  * products in backend"; "We should only have 3 shared tours"). Off sale like the tickets above;
  * their old URLs send visitors to the closest offered page (frontend lib/retiredTours.ts).
  */
+/** The winter tours: back on 2026-11-11, off the website again from 2026-11-25 (owner). */
+export const WINTER_TOUR_SLUGS = ["winter-special", "winter-signature-private-tour"];
 export const RETIRED_TOUR_SLUGS = [
   "shared-tours-heart-of-banff",
   "shared-tours-banff-yoho",
   "banff-yoho-custom-private-tour",
   "jasper-custom-private-tour",
+  // Owner, 2026-11-25: "remove these urls from live website fully, from dashboard too", and from the
+  // concierge. Brought back on 2026-11-11, retired again; apply-seo-fixes.ts switches their old
+  // redirects back on (retiredAgain).
+  ...WINTER_TOUR_SLUGS,
 ];
 /**
- * Tours brought back after being retired (owner, 2026-11-11: the winter tours "were live before",
- * bookable again December to April). Their old redirects are switched off on deploy
- * (scripts/apply-seo-fixes.ts) and their archived SEO page rows restored.
+ * Tours brought back after being retired. Their old redirects are switched off on deploy
+ * (scripts/apply-seo-fixes.ts) and their archived SEO page rows restored. Empty since the winter
+ * tours (restored 2026-11-11) were retired again on 2026-11-25.
  */
-export const RESTORED_TOUR_SLUGS = ["winter-special", "winter-signature-private-tour"];
+export const RESTORED_TOUR_SLUGS: string[] = [];
 export const REMOVED_TOUR_SLUGS = ["banff-upper-hot-springs-tickets", "open-top-touring-tickets", ...RETIRED_TOUR_SLUGS];
 export const ON_SALE = { slug: { notIn: REMOVED_TOUR_SLUGS } };
 /**

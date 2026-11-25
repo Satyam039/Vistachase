@@ -11,6 +11,7 @@ import { PriceTag } from "@/components/pricing/PriceTag";
 import { SectionHeading } from "@/components/home/SectionHeading";
 import { durationLabel, fromPrice, pickupLabel, priceUnitLabel } from "@/lib/tours";
 import type { TourWithAvailability } from "@/lib/api/types";
+import { tourPagePath } from "@/lib/retiredTours";
 
 export interface SignaturePick {
   slug: string;
@@ -120,7 +121,7 @@ export function SignatureDays({
                   <div className="mt-3 flex items-end justify-between gap-3 border-t border-white/[0.08] pt-3">
                     <PriceTag price={fromPrice(tour)} currency={tour.currency} unit={priceUnitLabel(tour)} size="sm" tone="dark" layout="inline" />
                     <Link
-                      href={`/${tour.slug}`}
+                      href={tourPagePath(tour.slug)}
                       className="golden-summit-btn inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full px-4 text-xs uppercase tracking-[0.12em]"
                       aria-label={`View ${tour.title}`}
                     >

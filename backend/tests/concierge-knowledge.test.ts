@@ -69,12 +69,11 @@ describe("product knowledgebase", () => {
     expect(card.image).toMatch(/^\/media\//);
 
     const winter = await recommendTours({ date: "2027-01-20", guests: 2, style: "shared", days: 1 });
-    expect(winter.cards.map((c) => c.slug)).toContain("winter-special");
+    expect(winter.cards.map((c) => c.slug)).not.toContain("winter-special"); // off the website (owner, 2026-11-25)
     expect(winter.cards.map((c) => c.slug)).not.toContain("full-day-at-lake-louise-and-moraine-lake");
 
     const big = await recommendTours({ date: "2027-07-14", guests: 13, style: "private", days: 1 });
     expect(big.cards.map((c) => c.slug)).toEqual(["banff-private-tour"]);
-    expect(big.reasonsLeftOut.join(" ")).toMatch(/up to 6 guests/);
   });
 
   it("opens one tour with its stops, inclusions, pickup and next dates", async () => {

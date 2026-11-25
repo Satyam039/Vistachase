@@ -169,7 +169,11 @@ describe("booking itinerary = the website's itinerary for exactly what was booke
     expect(winterEmail!.text).not.toContain("Our team will confirm your detailed itinerary");
 
     // A product with no itinerary for the date: no made-up route; the guest is told, staff get a flag.
-    const dep = await departure("winter-special", "2028-01-18");
+    // The winter tours are off the website (2026-11-25), so a copy of one stands in for "a product
+    // with no itinerary" here.
+    const { id: _id, slug: _slug, ...winter } = await prisma.tour.findUniqueOrThrow({ where: { slug: "winter-special" } });
+    await prisma.tour.upsert({ where: { slug: "no-itinerary-test-tour" }, update: {}, create: { ...(winter as any), slug: "no-itinerary-test-tour", bokunId: null } });
+    const dep = await departure("no-itinerary-test-tour", "2028-01-18");
     const { booking } = await createBooking(guest("itin.winter@example.com", dep.id, { pickupCustomText: "Moxy Banff" }));
     const email = confirmationFor("itin.winter@example.com");
     expect(email!.text).toContain("Our team will confirm your detailed itinerary");

@@ -1,6 +1,7 @@
 import { startTimeError } from "@/modules/departures/schedule-rules";
 import crypto from "node:crypto";
 import prisma from "@/lib/db/prisma";
+import { REMOVED_TOUR_SLUGS } from "@/modules/tours/product-map";
 import { getCacheProvider } from "@/lib/cache/cache.provider";
 import { isVehicleDeparture, partySizeError, seatsToReserve } from "@/modules/pricing/departure-pricing";
 import { formatDateOnly, formatTimeOfDay } from "@/lib/utils/time";
@@ -55,6 +56,11 @@ export async function createReservationHold(input: CreateHoldInput): Promise<Hol
 
     if (departure.status !== "ACTIVE") {
       return { success: false, error: "Departure is not active for booking" };
+    }
+
+    // A tour taken off the website (REMOVED_TOUR_SLUGS) keeps its booked dates, but sells no more seats.
+    if (departure.tour && REMOVED_TOUR_SLUGS.includes(departure.tour.slug)) {
+      return { success: false, error: "This tour is no longer offered." };
     }
 
     if (departure.tour?.bookingMode === "ENQUIRY") {

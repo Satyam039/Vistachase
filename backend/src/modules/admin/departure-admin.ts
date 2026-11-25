@@ -5,6 +5,7 @@
 
 import type { DepartureStatus } from "@prisma/client";
 import prisma from "@/lib/db/prisma";
+import { ON_SALE } from "@/modules/tours/product-map";
 import { dateOnly, formatDateOnly, formatTimeOfDay, timeOfDay, todayInMountainTime } from "@/lib/utils/time";
 
 const ACTIVE_BOOKING = ["PENDING_PAYMENT", "CONFIRMED", "PAID_UNSYNCED"] as const;
@@ -60,10 +61,10 @@ export async function listDepartures(filter: { tourSlug?: string; routeSlug?: st
   };
 }
 
-/** What staff can sell departures of: bookable tours and shuttle routes. */
+/** What staff can sell departures of: bookable tours (not ones taken off the website) and shuttle routes. */
 export async function departureProducts() {
   const [tours, routes] = await Promise.all([
-    prisma.tour.findMany({ orderBy: { title: "asc" }, select: { slug: true, title: true, category: true, bookingMode: true, currency: true } }),
+    prisma.tour.findMany({ where: ON_SALE, orderBy: { title: "asc" }, select: { slug: true, title: true, category: true, bookingMode: true, currency: true } }),
     prisma.shuttleRoute.findMany({ orderBy: { name: "asc" }, select: { slug: true, name: true } }),
   ]);
   return { tours, routes };

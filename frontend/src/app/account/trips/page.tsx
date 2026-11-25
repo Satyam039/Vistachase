@@ -20,6 +20,7 @@ import {
   RefreshCw,
   Settings,
 } from "lucide-react";
+import { tourPagePath } from "@/lib/retiredTours";
 
 interface TripBooking {
   id: string;
@@ -419,7 +420,7 @@ export default function MyTripsPage() {
                         </div>
                         <h3 className="text-xl leading-snug text-obsidian-900 sm:text-2xl sm:font-light">
                           {b.tourDeparture.tour?.slug ? (
-                            <Link href={`/${b.tourDeparture.tour.slug}`} className="hover:text-ocean-700">
+                            <Link href={tourPagePath(b.tourDeparture.tour.slug)} className="hover:text-ocean-700">
                               {title}
                             </Link>
                           ) : (

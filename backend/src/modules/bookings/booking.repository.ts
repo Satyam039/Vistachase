@@ -17,6 +17,7 @@ import crypto from "node:crypto";
 import QRCode from "qrcode";
 import { Prisma, type Booking, type Payment } from "@prisma/client";
 import prisma from "@/lib/db/prisma";
+import { REMOVED_TOUR_SLUGS } from "@/modules/tours/product-map";
 import { knownCountry } from "@/lib/utils/phone-country";
 import { formatDateOnly, formatTimeOfDay, getMountainTimeInstant } from "@/lib/utils/time";
 import { bookingClosedError } from "@/modules/departures/booking-window";
@@ -260,6 +261,8 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
         include: { tour: true, shuttleRoute: true },
       });
       if (!departure || departure.status !== "ACTIVE") throw new BookingRefused("Departure not found");
+      // A tour taken off the website keeps its booked dates, but sells no more seats.
+      if (departure.tour && REMOVED_TOUR_SLUGS.includes(departure.tour.slug)) throw new BookingRefused("This tour is no longer offered.");
       const notSellable = inventoryError(departure) ?? startTimeError(departure.tour?.slug, departure.departureTime);
       if (notSellable) throw new BookingRefused(notSellable);
       const closed = options.allowAfterCutoff

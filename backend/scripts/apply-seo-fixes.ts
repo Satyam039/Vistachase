@@ -19,6 +19,11 @@
 // 4. Renamed images (RENAMED_MEDIA, 10 Nov 2026: "ChatGPT Image <date>" blog files named after their
 //    post): every saved page that still points at an old /media path is pointed at the new one, in
 //    its text, image fields and unpublished draft. The old paths also 301 (modules/media/renamed-media.ts).
+// 5b. Tours retired again (owner 2026-11-25: the winter tours are off the website again): the
+//    redirect this script saved and later switched off when the tour came back is switched on again
+//    with the built-in target, and the page row this script published again is archived again.
+//    Redirects this script saved that point at a retired address are pointed at its new target, so
+//    nothing redirects twice. Redirects or page rows staff changed themselves stay.
 // 6. Blog post text (prisma/catalog/blog-fixes-2026-11.json, owner 13 Nov 2026): exact sentence swaps
 //    that replace retired tour names, old prices and old group sizes in 20 imported posts. A fix only
 //    replaces its own old text, so passages staff have rewritten in the SEO portal are left alone.
@@ -36,7 +41,7 @@ import { isWebflowUrl } from "../src/modules/seo/seo.audit";
 import { webflowLocalMap } from "../src/modules/seo/portal/images";
 import { BLOG_PREFIX } from "../src/modules/seo/static-routes";
 import { RENAMED_MEDIA } from "../src/modules/media/renamed-media";
-import { RESTORED_TOUR_SLUGS } from "../src/modules/tours/product-map";
+import { RESTORED_TOUR_SLUGS, RETIRED_TOUR_SLUGS } from "../src/modules/tours/product-map";
 import { planBlogTextFixes, type TextFix } from "../src/modules/seo/blog-text-fixes";
 
 const dryRun = process.argv.includes("--dry-run");
@@ -92,6 +97,67 @@ async function restoredTours() {
     });
   }
   console.log(`Restored tours: ${stale.length} redirects switched off, ${toRestore.length} page rows published again.`);
+}
+
+async function retiredAgain() {
+  const retired = new Set(RETIRED_TOUR_SLUGS.map((slug) => `/${slug}`));
+  const logs = await prisma.auditLog.findMany({
+    where: { action: { in: ["SEO_REDIRECT_UPDATED", "SEO_PAGE_RESTORED"] } },
+    select: { action: true, entityId: true, details: true },
+  });
+  const ours = (action: string) =>
+    new Set(
+      logs
+        .filter((l) => {
+          const d = l.details as { path?: string; fromPath?: string; script?: string; reason?: string } | null;
+          const p = d?.path ?? d?.fromPath;
+          return l.action === action && d?.script === "apply-seo-fixes" && /^Tour restored/.test(d.reason ?? "") && !!p && retired.has(p);
+        })
+        .map((l) => l.entityId),
+    );
+  const switchedOffByUs = ours("SEO_REDIRECT_UPDATED");
+  const publishedByUs = ours("SEO_PAGE_RESTORED");
+  const redirectsToSwitchOn = await prisma.seoRedirect.findMany({
+    where: { id: { in: [...switchedOffByUs] }, active: false, source: "IMPORT", note: SCRIPT_REDIRECT_NOTE },
+    select: { id: true, fromPath: true, toPath: true },
+  });
+  const pagesToArchive = await prisma.seoPage.findMany({ where: { id: { in: [...publishedByUs] }, status: { not: "ARCHIVED" } }, select: { id: true, path: true } });
+  const chained = await prisma.seoRedirect.findMany({
+    where: { toPath: { in: [...retired] }, active: true, source: "IMPORT", note: SCRIPT_REDIRECT_NOTE },
+    select: { id: true, fromPath: true, toPath: true },
+  });
+  const target = (p: string) => BUILT_IN_REDIRECTS[p];
+  if (dryRun) {
+    for (const r of redirectsToSwitchOn) console.log(`  would switch on ${r.fromPath} -> ${target(r.fromPath) ?? r.toPath} (tour retired again)`);
+    for (const p of pagesToArchive) console.log(`  would archive ${p.path} again`);
+    for (const r of chained) if (target(r.toPath)) console.log(`  would point ${r.fromPath} at ${target(r.toPath)} instead of ${r.toPath}`);
+    return;
+  }
+  const reason = "Tour retired again (owner, 2026-11-25)";
+  for (const r of redirectsToSwitchOn) {
+    const toPath = target(r.fromPath) ?? r.toPath;
+    await prisma.$transaction(async (tx) => {
+      await tx.seoRedirect.update({ where: { id: r.id }, data: { active: true, toPath } });
+      await tx.auditLog.create({ data: { action: "SEO_REDIRECT_UPDATED", entityType: "SeoRedirect", entityId: r.id, details: { fromPath: r.fromPath, toPath, active: true, reason, script: "apply-seo-fixes" } } });
+    });
+  }
+  for (const p of pagesToArchive) {
+    await prisma.$transaction(async (tx) => {
+      await tx.seoPage.update({ where: { id: p.id }, data: { status: "ARCHIVED" } });
+      await tx.auditLog.create({ data: { action: "SEO_PAGE_ARCHIVED", entityType: "SeoPage", entityId: p.id, details: { path: p.path, reason, script: "apply-seo-fixes" } } });
+    });
+  }
+  let repointed = 0;
+  for (const r of chained) {
+    const toPath = target(r.toPath);
+    if (!toPath || toPath === r.fromPath) continue;
+    await prisma.$transaction(async (tx) => {
+      await tx.seoRedirect.update({ where: { id: r.id }, data: { toPath } });
+      await tx.auditLog.create({ data: { action: "SEO_REDIRECT_UPDATED", entityType: "SeoRedirect", entityId: r.id, details: { fromPath: r.fromPath, toPath, previousToPath: r.toPath, reason, script: "apply-seo-fixes" } } });
+    });
+    repointed++;
+  }
+  console.log(`Retired again: ${redirectsToSwitchOn.length} redirects switched on, ${pagesToArchive.length} page rows archived, ${repointed} redirects re-pointed.`);
 }
 
 async function redirects() {
@@ -240,6 +306,7 @@ async function blogTextFixes() {
 
 async function main() {
   await restoredTours();
+  await retiredAgain();
   await redirects();
   await metaFixes("seoTitle", fixes.titles);
   await metaFixes("metaDescription", fixes.descriptions);

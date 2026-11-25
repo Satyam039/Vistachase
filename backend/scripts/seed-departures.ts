@@ -3,7 +3,9 @@
 // A year ahead (owner's doc, 2026-11-05: the Two-Day shared tour couldn't be booked past Jan 4
 // 2027, the end of the old 60-day window). Bókun's live calendar still decides which dates are on
 // sale: the seat check at booking time reads Bókun for every date (src/modules/bokun/bokun-seats.ts).
-// Tours retired from the owner's product list (RETIRED_TOUR_SLUGS) get no new dates.
+// Tours retired from the owner's product list (RETIRED_TOUR_SLUGS) get no new dates, and their
+// future dates nobody has booked or held are taken off sale (retireRemovedTourDepartures). The
+// winter tours below were retired again on 2026-11-25 (owner); their schedules are kept for reference.
 //
 // The winter tours (owner, 2026-11-11: bookable again) run December 1 to April 30, the operating
 // period on their pages, at the prices on their pages: Winter Special CAD 199 a guest (16+ and 6-15;
@@ -37,7 +39,7 @@
 //   npm run seed:departures
 
 import prisma from "../src/lib/db/prisma";
-import { PRODUCT_MAP } from "../src/modules/tours/product-map";
+import { PRODUCT_MAP, REMOVED_TOUR_SLUGS } from "../src/modules/tours/product-map";
 import { dateOnly, formatDateOnly, formatTimeOfDay, timeOfDay, todayInMountainTime } from "../src/lib/utils/time";
 import { FIXED_START_TIMES, PRIVATE_VEHICLE_CAPACITY, SHARED_CAPACITY, SHUTTLE_CAPACITY } from "../src/modules/departures/schedule-rules";
 
@@ -182,7 +184,7 @@ async function seedFallbackSchedule(daysCount = SEED_DAYS) {
   let totalCreated = 0;
   let totalExisting = 0;
 
-  for (const item of DEFAULT_SCHEDULES) {
+  for (const item of DEFAULT_SCHEDULES.filter((s) => !REMOVED_TOUR_SLUGS.includes(s.slug))) {
     const tour = await prisma.tour.findUnique({
       where: { slug: item.slug },
       select: { id: true, slug: true, currency: true, category: true },
@@ -260,7 +262,7 @@ export function winterRealignment(
 
 async function realignWinterDepartures() {
   const today = dateOnly(todayInMountainTime());
-  for (const item of DEFAULT_SCHEDULES.filter((s) => WINTER_SCHEDULE_SLUGS.includes(s.slug))) {
+  for (const item of DEFAULT_SCHEDULES.filter((s) => WINTER_SCHEDULE_SLUGS.includes(s.slug) && !REMOVED_TOUR_SLUGS.includes(s.slug))) {
     const deps = await prisma.tourDeparture.findMany({
       where: { tour: { slug: item.slug }, date: { gt: today }, capacityBooked: 0, capacityHeld: 0, inventorySource: "LOCAL" },
       select: { id: true, date: true, price: true, childPrice: true, infantPrice: true, capacityTotal: true, status: true },
@@ -297,6 +299,33 @@ const cleanupDates = (days: CleanupDays = {}) => ({
   gte: days.from ? dateOnly(days.from) : dateOnly(todayInMountainTime()),
   ...(days.to ? { lte: dateOnly(days.to) } : {}),
 });
+
+/**
+ * Takes today's and future dates of tours taken off the website (REMOVED_TOUR_SLUGS) off sale,
+ * unless one of our bookings or an active hold is on it. Those few are listed so staff can move
+ * or look after the guest.
+ */
+export async function retireRemovedTourDepartures(days: CleanupDays = {}) {
+  const deps = await prisma.tourDeparture.findMany({
+    where: { tour: { slug: { in: REMOVED_TOUR_SLUGS } }, date: cleanupDates(days), status: { not: "CANCELLED" } },
+    select: { id: true, date: true, departureTime: true, tour: { select: { slug: true } } },
+  });
+  let cancelled = 0;
+  const kept: string[] = [];
+  for (const d of deps) {
+    const [booked, held] = await Promise.all([
+      prisma.booking.count({ where: { tourDepartureId: d.id, status: { in: [...LIVE_BOOKING_STATUSES] } } }),
+      prisma.reservationHold.count({ where: { tourDepartureId: d.id, status: "ACTIVE", expiresAt: { gt: new Date() } } }),
+    ]);
+    if (booked > 0 || held > 0) {
+      kept.push(`${d.tour?.slug} ${formatDateOnly(d.date)} ${formatTimeOfDay(d.departureTime)}`);
+      continue;
+    }
+    await prisma.tourDeparture.update({ where: { id: d.id }, data: { status: "CANCELLED" } });
+    cancelled++;
+  }
+  console.log(`  ✓ tours off the website: ${cancelled} future departures taken off sale${kept.length ? `; kept for existing bookings: ${kept.join(", ")}` : ""}`);
+}
 
 export async function retireOffScheduleDepartures(days: CleanupDays = {}) {
   for (const [slug, time] of Object.entries(FIXED_START_TIMES)) {
@@ -379,6 +408,7 @@ export async function capSharedDepartures(days: CleanupDays = {}) {
 async function main() {
   await seedFallbackSchedule(SEED_DAYS);
   await realignWinterDepartures();
+  await retireRemovedTourDepartures();
   await retireOffScheduleDepartures();
   await alignCapacity();
   await capSharedDepartures();
