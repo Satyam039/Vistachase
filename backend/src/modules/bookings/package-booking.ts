@@ -74,6 +74,12 @@ export const PACKAGES: TourPackage[] = [
     slug: "two-day-rockies-explorer-private",
     title: "Private Two-Day Rockies Explorer",
     tourSlugs: ["banff-private-tour", "icefields-jasper-private-tour"],
+    // Owner, 2026-11-25: named by tour (either order, different dates), up to 14 guests, pickups in
+    // Banff or Canmore (each tour may use its own address), Lake Louise transfers via Special Requests.
+    dayTitles: ["Banff & Yoho Discovery", "Columbia Icefield Adventure"],
+    maxGuests: 14,
+    banffCanmorePickupDays: [0, 1],
+    banffCanmoreTransferOnly: true,
     discountPercent: 10,
     depositAllowed: true,
     winterDiscountPercent: 0,
@@ -290,9 +296,19 @@ export async function createPackageBooking(input: CreatePackageInput): Promise<P
           error:
             pkg.slug === "four-day-rockies-and-jasper"
               ? "Pickups for the Banff, Lake Louise/Yoho and Icefields-to-Jasper tours are from Banff or Canmore. Please choose a Banff or Canmore hotel."
-              : `Pickups for all ${pkg.tourSlugs.length === 3 ? "three" : pkg.tourSlugs.length} tours are from Banff or Canmore. Please choose a Banff or Canmore hotel.`,
+              : pkg.tourSlugs.length === 2
+                ? "Pickups for both tours are from Banff or Canmore. Please choose a Banff or Canmore hotel."
+                : `Pickups for all ${pkg.tourSlugs.length === 3 ? "three" : pkg.tourSlugs.length} tours are from Banff or Canmore. Please choose a Banff or Canmore hotel.`,
         };
       }
+    }
+  }
+  // The combined Ice Explorer + Skywalk runs in summer only (owner, 2026-11-25): not on a winter Icefields date.
+  const icefieldsIndex = pkg.tourSlugs.indexOf("icefields-jasper-private-tour");
+  if (icefieldsIndex >= 0 && (input.packageActivities ?? []).some((a) => a.id === "columbia-icefield-adventure")) {
+    const icefieldsDeparture = await prisma.tourDeparture.findUnique({ where: { id: input.departureIds[icefieldsIndex] }, select: { date: true } });
+    if (icefieldsDeparture && !inSummer(icefieldsDeparture.date.toISOString().slice(0, 10))) {
+      return { success: false, error: `Ice Explorer + Skywalk runs June 1 to October 10 only. On a winter ${packageDayName(pkg, icefieldsIndex)} date, please remove it.` };
     }
   }
   if (pkg.banffCanmoreTransferOnly && input.airportTransfer?.area === "LAKE_LOUISE") {

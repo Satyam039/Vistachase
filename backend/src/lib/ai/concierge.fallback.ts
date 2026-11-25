@@ -372,7 +372,7 @@ async function catalogTourDetails(slug: string, state: State, ctx: ToolExecution
 }
 
 const POLICY =
-  "Shared tours and shuttles: full refund if you cancel at least 24 hours before departure. Private single-day tours: full refund at least 72 hours before. Private packages of two or more days: 80% refund at least 72 hours before the first tour day (20% of the total is non-refundable). After the deadline, and for late arrivals or no-shows, there's no refund. Refunds take 5–10 business days, and activity tickets follow the provider's rules. You can request a cancellation from My trips (/account/trips). Full policy: /privacy-policy-vista-chase.";
+  "Shared tours and shuttles: full refund if you cancel at least 24 hours before departure. Private single-day tours: full refund at least 72 hours before. Private packages of two or more days: 80% refund at least 72 hours before the earliest booked service: an arrival transfer booked before the tours, otherwise the first tour (20% of the total package price is non-refundable). After the deadline, and for late arrivals or no-shows, there's no refund. Refunds take 5–10 business days, and activity tickets follow the provider's rules. You can request a cancellation from My trips (/account/trips). Full policy: /privacy-policy-vista-chase.";
 
 const CAN_DO =
   "I can tell you about our tours, shuttles and prices, check dates with free seats, find your hotel pickup, answer questions like what's included, what to bring, ages, lunch or airport transfers, explain the cancellation policy, and look up a booking with its reference and email.";

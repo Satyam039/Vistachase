@@ -59,7 +59,7 @@ export interface WebsiteProduct {
 const SUMMER_MONTHS = [6, 7, 8, 9, 10];
 const SHARED_CANCEL = "Free cancellation up to 24 hours before departure (full refund); no refund after that or for a no-show.";
 const PRIVATE_CANCEL = "Free cancellation up to 72 hours before departure (full refund); no refund after that or for a no-show.";
-const PACKAGE_CANCEL = "Private multi-day packages: 80% refund if cancelled 72+ hours before Day 1; no refund after that.";
+const PACKAGE_CANCEL = "Private multi-day packages: 80% refund if cancelled 72+ hours before the earliest booked service (an arrival transfer before the tours, otherwise the first tour); 20% of the total package price is non-refundable; no refund after that.";
 
 export const WEBSITE_CATALOG: WebsiteProduct[] = [
   {
@@ -233,19 +233,19 @@ export const WEBSITE_CATALOG: WebsiteProduct[] = [
     days: 2,
     page: "/two-day-rockies-explorer/private",
     image: "/media/photos/columbia-icefield-skywalk-guests-card.webp",
-    overview: "Banff & Yoho Discovery and the Columbia Icefield Adventure, each with your own vehicle and guide, on dates you choose. Up to 13 guests.",
-    duration: "Two full-day private tours",
-    stops: ["Day 1: Banff & Yoho Discovery (private)", "Day 2: Columbia Icefield Adventure (private)"],
+    overview: "Two private adventures, dates that fit your stay: Banff & Yoho Discovery and the Columbia Icefield Adventure in either order, consecutive or not, with a private van and driver-guide each day and 10% savings on summer tour days. Up to 14 guests; 12–13 recommended.",
+    duration: "Two full-day private tours, approximately 10–12 hours each",
+    stops: ["Banff & Yoho Discovery (private)", "Columbia Icefield Adventure (private; Abraham Lake in winter)"],
     places: ["banff", "lake-louise", "moraine-lake", "yoho", "johnston-canyon", "icefields-parkway", "columbia-icefield"],
     season: { text: "Year round" },
-    pickup: "Doorstep pickup in Banff, Canmore or Lake Louise each day.",
-    capacity: "Private, up to 13 guests; priced per vehicle per day",
-    maxGuests: 13,
+    pickup: "Doorstep pickup and drop-off in Banff or Canmore for each tour; exact pickup time confirmed before each tour.",
+    capacity: "Private group of up to 14 guests; 12–13 recommended for comfort; priced per van per day",
+    maxGuests: 14,
     included: ["Private vehicle and driver-guide each day", "Park admission", "Taxes and mandatory fees"],
-    notIncluded: ["Accommodation", "Meals", "Optional activities (billed separately)", "Gratuities"],
+    notIncluded: ["Accommodation", "Meals", "Optional Lake Minnewanka cruise and Ice Explorer + Skywalk (requested when booking, invoiced separately)", "Airport transfers unless added", "Gratuities"],
     cancellation: PACKAGE_CANCEL,
     bookIn: "page",
-    packagePrice: { text: "CAD $1,575 per day per vehicle (June 1–Oct 10) or CAD $1,240 per day (Oct 11–May 31); airport transfer from CAD $364 per one-way transfer", fromAmount: 1240 * 2, unit: "per vehicle" },
+    packagePrice: { text: "Per van: both summer dates CAD $3,150, one summer and one winter CAD $2,815, both winter CAD $2,480 (CAD $1,575 per summer day with 10% saving, CAD $1,240 per winter day); airport transfers from CAD $364 per one-way transfer", fromAmount: 1240 * 2, unit: "per vehicle" },
     goodFor: ["multi-day", "two days", "private", "premium", "groups"],
   },
   {

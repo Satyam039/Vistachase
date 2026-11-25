@@ -769,7 +769,7 @@ export async function cancelBooking(reference: string, customerEmail?: string) {
   if (!policy.eligible) {
     return {
       success: false,
-      error: `Cancellation window closed. This booking can be cancelled for a refund up to ${policy.cutoffHours} hours before ${policy.keepPercent > 0 ? "the first tour day" : "departure"}; that is ${Math.max(0, Math.round(policy.hoursLeft))} hours away.`,
+      error: `Cancellation window closed. This booking can be cancelled for a refund up to ${policy.cutoffHours} hours before ${policy.keepPercent > 0 ? "the earliest booked service of the package" : "departure"}; that is ${Math.max(0, Math.round(policy.hoursLeft))} hours away.`,
     };
   }
 

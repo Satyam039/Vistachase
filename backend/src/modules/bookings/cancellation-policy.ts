@@ -36,12 +36,12 @@ export const eligibleRefundCents = (paidCents: number, totalCents: number, keepP
 /** One line for emails and errors, e.g. "Free cancellation up to 24 hours before departure." */
 export function termsSentence(terms: CancellationTerms) {
   return terms.keepPercent > 0
-    ? `Cancel at least ${terms.cutoffHours} hours before the first tour day for an 80% refund; ${terms.keepPercent}% of the total price is non-refundable. No refund after that.`
+    ? `Cancel at least ${terms.cutoffHours} hours before your earliest booked service (an arrival transfer before your tours, otherwise your first tour) for an 80% refund; ${terms.keepPercent}% of the total package price is non-refundable. No refund after that.`
     : `Free cancellation up to ${terms.cutoffHours} hours before departure. No refund after that.`;
 }
 
-/** Packages whose deadline runs from an earlier arrival transfer (owner's Four-Day and Three-Day policies, 2026-11-24). */
-export const ARRIVAL_DEADLINE_PACKAGES: readonly string[] = ["four-day-rockies-and-jasper", "three-day-rockies-discovery"];
+/** Packages whose deadline runs from an earlier arrival transfer (owner's Four-Day and Three-Day policies 2026-11-24, private Two-Day 2026-11-25). */
+export const ARRIVAL_DEADLINE_PACKAGES: readonly string[] = ["four-day-rockies-and-jasper", "three-day-rockies-discovery", "two-day-rockies-explorer-private"];
 
 const packageSlugOf = (priceSnapshot: unknown) => (priceSnapshot as { package?: { slug?: unknown } } | null)?.package?.slug;
 

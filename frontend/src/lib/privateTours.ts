@@ -1,5 +1,6 @@
 import { isVisibleLink } from "@/lib/activityTickets";
 import { THREE_DAY_CANCELLATION } from "@/lib/threeDayContent";
+import { TWO_DAY_CANCELLATION } from "@/lib/twoDayPrivateContent";
 // Copy and structure for the Private Tours page and multi-day private journeys,
 // from the owner's change-tracking specification (Private Tour Page section).
 
@@ -43,6 +44,8 @@ export const PRIVATE_MAX_GUESTS = 14;
 export const PACKAGE_DAY_PRICE = { summer: 1575, winter: 1240 };
 /** Four-Day Rockies & Jasper (owner, 2026-11-24): up to 14 guests, 12–13 recommended for comfort. */
 export const FOUR_DAY_MAX_GUESTS = 14;
+/** Private Two-Day Rockies Explorer (owner, 2026-11-25): up to 14 guests, 12–13 recommended for comfort. */
+export const TWO_DAY_MAX_GUESTS = 14;
 /** Three-Day Rockies Discovery (owner, 2026-11-24): up to 14 guests, 12–13 recommended for comfort. */
 export const THREE_DAY_MAX_GUESTS = 14;
 
@@ -75,6 +78,8 @@ export interface PackageConfig {
   hidePickupTimes?: boolean;
   /** An arrival transfer before the tours starts the cancellation deadline. */
   arrivalStartsDeadline?: boolean;
+  /** Summary shows each day's seasonal package price and its summer saving (Two-Day private, 2026-11-25). */
+  seasonalDayPrices?: boolean;
   guestNote?: string;
   datesNote?: string;
 }
@@ -98,14 +103,26 @@ export const PRIVATE_PACKAGES: Record<"two" | "three" | "four", PackageConfig> =
   two: {
     slug: "two-day-rockies-explorer-private",
     title: "Private Two-Day Rockies Explorer",
+    // Owner, 2026-11-25: tour names, either order, different dates (consecutive or not), up to 14
+    // guests, Banff/Canmore pickups, 10% off summer days only. Same order as backend package-booking.ts.
     days: [
-      { slug: BANFF_DAY, title: "Banff & Yoho Discovery", label: "Private · Lake Louise, Moraine Lake & Yoho" },
-      { slug: ICEFIELD_DAY, title: "Columbia Icefield Adventure", label: "Private · Icefields Parkway" },
+      { slug: BANFF_DAY, title: "Banff & Yoho Discovery", label: "Private · Banff, Lake Louise & Yoho, approximately 10–12 hours" },
+      { slug: ICEFIELD_DAY, title: "Columbia Icefield Adventure", label: "Private · Icefields Parkway, approximately 10–12 hours" },
     ],
     discountPercent: 10,
     winterDiscountPercent: 0,
     vehicle: true,
-    maxGuests: PRIVATE_MAX_GUESTS,
+    maxGuests: TWO_DAY_MAX_GUESTS,
+    banffCanmorePickup: true,
+    banffCanmoreTransferOnly: true,
+    directActivities: true,
+    hidePickupTimes: true,
+    arrivalStartsDeadline: true,
+    seasonalDayPrices: true,
+    cancellationNote: `${TWO_DAY_CANCELLATION.short} If you book an arrival transfer before your tours, the deadline runs from its scheduled pickup; otherwise from your first tour. Alberta local time.`,
+    guestNote: "Private group of up to 14 guests. We recommend 12–13 for extra comfort. One price per private van, whatever the group size.",
+    datesNote:
+      "Choose an available date for each tour, in either order. Dates can be consecutive or have a break between them, but the two full-day tours can’t be on the same date. Summer days (June 1–October 10) are 10% off; winter days use the regular private-tour rate.",
   },
   three: {
     slug: "three-day-rockies-discovery",
@@ -247,17 +264,22 @@ export const PRIVATE_OPTIONS: PrivateTourOption[] = [
   {
     id: "two-day-rockies-private",
     title: "Two-Day Rockies Explorer",
-    description: "Combine both private day tours in one easy booking for lakes, mountain scenery and glacier views.",
+    // Owner's product card, 2026-11-25.
+    description:
+      "Two private adventures, dates that fit your stay. Explore Banff & Yoho and the Icefields Parkway in either order, with 10% savings on summer tour days.",
     duration: "2 days",
     transport: "Private Vehicle & Guide",
-    suggestedStay: "Canmore/Banff/Lake Louise",
-    pickup: "Doorstep Pickup Included",
-    activities: "Optional Activities at Checkout",
-    airportTransfers: "From CAD $364 per transfer, with 2+ tour days",
+    suggestedStay: "Banff or Canmore",
+    pickup: "Doorstep pickup and drop-off in Banff or Canmore",
+    group: "Up to 14 guests; 12–13 recommended for comfort",
+    dates: "Choose two available dates, consecutive or non-consecutive",
+    activities: "Optional experiences requested when booking; tickets invoiced separately",
+    airportTransfers: "From CAD $364 per one-way transfer for up to six passengers; extra charges apply",
     accommodation: "Booked separately by you",
+    savings: "10% savings on summer tour days only",
     priceFrom: PACKAGE_DAY_PRICE.winter * 2,
     priceUnit: "per vehicle",
-    priceNote: "CAD $1,575 per day Jun 1–Oct 10, $1,240 per day Oct 11–May 31. Private, up to 13 guests.",
+    priceNote: "Both summer dates CAD $3,150; one summer, one winter CAD $2,815; both winter CAD $2,480. Per private van, up to 14 guests.",
     seasonalPricing: {
       summer: "CAD $1,575/day ($3,150)",
       winter: "CAD $1,240/day ($2,480)",

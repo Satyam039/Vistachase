@@ -33,6 +33,8 @@ export interface AirportTransferValue {
   departureTo: string;
   /** Where the guest stays: sets the price. */
   area: "" | AirportArea;
+  /** Airline and flight number(s), optional (owner, 2026-11-25: flight details to confirm each service). */
+  flightNumbers?: string;
 }
 
 export const EMPTY_AIRPORT_TRANSFER: AirportTransferValue = {
@@ -148,6 +150,7 @@ export function airportTransferPayload(t: AirportTransferValue) {
     to: (departingOnly ? t.departureTo : t.to).trim(),
     ...(t.type === "ROUND_TRIP" ? { departureFrom: t.departureFrom.trim(), departureTo: t.departureTo.trim() } : {}),
     area: t.area || undefined,
+    ...(t.flightNumbers?.trim() ? { flightNumbers: t.flightNumbers.trim().slice(0, 80) } : {}),
   };
 }
 
@@ -373,6 +376,21 @@ export function AirportTransferDetails({
             </fieldset>
           )}
         </>
+      )}
+      {value.type && (
+        <label className="block text-sm text-obsidian-900" htmlFor="airport-flightNumbers">
+          Flight number(s) <span className="text-slate-600">(optional)</span>
+          <input
+            id="airport-flightNumbers"
+            type="text"
+            maxLength={80}
+            autoComplete="off"
+            placeholder={value.type === "ROUND_TRIP" ? "e.g. AC 123 arriving, WS 456 departing" : "e.g. AC 123"}
+            value={value.flightNumbers ?? ""}
+            onChange={(e) => onChange({ ...value, flightNumbers: e.target.value })}
+            className={input}
+          />
+        </label>
       )}
       <fieldset>
         <legend className="text-sm text-obsidian-900">Where you&apos;re staying</legend>

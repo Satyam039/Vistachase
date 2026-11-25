@@ -28,7 +28,7 @@ export function cancellationShort(category?: string | null, multiDay = false) {
   if (category === "TICKET") return TICKET_CANCELLATION_SHORT;
   const t = cancellationTerms(category, multiDay);
   return t.keepPercent > 0
-    ? `${100 - t.keepPercent}% refund up to ${t.cutoffHours} hours before the first day`
+    ? `${100 - t.keepPercent}% refund up to ${t.cutoffHours} hours before your earliest booked service`
     : `Free cancellation up to ${t.cutoffHours} hours before`;
 }
 
@@ -44,7 +44,7 @@ export function cancellationSentence(category?: string | null, multiDay = false)
   if (category === "TICKET") return "Tickets follow the attraction operator's cancellation rules, shown before you book.";
   const t = cancellationTerms(category, multiDay);
   return t.keepPercent > 0
-    ? `Cancel at least ${t.cutoffHours} hours before the first tour day for an 80% refund; ${t.keepPercent}% of the total package price is non-refundable. No refund after that, or for a no-show.`
+    ? `Cancel at least ${t.cutoffHours} hours before your earliest booked service (an arrival transfer before your tours, otherwise your first tour) for an 80% refund; ${t.keepPercent}% of the total package price is non-refundable. No refund after that, or for a no-show.`
     : `Cancel at least ${t.cutoffHours} hours before departure for a full refund. No refund after that, or for a no-show.`;
 }
 

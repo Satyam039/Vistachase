@@ -306,6 +306,40 @@ describe("private multi-day journeys", () => {
     expect(off.error).toMatch(/^Icefields Parkway & Columbia Icefield: /);
   });
 
+  it("private two-day (owner, 2026-11-25): either order, mixed seasons priced per day, 14 guests, no same date, tour names, no winter glacier, flight numbers kept", async () => {
+    setPaymentProviderForTests(browserPays);
+    // Icefields (summer) before Banff & Yoho (winter): CAD 1,575 + 1,240 = 2,815.
+    const banffWinter = await vehicle("banff-private-tour", "2027-10-20", 124000);
+    const iceSummer = await vehicle("icefields-jasper-private-tour", "2027-10-02", 175000);
+    const transfer = { type: "ARRIVAL" as const, area: "CANMORE" as const, arrivalDate: "2027-10-01", arrivalTime: "15:00", from: "Calgary Airport", to: "Canmore", flightNumbers: "AC 123" };
+    const mixed = await createPackageBooking(party(60, "two-day-rockies-explorer-private", [banffWinter, iceSummer], { adultsCount: 14, airportTransfer: transfer }));
+    expect(mixed.success).toBe(true);
+    // 7-14 passengers: CAD 850 one way, never discounted.
+    expect(mixed.totalAmount).toBe(1240 + 1575 + 850);
+    const first = await prisma.booking.findUniqueOrThrow({ where: { bookingReference: mixed.bookings![0].bookingReference } });
+    expect(first.specialRequests ?? "").toContain("flight AC 123");
+
+    expect((await createPackageBooking(party(61, "two-day-rockies-explorer-private", [await vehicle("banff-private-tour", "2027-08-01", 175000), await vehicle("icefields-jasper-private-tour", "2027-08-02", 175000)], { adultsCount: 15 }))).error).toContain("up to 14 guests");
+    const sameDay = await createPackageBooking(party(62, "two-day-rockies-explorer-private", [await vehicle("banff-private-tour", "2027-08-05", 175000), await vehicle("icefields-jasper-private-tour", "2027-08-05", 175000)]));
+    expect(sameDay.error).toContain("different date");
+
+    const iceWinter = await vehicle("icefields-jasper-private-tour", "2027-11-10", 124000);
+    const glacier = await createPackageBooking(
+      party(63, "two-day-rockies-explorer-private", [await vehicle("banff-private-tour", "2027-11-12", 124000), iceWinter], { packageActivities: [{ id: "columbia-icefield-adventure", adults: 2, children: 0, infants: 0 }] }),
+    );
+    expect(glacier.error).toContain("June 1 to October 10");
+    const cruise = await createPackageBooking(
+      party(64, "two-day-rockies-explorer-private", [await vehicle("banff-private-tour", "2027-11-14", 124000), await vehicle("icefields-jasper-private-tour", "2027-11-16", 124000)], { packageActivities: [{ id: "lake-minnewanka-cruise", adults: 3, children: 0, infants: 0 }] }),
+    );
+    expect(cruise.success).toBe(true);
+
+    // A vehicle that's gone is named by its tour, not left blank or "Day 2".
+    const taken = await vehicle("icefields-jasper-private-tour", "2027-08-20", 175000);
+    await prisma.tourDeparture.update({ where: { id: taken }, data: { capacityBooked: 13 } });
+    const gone = await createPackageBooking(party(65, "two-day-rockies-explorer-private", [await vehicle("banff-private-tour", "2027-08-22", 175000), taken]));
+    expect(gone.error).toMatch(/^Columbia Icefield Adventure: /);
+  });
+
   it("private journeys can be paid with a 20% deposit; the webhook confirms both days on the deposits (owner, 2026-11-11)", async () => {
     setPaymentProviderForTests(browserPays);
     const ids = [await vehicle("banff-private-tour", "2027-08-02", 175000), await vehicle("icefields-jasper-private-tour", "2027-08-04", 175000)];

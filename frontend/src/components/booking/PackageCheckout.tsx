@@ -194,6 +194,7 @@ export function PackageCheckout({
   directActivities = false,
   hidePickupTimes = false,
   arrivalStartsDeadline = false,
+  seasonalDayPrices = false,
 }: {
   packageSlug: string;
   title: string;
@@ -232,6 +233,8 @@ export function PackageCheckout({
   hidePickupTimes?: boolean;
   /** An arrival transfer before the tours starts the cancellation deadline (Four-Day always does). */
   arrivalStartsDeadline?: boolean;
+  /** Each day's seasonal package price and summer saving in the summary (Two-Day private, owner 2026-11-25). */
+  seasonalDayPrices?: boolean;
 }) {
   // Every link in the checkout opens in a new tab, so the guest never leaves it (owner, 2026-11-18).
   const newTab = { target: "_blank", rel: "noopener" } as const;
@@ -401,6 +404,17 @@ export function PackageCheckout({
   const showWinterIcefieldsNotice = Boolean(icefieldsChosen && !inSummer(icefieldsChosen.date));
 
   const allPicked = chosen.every(Boolean);
+
+  // The combined Ice Explorer + Skywalk runs June 1 to October 10 only (owner, 2026-11-25): on a winter
+  // Icefields date it can't be requested, and a request made before the date changed is dropped.
+  const winterIcefields = showWinterIcefieldsNotice;
+  const disabledActivities: Record<string, string> = winterIcefields
+    ? { "columbia-icefield-adventure": "Not available on your winter Icefields date (October 11–May 31): Abraham Lake replaces the Columbia Icefield experience." }
+    : {};
+  useEffect(() => {
+    if (!winterIcefields) return;
+    setActivityChoice((c) => (c["columbia-icefield-adventure"] ? Object.fromEntries(Object.entries(c).filter(([id]) => id !== "columbia-icefield-adventure")) : c));
+  }, [winterIcefields]);
 
   const pickedList = days.map((day, i) => ({
     day,
@@ -819,7 +833,11 @@ export function PackageCheckout({
                         value={picks[i]}
                         onChange={(id) => setPicks((p) => p.map((x, j) => (j === i ? id : x)))}
                         describe={(d) =>
-                          vehicle
+                          vehicle && seasonalDayPrices
+                            ? inSummer(d.date)
+                              ? `CAD $${(Math.round(d.price * (100 - discountOn(d.date))) / 100).toLocaleString("en-CA")} per van, summer rate with 10% saving`
+                              : `CAD $${d.price.toLocaleString("en-CA")} per van, winter rate`
+                            : vehicle
                             ? `CAD $${d.price.toLocaleString("en-CA")} per vehicle before the package price`
                             : d.seatsAvailable <= 4
                               ? `Only ${d.seatsAvailable} seats left`
@@ -902,9 +920,11 @@ export function PackageCheckout({
                 {directActivities && packageActivities.length > 0 ? (
                   <div className="space-y-3">
                     <p className="text-sm text-slate-600">
-                      Request any optional experience below and say how many guests join it. Our team arranges the tickets and sends a separate invoice: nothing is charged now, and requests are not confirmed reservations. Reserved activities may mean other stops are shortened or skipped.
+                      {seasonalDayPrices
+                        ? "Request activities when booking. Our team arranges tickets and sends a separate invoice for payment. Availability and activity times require confirmation. Tell us how many guests join each one."
+                        : <>Request any optional experience below and say how many guests join it. Our team arranges the tickets and sends a separate invoice: nothing is charged now, and requests are not confirmed reservations. Reserved activities may mean other stops are shortened or skipped.</>}
                     </p>
-                    <PackageActivityPicker activities={packageActivities} value={activityChoice} onChange={setActivityChoice} partySize={adults} prices={activityPrices} />
+                    <PackageActivityPicker activities={packageActivities} value={activityChoice} onChange={setActivityChoice} partySize={adults} prices={activityPrices} disabled={disabledActivities} />
                   </div>
                 ) : packageActivities.length > 0 ? (
                   <ActivityAddOnToggle checked={activities} onChange={setActivities}>
@@ -1144,7 +1164,17 @@ export function PackageCheckout({
               <p className="text-sm text-white/70">
                 {item.departure ? `${dayLabel(item.departure.date)} · ${timeLabel(item.departure.departureTime)}` : "Date not chosen yet"}
               </p>
-              {item.departure && (
+              {item.departure && seasonalDayPrices && (
+                <p className="mt-1 text-sm text-white/70">
+                  {cad(item.line.total / 100)} per van ·{" "}
+                  {inSummer(item.departure.date) ? (
+                    <span className="text-summit-200">summer rate, saves {cad(item.line.discount / 100)}</span>
+                  ) : (
+                    "winter rate, regular private-tour price"
+                  )}
+                </p>
+              )}
+              {item.departure && !seasonalDayPrices && (
                 <p className="mt-1 text-sm text-white/70">
                   {cad(item.line.fare / 100)} · {vehicle ? "per vehicle" : `${adults} adult${adults > 1 ? "s" : ""}${children > 0 ? `, ${children} youth` : ""}${infants > 0 ? `, ${infants} infant${infants > 1 ? "s" : ""}` : ""}`}
                 </p>
@@ -1154,15 +1184,30 @@ export function PackageCheckout({
         </ul>
         {allPicked ? (
           <dl className="mt-4 space-y-2 text-base">
-            <div className="flex justify-between text-white/80">
-              <dt>Regular subtotal</dt>
-              <dd>{cad(fare / 100)}</dd>
-            </div>
-            {saving > 0 && (
-              <div className="flex justify-between text-summit-200">
-                <dt>10% package savings already applied</dt>
-                <dd>−{cad(saving / 100)}</dd>
-              </div>
+            {seasonalDayPrices ? (
+              <>
+                <div className="flex justify-between text-white/80">
+                  <dt>Both tour days</dt>
+                  <dd>{cad((fare - saving) / 100)}</dd>
+                </div>
+                <div className="flex justify-between gap-4 text-summit-200">
+                  <dt>{saving > 0 ? "Summer savings included (10% on summer tour days)" : "No summer savings: winter days use the regular rate"}</dt>
+                  <dd className="shrink-0">{saving > 0 ? cad(saving / 100) : "—"}</dd>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex justify-between text-white/80">
+                  <dt>Regular subtotal</dt>
+                  <dd>{cad(fare / 100)}</dd>
+                </div>
+                {saving > 0 && (
+                  <div className="flex justify-between text-summit-200">
+                    <dt>10% package savings already applied</dt>
+                    <dd>−{cad(saving / 100)}</dd>
+                  </div>
+                )}
+              </>
             )}
             {withAirport && (
               <div className="flex justify-between text-white/80">
@@ -1177,7 +1222,7 @@ export function PackageCheckout({
                   <dt>
                     {a.name} · {activityGuestsLabel(activityChoice[a.id]!)}
                   </dt>
-                  <dd className="shrink-0 text-right">{price != null ? cad(price) : "Confirmed by our team"}</dd>
+                  <dd className="shrink-0 text-right">{price != null ? cad(price) : directActivities ? "Invoiced separately" : "Confirmed by our team"}</dd>
                 </div>
               );
             })}
@@ -1188,7 +1233,7 @@ export function PackageCheckout({
               </div>
             )}
             <div className="flex justify-between border-t border-white/15 pt-3 text-xl font-light">
-              <dt>Total</dt>
+              <dt>{seasonalDayPrices ? "Package total" : "Total"}</dt>
               <dd>{cad(total / 100)} CAD</dd>
             </div>
             {plan === "DEPOSIT" && (
@@ -1203,7 +1248,9 @@ export function PackageCheckout({
                 </div>
               </>
             )}
-            {chosenActivityList.some((a) => activityPriceOf(a.id) == null) && (
+            {directActivities && chosenActivityList.some((a) => activityPriceOf(a.id) == null) ? (
+              <p className="text-sm text-white/70">Attraction requests are not part of this payment: our team arranges the tickets and invoices them separately once availability and times are confirmed.</p>
+            ) : chosenActivityList.some((a) => activityPriceOf(a.id) == null) && (
               <p className="text-sm text-white/70">Activities marked &ldquo;Confirmed by our team&rdquo; aren&apos;t charged now: we confirm their price with you before your trip.</p>
             )}
             <p className="text-sm text-white/60">Taxes, park admission and mandatory fees included.</p>
@@ -1318,7 +1365,7 @@ export function PackageCheckout({
             <p className="flex items-start gap-2">
               <Lock className="mt-0.5 h-4 w-4 shrink-0 text-summit-300" aria-hidden="true" />
               <span>
-                One secure payment for {tourWord}, with {discountPercent}% savings already included. {cancellationNote}
+                One secure payment for {tourWord}, with {discountPercent}% savings {seasonalDayPrices ? "on summer tour days " : ""}already included. {cancellationNote}
               </span>
             </p>
             <p className="pl-6 text-xs leading-relaxed text-white/60">

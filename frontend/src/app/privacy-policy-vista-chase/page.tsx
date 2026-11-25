@@ -26,7 +26,7 @@ const SECTIONS: LegalSection[] = [
             ["Shared tours and shuttles", "At least 24 hours before departure", "Full refund"],
             ["Two-Day Rockies Explorer — shared package", "At least 24 hours before the first scheduled tour", "Full package refund"],
             ["Private single-day tours", "At least 72 hours before departure", "Full refund"],
-            ["Private packages of two or more days", "At least 72 hours before the first tour starts", "80% refund; 20% non-refundable"],
+            ["Private packages of two or more days", "At least 72 hours before your earliest booked service", "80% refund; 20% non-refundable"],
             ["Any booking cancelled after its deadline, or a no-show", "—", "No refund"],
           ],
         },
@@ -49,7 +49,8 @@ const SECTIONS: LegalSection[] = [
           "A private tour starting at 8:00 AM on Friday must be cancelled by 8:00 AM on Tuesday to meet the 72-hour cutoff.",
         ],
       },
-      "For private multi-day packages, the cutoff applies to the first tour day. It does not restart for each day of the package.",
+      "For private multi-day packages, the cutoff is calculated from your earliest booked service. If you book an arrival transfer before your tours, the deadline is calculated from that transfer’s scheduled pickup time. Otherwise, it is calculated from your first tour. It does not restart for each day of the package.",
+      "Later guest cancellations and voluntarily unused services are non-refundable. Cancelling an entire package also cancels its booked transfers.",
     ],
   },
   {

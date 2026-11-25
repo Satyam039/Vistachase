@@ -36,14 +36,15 @@ const NAMES: Record<string, string> = {
 
 /** The activities each private journey offers, in the order the page lists them. */
 export const PACKAGE_ACTIVITY_IDS: Record<string, string[]> = {
-  "two-day-rockies-explorer-private": ["columbia-icefield-adventure"],
+  // Owner, 2026-11-25: Lake Minnewanka cruise on the Banff & Yoho day, the combined glacier experience on a summer Icefields day.
+  "two-day-rockies-explorer-private": ["lake-minnewanka-cruise", "columbia-icefield-adventure"],
   // Owner, 2026-11-24: Banff tour (gondola, Minnewanka cruise), then the combined glacier experience.
   "three-day-rockies-discovery": ["banff-gondola", "lake-minnewanka-cruise", "columbia-icefield-adventure"],
   "four-day-rockies-and-jasper": ["banff-gondola", "lake-minnewanka-cruise", "columbia-icefield-adventure", "maligne-lake-cruise"],
 };
 
 export const packageActivityName = (packageSlug: string, id: string) =>
-  (packageSlug === "four-day-rockies-and-jasper" || packageSlug === "three-day-rockies-discovery") && id === "columbia-icefield-adventure" ? "Ice Explorer + Skywalk (combined glacier experience)" : (NAMES[id] ?? id);
+  (packageSlug === "four-day-rockies-and-jasper" || packageSlug === "three-day-rockies-discovery" || packageSlug === "two-day-rockies-explorer-private") && id === "columbia-icefield-adventure" ? "Ice Explorer + Skywalk (combined glacier experience)" : (NAMES[id] ?? id);
 
 export const packageActivitiesSchema = z
   .array(

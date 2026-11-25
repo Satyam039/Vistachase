@@ -50,6 +50,8 @@ export const airportTransferSchema = z
     departureTo: z.string().trim().min(2, "Say where we take you for your departure").max(160).optional(),
     /** Where the guest stays: sets the price. Required to book (checked when the booking is priced). */
     area: z.enum(["BANFF", "CANMORE", "LAKE_LOUISE"]).optional(),
+    /** Airline and flight number(s), optional (Two-Day private, owner 2026-11-25: flight details to confirm each service). */
+    flightNumbers: z.string().trim().max(80).optional(),
   })
   .transform((t) => ({ ...t, type: t.type ?? inferType(t) }))
   .refine((t) => !needsArrival(t.type) || (t.arrivalDate && t.arrivalTime), { message: "Enter your arrival date and time", path: ["arrivalDate"] })
@@ -170,7 +172,8 @@ export function airportTransferNote(t: AirportTransfer, guests: number): string 
     .filter(Boolean)
     .join(", ");
   const price = quote.unitCents != null ? `${airportTransferPriceText(quote)}, paid with the tour` : "price to be confirmed by Vista Chase";
-  return `Airport transfer requested (${TYPE_LABEL[t.type].toLowerCase()}): ${((r) => (r.startsWith("arrival ") ? r : `from ${t.from} to ${t.to}`))(routeText(t, t.type))}${area}, ${times} (${price}).`;
+  const flights = t.flightNumbers ? `, flight ${t.flightNumbers}` : "";
+  return `Airport transfer requested (${TYPE_LABEL[t.type].toLowerCase()}): ${((r) => (r.startsWith("arrival ") ? r : `from ${t.from} to ${t.to}`))(routeText(t, t.type))}${area}, ${times}${flights} (${price}).`;
 }
 
 /** Stored in priceSnapshot.airportTransfer. */
@@ -196,7 +199,8 @@ export function airportTransferSummary(priceSnapshot: unknown): string | null {
     needsArrival(type) && t.arrivalDate ? `arrival ${t.arrivalDate} ${t.arrivalTime ?? ""}`.trim() : null,
     needsDeparture(type) && t.departureDate ? `departure ${t.departureDate} ${t.departureTime ?? ""}`.trim() : null,
   ].filter(Boolean);
-  return `${TYPE_LABEL[type]} (${route})${times.length ? `, ${times.join(", ")}` : ""}, ${airportTransferPriceText({ transfers, unitCents })}`;
+  const flights = t.flightNumbers ? `, flight ${t.flightNumbers}` : "";
+  return `${TYPE_LABEL[type]} (${route})${times.length ? `, ${times.join(", ")}` : ""}${flights}, ${airportTransferPriceText({ transfers, unitCents })}`;
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -258,7 +262,7 @@ export function transferLegs(priceSnapshot: unknown): TransferLeg[] {
   const guests = Math.max(1, Number(t.guests ?? party) || 1);
   const unitCents = t.unitCents ?? (t.priceCents != null ? Math.round(t.priceCents / transferCount(type)) : null);
   const legs: TransferLeg[] = [];
-  const people = `${guests} guest${guests === 1 ? "" : "s"}`;
+  const people = `${guests} guest${guests === 1 ? "" : "s"}${t.flightNumbers ? `, flight ${t.flightNumbers}` : ""}`;
   if (needsArrival(type) && t.arrivalDate && t.arrivalTime) {
     legs.push({ leg: "ARRIVAL", area: t.area, date: t.arrivalDate, time: t.arrivalTime, from: t.from, to: t.to, guests, unitCents, description: `Arrival transfer: ${t.from} to ${t.to}, flight lands ${t.arrivalDate} ${t.arrivalTime}, ${people}.` });
   }
