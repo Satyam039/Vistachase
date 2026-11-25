@@ -117,13 +117,15 @@ export const BUILT_IN_REDIRECTS: Record<string, string> = {
   "/shared-tours-banff-yoho": "/banff-highlights-tour",
   "/banff-yoho-custom-private-tour": "/banff-private-tour",
   "/jasper-custom-private-tour": "/icefields-jasper-private-tour",
-  // Winter tours, retired again (owner, 25 Nov 2026: "remove these urls from live website fully").
-  "/winter-special": "/banff-highlights-tour",
-  "/winter-signature-private-tour": "/banff-private-tour",
+  // Winter tours, retired again (owner, 25 Nov 2026: "remove these urls from live website fully";
+  // both go to the shared Columbia Icefield Adventure, owner's choice the same day).
+  "/winter-special": "/shared-tours-icefields-jasper",
+  "/winter-signature-private-tour": "/shared-tours-icefields-jasper",
   // The two lake-shuttle product pages (owner, 25 Nov 2026: remove these pages, keep /shuttles and its
-  // booking). The products stay on sale for /shuttles; only their own pages go.
-  "/sunrise-shuttle-to-moraine-lake-and-lake-louise": "/shuttles",
-  "/full-day-at-lake-louise-and-moraine-lake": "/shuttles",
+  // booking). Each goes to one of its departures on /shuttles (the owner: sunrise = departure 1-2,
+  // day shuttle = departure 3-7): departure 2 and 3 run all season. Search engines see /shuttles.
+  "/sunrise-shuttle-to-moraine-lake-and-lake-louise": "/shuttles#shuttle-departure-2",
+  "/full-day-at-lake-louise-and-moraine-lake": "/shuttles#shuttle-departure-3",
   // Tickets taken off sale (owner, 2026-10-28). Their old URLs answered 404 (two critical audit issues).
   "/open-top-touring-tickets": "/banff-highlights-tour",
   "/banff-upper-hot-springs-tickets": "/destinations/banff-national-park",
@@ -137,7 +139,7 @@ export const BUILT_IN_REDIRECTS: Record<string, string> = {
   // Owner, 23 Nov 2026: both answered 404 (old Webflow duplicates Google still knows about). Each goes
   // to the live page it copied, so the old address stops showing as a broken link.
   "/blog-post/moraine-lake-access-rules-parking-2026": "/blog-post/moraine-lake-access-rules-parking",
-  "/winter-special-copy": "/banff-highlights-tour",
+  "/winter-special-copy": "/shared-tours-icefields-jasper",
 };
 
 export async function activeRedirectMap() {

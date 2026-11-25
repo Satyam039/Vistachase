@@ -161,7 +161,7 @@ export const WEBSITE_CATALOG: WebsiteProduct[] = [
     name: "Moraine Lake & Lake Louise Shuttle",
     type: "SHUTTLE",
     days: 1,
-    page: "/shuttles",
+    page: "/shuttles#shuttle-departure-2",
     image: "/media/photos/moraine-lake-perfect-reflection.webp",
     overview:
       "Moraine Lake & Lake Louise Shuttle early-morning departures 1 and 2 (CAD $135 per person; same fare for adults, children and infants; every passenger requires a seat), with independent exploration at both lakes and no guide onboard.",
@@ -185,7 +185,7 @@ export const WEBSITE_CATALOG: WebsiteProduct[] = [
     name: "Moraine Lake & Lake Louise Shuttle",
     type: "SHUTTLE",
     days: 1,
-    page: "/shuttles",
+    page: "/shuttles#shuttle-departure-3",
     image: "/media/photos/moraine-lake-red-canoes.webp",
     overview:
       "Moraine Lake & Lake Louise Shuttle departures 3–7 (CAD $120 for departures 3–4; CAD $108 for departures 5–7; same fare for adults, children and infants), with independent time at both lakes and no guide.",

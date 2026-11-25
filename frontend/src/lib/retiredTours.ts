@@ -11,9 +11,9 @@ export const RETIRED_TOUR_REDIRECTS: Record<string, string> = {
   "shared-tours-banff-yoho": "/banff-highlights-tour",
   "banff-yoho-custom-private-tour": "/banff-private-tour",
   "jasper-custom-private-tour": "/icefields-jasper-private-tour",
-  // Owner, 25 Nov 2026: the winter tours are off the website again.
-  "winter-special": "/banff-highlights-tour",
-  "winter-signature-private-tour": "/banff-private-tour",
+  // Owner, 25 Nov 2026: the winter tours are off the website again; both go to the shared Icefield tour.
+  "winter-special": "/shared-tours-icefields-jasper",
+  "winter-signature-private-tour": "/shared-tours-icefields-jasper",
   "open-top-touring-tickets": "/banff-highlights-tour",
   "banff-upper-hot-springs-tickets": "/destinations/banff-national-park",
 };
@@ -23,8 +23,14 @@ export const RETIRED_TOUR_REDIRECTS: Record<string, string> = {
  * booking stay). They stay on sale, because /shuttles books their departures, but their own pages
  * send visitors to /shuttles and every link on the site points there instead.
  */
-export const SHUTTLE_PRODUCT_SLUGS = ["sunrise-shuttle-to-moraine-lake-and-lake-louise", "full-day-at-lake-louise-and-moraine-lake"];
-for (const slug of SHUTTLE_PRODUCT_SLUGS) RETIRED_TOUR_REDIRECTS[slug] = "/shuttles";
+export const SHUTTLE_PRODUCT_PAGES: Record<string, string> = {
+  // Owner, 25 Nov 2026: sunrise = departures 1-2, day shuttle = departures 3-7. Departures 2 and 3 run
+  // all season (June to September), so their cards are always on /shuttles.
+  "sunrise-shuttle-to-moraine-lake-and-lake-louise": "/shuttles#shuttle-departure-2",
+  "full-day-at-lake-louise-and-moraine-lake": "/shuttles#shuttle-departure-3",
+};
+export const SHUTTLE_PRODUCT_SLUGS = Object.keys(SHUTTLE_PRODUCT_PAGES);
+Object.assign(RETIRED_TOUR_REDIRECTS, SHUTTLE_PRODUCT_PAGES);
 
-/** Where a tour's link goes: its own page, or /shuttles for the shuttle products. */
-export const tourPagePath = (slug: string) => (SHUTTLE_PRODUCT_SLUGS.includes(slug) ? "/shuttles" : `/${slug}`);
+/** Where a tour's link goes: its own page, or its departure on /shuttles for the shuttle products. */
+export const tourPagePath = (slug: string) => SHUTTLE_PRODUCT_PAGES[slug] ?? `/${slug}`;
