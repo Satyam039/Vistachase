@@ -158,8 +158,6 @@ export async function crawlLiveWebsiteKnowledge(): Promise<{ text: string; crawl
     "/shuttles",
     "/banff-highlights-tour",
     "/shared-tours-icefields-jasper",
-    "/winter-special",
-    "/winter-signature-private-tour",
     "/banff-private-tour",
     "/icefields-jasper-private-tour",
     "/two-day-rockies-explorer",
