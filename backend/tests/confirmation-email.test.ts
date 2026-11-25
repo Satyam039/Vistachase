@@ -17,9 +17,11 @@ import { dateOnly, timeOfDay } from "@/lib/utils/time";
 
 const sent: EmailPayload[] = [];
 let fail = false;
+let banffStop: { id: string; name: string };
 const confirmations = () => sent.filter((e) => e.subject.startsWith("Your Vista Chase booking is confirmed"));
 
-beforeAll(() => {
+beforeAll(async () => {
+  banffStop = await prisma.shuttleStop.findFirstOrThrow({ where: { town: "Banff", isActive: true }, select: { id: true, name: true } });
   vi.spyOn(getEmailProvider(), "sendEmail").mockImplementation(async (payload) => {
     if (fail) return { success: false, error: "provider down" };
     sent.push(payload);
@@ -47,7 +49,7 @@ const guest = (email: string, departureId: string) => ({
   adultsCount: 2,
   childrenCount: 0,
   infantsCount: 0,
-  pickupCustomText: "Moxy Banff",
+  pickupStopId: banffStop.id,
 });
 
 const pages = async (payload: EmailPayload) => (await PDFDocument.load(payload.attachments![0].content)).getPageCount();
@@ -63,7 +65,7 @@ describe("confirmation email", () => {
     const email = confirmations()[0];
     expect(email.to).toBe("one@example.com");
     expect(email.subject).toContain(ref);
-    expect(email.text).toContain("Pickup: Moxy Banff");
+    expect(email.text).toContain(`Pickup: ${banffStop.name}`);
     expect(email.attachments?.[0].filename).toBe(`Vista-Chase-itinerary-${ref}.pdf`);
     expect(email.attachments?.[0].content.subarray(0, 4).toString()).toBe("%PDF");
     // The tour's full current itinerary (timeline, stop by stop, good to know) and the check-in QR
@@ -81,7 +83,7 @@ describe("confirmation email", () => {
     expect(staff[0].text).toContain("Guest: Itinerary Guest");
     expect(staff[0].text).toContain("Phone: +1 403 555 0199");
     expect(staff[0].text).toContain("Party: 2 adults (2 seats)");
-    expect(staff[0].text).toContain("Pickup: Moxy Banff");
+    expect(staff[0].text).toContain(`Pickup: ${banffStop.name}`);
     expect(staff[0].text).toMatch(/Paid: \$\d+\.\d{2} CAD/);
     expect(staff[0].text).toContain("Date: 2028-05-02 at 08:30");
     const ics = email.attachments?.[1];
