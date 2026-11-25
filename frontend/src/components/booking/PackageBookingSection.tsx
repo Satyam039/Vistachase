@@ -98,6 +98,7 @@ export async function PackageBookingSection({
             directActivities={config.directActivities}
             hidePickupTimes={config.hidePickupTimes}
             arrivalStartsDeadline={config.arrivalStartsDeadline}
+            seasonalDayPrices={config.seasonalDayPrices}
           />
         </div>
       </div>

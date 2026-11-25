@@ -150,7 +150,20 @@ const MALIGNE_CRUISE: PackageActivity = {
 };
 
 export const PACKAGE_ACTIVITIES: Record<string, PackageActivity[]> = {
-  "two-day-rockies-explorer-private": [{ ...ICEFIELD_ADVENTURE, detail: "Columbia Icefield Adventure tickets: Ice Explorer onto the Athabasca Glacier and the Skywalk" }],
+  // Owner, 2026-11-25: the Minnewanka cruise on the Banff & Yoho day, the combined glacier experience on a summer Icefields day.
+  "two-day-rockies-explorer-private": [
+    {
+      ...MINNEWANKA_CRUISE,
+      detail: "Banff & Yoho day · optional, tickets extra",
+      info: { ...MINNEWANKA_CRUISE.info, good: ["On your Banff & Yoho Discovery tour", "Bring a jacket: it is cooler on the water", SEASON] },
+    },
+    {
+      ...ICEFIELD_ADVENTURE,
+      name: "Ice Explorer + Skywalk (combined glacier experience)",
+      detail: "Summer Icefields day · one combined optional experience, tickets extra. Individual attraction selection is unavailable.",
+      info: { ...ICEFIELD_ADVENTURE.info, good: ["On a summer Columbia Icefield Adventure date (June 1–October 10)", "Ice Explorer and Skywalk can't be chosen separately", "Bring a warm layer and good shoes: it is cold on the ice", SEASON] },
+    },
+  ],
   // Owner, 2026-11-24: the Banff tour's gondola and Minnewanka cruise, then one combined glacier experience.
   "three-day-rockies-discovery": [
     { ...BANFF_GONDOLA, info: { ...BANFF_GONDOLA.info, good: ["On your Banff Lakes & Viewpoints tour", "Food at the summit is not included", SEASON] } },

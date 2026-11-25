@@ -248,6 +248,7 @@ export function PackageActivityPicker({
   onChange,
   partySize,
   prices,
+  disabled = {},
 }: {
   activities: PackageActivity[];
   value: PackageActivityChoice;
@@ -256,6 +257,8 @@ export function PackageActivityPicker({
   partySize: number;
   /** The server's per-person prices; an activity without one is priced by our team. */
   prices: PackageActivityPrices | null;
+  /** Activities that can't be requested for the chosen dates, with the reason shown in place. */
+  disabled?: Record<string, string>;
 }) {
   if (activities.length === 0) return null;
   const toggle = (id: string, on: boolean) => {
@@ -270,21 +273,34 @@ export function PackageActivityPicker({
       <p className="text-xs text-slate-600">Tick each activity you&apos;d like, then tell us how many people join it. Up to {partySize} {partySize === 1 ? "guest" : "guests"}, your party size.</p>
       {activities.map((a) => {
         const guests = value[a.id];
+        const off = disabled[a.id];
         return (
-          <div key={a.id} className={`rounded-xl border ${guests ? "border-ocean-500 ring-1 ring-ocean-500" : "border-slate-200"}`}>
+          <div key={a.id} className={`rounded-xl border ${guests ? "border-ocean-500 ring-1 ring-ocean-500" : "border-slate-200"} ${off ? "bg-slate-50" : ""}`}>
             <div className="flex items-start gap-1 pr-2">
-              <label className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-start gap-3 p-3">
-                <input type="checkbox" className="mt-0.5 h-4 w-4 shrink-0 accent-ocean-700" checked={Boolean(guests)} onChange={(e) => toggle(a.id, e.target.checked)} />
+              <label className={`flex min-h-11 min-w-0 flex-1 items-start gap-3 p-3 ${off ? "cursor-not-allowed" : "cursor-pointer"}`}>
+                <input
+                  type="checkbox"
+                  className="mt-0.5 h-4 w-4 shrink-0 accent-ocean-700"
+                  checked={Boolean(guests) && !off}
+                  disabled={Boolean(off)}
+                  aria-describedby={off ? `activity-${a.id}-off` : undefined}
+                  onChange={(e) => toggle(a.id, e.target.checked)}
+                />
                 <span className="min-w-0">
-                  <span className="block text-sm font-medium text-obsidian-900">{a.name}</span>
+                  <span className={`block text-sm font-medium ${off ? "text-slate-600" : "text-obsidian-900"}`}>{a.name}</span>
                   <span className="block text-xs text-slate-600">{a.detail}</span>
+                  {off && (
+                    <span id={`activity-${a.id}-off`} className="mt-1 block text-xs text-amber-800">
+                      {off}
+                    </span>
+                  )}
                 </span>
               </label>
               <span className="pt-2">
                 <ActivityInfo activity={a} />
               </span>
             </div>
-            {guests && (
+            {guests && !off && (
               <div className="space-y-2 border-t border-slate-200 px-3 pb-3 pt-2">
                 <p className="text-xs text-slate-600">Who joins the {a.name}?</p>
                 <GuestBands guests={guests} onChange={(g) => onChange({ ...value, [a.id]: g })} maxGuests={partySize} idPrefix={`activity-${a.id}`} />

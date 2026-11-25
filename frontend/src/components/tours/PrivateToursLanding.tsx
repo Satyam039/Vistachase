@@ -585,6 +585,19 @@ function PrivateTourCard({
                             <span className="text-right font-medium text-white">{option.seasonLabel}</span>
                           </div>
                         )}
+                        {/* Two-Day private (owner, 2026-11-25): savings note plus both seasonal prices. */}
+                        {!option.seasonLabel && option.seasonalPricing && (
+                          <>
+                            <div className="flex items-center justify-between text-white/80">
+                              <span className="text-white/55">Summer Price:</span>
+                              <span className="font-medium text-summit-200">{option.seasonalPricing.summer}</span>
+                            </div>
+                            <div className="flex items-center justify-between text-white/80">
+                              <span className="text-white/55">Winter Price:</span>
+                              <span className="font-medium text-white">{option.seasonalPricing.winter}</span>
+                            </div>
+                          </>
+                        )}
                       </div>
                     ) : option.seasonalPricing ? (
                       <div className="mt-2.5 space-y-1 rounded-lg bg-white/[0.04] p-2.5 text-xs">
