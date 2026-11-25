@@ -135,7 +135,13 @@ export default async function HomePage() {
 
 export async function generateMetadata(): Promise<Metadata> {
   cachePublicData();
-  // The Google site verification tag sits on the home page only (approved in the SEO portal).
+  // The Google site verification tag sits on the home page only. The Search Console token is
+  // always present; a different token approved in the SEO portal is added beside it, never instead.
   const [metadata, config] = await Promise.all([withSeo("/", baseMetadata), getSiteConfig()]);
-  return config?.verification ? { ...metadata, verification: { google: config.verification } } : metadata;
+  const tokens = [GOOGLE_SITE_VERIFICATION];
+  if (config?.verification && config.verification !== GOOGLE_SITE_VERIFICATION) tokens.push(config.verification);
+  return { ...metadata, verification: { google: tokens.length === 1 ? tokens[0] : tokens } };
 }
+
+/** Search Console ownership token for https://www.vistachase.com/ (same as the old Webflow tag). */
+const GOOGLE_SITE_VERIFICATION = "isQ3svDyWBUc7wL57wZAC-aZ5_yT-QXBS0eMwJU9jvk";

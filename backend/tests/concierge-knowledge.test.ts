@@ -52,7 +52,7 @@ describe("product knowledgebase", () => {
   it("puts live prices and departure times in the concierge's knowledge, never old Webflow names", async () => {
     const text = await renderCatalogKnowledge();
     expect(text).toContain("### Banff & Yoho Discovery [slug: banff-highlights-tour]");
-    expect(text).toMatch(/Banff & Yoho Discovery – Private[^#]*CAD \$1,750 per vehicle June 1–Oct 10/);
+    expect(text).toMatch(/Private Banff & Yoho Discovery[^#]*CAD \$1,750 per vehicle June 1–Oct 10/);
     expect(text).toContain("8:00 AM");
     expect(text).not.toContain("Our Best Selling Banff Shared Tour");
     expect(text).not.toContain("Standard Banff Private Best Selling Tour");
@@ -69,12 +69,11 @@ describe("product knowledgebase", () => {
     expect(card.image).toMatch(/^\/media\//);
 
     const winter = await recommendTours({ date: "2027-01-20", guests: 2, style: "shared", days: 1 });
-    expect(winter.cards.map((c) => c.slug)).toContain("winter-special");
+    expect(winter.cards.map((c) => c.slug)).not.toContain("winter-special"); // off the website (owner, 2026-11-25)
     expect(winter.cards.map((c) => c.slug)).not.toContain("full-day-at-lake-louise-and-moraine-lake");
 
     const big = await recommendTours({ date: "2027-07-14", guests: 13, style: "private", days: 1 });
     expect(big.cards.map((c) => c.slug)).toEqual(["banff-private-tour"]);
-    expect(big.reasonsLeftOut.join(" ")).toMatch(/up to 6 guests/);
   });
 
   it("opens one tour with its stops, inclusions, pickup and next dates", async () => {

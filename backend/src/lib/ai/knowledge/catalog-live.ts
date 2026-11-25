@@ -310,9 +310,6 @@ export async function recommendTours(prefs: Preferences, limit = 3): Promise<{ c
     for (const [place, re] of Object.entries(PLACE_WORDS) as [Place, RegExp][]) {
       if (re.test(wanted)) score += p.places.includes(place) ? 3 : -2;
     }
-    if (/\b(winter|snow|ice bubble|frozen)\b/i.test(wanted) && (p.slug === "winter-special" || p.slug === "winter-signature-private-tour")) {
-      score += 4;
-    }
     if (prefs.interests) for (const g of p.goodFor) if (new RegExp(`\\b${g.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i").test(prefs.interests)) score += 2;
     if (prefs.premium === true) score += p.type === "PRIVATE" ? 3 : -1;
     if (prefs.premium === false) score += p.type === "PRIVATE" ? -3 : 1;

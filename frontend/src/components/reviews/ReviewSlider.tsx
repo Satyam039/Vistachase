@@ -9,6 +9,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight, BadgeCheck, ChevronLeft, ChevronRight, Pause, Play, Star } from "lucide-react";
+import { tourPagePath } from "@/lib/retiredTours";
 
 export interface SliderReview {
   id: string;
@@ -133,7 +134,7 @@ export function ReviewSlider({ reviews, tone = "light", label = "Guest reviews" 
               <figcaption className={`mt-5 border-t pt-4 text-sm ${dark ? "border-white/10 text-slate-300" : "border-obsidian-900/[0.06] text-slate-600"}`}>
                 <span className={dark ? "text-white" : "text-obsidian-900"}>{r.authorName}</span> · {r.date}
                 {r.tourTitle && r.tourSlug && (
-                  <Link href={`/${r.tourSlug}`} className={`mt-1 block truncate underline-offset-4 hover:underline ${dark ? "text-summit-200" : "text-ocean-600"}`}>
+                  <Link href={tourPagePath(r.tourSlug)} className={`mt-1 block truncate underline-offset-4 hover:underline ${dark ? "text-summit-200" : "text-ocean-600"}`}>
                     {r.tourTitle}
                   </Link>
                 )}

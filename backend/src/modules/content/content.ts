@@ -6,6 +6,7 @@
 
 import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/db/prisma";
+import { ON_SALE } from "@/modules/tours/product-map";
 import { z } from "@/lib/security/validate";
 import { normalizePath } from "@/modules/seo/paths";
 
@@ -121,7 +122,9 @@ const TOUR_FIELDS = {
 
 export async function listContent() {
   const [tours, destinations] = await Promise.all([
+    // Tours taken off the website (REMOVED_TOUR_SLUGS) are left out of Admin → Content.
     prisma.tour.findMany({
+      where: ON_SALE,
       orderBy: [{ sortOrder: "asc" }, { title: "asc" }],
       select: { id: true, slug: true, title: true, category: true, isFeatured: true, featuredImage: true, updatedAt: true, destination: { select: { name: true } } },
     }),

@@ -27,9 +27,11 @@ import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 import { PACKAGE_ITINERARIES } from "@/lib/itineraries";
 import { ItineraryDayPanel, ItineraryDayTabList, ItineraryDays } from "@/components/tours/ItineraryDayTabs";
 import { PackageTripJsonLd } from "@/components/seo/PackageTripJsonLd";
-import { PACKAGE_DAY_PRICE, PRIVATE_MAX_GUESTS, PRIVATE_PACKAGES } from "@/lib/privateTours";
+import { PRIVATE_PACKAGES, THREE_DAY_MAX_GUESTS } from "@/lib/privateTours";
 import { PackageBookingSection } from "@/components/booking/PackageBookingSection";
-import { cancellationShort } from "@/lib/policy";
+import { BALANCE_DUE_DAYS, DEPOSIT_MIN_DAYS, DEPOSIT_PERCENT } from "@/lib/policy";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { THREE_DAY_CANCELLATION, THREE_DAY_DURATION, THREE_DAY_FAQS, THREE_DAY_INTRO, THREE_DAY_PRICE, THREE_DAY_PRICING } from "@/lib/threeDayContent";
 import { cachePublicData } from "@/lib/api/cachePolicy";
 
 // Rendered once and served from cache, refreshed in the background at most every minute, instead of
@@ -40,52 +42,53 @@ export const revalidate = 60;
 export const metadata: Metadata = {
   title: "Three-Day Rockies Discovery Private Tour | Vista Chase",
   description:
-    "Three days of mountain towns, iconic lakes, waterfalls and glaciers with your own driver-guide, private vehicle and doorstep pickup. Hotels booked by guests.",
+    "Three private tours: Banff’s lakes and viewpoints, Lake Louise, Moraine Lake & Yoho, and the Icefields Parkway. Private van and driver-guide, dates in any order, 10% savings, summer only.",
   alternates: { canonical: "/three-day-rockies-discovery" },
 };
 
+const cad = (n: number) => `CAD $${n.toLocaleString("en-CA")}`;
+
+// Owner's Trello card, 2026-11-24: tour names, any order, 14 guests, Banff/Canmore pickup only.
 const SPECS = [
-  { label: "Duration", value: "Three full-day tours", icon: Clock },
-  { label: "Experience", value: "Private, exclusively for your group", icon: Users },
-  { label: "Pickup", value: "Your accommodation in Banff, Canmore or Lake Louise", icon: MapPin },
-  { label: "Pricing", value: "Per vehicle, according to your selected vehicle capacity", icon: Car },
-  { label: "Park admission", value: "Included", icon: Check },
-  { label: "Activities", value: "Optional extras selected at checkout", icon: Sparkles },
-  { label: "Accommodation", value: "Booked directly by guests", icon: BedDouble },
-  { label: "Airport transfers", value: "From CAD $364 per transfer", icon: Plane },
-  { label: "Availability", value: "Seasonal; available dates shown when booking", icon: Calendar },
+  { label: "Tours", value: "Three private tours on different dates, in any order", icon: Compass },
+  { label: "Duration", value: THREE_DAY_DURATION, icon: Clock },
+  { label: "Group", value: `Up to ${THREE_DAY_MAX_GUESTS} guests; 12–13 recommended for comfort`, icon: Users },
+  { label: "Pickup", value: "Doorstep pickup and drop-off in Banff or Canmore", icon: MapPin },
+  { label: "Pricing", value: `${cad(THREE_DAY_PRICE.total)} per private van, 10% savings included`, icon: Car },
 ];
 
-// Day-by-day itinerary: lib/itineraries.ts (shared with the booking PDF).
+// Tour-by-tour itinerary: lib/itineraries.ts (shared with the booking PDF).
 const ITINERARY_DAYS = PACKAGE_ITINERARIES["three-day-rockies-discovery"];
 
 const INCLUSIONS = [
-  "Private vehicle for your group during the three tour days.",
-  "A dedicated driver-guide.",
-  "Doorstep pickup and drop-off at your accommodation in Banff, Canmore or Lake Louise.",
+  "A private van and driver-guide for each of the three tours.",
+  "Doorstep pickup and drop-off at your accommodation in Banff or Canmore for each tour.",
   "Transportation between the sightseeing locations.",
   "Required national park admission fees.",
-  "Moraine Lake access arrangements when included in the operating itinerary.",
+  "Moraine Lake transportation during its operating season, subject to access conditions; no separate shuttle booking is needed.",
   "Taxes and other mandatory fees charged by authorities for the included tour services.",
+  `10% package savings: ${cad(THREE_DAY_PRICE.saving)} off the three-tour price.`,
 ];
 
 const EXCLUSIONS = [
   "Accommodation; guests book directly.",
   "Lunch, other meals and personal purchases.",
-  "Third-party activities, including gondola rides, lake cruises, canoe rentals, Ice Explorer and Skywalk admission, unless selected and paid for.",
-  "Airport transfers unless separately arranged and added to your booking.",
+  "Optional experiences: Banff Gondola, Lake Minnewanka cruise and the combined Ice Explorer + Skywalk. Tickets are arranged by our team and invoiced separately.",
+  "Airport transfers, unless added to your booking.",
   "Gratuities.",
 ];
 
 const IMPORTANT_INFO = [
-  "This is a private experience for your booked group. Vehicle capacity depends on the option selected.",
-  "Third-party attractions may be shared with other visitors.",
-  "Optional activities are subject to seasonal operation, ticket availability and the attraction operator’s terms.",
+  "Your van and driver-guide are exclusive to your group. Third-party attractions may be shared with other visitors.",
+  "Up to 14 guests per van; 12–13 is recommended for comfort.",
+  THREE_DAY_DURATION,
+  "Optional experiences depend on seasonal operation, ticket availability, the day’s schedule and the attraction operator’s terms. Reserved activities may mean other stops are shortened or skipped.",
   "Moraine Lake, Takakkaw Falls and other locations depend on seasonal access.",
+  "Moraine Lake: a van transfer may be needed depending on arrangements on the day. Your group’s transportation remains private, and no separate shuttle booking is required.",
+  "The Icefields tour reaches the Columbia Icefield but does not visit Jasper town.",
   "Short walks may include hills, steps, uneven surfaces and canyon walkways. Tell us about mobility needs before booking.",
   "Bring comfortable walking shoes, layers and a weatherproof jacket. Pack additional warm clothing for the Columbia Icefield.",
   "Wildlife sightings, clear views and lake colours cannot be guaranteed.",
-  "Moraine Lake transportation may involve a vehicle transfer, depending on your booked vehicle option. Your arrangements will be explained before booking.",
 ];
 
 export default function ThreeDayRockiesDiscoveryPage() {
@@ -102,6 +105,13 @@ export default function ThreeDayRockiesDiscoveryPage() {
         days={PRIVATE_PACKAGES.three.days.map((d) => d.title)}
         touristType="Private Group"
         crumbs={[{ name: "Home", path: "/" }, { name: "Multi-day tours", path: "/multi-day-tour-package-for-banff" }, { name: PRIVATE_PACKAGES.three.title }]}
+      />
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: THREE_DAY_FAQS.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a.join("\n") } })),
+        }}
       />
       <div className="bg-obsidian-50 text-obsidian-900">
         {/* Hero */}
@@ -153,7 +163,7 @@ export default function ThreeDayRockiesDiscoveryPage() {
             </nav>
 
             <span className="mb-3 inline-block rounded-full bg-summit-500/20 px-3.5 py-1 text-xs font-medium uppercase tracking-[0.2em] text-summit-300 ring-1 ring-summit-400/30 backdrop-blur-md">
-              Private Tour · 3 Days
+              Private Tours · Three Experiences
             </span>
 
             <h1 className="text-balance text-[clamp(2.25rem,8vw,4.5rem)] font-light leading-[1.05] tracking-tight text-white motion-safe:animate-[fadeUp_900ms_ease-out]">
@@ -163,7 +173,7 @@ export default function ThreeDayRockiesDiscoveryPage() {
               Private Banff, Yoho &amp; Columbia Icefield Tour
             </p>
             <p className="mx-auto mt-5 max-w-3xl text-base sm:text-lg font-light leading-relaxed text-slate-100">
-              Three remarkable days exploring mountain towns, iconic lakes, waterfalls and glacier landscapes—with your own driver-guide, private vehicle and doorstep pickup.
+              {THREE_DAY_INTRO.headline}
             </p>
           </div>
         </section>
@@ -192,22 +202,30 @@ export default function ThreeDayRockiesDiscoveryPage() {
         <ItineraryDays days={ITINERARY_DAYS}>
         {/* Main Content Layout */}
         <div className="mx-auto grid max-w-7xl items-start gap-12 px-page pb-6 pt-16 sm:pt-20 lg:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)]">
-          {/* Main Column */}
-          <div className="space-y-12">
+          {/* Main Column (min-w-0: the tour tabs scroll sideways instead of widening the column on phones) */}
+          <div className="min-w-0 space-y-12">
             {/* Overview */}
             <section aria-labelledby="overview-heading" className="space-y-4">
               <h2 id="overview-heading" className="text-2xl sm:text-3xl font-light tracking-tight text-obsidian-900">
                 Overview
               </h2>
-              <p className="text-base sm:text-lg font-light leading-relaxed text-slate-700">
-                Discover the Canadian Rockies across three thoughtfully planned days. Explore Banff’s viewpoints and lakes, visit Lake Louise and Moraine Lake, discover the waterfalls and scenery of Yoho, then follow the Icefields Parkway to the Columbia Icefield.
+              <p className="text-lg sm:text-xl font-light text-obsidian-900">{THREE_DAY_INTRO.headline}</p>
+              {THREE_DAY_INTRO.paragraphs.map((p) => (
+                <p key={p} className="text-base sm:text-lg font-light leading-relaxed text-slate-700">
+                  {p}
+                </p>
+              ))}
+              <p className="text-base font-light leading-relaxed text-slate-700">
+                <strong className="font-medium text-obsidian-900">Duration:</strong> {THREE_DAY_DURATION}
               </p>
-              <p className="text-base sm:text-lg font-light leading-relaxed text-slate-700">
-                Your dedicated driver-guide takes care of the driving and daily route, leaving you free to enjoy the scenery. Choose optional experiences at checkout, including the Banff Gondola, Ice Explorer and Columbia Icefield Skywalk.
-              </p>
-              <p className="text-base sm:text-lg font-light leading-relaxed text-slate-700">
-                Stay in your own chosen accommodation in Banff, Canmore or Lake Louise, with doorstep pickup each tour day. Airport transfers can also be arranged, making it possible to enjoy your visit without renting a car.
-              </p>
+              <div className="border-l-2 border-summit-500 bg-white p-5">
+                <h3 className="text-sm uppercase tracking-[0.18em] text-ocean-600">Pricing</h3>
+                {THREE_DAY_PRICING.map((p) => (
+                  <p key={p} className="mt-2 text-base font-light leading-relaxed text-slate-700">
+                    {p}
+                  </p>
+                ))}
+              </div>
             </section>
 
             {/* Daily Itinerary */}
@@ -216,7 +234,9 @@ export default function ThreeDayRockiesDiscoveryPage() {
                 Detailed Itinerary
               </h2>
 
-              <ItineraryDayTabList />
+              <p className="text-sm text-slate-600">Choose a tour to see its stops. Book the three tours on different available dates, in any order; they don&rsquo;t need to be consecutive.</p>
+
+              <ItineraryDayTabList fit />
 
             </section>
 
@@ -230,24 +250,29 @@ export default function ThreeDayRockiesDiscoveryPage() {
             <div className="border-b border-white/10 pb-5">
               <span className="text-xs uppercase tracking-[0.2em] text-summit-300">Private Journey</span>
               <h3 className="mt-1 text-2xl font-light text-white">Three-Day Rockies Discovery</h3>
-              {/* The doc's package price (lib/privateTours.ts): per day per vehicle, summer season only. */}
-              <p className="mt-4 flex items-baseline gap-1.5 text-white">
-                <span className="text-xs text-white/60">From</span>
-                <span className="text-3xl font-light tabular-nums">CAD ${(PACKAGE_DAY_PRICE.summer * 3).toLocaleString("en-CA")}</span>
-                <span className="text-xs text-white/70">per vehicle</span>
+              {/* Owner, 2026-11-24: the package price per private van (PACKAGE_DAY_PRICE.summer x 3). */}
+              <p className="mt-4 flex flex-wrap items-baseline gap-1.5 text-white">
+                <span className="text-3xl font-light tabular-nums">{cad(THREE_DAY_PRICE.total)}</span>
+                <span className="text-xs text-white/70">per private van, all three tours</span>
               </p>
+              <p className="mt-1 text-xs text-white/60">Taxes, mandatory fees and 10% savings included</p>
               <dl className="mt-3 space-y-1 text-xs">
                 <div className="flex justify-between gap-3">
-                  <dt className="text-white/60">Summer (Jun 1–Oct 10)</dt>
-                  <dd className="text-summit-200">CAD ${PACKAGE_DAY_PRICE.summer.toLocaleString("en-CA")} per day per vehicle</dd>
+                  <dt className="text-white/60">Savings</dt>
+                  <dd className="text-right text-summit-200">
+                    {cad(THREE_DAY_PRICE.perDay)} per tour day · Save {cad(THREE_DAY_PRICE.saving)}
+                  </dd>
                 </div>
                 <div className="flex justify-between gap-3">
-                  <dt className="text-white/60">Winter (Oct 11–May 31)</dt>
-                  <dd className="text-white/80">Not offered (summer only)</dd>
+                  <dt className="text-white/60">Group</dt>
+                  <dd className="text-right text-white/80">Up to {THREE_DAY_MAX_GUESTS} guests; 12–13 recommended</dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-white/60">Season</dt>
+                  <dd className="text-right text-white/80">Summer only: June 1–October 10</dd>
                 </div>
               </dl>
             </div>
-
 
             <div className="mt-8">
               <a
@@ -257,7 +282,7 @@ export default function ThreeDayRockiesDiscoveryPage() {
                 Book Now <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </a>
               <p className="mt-3 text-center text-xs text-white/60">
-                Choose your own date for each day, then pay once. {cancellationShort("MULTIDAY")}.
+                Choose a date for each tour, then pay once. {THREE_DAY_CANCELLATION.short}
               </p>
             </div>
 
@@ -272,7 +297,11 @@ export default function ThreeDayRockiesDiscoveryPage() {
             </div>
           </aside>
         </div>
-        <PackageBookingSection config={PRIVATE_PACKAGES.three} heading="Book the Three-Day Rockies Discovery" />
+        <PackageBookingSection
+          config={PRIVATE_PACKAGES.three}
+          heading="Book the Three-Day Rockies Discovery"
+          intro={`One private van and driver-guide for each tour. Choose a different date for each of the three tours, then pay once, in full or with a ${DEPOSIT_PERCENT}% deposit when every tour is at least ${DEPOSIT_MIN_DAYS} days away.`}
+        />
         <div className="mx-auto max-w-7xl px-page py-16 sm:py-20">
           <div className="space-y-12 lg:max-w-[calc((100%-3rem)*1.75/2.75)]">
             <ItineraryDayPanel />
@@ -281,7 +310,7 @@ export default function ThreeDayRockiesDiscoveryPage() {
             <div className="flex items-start gap-3 rounded-2xl bg-amber-500/10 p-5 text-sm text-amber-950 border border-amber-500/20">
               <Info className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" aria-hidden="true" />
               <p>
-                <strong className="font-semibold">Itinerary note:</strong> The day-by-day itinerary above outlines the planned experiences rather than a fixed driving order. Your guide may rearrange stops around pickup location, attraction reservations, weather and road conditions. Optional activities affect the time available at other stops.
+                <strong className="font-semibold">Itinerary note:</strong> Each tour&rsquo;s itinerary outlines the planned experiences rather than a fixed driving order. Your guide may rearrange stops around pickup location, attraction reservations, weather and road conditions. Optional activities affect the time available at other stops.
               </p>
             </div>
 
@@ -326,16 +355,16 @@ export default function ThreeDayRockiesDiscoveryPage() {
                   <span>Pickup &amp; Drop-Off</span>
                 </h3>
                 <p className="mt-3 text-sm sm:text-base leading-relaxed text-slate-600 font-light">
-                  Doorstep pickup is available from your booked accommodation in Banff, Canmore or Lake Louise. Please provide your accommodation name and full address when booking.
+                  Tour pickup and drop-off are at your accommodation in Banff or Canmore. Use the same address for all three tours, or a different confirmed Banff or Canmore address for each tour, and give us the accommodation name and full address when booking.
                 </p>
                 <p className="mt-2 text-sm sm:text-base leading-relaxed text-slate-600 font-light">
-                  Your exact pickup time will be confirmed before each tour day. For private tours, the daily schedule is coordinated around your itinerary and any reserved activities.
+                  Your exact pickup time will be confirmed before each tour. For private tours, the schedule is coordinated around your itinerary and any reserved activities.
                 </p>
                 <p className="mt-2 text-sm sm:text-base leading-relaxed text-slate-600 font-light">
                   Your guide will be assigned the day before your tour, and their contact information will be shared once confirmed. We aim to retain the same guide throughout multi-day bookings, subject to availability and operational requirements.
                 </p>
                 <p className="mt-2 text-sm text-ocean-700 font-medium">
-                  Airport transfers are available with this package per one-way transfer for CAD $364 (Banff or Canmore) or CAD $445 (Lake Louise) for up to 6 guests, or CAD $850 (Banff or Canmore) or CAD $895 (Lake Louise) for 7 to 12 guests; a round trip is two transfers, added to your total when you tick the airport transfer box. Share your flight details at checkout.
+                  Private airport transfers between Calgary and Banff or Canmore can be added when booking, per one-way transfer: CAD $364 for 1–6 passengers or CAD $850 for 7–14 passengers, including taxes and mandatory fees. A round trip is two transfers. For a Lake Louise transfer, use Special requests or contact our team for confirmation.
                 </p>
               </div>
 
@@ -345,7 +374,7 @@ export default function ThreeDayRockiesDiscoveryPage() {
                   <span>Accommodation</span>
                 </h3>
                 <p className="mt-3 text-sm sm:text-base leading-relaxed text-slate-600 font-light">
-                  Book your accommodation directly in Banff, Canmore or Lake Louise for the nights needed around your tour dates. You can remain at the same property throughout the three-day experience.
+                  Book your accommodation directly in Banff or Canmore for the nights around your tour dates. You can stay at the same property throughout, or use a different confirmed Banff or Canmore address for each tour.
                 </p>
                 <p className="mt-2 text-xs uppercase tracking-wider text-slate-500 font-medium">
                   Accommodation is not included in the tour price.
@@ -367,6 +396,47 @@ export default function ThreeDayRockiesDiscoveryPage() {
                   </li>
                 ))}
               </ul>
+            </section>
+
+            {/* Cancellation policy (owner, 2026-11-24): one statement, the same everywhere on this page and at checkout. */}
+            <section aria-labelledby="cancellation-heading" className="rounded-none bg-white p-6 sm:p-8 border border-obsidian-900/[0.08]">
+              <h3 id="cancellation-heading" className="text-xl font-normal text-obsidian-900 flex items-center gap-2">
+                <FileText className="h-5 w-5 text-ocean-600" />
+                <span>Cancellation Policy</span>
+              </h3>
+              {THREE_DAY_CANCELLATION.paragraphs.map((p) => (
+                <p key={p} className="mt-3 text-sm sm:text-base leading-relaxed text-slate-600 font-light">
+                  {p}
+                </p>
+              ))}
+              <h4 className="mt-5 text-base font-normal text-obsidian-900">Paying with a deposit</h4>
+              <p className="mt-2 text-sm sm:text-base leading-relaxed text-slate-600 font-light">
+                When every tour is at least {DEPOSIT_MIN_DAYS} days away, you can pay {DEPOSIT_PERCENT}% at booking and the rest {BALANCE_DUE_DAYS} days before your first tour, from your vouchers; we email you a reminder. Otherwise the full amount is paid at booking. The non-refundable portion is {DEPOSIT_PERCENT}% of the total package price, regardless of instalments paid, so a cancellation after paying only the deposit is not refunded.
+              </p>
+            </section>
+
+            {/* FAQs (owner, 2026-11-24) */}
+            <section aria-labelledby="faq-heading" className="space-y-4">
+              <h2 id="faq-heading" className="text-2xl sm:text-3xl font-light tracking-tight text-obsidian-900">
+                Frequently Asked Questions
+              </h2>
+              <div className="divide-y divide-obsidian-900/[0.08] border-y border-obsidian-900/[0.08] bg-white">
+                {THREE_DAY_FAQS.map((f) => (
+                  <details key={f.q} className="group px-5 sm:px-6">
+                    <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 py-4 text-base text-obsidian-900 [&::-webkit-details-marker]:hidden">
+                      {f.q}
+                      <ChevronRight className="h-4 w-4 shrink-0 text-ocean-600 transition-transform group-open:rotate-90" aria-hidden="true" />
+                    </summary>
+                    <div className="space-y-2 pb-5 text-sm sm:text-base font-light leading-relaxed text-slate-600">
+                      {f.a.map((p) => (
+                        <p key={p} className="whitespace-pre-line">
+                          {p}
+                        </p>
+                      ))}
+                    </div>
+                  </details>
+                ))}
+              </div>
             </section>
           </div>
         </div>

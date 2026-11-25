@@ -38,7 +38,7 @@ export function ItineraryDays({ days, idPrefix = "itinerary", children }: { days
 }
 
 /** The Day 1, Day 2… buttons. */
-export function ItineraryDayTabList() {
+export function ItineraryDayTabList({ fit = false }: { fit?: boolean } = {}) {
   const { days, idPrefix, active, setActive } = useDays();
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
 
@@ -57,7 +57,12 @@ export function ItineraryDayTabList() {
   };
 
   return (
-    <div role="tablist" aria-label={days.some((d) => d.tabLabel) ? "Itinerary by tour" : "Itinerary by day"} className="flex gap-2 overflow-x-auto pb-1">
+    <div
+      role="tablist"
+      aria-label={days.some((d) => d.tabLabel) ? "Itinerary by tour" : "Itinerary by day"}
+      // `fit` (Three-Day, 2026-11-24): on phones the tabs share the row and their labels wrap, so none is cut off at the edge.
+      className={fit ? "grid auto-cols-fr grid-flow-col gap-2 pb-1 sm:flex sm:overflow-x-auto" : "flex gap-2 overflow-x-auto pb-1"}
+    >
       {days.map((d, i) => {
         const selected = i === active;
         return (
@@ -83,13 +88,13 @@ export function ItineraryDayTabList() {
               });
             }}
             onKeyDown={onKey}
-            className={`min-h-11 shrink-0 border px-4 py-2 text-left transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-600 sm:min-w-40 ${
+            className={`min-h-11 shrink-0 border ${fit ? "min-w-0 px-2.5 sm:px-4" : "px-4"} py-2 text-left transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-600 sm:min-w-40 ${
               selected
                 ? "border-obsidian-950 bg-obsidian-950 text-white"
                 : "border-obsidian-900/[0.12] bg-white text-obsidian-900 [@media(hover:hover)]:hover:border-ocean-600 [@media(hover:hover)]:hover:bg-ocean-50"
             }`}
           >
-            <span className={`block text-xs uppercase tracking-[0.2em] ${selected ? "text-summit-200" : "text-ocean-600"}`}>{d.tabLabel ?? `Day ${d.dayNumber}`}</span>
+            <span className={`block text-xs uppercase ${fit ? "tracking-[0.1em] sm:tracking-[0.2em]" : "tracking-[0.2em]"} ${selected ? "text-summit-200" : "text-ocean-600"}`}>{d.tabLabel ?? `Day ${d.dayNumber}`}</span>
           </button>
         );
       })}

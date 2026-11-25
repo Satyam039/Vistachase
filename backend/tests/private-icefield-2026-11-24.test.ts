@@ -51,7 +51,7 @@ describe("Private Columbia Icefield Adventure", () => {
     );
     expect(result.error).toBeUndefined();
     expect(result.success).toBe(true);
-    const booking = await prisma.booking.findUniqueOrThrow({ where: { bookingReference: result.booking.bookingReference } });
+    const booking = await prisma.booking.findUniqueOrThrow({ where: { bookingReference: result.booking!.bookingReference } });
     expect(booking.totalSeats).toBe(14);
     expect(booking.totalAmount).toBe(175000); // the van price only: tickets are invoiced separately
     expect(booking.specialRequests).toContain("TICKET REQUEST (not a confirmed reservation): Ice Explorer + Skywalk (combined experience) for 5 of 14 guests");

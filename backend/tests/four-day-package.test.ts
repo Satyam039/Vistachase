@@ -38,3 +38,11 @@ describe("four-day cancellation deadline", () => {
     expect(arrivalPickupInstant({})).toBeNull();
   });
 });
+
+describe("three-day rules (owner, 2026-11-24)", () => {
+  const three = findPackage("three-day-rockies-discovery")!;
+  it("needs three different dates, in any order", () => {
+    expect(packageDateRuleError(three, ["2027-07-20", "2027-07-02", "2027-06-15"])).toBeNull();
+    expect(packageDateRuleError(three, ["2027-07-20", "2027-07-20", "2027-06-15"])).toContain("different date");
+  });
+});

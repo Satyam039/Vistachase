@@ -138,6 +138,11 @@ export function ConciergePackageCheckout({ slug }: { slug: string }) {
         consecutive={config.consecutive}
         guestNote={config.guestNote}
         datesNote={config.datesNote}
+        banffCanmorePickup={config.banffCanmorePickup}
+        banffCanmoreTransferOnly={config.banffCanmoreTransferOnly}
+        directActivities={config.directActivities}
+        hidePickupTimes={config.hidePickupTimes}
+        arrivalStartsDeadline={config.arrivalStartsDeadline}
       />
     </section>
   );

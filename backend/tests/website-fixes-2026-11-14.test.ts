@@ -143,7 +143,7 @@ describe("booking itinerary = the website's itinerary for exactly what was booke
     const cases = [
       { slug: "banff-highlights-tour", email: "itin.by@example.com", expect: "Lake Louise and Moraine Lake (Moraine Lake from June 1 to October 10)." },
       { slug: "shared-tours-icefields-jasper", email: "itin.cia@example.com", expect: "Bow Lake, Crowfoot Glacier, Peyto Lake and Waterfowl Lakes along the Icefields Parkway." },
-      { slug: "banff-private-tour", email: "itin.pby@example.com", expect: "Drop-off at your accommodation. The day runs about 10 to 12 hours, depending on your pace." },
+      { slug: "banff-private-tour", email: "itin.pby@example.com", expect: "Drop-off at your accommodation in Banff or Canmore. Allow approximately 10–12 hours for the tour." },
       { slug: "icefields-jasper-private-tour", email: "itin.pcia@example.com", expect: "Columbia Icefield: the optional Ice Explorer + Skywalk combined experience" },
     ];
     const banffStop = await prisma.shuttleStop.findFirstOrThrow({ where: { town: "Banff", isActive: true } });
@@ -171,7 +171,11 @@ describe("booking itinerary = the website's itinerary for exactly what was booke
     expect(winterEmail!.text).not.toContain("Our team will confirm your detailed itinerary");
 
     // A product with no itinerary for the date: no made-up route; the guest is told, staff get a flag.
-    const dep = await departure("winter-special", "2028-01-18");
+    // The winter tours are off the website (2026-11-25), so a copy of one stands in for "a product
+    // with no itinerary" here.
+    const { id: _id, slug: _slug, ...winter } = await prisma.tour.findUniqueOrThrow({ where: { slug: "winter-special" } });
+    await prisma.tour.upsert({ where: { slug: "no-itinerary-test-tour" }, update: {}, create: { ...(winter as any), slug: "no-itinerary-test-tour", bokunId: null } });
+    const dep = await departure("no-itinerary-test-tour", "2028-01-18");
     const { booking } = await createBooking(guest("itin.winter@example.com", dep.id, { pickupStopId: banffStop.id }));
     const email = confirmationFor("itin.winter@example.com");
     expect(email!.text).toContain("Our team will confirm your detailed itinerary");

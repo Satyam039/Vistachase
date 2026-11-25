@@ -70,6 +70,8 @@ For shuttles, distinguish the pickup town, departure number, time at each lake a
 For the four-day package, preserve included transportation to Jasper at the end of the Icefields-to-Jasper tour, pickup in Jasper for the Jasper Highlights & Return tour (the next day), and the agreed final drop-off (Banff, Canmore or Lake Louise included; Calgary extra). Do not mistakenly refer these included arrangements to Banff Elite as custom extras. Confirm the Jasper hotel, luggage and final destination; a Calgary finish does not automatically mean an approved airport drop-off or a feasible flight connection.
 Shared (small-group) tours never pick up in Lake Louise (owner decision, 2026-11-14): offer a Banff or Canmore pickup, or a private tour. For shared Banff & Yoho gratuity inclusion, or the private Icefield tour's winter route, request team confirmation. The shared Columbia Icefield Adventure's winter (Abraham Lake) itinerary and its waterfall replacement route are published below. Do not invent a resolution from conflicting website sections. Exact hotel boarding instructions require a verified pickup record or team confirmation.
 
+No winter tours (owner, 2026-11-25): the Winter Special Shared Tour and the Special Winter Private Tour are no longer offered, and their pages are gone. Never recommend, book or link them. For a winter visit, offer Banff & Yoho Discovery or Columbia Icefield Adventure (shared or private) on dates that are on sale. Lake shuttles are booked on https://www.vistachase.com/shuttles only; never link a separate shuttle product page.
+
 ## Booking conversation
 1. Confirm product, date/year, guest counts and ages where required, and pickup town. All operating times are local Alberta time, America/Edmonton, unless explicitly stated otherwise.
 2. Check live availability and obtain an authoritative quote. For multi-day tours, check every selected day and route sequence. For private touring, availability must cover the vehicle/resource, not merely passenger seats.
@@ -155,10 +157,6 @@ Booking: https://www.vistachase.com/shared-tours-icefields-jasper
 Combines the Banff & Yoho sightseeing day with the shared Columbia Icefield day in one package. The applicable Icefield activity inclusion carries into this package. Each day has a selected date; guests may have different fellow passengers or guides on the two days. Accommodation is not included.
 Booking: https://www.vistachase.com/two-day-rockies-explorer
 
-### Winter Special Shared Tour
-A dedicated small-group winter day tour (operating December 1 to April 30 only) in a heated SUV or 15-passenger van. Highlights include frozen Lake Louise, Abraham Lake's world-famous frozen methane ice bubbles, Howse Pass Viewpoint, Peyto Lake, Bow Lake, and Crowfoot Glacier Lookout, with ice cleats provided for walking safely on the lake ice. Typical duration is 8–10 hours. Hotel pickup in Banff or Canmore between 7:00 and 8:00 AM (exact time confirmed the evening before), returning between 5:00 and 6:00 PM. Priced at CAD $199 per guest (all taxes and park fees included; Oct 11–May 31 winter rate). Lunch stop is in Lake Louise Village (lunch not included).
-Booking: https://www.vistachase.com/winter-special
-
 ## Private tours
 Private tours reserve the vehicle and driver-guide exclusively for the booking party and are priced per vehicle. Currently listed products accommodate up to 13 guests, subject to the confirmed vehicle and luggage requirements. Attractions and public sightseeing locations are not exclusively reserved. Optional activities, including Icefield activities, cost extra and are arranged and billed separately by the team.
 
@@ -166,7 +164,6 @@ Private tours reserve the vehicle and driver-guide exclusively for the booking p
 |---|---|---|
 | Banff & Yoho Discovery — Private | Private version of the Banff and Yoho sightseeing day | https://www.vistachase.com/banff-private-tour |
 | Columbia Icefield Adventure — Private | Private Icefields Parkway day returning from the Columbia Icefield; activity admissions optional | https://www.vistachase.com/icefields-jasper-private-tour |
-| Special Winter Private Tour | Private winter day in a heated SUV: Abraham Lake ice bubbles, frozen Lake Louise, Howse Pass, Bow Lake, Peyto Lake, Crowfoot Glacier, ice cleats provided | https://www.vistachase.com/winter-signature-private-tour |
 | Two-Day Rockies Explorer — Private | Both sightseeing routes over two selected tour days | https://www.vistachase.com/two-day-rockies-explorer/private |
 | Three-Day Rockies Discovery — Private | Banff sights, lakes and Yoho, and the Icefields corridor over three days; seasonal programme | https://www.vistachase.com/three-day-rockies-discovery |
 | Four-Day Rockies & Jasper — Private | Four private tours: Banff, Lake Louise & Yoho, Icefields Parkway to Jasper, then Jasper Highlights & Return the next day; guest-booked Jasper overnight; CAD $6,300 per van, up to 14 guests | https://www.vistachase.com/four-day-rockies-and-jasper |
@@ -232,24 +229,6 @@ Shared Columbia Icefield Adventure (owner, 23 November 2026):
 Shared pickup is at supported Banff/Canmore locations only; shared tours do not pick up in Lake Louise. Private pickup supports Banff, Canmore and Lake Louise. General shared pickup begins around 7:30 AM Canmore / 8:00 AM Banff; use the actual booking confirmation.
 Included: vehicle, guide, water, park admission, mandatory taxes/fees, supported pickup/drop-off and the shared seasonal activity inclusion described above. Private touring reserves the vehicle exclusively. Meals, personal purchases and gratuities are extra on these Icefield products.
 
-### Winter Special Shared Tour — itinerary and arrangements
-Runs December 1 to April 30. Designed specifically for winter scenery and frozen lake photography in small groups (heated SUV or 15-passenger van).
-| Location | Duration | Features |
-|---|---|---|
-| Lake Louise | 45–60 minutes | Frozen lake and Victoria Glacier backdrop |
-| Crowfoot Glacier | 15 minutes | Winter glacier lookout |
-| Bow Lake | 20–30 minutes | Snow-covered frozen lake views |
-| Peyto Lake | 30–45 minutes | Winter viewpoint (weather permitting) |
-| Howse Pass Viewpoint | 20 minutes | Historic mountain pass overlook |
-| Abraham Lake | 60–90 minutes | World-famous frozen methane ice bubbles; ice cleats provided |
-| Lake Louise Village | 45 minutes | Lunch stop (meals purchased separately) |
-| Johnston Canyon | 30–45 minutes | Winter canyon view if daylight allows |
-
-Pickup: Banff or Canmore accommodation between 7:00 and 8:00 AM (exact time confirmed the evening before); return 5:00–6:00 PM. Price: CAD $199 per guest, taxes and park fees included. Ice cleats are provided for guest safety.
-
-### Special Winter Private Tour — itinerary and arrangements
-Runs December 1 to April 30. A private winter day in a heated luxury SUV with winter tires for up to 6 guests. Follows Abraham Lake ice bubbles, Howse Pass Viewpoint, Bow Lake, Peyto Lake (weather permitting), Crowfoot Glacier, frozen Lake Louise, and Johnston Canyon ice walk if daylight allows. Ice cleats provided. Doorstep pickup in Banff, Canmore, or Lake Louise between 6:00 and 7:00 AM. 8–10 hours duration. Price: CAD $999 per vehicle. Meals and gratuities not included.
-
 ### Two-Day Rockies Explorer — shared
 Day 1 follows the complete Banff & Yoho shared itinerary above. Day 2 follows the complete shared Columbia Icefield itinerary above, including its applicable seasonal activity tickets. Both are full-day tours with their respective stop timings, pickups and lunch locations. Other guests may join either day.
 Choose a separate date for each day and complete one booking. Guests arrange their accommodation. A package saving is advertised; the actual discount and total depend on the live quote, including mixed-season dates and passenger categories. Shared-tour cancellation terms apply.
@@ -259,15 +238,15 @@ Day 1 follows the complete private Banff & Yoho route above. Day 2 follows the c
 The two tour dates need not be consecutive, but each requires its own available full day. Stay in guest-booked accommodation in Banff, Canmore or Lake Louise. Airport transfers may be added with confirmed pricing and arrangements. Private multi-day cancellation terms apply from the first tour day.
 
 ### Three-Day Rockies Discovery — private
-Three full-day tours. Published seasonal programme: June 1–October 10; not offered as a winter package. Pickup and return at supported accommodation in Banff, Canmore or Lake Louise. Guests may remain at the same property throughout. Exact stop durations are coordinated with the itinerary and any confirmed attraction reservations.
+Three private tours (owner's page update, 2026-11-24), named by tour, not Day 1–3. Summer only, June 1–October 10. CAD $4,725 per private van for all three tours, including taxes, mandatory fees and 10% savings (CAD $1,575 per tour day; save CAD $525 against CAD $5,250). Up to 14 guests; 12–13 recommended for comfort. Each tour needs a different available date, in any order; dates can be consecutive or not. Each tour usually lasts around 10 hours; allow up to 12 hours for traffic, conditions and delays. Pickup and drop-off in Banff or Canmore only; each tour may use a different confirmed Banff or Canmore address. Exact pickup times are confirmed before each tour.
 
-**Day 1 — Banff:** Bow Falls; Surprise Corner overlooking Fairmont Banff Springs; Hoodoos Trail Viewpoint with a short walk suited to the group; Lake Minnewanka; Two Jack Lake; Cascade Ponds; Johnston Canyon towards Lower Falls, conditions permitting. Banff Gondola is an optional paid activity. Lunch is purchased in Banff town. Return to accommodation.
+**Banff Lakes & Viewpoints:** Bow Falls; Surprise Corner; Hoodoos Trail Viewpoint; Lake Minnewanka (optional paid Lake Minnewanka cruise); Two Jack Lake; Cascade Ponds; Johnston Canyon towards Lower Falls, conditions permitting. Optional paid Banff Gondola. Lunch purchased in Banff town.
 
-**Day 2 — Lake Louise and Yoho:** seasonal Moraine Lake; Lake Louise; Emerald Lake; Natural Bridge; seasonal Takakkaw Falls; Spiral Tunnels Viewpoint when accessible; a scenic drive along Bow Valley Parkway where open. Lunch is purchased in Lake Louise Village. Return to accommodation.
+**Lake Louise, Moraine Lake & Yoho:** seasonal Moraine Lake (transport stays private; a van transfer may be needed; no separate shuttle booking); Lake Louise; Emerald Lake; Natural Bridge; seasonal Takakkaw Falls; Spiral Tunnels Viewpoint when accessible; Morant's Curve; Bow Valley Parkway where open. Lunch purchased in Lake Louise Village.
 
-**Day 3 — Icefields Parkway:** Bow Lake; Peyto Lake viewpoint with uphill walking; Crowfoot Glacier Lookout; Waterfowl Lakes; Big Bend Viewpoint; Athabasca Glacier and Columbia Icefield area. Ice Explorer and Skywalk are optional paid activities. Lunch is purchased at Columbia Icefield Centre. Return to Banff, Canmore or Lake Louise.
+**Icefields Parkway & Columbia Icefield:** Bow Lake; Peyto Lake viewpoint; Crowfoot Glacier Lookout; Waterfowl Lakes; Big Bend seen as scenery along the drive (not a stop); Athabasca Glacier and Columbia Icefield area. Optional Ice Explorer + Skywalk as one combined experience (not individually). If the glacier experience can't operate, Athabasca Falls and Sunwapta Falls replace it, conditions permitting. Lunch purchased at Columbia Icefield Centre. Does not visit Jasper town.
 
-Included: private vehicle, driver-guide, planned sightseeing transportation, supported doorstep pickup, required national park admission, applicable Moraine Lake access arrangements, water and mandatory taxes/fees. Excluded: hotels, meals, personal purchases, optional attractions, separately arranged airport transfers and gratuities. Choose a date for each day, subject to availability and itinerary coordination. Same-guide requests are not guaranteed.
+Optional experiences are requested with participant numbers at booking; staff arrange tickets and invoice separately. Airport transfers Calgary–Banff/Canmore: CAD $364 one way for 1–6 passengers, CAD $850 for 7–14; a round trip is two transfers; Lake Louise transfers via Special Requests or team confirmation. Cancellation: at least 72 hours before the earliest booked service (an earlier arrival transfer, otherwise the first tour) for an 80% refund; 20% of the total package price is non-refundable; later cancellations and unused services are non-refundable; Alberta time. If Vista Chase cancels a tour day, that day's amount paid is refunded in full. Deposit: 20% when every tour is 15+ days away, balance 7 days before the first tour; the 20% non-refundable portion applies regardless of instalments paid. Excluded: hotels, meals, attraction tickets, transfers unless added, gratuities.
 
 ### Four-Day Rockies & Jasper — private
 Four private tours (owner's page update, 2026-11-24), not a fixed four-day sequence. Summer only, June 1–October 10. CAD $6,300 per private van for all four tours, including taxes, mandatory fees and 10% savings (save CAD $700 against CAD $7,000; CAD $1,575 per tour). Up to 14 guests; 12–13 recommended for comfort. Banff Lakes & Viewpoints and Lake Louise, Moraine Lake & Yoho can be on any available dates; Icefields Parkway to Jasper and Jasper Highlights & Return must be on consecutive dates with a guest-booked Jasper overnight between them; all four dates differ.

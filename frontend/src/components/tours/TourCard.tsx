@@ -20,6 +20,7 @@ import {
   reviewsLabel,
 } from "@/lib/tours";
 import { activityTicket } from "@/lib/activityTickets";
+import { tourPagePath } from "@/lib/retiredTours";
 
 export {
   CATEGORY_LABEL,
@@ -169,7 +170,7 @@ export function TourCard({
                 <span className="sr-only"> (book on the operator&apos;s site, opens in a new tab)</span>
               </a>
             ) : (
-              <Link href={`/${tour.slug}`} className="focus-visible:outline-none">
+              <Link href={tourPagePath(tour.slug)} className="focus-visible:outline-none">
                 <span className="absolute inset-0 z-10 group-has-[:focus-visible]:outline group-has-[:focus-visible]:outline-2 group-has-[:focus-visible]:outline-offset-2 group-has-[:focus-visible]:outline-summit-300" />
                 {title ?? tour.title}
               </Link>
