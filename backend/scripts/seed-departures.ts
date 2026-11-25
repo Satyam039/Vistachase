@@ -65,12 +65,14 @@ interface ScheduleConfig extends Fare {
   summer?: Fare;
   /** Seed every date until the end of this month (1-12) of its next season, instead of SEED_DAYS. */
   seasonEndsMonth?: number;
+  /** Optional MM-DD cutoff within seasonEndsMonth (e.g. "10-12" for Oct 12). */
+  seasonEndMonthDay?: string;
 }
 
 const JUNE_JULY = [6, 7];
-/** Shuttles: one fare for adults, youth and infants (owner's doc, 2026-11-04). */
+/** Shuttles: one fare for adults, youth and infants (same fare across all ages; every passenger requires a seat). */
 const shuttleFare = (cents: number): Fare => ({ price: cents, childPrice: cents, infantPrice: cents });
-const JUNE_SEPTEMBER = [6, 7, 8, 9];
+const JUNE_OCTOBER = [6, 7, 8, 9, 10];
 /** December 1 to April 30: the winter tours' operating period. */
 export const WINTER_MONTHS = [12, 1, 2, 3, 4];
 
@@ -130,26 +132,28 @@ export const DEFAULT_SCHEDULES: ScheduleConfig[] = [
   {
     slug: "full-day-at-lake-louise-and-moraine-lake",
     times: [
-      { time: "06:30", returnTime: "13:00", months: JUNE_SEPTEMBER, fare: shuttleFare(12000) },
-      { time: "10:15", returnTime: "15:45", months: JUNE_SEPTEMBER, fare: shuttleFare(12000) },
-      { time: "11:30", returnTime: "18:00", months: JUNE_SEPTEMBER, fare: shuttleFare(10800) },
-      { time: "14:00", returnTime: "20:30", months: JUNE_SEPTEMBER, fare: shuttleFare(10800) },
+      { time: "06:30", returnTime: "13:00", months: JUNE_OCTOBER, fare: shuttleFare(12000) },
+      { time: "10:15", returnTime: "15:45", months: JUNE_OCTOBER, fare: shuttleFare(12000) },
+      { time: "11:30", returnTime: "18:00", months: JUNE_OCTOBER, fare: shuttleFare(10800) },
+      { time: "14:00", returnTime: "20:30", months: JUNE_OCTOBER, fare: shuttleFare(10800) },
       { time: "16:45", returnTime: "22:00", months: JUNE_JULY, fare: shuttleFare(10800) },
     ],
     capacity: SHUTTLE_CAPACITY,
     ...shuttleFare(10800),
-    seasonEndsMonth: 9,
+    seasonEndsMonth: 10,
+    seasonEndMonthDay: "10-12",
   },
   // Shuttle departures 1-2 (Early Morning).
   {
     slug: "sunrise-shuttle-to-moraine-lake-and-lake-louise",
     times: [
       { time: "03:15", returnTime: "09:00", months: JUNE_JULY },
-      { time: "04:15", returnTime: "10:30", months: JUNE_SEPTEMBER },
+      { time: "04:15", returnTime: "10:30", months: JUNE_OCTOBER },
     ],
     capacity: SHUTTLE_CAPACITY,
-    ...shuttleFare(13000),
-    seasonEndsMonth: 9,
+    ...shuttleFare(13500),
+    seasonEndsMonth: 10,
+    seasonEndMonthDay: "10-12",
   },
 ];
 
@@ -198,6 +202,7 @@ async function seedFallbackSchedule(daysCount = SEED_DAYS) {
       const targetDate = new Date(startDate);
       targetDate.setUTCDate(startDate.getUTCDate() + dayOffset);
       const isoDateStr = targetDate.toISOString().slice(0, 10);
+      if (item.seasonEndMonthDay && isoDateStr.slice(5, 10) > item.seasonEndMonthDay) continue;
 
       const month = Number(isoDateStr.slice(5, 7));
       for (const slot of item.times) {

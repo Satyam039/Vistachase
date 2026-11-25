@@ -137,7 +137,7 @@ const TOPICS: Topic[] = [
       [/\b(how (does|do) (it|the shuttle|shuttles) work|tell me about|info\w*|details?|explain|what is)\b/, 1],
     ],
     answer: () =>
-      "Our Moraine Lake & Lake Louise shuttle runs in summer from Banff and Canmore with guaranteed access, since Moraine Lake Road is closed to private cars. Tell me a date and I'll show the times with free seats, or see /shuttles.",
+      "Our Moraine Lake & Lake Louise Shuttle runs June 1–October 12 (departures 1–7 through July 31, 2–6 from August 1; CAD $135 for dep 1–2, $120 for dep 3–4, $108 for dep 5–7; same fare for all ages). Listed pickups in Canmore, Banff and Samson Mall (access subject to closures and operating conditions). Tell me a date and I'll check live departures, or see /shuttles.",
   },
   {
     id: "parks-pass",

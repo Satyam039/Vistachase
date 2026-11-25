@@ -10,6 +10,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "@site": path.resolve(__dirname, "../frontend/src/lib"),
     },
   },
 });

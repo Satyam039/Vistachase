@@ -29,8 +29,8 @@ const PRIVATE_BENEFITS = [
   },
   {
     icon: ShieldCheck,
-    title: "Guaranteed Commercial Access Permits",
-    description: "Full commercial authorization to drive directly to Moraine Lake and Lake Louise shorelines, bypassing all parking bans.",
+    title: "Licensed Commercial Access Permits",
+    description: "Commercial authorization to drive to Moraine Lake and Lake Louise shorelines without public parking lots, subject to road closures and Parks Canada conditions.",
   },
 ];
 

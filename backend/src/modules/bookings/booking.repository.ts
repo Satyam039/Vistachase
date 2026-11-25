@@ -436,15 +436,18 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
       };
 
       const stop = input.pickupStopId ? await tx.shuttleStop.findUnique({ where: { id: input.pickupStopId } }) : null;
-      // Shared tours: no Lake Louise pickup (pickup-rules.ts). Refused here, so no caller can skip it.
-      const pickupRefusal = pickupError(departure.tour, stop, input.pickupCustomText);
-      if (pickupRefusal) throw new BookingRefused(pickupRefusal);
       const isShuttle = Boolean(
         departure.shuttleRouteId ||
         departure.shuttleRoute ||
         departure.tour?.category === "SHUTTLE" ||
         departure.tour?.slug?.includes("shuttle"),
       );
+      // Shared tours: no Lake Louise pickup; shuttles & shared tours: listed stops only; private custom addresses: Canmore/Banff only.
+      const pickupRefusal = pickupError(departure.tour, stop, input.pickupCustomText, {
+        isShuttle,
+        allowCustomPickup: options.offlinePayment,
+      });
+      if (pickupRefusal) throw new BookingRefused(pickupRefusal);
       const resolvedPickupTime = resolveShuttlePickupTime({
         departureTime: formatTimeOfDay(departure.departureTime),
         town: stop?.town,

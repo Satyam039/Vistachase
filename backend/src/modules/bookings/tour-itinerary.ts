@@ -20,7 +20,7 @@
 // team will confirm the itinerary, and staff get a flag, instead of an old Webflow itinerary.
 
 import { PACKAGE_ITINERARIES, TOUR_ITINERARIES, inSummerSeason } from "@site/itineraries";
-import { SHUTTLE_DEPARTURES, SHUTTLE_PICKUPS, clockRange, departuresFor, clock as shuttleClock } from "@site/shuttleSchedule";
+import { SHUTTLE_DEPARTURES, SHUTTLE_PICKUPS, SHUTTLE_PRODUCT_NAME, clockRange, departuresFor, clock as shuttleClock } from "@site/shuttleSchedule";
 import { formatDateOnly, formatTimeOfDay } from "@/lib/utils/time";
 
 export interface ItineraryStep {
@@ -69,12 +69,17 @@ export const WEBSITE_TITLES: Record<string, string> = {
   ...Object.fromEntries(Object.entries(TOUR_ITINERARIES).map(([slug, t]) => [slug, t.title])),
   "winter-special": "Winter Special Shared Tour",
   "winter-signature-private-tour": "Special Winter Private Tour",
+  "sunrise-shuttle-to-moraine-lake-and-lake-louise": SHUTTLE_PRODUCT_NAME,
+  "full-day-at-lake-louise-and-moraine-lake": SHUTTLE_PRODUCT_NAME,
 };
 
 /** The experience's name for vouchers and emails: the website's name for the tour, else its title. */
-export function experienceTitle(departure: { tour?: { slug: string; title: string } | null; shuttleRoute?: { name: string } | null }): string {
+export function experienceTitle(departure: { tour?: { slug: string; title: string; category?: string | null } | null; shuttleRoute?: { name: string } | null }): string {
   const tour = departure.tour;
-  return (tour && WEBSITE_TITLES[tour.slug]) || tour?.title || departure.shuttleRoute?.name || "Vista Chase experience";
+  if (departure.shuttleRoute || tour?.category === "SHUTTLE" || tour?.slug?.includes("shuttle")) {
+    return SHUTTLE_PRODUCT_NAME;
+  }
+  return (tour && WEBSITE_TITLES[tour.slug]) || tour?.title || "Vista Chase experience";
 }
 
 export interface ItineraryBooking {
@@ -184,12 +189,18 @@ export function bookingItinerary(booking: ItineraryBooking): ItineraryResult {
           { time: "Pickup", text: pickups },
           { time: clockRange(dep.moraine), text: "Moraine Lake" },
           { time: clockRange(dep.louise), text: "Lake Louise" },
-          { time: "Return", text: `Back in Banff around ${shuttleClock(dep.returnBanff)} and Canmore around ${shuttleClock(dep.returnCanmore)} (estimated).` },
+          {
+            time: "Return",
+            text: `Estimated return (local Alberta time): Samson Mall ${shuttleClock(dep.returnSamson)}, Banff ${shuttleClock(dep.returnBanff)}, Canmore ${shuttleClock(dep.returnCanmore)}.`,
+          },
         ],
         stops: [],
         notes: [
-          "Shuttle departures have specific lake pickup times, which must be followed.",
-          "Times are local Alberta time. Your exact pickup time and stop are shown above.",
+          "This is a shuttle service, not a guided tour. Explore independently and follow your booked schedule.",
+          "Be ready at your confirmed pickup point 10 minutes before departure. Switching departures or skipping a leg requires team approval.",
+          "Park admission and bottled water included; meals and hot drinks not included. Eating onboard is not permitted; water is allowed.",
+          "Samson Mall pickup: parking is not provided at Samson Mall, village public parking, or day-use areas.",
+          "Minimum 4 passengers required. Access remains subject to road closures and Parks Canada operating conditions.",
         ],
         source: `shuttle:${dep.number}`,
       },

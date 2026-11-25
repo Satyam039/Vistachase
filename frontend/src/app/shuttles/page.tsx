@@ -24,72 +24,125 @@ import { cachePublicData } from "@/lib/api/cachePolicy";
 export const revalidate = 60;
 
 const baseMetadata: Metadata = {
-  title: "Moraine Lake & Lake Louise Shuttles | Vista Chase",
+  title: "Moraine Lake & Lake Louise Shuttle | Vista Chase",
   description:
-    "Sunrise and day shuttles to Moraine Lake and Lake Louise from Canmore and Banff. Parks Canada entry, a local guide and guaranteed access included.",
+    "Moraine Lake & Lake Louise Shuttle from Canmore, Banff and Lake Louise Village (Samson Mall), June 1–October 12. Parks Canada admission and bottled water included; access subject to road closures and operating conditions.",
   alternates: { canonical: "/shuttles" },
 };
 
 const INCLUDED = [
-  "Guaranteed Moraine Lake and Lake Louise access",
-  "Parks Canada entry fees",
-  "A professional local guide",
-  "Bottled water and a hot drink",
-  "Round trip from Canmore, Banff or Lake Louise",
+  "Moraine Lake & Lake Louise shuttle access (subject to closures & operating conditions)",
+  "Parks Canada admission fees",
+  "Bottled water onboard",
+  "Round-trip transportation from Canmore, Banff or Samson Mall",
 ];
 
 const STEPS = [
-  { icon: TicketCheck, title: "Pick a departure", body: "Choose sunrise or the day shuttle and your date below." },
-  { icon: Clock, title: "Get your pickup time", body: "We confirm your exact pickup time the day before." },
-  { icon: Sunrise, title: "Ride to the lakes", body: "No driving, no parking: we take the road closed to cars." },
-  { icon: CalendarCheck, title: "Free time, then home", body: "Time at Moraine Lake and Lake Louise, then back to Banff or Canmore." },
+  { icon: TicketCheck, title: "Pick a departure", body: "Choose from departures 1–7 (June 1–July 31) or 2–6 (August 1–October 12)." },
+  { icon: Clock, title: "Check your pickup time", body: "Board at your listed Banff, Canmore or Samson Mall pickup 10 minutes early." },
+  { icon: Sunrise, title: "Ride to the lakes", body: "No driving, no parking: we take the road closed to personal cars." },
+  { icon: CalendarCheck, title: "Explore & return", body: "Explore both lakes independently on your booked schedule, then ride back." },
+];
+
+const SHUTTLE_INFO = [
+  {
+    title: "Service",
+    body: "This is a shuttle service, not a guided tour. Guests explore independently and must follow their booked schedule. Switching departures or skipping a leg requires team approval.",
+  },
+  {
+    title: "Food and drinks",
+    body: "Park admission and bottled water are included. Meals and hot drinks are not included. Packed food is welcome for consumption during lake stops. Eating onboard is not permitted; water is allowed.",
+  },
+  {
+    title: "Timing",
+    body: "Be ready at your confirmed pickup point 10 minutes before departure. Visit and return times are approximate and may change due to traffic, road conditions or unexpected disruptions.",
+  },
+  {
+    title: "Samson Mall pickup notice",
+    body: "Parking is not provided. Do not leave your vehicle in village public parking, day-use areas or Samson Mall customer parking while using the shuttle. Guests staying in Banff or Canmore should board there.",
+  },
+  {
+    title: "Rescheduling",
+    body: "Request rescheduling at least 24 hours before departure, subject to availability and confirmation.",
+  },
+  {
+    title: "Minimum passengers",
+    body: "Four passengers are required. If minimum numbers require cancellation, guests are contacted at least one week ahead and offered an alternative or full refund. Bookings made within seven days are protected from minimum-passenger cancellation. Major disruptions may still affect operation.",
+  },
+  {
+    title: "Closures",
+    body: "If Parks Canada closes one lake but the shuttle operates, no refund applies for the missed lake. If Vista Chase cancels the entire departure, guests receive a full refund.",
+  },
+  {
+    title: "Missed lake pickup",
+    body: "Contact your driver or Vista Chase support immediately. Later transportation depends on availability and is not guaranteed.",
+  },
 ];
 
 const SHUTTLE_FAQS = [
-  // Owner's "AI Training for Vista Chase" (2026-11-11), word for word.
-  {
-    q: "Staying in Banff or Canmore? Board your shuttle there.",
-    a: "We do not recommend driving to Lake Louise Village to catch our shuttle. Village public parking and day-use areas cannot be used to leave your vehicle while taking our service. Samson Mall’s short-stay customer parking is not suitable for your lake excursion.\n\nOur Lake Louise Village pickup is intended for guests staying locally or arriving without needing to park. Enjoy both lakes without the drive or parking worries by choosing pickup in Banff or Canmore.",
-  },
-  {
-    q: "Which shuttle should I choose for an early-morning or late-afternoon visit?",
-    a: "Choose according to the scheduled arrival and time at each lake, as well as your return time. Early-morning and late-afternoon options may suit you if you prefer to visit outside peak periods, but crowd levels cannot be guaranteed. Departures vary by date and season. Tell us your travel date and pickup town so we can guide you to the appropriate departure options.",
-  },
-  {
-    q: "Why can't I drive my personal car to Moraine Lake?",
-    a: "Parks Canada closed Moraine Lake Road to personal and rental vehicles to manage traffic and protect the alpine ecosystem. Only licensed commercial operators like Vista Chase, public Roam Transit, and Parks Canada shuttles are permitted on the road. Booking with Vista Chase guarantees your seat and direct access right to the lake shore.",
-  },
   {
     q: "Where do your shuttles pick up and drop off?",
-    a: "We provide convenient pickup and drop-off points across Canmore, Banff townsite, and Lake Louise Village (Samson Mall). You can select your preferred pickup point during checkout or look up your nearest hotel stop using our Hotel Pickup Finder.",
+    a: "Choose from the listed hotel/pickup options in Banff or Canmore, or Samson Mall in Lake Louise Village. Custom pickup addresses are not available for this shared shuttle. Your exact pickup arrangements are confirmed before travel.",
   },
   {
-    q: "Are Parks Canada entrance fees and road permits included?",
-    a: "Yes, all commercial road permits and Parks Canada entrance fees required for transportation to Moraine Lake and Lake Louise are included in your ticket price. There are no surprise fees or extra permit costs at boarding.",
+    q: "What time do the early-morning shuttles depart?",
+    a: "Departure 1 picks up at 2:45 AM in Canmore, 3:15 AM in Banff and 3:55 AM at Samson Mall. It operates June 1–July 31.\n\nDeparture 2 picks up at 3:45 AM in Canmore, 4:15 AM in Banff and 4:55 AM at Samson Mall. It operates June 1–October 12.\n\nAll times are local Alberta time. Sunrise timing and conditions vary; a particular sunrise view is not guaranteed.",
   },
   {
-    q: "What time do sunrise shuttles depart?",
-    a: "Sunrise departures leave early in the morning (Departure 1: Canmore 2:45 AM / Banff 3:15 AM / Lake Louise Village 3:55 AM for 4:30–6:00 AM at Moraine Lake; Departure 2: Canmore 3:45 AM / Banff 4:15 AM / Lake Louise Village 4:55 AM for 5:30–7:00 AM at Moraine Lake) so you arrive well before first light strikes the Ten Peaks. Please refer to our departure schedule for exact timings.",
+    q: "When does the shuttle operate?",
+    a: "The shuttle operates June 1–October 12, subject to road access and conditions.\n\nJune 1–July 31: departures 1–7.\nAugust 1–October 12: departures 2–6.",
   },
   {
-    q: "How much time do we spend at Moraine Lake and Lake Louise?",
-    a: "Visit durations follow your selected departure schedule—about 1¼ to 1¾ hours at Moraine Lake and 1½ to 2½ hours at Lake Louise. Please review our detailed departure timetable for each departure's specific lake visit and return times.",
+    q: "How much does the shuttle cost?",
+    a: "Prices are in Canadian dollars per person, including taxes and mandatory fees:\n\n• Departures 1–2: $135\n• Departures 3–4: $120\n• Departures 5–7: $108\n\nThe same fare applies to adults, children and infants. Every passenger requires a seat.",
   },
   {
-    q: "How many guests travel on each shuttle vehicle?",
-    a: "Up to 14 guests per departure, in a comfortable shuttle with time to explore both lakes independently.",
+    q: "Is this a guided tour?",
+    a: "No. This is a shared shuttle service with transportation between the lakes and time to explore independently. A guide does not accompany you at the lakes.",
+  },
+  {
+    q: "Are food and drinks included?",
+    a: "Bottled water is included. Meals and hot drinks are not included, and there is no dedicated lunch stop.\n\nBring breakfast, snacks or a packed meal to enjoy during your scheduled lake time, particularly on early departures when food outlets may not be open. Eating onboard is not permitted; drinking water is allowed.",
+  },
+  {
+    q: "How early should I be ready, and can the schedule change?",
+    a: "Be ready at your confirmed pickup point 10 minutes before departure. Visit and return times are approximate and may change because of traffic, road conditions or unexpected disruptions.",
+  },
+  {
+    q: "Can I return on a different departure or skip one lake?",
+    a: "Your booking follows a fixed schedule covering both lakes and all shuttle legs. You cannot independently switch return departures or skip a leg. Contact us with special requests; changes require approval and depend on availability.",
+  },
+  {
+    q: "What if I miss the shuttle at a lake?",
+    a: "Contact your driver or Vista Chase support immediately. We will advise on available options, but later transportation is subject to availability and is not guaranteed.",
+  },
+  {
+    q: "Is there a minimum passenger requirement?",
+    a: "Yes, four passengers. If minimum numbers require cancellation, we contact guests at least one week before departure and offer a suitable alternative. If it does not work for you, we provide a full refund.\n\nBookings made within seven days of departure are protected from minimum-passenger cancellation. Major disruptions may still affect operation.",
+  },
+  {
+    q: "What happens if Parks Canada closes one lake?",
+    a: "If Parks Canada closes one lake but the shuttle still operates, no refund applies for the missed lake. If Vista Chase cancels the entire departure, you receive a full refund.",
+  },
+  {
+    q: "Can I bring an infant, and are child seats available?",
+    a: "Yes. Infants pay the same departure fare and require a seat. Complimentary child seats and boosters are limited and require advance confirmation. Tell us your child’s age and seat requirements before travel.",
+  },
+  {
+    q: "What is your cancellation and rescheduling policy?",
+    a: "Cancel at least 24 hours before your confirmed departure for a full refund. Later cancellations, missed pickups and no-shows are non-refundable.\n\nRescheduling requests also require at least 24 hours’ notice and depend on availability and confirmation.",
+  },
+  {
+    q: "Why should I use a shuttle to visit Moraine Lake?",
+    a: "The shuttle provides arranged transportation to Moraine Lake and Lake Louise without the need to drive or find parking at the lakes. Access remains subject to road closures, Parks Canada restrictions and operating conditions.",
+  },
+  {
+    q: "Staying in Banff or Canmore? Board your shuttle there.",
+    a: "Parking is not provided at Samson Mall. Do not leave your vehicle in village public parking, day-use areas or Samson Mall customer parking while using the shuttle. Guests staying in Banff or Canmore should board there.",
   },
   {
     q: "Can I bring luggage, strollers, or outdoor gear?",
     a: "Small daypacks, camera bags, hiking poles (with rubber tips), and compact foldable strollers are welcome on board. If you have larger luggage or special mobility equipment, please contact us in advance at support@vistachase.com so we can ensure suitable vehicle accommodation.",
-  },
-  {
-    q: "What is your cancellation policy for lake shuttles?",
-    a: "Cancel at least 24 hours before your scheduled departure for a full refund. Cancellations after that, missed pickups and no-shows aren't refunded.",
-  },
-  {
-    q: "What should I wear and bring on the shuttle?",
-    a: "Mountain mornings in the Canadian Rockies can be brisk—especially for sunrise shuttles. We recommend dressing in warm layers (fleece or light down jacket), comfortable sturdy walking shoes, sunglasses, a reusable water bottle, and your camera or phone for photos.",
   },
 ];
 
@@ -157,7 +210,7 @@ export default async function ShuttlesPage() {
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </a>
           <p className="mt-6 text-sm text-white/85">Both Lakes Included · Round-Trip Transportation · Small Groups</p>
-          <p className="mt-1 text-sm text-white/70">Operating June–September · Multiple Daily Departures</p>
+          <p className="mt-1 text-sm text-white/70">Operating June 1–October 12 · Access subject to road closures &amp; operating conditions</p>
         </div>
       </section>
 
@@ -177,8 +230,12 @@ export default async function ShuttlesPage() {
           </p>
           <p className="mt-3 text-base text-slate-600">Choose your date and pickup location to see available departures.</p>
           <p className="mt-4 flex flex-wrap justify-center gap-x-6 gap-y-1 text-sm text-obsidian-900">
-            <span>June–July: 7 Daily Departures</span>
-            <span>August–September: 5 Daily Departures</span>
+            <span>June 1–July 31: Departures 1–7</span>
+            <span>August 1–October 12: Departures 2–6</span>
+            <span>CAD $135 (Dep 1–2) · $120 (Dep 3–4) · $108 (Dep 5–7)</span>
+          </p>
+          <p className="mt-1 text-xs text-slate-600">
+            Adults, children and infants pay the same fare. Every passenger requires a seat.
           </p>
         </div>
         <ShuttleDayPlanner today={albertaToday()} live={live} fromPrice={fromPrice} />
@@ -192,7 +249,7 @@ export default async function ShuttlesPage() {
             <h2 id="departures-heading" className="text-balance text-3xl font-light leading-[1.1] tracking-tight text-obsidian-900 sm:text-4xl">
               Pick your date
             </h2>
-            <p className="mt-3 text-base text-slate-600">{SEATS_MESSAGE}. Choose a date to hold your seats.</p>
+            <p className="mt-3 text-base text-slate-600">{SEATS_MESSAGE}. Select an available departure to begin booking.</p>
           </div>
           <div className="space-y-10">
             {routes.map((route) => (
@@ -259,7 +316,7 @@ export default async function ShuttlesPage() {
             ))}
           </ul>
           <p className="mt-6 text-base text-slate-600">
-            Pickup points are in Canmore, Banff and Lake Louise (Samson Mall).{" "}
+            Listed pickup points only in Canmore, Banff and Lake Louise (Samson Mall) — custom pickup addresses are not available.{" "}
             <Link href="/pickup-finder" className="text-ocean-700 underline underline-offset-2">
               Find your nearest pickup
             </Link>
@@ -285,6 +342,26 @@ export default async function ShuttlesPage() {
               </li>
             ))}
           </ol>
+        </div>
+      </section>
+
+      {/* Important shuttle information */}
+      <section aria-labelledby="shuttle-info-heading" className="border-t border-obsidian-900/[0.06] bg-white py-16 sm:py-20">
+        <div className="mx-auto max-w-7xl px-page">
+          <div className="mb-10 max-w-2xl">
+            <p className="mb-2 text-xs uppercase tracking-[0.22em] text-ocean-700">Before you book</p>
+            <h2 id="shuttle-info-heading" className="text-3xl font-light tracking-tight text-obsidian-900 sm:text-4xl">
+              Important shuttle information
+            </h2>
+          </div>
+          <dl className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {SHUTTLE_INFO.map((item) => (
+              <div key={item.title} className="rounded-none bg-obsidian-50 p-5 ring-1 ring-obsidian-900/[0.07]">
+                <dt className="text-base font-medium text-obsidian-900">{item.title}</dt>
+                <dd className="mt-2 text-sm leading-relaxed text-slate-600">{item.body}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
       </section>
 

@@ -86,9 +86,9 @@ const META_DESCRIPTION: Record<string, string> = {
   "banff-national-park":
     "Guided Banff National Park tours with hotel pickup in Banff, Canmore and Lake Louise: small-group and private tours, plus Moraine Lake and Lake Louise shuttles.",
   "lake-louise":
-    "Skip the Lake Louise parking hunt: guaranteed shuttles from Banff, Canmore and Lake Louise hotels, plus small-group and private tours that include the lake.",
+    "Skip the Lake Louise parking hunt: scheduled shuttles from Banff, Canmore and Samson Mall (subject to operating conditions), plus small-group and private tours.",
   "moraine-lake":
-    "Moraine Lake is closed to private cars. Get there on a guaranteed sunrise or daytime shuttle, or on a small-group or private tour with hotel pickup.",
+    "Moraine Lake is closed to private cars. Visit on our scheduled Moraine Lake & Lake Louise Shuttle (subject to operating conditions), or on a small-group or private tour.",
   "yoho-national-park":
     "Explore Yoho National Park, from Emerald Lake to the Natural Bridge and Spiral Tunnels, on our Banff & Yoho small-group tour or a private tour.",
   "jasper-national-park":

@@ -24,6 +24,8 @@ import { Dropdown } from "@/components/forms/Dropdown";
 import { StripeCheckoutForm } from "@/components/booking/StripeCheckoutForm";
 import { dialCode } from "@/lib/countries";
 import { moneyExact } from "@/lib/pricing";
+import { cancellationTerms, formatCancellationDeadline } from "@/lib/policy";
+import { clock, clockRange, resolveShuttlePickupTime, SHUTTLE_PRODUCT_NAME, shuttleDepartureForTime } from "@/lib/shuttleSchedule";
 import {
   AirportTransferDetails,
   AirportTransferToggle,
@@ -48,7 +50,7 @@ type Departure = {
   childPrice: number | null;
   infantPrice: number | null;
   currency: string;
-  tour?: { title: string; category: string } | null;
+  tour?: { title: string; slug?: string; category: string } | null;
   shuttleRoute?: { name: string } | null;
 };
 type Booking = { bookingReference: string; voucherToken?: string; voucherUrl?: string; voucherCode?: string; status?: string; totalAmount?: number; qrCodeUrl?: string | null };
@@ -123,8 +125,11 @@ export function ConciergeCheckout(props: ConciergeCheckoutProps) {
   const [confirmed, setConfirmed] = useState<Booking | null>(null);
   const idempotencyKey = useRef("");
 
+  const OUTSIDE_BANFF_CANMORE = /\b(lake\s*louise|calgary|jasper|golden|field|revelstoke|edmonton|airdrie|cochrane|radium|invermere)\b/i;
   const isVehicle = dep?.tour?.category === "PRIVATE";
-  const title = props.title || dep?.tour?.title || dep?.shuttleRoute?.name || "Your Vista Chase trip";
+  const isShuttle = Boolean(dep?.tour?.category === "SHUTTLE" || dep?.shuttleRoute || dep?.tour?.slug?.includes("shuttle"));
+  const shuttleDep = isShuttle && dep ? shuttleDepartureForTime(dep.departureTime) : undefined;
+  const title = isShuttle ? SHUTTLE_PRODUCT_NAME : props.title || dep?.tour?.title || dep?.shuttleRoute?.name || "Your Vista Chase trip";
 
   // Departure, prices, live seats and pickup stops: the same data the /book page uses.
   const load = useCallback(async () => {
@@ -210,7 +215,14 @@ export function ConciergeCheckout(props: ConciergeCheckoutProps) {
     const e: Record<string, string> = {};
     const airportProblem = offersAirport && airport ? airportTransferError(airportTransfer) : null;
     if (airportProblem) e.airport = airportProblem;
-    if (!pickupStopId && !customPickup.trim()) e.pickup = "Choose your pickup hotel.";
+    if (isVehicle) {
+      if (!pickupStopId && !customPickup.trim()) e.pickup = "Choose your pickup hotel or enter a Canmore or Banff address.";
+      else if (customPickup.trim() && OUTSIDE_BANFF_CANMORE.test(customPickup)) {
+        e.pickup = "Custom pickup addresses on private tours are available in Canmore and Banff only.";
+      }
+    } else if (!pickupStopId) {
+      e.pickup = "Choose your listed pickup location.";
+    }
     if (name.trim().length < 2) e.name = "Enter the lead guest's full name.";
     if (!EMAIL.test(email.trim())) e.email = "Enter a valid email address.";
     if (phoneLocal.replace(/\D/g, "").length < 6) e.phone = "Enter a mobile number.";
@@ -323,7 +335,7 @@ export function ConciergeCheckout(props: ConciergeCheckoutProps) {
           customerPhone: phone,
           customerCountry: phoneCountry,
           pickupStopId: pickupStopId || undefined,
-          pickupCustomText: customPickup.trim() || undefined,
+          pickupCustomText: isVehicle ? customPickup.trim() || undefined : undefined,
           adultsCount: adults,
           childrenCount: children,
           infantsCount: infants,
@@ -381,7 +393,8 @@ export function ConciergeCheckout(props: ConciergeCheckoutProps) {
         <div className="min-w-0">
           <p className="text-base leading-snug">{title}</p>
           <p className="mt-0.5 text-xs text-slate-600">
-            {shortDate(dep.date)} · {dep.departureTime}
+            {shortDate(dep.date)}
+            {shuttleDep ? ` · Departure ${shuttleDep.number} · ${clock(dep.departureTime.slice(0, 5))}` : ` · ${dep.departureTime}`}
           </p>
         </div>
         {hold && step !== "confirmed" && (
@@ -446,8 +459,9 @@ export function ConciergeCheckout(props: ConciergeCheckoutProps) {
           )}
           {isVehicle && (
             <label className="block">
-              <span className="mb-1.5 block text-sm">Or your accommodation address (private tours)</span>
-              <input className={INPUT} value={customPickup} onChange={(e) => { setCustomPickup(e.target.value); if (e.target.value) setPickupStopId(""); }} placeholder="Hotel name or address" />
+              <span className="mb-1.5 block text-sm">Or your accommodation address in Canmore or Banff (private tours only)</span>
+              <input className={INPUT} value={customPickup} onChange={(e) => { setCustomPickup(e.target.value); if (e.target.value) setPickupStopId(""); }} placeholder="Hotel name or address in Canmore or Banff" />
+              {errors.pickup && <p role="alert" className="mt-1 text-xs text-red-700">{errors.pickup}</p>}
             </label>
           )}
           <label className="block">
@@ -486,7 +500,28 @@ export function ConciergeCheckout(props: ConciergeCheckoutProps) {
         <div className="mt-4 space-y-3">
           <dl className="space-y-1.5 rounded-xl bg-obsidian-50 p-3">
             <Row icon={Users} label="Guests" value={[`${adults} adult${adults === 1 ? "" : "s"}`, children ? `${children} youth` : "", infants ? `${infants} infant${infants === 1 ? "" : "s"}` : ""].filter(Boolean).join(", ")} />
-            <Row icon={MapPin} label="Pickup" value={selectedStop?.name ?? customPickup ?? ""} />
+            <Row
+              icon={MapPin}
+              label="Pickup"
+              value={(() => {
+                const place = selectedStop ? `${selectedStop.name} (${selectedStop.town})` : isVehicle ? customPickup : "";
+                if (!isShuttle) return place;
+                const pt = resolveShuttlePickupTime({ departureTime: dep.departureTime, town: selectedStop?.town, stopName: selectedStop?.name, isShuttle: true });
+                return pt ? `${place} · ${clock(pt)}` : place;
+              })()}
+            />
+            {shuttleDep && (
+              <Row
+                icon={Clock}
+                label="Lakes & return"
+                value={`Moraine ${clockRange(shuttleDep.moraine)} · Louise ${clockRange(shuttleDep.louise)} · Est. Samson Mall ${clock(shuttleDep.returnSamson)}, Banff ${clock(shuttleDep.returnBanff)}, Canmore ${clock(shuttleDep.returnCanmore)}`}
+              />
+            )}
+            <Row
+              icon={ShieldCheck}
+              label="Free cancel until"
+              value={formatCancellationDeadline(dep.date, dep.departureTime, cancellationTerms(dep.tour?.category ?? (isShuttle ? "SHUTTLE" : undefined)).cutoffHours)}
+            />
             <Row icon={Mail} label="Voucher to" value={email.trim()} />
             <div className="border-t border-obsidian-900/10 pt-2">
               <div className="flex justify-between gap-3 text-xs text-slate-600">

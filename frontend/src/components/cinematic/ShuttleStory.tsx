@@ -9,23 +9,23 @@ import { ScrollReveal } from "./ScrollReveal";
 const SHUTTLE_BENEFITS = [
   {
     icon: ShieldCheck,
-    title: "100% Guaranteed Commercial Corridor Entry",
-    description: "Personal and rental vehicles are completely barred from Moraine Lake Road. Our commercial permit grants direct vehicle passage.",
+    title: "Licensed Commercial Corridor Entry",
+    description: "Personal and rental vehicles are barred from Moraine Lake Road. Our commercial permit grants authorized vehicle passage, subject to road closures and Parks Canada operating conditions.",
   },
   {
     icon: MapPin,
-    title: "Door-to-Door Banff & Canmore Pickup",
-    description: "No need to drive to remote park-and-ride transit hubs. We collect you directly from your hotel lobby entrance.",
+    title: "Listed Pickups in Canmore, Banff & Samson Mall",
+    description: "Board from supported hotels in Banff or Canmore, or at Samson Mall in Lake Louise Village (no parking provided at Samson Mall).",
   },
   {
     icon: Clock,
-    title: "Sunrise & Daytime Schedule Options",
-    description: "Depart at 5:00 AM for the legendary golden hour reflection over the Ten Peaks, or join mid-day transfers for relaxed hiking.",
+    title: "Daily Departures (June 1–October 12)",
+    description: "Departures 1–7 operate June 1–July 31 and departures 2–6 operate August 1–October 12 on fixed schedules.",
   },
   {
     icon: Bus,
-    title: "Direct Shoreline Arrival",
-    description: "Step off the shuttle right at the Moraine Lake and Lake Louise shorelines, ready to hike or hire canoes immediately.",
+    title: "Independent Exploration at Both Lakes",
+    description: "Step off right at Moraine Lake and Lake Louise to explore on your own within your departure schedule (no guide accompanies guests at the lakes).",
   },
 ];
 
@@ -56,15 +56,15 @@ export function ShuttleStory() {
                 {/* Bottom Overlay Summary */}
                 <div className="absolute bottom-6 left-6 right-6 p-6 rounded-none bg-white/10 backdrop-blur-md border border-white/15 text-white">
                   <span className="text-xs uppercase tracking-widest text-summit-300 font-semibold block mb-1">
-                    Guaranteed Commercial Transit
+                    Licensed Commercial Shuttle
                   </span>
                   <div className="flex items-baseline justify-between">
                     <div>
-                      <span className="text-2xl font-serif font-light text-white">CAD $89</span>
-                      <span className="text-xs text-slate-300 ml-1.5">per guest return</span>
+                      <span className="text-2xl font-serif font-light text-white">CAD $108–$135</span>
+                      <span className="text-xs text-slate-300 ml-1.5">per person (all ages)</span>
                     </div>
                     <span className="text-xs text-emerald-300 flex items-center gap-1 font-medium">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> Direct hotel pickup
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Listed pickups
                     </span>
                   </div>
                 </div>
@@ -89,8 +89,7 @@ export function ShuttleStory() {
 
               <ScrollReveal delay={300} yOffset={16}>
                 <p className="text-slate-600 text-base sm:text-lg leading-relaxed font-sans font-light">
-                  Skip the stress of the 3:00 AM public transit lottery. Parks Canada has permanently closed Moraine Lake Road
-                  to private vehicles. Vista Chase shuttles guarantee your entrance with direct hotel pickups in Banff and Canmore.
+                  Skip the drive and parking hunt: Moraine Lake Road is closed to private vehicles. Vista Chase’s Moraine Lake &amp; Lake Louise Shuttle offers arranged pickups in Canmore, Banff and Samson Mall (subject to road closures and Parks Canada conditions).
                 </p>
               </ScrollReveal>
             </div>

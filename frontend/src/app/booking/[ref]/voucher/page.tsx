@@ -25,7 +25,8 @@ import { getBookingByReference } from "@/lib/api/catalog";
 import { PrintButton } from "@/components/booking/PrintButton";
 import { BalancePayment } from "@/components/booking/BalancePayment";
 import { ManageBooking } from "@/components/booking/ManageBooking";
-import { POLICY_URL, canCancelFree, cancellationSentence, cancellationShort, depositPolicy, formatRockiesDate } from "@/lib/policy";
+import { POLICY_URL, canCancelFree, cancellationSentence, cancellationShort, cancellationTerms, depositPolicy, formatCancellationDeadline, formatRockiesDate } from "@/lib/policy";
+import { clock as shuttleClock, clockRange, resolveShuttlePickupTime, SHUTTLE_PRODUCT_NAME, shuttleDepartureForTime } from "@/lib/shuttleSchedule";
 import { headers } from "next/headers";
 
 export async function generateMetadata({ params }: { params: Promise<{ ref: string }> }): Promise<Metadata> {
@@ -87,7 +88,15 @@ export default async function VoucherPage({
   if (!booking) notFound();
 
   const departure = booking.tourDeparture;
-  const title = departure.tour?.title || departure.shuttleRoute?.name || "Canadian Rockies tour";
+  const isShuttle = Boolean(
+    departure.shuttleRoute ||
+    departure.tour?.category === "SHUTTLE" ||
+    departure.tour?.slug?.includes("shuttle"),
+  );
+  const shuttleDep = isShuttle ? shuttleDepartureForTime(departure.departureTime) : undefined;
+  const title = isShuttle
+    ? SHUTTLE_PRODUCT_NAME
+    : departure.tour?.title || departure.shuttleRoute?.name || "Canadian Rockies tour";
   const image = departure.tour?.featuredImage || "/media/photos/moraine-lake-perfect-reflection.webp";
   const date = new Date(`${departure.date}T00:00:00`);
   const dateLabel = Number.isNaN(date.getTime())
@@ -96,6 +105,16 @@ export default async function VoucherPage({
   const cancelled = booking.status === "CANCELLED" || booking.status === "EXPIRED";
   const pickupName = booking.pickupStop?.name || booking.pickupCustomText || "Pickup to be confirmed by email";
   const pickupAddress = booking.pickupStop?.address || (booking.pickupStop ? booking.pickupStop.town : null);
+  const resolvedPickup24 = isShuttle
+    ? resolveShuttlePickupTime({
+        departureTime: departure.departureTime,
+        town: booking.pickupStop?.town,
+        stopName: booking.pickupStop?.name,
+        customText: booking.pickupCustomText,
+        storedPickupTime: booking.pickupTime,
+        isShuttle: true,
+      })
+    : booking.pickupTime;
   // Directions by name and address: some stops' coordinates are approximate.
   const directions = pickupAddress
     ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${pickupName}, ${pickupAddress}`)}`
@@ -109,7 +128,7 @@ export default async function VoucherPage({
     .join(", ") || `${booking.totalSeats} guest${booking.totalSeats === 1 ? "" : "s"}`;
   const ics = cancelled
     ? null
-    : calendarHref(title, departure.date, booking.pickupTime || departure.departureTime, departure.tour?.durationHours ?? 8, `${pickupName}${pickupAddress ? `, ${pickupAddress}` : ""}`, booking.bookingReference);
+    : calendarHref(title, departure.date, resolvedPickup24 || departure.departureTime, departure.tour?.durationHours ?? 8, `${pickupName}${pickupAddress ? `, ${pickupAddress}` : ""}`, booking.bookingReference);
 
   const deposit = booking.paymentPlan === "DEPOSIT";
   // Booking & Cancellation Policy: the deadline is the category's, measured from Day 1 of a package.
@@ -121,14 +140,49 @@ export default async function VoucherPage({
     firstDay?.departureTime ?? departure.departureTime,
     multiDay ? "MULTIDAY" : category,
   );
+  const cutoffHours = cancellationTerms(multiDay ? "MULTIDAY" : category).cutoffHours;
+  const cancellationDeadlineLabel = formatCancellationDeadline(
+    firstDay?.date ?? departure.date,
+    firstDay?.departureTime ?? departure.departureTime,
+    cutoffHours,
+  );
+  const requestStatusLabel = booking.specialRequests?.trim()
+    ? `${booking.specialRequests.trim()} — requires advance confirmation by team`
+    : "None requested (complimentary child seats/boosters require advance confirmation)";
   const balanceDue = deposit ? booking.balanceDue ?? 0 : 0;
   const balanceDueLabel = booking.balanceDueAt ? formatRockiesDate(booking.balanceDueAt) : null;
 
   const facts = [
     { icon: CalendarCheck, label: "Date", value: dateLabel },
-    { icon: Clock, label: "Departs", value: clock(departure.departureTime) ?? "To be confirmed" },
-    { icon: MapPin, label: "Pickup", value: booking.pickupTime ? `${clock(booking.pickupTime)} · ${pickupName}` : pickupName },
+    {
+      icon: Clock,
+      label: shuttleDep ? "Departure" : "Departs",
+      value: shuttleDep
+        ? `Departure ${shuttleDep.number} · ${clock(departure.departureTime) ?? departure.departureTime}`
+        : clock(departure.departureTime) ?? "To be confirmed",
+    },
+    {
+      icon: MapPin,
+      label: "Pickup location & time",
+      value: `${resolvedPickup24 ? `${clock(resolvedPickup24)} MT · ` : ""}${pickupName}${pickupAddress ? ` (${pickupAddress})` : ""}`,
+    },
     { icon: Users, label: "Guests", value: guests },
+    ...(shuttleDep
+      ? [
+          {
+            icon: Clock,
+            label: "Lake meeting times",
+            value: `Moraine Lake ${clockRange(shuttleDep.moraine)} · Lake Louise ${clockRange(shuttleDep.louise)}`,
+          },
+          {
+            icon: Clock,
+            label: "Estimated return",
+            value: `Samson Mall ${shuttleClock(shuttleDep.returnSamson)} · Banff ${shuttleClock(shuttleDep.returnBanff)} · Canmore ${shuttleClock(shuttleDep.returnCanmore)}`,
+          },
+        ]
+      : []),
+    { icon: CalendarCheck, label: "Free cancellation deadline", value: cancellationDeadlineLabel },
+    { icon: CheckCircle2, label: "Child seat & requests", value: requestStatusLabel },
   ];
 
   return (
@@ -158,7 +212,7 @@ export default async function VoucherPage({
                 </p>
                 <h1 className="mt-4 text-3xl font-light tracking-tight text-white sm:text-5xl">You&rsquo;re all set, {booking.customerName.split(" ")[0]}</h1>
                 <p className="mt-3 max-w-2xl text-lg font-light text-white/85">
-                  Show this voucher to your guide at pickup. On your phone is fine.
+                  Show this voucher to your {isShuttle ? "driver" : "guide"} at pickup. On your phone is fine.
                 </p>
               </>
             )}
@@ -317,7 +371,7 @@ export default async function VoucherPage({
             {pickupAddress && <p className="text-sm text-slate-600">{pickupAddress}</p>}
             {booking.pickupStop?.instructions && <p className="mt-3 text-sm leading-relaxed text-slate-700">{booking.pickupStop.instructions}</p>}
             <p className="mt-4 rounded-2xl bg-summit-100 px-4 py-3 text-sm text-obsidian-900">
-              Please be there 10 minutes early{booking.pickupTime ? ` (by ${clock(booking.pickupTime)})` : ""}. Vehicles leave on time.
+              Please be ready 10 minutes early{resolvedPickup24 ? ` (by ${clock(resolvedPickup24)} MT)` : ""}. Vehicles leave on time.
             </p>
             {directions && (
               <a
@@ -461,8 +515,22 @@ export default async function VoucherPage({
                 </a>
               </li>
             </ul>
-            <p className="mt-4 text-xs text-slate-600">Vista Chase · 121 Bow Meadows Crescent #110, Canmore, AB</p>
+            <p className="mt-4 text-xs text-slate-600">Vista Chase Tours Ltd.</p>
           </section>
+          {isShuttle && (
+            <section aria-labelledby="shuttle-rules-heading" className="rounded-none bg-white p-6 ring-1 ring-obsidian-900/[0.07] sm:p-7">
+              <h2 id="shuttle-rules-heading" className="text-lg text-obsidian-900">
+                Shuttle information &amp; policies
+              </h2>
+              <dl className="mt-3 space-y-2.5 text-xs leading-relaxed text-slate-700">
+                <div><dt className="font-semibold text-obsidian-900">Service</dt><dd>Shuttle transportation only (not a guided tour). Follow your booked schedule; switching departures or skipping a leg requires team approval.</dd></div>
+                <div><dt className="font-semibold text-obsidian-900">Food and drinks</dt><dd>Park admission and bottled water included; meals and hot drinks not included. Packed food welcome at lake stops; eating onboard not permitted (water allowed).</dd></div>
+                <div><dt className="font-semibold text-obsidian-900">Samson Mall notice</dt><dd>Parking is not provided at village public parking, day-use areas or Samson Mall customer parking.</dd></div>
+                <div><dt className="font-semibold text-obsidian-900">Rescheduling &amp; closures</dt><dd>Reschedule 24+ hours before departure subject to availability. Four-passenger minimum (7+ days notice if cancelled; bookings within 7 days protected from minimum-number cancellation). No refund for single-lake Parks Canada closures when the shuttle operates.</dd></div>
+                <div><dt className="font-semibold text-obsidian-900">Missed lake pickup</dt><dd>Contact your driver or Vista Chase support immediately; later transportation depends on availability and is not guaranteed.</dd></div>
+              </dl>
+            </section>
+          )}
         </aside>
       </div>
     </div>

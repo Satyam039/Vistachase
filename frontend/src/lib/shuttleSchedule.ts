@@ -87,39 +87,58 @@ export interface ShuttleDeparture {
   moraine: [string, string];
   louise: [string, string];
   /** Estimated return, 24h "HH:MM". */
+  returnSamson: string;
   returnBanff: string;
   returnCanmore: string;
 }
 
+export const SHUTTLE_PRODUCT_NAME = "Moraine Lake & Lake Louise Shuttle";
+
 export const SHUTTLE_DEPARTURES: ShuttleDeparture[] = [
-  { number: 1, name: "Early Morning", pickup: { canmore: "02:45", banff: "03:15", samson: calculateSamsonPickup("03:15") }, moraine: ["04:30", "06:00"], louise: ["06:30", "08:00"], returnBanff: "09:00", returnCanmore: "09:30" },
-  { number: 2, name: "Early Morning", pickup: { canmore: "03:45", banff: "04:15", samson: calculateSamsonPickup("04:15") }, moraine: ["05:30", "07:00"], louise: ["07:30", "09:30"], returnBanff: "10:30", returnCanmore: "11:00" },
-  { number: 3, name: "Morning", pickup: { canmore: "06:00", banff: "06:30", samson: calculateSamsonPickup("06:30") }, moraine: ["07:30", "09:00"], louise: ["09:30", "12:00"], returnBanff: "13:00", returnCanmore: "13:30" },
-  { number: 4, name: "Late Morning", pickup: { canmore: "09:45", banff: "10:15", samson: calculateSamsonPickup("10:15") }, moraine: ["11:15", "12:45"], louise: ["13:15", "14:45"], returnBanff: "15:45", returnCanmore: "16:15" },
-  { number: 5, name: "Midday", pickup: { canmore: "11:00", banff: "11:30", samson: calculateSamsonPickup("11:30") }, moraine: ["12:30", "14:15"], louise: ["14:45", "17:00"], returnBanff: "18:00", returnCanmore: "18:30" },
-  { number: 6, name: "Afternoon", pickup: { canmore: "13:30", banff: "14:00", samson: calculateSamsonPickup("14:00") }, moraine: ["15:00", "16:30"], louise: ["17:00", "19:30"], returnBanff: "20:30", returnCanmore: "21:00" },
-  { number: 7, name: "Late Afternoon", pickup: { canmore: "16:15", banff: "16:45", samson: calculateSamsonPickup("16:45") }, moraine: ["17:45", "19:00"], louise: ["19:30", "21:00"], returnBanff: "22:00", returnCanmore: "22:30" },
+  { number: 1, name: "Early Morning", pickup: { canmore: "02:45", banff: "03:15", samson: calculateSamsonPickup("03:15") }, moraine: ["04:30", "06:00"], louise: ["06:30", "08:00"], returnSamson: "08:15", returnBanff: "09:00", returnCanmore: "09:30" },
+  { number: 2, name: "Early Morning", pickup: { canmore: "03:45", banff: "04:15", samson: calculateSamsonPickup("04:15") }, moraine: ["05:30", "07:00"], louise: ["07:30", "09:30"], returnSamson: "09:45", returnBanff: "10:30", returnCanmore: "11:00" },
+  { number: 3, name: "Morning", pickup: { canmore: "06:00", banff: "06:30", samson: calculateSamsonPickup("06:30") }, moraine: ["07:30", "09:00"], louise: ["09:30", "12:00"], returnSamson: "12:15", returnBanff: "13:00", returnCanmore: "13:30" },
+  { number: 4, name: "Late Morning", pickup: { canmore: "09:45", banff: "10:15", samson: calculateSamsonPickup("10:15") }, moraine: ["11:15", "12:45"], louise: ["13:15", "14:45"], returnSamson: "15:00", returnBanff: "15:45", returnCanmore: "16:15" },
+  { number: 5, name: "Midday", pickup: { canmore: "11:00", banff: "11:30", samson: calculateSamsonPickup("11:30") }, moraine: ["12:30", "14:15"], louise: ["14:45", "17:00"], returnSamson: "17:15", returnBanff: "18:00", returnCanmore: "18:30" },
+  { number: 6, name: "Afternoon", pickup: { canmore: "13:30", banff: "14:00", samson: calculateSamsonPickup("14:00") }, moraine: ["15:00", "16:30"], louise: ["17:00", "19:30"], returnSamson: "19:45", returnBanff: "20:30", returnCanmore: "21:00" },
+  { number: 7, name: "Late Afternoon", pickup: { canmore: "16:15", banff: "16:45", samson: calculateSamsonPickup("16:45") }, moraine: ["17:45", "19:00"], louise: ["19:30", "21:00"], returnSamson: "21:15", returnBanff: "22:00", returnCanmore: "22:30" },
 ];
 
-/**
- * Which departures run in August–September. The doc says five but not which five; until the owner
- * confirms, the earliest (1) and latest (7) are dropped as the days get shorter.
- */
+/** Departures 2–6 operate August 1 – October 12. */
 export const LATE_SEASON_DEPARTURES = [2, 3, 4, 5, 6];
 
-/** Season months (1-12). June–July: all seven. August–September: LATE_SEASON_DEPARTURES. */
-const PEAK_MONTHS = [6, 7];
-const LATE_MONTHS = [8, 9];
+export const SHUTTLE_SEASON_START = "06-01";
+export const SHUTTLE_PEAK_END = "07-31";
+export const SHUTTLE_LATE_START = "08-01";
+export const SHUTTLE_SEASON_END = "10-12";
 
-const monthOf = (date: string) => Number(date.slice(5, 7));
+const monthDayOf = (date: string) => date.slice(5, 10);
 
-export const inSeason = (date: string) => [...PEAK_MONTHS, ...LATE_MONTHS].includes(monthOf(date));
+export const inSeason = (date: string) => {
+  const md = monthDayOf(date);
+  return md >= SHUTTLE_SEASON_START && md <= SHUTTLE_SEASON_END;
+};
 
 export function departuresFor(date: string): ShuttleDeparture[] {
-  const m = monthOf(date);
-  if (PEAK_MONTHS.includes(m)) return SHUTTLE_DEPARTURES;
-  if (LATE_MONTHS.includes(m)) return SHUTTLE_DEPARTURES.filter((d) => LATE_SEASON_DEPARTURES.includes(d.number));
+  const md = monthDayOf(date);
+  if (md >= SHUTTLE_SEASON_START && md <= SHUTTLE_PEAK_END) return SHUTTLE_DEPARTURES;
+  if (md >= SHUTTLE_LATE_START && md <= SHUTTLE_SEASON_END) {
+    return SHUTTLE_DEPARTURES.filter((d) => LATE_SEASON_DEPARTURES.includes(d.number));
+  }
   return [];
+}
+
+export function shuttleDepartureForTime(time: string | null | undefined): ShuttleDeparture | undefined {
+  if (!time) return undefined;
+  const hhmm = time.slice(0, 5);
+  return SHUTTLE_DEPARTURES.find((d) => d.pickup.banff === hhmm);
+}
+
+/** CAD per person (all ages: adults, children, infants). */
+export function shuttleFareCad(departureNumber: number): number {
+  if (departureNumber <= 2) return 135;
+  if (departureNumber <= 4) return 120;
+  return 108;
 }
 
 /** "YYYY-MM-DD" today in Alberta. */
@@ -131,7 +150,7 @@ export function albertaToday(now = new Date()): string {
 export function firstShuttleDate(today: string): string {
   if (inSeason(today)) return today;
   const year = Number(today.slice(0, 4));
-  return monthOf(today) < 6 ? `${year}-06-01` : `${year + 1}-06-01`;
+  return monthDayOf(today) < SHUTTLE_SEASON_START ? `${year}-06-01` : `${year + 1}-06-01`;
 }
 
 /** "14:45" -> "2:45 PM". Written out by hand so server and browser print the same text. */

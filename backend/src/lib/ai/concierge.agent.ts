@@ -192,7 +192,7 @@ const CUSTOMER_TOOLS: Anthropic.Tool[] = [
       properties: {
         departureId: { type: "string" },
         pickupStopId: { type: "string", description: "Optional: the pickup stop id from find_pickup that the guest chose" },
-        pickupCustomText: { type: "string", description: "Optional: hotel name or custom lodging address" },
+        pickupCustomText: { type: "string", description: "Optional (private tours only, Canmore and Banff only): hotel name or custom lodging address" },
         seats: { type: "integer", minimum: 1, maximum: 13 },
         adultsCount: { type: "integer", description: "Optional: number of adults" },
         childrenCount: { type: "integer", description: "Optional: number of children (1-13)" },
@@ -385,14 +385,19 @@ export async function runConciergeTool(name: string, input: Record<string, any>,
       };
     }
     case "hold_seats": {
-      // Shared tours don't pick up in Lake Louise (modules/bookings/pickup-rules.ts): say so before
-      // holding seats rather than at payment.
-      if (input.pickupStopId) {
+      // Enforce pickup rules (shared/shuttle listed stops only, no Lake Louise on shared, Canmore/Banff custom on private) before holding seats.
+      if (input.pickupStopId || input.pickupCustomText) {
         const [heldDep, heldStop] = await Promise.all([
-          prisma.tourDeparture.findUnique({ where: { id: String(input.departureId) }, select: { tour: { select: { category: true } } } }),
-          prisma.shuttleStop.findUnique({ where: { id: String(input.pickupStopId) }, select: { town: true, name: true } }),
+          prisma.tourDeparture.findUnique({
+            where: { id: String(input.departureId) },
+            select: { shuttleRouteId: true, tour: { select: { category: true, slug: true } } },
+          }),
+          input.pickupStopId
+            ? prisma.shuttleStop.findUnique({ where: { id: String(input.pickupStopId) }, select: { town: true, name: true } })
+            : Promise.resolve(null),
         ]);
-        const refusal = pickupError(heldDep?.tour, heldStop);
+        const isShuttle = Boolean(heldDep?.shuttleRouteId || heldDep?.tour?.category === "SHUTTLE");
+        const refusal = pickupError(heldDep?.tour, heldStop, input.pickupCustomText ? String(input.pickupCustomText) : undefined, { isShuttle });
         if (refusal) return { result: { error: refusal } };
       }
       const r = await executeAiTool(

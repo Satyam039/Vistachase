@@ -14,8 +14,8 @@ const SHARED_BENEFITS = [
   },
   {
     icon: MapPin,
-    title: "Guaranteed Commercial Access",
-    description: "Bypass the 3:00 AM personal car parking restrictions with authorized commercial permits straight to the lakeshore.",
+    title: "Licensed Commercial Access",
+    description: "Authorized commercial access along the Moraine Lake corridor without personal-car parking stress, subject to road closures and Parks Canada conditions.",
   },
   {
     icon: CheckCircle2,

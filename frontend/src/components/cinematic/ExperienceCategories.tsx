@@ -49,7 +49,7 @@ const CATEGORIES: CategoryCard[] = [
     image: "/media/photos/moraine-lake-perfect-reflection.webp",
     href: "/shuttles",
     icon: Compass,
-    badge: "Guaranteed access",
+    badge: "Seasonal shuttle access",
   },
   {
     id: "multiday",

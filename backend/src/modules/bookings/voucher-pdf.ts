@@ -11,11 +11,21 @@ import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFImage, type PDFP
 import { MEDIA_DIR } from "@/modules/media/media.repository";
 import QRCode from "qrcode";
 import { checkinLink } from "@/lib/security/signed-links";
-import { formatDateOnly, formatTimeOfDay } from "@/lib/utils/time";
+import { formatDateOnly, formatTimeOfDay, getMountainTimeInstant } from "@/lib/utils/time";
+import { cancellationTerms } from "@/modules/bookings/cancellation-policy";
 import { paidCents, paymentSummary } from "@/modules/bookings/deposit";
 import type { getBookingByReference } from "@/modules/bookings/booking.repository";
 import { bookingItinerary, experienceTitle } from "@/modules/bookings/tour-itinerary";
 import { resolveShuttlePickupTime } from "@/modules/shuttles/shuttle-timing";
+import { clockRange, shuttleDepartureForTime } from "@site/shuttleSchedule";
+
+function formatAlbertaDeadline(date: Date, departureTime: Date | null, cutoffHours: number): string {
+  const startsAt = getMountainTimeInstant(date, departureTime ?? new Date("1970-01-01T08:00:00Z"));
+  const cutoff = new Date(startsAt.getTime() - cutoffHours * 3600_000);
+  const dateStr = cutoff.toLocaleDateString("en-CA", { timeZone: "America/Edmonton", weekday: "short", month: "short", day: "numeric", year: "numeric" });
+  const timeStr = new Intl.DateTimeFormat("en-US", { timeZone: "America/Edmonton", hour: "numeric", minute: "2-digit", timeZoneName: "short" }).format(cutoff);
+  return `${dateStr} at ${timeStr}`;
+}
 
 type VoucherBooking = NonNullable<Awaited<ReturnType<typeof getBookingByReference>>>;
 
@@ -215,6 +225,7 @@ export async function addVoucherPage(pdf: PDFDocument, booking: VoucherBooking, 
     departure.tour?.category === "SHUTTLE" ||
     departure.tour?.slug?.includes("shuttle"),
   );
+  const shuttleDep = isShuttle ? shuttleDepartureForTime(formatTimeOfDay(departure.departureTime)) : undefined;
   const pickupTime = resolveShuttlePickupTime({
     departureTime: formatTimeOfDay(departure.departureTime),
     town: stop?.town,
@@ -223,23 +234,45 @@ export async function addVoucherPage(pdf: PDFDocument, booking: VoucherBooking, 
     storedPickupTime: booking.pickupTime,
     isShuttle,
   });
+  const deadlineLabel = formatAlbertaDeadline(
+    departure.date,
+    departure.departureTime,
+    cancellationTerms(departure.tour?.category ?? (isShuttle ? "SHUTTLE" : undefined)).cutoffHours,
+  );
   row("Date", longDate(departure.date));
-  row("Departs", clock(departure.departureTime) ?? "To be confirmed");
-  row("Returns (approx.)", clock(departure.returnTime));
+  row(
+    shuttleDep ? "Departure" : "Departs",
+    shuttleDep ? `Departure ${shuttleDep.number} (${clock(departure.departureTime) ?? "To be confirmed"})` : clock(departure.departureTime) ?? "To be confirmed",
+  );
+  row(
+    "Returns (approx.)",
+    shuttleDep
+      ? `Samson Mall ${clock(shuttleDep.returnSamson)}, Banff ${clock(shuttleDep.returnBanff)}, Canmore ${clock(shuttleDep.returnCanmore)}`
+      : clock(departure.returnTime),
+  );
+  if (shuttleDep) {
+    row("Lake meeting times", `Moraine Lake ${clockRange(shuttleDep.moraine)} · Lake Louise ${clockRange(shuttleDep.louise)}`);
+  }
   row(
     "Pickup",
     pickupTime
-      ? `${clock(pickupTime)} ${pickupPlace ? `at ${pickupPlace}` : "(place to be confirmed by email)"}`
+      ? `${clock(pickupTime)} MT ${pickupPlace ? `at ${pickupPlace}` : "(place to be confirmed by email)"}`
       : (pickupPlace ?? "To be confirmed by email"),
   );
   row("Pickup address", stop ? [stop.address, stop.town].filter(Boolean).join(", ") : null);
   row("Pickup notes", stop?.instructions);
+  row("Free cancel until", deadlineLabel);
   row("Lead guest", booking.customerName);
   row("Guests", guests);
   row("Add-ons", booking.items.length ? booking.items.map((i) => (i.quantity > 1 ? `${i.name} x${i.quantity}` : i.name)).join(", ") : null);
   row("Airport transfer", airportTransferSummary(booking.priceSnapshot));
   row("Add-on activities", activitiesSummary(booking.priceSnapshot));
-  row("Special requests", booking.specialRequests);
+  row(
+    "Requests & child seats",
+    booking.specialRequests
+      ? `${booking.specialRequests} (requires advance team confirmation)`
+      : "None requested (complimentary child seats/boosters require advance confirmation)",
+  );
 
   rule();
   const summary = paymentSummary(booking, booking.payments);
@@ -315,7 +348,7 @@ export async function addVoucherPage(pdf: PDFDocument, booking: VoucherBooking, 
   text("On the day", margin, y, 11, bold);
   y -= 16;
   for (const line of [
-    "Be at your pickup 10 minutes early and show this voucher to your guide, printed or on your phone.",
+    "Be at your pickup 10 minutes early and show this voucher to your driver or guide, printed or on your phone.",
     "Your cancellation terms, and the button to cancel, are on your voucher page and in My trips.",
   ].flatMap((l) => wrap(l, regular, 10, inner))) {
     text(line, margin, y, 10, regular, MUTED);
@@ -436,7 +469,20 @@ export async function itineraryPdf(bookings: VoucherBooking[], trip: { title: st
   row("Guests", guests);
   row("Airport transfer", bookings.map((b) => airportTransferSummary(b.priceSnapshot)).find(Boolean) ?? null);
   row("Add-on activities", bookings.map((b) => activitiesSummary(b.priceSnapshot)).find(Boolean) ?? null);
-  row("Special requests", lead.specialRequests);
+  row(
+    "Requests & child seats",
+    lead.specialRequests
+      ? `${lead.specialRequests} (requires advance team confirmation)`
+      : "None requested (complimentary child seats/boosters require advance confirmation)",
+  );
+  const firstStart = bookings.reduce((min, b) => {
+    const t = getMountainTimeInstant(b.tourDeparture.date, b.tourDeparture.departureTime ?? new Date("1970-01-01T08:00:00Z")).getTime();
+    return t < min ? t : min;
+  }, Infinity);
+  if (Number.isFinite(firstStart)) {
+    const terms = cancellationTerms(lead.tourDeparture.tour?.category, bookings.length > 1 && lead.tourDeparture.tour?.category === "PRIVATE");
+    row("Free cancel until", formatAlbertaDeadline(new Date(firstStart), new Date(firstStart), terms.cutoffHours));
+  }
 
   rule();
   heading(bookings.length > 1 ? "Your days" : "Your tour");
@@ -463,6 +509,7 @@ export async function itineraryPdf(bookings: VoucherBooking[], trip: { title: st
       d.tour?.category === "SHUTTLE" ||
       d.tour?.slug?.includes("shuttle"),
     );
+    const shuttleDep = isShuttle ? shuttleDepartureForTime(formatTimeOfDay(d.departureTime)) : undefined;
     const pickupTime = resolveShuttlePickupTime({
       departureTime: formatTimeOfDay(d.departureTime),
       town: stop?.town,
@@ -471,9 +518,22 @@ export async function itineraryPdf(bookings: VoucherBooking[], trip: { title: st
       storedPickupTime: b.pickupTime,
       isShuttle,
     });
-    row("Departs", clock(d.departureTime) ?? "To be confirmed", beside);
-    row("Returns (approx.)", clock(d.returnTime), beside);
-    row("Pickup", pickupTime ? `${clock(pickupTime)}${place ? ` at ${place}` : ""}` : (place ?? "To be confirmed by email"), beside);
+    row(
+      shuttleDep ? "Departure" : "Departs",
+      shuttleDep ? `Departure ${shuttleDep.number} (${clock(d.departureTime) ?? "To be confirmed"})` : clock(d.departureTime) ?? "To be confirmed",
+      beside,
+    );
+    row(
+      "Returns (approx.)",
+      shuttleDep
+        ? `Samson Mall ${clock(shuttleDep.returnSamson)}, Banff ${clock(shuttleDep.returnBanff)}, Canmore ${clock(shuttleDep.returnCanmore)}`
+        : clock(d.returnTime),
+      beside,
+    );
+    if (shuttleDep) {
+      row("Lake meeting times", `Moraine Lake ${clockRange(shuttleDep.moraine)} · Lake Louise ${clockRange(shuttleDep.louise)}`, beside);
+    }
+    row("Pickup", pickupTime ? `${clock(pickupTime)} MT${place ? ` at ${place}` : ""}` : (place ?? "To be confirmed by email"), beside);
     row("Pickup address", stop ? [stop.address, stop.town].filter(Boolean).join(", ") : null, beside);
     if (bookings.length > 1) row("Day reference", b.bookingReference, beside);
     if (!(b.status === "CONFIRMED" || b.status === "COMPLETED")) row("Status", b.status.replace(/_/g, " ").toLowerCase(), beside);
