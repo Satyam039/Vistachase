@@ -11,6 +11,7 @@ import { paymentSummary } from "@/modules/bookings/deposit";
 import { startBalancePayment } from "@/modules/bookings/deposit-payments";
 import { requestCancellation } from "@/modules/admin/booking-requests";
 import { changeRequestSchema, guestDetailsSchema, requestDateChange, updateGuestDetails } from "@/modules/bookings/manage-booking";
+import { bookingChangeRequestSchema, requestBookingChange } from "@/modules/bookings/booking-changes";
 import { createPackageBooking, PACKAGES } from "@/modules/bookings/package-booking";
 import { syncPendingPayments } from "@/modules/bookings/payment-sync";
 import { itineraryPdf, voucherPdf } from "@/modules/bookings/voucher-pdf";
@@ -350,6 +351,25 @@ router.post("/manage/change-date", rateLimitMiddleware("booking_manage", { maxRe
     const result = await requestDateChange(ok.booking.bookingReference, { newDate: body.newDate, preferredTime: body.preferredTime, note: body.note }, ok.userId);
     if ("error" in result) return res.status(result.status).json({ success: false, error: result.error });
     return res.status(201).json({ success: true, request: result.request });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// One request for any change (date, guest count, email, guest names): staff review it in Admin →
+// Requests and the backend adjusts seats, invoice and refund (modules/bookings/booking-changes.ts).
+const changeAnySchema = bookingChangeRequestSchema.extend(manageAuth);
+
+router.post("/manage/change-request", rateLimitMiddleware("booking_manage", { maxRequests: 5, windowSeconds: 60 }), async (req, res, next) => {
+  try {
+    const body = parseOr400(changeAnySchema, req.body, res);
+    if (!body) return;
+    const ok = await manageAllowed(req, body.bookingReference, body.t);
+    if (!ok) return res.status(403).json({ success: false, error: MANAGE_DENIED });
+    const { bookingReference: _ref, t: _t, ...change } = body;
+    const result = await requestBookingChange(ok.booking.bookingReference, change, ok.userId);
+    if ("error" in result) return res.status(result.status).json({ success: false, error: result.error });
+    return res.status(201).json({ success: true, request: result.request, estimate: result.estimate });
   } catch (error) {
     next(error);
   }

@@ -22,6 +22,7 @@ import { confirmPackagePayment, failPackagePayment, packageReferences } from "@/
 import { sendPaymentFailedEmail } from "@/modules/bookings/payment-failed-email";
 import { transitionBooking } from "@/modules/bookings/booking-status";
 import { reverseCommissionForRefund } from "@/modules/affiliates/commission";
+import { CHANGE_REFUND_KIND } from "@/modules/bookings/booking-changes";
 import prisma from "@/lib/db/prisma";
 
 const router = Router();
@@ -159,9 +160,13 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
   }
 
   const { status, bookingReference, currency } = payment.booking;
+  // Refunds Vista Chase made for a booking change (fewer guests, cheaper date) leave the booking live on purpose.
+  const changeRefunded = (await refundsOf(charge, intentId))
+    .filter((r) => r.metadata?.kind === CHANGE_REFUND_KIND && (r.status === "succeeded" || r.status === "pending"))
+    .reduce((sum, r) => sum + r.amount, 0);
   if (status === "CANCELLED" && fully) {
     await prisma.$transaction((tx) => transitionBooking(tx, payment.bookingId, ["CANCELLED"], "REFUNDED", { refundedCents, by: "stripe webhook" }));
-  } else if (["CONFIRMED", "PAID_UNSYNCED", "PENDING_PAYMENT", "COMPLETED"].includes(status)) {
+  } else if (["CONFIRMED", "PAID_UNSYNCED", "PENDING_PAYMENT", "COMPLETED"].includes(status) && refundedCents > changeRefunded) {
     // Money went back in Stripe (usually from the dashboard) but the booking still holds seats.
     // Once per refunded total: a later, larger refund raises its own flag.
     const key = `[stripe ${charge.id} refunded ${refundedCents}]`;

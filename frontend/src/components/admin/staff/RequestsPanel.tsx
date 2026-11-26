@@ -10,6 +10,7 @@ import { Dropdown } from "@/components/forms/Dropdown";
 import { BookingDetail } from "@/components/admin/staff/BookingDetail";
 import { clockOnly, dayOnly } from "@/components/admin/staff/BookingsPanel";
 import { PAYMENT_METHODS } from "@/components/admin/staff/FlagsPanel";
+import { ChangeBookingForm, type ChangeAsked, type ChangeParty } from "@/components/admin/staff/ChangeBookingForm";
 import {
   BOOKING_STATUS_STYLE,
   Chip,
@@ -55,6 +56,14 @@ interface CancelRequest {
   booking: RequestBooking;
 }
 
+interface ChangeRequest {
+  id: string;
+  note: string;
+  createdAt: string;
+  asked: ChangeAsked & { estimate: number | null };
+  booking: RequestBooking & { guests: ChangeParty; category: string; multiDayTrip: boolean };
+}
+
 const MANAGERS = ["ADMIN", "OPERATOR"];
 
 export const APPROVE_METHODS = [
@@ -63,7 +72,7 @@ export const APPROVE_METHODS = [
 ];
 
 type Active =
-  | { id: string; action: "approve-cancel" | "decline" }
+  | { id: string; action: "approve-cancel" | "decline" | "change" | "decline-change" }
   | { id: string; action: "approve-booking" }
   | null;
 
@@ -80,6 +89,7 @@ export function RequestsPanel({
     null,
   );
   const [pending, setPending] = useState<RequestBooking[] | null>(null);
+  const [changes, setChanges] = useState<ChangeRequest[] | null>(null);
   const [viaProvider, setViaProvider] = useState(false);
   const [error, setError] = useState("");
   const [active, setActive] = useState<Active>(null);
@@ -90,15 +100,17 @@ export function RequestsPanel({
     const res = await adminApi<{
       cancellations: CancelRequest[];
       awaitingApproval: RequestBooking[];
+      changes?: ChangeRequest[];
       refundsViaProvider: boolean;
     }>("/requests");
     if (!res.ok) return setError(errorOf(res.data, "Couldn't load requests."));
     setError("");
     setCancellations(res.data.cancellations);
     setPending(res.data.awaitingApproval);
+    setChanges(res.data.changes ?? []);
     setViaProvider(Boolean(res.data.refundsViaProvider));
     onCounts?.(
-      res.data.cancellations.length + res.data.awaitingApproval.length,
+      res.data.cancellations.length + res.data.awaitingApproval.length + (res.data.changes?.length ?? 0),
     );
   }, [onCounts]);
 
@@ -208,6 +220,78 @@ export function RequestsPanel({
                   {on("decline") && (
                     <DeclineForm
                       request={r}
+                      onCancel={() => setActive(null)}
+                      onDone={done}
+                    />
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </Panel>
+
+      <Panel
+        id="staff-change-requests"
+        title="Change requests"
+        description="Guests who asked to change a booking (fewer or more guests, another date, a new email or guest names). Review shows the new seats, invoice and any refund or amount due before you apply it."
+      >
+        {!changes ? (
+          <Loading />
+        ) : changes.length === 0 ? (
+          <Empty>No change requests waiting.</Empty>
+        ) : (
+          <ul className="divide-y divide-obsidian-900/[0.06]">
+            {changes.map((r) => {
+              const b = r.booking;
+              const on = (a: "change" | "decline-change") => active?.id === r.id && active.action === a;
+              return (
+                <li key={r.id} className="px-6 py-5">
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <BookingSummary b={b} extra={`Asked ${when(r.createdAt)}`} />
+                    <div className="flex flex-wrap gap-2">
+                      {isManager && (
+                        <>
+                          <button type="button" className={on("change") ? primaryBtn : quietBtn} aria-expanded={on("change")} onClick={() => toggle({ id: r.id, action: "change" })}>
+                            Review change
+                            <span className="sr-only"> for {b.bookingReference}</span>
+                          </button>
+                          <button
+                            type="button"
+                            className={on("decline-change") ? primaryBtn : quietBtn}
+                            aria-expanded={on("decline-change")}
+                            onClick={() => toggle({ id: r.id, action: "decline-change" })}
+                          >
+                            Decline
+                            <span className="sr-only"> change for {b.bookingReference}</span>
+                          </button>
+                        </>
+                      )}
+                      <button type="button" className={quietBtn} onClick={() => setOpenId(b.id)}>
+                        Open booking
+                      </button>
+                    </div>
+                  </div>
+                  <p className="mt-2 text-sm text-slate-700">{r.note}</p>
+                  {r.asked.estimate != null && r.asked.estimate !== b.totalAmount && (
+                    <p className="mt-1 text-sm text-slate-600">
+                      Estimate at the booked price: {money(r.asked.estimate, b.currency)} (now {money(b.totalAmount, b.currency)}).
+                    </p>
+                  )}
+                  {on("change") && (
+                    <ChangeBookingForm
+                      booking={b}
+                      asked={r.asked}
+                      requestId={r.id}
+                      viaProvider={viaProvider}
+                      onCancel={() => setActive(null)}
+                      onDone={done}
+                    />
+                  )}
+                  {on("decline-change") && (
+                    <DeclineForm
+                      request={{ id: r.id, booking: b }}
+                      path="decline-change"
                       onCancel={() => setActive(null)}
                       onDone={done}
                     />
@@ -474,10 +558,12 @@ function ApproveCancelForm({
 
 function DeclineForm({
   request,
+  path = "decline",
   onCancel,
   onDone,
 }: {
-  request: CancelRequest;
+  request: Pick<CancelRequest, "id" | "booking">;
+  path?: "decline" | "decline-change";
   onCancel: () => void;
   onDone: (m: string) => Promise<void>;
 }) {
@@ -491,7 +577,7 @@ function DeclineForm({
     e.preventDefault();
     setBusy(true);
     const res = await adminApi(
-      `/requests/${encodeURIComponent(request.id)}/decline`,
+      `/requests/${encodeURIComponent(request.id)}/${path}`,
       "POST",
       { reason: reason.trim(), notifyGuest },
     );

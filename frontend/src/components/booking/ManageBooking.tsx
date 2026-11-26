@@ -1,9 +1,11 @@
 "use client";
 
 // Manage booking on the voucher page (owner, 2026-11-01), opened from the confirmation email's
-// "Manage booking" button (#manage). The lead guest's name and phone change straight away; a new
-// date is a request our team confirms (seats, price difference), as backend
-// modules/bookings/manage-booking.ts explains.
+// "Manage booking" button (#manage) and from My Trips. The lead guest's name and phone change
+// straight away. Everything else is one request our team confirms (owner, 2026-11-26): a new date,
+// fewer or more guests (e.g. booked 6 and one can't join), a new email address and the names of
+// everyone travelling. Staff then adjust the seats, the invoice and any refund
+// (backend modules/bookings/booking-changes.ts); nothing changes until they do.
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -33,6 +35,9 @@ export function ManageBooking({
   policyOpen = true,
   refundAmount,
   currency = "CAD",
+  guests,
+  customerEmail,
+  perVehicle = false,
 }: {
   bookingReference: string;
   token?: string;
@@ -42,6 +47,11 @@ export function ManageBooking({
   policyOpen?: boolean;
   refundAmount?: number;
   currency?: string;
+  /** The party as booked, so the guest can ask for one more or one less. */
+  guests?: { adults: number; children: number; infants: number };
+  customerEmail?: string;
+  /** Private tours are priced per vehicle: fewer guests don't change the price. */
+  perVehicle?: boolean;
 }) {
   const router = useRouter();
   const [name, setName] = useState(customerName);
@@ -52,7 +62,18 @@ export function ManageBooking({
   const [newDate, setNewDate] = useState("");
   const [preferredTime, setPreferredTime] = useState("");
   const [note, setNote] = useState("");
-  const [changeState, setChangeState] = useState<{ busy?: boolean; done?: boolean; error?: string }>({});
+  const booked = guests ?? { adults: 1, children: 0, infants: 0 };
+  const [adults, setAdults] = useState(booked.adults);
+  const [children, setChildren] = useState(booked.children);
+  const [infants, setInfants] = useState(booked.infants);
+  const [newEmail, setNewEmail] = useState("");
+  const [guestNames, setGuestNames] = useState("");
+  const [changeState, setChangeState] = useState<{
+    busy?: boolean;
+    done?: boolean;
+    error?: string;
+    estimate?: { total: number; current: number; paid: number; currency: string } | null;
+  }>({});
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelState, setCancelState] = useState<{ busy?: boolean; done?: boolean; error?: string }>({});
 
@@ -70,10 +91,27 @@ export function ManageBooking({
 
   const requestChange = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newDate) return setChangeState({ error: "Choose the new date." });
+    const partyChanged = adults !== booked.adults || children !== booked.children || infants !== booked.infants;
+    if (!newDate && !partyChanged && !newEmail.trim() && !guestNames.trim() && !note.trim()) {
+      return setChangeState({ error: "Tell us what to change: a new date, the number of guests, the email or the guests' names." });
+    }
+    if (adults + children < 1) return setChangeState({ error: "At least one guest must travel. To cancel the whole booking, use Cancel booking below." });
     setChangeState({ busy: true });
-    const result = await post("/api/bookings/manage/change-date", { bookingReference, t: token, newDate, preferredTime, note });
-    setChangeState(result.ok ? { done: true } : { error: result.error });
+    const result = await post("/api/bookings/manage/change-request", {
+      bookingReference,
+      t: token,
+      ...(newDate ? { newDate } : {}),
+      preferredTime,
+      ...(partyChanged ? { guests: { adults, children, infants } } : {}),
+      ...(newEmail.trim() ? { customerEmail: newEmail.trim() } : {}),
+      guestNames: guestNames.trim(),
+      note,
+    });
+    setChangeState(
+      result.ok
+        ? { done: true, estimate: (result.data as { estimate?: { total: number; current: number; paid: number; currency: string } | null }).estimate ?? null }
+        : { error: result.error },
+    );
   };
 
   const handleCancelBooking = async () => {
@@ -130,19 +168,57 @@ export function ManageBooking({
       {changeState.done ? (
         <p role="status" className="flex items-start gap-2 bg-emerald-50 p-4 text-sm text-emerald-900 ring-1 ring-emerald-200">
           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-          Request sent. Your booking stays as it is until our team confirms the new date, usually within one business day. We&apos;ve emailed you a copy.
+          <span>
+            Request sent. Your booking stays as it is until our team confirms the change, usually within one business day. We&apos;ve emailed you a copy.
+            {changeState.estimate && changeState.estimate.total !== changeState.estimate.current && (
+              <span className="mt-1 block">
+                At the price you booked, the new total would be about {changeState.estimate.currency} ${changeState.estimate.total.toFixed(2)} (now{" "}
+                {changeState.estimate.currency} ${changeState.estimate.current.toFixed(2)}). Any refund follows the cancellation policy; anything extra you can pay from this page once confirmed.
+              </span>
+            )}
+          </span>
         </p>
       ) : (
         <form onSubmit={requestChange} className="space-y-3" noValidate>
           <p className="flex items-center gap-2 text-sm font-medium text-obsidian-900">
             <CalendarClock className="h-4 w-4 text-ocean-600" aria-hidden="true" />
-            Change date or time
+            Request a change
           </p>
           <p className="text-xs leading-relaxed text-slate-600">
-            Booked for {currentDate}. Ask for another date and our team confirms seats and any price difference before anything changes.
+            Booked for {currentDate}. Change only what you need: our team confirms seats and any price difference, refund or extra payment before anything changes.
           </p>
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-medium text-slate-700">Number of guests</legend>
+            <div className="grid grid-cols-3 gap-3">
+              {(
+                [
+                  ["Adults", adults, setAdults],
+                  ["Youth (6–15)", children, setChildren],
+                  ["Infants (0–5)", infants, setInfants],
+                ] as const
+              ).map(([label, value, set]) => (
+                <label key={label} className="block text-sm text-slate-700">
+                  {label}
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    max={30}
+                    className={input}
+                    value={value}
+                    onChange={(e) => set(Math.max(0, Math.min(30, Number(e.target.value) || 0)))}
+                  />
+                </label>
+              ))}
+            </div>
+            <p className="text-xs leading-relaxed text-slate-600">
+              {perVehicle
+                ? "Private tours are priced per vehicle, so fewer guests don't change the price."
+                : "Fewer guests: the difference is refunded if you ask before the cancellation deadline. More guests: we check seats and you pay the difference."}
+            </p>
+          </fieldset>
           <label className="block text-sm font-medium text-slate-700">
-            New date
+            New date (optional)
             <div className="relative mt-1">
               <input
                 type="date"
@@ -150,7 +226,6 @@ export function ManageBooking({
                 min={tomorrow}
                 value={newDate}
                 onChange={(e) => setNewDate(e.target.value)}
-                required
               />
               <CalendarClock className="pointer-events-none absolute right-3 top-3 h-5 w-5 text-slate-400" aria-hidden="true" />
             </div>
@@ -158,6 +233,28 @@ export function ManageBooking({
           <label className="block text-sm font-medium text-slate-700">
             Preferred time (optional)
             <input className={input} value={preferredTime} onChange={(e) => setPreferredTime(e.target.value)} maxLength={40} placeholder="e.g. morning, 7:30 AM" />
+          </label>
+          <label className="block text-sm font-medium text-slate-700">
+            New email address (optional)
+            <input
+              type="email"
+              autoComplete="email"
+              className={input}
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
+              maxLength={254}
+              placeholder={customerEmail ? `Now ${customerEmail}` : "you@example.com"}
+            />
+          </label>
+          <label className="block text-sm font-medium text-slate-700">
+            Names of everyone travelling (optional)
+            <textarea
+              className={`${input} h-auto min-h-[4rem] py-2`}
+              value={guestNames}
+              onChange={(e) => setGuestNames(e.target.value)}
+              maxLength={600}
+              placeholder="e.g. Meera Kapoor, Arjun Kapoor"
+            />
           </label>
           <label className="block text-sm font-medium text-slate-700">
             Anything else (optional)
@@ -171,7 +268,7 @@ export function ManageBooking({
           </label>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
             <button type="submit" className={button} disabled={changeState.busy || cancelState.busy}>
-              {changeState.busy ? "Sending…" : "Request new date"}
+              {changeState.busy ? "Sending…" : "Send change request"}
             </button>
             <button
               type="button"

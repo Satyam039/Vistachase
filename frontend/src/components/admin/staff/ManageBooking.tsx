@@ -7,6 +7,7 @@
 // logs). Additive: the bookings list and its detail panel (BookingDetail) are unchanged, and the
 // cancel / approve / resend / notes actions call the same /api/admin endpoints they do.
 
+import { ChangeBookingForm } from "@/components/admin/staff/ChangeBookingForm";
 import Link from "next/link";
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
 import {
@@ -90,7 +91,7 @@ interface DateOption {
 }
 
 type Tab = "overview" | "guest" | "payments" | "history" | "bokun";
-type Action = null | "change-date" | "cancel" | "edit";
+type Action = null | "change-date" | "change" | "cancel" | "edit";
 
 const TABS: [Tab, string][] = [
   ["overview", "Booking Overview"],
@@ -316,6 +317,7 @@ export function ManageBooking({ id, role, staffName }: { id: string; role: strin
       {/* Staff actions */}
       <div className="flex flex-wrap gap-2" role="group" aria-label="Booking actions">
         {isManager && live && !cancelled && actionButton("change-date", "Change Tour Date", CalendarSync, primaryBtn)}
+        {isManager && live && !cancelled && actionButton("change", "Change Guests / Invoice", Users, quietBtn)}
         {isManager && live && !cancelled &&
           actionButton("cancel", "Cancel Booking", Trash2, "inline-flex h-11 items-center gap-2 rounded-full bg-red-700 px-5 text-sm text-white hover:bg-red-800 disabled:opacity-60")}
         {isManager && actionButton("edit", "Edit Booking", Pencil, quietBtn)}
@@ -347,6 +349,34 @@ export function ManageBooking({ id, role, staffName }: { id: string; role: strin
                 await load();
               }}
             />
+          )}
+          {action === "change" && (
+            <div className="px-6 py-5">
+              <h3 className="text-lg text-obsidian-900">Change guests, date or details</h3>
+              <p className="mt-1 text-sm text-slate-600">
+                For a change the guest asked for by phone or email. Seats, the invoice and any refund or amount due follow from it; a request made online is answered from Requests.
+              </p>
+              <ChangeBookingForm
+                booking={{
+                  id: booking.id,
+                  bookingReference: booking.bookingReference,
+                  customerName: booking.customerName,
+                  customerEmail: booking.customerEmail,
+                  currency: booking.currency,
+                  guests: { adults: booking.adultsCount, children: booking.childrenCount, infants: booking.infantsCount },
+                  date: date ?? "",
+                  departureTime: time,
+                  multiDayTrip: Boolean(booking.trip),
+                }}
+                viaProvider={viaProvider}
+                onCancel={() => setAction(null)}
+                onDone={async (m) => {
+                  setAction(null);
+                  notify(m);
+                  await load();
+                }}
+              />
+            </div>
           )}
           {action === "cancel" &&
             (cancelled ? (

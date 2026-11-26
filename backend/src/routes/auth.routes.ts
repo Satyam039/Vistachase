@@ -3,7 +3,7 @@ import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
 import { recordSubmission } from "@/modules/security/visitor-log";
 import { Router, type Request, type Response } from "express";
 import prisma from "@/lib/db/prisma";
-import { hashPassword, verifyPassword, signToken, UserRole } from "@/lib/auth/auth";
+import { hashPassword, verifyPassword, signToken, sessionCookieMaxAgeMs, UserRole } from "@/lib/auth/auth";
 import { AUTH_COOKIE_NAME, getSessionUser } from "@/lib/auth/admin-guard";
 import { portalFor } from "@/lib/auth/permissions";
 import crypto from "node:crypto";
@@ -34,7 +34,7 @@ function setAuthCookie(req: Request, res: Response, token: string) {
     httpOnly: true,
     secure: secureCookie(req),
     sameSite: "lax",
-    maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+    maxAge: sessionCookieMaxAgeMs(), // the session lifetime (auth.ts, 3 days)
     path: "/",
   });
 }

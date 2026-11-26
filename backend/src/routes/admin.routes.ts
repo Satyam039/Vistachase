@@ -34,6 +34,7 @@ import { bokunSyncStatus, processBokunSyncTasks, queueBokunNoteUpdate, queueUpco
 import { syncBokunSeats } from "@/modules/bokun/availability-sync";
 import { pullBokunChanges } from "@/modules/bokun/bokun-inbound";
 import { bookingOverview, changeBookingDate, dateOptions, updateGuestContact } from "@/modules/admin/booking-manage";
+import { applyBookingChange, changeInputSchema, declineChangeRequest, listChangeRequests, planBookingChange, planSummary } from "@/modules/bookings/booking-changes";
 import { PRODUCT_MAP } from "@/modules/tours/product-map";
 import { hashPassword } from "@/lib/auth/auth";
 import { ASSIGNABLE_ROLES, STAFF_LIST_ROLES } from "@/lib/auth/permissions";
@@ -553,7 +554,8 @@ router.post("/bookings/:id/cancel", requireStaff(MANAGERS), async (req, res, nex
 // Requests (docs/ADMIN.md): guests' cancellation requests, and bookings waiting for staff approval.
 router.get("/requests", async (_req, res, next) => {
   try {
-    res.json({ success: true, ...(await listRequests()), refundsViaProvider: staffRefundsViaProvider() });
+    const [requests, changes] = await Promise.all([listRequests(), listChangeRequests()]);
+    res.json({ success: true, ...requests, changes, refundsViaProvider: staffRefundsViaProvider() });
   } catch (e) {
     next(e);
   }
@@ -570,6 +572,40 @@ router.post("/requests/:id/approve", requireStaff(MANAGERS), async (req, res, ne
     const result = await approveCancellation(id(req), body, staffId(req));
     if (result.status !== 200 || !("paidCents" in result)) return send(res, result);
     send(res, { ...result, paid: result.paidCents / 100, refundOwed: result.refundOwedCents / 100, refunded: result.refundedCents / 100, refundDue: result.refundDueCents / 100 });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// Booking changes (modules/bookings/booking-changes.ts): preview, apply (seats, invoice, refund or
+// amount due, Bókun) and decline a guest's change request.
+router.post("/bookings/:id/change/preview", requireStaff(MANAGERS), async (req, res, next) => {
+  try {
+    const body = parseOr400(changeInputSchema, req.body, res);
+    if (!body) return;
+    const plan = await planBookingChange(id(req), body);
+    if (plan.status !== 200) return send(res, plan);
+    send(res, { status: 200, preview: planSummary(plan) });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post("/bookings/:id/change", requireStaff(MANAGERS), async (req, res, next) => {
+  try {
+    const body = parseOr400(changeInputSchema, req.body, res);
+    if (!body) return;
+    send(res, await applyBookingChange(id(req), body, staffId(req)));
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post("/requests/:id/decline-change", requireStaff(MANAGERS), async (req, res, next) => {
+  try {
+    const body = parseOr400(z.object({ reason: z.string().trim().min(3).max(500), notifyGuest: z.boolean().default(true) }), req.body, res);
+    if (!body) return;
+    send(res, await declineChangeRequest(id(req), body, staffId(req)));
   } catch (e) {
     next(e);
   }

@@ -21,6 +21,7 @@ import {
   Settings,
 } from "lucide-react";
 import { tourPagePath } from "@/lib/retiredTours";
+import { portalFor } from "@/lib/portals";
 
 interface TripBooking {
   id: string;
@@ -121,6 +122,7 @@ export default function MyTripsPage() {
   // false: bookings made with this email before the account existed stay hidden until it's confirmed.
   const [emailVerified, setEmailVerified] = useState(true);
   const [verifyNote, setVerifyNote] = useState("");
+  const [portalNote, setPortalNote] = useState("");
 
   // Lookup by Reference fallback state (for guests not logged in)
   const [searchRef, setSearchRef] = useState("");
@@ -166,7 +168,14 @@ export default function MyTripsPage() {
       const meRes = await fetch("/api/auth/me");
       const meData = await meRes.json();
 
-      if (meData.authenticated && meData.user) {
+      // My Trips is the guest side. A staff or partner sign-in sees "Find your booking" and the
+      // guest sign-in, with a note, instead of being sent to its own portal.
+      const portal = portalFor(meData.user?.role);
+      if (meData.authenticated && meData.user && portal !== "customer") {
+        setPortalNote(
+          `You're signed in to the ${portal === "partner" ? "partner" : "staff"} portal. My Trips is for guest bookings: find one by its reference below, or sign in with the guest account you booked with.`,
+        );
+      } else if (meData.authenticated && meData.user) {
         setUser(meData.user);
         const tripsRes = await fetch("/api/account/trips");
         const tripsData = await tripsRes.json();
@@ -480,7 +489,7 @@ export default function MyTripsPage() {
                           <p className="text-2xl font-light text-obsidian-900">
                             CAD ${b.totalAmount.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </p>
-                          {b.paymentPlan === "DEPOSIT" && b.status !== "CANCELLED" && (b.balanceDue ?? 0) > 0 && (
+                          {b.status !== "CANCELLED" && (b.balanceDue ?? 0) > 0 && (
                             <p className="mt-2 rounded-2xl bg-summit-100 px-3 py-2 text-sm text-obsidian-900">
                               Balance ${(b.balanceDue ?? 0).toFixed(2)} due
                               {b.balanceDueAt ? ` by ${formatRockiesDate(b.balanceDueAt)}` : ""}.{" "}
@@ -526,6 +535,17 @@ export default function MyTripsPage() {
                             <p className="text-sm leading-snug text-slate-600">
                               Your cancellation request was declined{b.cancelRequest.reason ? `: ${b.cancelRequest.reason}` : "."}
                             </p>
+                          )}
+                          {CANCELLABLE.includes(b.status) && activeTab === "upcoming" && (
+                            // Fewer or more guests, another date, a new email or guest names: one request
+                            // staff confirm (Manage booking on the voucher page).
+                            <Link
+                              href={`/booking/${b.bookingReference}/voucher#manage`}
+                              className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-obsidian-900/10 px-5 text-sm text-obsidian-900 hover:bg-obsidian-50"
+                            >
+                              <Users className="h-4 w-4" aria-hidden="true" />
+                              Change guests or date
+                            </Link>
                           )}
                           {CANCELLABLE.includes(b.status) && activeTab === "upcoming" && b.cancelRequest?.status !== "PENDING" && (
                             <button
@@ -616,6 +636,12 @@ export default function MyTripsPage() {
               Send confirmation link
             </button>
           </div>
+        )}
+        {portalNote && !user && (
+          <p role="status" className="mb-8 flex items-start gap-2 rounded-2xl bg-ocean-50 px-5 py-4 text-sm text-obsidian-900 ring-1 ring-ocean-100">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-ocean-700" aria-hidden="true" />
+            {portalNote}
+          </p>
         )}
         {/* Signed out: find a booking, or sign in */}
         {!user && !loading && bookings.length === 0 && (

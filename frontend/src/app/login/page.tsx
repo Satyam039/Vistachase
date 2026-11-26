@@ -8,9 +8,15 @@ import { useState } from "react";
 import Link from "next/link";
 import { AlertCircle, ArrowLeft, CheckCircle2, Eye, EyeOff, KeyRound } from "lucide-react";
 import { AUTH_FIELD, AuthShell } from "@/components/forms/AuthShell";
-import { portalFor, signInFor } from "@/lib/portals";
+import { portalFor, safeNextFor, signInFor } from "@/lib/portals";
 
 const DEV = process.env.NODE_ENV !== "production";
+
+/** Back to the page that sent the guest here (?next=, e.g. /account/settings), else My Trips. */
+function afterSignIn(role?: string) {
+  const next = typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("next");
+  return safeNextFor(role, next) ?? "/account/trips";
+}
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -47,7 +53,7 @@ export default function LoginPage() {
           await fetch("/api/auth/logout", { method: "POST" }).catch(() => undefined);
           setErrorMsg(`This is a staff or partner account. Sign in at ${signInFor(portal)} instead.`);
         } else {
-          window.location.assign("/account/trips");
+          window.location.assign(afterSignIn(data.user?.role));
         }
       }
     } catch {
@@ -80,7 +86,7 @@ export default function LoginPage() {
           await fetch("/api/auth/logout", { method: "POST" }).catch(() => undefined);
           setErrorMsg(`This is a staff or partner account. Sign in at ${signInFor(portal)} instead.`);
         } else {
-          window.location.assign("/account/trips"); // full load so the middleware sees the new cookie
+          window.location.assign(afterSignIn(data.user?.role)); // full load so the middleware sees the new cookie
         }
       }
     } catch {

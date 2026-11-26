@@ -22,6 +22,7 @@ import { eligibleRefundCents, policyDecision } from "@/modules/bookings/cancella
 import { earnCommission, reverseCommissionForRefund } from "@/modules/affiliates/commission";
 import { endBooking } from "@/modules/departures/inventory";
 import { experienceTitle } from "@/modules/bookings/tour-itinerary";
+import { reducePaidBy } from "@/modules/bookings/booking-changes";
 
 export const OFFLINE_METHODS = ["CASH", "ETRANSFER", "CARD_TERMINAL", "OTHER"] as const;
 export type OfflineMethod = (typeof OFFLINE_METHODS)[number];
@@ -83,7 +84,9 @@ export async function staffCancelBooking(bookingId: string, input: StaffCancelIn
   // is held to the deadline; otherwise the amount the rules keep (20% on private packages) stays.
   const policy = await policyDecision(booking, input.requestedAt);
   const policyRefund = input.requestedAt ? policy.refundCents : eligibleRefundCents(paidCents, booking.totalAmount, policy.keepPercent);
-  const owed = input.refund === "NONE" ? 0 : input.refund === "FULL" ? paidCents : policyRefund;
+  // A refund already owed for an earlier change (booking-changes.ts) is not refunded a second time.
+  const alreadyOwed = (await prisma.bookingFlag.aggregate({ where: { bookingId: booking.id, type: "REFUND_DUE", status: "OPEN" }, _sum: { amountCents: true } }))._sum.amountCents ?? 0;
+  const owed = Math.max(0, Math.min(input.refund === "NONE" ? 0 : input.refund === "FULL" ? paidCents : policyRefund, paidCents - alreadyOwed));
 
   // The status move is the claim: a double-submitted cancel releases the seats once.
   const cancelled = await prisma.$transaction(async (tx) => {
@@ -262,8 +265,14 @@ export async function markRefunded(flagId: string, input: { reference: string; n
   const done = await prisma.$transaction(async (tx) => {
     const claimed = await claimFlag(tx, flagId, staffId, resolution);
     if (!claimed) return null;
-    await transitionBooking(tx, flag.bookingId, ["CANCELLED"], "REFUNDED", { refundedCents: amount, by: "staff", reference: input.reference });
-    await tx.payment.updateMany({ where: { bookingId: flag.bookingId, status: "SUCCEEDED" }, data: { status: "REFUNDED" } });
+    const booking = await tx.booking.findUniqueOrThrow({ where: { id: flag.bookingId }, select: { status: true } });
+    if (booking.status === "CANCELLED" || booking.status === "REFUNDED" || booking.status === "EXPIRED") {
+      await transitionBooking(tx, flag.bookingId, ["CANCELLED"], "REFUNDED", { refundedCents: amount, by: "staff", reference: input.reference });
+      await tx.payment.updateMany({ where: { bookingId: flag.bookingId, status: "SUCCEEDED" }, data: { status: "REFUNDED" } });
+    } else {
+      // A change refund (fewer guests, cheaper date): the booking stays live, only what it was paid drops.
+      await reducePaidBy(tx, flag.bookingId, amount);
+    }
     await appendNote(tx, flag.bookingId, `Refund of ${(amount / 100).toFixed(2)} sent by hand (${input.reference}).`);
     await staffAudit(tx, staffId, "MARK_REFUNDED", "Booking", flag.bookingId, { flagId, amountCents: amount, reference: input.reference });
     return claimed;

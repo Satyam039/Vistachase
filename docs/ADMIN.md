@@ -10,7 +10,7 @@ bookings, guests, payments, partners or commissions.
 | Screen | Who | What |
 | --- | --- | --- |
 | Bookings → Bookings | operations staff (actions: Admin, Operator) | Search, booking detail with payments, flags and history; edit notes; resend voucher; **cancel** with a refund decision |
-| Bookings → Requests | operations staff (actions: Admin, Operator) | Guests' cancellation requests (approve = cancel with a refund choice, or decline with a reason); bookings waiting for payment to **approve** by hand |
+| Bookings → Requests | operations staff (actions: Admin, Operator) | Guests' cancellation requests (approve = cancel with a refund choice, or decline with a reason); bookings waiting for payment to **approve** by hand; guests' **change requests** (guests, date, email, names: review shows seats, invoice and refund before Apply, see docs/BOOKING_CHANGES.md) |
 | Bookings → Flags | operations staff (actions: Admin, Operator; Mark refunded: Admin) | Payments that didn't match or came late, refunds owed, Quick Book payments due |
 | Bookings → Quick Book | Admin, Operator | Book a departure for a guest on the phone or at the desk |
 | Departures | operations staff (changes: Admin, Operator) | List, add many dates at once, edit seats and prices, take off sale, manifest |
@@ -63,6 +63,8 @@ With `STAFF_REFUNDS_VIA_PROVIDER=true`, online payments are refunded through the
 is still recorded as owed. A cancellation with no refund leaves partner commission as it is.
 
 ## Requests: cancellation requests and approving bookings
+
+Change requests (fewer or more guests, another date, a new email, guest names) are a third list on the same screen; see `docs/BOOKING_CHANGES.md`.
 
 **Cancellation requests.** On My trips, guests press **Request cancellation** beside an upcoming
 booking (any time before departure, with an optional reason). Nothing changes for the booking: the
