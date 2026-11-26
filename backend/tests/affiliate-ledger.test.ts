@@ -258,6 +258,33 @@ describe("partner API", () => {
     expect(me.body.totals).toMatchObject({ bookings: 1, revenue: 100, commission: 10 });
   });
 
+  it("lets an admin pick which partner's portal to view, defaulting to the latest referred booking", async () => {
+    const a = await activePartner();
+    const b = await activePartner();
+    const dep = await departure();
+    await bookFor(a.affiliate.code, dep.id);
+    const latest = await bookFor(b.affiliate.code, dep.id);
+
+    // No choice yet: the partner credited with the newest booking (not just the first partner row).
+    const first = await request(app).get("/api/affiliates/me").set("Cookie", adminCookie);
+    expect(first.status).toBe(200);
+    expect(first.body.affiliate.code).toBe(b.affiliate.code);
+    expect(first.body.recentBookings.map((x: { reference: string }) => x.reference)).toContain(latest.booking!.bookingReference);
+    const listed = first.body.adminView.partners.find((p: { code: string }) => p.code === a.affiliate.code);
+    expect(listed).toMatchObject({ bookings: 1, status: "ACTIVE" });
+
+    // The admin's choice (cookie set by the portal) switches every partner screen.
+    const pick = `${adminCookie}; vc_partner_view=${a.affiliate.code.toLowerCase()}`;
+    expect((await request(app).get("/api/affiliates/me").set("Cookie", pick)).body.affiliate.code).toBe(a.affiliate.code);
+    const bookings = await request(app).get("/api/affiliates/me/bookings").set("Cookie", pick);
+    expect(bookings.body.bookings).toHaveLength(1);
+
+    // A partner always sees their own portal, whatever the cookie says, and gets no partner list.
+    const own = await request(app).get("/api/affiliates/me").set("Cookie", `${b.cookie}; vc_partner_view=${a.affiliate.code}`);
+    expect(own.body.affiliate.code).toBe(b.affiliate.code);
+    expect(own.body.adminView).toBeUndefined();
+  });
+
   it("lets a partner edit their profile but not their code, status or rate", async () => {
     const { affiliate, cookie } = await activePartner();
     const ok = await request(app).patch("/api/affiliates/me").set("Cookie", cookie).send({ phone: "+1 403 555 0199", payoutEmail: "pay@example.com" });

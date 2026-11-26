@@ -37,10 +37,27 @@ interface AffiliateInfo {
   status: string;
 }
 
+interface AdminViewPartner {
+  code: string;
+  name: string;
+  status: string;
+  bookings: number;
+}
+
+// An admin opening the affiliate portal sees one partner's portal at a time and picks which one
+// here. The API reads the choice from this cookie (admins only; partners always see their own).
+const PARTNER_VIEW_COOKIE = "vc_partner_view";
+
+function viewPartner(code: string) {
+  document.cookie = `${PARTNER_VIEW_COOKIE}=${encodeURIComponent(code)}; path=/; max-age=${60 * 60 * 24 * 30}; samesite=lax${window.location.protocol === "https:" ? "; secure" : ""}`;
+  window.location.reload();
+}
+
 export function AffiliateHeader({ current }: { current?: string }) {
   const pathname = usePathname();
   const router = useRouter();
   const [partner, setPartner] = useState<AffiliateInfo | null>(null);
+  const [adminPartners, setAdminPartners] = useState<AdminViewPartner[] | null>(null);
 
   useEffect(() => {
     fetch("/api/affiliates/me")
@@ -54,6 +71,7 @@ export function AffiliateHeader({ current }: { current?: string }) {
             status: data.affiliate.status,
           });
         }
+        if (Array.isArray(data?.adminView?.partners)) setAdminPartners(data.adminView.partners);
       })
       .catch(() => undefined);
   }, []);
@@ -105,6 +123,28 @@ export function AffiliateHeader({ current }: { current?: string }) {
           </Link>
         )}
       </div>
+
+      {partner && adminPartners ? (
+        <div className="border-y border-amber-200 bg-amber-50">
+          <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-3 gap-y-2 px-page py-2.5 text-xs text-amber-900">
+            <span className="font-medium">Admin view. You are seeing this partner&apos;s portal:</span>
+            <label className="sr-only" htmlFor="admin-partner-view">Partner to view</label>
+            <select
+              id="admin-partner-view"
+              value={partner.code}
+              onChange={(e) => viewPartner(e.target.value)}
+              className="h-8 max-w-full rounded-md border border-amber-300 bg-white px-2 text-xs text-slate-900"
+            >
+              {adminPartners.map((p) => (
+                <option key={p.code} value={p.code}>
+                  {p.name} ({p.code}) · {p.bookings} {p.bookings === 1 ? "booking" : "bookings"}
+                  {p.status !== "ACTIVE" ? ` · ${p.status.toLowerCase()}` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      ) : null}
 
       {/* Navigation Tabs */}
       <div className="mx-auto max-w-7xl px-page">
