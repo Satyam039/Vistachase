@@ -76,16 +76,17 @@ describe("Partner (affiliate) program", () => {
     expect(b?.affiliateId).toBeNull();
   });
 
-  it("never credits a partner for their own booking (self-referral)", async () => {
+  it("credits a partner for a booking they make themself, with their own email or account", async () => {
     const partner = await prisma.user.findUniqueOrThrow({ where: { email: "partner.demo@example.com" } });
     const dep = await openDeparture();
     const base = { departureId: dep.id, customerName: "Demo Partner", customerPhone: "+1-403-555-0100", adultsCount: 1, childrenCount: 0, infantsCount: 0, affiliateCode: "BANFFLODGE" };
     const byEmail = await createBooking({ ...base, customerEmail: "Partner.Demo@example.com" });
     const byAccount = await createBooking({ ...base, customerEmail: `other-${unique()}@example.com`, customerId: partner.id });
     expect(byEmail.success && byAccount.success).toBe(true);
+    const lodge = await prisma.affiliate.findUniqueOrThrow({ where: { code: "BANFFLODGE" } });
     for (const r of [byEmail, byAccount]) {
       const b = await prisma.booking.findUnique({ where: { bookingReference: r.booking!.bookingReference } });
-      expect(b?.affiliateId).toBeNull();
+      expect(b?.affiliateId).toBe(lodge.id);
     }
   });
 

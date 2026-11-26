@@ -83,16 +83,14 @@ export async function findActiveAffiliateByCode(code: string | undefined | null)
 }
 
 /**
- * The partner to credit for a booking: an ACTIVE partner whose code is in the vc_ref cookie, and
- * never the partner themself (self-referral: the booking is made by the partner's own account or
- * with the partner account's email).
+ * The partner to credit for a booking: an ACTIVE partner whose code is in the vc_ref cookie (or
+ * whose coupon was used). A booking the partner makes themself, with their own account or email,
+ * counts too: hotels and agents book for their guests with their own details (owner, 2026-11-26;
+ * before that such bookings were refused as self-referral and never showed in the partner portal).
  */
-export async function referringAffiliateId(code: string | undefined | null, customer: { customerId?: string; customerEmail: string }) {
+export async function referringAffiliateId(code: string | undefined | null, _customer?: { customerId?: string; customerEmail: string }) {
   const affiliate = await findActiveAffiliateByCode(code);
-  if (!affiliate) return null;
-  if (customer.customerId && customer.customerId === affiliate.userId) return null;
-  if (affiliate.user.email.toLowerCase() === customer.customerEmail.trim().toLowerCase()) return null;
-  return affiliate.id;
+  return affiliate ? affiliate.id : null;
 }
 
 /** Bookings that count as sales: paid (or being finished by staff after payment), not unpaid, cancelled or refunded. */
