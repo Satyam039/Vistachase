@@ -37,7 +37,7 @@ const RED = rgb(0.7, 0.11, 0.11);
 
 // Characters the standard (WinAnsi) fonts can draw beyond Latin-1; anything else becomes "?".
 const WIN_ANSI_EXTRA = new Set("€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ");
-const safe = (text: string) =>
+export const safe = (text: string) =>
   Array.from(text.replace(/[\r\n\t]+/g, " "))
     .map((c) => (c.charCodeAt(0) <= 0xff && c.charCodeAt(0) >= 0x20 ? c : WIN_ANSI_EXTRA.has(c) ? c : c === "→" ? "->" : "?"))
     .join("");
@@ -62,7 +62,7 @@ function emblemPng(): Buffer | null {
 }
 
 const emblems = new WeakMap<PDFDocument, PDFImage | null>();
-async function emblemFor(pdf: PDFDocument): Promise<PDFImage | null> {
+export async function emblemFor(pdf: PDFDocument): Promise<PDFImage | null> {
   if (!emblems.has(pdf)) {
     const bytes = emblemPng();
     emblems.set(pdf, bytes ? await pdf.embedPng(bytes) : null);
@@ -70,9 +70,9 @@ async function emblemFor(pdf: PDFDocument): Promise<PDFImage | null> {
   return emblems.get(pdf) ?? null;
 }
 
-const BAND = 92;
+export const BAND = 92;
 /** The dark header band: VISTA CHASE and a subtitle on the left, the gold horse on the right. */
-function drawBand(page: PDFPage, emblem: PDFImage | null, bold: PDFFont, regular: PDFFont, subtitle: string, margin: number) {
+export function drawBand(page: PDFPage, emblem: PDFImage | null, bold: PDFFont, regular: PDFFont, subtitle: string, margin: number) {
   const { width, height } = page.getSize();
   page.drawRectangle({ x: 0, y: height - BAND, width, height: BAND, color: rgb(0.047, 0.122, 0.129) });
   page.drawText("VISTA CHASE", { x: margin, y: height - 50, size: 20, font: bold, color: rgb(1, 1, 1) });
@@ -105,7 +105,7 @@ function longDate(value: Date) {
 }
 
 /** Splits text into lines no wider than `width` points. */
-function wrap(text: string, font: PDFFont, size: number, width: number): string[] {
+export function wrap(text: string, font: PDFFont, size: number, width: number): string[] {
   const lines: string[] = [];
   let line = "";
   for (const word of safe(text).split(" ")) {

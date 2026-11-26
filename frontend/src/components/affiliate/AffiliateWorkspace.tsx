@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Check, Clock, Copy, LogOut, ExternalLink, BarChart2, RefreshCw } from "lucide-react";
 import { Dropdown } from "@/components/forms/Dropdown";
 import { AffiliateHeader } from "./AffiliateHeader";
+import { PartnerRequests } from "@/components/affiliate/PartnerRequests";
+import { PartnerAgreements } from "@/components/affiliate/PartnerAgreements";
 import { PartnerCoupons } from "@/components/affiliate/PartnerCoupons";
 import { PartnerProducts } from "./PartnerProducts";
 import { referralGroups, referralLink, type ReferralDestination, type ReferralPost, type ReferralTour } from "@/lib/affiliateLinks";
@@ -19,7 +21,7 @@ export interface Profile {
 }
 
 export interface Dashboard {
-  affiliate: Profile & { code: string; type: string; status: string; commissionRate: number; bokunChannelId: string | null };
+  affiliate: Profile & { code: string; type: string; status: string; commissionRate: number; commissionPercent?: number | null; commissionProducts?: string[] | null; bokunChannelId: string | null };
   totals: {
     bookings: number;
     guests: number;
@@ -70,7 +72,7 @@ export interface Payout {
   createdAt: string;
 }
 
-export type Tab = "overview" | "products" | "referrals" | "coupons" | "bookings" | "commissions" | "payouts" | "reports" | "settings";
+export type Tab = "overview" | "products" | "referrals" | "coupons" | "requests" | "bookings" | "commissions" | "payouts" | "reports" | "settings";
 
 const money = (n: number) => `$${n.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const SITE = typeof window !== "undefined" ? window.location.origin : "https://www.vistachase.com";
@@ -243,7 +245,7 @@ export function AffiliateWorkspace({ activeTab = "overview" }: { activeTab?: Tab
                   <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-200 font-bold text-emerald-900 text-xs">3</div>
                   <div>
                     <strong className="block text-slate-800">Receive Commission</strong>
-                    Commission ({Math.round(affiliate.commissionRate * 100)}%) is automatically credited to your balance.
+                    Commission{affiliate.commissionPercent != null ? ` (${affiliate.commissionPercent}%${affiliate.commissionProducts?.length ? ` on ${affiliate.commissionProducts.join(", ")}` : ""})` : ""} is automatically credited to your balance.
                   </div>
                 </div>
               </div>
@@ -255,7 +257,7 @@ export function AffiliateWorkspace({ activeTab = "overview" }: { activeTab?: Tab
                   <h1 className="text-2xl font-light text-slate-900">Performance Summary</h1>
                   <p className="text-xs text-slate-500">Live booking attribution and commission totals.</p>
                 </div>
-                <span className="text-xs text-slate-500 font-mono">Commission Rate: {Math.round(affiliate.commissionRate * 100)}%</span>
+                <span className="text-xs text-slate-500 font-mono">Commission Rate: {affiliate.commissionPercent != null ? `${affiliate.commissionPercent}%` : "set in your agreement"}</span>
               </div>
 
               <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -379,6 +381,8 @@ export function AffiliateWorkspace({ activeTab = "overview" }: { activeTab?: Tab
         {/* Tab 3: Bookings */}
         {activeTab === "coupons" && <PartnerCoupons />}
 
+        {activeTab === "requests" && <PartnerRequests />}
+
         {activeTab === "bookings" && <BookingsPanel />}
 
         {/* Tab 4: Commissions */}
@@ -422,7 +426,12 @@ export function AffiliateWorkspace({ activeTab = "overview" }: { activeTab?: Tab
         )}
 
         {/* Tab 7: Settings */}
-        {activeTab === "settings" && <ProfilePanel profile={affiliate} onSaved={loadDashboard} />}
+        {activeTab === "settings" && (
+          <>
+            <ProfilePanel profile={affiliate} onSaved={loadDashboard} />
+            <PartnerAgreements />
+          </>
+        )}
       </main>
     </div>
   );

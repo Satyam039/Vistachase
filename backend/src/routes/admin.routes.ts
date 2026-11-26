@@ -825,7 +825,9 @@ router.patch("/pickup-stops/:id", requireStaff(MANAGERS), async (req, res, next)
 // Promo codes (Admin → Promo codes): staff see them; admins create, change and delete them.
 router.get("/promo-codes", requireStaff(MANAGERS), async (_req, res, next) => {
   try {
-    res.json({ success: true, ...(await listPromos()) });
+    // Active partners, for "Give this code to a partner".
+    const partners = await prisma.affiliate.findMany({ where: { status: "ACTIVE" }, select: { id: true, name: true, code: true }, orderBy: { name: "asc" } });
+    res.json({ success: true, ...(await listPromos()), partners });
   } catch (e) {
     next(e);
   }
@@ -843,8 +845,19 @@ const promoSchema = z
     note: z.string().trim().max(300).optional(),
     // "Where does it apply": one, two or all three.
     appliesTo: z.array(z.enum(["SHARED", "PRIVATE", "SHUTTLE"])).min(1, "Choose where the coupon applies: shared tours, private tours or shuttles.").max(3).optional(),
+    // A partner's coupon (owner, 2026-11-26: only the Vista Chase team makes coupon codes): bookings
+    // made with it are credited to this partner.
+    affiliateId: z.string().min(1).max(40).nullable().optional(),
   })
   .strict();
+
+/** The partner a coupon is given to must exist and be active (suspended partners' codes are refused at checkout anyway). */
+async function promoPartnerError(affiliateId: string | null | undefined) {
+  if (!affiliateId) return null;
+  const partner = await prisma.affiliate.findUnique({ where: { id: affiliateId }, select: { status: true } });
+  if (!partner) return "Partner not found.";
+  return partner.status === "ACTIVE" ? null : "That partner isn't active, so their coupon wouldn't work. Approve or reactivate them first.";
+}
 
 const promoValueError = (b: { kind?: string; value?: number }) =>
   b.kind === "PERCENT" && (!Number.isInteger(b.value) || (b.value ?? 0) > 100)
@@ -857,7 +870,7 @@ router.post("/promo-codes", requireStaff(["ADMIN"]), async (req, res, next) => {
   try {
     const body = parseOr400(promoSchema, req.body, res);
     if (!body) return;
-    const bad = promoValueError(body);
+    const bad = promoValueError(body) ?? (await promoPartnerError(body.affiliateId));
     if (bad) return res.status(400).json({ success: false, error: bad });
     const result = await createPromo(body);
     if (result.status === 201) await audit(req, "CREATE_PROMO_CODE", "PromoCode", result.promo.id, body);
@@ -871,7 +884,7 @@ router.patch("/promo-codes/:id", requireStaff(["ADMIN"]), async (req, res, next)
   try {
     const body = parseOr400(promoSchema.partial(), req.body, res);
     if (!body) return;
-    const bad = promoValueError(body);
+    const bad = promoValueError(body) ?? (await promoPartnerError(body.affiliateId));
     if (bad) return res.status(400).json({ success: false, error: bad });
     const result = await updatePromo(id(req), body);
     if (result.status !== 200) return send(res, result);

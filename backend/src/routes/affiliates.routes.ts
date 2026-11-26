@@ -29,13 +29,24 @@ import { adjustCommission, approveCommissions } from "@/modules/affiliates/commi
 import { applicationFields, applicationRecord, decryptBankDetails, encryptBankDetails } from "@/modules/affiliates/partner-application";
 import { cancelPayout, createPayout, listPayouts, markPayoutPaid, payoutDto } from "@/modules/affiliates/payouts";
 import { affiliateReport, reportToCsv } from "@/modules/affiliates/reports";
-import { sendPayoutPaidEmail, sendStatusEmail } from "@/modules/affiliates/partner-emails";
+import { sendChangeRequestEmails, sendChangeRequestUpdate, sendContractEmail, sendPayoutPaidEmail, sendStatusEmail } from "@/modules/affiliates/partner-emails";
+import {
+  CONTRACT_CATEGORIES,
+  affiliateForDocs,
+  applicationPdf,
+  contractDto,
+  contractPdf,
+  contractProductOptions,
+  issueContract,
+  resolveProducts,
+  type ContractTerms,
+} from "@/modules/affiliates/partner-contract";
 import { rateLimitMiddleware } from "@/lib/security/rate-limit-middleware";
 import { recordSubmission } from "@/modules/security/visitor-log";
 import { formTokenProblem, looksLikeBotName, verifyTurnstile } from "@/modules/enquiries/spam";
 import { hasValidMxRecords, isSuspiciousEmail, isSyntheticBotName } from "@/lib/security/spam-detector";
 
-import { createPromo, deletePromo, updatePromo, usesByCode } from "@/modules/admin/promo-admin";
+import { usesByCode } from "@/modules/admin/promo-admin";
 import { PROMO_SCOPES, promoLabel } from "@/modules/pricing/promo-codes";
 import { todayInMountainTime } from "@/lib/utils/time";
 
@@ -259,27 +270,10 @@ router.get("/me/payouts", async (req, res) => {
 
 
 // ---------------------------------------------------------------------------------------------
-// Partner coupons (affiliate account → Coupons, owner 2026-11-22). A partner makes their own coupon
-// codes: percent off, start/end date, active or not, and where it applies (shared tours, private
-// tours, shuttles). Guests type them at checkout like any promo code; bookings made with one credit
-// this partner. Percent is capped by PARTNER_COUPON_MAX_PERCENT (default 20).
-
-export const partnerCouponMaxPercent = () => {
-  const n = Number(process.env.PARTNER_COUPON_MAX_PERCENT);
-  return Number.isInteger(n) && n >= 1 && n <= 100 ? n : 20;
-};
-
-const couponDay = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use a date like 2027-06-01.");
-const couponSchema = z
-  .object({
-    code: z.string().trim().regex(/^[A-Za-z0-9_-]{3,40}$/, "Use 3 to 40 letters, numbers, - or _ (no spaces)."),
-    percentOff: z.number().int("Use a whole number.").min(1),
-    startsOn: couponDay.nullable().optional(),
-    endsOn: couponDay.nullable().optional(),
-    isActive: z.boolean().optional(),
-    appliesTo: z.array(z.enum(PROMO_SCOPES)).min(1, "Choose where the coupon applies: shared tours, private tours or shuttles.").max(3),
-  })
-  .strict();
+// Partner coupons (affiliate account → Coupons). Since 2026-11-26 (owner) only the Vista Chase team
+// creates coupon codes, in Admin → Promo codes, where a code can be given to a partner so bookings
+// made with it credit that partner. The partner sees their codes here and asks for new ones through a
+// change request; the old create/edit/delete routes answer 403.
 
 async function partnerForCoupons(req: Request, res: Response) {
   const user = requirePartnerUser(req, res);
@@ -292,15 +286,6 @@ async function partnerForCoupons(req: Request, res: Response) {
   return affiliate;
 }
 
-const couponInput = (b: Partial<z.infer<typeof couponSchema>>) => ({
-  ...(b.code !== undefined ? { code: b.code } : {}),
-  ...(b.percentOff !== undefined ? { kind: "PERCENT" as const, value: b.percentOff } : {}),
-  ...(b.startsOn !== undefined ? { startsOn: b.startsOn } : {}),
-  ...(b.endsOn !== undefined ? { endsOn: b.endsOn } : {}),
-  ...(b.isActive !== undefined ? { isActive: b.isActive } : {}),
-  ...(b.appliesTo !== undefined ? { appliesTo: b.appliesTo } : {}),
-});
-
 router.get("/me/coupons", async (req, res) => {
   const affiliate = await partnerForCoupons(req, res);
   if (!affiliate) return;
@@ -309,8 +294,7 @@ router.get("/me/coupons", async (req, res) => {
   const now = new Date();
   return res.json({
     success: true,
-    maxPercent: partnerCouponMaxPercent(),
-    canCreate: affiliate.status === "ACTIVE",
+    canCreate: false,
     coupons: rows.map((r) => ({
       id: r.id,
       code: r.code,
@@ -327,40 +311,109 @@ router.get("/me/coupons", async (req, res) => {
   });
 });
 
-router.post("/me/coupons", rateLimitMiddleware("partner_coupon", { maxRequests: 30, windowSeconds: 3600 }), async (req, res) => {
-  const affiliate = await partnerForCoupons(req, res);
-  if (!affiliate) return;
-  if (affiliate.status !== "ACTIVE") return res.status(403).json({ success: false, error: "Your partner account must be approved before you can create coupons." });
-  const parsed = couponSchema.safeParse(req.body ?? {});
-  if (!parsed.success) return invalid(res, parsed.error);
-  const max = partnerCouponMaxPercent();
-  if (parsed.data.percentOff > max) return res.status(400).json({ success: false, error: `The discount can be at most ${max}%.` });
-  const result = await createPromo({ ...couponInput(parsed.data), kind: "PERCENT", value: parsed.data.percentOff, code: parsed.data.code, note: `Partner coupon: ${affiliate.name}` }, affiliate.id);
-  if (result.status !== 201) return res.status(result.status).json({ success: false, error: result.error });
-  return res.status(201).json({ success: true, coupon: { id: result.promo.id, code: result.promo.code } });
+const couponsByTeamOnly = (_req: Request, res: Response) =>
+  res.status(403).json({ success: false, error: "Coupon codes are created by the Vista Chase team. Send a change request to ask for one." });
+router.post("/me/coupons", couponsByTeamOnly);
+router.patch("/me/coupons/:id", couponsByTeamOnly);
+router.delete("/me/coupons/:id", couponsByTeamOnly);
+
+// Change requests (owner, 2026-11-26): a partner asks for any change from the portal (profile,
+// bank details, commission, a coupon, a booking, anything). The team is emailed and answers in
+// Admin → Partners → Change requests; the partner is emailed when it is updated.
+
+export const REQUEST_CATEGORIES = ["PROFILE", "BANK", "COMMISSION", "COUPON", "BOOKING", "PRODUCTS", "OTHER"] as const;
+export const REQUEST_CATEGORY_LABELS: Record<(typeof REQUEST_CATEGORIES)[number], string> = {
+  PROFILE: "Business or contact details",
+  BANK: "Bank / payout details",
+  COMMISSION: "Commission or agreement",
+  COUPON: "Coupon code",
+  BOOKING: "A booking",
+  PRODUCTS: "Products or links",
+  OTHER: "Something else",
+};
+export const REQUEST_STATUSES = ["OPEN", "IN_PROGRESS", "DONE", "DECLINED"] as const;
+
+const requestSchema = z
+  .object({
+    category: z.enum(REQUEST_CATEGORIES),
+    subject: z.string().trim().min(3, "Add a short subject").max(150),
+    details: z.string().trim().min(10, "Tell us what should change (at least 10 characters)").max(4000),
+    bookingReference: z.string().trim().max(40).regex(/^[A-Za-z0-9-]*$/, "Use the booking reference, like VC-2026-1A2B3C4D").optional().or(z.literal("")),
+  })
+  .strict();
+
+const requestDto = (r: { id: string; category: string; subject: string; details: string; bookingReference: string | null; status: string; staffNote: string | null; createdAt: Date; updatedAt: Date; resolvedAt: Date | null }) => ({
+  id: r.id,
+  category: r.category,
+  categoryLabel: REQUEST_CATEGORY_LABELS[r.category as keyof typeof REQUEST_CATEGORY_LABELS] ?? r.category,
+  subject: r.subject,
+  details: r.details,
+  bookingReference: r.bookingReference,
+  status: r.status,
+  staffNote: r.staffNote,
+  createdAt: r.createdAt,
+  updatedAt: r.updatedAt,
+  resolvedAt: r.resolvedAt,
 });
 
-router.patch("/me/coupons/:id", async (req, res) => {
+router.get("/me/requests", async (req, res) => {
   const affiliate = await partnerForCoupons(req, res);
   if (!affiliate) return;
-  // The code itself can't change once made (guests may already have it).
-  const parsed = couponSchema.omit({ code: true }).partial().safeParse(req.body ?? {});
-  if (!parsed.success) return invalid(res, parsed.error);
-  const max = partnerCouponMaxPercent();
-  if (parsed.data.percentOff !== undefined && parsed.data.percentOff > max) return res.status(400).json({ success: false, error: `The discount can be at most ${max}%.` });
-  if (parsed.data.isActive && affiliate.status !== "ACTIVE") return res.status(403).json({ success: false, error: "Your partner account isn't active, so its coupons can't be turned on." });
-  const result = await updatePromo(String(req.params.id), couponInput(parsed.data), affiliate.id);
-  if (result.status !== 200) return res.status(result.status).json({ success: false, error: result.status === 404 ? "Coupon not found." : result.error });
-  return res.json({ success: true });
+  const rows = await prisma.affiliateChangeRequest.findMany({ where: { affiliateId: affiliate.id }, orderBy: { createdAt: "desc" }, take: 100 });
+  return res.json({ success: true, categories: REQUEST_CATEGORIES.map((c) => ({ value: c, label: REQUEST_CATEGORY_LABELS[c] })), requests: rows.map(requestDto) });
 });
 
-router.delete("/me/coupons/:id", async (req, res) => {
+router.post("/me/requests", rateLimitMiddleware("partner_change_request", { maxRequests: 10, windowSeconds: 3600 }), async (req, res) => {
   const affiliate = await partnerForCoupons(req, res);
   if (!affiliate) return;
-  const result = await deletePromo(String(req.params.id), affiliate.id);
-  if (result.status !== 200) return res.status(404).json({ success: false, error: "Coupon not found." });
-  return res.json({ success: true });
+  const parsed = requestSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return invalid(res, parsed.error);
+  const ref = parsed.data.bookingReference ? parsed.data.bookingReference.toUpperCase() : null;
+  const created = await prisma.affiliateChangeRequest.create({
+    data: { affiliateId: affiliate.id, category: parsed.data.category, subject: parsed.data.subject, details: parsed.data.details, bookingReference: ref },
+  });
+  const user = await prisma.user.findUnique({ where: { id: affiliate.userId }, select: { email: true, name: true } });
+  sendChangeRequestEmails({
+    partner: affiliate.name,
+    code: affiliate.code,
+    contactName: user?.name ?? "",
+    email: user?.email ?? "",
+    category: REQUEST_CATEGORY_LABELS[parsed.data.category],
+    subject: parsed.data.subject,
+    details: parsed.data.details,
+    bookingReference: ref,
+  });
+  return res.status(201).json({ success: true, request: requestDto(created) });
 });
+
+// The partner's own agreements (contracts), newest first, and each one as a PDF.
+router.get("/me/contracts", async (req, res) => {
+  const affiliate = await partnerForCoupons(req, res);
+  if (!affiliate) return;
+  const rows = await prisma.affiliateContract.findMany({ where: { affiliateId: affiliate.id }, orderBy: { version: "desc" } });
+  return res.json({ success: true, contracts: rows.map(contractDto) });
+});
+
+router.get("/me/contracts/:version/pdf", async (req, res) => {
+  const affiliate = await partnerForCoupons(req, res);
+  if (!affiliate) return;
+  return sendContractPdf(res, affiliate.id, Number(req.params.version));
+});
+
+async function sendContractPdf(res: Response, affiliateId: string, version: number) {
+  const contract = Number.isInteger(version) ? await prisma.affiliateContract.findUnique({ where: { affiliateId_version: { affiliateId, version } } }) : null;
+  const a = contract ? await affiliateForDocs(affiliateId) : null;
+  if (!contract || !a) return res.status(404).json({ success: false, error: "Agreement not found." });
+  const pdf = await contractPdf(a, contract.snapshot as unknown as ContractTerms, { draft: false });
+  return sendPdf(res, pdf, `vista-chase-partner-agreement-v${version}.pdf`);
+}
+
+function sendPdf(res: Response, pdf: Uint8Array, filename: string) {
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", `attachment; filename="${filename.replace(/[^A-Za-z0-9._-]/g, "-")}"`);
+  res.setHeader("Cache-Control", "private, no-store");
+  return res.send(Buffer.from(pdf));
+}
 
 // ---------------------------------------------------------------------------------------------
 // Admin
@@ -380,6 +433,10 @@ router.post("/admin", async (req, res) => {
   if (!staff) return;
   const parsed = createSchema.safeParse(req.body ?? {});
   if (!parsed.success) return invalid(res, parsed.error);
+  // An active partner needs a commission staff chose (owner, 2026-11-26: no automatic 10%).
+  if (parsed.data.status === "ACTIVE" && parsed.data.commissionRate === undefined) {
+    return res.status(400).json({ success: false, error: "Set the commission % for an active partner.", fields: { commissionRate: ["Set the commission %"] } });
+  }
   const result = await createAffiliateByAdmin(parsed.data, staff.userId);
   if (result.success && parsed.data.status === "ACTIVE") {
     sendStatusEmail({ name: parsed.data.name, email: parsed.data.email.toLowerCase(), contactName: parsed.data.contactName, code: result.affiliate.code, status: "ACTIVE" });
@@ -404,6 +461,14 @@ router.patch("/admin/:id", async (req, res) => {
   if (!staff) return;
   const parsed = updateSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ success: false, error: "Invalid update." });
+  if (parsed.data.status === "ACTIVE") {
+    // Approving needs a commission chosen by staff: that goes through POST /admin/:id/approve, which
+    // also sends the contract. Reactivating a partner whose commission was already set is fine.
+    const current = await prisma.affiliate.findUnique({ where: { id: String(req.params.id) }, select: { status: true, commissionSetAt: true } });
+    if (current && current.status !== "ACTIVE" && !current.commissionSetAt && parsed.data.commissionRate === undefined) {
+      return res.status(409).json({ success: false, error: "Set the commission % and products first: use Approve, which also sends the partner agreement." });
+    }
+  }
   try {
     const { before, updated } = await updateAffiliate(String(req.params.id), parsed.data, staff.userId);
     if (parsed.data.status && parsed.data.status !== before.status) {
@@ -441,6 +506,173 @@ router.get("/admin/:id/application", async (req, res) => {
     bank,
     bankUnreadable: wantBank && !!affiliate.payoutDetails && !bank,
   });
+});
+
+// The application form as a PDF for the team to download and keep (owner, 2026-11-26). Account
+// numbers are masked unless ?bank=1, which is audited like "Show bank details".
+router.get("/admin/:id/application/pdf", async (req, res) => {
+  const staff = await requireAdmin(req, res);
+  if (!staff) return;
+  const a = await affiliateForDocs(String(req.params.id));
+  if (!a) return res.status(404).json({ success: false, error: "Partner not found." });
+  const full = req.query.bank === "1";
+  const details = a.payoutDetails ? decryptBankDetails(a.payoutDetails) : null;
+  if (full && a.payoutDetails) {
+    await prisma.auditLog.create({
+      data: { userId: staff.userId, action: "PARTNER_BANK_DETAILS_VIEWED", entityType: "Affiliate", entityId: a.id, details: { readable: !!details, via: "application-pdf" } },
+    });
+  }
+  const pdf = await applicationPdf(a, { details, full, stored: !!a.payoutDetails });
+  return sendPdf(res, pdf, `partner-application-${a.code}${full ? "-with-bank" : ""}.pdf`);
+});
+
+// Contracts (owner, 2026-11-26): drafted from the application, generated and sent once staff set the
+// commission % and products (modules/affiliates/partner-contract.ts).
+
+const contractSchema = z
+  .object({
+    commissionPercent: z.number({ required_error: "Set the commission %" }).min(0).max(50),
+    products: z.object({
+      all: z.boolean(),
+      categories: z.array(z.enum(CONTRACT_CATEGORIES)).max(CONTRACT_CATEGORIES.length).default([]),
+      tourSlugs: z.array(z.string().min(1).max(200)).max(200).default([]),
+    }),
+    extraTerms: z.string().trim().max(3000).optional().or(z.literal("")),
+  })
+  .strict();
+
+router.get("/admin/contract-products", async (req, res) => {
+  if (!(await requireAdmin(req, res))) return;
+  return res.json({ success: true, ...(await contractProductOptions()) });
+});
+
+// A draft PDF with whatever staff have chosen so far (blank commission/products show placeholders).
+router.post("/admin/:id/contract/preview", async (req, res) => {
+  const staff = await requireAdmin(req, res);
+  if (!staff) return;
+  const a = await affiliateForDocs(String(req.params.id));
+  if (!a) return res.status(404).json({ success: false, error: "Partner not found." });
+  const parsed = contractSchema.partial({ commissionPercent: true, products: true }).safeParse(req.body ?? {});
+  if (!parsed.success) return invalid(res, parsed.error);
+  let products = null;
+  if (parsed.data.products) {
+    const resolved = await resolveProducts(parsed.data.products);
+    if (resolved.ok) products = resolved.products;
+  }
+  const terms: ContractTerms = {
+    version: null,
+    date: new Date().toISOString(),
+    commissionPercent: parsed.data.commissionPercent ?? null,
+    products,
+    extraTerms: parsed.data.extraTerms || null,
+    signedForVistaChase: staff.name ?? null,
+  };
+  return sendPdf(res, await contractPdf(a, terms, { draft: true }), `partner-agreement-draft-${a.code}.pdf`);
+});
+
+async function issueAndSend(req: Request, res: Response, mode: "approve" | "update") {
+  const staff = await requireAdmin(req, res);
+  if (!staff) return;
+  const parsed = contractSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return invalid(res, parsed.error);
+  const resolved = await resolveProducts(parsed.data.products);
+  if (!resolved.ok) return res.status(400).json({ success: false, error: resolved.error, fields: { products: [resolved.error] } });
+  const a = await affiliateForDocs(String(req.params.id));
+  if (!a) return res.status(404).json({ success: false, error: "Partner not found." });
+  if (mode === "approve" && a.status === "ACTIVE") return res.status(409).json({ success: false, error: "This partner is already active. Use Send new agreement to change the commission." });
+  if (mode === "update" && (a.status === "PENDING" || a.status === "REJECTED")) return res.status(409).json({ success: false, error: "Approve this partner first." });
+  const sentTo = a.user.email;
+  const { terms } = await prisma.$transaction(async (tx) => {
+    const issued = await issueContract(tx, {
+      affiliateId: a.id,
+      commissionPercent: parsed.data.commissionPercent,
+      products: resolved.products,
+      extraTerms: parsed.data.extraTerms || null,
+      staffId: staff.userId,
+      staffName: staff.name ?? null,
+      sentTo,
+    });
+    if (mode === "approve") {
+      await tx.affiliate.update({ where: { id: a.id }, data: { status: "ACTIVE" } });
+      await tx.auditLog.create({ data: { userId: staff.userId, action: "PARTNER_UPDATED", entityType: "Affiliate", entityId: a.id, details: { status: { from: a.status, to: "ACTIVE" } } } });
+    }
+    return issued;
+  });
+  const pdf = await contractPdf({ ...a, status: mode === "approve" ? "ACTIVE" : a.status }, terms, { draft: false });
+  if (mode === "approve") sendStatusEmail({ name: a.name, email: sentTo, contactName: a.user.name, code: a.code, status: "ACTIVE" });
+  sendContractEmail({ to: sentTo, contactName: a.user.name, name: a.name, version: terms.version ?? 1, pdf, approved: mode === "approve" });
+  return res.status(201).json({ success: true, version: terms.version, sentTo });
+}
+
+router.post("/admin/:id/approve", (req, res) => issueAndSend(req, res, "approve"));
+router.post("/admin/:id/contract", (req, res) => issueAndSend(req, res, "update"));
+
+router.get("/admin/:id/contracts", async (req, res) => {
+  if (!(await requireAdmin(req, res))) return;
+  const rows = await prisma.affiliateContract.findMany({ where: { affiliateId: String(req.params.id) }, orderBy: { version: "desc" } });
+  return res.json({ success: true, contracts: rows.map(contractDto) });
+});
+
+router.get("/admin/:id/contracts/:version/pdf", async (req, res) => {
+  if (!(await requireAdmin(req, res))) return;
+  return sendContractPdf(res, String(req.params.id), Number(req.params.version));
+});
+
+// Change requests from partners -------------------------------------------------------------------
+
+router.get("/admin/requests", async (req, res) => {
+  if (!(await requireAdmin(req, res))) return;
+  const parsed = z.object({ status: z.enum(REQUEST_STATUSES).optional() }).safeParse(req.query);
+  if (!parsed.success) return invalid(res, parsed.error);
+  const rows = await prisma.affiliateChangeRequest.findMany({
+    where: parsed.data.status ? { status: parsed.data.status } : {},
+    orderBy: { createdAt: "desc" },
+    take: 300,
+    include: { affiliate: { select: { id: true, name: true, code: true, user: { select: { email: true, name: true } } } } },
+  });
+  const counts = await prisma.affiliateChangeRequest.groupBy({ by: ["status"], _count: { _all: true } });
+  return res.json({
+    success: true,
+    counts: Object.fromEntries(REQUEST_STATUSES.map((st) => [st, counts.find((c) => c.status === st)?._count._all ?? 0])),
+    requests: rows.map((r) => ({ ...requestDto(r), partner: { id: r.affiliate.id, name: r.affiliate.name, code: r.affiliate.code, email: r.affiliate.user.email, contactName: r.affiliate.user.name } })),
+  });
+});
+
+const requestUpdateSchema = z
+  .object({
+    status: z.enum(REQUEST_STATUSES),
+    staffNote: z.string().trim().max(2000).nullable().optional(),
+    notifyPartner: z.boolean().default(true),
+  })
+  .strict();
+
+router.patch("/admin/requests/:id", async (req, res) => {
+  const staff = await requireAdmin(req, res);
+  if (!staff) return;
+  const parsed = requestUpdateSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return invalid(res, parsed.error);
+  const existing = await prisma.affiliateChangeRequest.findUnique({ where: { id: String(req.params.id) }, include: { affiliate: { include: { user: { select: { email: true, name: true } } } } } });
+  if (!existing) return res.status(404).json({ success: false, error: "Request not found." });
+  const closed = parsed.data.status === "DONE" || parsed.data.status === "DECLINED";
+  const updated = await prisma.$transaction(async (tx) => {
+    const row = await tx.affiliateChangeRequest.update({
+      where: { id: existing.id },
+      data: {
+        status: parsed.data.status,
+        ...(parsed.data.staffNote !== undefined ? { staffNote: parsed.data.staffNote || null } : {}),
+        resolvedAt: closed ? new Date() : null,
+        resolvedById: closed ? staff.userId : null,
+      },
+    });
+    await tx.auditLog.create({
+      data: { userId: staff.userId, action: "PARTNER_CHANGE_REQUEST_UPDATED", entityType: "AffiliateChangeRequest", entityId: row.id, details: { from: existing.status, to: row.status, affiliateId: existing.affiliateId } },
+    });
+    return row;
+  });
+  if (parsed.data.notifyPartner && (existing.status !== updated.status || (updated.staffNote ?? null) !== (existing.staffNote ?? null))) {
+    sendChangeRequestUpdate({ to: existing.affiliate.user.email, contactName: existing.affiliate.user.name, subject: existing.subject, status: updated.status, note: updated.staffNote });
+  }
+  return res.json({ success: true, request: requestDto(updated) });
 });
 
 // Delete an application or partner with no bookings, commission or payouts (see deleteAffiliate).
