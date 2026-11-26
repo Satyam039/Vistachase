@@ -3,6 +3,7 @@
 // Admin: review partner applications (approve, reject or delete them), suspend partners, add and edit partners, and
 // run the commission program (rules, ledger, payouts, report: components/admin/partners).
 
+import Link from "next/link";
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { FileDown, RefreshCw, Trash2, XCircle } from "lucide-react";
 import { ModalDialog } from "@/components/forms/ModalDialog";
@@ -72,6 +73,12 @@ export default function AdminPartnersPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // ?section=requests (from a partner's own page).
+  useEffect(() => {
+    const wanted = new URLSearchParams(window.location.search).get("section");
+    if (wanted && SECTIONS.some(([id]) => id === wanted)) setSection(wanted as Section);
+  }, []);
 
   async function setStatus(p: Partner, status: Partner["status"]) {
     setBusy(p.id);
@@ -263,7 +270,9 @@ export default function AdminPartnersPage() {
                           <tr className="hover:bg-obsidian-50/60">
                             <td className="px-6 py-4">
                               <span className="block text-obsidian-900">
-                                {p.name}
+                                <Link href={`/admin/partners/${p.id}`} className="text-obsidian-900 underline decoration-obsidian-900/30 underline-offset-4 hover:decoration-ocean-600">
+                                  {p.name}
+                                </Link>
                                 {p.openRequests > 0 && (
                                   <button type="button" onClick={() => setSection("requests")} className="ml-2 rounded-full bg-summit-100 px-2 py-0.5 text-xs text-obsidian-900 hover:bg-summit-200">
                                     {p.openRequests} open request{p.openRequests === 1 ? "" : "s"}
@@ -297,6 +306,12 @@ export default function AdminPartnersPage() {
                             </td>
                             <td className="px-6 py-4">
                               <div className="flex min-w-[12rem] flex-wrap items-center justify-end gap-2">
+                              <Link
+                                href={`/admin/partners/${p.id}`}
+                                className="inline-flex h-10 items-center rounded-full bg-obsidian-900 px-4 text-sm text-white hover:bg-obsidian-800"
+                              >
+                                Open <span className="sr-only">{p.name}</span>
+                              </Link>
                               <button
                                 type="button"
                                 aria-expanded={editing === p.id}

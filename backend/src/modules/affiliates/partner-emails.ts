@@ -50,14 +50,18 @@ async function applicationAttachment(affiliateId: string): Promise<EmailAttachme
   }
 }
 
-export function sendApplicationEmails(p: { name: string; contactName: string; email: string; code: string; type: string; affiliateId?: string }) {
+/**
+ * Awaited by the caller so the PDF's database reads finish before the request (or a test worker)
+ * ends; the sends themselves stay fire-and-forget.
+ */
+export async function sendApplicationEmails(p: { name: string; contactName: string; email: string; code: string; type: string; affiliateId?: string }) {
   send(p.email, "We received your Vista Chase partner application", [
     `Hi ${escapeHtml(p.contactName)},`,
     `Thank you for applying to the Vista Chase partner program for <strong>${escapeHtml(p.name)}</strong>. We review every application by hand and will email you once your account is approved.`,
     `Your referral code will be <strong>${p.code}</strong>. You can sign in at <a href="${siteUrl()}/partners/login">${siteUrl()}/partners/login</a>.`,
   ]);
-  void (p.affiliateId ? applicationAttachment(p.affiliateId) : Promise.resolve([])).then((attachments) =>
-    send(
+  const attachments = p.affiliateId ? await applicationAttachment(p.affiliateId) : [];
+  send(
       partnersInbox(),
       `New partner application: ${p.name}`,
       [
@@ -67,8 +71,7 @@ export function sendApplicationEmails(p: { name: string; contactName: string; em
         `Review it, set the commission and approve it at <a href="${siteUrl()}/admin/partners">${siteUrl()}/admin/partners</a>.`,
       ].filter(Boolean),
       attachments,
-    ),
-  );
+    );
 }
 
 /** The partner agreement PDF, sent when staff approve a partner or send a new version. */
