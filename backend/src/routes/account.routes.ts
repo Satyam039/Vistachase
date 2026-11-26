@@ -2,7 +2,7 @@ import { Router } from "express";
 import crypto from "node:crypto";
 import prisma from "@/lib/db/prisma";
 import { AUTH_COOKIE_NAME, getSessionUser } from "@/lib/auth/admin-guard";
-import { hashPassword, signToken, verifyPassword, type UserRole } from "@/lib/auth/auth";
+import { hashPassword, sessionCookieMaxAgeMs, signToken, verifyPassword, type UserRole } from "@/lib/auth/auth";
 import { secureCookie } from "@/routes/auth.routes";
 import { renderAccountDeletedEmail, renderPasswordChangedEmail } from "@/lib/email/account-security-email";
 import { dateOnly, todayInMountainTime } from "@/lib/utils/time";
@@ -431,7 +431,7 @@ router.post(
       });
 
       const token = signToken({ userId: user.id, email: user.email, role: user.role as UserRole, name: user.name });
-      res.cookie(AUTH_COOKIE_NAME, token, { httpOnly: true, secure: secureCookie(req), sameSite: "lax", maxAge: 1000 * 60 * 60 * 24 * 7, path: "/" });
+      res.cookie(AUTH_COOKIE_NAME, token, { httpOnly: true, secure: secureCookie(req), sameSite: "lax", maxAge: sessionCookieMaxAgeMs(), path: "/" });
 
       const notice = renderPasswordChangedEmail({ name: user.name, site: siteUrl() });
       await getEmailProvider()

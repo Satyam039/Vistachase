@@ -45,8 +45,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
         if (!OPS.includes(role)) return;
         return fetch("/api/admin/requests")
           .then((r) => (r.ok ? r.json() : null))
-          .then((x: { cancellations?: unknown[]; awaitingApproval?: unknown[] } | null) => {
-            if (alive && x) setRequests((x.cancellations?.length ?? 0) + (x.awaitingApproval?.length ?? 0));
+          .then((x: { cancellations?: unknown[]; awaitingApproval?: unknown[]; changes?: unknown[] } | null) => {
+            if (alive && x) setRequests((x.cancellations?.length ?? 0) + (x.awaitingApproval?.length ?? 0) + (x.changes?.length ?? 0));
           });
       })
       .catch(() => alive && setMe({ name: "", role: "" }));

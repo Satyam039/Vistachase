@@ -46,6 +46,10 @@ export function areaOf(path: string): Portal | null {
     return "partner";
   }
   if (under(path, "/partners/dashboard")) return "partner";
+  // My Trips opens for everyone: signed out (or signed in to a staff or partner portal) it shows
+  // "Find your booking" by reference and the guest sign-in (owner, 2026-11-26: the My Trips
+  // button is the customer side). Account settings stay for signed-in guests.
+  if (path === "/account/trips") return null;
   if (under(path, "/account")) return "customer";
   return null;
 }

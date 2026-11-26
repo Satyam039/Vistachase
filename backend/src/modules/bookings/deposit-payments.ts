@@ -53,9 +53,10 @@ export type BalanceStart =
 export async function startBalancePayment(reference: string, now = new Date()): Promise<BalanceStart> {
   const booking = await loadBooking(reference);
   if (!booking) return { ok: false, status: 404, error: "Booking not found" };
-  if (booking.paymentPlan !== "DEPOSIT") return { ok: false, status: 400, error: "This booking was paid in full at checkout." };
   if (!LIVE.includes(booking.status)) return { ok: false, status: 409, error: "This booking is no longer active, so there is nothing to pay." };
   const owed = balanceOwedCents(booking, booking.payments);
+  // A FULL booking owes something only after a change made it dearer (booking-changes.ts).
+  if (booking.paymentPlan !== "DEPOSIT" && owed <= 0) return { ok: false, status: 400, error: "This booking was paid in full at checkout." };
   if (owed <= 0) return { ok: true, paid: true, balanceDue: 0 };
   if (departureAt(booking) <= now) {
     return { ok: false, status: 409, error: "This departure has already left. Please contact us about the balance." };

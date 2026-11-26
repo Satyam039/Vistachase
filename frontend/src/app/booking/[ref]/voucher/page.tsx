@@ -149,7 +149,11 @@ export default async function VoucherPage({
   const requestStatusLabel = booking.specialRequests?.trim()
     ? `${booking.specialRequests.trim()} — requires advance confirmation by team`
     : "None requested (complimentary child seats/boosters require advance confirmation)";
-  const balanceDue = deposit ? booking.balanceDue ?? 0 : 0;
+  // A deposit's balance, or what a staff change added to a booking paid in full (more guests, a dearer date).
+  const balanceDue = booking.balanceDue ?? 0;
+  const extraDue = !deposit && balanceDue > 0;
+  // Money kept under the cancellation policy when a change lowered the price (shown on the invoice).
+  const keptByChange = Math.round(((booking.totalAmount ?? 0) - (booking.subtotal ?? 0) - booking.items.reduce((s, i) => s + i.price * i.quantity, 0)) * 100) / 100;
   const balanceDueLabel = booking.balanceDueAt ? formatRockiesDate(booking.balanceDueAt) : null;
 
   const facts = [
@@ -420,7 +424,28 @@ export default async function VoucherPage({
                   <dd className="shrink-0">{money(item.price * item.quantity)}</dd>
                 </div>
               ))}
-              {deposit ? (
+              {keptByChange > 0.004 && (
+                <div className="flex justify-between gap-4 text-slate-700">
+                  <dt>Non-refundable after a change (cancellation policy)</dt>
+                  <dd className="shrink-0">{money(keptByChange)}</dd>
+                </div>
+              )}
+              {extraDue ? (
+                <>
+                  <div className="flex justify-between gap-4 border-t border-obsidian-900/[0.08] pt-3 text-obsidian-900">
+                    <dt>Total</dt>
+                    <dd className="shrink-0">{money(booking.totalAmount)}</dd>
+                  </div>
+                  <div className="flex justify-between gap-4 text-slate-700">
+                    <dt>Paid so far</dt>
+                    <dd className="shrink-0">{money(booking.amountPaid ?? 0)}</dd>
+                  </div>
+                  <div className="flex justify-between gap-4 text-base text-obsidian-900">
+                    <dt>Still to pay (booking changed)</dt>
+                    <dd className="shrink-0">{money(balanceDue)}</dd>
+                  </div>
+                </>
+              ) : deposit ? (
                 <>
                   <div className="flex justify-between gap-4 border-t border-obsidian-900/[0.08] pt-3 text-obsidian-900">
                     <dt>Total</dt>
@@ -446,7 +471,7 @@ export default async function VoucherPage({
                 </div>
               )}
             </dl>
-            {deposit && !cancelled && balanceDue > 0 && (
+            {(deposit || extraDue) && !cancelled && balanceDue > 0 && (
               <div className="mt-5">
                 <BalancePayment
                   bookingReference={booking.bookingReference}
@@ -468,8 +493,10 @@ export default async function VoucherPage({
               customerPhone={booking.customerPhone}
               currentDate={dateLabel}
               policyOpen={policyOpen}
-              refundAmount={booking.totalAmount / 100}
+              refundAmount={booking.amountPaid ?? booking.totalAmount}
               currency={booking.currency}
+              guests={{ adults: booking.adultsCount ?? 1, children: booking.childrenCount ?? 0, infants: booking.infantsCount ?? 0 }}
+              perVehicle={category === "PRIVATE"}
             />
           )}
 
