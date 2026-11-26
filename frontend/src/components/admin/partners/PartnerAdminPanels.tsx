@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Download } from "lucide-react";
 import { Dropdown } from "@/components/forms/Dropdown";
+import { downloadPdf } from "@/components/admin/partners/PartnerContractDialog";
 
 export interface AdminPartner {
   id: string;
@@ -21,6 +22,11 @@ export interface AdminPartner {
   website: string | null;
   status: "PENDING" | "ACTIVE" | "SUSPENDED" | "REJECTED";
   commissionRate: number;
+  /** When staff set the commission by hand; null = not set yet (can't be approved without it). */
+  commissionSetAt: string | null;
+  contract: { version: number; commissionPercent: number; products: string[]; sentAt: string | null } | null;
+  hasApplication: boolean;
+  openRequests: number;
   bokunChannelId: string | null;
   bookings: number;
   commission: { pending: number; approved: number; paid: number };
@@ -183,6 +189,10 @@ export function CreatePartnerForm({ onDone, notify }: { onDone: () => void; noti
     setError("");
     const f = Object.fromEntries(new FormData(e.currentTarget)) as Record<string, string>;
     const rate = f.rate.trim() ? Number(f.rate) / 100 : undefined;
+    if (status === "ACTIVE" && rate === undefined) {
+      setBusy(false);
+      return setError("Set the commission % for an active partner (or add them as Pending review and approve them later).");
+    }
     const { ok, data } = await call("", "POST", {
       name: f.name,
       contactName: f.contactName,
@@ -238,7 +248,7 @@ export function CreatePartnerForm({ onDone, notify }: { onDone: () => void; noti
             { value: "PENDING", label: "Pending review" },
           ]}
         />
-        <Field id="np-rate" label="Fallback rate % (blank = 10)">
+        <Field id="np-rate" label={status === "ACTIVE" ? "Commission % (all products)" : "Commission % (set when approving)"}>
           {(id) => <input id={id} name="rate" type="number" min={0} max={50} step={0.5} className={field} />}
         </Field>
         <div className="md:col-span-3">
@@ -262,7 +272,6 @@ export function EditPartnerForm({ partner, onDone, notify }: { partner: AdminPar
     const f = Object.fromEntries(new FormData(e.currentTarget)) as Record<string, string>;
     const { ok, data } = await call(`/${partner.id}`, "PATCH", {
       name: f.name,
-      commissionRate: Number(f.rate) / 100,
       phone: f.phone.trim() || null,
       payoutEmail: f.payoutEmail.trim() || null,
       website: f.website.trim() || null,
@@ -283,9 +292,6 @@ export function EditPartnerForm({ partner, onDone, notify }: { partner: AdminPar
       <Field id={`ep-name-${partner.id}`} label="Business name">
         {(id) => <input id={id} name="name" defaultValue={partner.name} required className={field} />}
       </Field>
-      <Field id={`ep-rate-${partner.id}`} label="Fallback commission %">
-        {(id) => <input id={id} name="rate" type="number" min={0} max={50} step={0.5} defaultValue={Math.round(partner.commissionRate * 1000) / 10} required className={field} />}
-      </Field>
       <Field id={`ep-payout-${partner.id}`} label="Payout email">
         {(id) => <input id={id} name="payoutEmail" type="email" defaultValue={partner.payoutEmail ?? ""} className={field} />}
       </Field>
@@ -295,7 +301,13 @@ export function EditPartnerForm({ partner, onDone, notify }: { partner: AdminPar
       <Field id={`ep-site-${partner.id}`} label="Website">
         {(id) => <input id={id} name="website" type="url" defaultValue={partner.website ?? ""} className={field} />}
       </Field>
-      <p className="self-end text-sm text-slate-600">Commission rules, when set, take priority over the fallback rate. Rate changes never alter commission already earned.</p>
+      <p className="self-end text-sm text-slate-600">
+        {partner.contract
+          ? `Commission: ${partner.contract.commissionPercent}% on ${partner.contract.products.join(", ")} (agreement v${partner.contract.version}). Change it with New agreement.`
+          : partner.commissionSetAt
+            ? `Commission: ${Math.round(partner.commissionRate * 1000) / 10}% on all products. Use New agreement to change it and send the partner an agreement.`
+            : "Commission isn't set yet: it is chosen when you approve the partner."}
+      </p>
       <div className="md:col-span-3">
         <button type="submit" disabled={busy} className={primaryBtn}>
           {busy ? "Saving…" : "Save changes"}
@@ -376,9 +388,26 @@ export function PartnerApplicationDetails({ partnerId }: { partnerId: string }) 
       ]
     : [];
 
+  async function download(bankToo: boolean) {
+    setError(await downloadPdf(`/api/affiliates/admin/${partnerId}/application/pdf${bankToo ? "?bank=1" : ""}`, `partner-application${bankToo ? "-with-bank" : ""}.pdf`));
+  }
+
   return (
     <div className="space-y-4 bg-obsidian-50/60 px-6 pt-5">
-      <h3 className="text-base text-obsidian-900">Application</h3>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h3 className="text-base text-obsidian-900">Application</h3>
+        <span className="flex flex-wrap gap-2">
+          <button type="button" onClick={() => void download(false)} className={quietBtn}>
+            <Download className="mr-1.5 h-4 w-4" aria-hidden="true" />
+            Application PDF
+          </button>
+          {hasBank && (
+            <button type="button" onClick={() => void download(true)} className={quietBtn} title="Includes full bank account numbers. The download is recorded in the audit log.">
+              PDF with bank details
+            </button>
+          )}
+        </span>
+      </div>
       {error && (
         <p role="alert" className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-800">
           {error}

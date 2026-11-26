@@ -5,6 +5,7 @@ import { hashPassword } from "@/lib/auth/auth";
 import { commissionTotals } from "@/modules/affiliates/commission";
 import { payoutDto } from "@/modules/affiliates/payouts";
 import { sendApplicationEmails } from "@/modules/affiliates/partner-emails";
+import { productLines, type ResolvedProducts } from "@/modules/affiliates/partner-contract";
 
 /**
  * Partner (affiliate / associate) program. Partners share links with ?ref=<code>; the frontend
@@ -71,7 +72,7 @@ export async function applyAffiliate(input: {
       },
     });
   });
-  sendApplicationEmails({ name: input.name, contactName: input.contactName, email, code: affiliate.code, type: input.type });
+  sendApplicationEmails({ name: input.name, contactName: input.contactName, email, code: affiliate.code, type: input.type, affiliateId: affiliate.id });
   return { success: true as const, affiliate: { code: affiliate.code, status: affiliate.status } };
 }
 
@@ -137,8 +138,12 @@ function partnerBookingDto(b: PartnerBooking, commissionCents: number) {
 
 /** A partner's own dashboard: profile, totals (from the ledger) and recent referred bookings (no guest PII). */
 export async function getAffiliateDashboard(userId: string) {
-  const affiliate = await prisma.affiliate.findUnique({ where: { userId }, include: { user: { select: { name: true, email: true } } } });
+  const affiliate = await prisma.affiliate.findUnique({
+    where: { userId },
+    include: { user: { select: { name: true, email: true } }, contracts: { orderBy: { version: "desc" }, take: 1, select: { commissionPercent: true, products: true } } },
+  });
   if (!affiliate) return null;
+  const contract = affiliate.contracts[0];
 
   const since = new Date(Date.now() - CLICK_WINDOW_DAYS * 86_400_000);
   const [bookings, totals, clicks, salesSince] = await Promise.all([
@@ -163,6 +168,9 @@ export async function getAffiliateDashboard(userId: string) {
       type: affiliate.type,
       status: affiliate.status,
       commissionRate: affiliate.commissionRate,
+      // What the partner's agreement says (staff set it on approval), for display.
+      commissionPercent: contract ? contract.commissionPercent : affiliate.commissionSetAt ? Math.round(affiliate.commissionRate * 1000) / 10 : null,
+      commissionProducts: contract ? productLines(contract.products as unknown as ResolvedProducts) : null,
       bokunChannelId: affiliate.bokunChannelId,
       createdAt: affiliate.createdAt,
     },
@@ -322,8 +330,13 @@ export async function pruneOldClicks(now = new Date()) {
 export async function listAffiliates() {
   const affiliates = await prisma.affiliate.findMany({
     orderBy: { createdAt: "desc" },
-    include: { user: { select: { email: true, name: true } }, _count: { select: { bookings: true } } },
+    include: {
+      user: { select: { email: true, name: true } },
+      _count: { select: { bookings: true } },
+      contracts: { orderBy: { version: "desc" }, take: 1, select: { version: true, commissionPercent: true, products: true, sentAt: true } },
+    },
   });
+  const openRequests = await prisma.affiliateChangeRequest.groupBy({ by: ["affiliateId"], where: { status: { in: ["OPEN", "IN_PROGRESS"] } }, _count: { _all: true } });
   const ledger = await prisma.commissionLedger.groupBy({ by: ["affiliateId", "status"], _sum: { amountCents: true } });
   const sum = (id: string, status: string) => ledger.find((r) => r.affiliateId === id && r.status === status)?._sum.amountCents ?? 0;
   return affiliates.map((a) => ({
@@ -338,6 +351,12 @@ export async function listAffiliates() {
     website: a.website,
     status: a.status,
     commissionRate: a.commissionRate,
+    commissionSetAt: a.commissionSetAt,
+    contract: a.contracts[0]
+      ? { version: a.contracts[0].version, commissionPercent: a.contracts[0].commissionPercent, products: productLines(a.contracts[0].products as unknown as ResolvedProducts), sentAt: a.contracts[0].sentAt }
+      : null,
+    hasApplication: !!a.application,
+    openRequests: openRequests.find((r) => r.affiliateId === a.id)?._count._all ?? 0,
     bokunChannelId: a.bokunChannelId,
     bookings: a._count.bookings,
     commission: { pending: dollars(sum(a.id, "PENDING")), approved: dollars(sum(a.id, "APPROVED")), paid: dollars(sum(a.id, "PAID")) },
@@ -367,7 +386,7 @@ export async function createAffiliateByAdmin(
         phone: input.phone || null,
         status: input.status,
         code,
-        ...(input.commissionRate !== undefined ? { commissionRate: input.commissionRate } : {}),
+        ...(input.commissionRate !== undefined ? { commissionRate: input.commissionRate, commissionSetAt: new Date() } : {}),
       },
     });
     await tx.auditLog.create({ data: { userId: staffId, action: "PARTNER_CREATED", entityType: "Affiliate", entityId: created.id, details: { code, status: input.status } } });
@@ -379,7 +398,7 @@ export async function createAffiliateByAdmin(
 export async function updateAffiliate(id: string, data: { status?: (typeof AFFILIATE_STATUSES)[number]; commissionRate?: number; bokunChannelId?: string | null; name?: string; phone?: string | null; payoutEmail?: string | null; website?: string | null }, staffId?: string) {
   return prisma.$transaction(async (tx) => {
     const before = await tx.affiliate.findUniqueOrThrow({ where: { id } });
-    const updated = await tx.affiliate.update({ where: { id }, data });
+    const updated = await tx.affiliate.update({ where: { id }, data: { ...data, ...(data.commissionRate !== undefined ? { commissionSetAt: new Date() } : {}) } });
     const changes = Object.fromEntries(
       Object.keys(data).map((k) => [k, { from: (before as Record<string, unknown>)[k] ?? null, to: (updated as Record<string, unknown>)[k] ?? null }]),
     );

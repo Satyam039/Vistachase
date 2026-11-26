@@ -26,6 +26,44 @@ partner has no credited bookings, commission lines or payouts; it removes the pa
 sign-in account (unless that account also booked as a guest: then the account stays as a guest
 account), and writes a `PARTNER_DELETED` audit row.
 
+## Approval, commission and the partner agreement (2026-11-26)
+
+The owner asked for: commission set by hand on approval (no automatic 10%), a contract drafted from
+the application and sent automatically, the application as a downloadable PDF, a change request form
+for partners, and coupon codes made only by the Vista Chase team.
+
+- **Application PDF.** Admin → Partners: the file icon on a row, or Edit → Application PDF
+  (`GET /admin/:id/application/pdf`). Account numbers are masked; "PDF with bank details" (`?bank=1`)
+  shows them and is audited as `PARTNER_BANK_DETAILS_VIEWED`. The "New partner application" email to
+  `PARTNERS_TO` now has the masked PDF attached.
+- **Approve** opens a dialog: commission % (required, 0-50, of the amount the guest pays), and the
+  products it applies to (all products, or whole categories and/or single tours), optional additional
+  terms. "Preview agreement (PDF)" downloads a DRAFT built from the application
+  (`POST /admin/:id/contract/preview`). "Approve and send agreement" (`POST /admin/:id/approve`) makes the
+  partner ACTIVE, saves the commission as rules, stores agreement version 1 (`AffiliateContract`, a
+  snapshot the PDF is rebuilt from) and emails the partner the "account active" email plus the agreement
+  PDF. `PATCH /admin/:id {status: "ACTIVE"}` is refused (409) for a partner whose commission was never set
+  (`Affiliate.commissionSetAt` null); reactivating a suspended partner still works.
+- **Rules the agreement writes** (modules/affiliates/partner-contract.ts): all products = one partner-wide
+  rule at the rate; chosen products = one rule per category/tour at the rate plus a partner-wide 0% rule,
+  so other products earn nothing (it outranks every all-partner rule). `Affiliate.commissionRate` is set
+  to the rate (all products) or 0. **New agreement** on an active partner (`POST /admin/:id/contract`)
+  ends the previous version's rules and sends version N+1; earned commission never changes.
+- Staff adding an ACTIVE partner by hand must give a commission %.
+- Partners download every version under Settings → Partner agreement (`GET /me/contracts`,
+  `GET /me/contracts/:version/pdf`). The agreement wording is a draft based on how the program works
+  here; Vista Chase should review it (`contractClauses()`).
+- **Change requests.** Affiliate portal → Requests (`/affiliate/requests`, `GET|POST /me/requests`, 10
+  per hour): category, subject, details, optional booking reference. The team is emailed; staff answer in
+  Admin → Partners → Change requests (`GET /admin/requests`, `PATCH /admin/requests/:id` with status
+  OPEN / IN_PROGRESS / DONE / DECLINED and a reply), which emails the partner.
+- **Coupons.** Only staff create codes, in Admin → Promo codes, with an optional Partner (bookings with
+  the code credit that partner; the partner must be ACTIVE) and where it applies. The affiliate portal's
+  Coupons tab is read-only with "Ask for a coupon" (a change request); `POST/PATCH/DELETE /me/coupons`
+  answer 403. `PARTNER_COUPON_MAX_PERCENT` is no longer used.
+- Migration `9q_partner_contracts_requests` (additive): `Affiliate.commissionSetAt`, tables
+  `AffiliateChangeRequest` and `AffiliateContract`.
+
 ## Attribution
 
 1. A visitor opens any page with `?ref=CODE`. `frontend/src/middleware.ts` stores the code in the httpOnly `vc_ref` cookie for 30 days (last click wins) and reports the landing to `POST /api/affiliates/click`.
@@ -60,9 +98,9 @@ The most specific active rule wins, at the time the booking is paid:
 5. all partners + category
 6. all partners
 
-Without a matching rule, the partner's own `commissionRate` (default 10%) applies. A rule is either a percentage of the amount paid or a fixed amount per booking (capped at the amount paid), never both; the database enforces this with a CHECK constraint. Percentages are rounded half up to the cent once per line.
+Without a matching rule, the partner's own `commissionRate` applies (the column still defaults to 10%, but since 2026-11-26 a partner can't be approved until staff set the commission, see above). A rule is either a percentage of the amount paid or a fixed amount per booking (capped at the amount paid), never both; the database enforces this with a CHECK constraint. Percentages are rounded half up to the cent once per line.
 
-**The real rates are Vista Chase's decision.** Until they're confirmed, every partner earns the existing 10% fallback.
+**The real rates are Vista Chase's decision**, made per partner on approval. Partners approved before 2026-11-26 keep the rate they had (10% unless staff changed it) until staff send them an agreement.
 
 ### Payouts
 

@@ -12,6 +12,7 @@ export function ModalDialog({
   icon,
   children,
   actions,
+  size = "md",
 }: {
   open: boolean;
   onClose: () => void;
@@ -19,6 +20,8 @@ export function ModalDialog({
   icon?: ReactNode;
   children: ReactNode;
   actions: ReactNode;
+  /** "lg" for dialogs holding a form (wider, scrolls inside). */
+  size?: "md" | "lg";
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -35,7 +38,7 @@ export function ModalDialog({
       ref={ref}
       onClose={onClose}
       aria-labelledby={titleId}
-      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-none bg-white p-0 text-obsidian-900 shadow-2xl backdrop:bg-obsidian-950/60 backdrop:backdrop-blur-sm"
+      className={`m-auto w-[calc(100%-2rem)] ${size === "lg" ? "max-h-[90vh] max-w-2xl overflow-y-auto" : "max-w-md"} rounded-none bg-white p-0 text-obsidian-900 shadow-2xl backdrop:bg-obsidian-950/60 backdrop:backdrop-blur-sm`}
     >
       {open && (
         <div className="space-y-4 p-6 sm:p-7">

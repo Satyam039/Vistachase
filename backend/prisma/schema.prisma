@@ -622,15 +622,15 @@ model AuditLog {
 // Partner program: hotels, agents and creators who refer bookings with their ?ref= link.
 // Each partner maps to a Bokun booking channel once Vista Chase's Bokun API access exists.
 model Affiliate {
-  id              String             @id @default(cuid())
-  userId          String             @unique
-  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  code            String             @unique // referral code used in ?ref=CODE links
+  id              String                   @id @default(cuid())
+  userId          String                   @unique
+  user            User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code            String                   @unique // referral code used in ?ref=CODE links
   name            String // business or creator name
-  type            String             @default("HOTEL") // HOTEL, AGENT, CREATOR, OTHER
+  type            String                   @default("HOTEL") // HOTEL, AGENT, CREATOR, OTHER
   website         String?
-  status          AffiliateStatus    @default(PENDING) // PENDING, ACTIVE, SUSPENDED, REJECTED
-  commissionRate  Float              @default(0.1)
+  status          AffiliateStatus          @default(PENDING) // PENDING, ACTIVE, SUSPENDED, REJECTED
+  commissionRate  Float                    @default(0.1)
   bokunChannelId  String? // Bokun booking channel for this partner (placeholder until API access)
   phone           String?
   payoutEmail     String? // where Vista Chase sends the partner's payouts (paid outside the app)
@@ -638,16 +638,67 @@ model Affiliate {
   application     Json?
   /// Wire transfer details from the application, AES-256-GCM encrypted (modules/affiliates/partner-application.ts).
   payoutDetails   String?
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  /// When staff set the commission by hand (approval or a new contract). Null = never set: the
+  /// partner can't be approved until staff choose a rate (owner, 2026-11-26: no automatic 10%).
+  commissionSetAt DateTime?
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
   bookings        Booking[]
   commissionRules CommissionRule[]
   commissions     CommissionLedger[]
   payouts         AffiliatePayout[]
   clicks          AffiliateClick[]
   coupons         PromoCode[]
+  changeRequests  AffiliateChangeRequest[]
+  contracts       AffiliateContract[]
 
   @@index([status])
+}
+
+/// A partner's change request from the affiliate portal (owner, 2026-11-26): profile, bank details,
+/// commission, a coupon, a booking, anything. Staff answer it in Admin → Partners → Change requests.
+model AffiliateChangeRequest {
+  id               String    @id @default(cuid())
+  affiliateId      String
+  affiliate        Affiliate @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  /// PROFILE, BANK, COMMISSION, COUPON, BOOKING, PRODUCTS, OTHER
+  category         String
+  subject          String
+  details          String
+  bookingReference String?
+  /// OPEN, IN_PROGRESS, DONE, DECLINED
+  status           String    @default("OPEN")
+  /// Staff reply, shown to the partner and emailed to them.
+  staffNote        String?
+  resolvedById     String?
+  resolvedAt       DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([affiliateId, createdAt])
+  @@index([status])
+}
+
+/// The partner agreement sent when staff approve a partner (or change their commission). Each send
+/// is a new version; the PDF is rebuilt from this snapshot, so it never changes after it is sent.
+model AffiliateContract {
+  id                String    @id @default(cuid())
+  affiliateId       String
+  affiliate         Affiliate @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  version           Int
+  commissionPercent Float
+  /// { all: boolean, categories: string[], tours: { slug, title }[] }
+  products          Json
+  /// Partner details and terms as sent (modules/affiliates/partner-contract.ts).
+  snapshot          Json
+  /// Commission rules this contract created; ended when a newer contract replaces it.
+  ruleIds           String[]  @default([])
+  sentTo            String?
+  sentAt            DateTime?
+  createdById       String?
+  createdAt         DateTime  @default(now())
+
+  @@unique([affiliateId, version])
 }
 
 // Messages from the contact form and "Request this tour" (custom quotes). The team is emailed a

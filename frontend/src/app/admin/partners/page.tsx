@@ -4,13 +4,16 @@
 // run the commission program (rules, ledger, payouts, report: components/admin/partners).
 
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
-import { RefreshCw, Trash2, XCircle } from "lucide-react";
+import { FileDown, RefreshCw, Trash2, XCircle } from "lucide-react";
 import { ModalDialog } from "@/components/forms/ModalDialog";
 import { AdminHeader, StaffSignIn } from "@/components/admin/AdminHeader";
+import { ChangeRequestsPanel } from "@/components/admin/partners/ChangeRequestsPanel";
+import { PartnerContractDialog, downloadPdf } from "@/components/admin/partners/PartnerContractDialog";
 import { CommissionsPanel, CreatePartnerForm, EditPartnerForm, PartnerApplicationDetails, PayoutsPanel, ReportPanel, RulesPanel, type AdminPartner as Partner } from "@/components/admin/partners/PartnerAdminPanels";
 
 const SECTIONS = [
   ["partners", "Partners"],
+  ["requests", "Change requests"],
   ["rules", "Commission rules"],
   ["commissions", "Commissions"],
   ["payouts", "Payouts"],
@@ -44,6 +47,8 @@ export default function AdminPartnersPage() {
   // applicant; Delete removes an application with no bookings, commission or payouts.
   const [confirm, setConfirm] = useState<{ kind: "reject" | "delete"; partner: Partner } | null>(null);
   const [confirmError, setConfirmError] = useState("");
+  // Approve (commission % + products, then the agreement is sent) or send a new agreement.
+  const [contractFor, setContractFor] = useState<{ partner: Partner; mode: "approve" | "update" } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -114,6 +119,7 @@ export default function AdminPartnersPage() {
     }
     return c;
   }, [partners]);
+  const openRequests = (partners ?? []).reduce((n, p) => n + (p.openRequests ?? 0), 0);
   const shown = (partners ?? []).filter((p) => filter === "ALL" || p.status === filter);
 
   return (
@@ -122,7 +128,7 @@ export default function AdminPartnersPage() {
         current="/admin/partners"
         eyebrow="Staff · Partner program"
         title="Partners"
-        subtitle="Approve applications, set commission rules and record payouts. Commission is earned only on paid bookings by active partners."
+        subtitle="Review applications (download them as PDF), approve them with the commission you choose and send the partner agreement, answer change requests and record payouts."
         actions={
           <button
             type="button"
@@ -163,6 +169,9 @@ export default function AdminPartnersPage() {
                 }`}
               >
                 {name}
+                {id === "requests" && openRequests > 0 && (
+                  <span className={`ml-2 inline-flex min-w-6 justify-center rounded-full px-1.5 text-xs ${section === id ? "bg-white text-obsidian-900" : "bg-summit-300 text-obsidian-900"}`}>{openRequests}</span>
+                )}
               </button>
             ))}
           </div>
@@ -170,6 +179,7 @@ export default function AdminPartnersPage() {
 
         {!forbidden && partners && section !== "partners" && (
           <div id={`section-panel-${section}`} role="tabpanel" aria-labelledby={`section-${section}`}>
+            {section === "requests" && <ChangeRequestsPanel notify={setMessage} onChange={load} />}
             {section === "rules" && <RulesPanel partners={partners} notify={setMessage} />}
             {section === "commissions" && <CommissionsPanel partners={partners} notify={setMessage} onChange={load} />}
             {section === "payouts" && <PayoutsPanel partners={partners} notify={setMessage} onChange={load} />}
@@ -252,7 +262,14 @@ export default function AdminPartnersPage() {
                         <Fragment key={p.id}>
                           <tr className="hover:bg-obsidian-50/60">
                             <td className="px-6 py-4">
-                              <span className="block text-obsidian-900">{p.name}</span>
+                              <span className="block text-obsidian-900">
+                                {p.name}
+                                {p.openRequests > 0 && (
+                                  <button type="button" onClick={() => setSection("requests")} className="ml-2 rounded-full bg-summit-100 px-2 py-0.5 text-xs text-obsidian-900 hover:bg-summit-200">
+                                    {p.openRequests} open request{p.openRequests === 1 ? "" : "s"}
+                                  </button>
+                                )}
+                              </span>
                               <span className="block text-sm text-slate-600">
                                 {p.contactName} · {p.email}
                               </span>
@@ -261,7 +278,16 @@ export default function AdminPartnersPage() {
                             <td className="px-6 py-4 text-sm">{label(p.type)}</td>
                             <td className="px-6 py-4 text-right tabular-nums">{p.bookings}</td>
                             <td className="px-6 py-4 text-right text-sm tabular-nums">
-                              <span className="block">{Math.round(p.commissionRate * 1000) / 10}% fallback</span>
+                              <span className="block">
+                                {p.contract
+                                  ? `${p.contract.commissionPercent}% · agreement v${p.contract.version}`
+                                  : p.commissionSetAt
+                                    ? `${Math.round(p.commissionRate * 1000) / 10}% (no agreement)`
+                                    : p.status === "ACTIVE"
+                                      ? `${Math.round(p.commissionRate * 1000) / 10}% (old default, not set by staff)`
+                                      : "Not set"}
+                              </span>
+                              {p.contract && <span className="ml-auto block max-w-[16rem] truncate text-slate-600" title={p.contract.products.join(", ")}>{p.contract.products.join(", ")}</span>}
                               <span className="block text-slate-600">
                                 ${p.commission.approved.toFixed(2)} approved · ${p.commission.pending.toFixed(2)} pending
                               </span>
@@ -280,6 +306,15 @@ export default function AdminPartnersPage() {
                                 {editing === p.id ? "Close" : "Edit"} <span className="sr-only">{p.name}</span>
                               </button>
                               {p.status === "ACTIVE" ? (
+                                <>
+                                <button
+                                  type="button"
+                                  disabled={busy === p.id}
+                                  onClick={() => setContractFor({ partner: p, mode: "update" })}
+                                  className="inline-flex h-10 items-center rounded-full border border-obsidian-900/10 px-4 text-sm text-obsidian-900 hover:bg-obsidian-50 disabled:opacity-60"
+                                >
+                                  New agreement <span className="sr-only">for {p.name}</span>
+                                </button>
                                 <button
                                   type="button"
                                   disabled={busy === p.id}
@@ -288,6 +323,7 @@ export default function AdminPartnersPage() {
                                 >
                                   Suspend <span className="sr-only">{p.name}</span>
                                 </button>
+                                </>
                               ) : (
                                 <>
                                   {p.status === "PENDING" && (
@@ -306,12 +342,26 @@ export default function AdminPartnersPage() {
                                   <button
                                     type="button"
                                     disabled={busy === p.id}
-                                    onClick={() => setStatus(p, "ACTIVE")}
+                                    onClick={() => (p.status === "SUSPENDED" && p.commissionSetAt ? setStatus(p, "ACTIVE") : setContractFor({ partner: p, mode: "approve" }))}
                                     className="inline-flex h-10 items-center rounded-full bg-ocean-600 px-4 text-sm text-white hover:bg-ocean-700 disabled:opacity-60"
                                   >
-                                    {p.status === "SUSPENDED" ? "Reactivate" : "Approve"} <span className="sr-only">{p.name}</span>
+                                    {p.status === "SUSPENDED" && p.commissionSetAt ? "Reactivate" : "Approve"} <span className="sr-only">{p.name}</span>
                                   </button>
                                 </>
+                              )}
+                              {p.hasApplication && (
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    const problem = await downloadPdf(`/api/affiliates/admin/${p.id}/application/pdf`, `partner-application-${p.code}.pdf`);
+                                    if (problem) setMessage(problem);
+                                  }}
+                                  aria-label={`Download ${p.name}'s application as PDF`}
+                                  title="Application PDF"
+                                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-obsidian-900/10 text-slate-700 hover:bg-obsidian-50"
+                                >
+                                  <FileDown className="h-4 w-4" aria-hidden="true" />
+                                </button>
                               )}
                               <button
                                 type="button"
@@ -354,6 +404,16 @@ export default function AdminPartnersPage() {
           </div>
         )}
       </div>
+      <PartnerContractDialog
+        partner={contractFor?.partner ?? null}
+        mode={contractFor?.mode ?? "approve"}
+        onClose={() => setContractFor(null)}
+        onDone={(m) => {
+          setContractFor(null);
+          setMessage(m);
+          void load();
+        }}
+      />
       <ModalDialog
         open={!!confirm}
         onClose={() => setConfirm(null)}

@@ -323,7 +323,7 @@ describe("admin API", () => {
     const created = await request(app)
       .post("/api/affiliates/admin")
       .set("Cookie", adminCookie)
-      .send({ name: `Desk ${id}`, contactName: "Front Desk", email: `desk-${id}@example.com`, password: "a-long-password", type: "HOTEL", status: "ACTIVE" });
+      .send({ name: `Desk ${id}`, contactName: "Front Desk", email: `desk-${id}@example.com`, password: "a-long-password", type: "HOTEL", status: "ACTIVE", commissionRate: 0.1 });
     expect(created.status).toBe(201);
     const affiliateId = created.body.affiliate.id;
     expect(await prisma.auditLog.count({ where: { entityId: affiliateId, action: "PARTNER_CREATED" } })).toBe(1);

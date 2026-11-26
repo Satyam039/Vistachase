@@ -16,6 +16,7 @@ import {
   Settings,
   LogOut,
   ChevronDown,
+  MessageSquarePlus,
 } from "lucide-react";
 
 export const AFFILIATE_TABS = [
@@ -23,6 +24,7 @@ export const AFFILIATE_TABS = [
   { label: "Products", href: "/affiliate/products", icon: Package },
   { label: "Referrals", href: "/affiliate/referrals", icon: Link2 },
   { label: "Coupons", href: "/affiliate/coupons", icon: Tag },
+  { label: "Requests", href: "/affiliate/requests", icon: MessageSquarePlus },
   { label: "Bookings", href: "/affiliate/bookings", icon: Ticket },
   { label: "Commissions", href: "/affiliate/commissions", icon: BadgePercent },
   { label: "Payouts", href: "/affiliate/payouts", icon: Wallet },
@@ -33,7 +35,7 @@ export const AFFILIATE_TABS = [
 interface AffiliateInfo {
   name: string;
   code: string;
-  commissionRate: number;
+  commissionPercent: number | null;
   status: string;
 }
 
@@ -67,7 +69,7 @@ export function AffiliateHeader({ current }: { current?: string }) {
           setPartner({
             name: data.affiliate.name,
             code: data.affiliate.code,
-            commissionRate: data.affiliate.commissionRate,
+            commissionPercent: data.affiliate.commissionPercent ?? null,
             status: data.affiliate.status,
           });
         }
@@ -102,8 +104,8 @@ export function AffiliateHeader({ current }: { current?: string }) {
             <div className="hidden text-right sm:block">
               <p className="text-sm font-medium text-slate-900">{partner.name}</p>
               <p className="text-xs text-slate-500">
-                Code <span className="font-mono font-medium text-slate-700">{partner.code}</span> ·{" "}
-                {Math.round(partner.commissionRate * 100)}% Comm.
+                Code <span className="font-mono font-medium text-slate-700">{partner.code}</span>
+                {partner.commissionPercent != null ? ` · ${partner.commissionPercent}% Comm.` : ""}
               </p>
             </div>
             <button

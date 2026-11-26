@@ -25,8 +25,22 @@ interface Promo {
   uses: number;
   paidBookings: number;
   note: string;
+  appliesTo: Scope[];
+  partner: { id: string; name: string; code: string; status: string } | null;
   state: State;
 }
+
+type Scope = "SHARED" | "PRIVATE" | "SHUTTLE";
+interface PartnerOption {
+  id: string;
+  name: string;
+  code: string;
+}
+const SCOPES: { value: Scope; label: string }[] = [
+  { value: "SHARED", label: "Shared tours" },
+  { value: "PRIVATE", label: "Private tours" },
+  { value: "SHUTTLE", label: "Shuttles" },
+];
 
 interface SettingCode {
   code: string;
@@ -49,6 +63,7 @@ export function PromoCodesPanel({ notify, role }: { notify: (m: string) => void;
   const canManage = role === "ADMIN";
   const [promos, setPromos] = useState<Promo[] | null>(null);
   const [fromSettings, setFromSettings] = useState<SettingCode[]>([]);
+  const [partners, setPartners] = useState<PartnerOption[]>([]);
   const [error, setError] = useState("");
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
@@ -56,11 +71,12 @@ export function PromoCodesPanel({ notify, role }: { notify: (m: string) => void;
   const [rowError, setRowError] = useState<{ id: string; message: string } | null>(null);
 
   const load = useCallback(async () => {
-    const res = await adminApi<{ promos: Promo[]; fromSettings: SettingCode[] }>("/promo-codes");
+    const res = await adminApi<{ promos: Promo[]; fromSettings: SettingCode[]; partners?: PartnerOption[] }>("/promo-codes");
     if (!res.ok) return setError(errorOf(res.data, "Couldn't load promo codes."));
     setError("");
     setPromos(res.data.promos ?? []);
     setFromSettings(res.data.fromSettings ?? []);
+    setPartners(res.data.partners ?? []);
   }, []);
 
   useEffect(() => {
@@ -95,7 +111,7 @@ export function PromoCodesPanel({ notify, role }: { notify: (m: string) => void;
       <Panel
         id="promo-codes"
         title="Promo codes"
-        description="Guests type the code at checkout and press Apply. It takes the discount off the tour price (not off the airport transfer). Codes are not case-sensitive. A use is counted when a booking is made with the code; unpaid bookings that expire and cancelled bookings give their use back."
+        description="Only the Vista Chase team creates codes (partners can't). Give a code to a partner and every booking made with it is credited to that partner; they see it in their portal under Coupons. Guests type the code at checkout and press Apply. It takes the discount off the tour price (not off the airport transfer). Codes are not case-sensitive. A use is counted when a booking is made with the code; unpaid bookings that expire and cancelled bookings give their use back."
         actions={
           canManage && (
             <button type="button" className={adding ? quietBtn : primaryBtn} aria-expanded={adding} onClick={() => setAdding((a) => !a)}>
@@ -108,6 +124,7 @@ export function PromoCodesPanel({ notify, role }: { notify: (m: string) => void;
           <div className="border-b border-obsidian-900/[0.06] bg-obsidian-50/60 px-6 py-5">
             <PromoForm
               idPrefix="new-promo"
+              partners={partners}
               submitLabel="Create code"
               onSave={async (body) => {
                 const res = await adminApi("/promo-codes", "POST", body);
@@ -138,7 +155,13 @@ export function PromoCodesPanel({ notify, role }: { notify: (m: string) => void;
                 <tr className={`align-top ${editing === p.id ? "bg-ocean-50/60" : "hover:bg-obsidian-50/60"}`}>
                   <td className="px-6 py-4">
                     <span className="block font-mono text-obsidian-900">{p.code}</span>
+                    {p.partner && (
+                      <span className="block text-sm text-ocean-700">
+                        Partner: {p.partner.name} ({p.partner.code}){p.partner.status !== "ACTIVE" ? ` · ${p.partner.status.toLowerCase()}, code won't work` : ""}
+                      </span>
+                    )}
                     {p.note && <span className="block text-sm text-slate-600">{p.note}</span>}
+                    <span className="block text-sm text-slate-600">{p.appliesTo.length === SCOPES.length ? "Everywhere" : SCOPES.filter((x) => p.appliesTo.includes(x.value)).map((x) => x.label).join(", ")}</span>
                   </td>
                   <td className="px-6 py-4">{p.label}</td>
                   <td className="px-6 py-4 text-sm text-slate-700">
@@ -180,6 +203,7 @@ export function PromoCodesPanel({ notify, role }: { notify: (m: string) => void;
                         <PromoForm
                           idPrefix={`edit-${p.id}`}
                           initial={p}
+                          partners={partners}
                           submitLabel="Save"
                           onSave={async (body) => {
                             const res = await adminApi(`/promo-codes/${p.id}`, "PATCH", body);
@@ -233,10 +257,26 @@ interface PromoBody {
   endsOn: string | null;
   maxUses: number | null;
   note: string;
+  appliesTo: Scope[];
+  affiliateId: string | null;
 }
 
 /** Add/edit form. `onSave` returns an error message, or "" when saved. */
-function PromoForm({ idPrefix: p, initial, submitLabel, onSave }: { idPrefix: string; initial?: Promo; submitLabel: string; onSave: (body: PromoBody) => Promise<string> }) {
+function PromoForm({
+  idPrefix: p,
+  initial,
+  partners,
+  submitLabel,
+  onSave,
+}: {
+  idPrefix: string;
+  initial?: Promo;
+  partners: PartnerOption[];
+  submitLabel: string;
+  onSave: (body: PromoBody) => Promise<string>;
+}) {
+  const [appliesTo, setAppliesTo] = useState<Scope[]>(initial?.appliesTo ?? SCOPES.map((x) => x.value));
+  const [affiliateId, setAffiliateId] = useState(initial?.partner?.id ?? "");
   const [code, setCode] = useState(initial?.code ?? "");
   const [kind, setKind] = useState<Kind>(initial?.kind ?? "PERCENT");
   const [value, setValue] = useState(initial ? String(initial.value) : "");
@@ -250,8 +290,11 @@ function PromoForm({ idPrefix: p, initial, submitLabel, onSave }: { idPrefix: st
 
   async function submit(e: FormEvent) {
     e.preventDefault();
+    if (appliesTo.length === 0) return setError("Choose where the code applies: shared tours, private tours or shuttles.");
     setBusy(true);
     const message = await onSave({
+      appliesTo,
+      affiliateId: affiliateId || null,
       code: code.trim().toUpperCase(),
       kind,
       value: Number(value),
@@ -338,6 +381,38 @@ function PromoForm({ idPrefix: p, initial, submitLabel, onSave }: { idPrefix: st
         </label>
         <input id={`${p}-note`} maxLength={300} className={field} value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Hotel partner, newsletter" />
       </div>
+      <div className="sm:col-span-2">
+        <Dropdown
+          id={`${p}-partner`}
+          label="Partner (optional)"
+          labelClassName={labelCls}
+          value={affiliateId}
+          onChange={setAffiliateId}
+          searchable={partners.length > 8}
+          options={[
+            { value: "", label: "No partner (Vista Chase code)" },
+            ...(initial?.partner && !partners.some((x) => x.id === initial.partner!.id) ? [{ value: initial.partner.id, label: `${initial.partner.name} (${initial.partner.code}, not active)` }] : []),
+            ...partners.map((x) => ({ value: x.id, label: `${x.name} (${x.code})` })),
+          ]}
+        />
+      </div>
+      <fieldset className="sm:col-span-2">
+        <legend className={labelCls}>Where it applies</legend>
+        <span className="mt-2 flex flex-wrap gap-x-6 gap-y-2">
+          {SCOPES.map((x) => (
+            <label key={x.value} htmlFor={`${p}-scope-${x.value}`} className="inline-flex items-center gap-2 text-sm text-slate-700">
+              <input
+                id={`${p}-scope-${x.value}`}
+                type="checkbox"
+                className="h-4 w-4 accent-ocean-600"
+                checked={appliesTo.includes(x.value)}
+                onChange={(e) => setAppliesTo((a) => (e.target.checked ? [...a, x.value] : a.filter((v) => v !== x.value)))}
+              />
+              {x.label}
+            </label>
+          ))}
+        </span>
+      </fieldset>
       <p className="text-sm text-slate-600 sm:col-span-2 lg:col-span-4">Dates are in Banff time and include the whole last day. The date a guest books on counts, not the tour date.</p>
       <div className="sm:col-span-2 lg:col-span-4">
         <label htmlFor={`${p}-active`} className="inline-flex items-center gap-2 text-sm text-slate-700">
