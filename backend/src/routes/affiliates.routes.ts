@@ -182,23 +182,49 @@ router.post("/click", rateLimitMiddleware("affiliate_click", { maxRequests: 60, 
 // ---------------------------------------------------------------------------------------------
 // Partner (own data only)
 
-async function resolveAffiliateUserId(userId: string, role?: string): Promise<string> {
-  const hasAffiliate = await prisma.affiliate.findUnique({ where: { userId }, select: { id: true } });
-  if (hasAffiliate) return userId;
-  if (role === "ADMIN") {
-    const first = await prisma.affiliate.findFirst({ select: { userId: true } });
-    if (first) return first.userId;
+// Staff (ADMIN) may open the affiliate portal to see it as a partner sees it. Before 2026-11-26 an
+// admin always got whichever partner the database returned first, so bookings made with another
+// partner's link looked missing. Now the admin picks the partner (the portal sets this cookie with
+// the partner's code); with no choice yet, the partner with the latest referred booking is shown.
+export const PARTNER_VIEW_COOKIE = "vc_partner_view";
+
+async function resolveAffiliateUserId(req: Request, user: { userId: string; role?: string }): Promise<string> {
+  const own = await prisma.affiliate.findUnique({ where: { userId: user.userId }, select: { id: true } });
+  if (own || user.role !== "ADMIN") return user.userId;
+  const chosen = typeof req.cookies?.[PARTNER_VIEW_COOKIE] === "string" ? req.cookies[PARTNER_VIEW_COOKIE].trim().toUpperCase() : "";
+  if (chosen) {
+    const picked = await prisma.affiliate.findUnique({ where: { code: chosen }, select: { userId: true } });
+    if (picked) return picked.userId;
   }
-  return userId;
+  const latest = await prisma.booking.findFirst({
+    where: { affiliateId: { not: null } },
+    orderBy: { createdAt: "desc" },
+    select: { affiliate: { select: { userId: true } } },
+  });
+  if (latest?.affiliate) return latest.affiliate.userId;
+  const newest = await prisma.affiliate.findFirst({ orderBy: { createdAt: "desc" }, select: { userId: true } });
+  return newest?.userId ?? user.userId;
+}
+
+/** For an admin viewing the portal: every partner they can switch to, with referred booking counts. */
+async function partnersForAdminView() {
+  const [partners, counts] = await Promise.all([
+    prisma.affiliate.findMany({ orderBy: { name: "asc" }, select: { id: true, code: true, name: true, status: true } }),
+    prisma.booking.groupBy({ by: ["affiliateId"], where: { affiliateId: { not: null } }, _count: { _all: true } }),
+  ]);
+  const byId = new Map(counts.map((c) => [c.affiliateId, c._count._all]));
+  return partners.map((p) => ({ code: p.code, name: p.name, status: p.status, bookings: byId.get(p.id) ?? 0 }));
 }
 
 router.get("/me", async (req, res) => {
   const user = requirePartnerUser(req, res);
   if (!user) return;
-  const targetUserId = await resolveAffiliateUserId(user.userId, user.role);
+  const targetUserId = await resolveAffiliateUserId(req, user);
   const dashboard = await getAffiliateDashboard(targetUserId);
   if (!dashboard) return notPartner(res);
-  return res.json({ success: true, ...dashboard });
+  // An admin looking at a partner's portal is told so, and gets the list of partners to switch to.
+  const adminView = targetUserId !== user.userId && user.role === "ADMIN" ? { adminView: { partners: await partnersForAdminView() } } : {};
+  return res.json({ success: true, ...dashboard, ...adminView });
 });
 
 const profileSchema = z
@@ -214,7 +240,7 @@ const profileSchema = z
 router.patch("/me", async (req, res) => {
   const user = requirePartnerUser(req, res);
   if (!user) return;
-  const targetUserId = await resolveAffiliateUserId(user.userId, user.role);
+  const targetUserId = await resolveAffiliateUserId(req, user);
   const parsed = profileSchema.safeParse(req.body ?? {});
   if (!parsed.success) return invalid(res, parsed.error);
   const updated = await updateAffiliateProfile(targetUserId, parsed.data);
@@ -227,7 +253,7 @@ const bookingStatus = z.enum(["PENDING_PAYMENT", "CONFIRMED", "COMPLETED", "CANC
 router.get("/me/bookings", async (req, res) => {
   const user = requirePartnerUser(req, res);
   if (!user) return;
-  const targetUserId = await resolveAffiliateUserId(user.userId, user.role);
+  const targetUserId = await resolveAffiliateUserId(req, user);
   const parsed = pageQuery.extend({ status: bookingStatus.optional() }).safeParse(req.query);
   if (!parsed.success) return invalid(res, parsed.error);
   const result = await listPartnerBookings(targetUserId, parsed.data);
@@ -240,7 +266,7 @@ const commissionStatus = z.enum(["PENDING", "APPROVED", "PAID"]);
 router.get("/me/commissions", async (req, res) => {
   const user = requirePartnerUser(req, res);
   if (!user) return;
-  const targetUserId = await resolveAffiliateUserId(user.userId, user.role);
+  const targetUserId = await resolveAffiliateUserId(req, user);
   const parsed = pageQuery.extend({ status: commissionStatus.optional() }).safeParse(req.query);
   if (!parsed.success) return invalid(res, parsed.error);
   const result = await listPartnerCommissions(targetUserId, parsed.data);
@@ -251,7 +277,7 @@ router.get("/me/commissions", async (req, res) => {
 router.get("/me/payouts", async (req, res) => {
   const user = requirePartnerUser(req, res);
   if (!user) return;
-  const targetUserId = await resolveAffiliateUserId(user.userId, user.role);
+  const targetUserId = await resolveAffiliateUserId(req, user);
   const payouts = await listPartnerPayouts(targetUserId);
   if (!payouts) return notPartner(res);
   return res.json({ success: true, payouts });
@@ -284,7 +310,7 @@ const couponSchema = z
 async function partnerForCoupons(req: Request, res: Response) {
   const user = requirePartnerUser(req, res);
   if (!user) return null;
-  const affiliate = await prisma.affiliate.findUnique({ where: { userId: await resolveAffiliateUserId(user.userId, user.role) } });
+  const affiliate = await prisma.affiliate.findUnique({ where: { userId: await resolveAffiliateUserId(req, user) } });
   if (!affiliate) {
     notPartner(res);
     return null;
