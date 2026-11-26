@@ -61,6 +61,10 @@ for partners, and coupon codes made only by the Vista Chase team.
   the code credit that partner; the partner must be ACTIVE) and where it applies. The affiliate portal's
   Coupons tab is read-only with "Ask for a coupon" (a change request); `POST/PATCH/DELETE /me/coupons`
   answer 403. `PARTNER_COUPON_MAX_PERCENT` is no longer used.
+- **Partner page.** Click a partner's name (or Open) in Admin → Partners to open `/admin/partners/<id>`:
+  totals, commission and agreements (PDFs), contact details, application and bank details (on request,
+  audited), coupons, credited bookings (with guest names, staff only), change requests and payouts
+  (`GET /admin/:id/overview`; bank details are never in this response).
 - Migration `9q_partner_contracts_requests` (additive): `Affiliate.commissionSetAt`, tables
   `AffiliateChangeRequest` and `AffiliateContract`.
 

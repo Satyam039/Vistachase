@@ -16,6 +16,7 @@ import {
   createAffiliateByAdmin,
   deleteAffiliate,
   getAffiliateDashboard,
+  getPartnerOverview,
   listAffiliates,
   listCommissionLines,
   listPartnerBookings,
@@ -532,6 +533,30 @@ router.get("/admin/:id/application", async (req, res) => {
     bank,
     bankUnreadable: wantBank && !!affiliate.payoutDetails && !bank,
   });
+});
+
+// One partner's page in Admin → Partners (owner, 2026-11-26: click a partner to see everything):
+// profile, application, totals, bookings, coupons, agreements, rules, change requests and payouts.
+router.get("/admin/:id/overview", async (req, res) => {
+  if (!(await requireAdmin(req, res))) return;
+  const overview = await getPartnerOverview(String(req.params.id));
+  if (!overview) return res.status(404).json({ success: false, error: "Partner not found." });
+  const rows = await prisma.promoCode.findMany({ where: { affiliateId: overview.partner.id }, orderBy: [{ isActive: "desc" }, { createdAt: "desc" }] });
+  const uses = await usesByCode(rows.map((r) => r.code));
+  const now = new Date();
+  const coupons = rows.map((r) => ({
+    id: r.id,
+    code: r.code,
+    label: promoLabel(r),
+    isActive: r.isActive,
+    startsOn: r.startsAt ? todayInMountainTime(r.startsAt) : null,
+    endsOn: r.expiresAt ? todayInMountainTime(new Date(r.expiresAt.getTime() - 1)) : null,
+    appliesTo: r.appliesTo.length ? PROMO_SCOPES.filter((x) => r.appliesTo.includes(x)) : [...PROMO_SCOPES],
+    uses: uses.get(r.code)?.live ?? 0,
+    paidBookings: uses.get(r.code)?.paid ?? 0,
+    state: !r.isActive ? "INACTIVE" : r.startsAt && r.startsAt > now ? "SCHEDULED" : r.expiresAt && r.expiresAt <= now ? "EXPIRED" : "ACTIVE",
+  }));
+  return res.json({ success: true, ...overview, coupons });
 });
 
 // The application form as a PDF for the team to download and keep (owner, 2026-11-26). Account

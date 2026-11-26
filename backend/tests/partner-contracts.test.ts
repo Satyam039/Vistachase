@@ -165,6 +165,27 @@ describe("partner approval and contract", () => {
   });
 });
 
+describe("partner overview page", () => {
+  it("gives staff one partner's details, coupons, agreements and requests; partners can't read it", async () => {
+    const { affiliate, cookie } = await applicant();
+    await request(app).post(`/api/affiliates/admin/${affiliate.id}/approve`).set("Cookie", adminCookie).send({ commissionPercent: 10, products: { all: true } });
+    await request(app).post("/api/admin/promo-codes").set("Cookie", adminCookie).send({ code: `OV${unique()}`, kind: "PERCENT", value: 10, appliesTo: ["SHARED"], affiliateId: affiliate.id });
+    await request(app).post("/api/affiliates/me/requests").set("Cookie", cookie).send({ category: "OTHER", subject: "Hello team", details: "Just checking the overview page works." });
+    const res = await request(app).get(`/api/affiliates/admin/${affiliate.id}/overview`).set("Cookie", adminCookie);
+    expect(res.status).toBe(200);
+    expect(res.body.partner).toMatchObject({ id: affiliate.id, code: affiliate.code, status: "ACTIVE", hasBankDetails: true });
+    expect(res.body.application.contactRole).toBe("Owner");
+    expect(res.body.coupons).toHaveLength(1);
+    expect(res.body.contracts[0]).toMatchObject({ version: 1, commissionPercent: 10 });
+    expect(res.body.requests).toHaveLength(1);
+    expect(res.body.rules.length).toBeGreaterThan(0);
+    expect(res.body.totals).toMatchObject({ bookings: 0, currency: "CAD" });
+    expect(JSON.stringify(res.body)).not.toContain("9876543210"); // bank details only through the audited route
+    expect((await request(app).get(`/api/affiliates/admin/${affiliate.id}/overview`).set("Cookie", cookie)).status).toBe(403);
+    expect((await request(app).get(`/api/affiliates/admin/nope/overview`).set("Cookie", adminCookie)).status).toBe(404);
+  });
+});
+
 describe("partner change requests", () => {
   it("a partner sends a request, staff answer it, and only that partner sees it", async () => {
     const { affiliate, cookie } = await applicant();

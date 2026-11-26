@@ -72,7 +72,7 @@ export async function applyAffiliate(input: {
       },
     });
   });
-  sendApplicationEmails({ name: input.name, contactName: input.contactName, email, code: affiliate.code, type: input.type, affiliateId: affiliate.id });
+  await sendApplicationEmails({ name: input.name, contactName: input.contactName, email, code: affiliate.code, type: input.type, affiliateId: affiliate.id });
   return { success: true as const, affiliate: { code: affiliate.code, status: affiliate.status } };
 }
 
@@ -449,4 +449,88 @@ export async function deleteAffiliate(id: string, staffId: string) {
     });
     return { success: true as const, accountRemoved: removeAccount };
   });
+}
+
+/**
+ * Admin → Partners → a partner's own page (owner, 2026-11-26): everything about one partner in one
+ * place. Staff see guest names here (the partner never does). Bank details are not included: the
+ * page asks for them separately (GET /admin/:id/application?bank=1, audited).
+ */
+export async function getPartnerOverview(id: string) {
+  const affiliate = await prisma.affiliate.findUnique({
+    where: { id },
+    include: {
+      user: { select: { name: true, email: true, createdAt: true } },
+      contracts: { orderBy: { version: "desc" } },
+      changeRequests: { orderBy: { createdAt: "desc" }, take: 50 },
+      payouts: { orderBy: { createdAt: "desc" }, take: 50 },
+      commissionRules: { where: { active: true }, orderBy: { createdAt: "desc" } },
+    },
+  });
+  if (!affiliate) return null;
+  const since = new Date(Date.now() - CLICK_WINDOW_DAYS * 86_400_000);
+  const [bookings, totals, clicks30d, clicksAll, bookingCount] = await Promise.all([
+    prisma.booking.findMany({ where: { affiliateId: id }, orderBy: { createdAt: "desc" }, take: 100, include: bookingInclude }),
+    commissionTotals(id),
+    prisma.affiliateClick.count({ where: { affiliateId: id, createdAt: { gte: since } } }),
+    prisma.affiliateClick.count({ where: { affiliateId: id } }),
+    prisma.booking.count({ where: { affiliateId: id } }),
+  ]);
+  const perBooking = await commissionByBooking(id, bookings.map((b) => b.id));
+  const sales = bookings.filter((b) => isSale(b.status));
+  const tourIds = [...new Set(affiliate.commissionRules.map((r) => r.tourId).filter((t): t is string => !!t))];
+  const tours = tourIds.length ? await prisma.tour.findMany({ where: { id: { in: tourIds } }, select: { id: true, title: true } }) : [];
+  return {
+    partner: {
+      id: affiliate.id,
+      name: affiliate.name,
+      contactName: affiliate.user.name,
+      email: affiliate.user.email,
+      phone: affiliate.phone,
+      website: affiliate.website,
+      payoutEmail: affiliate.payoutEmail,
+      code: affiliate.code,
+      type: affiliate.type,
+      status: affiliate.status,
+      commissionRate: affiliate.commissionRate,
+      commissionSetAt: affiliate.commissionSetAt,
+      bokunChannelId: affiliate.bokunChannelId,
+      createdAt: affiliate.createdAt,
+      hasBankDetails: !!affiliate.payoutDetails,
+    },
+    application: affiliate.application,
+    totals: {
+      bookings: bookingCount,
+      paidBookings: sales.length,
+      guests: sales.reduce((sum, b) => sum + b.totalSeats, 0),
+      revenue: dollars(sales.reduce((sum, b) => sum + b.totalAmount, 0)),
+      commission: dollars(totals.netCents),
+      pending: dollars(totals.pendingCents),
+      approved: dollars(totals.approvedCents),
+      paid: dollars(totals.paidCents),
+      reversed: dollars(totals.reversedCents),
+      clicks30d,
+      clicksAll,
+      currency: "CAD",
+    },
+    bookings: bookings.map((b) => ({ ...partnerBookingDto(b, perBooking.get(b.id) ?? 0), id: b.id, guestName: b.customerName, promoCode: (b.priceSnapshot as { promo?: { code?: string } } | null)?.promo?.code ?? null })),
+    contracts: affiliate.contracts.map((c) => ({
+      version: c.version,
+      commissionPercent: c.commissionPercent,
+      products: productLines(c.products as unknown as ResolvedProducts),
+      sentTo: c.sentTo,
+      sentAt: c.sentAt,
+    })),
+    rules: affiliate.commissionRules.map((r) => ({
+      id: r.id,
+      name: r.name,
+      percent: r.percentBps == null ? null : r.percentBps / 100,
+      fixedAmount: r.fixedCents == null ? null : r.fixedCents / 100,
+      category: r.category,
+      tour: tours.find((t) => t.id === r.tourId)?.title ?? null,
+      validFrom: r.validFrom,
+    })),
+    requests: affiliate.changeRequests.map((r) => ({ id: r.id, category: r.category, subject: r.subject, status: r.status, createdAt: r.createdAt, staffNote: r.staffNote })),
+    payouts: affiliate.payouts.map((p) => ({ id: p.id, amount: dollars(p.amountCents), currency: p.currency, status: p.status, method: p.method, reference: p.reference, paidAt: p.paidAt, createdAt: p.createdAt })),
+  };
 }
