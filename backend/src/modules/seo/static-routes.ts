@@ -23,6 +23,8 @@ export const STATIC_ROUTES: StaticRoute[] = [
   { path: "/shuttles", label: "Moraine Lake & Lake Louise shuttles", pageType: "LANDING", important: true, indexable: true, conversionGoal: "BOOKING", sitemapPriority: 0.9 },
   { path: "/two-day-rockies-explorer", label: "Two-Day Rockies Explorer", pageType: "LANDING", indexable: true, conversionGoal: "BOOKING", sitemapPriority: 0.8 },
   { path: "/three-day-rockies-discovery", label: "Three-Day Rockies Discovery", pageType: "LANDING", indexable: true, conversionGoal: "ENQUIRY", sitemapPriority: 0.8 },
+  // Kept noindex, follow in its code (fix recheck, 10 Nov 2026, R3); listed so the SEO portal can edit its metadata.
+  { path: "/two-day-rockies-explorer/private", label: "Private Two-Day Rockies Explorer", pageType: "LANDING", indexable: false, conversionGoal: "BOOKING" },
   { path: "/four-day-rockies-and-jasper", label: "Four-Day Rockies & Jasper", pageType: "LANDING", indexable: true, conversionGoal: "ENQUIRY", sitemapPriority: 0.8 },
   { path: "/banff-activity-tickets", label: "Banff activity tickets", pageType: "LANDING", indexable: true, conversionGoal: "ENQUIRY", sitemapPriority: 0.7 },
   { path: "/destinations", label: "Destinations", pageType: "LANDING", indexable: true, sitemapPriority: 0.7 },

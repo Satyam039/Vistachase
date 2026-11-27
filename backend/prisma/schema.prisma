@@ -982,6 +982,9 @@ model SeoPage {
   twitterTitle       String?
   twitterDescription String?
   twitterImage       String?
+  // Page SEO editor (migration 9s): <meta name="keywords"> and the X card type; null = the page's code default
+  metaKeywords       String?
+  twitterCard        String? // "summary" | "summary_large_image"
   breadcrumbLabel    String?
   excerpt            String?
   body               String? // CMS pages only: a small markdown subset rendered as text, never HTML

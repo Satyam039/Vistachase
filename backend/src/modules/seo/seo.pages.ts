@@ -210,7 +210,7 @@ export async function getPage(id: string) {
 
 const TRACKED_FIELDS = [
   "label", "important", "seoTitle", "metaDescription", "h1", "focusKeyword", "secondaryKeywords", "canonicalUrl", "robotsIndex", "robotsFollow",
-  "ogTitle", "ogDescription", "ogImage", "twitterTitle", "twitterDescription", "twitterImage", "breadcrumbLabel", "excerpt", "body",
+  "ogTitle", "ogDescription", "ogImage", "twitterTitle", "twitterDescription", "twitterImage", "metaKeywords", "twitterCard", "breadcrumbLabel", "excerpt", "body",
   "answerSnippet", "citationFact", "faqs", "authorName", "authorBio", "reviewedAt", "featuredImage", "featuredImageAlt", "imageTitle",
   "imageCaption", "imageFileName", "ctaText", "ctaUrl", "conversionGoal", "utmSource", "utmMedium", "utmCampaign", "pillar", "tags",
   "relatedPaths", "sitemapPriority", "path", "sitemapInclude", "datePublished", "dateModified", "featured", "thumbnailImage", "thumbnailAlt",

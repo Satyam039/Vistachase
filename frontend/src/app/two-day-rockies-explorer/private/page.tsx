@@ -7,6 +7,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { withSeo } from "@/lib/seo/server";
+import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 import { ArrowRight, BedDouble, Calendar, Car, Check, ChevronRight, Clock, FileText, Info, MapPin, Plane, Shield, Sparkles, Users, X } from "lucide-react";
 import { PackageBookingSection } from "@/components/booking/PackageBookingSection";
 import { ItineraryDayPanel, ItineraryDayTabList, ItineraryDays } from "@/components/tours/ItineraryDayTabs";
@@ -35,7 +37,8 @@ import {
 // Dates on this page can be up to a minute old; the server checks both days again before payment.
 export const revalidate = 60;
 
-export const metadata: Metadata = {
+// Code defaults; a published override from the SEO portal replaces only the fields it sets.
+const baseMetadata: Metadata = {
   // Kept noindex, follow (fix recheck, 10 Nov 2026, R3): indexing this page is a separate SEO decision.
   robots: { index: false, follow: true },
   title: "Private Two-Day Rockies Explorer | Vista Chase",
@@ -43,6 +46,10 @@ export const metadata: Metadata = {
     "Two private tours, Banff & Yoho Discovery and Columbia Icefield Adventure, in either order on dates that fit your stay. Private van and driver-guide, up to 14 guests, 10% off summer tour days.",
   alternates: { canonical: "/two-day-rockies-explorer/private" },
 };
+
+export function generateMetadata(): Promise<Metadata> {
+  return withSeo("/two-day-rockies-explorer/private", baseMetadata);
+}
 
 const cad = (n: number) => `CAD $${n.toLocaleString("en-CA")}`;
 
@@ -90,6 +97,7 @@ export default function PrivateTwoDayPage() {
 
   return (
     <>
+      <PageSeoExtras path="/two-day-rockies-explorer/private" />
       <JsonLd
         data={{
           "@context": "https://schema.org",

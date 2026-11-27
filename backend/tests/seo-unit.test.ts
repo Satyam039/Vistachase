@@ -145,4 +145,13 @@ describe("field checks", () => {
     expect(pageUpdateSchema.safeParse({ ctaUrl: "javascript:alert(1)" }).success).toBe(false);
     expect(pageUpdateSchema.safeParse({ ogImage: "https://x.example/a.jpg", seoTitle: "" }).data).toEqual({ ogImage: "https://x.example/a.jpg", seoTitle: null });
   });
+  it("cleans meta keywords and accepts only real X card types", () => {
+    expect(pageUpdateSchema.parse({ metaKeywords: " banff tours,  moraine lake ,,banff tours " }).metaKeywords).toBe("banff tours, moraine lake");
+    expect(pageUpdateSchema.parse({ metaKeywords: " , " }).metaKeywords).toBeNull();
+    expect(pageUpdateSchema.safeParse({ metaKeywords: 'a"><script>' }).success).toBe(false);
+    expect(pageUpdateSchema.safeParse({ metaKeywords: Array.from({ length: 21 }, (_, i) => `k${i}`).join(",") }).success).toBe(false);
+    expect(pageUpdateSchema.parse({ twitterCard: "summary" }).twitterCard).toBe("summary");
+    expect(pageUpdateSchema.parse({ twitterCard: null }).twitterCard).toBeNull();
+    expect(pageUpdateSchema.safeParse({ twitterCard: "player" }).success).toBe(false);
+  });
 });

@@ -82,6 +82,17 @@ export const pageUpdateSchema = z
     twitterTitle: text(120),
     twitterDescription: text(320),
     twitterImage: refined(checkImageRef),
+    /** <meta name="keywords">: comma-separated phrases. Search engines mostly ignore it; kept for teams that use it. */
+    metaKeywords: z
+      .string()
+      .max(400)
+      .transform((v) => v.split(",").map((k) => k.replace(/\s+/g, " ").trim()).filter(Boolean))
+      .refine((list) => list.length <= 20, "Up to 20 keywords.")
+      .refine((list) => list.every((k) => k.length <= 60), "Each keyword can be up to 60 characters.")
+      .refine((list) => list.every((k) => !/[<>"]/.test(k)), "Keywords can't contain < > or quotes.")
+      .transform((list) => (list.length ? [...new Set(list)].join(", ") : null))
+      .nullable(),
+    twitterCard: z.enum(["summary", "summary_large_image"]).nullable(),
     breadcrumbLabel: text(60),
     excerpt: text(500),
     body: text(50_000),

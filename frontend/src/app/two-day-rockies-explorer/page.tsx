@@ -6,6 +6,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { withSeo } from "@/lib/seo/server";
+import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 import { ArrowRight, BedDouble, Check, ChevronRight, Clock, Info, MapPin, Users } from "lucide-react";
 import { getTours } from "@/lib/api/catalog";
 import { FALLBACK_TOURS } from "@/lib/api/fallback-data";
@@ -23,12 +25,17 @@ import { TWO_DAY_ROCKIES_EXPLORER_FAQS } from "@/lib/twoDayPackageFaqs";
 // Seats and prices on this page can be up to a minute old; checkout (/book) always reads them live.
 export const revalidate = 60;
 
-export const metadata: Metadata = {
+// Code defaults; a published override from the SEO portal replaces only the fields it sets.
+const baseMetadata: Metadata = {
   title: "Two-Day Rockies Explorer: Banff & Icefield | Vista Chase",
   description:
     "Both small-group day tours in one booking: Banff & Yoho Discovery and Columbia Icefield Adventure. Save 10%, small groups, pickup in Banff & Canmore.",
   alternates: { canonical: "/two-day-rockies-explorer" },
 };
+
+export function generateMetadata(): Promise<Metadata> {
+  return withSeo("/two-day-rockies-explorer", baseMetadata);
+}
 
 export default async function TwoDayRockiesExplorerPage() {
   cachePublicData();
@@ -47,10 +54,11 @@ export default async function TwoDayRockiesExplorerPage() {
 
   return (
     <div className="bg-obsidian-50 text-obsidian-900">
+      <PageSeoExtras path="/two-day-rockies-explorer" />
       <PackageTripJsonLd
         path={TWO_DAY_PACKAGE.href}
         name={TWO_DAY_PACKAGE.title}
-        description={String(metadata.description)}
+        description={String(baseMetadata.description)}
         image={TWO_DAY_PACKAGE.images[0].src}
         days={TWO_DAY_PACKAGE.days.map((d) => d.title)}
         touristType="Small Group"

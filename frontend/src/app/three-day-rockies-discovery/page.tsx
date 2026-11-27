@@ -4,6 +4,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { withSeo } from "@/lib/seo/server";
 import {
   ArrowRight,
   BedDouble,
@@ -39,12 +40,17 @@ import { cachePublicData } from "@/lib/api/cachePolicy";
 // Seats and prices on this page can be up to a minute old; checkout (/book) always reads them live.
 export const revalidate = 60;
 
-export const metadata: Metadata = {
+// Code defaults; a published override from the SEO portal replaces only the fields it sets.
+const baseMetadata: Metadata = {
   title: "Three-Day Rockies Discovery Private Tour | Vista Chase",
   description:
     "Three private tours: Banff’s lakes and viewpoints, Lake Louise, Moraine Lake & Yoho, and the Icefields Parkway. Private van and driver-guide, dates in any order, 10% savings, summer only.",
   alternates: { canonical: "/three-day-rockies-discovery" },
 };
+
+export function generateMetadata(): Promise<Metadata> {
+  return withSeo("/three-day-rockies-discovery", baseMetadata);
+}
 
 const cad = (n: number) => `CAD $${n.toLocaleString("en-CA")}`;
 
@@ -100,7 +106,7 @@ export default function ThreeDayRockiesDiscoveryPage() {
       <PackageTripJsonLd
         path="/three-day-rockies-discovery"
         name={PRIVATE_PACKAGES.three.title}
-        description={String(metadata.description)}
+        description={String(baseMetadata.description)}
         image="/media/photos/bow-lake-dock-sunrise.webp"
         days={PRIVATE_PACKAGES.three.days.map((d) => d.title)}
         touristType="Private Group"

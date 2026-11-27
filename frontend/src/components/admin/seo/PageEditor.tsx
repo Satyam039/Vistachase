@@ -109,6 +109,8 @@ interface SeoPage {
   twitterTitle: string | null;
   twitterDescription: string | null;
   twitterImage: string | null;
+  metaKeywords: string | null;
+  twitterCard: TwitterCard | null;
   breadcrumbLabel: string | null;
   excerpt: string | null;
   body: string | null;
@@ -190,7 +192,7 @@ const TEXT_FIELDS = [
   "twitterTitle", "twitterDescription", "twitterImage", "breadcrumbLabel", "excerpt", "body", "answerSnippet", "citationFact",
   "authorName", "authorBio", "featuredImage", "featuredImageAlt", "imageTitle", "imageCaption", "imageFileName", "ctaText",
   "ctaUrl", "utmSource", "utmMedium", "utmCampaign", "pillar", "thumbnailImage", "thumbnailAlt",
-  "searchTitle", "searchDescription", "searchImage",
+  "searchTitle", "searchDescription", "searchImage", "metaKeywords",
 ] as const;
 type TextKey = (typeof TEXT_FIELDS)[number];
 
@@ -210,6 +212,7 @@ type Form = Record<TextKey, string> & {
   searchExclude: boolean;
   featured: boolean;
   conversionGoal: ConversionGoal;
+  twitterCard: TwitterCard | "";
   robotsIndex: boolean;
   robotsFollow: boolean;
   important: boolean;
@@ -243,6 +246,7 @@ function formOf(p: SeoPage): Form {
     searchExclude: p.searchExclude ?? false,
     featured: p.featured ?? false,
     conversionGoal: p.conversionGoal,
+    twitterCard: p.twitterCard ?? "",
     robotsIndex: p.robotsIndex,
     robotsFollow: p.robotsFollow,
     important: p.important,
@@ -264,6 +268,7 @@ function changesOf(form: Form, saved: Form, isCms: boolean): Record<string, unkn
     else if (key === "relatedPaths") out[key] = lineList(v as string);
     else if (key === "reviewedAt" || key === "datePublished" || key === "dateModified") out[key] = v === "" ? null : v;
     else if (key === "sitemapPriority") out[key] = v === "" ? null : Number(v);
+    else if (key === "twitterCard") out[key] = v === "" ? null : v;
     else if (key === "faqs") out[key] = (v as Faq[]).map((f) => ({ question: f.question.trim(), answer: f.answer.trim() }));
     else out[key] = v;
   }
@@ -441,6 +446,13 @@ const SOURCE_LABEL: Record<SeoPage["source"], string> = {
   DESTINATION: "Destination record",
   CMS: "Guide (edited here)",
 };
+
+type TwitterCard = "summary" | "summary_large_image";
+const TWITTER_CARDS: { value: TwitterCard | ""; label: string }[] = [
+  { value: "", label: "Page default" },
+  { value: "summary_large_image", label: "Large image (summary_large_image)" },
+  { value: "summary", label: "Small image (summary)" },
+];
 
 const GOALS: { value: ConversionGoal; label: string }[] = [
   { value: "BOOKING", label: "Booking" },
@@ -835,6 +847,13 @@ export function SeoPageEditor({ id, mode = "direct", canPublish = true, compact 
                 <TextField id={f("focusKeyword")} label="Focus keyword" value={form.focusKeyword} onChange={(v) => set("focusKeyword", v)} />
                 <TextField id={f("secondaryKeywords")} label="Secondary keywords" value={form.secondaryKeywords} onChange={(v) => set("secondaryKeywords", v)} hint="Separate with commas." />
               </div>
+              <TextField
+                id={f("metaKeywords")}
+                label="Meta keywords"
+                value={form.metaKeywords}
+                onChange={(v) => set("metaKeywords", v)}
+                hint={'Optional. Separate with commas (up to 20). Rendered as <meta name="keywords">; Google ignores it, other tools may read it. Empty adds no tag.'}
+              />
               <TextField id={f("h1")} label="Main heading (H1)" value={form.h1} onChange={(v) => set("h1", v)} placeholder={defH1} />
               <TextField id={f("canonicalUrl")} label="Canonical URL" value={form.canonicalUrl} onChange={(v) => set("canonicalUrl", v)} placeholder={defCanonical} mono />
               <div className="grid gap-5 sm:grid-cols-2">
@@ -897,6 +916,7 @@ export function SeoPageEditor({ id, mode = "direct", canPublish = true, compact 
                 />
               </div>
               <TextField id={f("twitterImage")} label="X (Twitter) image" value={form.twitterImage} onChange={(v) => set("twitterImage", v)} placeholder={effOgImage} mono />
+              <Dropdown id={f("twitterCard")} label="X (Twitter) card" options={TWITTER_CARDS} value={form.twitterCard} onChange={(v) => set("twitterCard", v as TwitterCard | "")} />
             </div>
           </Panel>
 
