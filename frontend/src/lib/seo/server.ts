@@ -22,6 +22,9 @@ export interface SeoMeta {
   twitterTitle: string | null;
   twitterDescription: string | null;
   twitterImage: string | null;
+  /** Comma-separated; older backends leave it out. */
+  metaKeywords?: string | null;
+  twitterCard?: "summary" | "summary_large_image" | null;
   breadcrumbLabel: string | null;
   featuredImage: string | null;
   featuredImageAlt: string | null;
@@ -95,6 +98,7 @@ export function mergeSeo(defaults: Metadata, meta: SeoMeta | null): Metadata {
   const merged: Metadata = { ...defaults };
   if (title) merged.title = { absolute: title };
   if (description) merged.description = description;
+  if (meta.metaKeywords) merged.keywords = meta.metaKeywords.split(",").map((k) => k.trim()).filter(Boolean);
   if (meta.canonicalUrl) merged.alternates = { ...defaults.alternates, canonical: meta.canonicalUrl };
   if (!meta.robotsIndex || !meta.robotsFollow) {
     merged.robots = { index: meta.robotsIndex, follow: meta.robotsFollow };
@@ -114,10 +118,10 @@ export function mergeSeo(defaults: Metadata, meta: SeoMeta | null): Metadata {
   const twTitle = meta.twitterTitle ?? ogTitle;
   const twDescription = meta.twitterDescription ?? ogDescription;
   const twImage = meta.twitterImage ?? ogImage;
-  if (meta.twitterTitle || meta.twitterDescription || meta.twitterImage) {
+  if (meta.twitterTitle || meta.twitterDescription || meta.twitterImage || meta.twitterCard) {
     merged.twitter = {
       ...defaults.twitter,
-      card: "summary_large_image",
+      card: meta.twitterCard ?? "summary_large_image",
       ...(twTitle ? { title: twTitle } : {}),
       ...(twDescription ? { description: twDescription } : {}),
       ...(twImage ? { images: [twImage] } : {}),

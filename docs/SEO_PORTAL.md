@@ -103,6 +103,13 @@ All of it is off until staff act:
   `<noscript>`, `<style>`, `<meta>` name/property + content, `<link>` with a safe rel and https href; no
   `on*` attributes, no `http-equiv`, no other tags). `<meta>`/`<link>` are hoisted into `<head>`;
   scripts load after the page is interactive. Nothing is set on any page until an admin saves code.
+- Page metadata (SEO portal → Pages → a page): SEO title, meta description, meta keywords, canonical,
+  robots index/follow, Open Graph title/description/image, X (Twitter) title/description/image and card
+  type. Public pages merge the published row over their code metadata with `withSeo(path, baseMetadata)`
+  (frontend/src/lib/seo/server.ts), so an empty field keeps the page's own value. Meta keywords
+  (`metaKeywords`, comma-separated, max 20) and the X card (`twitterCard`: summary | summary_large_image)
+  came with migration 9s; null adds nothing. Tour pages, landing pages, the multi-day package pages
+  (two-day, private two-day, three-day, four-day) and blog posts all read it.
 - Site search: `GET /api/seo/public/search-index` lists published, indexable pages not excluded from
   site search, with their search title/description/image (falling back to SEO, Open Graph, then the last
   audit). The site has no page-wide search box yet (`/search` is the tour search and is unchanged), so

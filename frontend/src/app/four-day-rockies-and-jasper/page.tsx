@@ -4,6 +4,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { withSeo } from "@/lib/seo/server";
 import {
   ArrowRight,
   BedDouble,
@@ -38,12 +39,17 @@ import { cachePublicData } from "@/lib/api/cachePolicy";
 // Seats and prices on this page can be up to a minute old; checkout (/book) always reads them live.
 export const revalidate = 60;
 
-export const metadata: Metadata = {
+// Code defaults; a published override from the SEO portal replaces only the fields it sets.
+const baseMetadata: Metadata = {
   title: "Four-Day Rockies & Jasper Private Tour | Vista Chase",
   description:
     "Four private tours: Banff, Lake Louise & Yoho, the Icefields Parkway to Jasper, then Jasper sightseeing and your return. Private van and driver-guide, 10% savings, summer only.",
   alternates: { canonical: "/four-day-rockies-and-jasper" },
 };
+
+export function generateMetadata(): Promise<Metadata> {
+  return withSeo("/four-day-rockies-and-jasper", baseMetadata);
+}
 
 const cad = (n: number) => `CAD $${n.toLocaleString("en-CA")}`;
 
@@ -102,7 +108,7 @@ export default function FourDayRockiesAndJasperPage() {
       <PackageTripJsonLd
         path="/four-day-rockies-and-jasper"
         name={PRIVATE_PACKAGES.four.title}
-        description={String(metadata.description)}
+        description={String(baseMetadata.description)}
         image="/media/photos/spirit-island.webp"
         days={PRIVATE_PACKAGES.four.days.map((d) => d.title)}
         touristType="Private Group"

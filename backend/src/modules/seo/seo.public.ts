@@ -25,6 +25,8 @@ const PUBLIC_FIELDS = {
   twitterTitle: true,
   twitterDescription: true,
   twitterImage: true,
+  metaKeywords: true,
+  twitterCard: true,
   breadcrumbLabel: true,
   featuredImage: true,
   featuredImageAlt: true,
