@@ -9,18 +9,57 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import { TourCard } from "@/components/tours/TourCard";
-import { ExperienceCard } from "@/components/home/TopExperiences";
-import { buildExperienceTabs } from "@/lib/experiences";
+import { PrivateTourCard } from "@/components/tours/PrivateTourCard";
+import { PRIVATE_OPTIONS, type PrivateTourOption } from "@/lib/privateTours";
+import { BANFF_YOHO, ICEFIELD, TWO_DAY_PACKAGE, packagePrice } from "@/lib/sharedTours";
+import { PACKAGE_NAMES } from "@/lib/tourNames";
+import { fromPrice } from "@/lib/tours";
 import type { TourWithAvailability } from "@/lib/api/types";
+
+// Every journey uses the Private Tours page card (owner, 2026-11-27). The shared Two-Day's rows come
+// from the Shared Tours page (lib/sharedTours.ts); rows it has no value for are left out.
+const SHARED_TWO_DAY: PrivateTourOption = {
+  id: "two-day-shared",
+  title: TWO_DAY_PACKAGE.title,
+  description: TWO_DAY_PACKAGE.description,
+  duration: TWO_DAY_PACKAGE.duration,
+  transport: "",
+  suggestedStay: "",
+  pickup: "Hotel pickup in Banff & Canmore",
+  group: "Small group",
+  activities: "Columbia Icefield tickets included June 1–October 10",
+  airportTransfers: "",
+  accommodation: "Not included",
+  savings: TWO_DAY_PACKAGE.saving,
+  priceFrom: 0,
+  priceUnit: "per guest",
+  // Same seasonal prices as the Two-Day card on the Shared Tours page.
+  seasonalPricing: { summer: "CAD $486/guest", winter: "CAD $396/guest" },
+  buttonLabel: TWO_DAY_PACKAGE.button,
+  buttonHref: TWO_DAY_PACKAGE.href,
+  // Peyto Lake is on both days' routes.
+  image: "/media/photos/peyto-lake.webp",
+  imageAlt: "Peyto Lake from the Icefields Parkway",
+};
+
+const PRIVATE_JOURNEYS = ["two-day-rockies-private", "three-day-rockies-discovery", "four-day-rockies-jasper"];
 
 export function MultiDayLanding({ tours }: { tours: TourWithAvailability[] }) {
   const cards = useMemo(() => {
-    const tabs = buildExperienceTabs(tours);
+    const price = (slug: string) => {
+      const tour = tours.find((t) => t.slug === slug);
+      return tour ? fromPrice(tour) : 0;
+    };
+    const shared = packagePrice(price(BANFF_YOHO.slug), price(ICEFIELD.slug)).price;
     return [
-      ...tabs.SHARED.filter((c) => c.key === "two-day-shared"),
-      ...tabs.PRIVATE.filter((c) => c.key === "two-day-rockies-private"),
-      ...tabs.MULTIDAY,
+      { option: SHARED_TWO_DAY, price: shared, name: PACKAGE_NAMES[TWO_DAY_PACKAGE.slug], badge: "Shared Tour" },
+      ...PRIVATE_OPTIONS.filter((o) => PRIVATE_JOURNEYS.includes(o.id) || o.isCustomPartner).map((o) => ({
+        option: o,
+        // Packages show the doc's per-day price (as on the Private Tours page).
+        price: o.isCustomPartner ? 0 : o.slug && price(o.slug) > 0 ? price(o.slug) : o.priceFrom,
+        name: undefined,
+        badge: undefined,
+      })),
     ];
   }, [tours]);
 
@@ -52,15 +91,10 @@ export function MultiDayLanding({ tours }: { tours: TourWithAvailability[] }) {
       </section>
 
       <div className="mx-auto max-w-7xl px-page pb-20 pt-10">
-        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
-          {cards.map((card, i) => (
-            <li key={card.key} className="min-w-0">
-              {/* The first card is the largest thing on a phone's first screen: its photo loads first. */}
-              {card.kind === "tour" ? (
-                <TourCard tour={card.tour} title={card.title} image={card.image} priority={i === 0} />
-              ) : (
-                <ExperienceCard card={card} priority={i === 0} />
-              )}
+        <ul className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {cards.map((card) => (
+            <li key={card.option.id} className="flex min-w-0">
+              <PrivateTourCard option={card.option} calculatedPrice={card.price} name={card.name} badge={card.badge} />
             </li>
           ))}
         </ul>
