@@ -315,9 +315,9 @@ When you book a private tour, the vehicle and driver-guide are reserved exclusiv
 Private touring does not mean exclusive use of attractions, trails or lake facilities. Third-party activities may be shared with other visitors. Any required change of vehicle for Moraine Lake access will be explained before booking.
 
 ### 04. How many guests can travel in each vehicle?
-Shared tours are small-group tours in a comfortable 15-passenger van, never a big coach. Our currently listed private tours accommodate up to 13 guests per vehicle, subject to the booked vehicle and luggage requirements. Lake shuttles carry up to 14 guests per departure.
+Our shared tours carry a maximum of 12 guests in a 15-passenger van. Every guest, including an infant, counts towards passenger capacity. Private tours and lake shuttles have different capacities; please check your selected product.
 
-Infants count towards passenger capacity. For larger parties, contact our team before booking so we can confirm suitable arrangements.
+Our currently listed private tours accommodate up to 13 guests per vehicle, subject to the booked vehicle and luggage requirements. Lake shuttles carry up to 14 guests per departure. For larger parties, contact our team before booking so we can confirm suitable arrangements.
 
 ### 05. Can friends with separate bookings travel in the same vehicle?
 We’ll do our best to place you together, but this cannot be guaranteed. Contact our team as early as possible with all booking references, and make sure everyone has booked the same product, date and departure. Separate bookings are not automatically grouped together.
@@ -439,14 +439,10 @@ Contact us with the places you hope to visit and your access requirements. We’
 No. Vista Chase does not supply wheelchairs, walkers or other mobility aids. Please bring your own equipment and contact us beforehand to confirm that it can be carried in the vehicle.
 
 ### 31. Do you provide child car seats or booster seats?
-For private tours, child seats and booster seats may be provided at no additional charge, subject to limited supply and confirmation from our team. They must be requested and reserved in advance.
-
-Tell us each child’s age, height and weight. A request is not confirmed until our team confirms the appropriate seat is available.
+Complimentary child seats and booster seats are available on our shared and private tours, subject to limited supply and advance confirmation. They are allocated on a first-come-first-served basis. Please provide each child’s age, height and weight when contacting us. A seat is reserved only once our team confirms availability. For lake shuttles, contact us to confirm the arrangements for your departure.
 
 ### 32. Do we need to bring our own child seats on shared tours or shuttles?
-Please contact us before booking with each child’s age, height and weight. Our complimentary child-seat provision applies to confirmed private-tour requests; do not assume a seat will be supplied on a shared tour or shuttle.
-
-Our team will confirm what is required and whether your own child seat can be used with the vehicle assigned to your service.
+For shared tours, contact us in advance to request a complimentary child seat or booster. Supply is limited, so please wait for confirmation. For shuttles, or if you plan to bring your own seat, our team must confirm suitable arrangements for the assigned vehicle before travel.
 
 ### 33. What are the child car-seat requirements?
 Children must travel using the restraint appropriate to their age and size, the vehicle and the applicable rules for the route. Please provide each child’s age, height and weight before booking so our team can confirm suitable arrangements.
@@ -456,19 +452,19 @@ If you plan to bring your own seat, it must meet Canadian safety standards, be w
 ### 34. Can you accommodate a family with several children?
 Please contact us before booking with the total number of adults and children, plus each child’s age, height and weight. We’ll check passenger capacity and any required child-seat arrangements.
 
-For private tours, complimentary seats are available only in limited numbers and must be confirmed in advance. Every child, including an infant, counts towards vehicle capacity.
+Complimentary seats are available only in limited numbers and must be confirmed in advance. Every child, including an infant, counts towards vehicle capacity.
 
 ## Category 5 — Food, Pets & Special Requests
 
-### 35. Can I bring my own lunch or snacks? Can we eat in the vehicle?
-Yes. You may bring snacks and a packed lunch to enjoy during sightseeing or meal stops. Eating inside the vehicle is not permitted. We provide drinking water.
+### 35. Can I bring lunch or snacks, and eat inside the vehicle?
+Yes. You may bring snacks and a packed lunch to enjoy during stops. Eating inside the vehicle is normally not permitted.
 
-Keep your food within your permitted bag allowance. Do not assume there is room for a separate cooler; contact our team before bringing bulky items.
+An exception applies to the winter Columbia Icefield Adventure, from October 11 to May 31: guests may eat inside the vehicle because there is no scheduled restaurant lunch stop. Drinking water is provided.
 
 ### 36. Are vegetarian, vegan or gluten-free meals available?
-Meals are not included in our tours. You can purchase food during the scheduled meal stop or bring a suitable packed lunch.
+Meals are not included. Where your itinerary includes a food-purchase stop, available options depend on the provider. You are welcome to bring a suitable packed lunch.
 
-Restaurant menus and dietary options vary. Check directly with the food provider about ingredients, allergies and cross-contact; Vista Chase cannot guarantee that a particular option will be available.
+For the winter Columbia Icefield Adventure, bring lunch or request a quick morning food stop in Lake Louise Village. Contact food providers directly about ingredients, allergies and cross-contact; we cannot guarantee specific dietary options.
 
 ### 37. Can I bring alcohol, cannabis or recreational drugs?
 No. Alcohol, cannabis and other recreational drugs are not permitted in our vehicles, even where their possession may otherwise be legal. Intoxicated guests are not permitted to board.
@@ -508,13 +504,23 @@ Use your confirmation’s booking-management link where cancellation is availabl
 Approved refunds are normally initiated within 5–10 business days. Your bank may take additional time to show the credit.
 
 ### 48. Can I reschedule, including because of a flight delay?
-Contact us promptly. Changes depend on availability and any price difference. A flight delay does not automatically waive cancellation terms or guarantee a replacement departure.
+For shared tours, date changes requested at least 24 hours before departure are free, subject to availability. Contact us with your booking reference and preferred date.
+
+Requests within 24 hours require individual review and are not guaranteed. A flight delay does not automatically waive cancellation terms. Private tours and shuttles follow their applicable booking terms. Reservations made through a travel platform must be changed through that provider.
 
 ### 48a. How can I request a change to my booking date? (website FAQ, 2026-11-14)
-Open the Manage booking link in the confirmation email (or My Trips → View voucher), choose Change date or time, pick the new date and send the request. The team checks seats and any price difference and confirms by email, usually within one business day; the booking stays as it is until then. Guests can also email support@vistachase.com or call +1 (825) 734-9456 with their reference. Platform (e.g. Viator) bookings are changed through that platform.
+Open the Manage booking link in the confirmation email (or My Trips → View voucher), choose Change date or time, pick the new date and send the request. For shared tours, a change requested at least 24 hours before departure is free, subject to availability; requests within 24 hours are reviewed individually and not guaranteed; private tours and shuttles follow their applicable booking terms. The team checks seats and confirms by email, usually within one business day; the booking stays as it is until then. Guests can also email support@vistachase.com or call +1 (825) 734-9456 with their reference. Platform (e.g. Viator) bookings are changed through that platform.
 
 ### 48b. What payment methods do you accept? (website FAQ, 2026-11-14)
 Paid online at booking through the secure Stripe checkout, in Canadian dollars: credit or debit card, or any other method the payment form offers on the guest's device (such as Apple Pay or Google Pay). No cash or pay-the-driver for tours; guide gratuities can be paid by credit card.
+
+### Is there a minimum number of passengers for shared tours?
+Yes. Our shared tours require at least four passengers. If the minimum has not been reached one week before departure, we will contact you to offer alternative dates or arrangements. If none works for you, we will provide a full refund.
+
+We work to keep availability updated and rarely cancel bookings made within seven days of departure because of minimum numbers, although departure is not guaranteed.
+
+### Are there coupons or discounts?
+Our two-day combined shared-tour product includes Banff & Yoho Discovery and Columbia Icefield Adventure with 10% savings. Select the combined product when booking to receive this offer. No additional coupons or discounts are currently available.
 
 ## Category 7 — Weather, Wildlife & Lake Access
 
