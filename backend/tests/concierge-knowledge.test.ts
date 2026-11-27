@@ -2,6 +2,7 @@
 // prices and times come from the live departures, recommendations fit the guest's date, party and
 // style, and the concierge asks before it recommends.
 
+import { baseTourName } from "@site/tourNames";
 import { describe, it, expect, beforeAll } from "vitest";
 import prisma from "@/lib/db/prisma";
 import { WEBSITE_CATALOG } from "@/lib/ai/knowledge/website-catalog";
@@ -40,7 +41,7 @@ describe("product knowledgebase", () => {
     const slugs = new Set(listed.map((t) => t.slug));
     for (const p of WEBSITE_CATALOG.filter((p) => p.bookIn === "chat")) {
       expect(slugs.has(p.slug), `${p.slug} is on sale`).toBe(true);
-      if (WEBSITE_NAMES[p.slug]) expect(p.name.replace(/ – /, " — ")).toContain(WEBSITE_NAMES[p.slug].split(" (")[0].replace(/ – /, " — ").split(" — ")[0]);
+      if (WEBSITE_NAMES[p.slug]) expect(p.name.toUpperCase()).toContain(baseTourName(WEBSITE_NAMES[p.slug]).toUpperCase());
     }
     for (const p of WEBSITE_CATALOG) {
       expect(p.page.startsWith("/")).toBe(true);

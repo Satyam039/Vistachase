@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { tourPagePath } from "@/lib/retiredTours";
 import { portalFor } from "@/lib/portals";
+import { tourDisplayName } from "@/lib/tourNames";
 
 interface TripBooking {
   id: string;
@@ -392,7 +393,7 @@ export default function MyTripsPage() {
 
   // One booking card. Days of a multi-day trip are drawn the same way, under their trip's header.
   const renderBooking = (b: TripBooking) => {
-                const title = b.tourDeparture.tour?.title || b.tourDeparture.shuttleRoute?.name || "Vista Chase tour";
+                const title = (b.tourDeparture.tour?.title ? tourDisplayName(b.tourDeparture.tour) : "") || b.tourDeparture.shuttleRoute?.name || "Vista Chase tour";
                 const image = b.tourDeparture.tour?.featuredImage || b.tourDeparture.tour?.image || "/media/photos/moraine-lake-perfect-reflection.webp";
                 const date = new Date(`${b.tourDeparture.date}T00:00:00`);
                 const valid = !Number.isNaN(date.getTime());
@@ -825,7 +826,7 @@ export default function MyTripsPage() {
               </h2>
               <p className="text-base text-slate-700">
                 <span className="font-mono">{cancellingBooking.bookingReference}</span> ·{" "}
-                {cancellingBooking.tourDeparture.tour?.title || "Vista Chase tour"} on {cancellingBooking.tourDeparture.date}
+                {tourDisplayName(cancellingBooking.tourDeparture.tour)} on {cancellingBooking.tourDeparture.date}
               </p>
               {cancelPolicy && !cancelPolicy.open && (
                 <p className="rounded-2xl bg-summit-100 p-4 text-sm text-obsidian-900">
@@ -909,7 +910,7 @@ export default function MyTripsPage() {
                   <h2 id="review-title" className="text-2xl font-light text-obsidian-900">
                     How was your day?
                   </h2>
-                  <p className="mt-1 text-sm text-slate-600">{reviewModalBooking.tourDeparture.tour?.title}</p>
+                  <p className="mt-1 text-sm text-slate-600">{reviewModalBooking.tourDeparture.tour?.title ? tourDisplayName(reviewModalBooking.tourDeparture.tour) : null}</p>
                 </div>
                 <button
                   type="button"

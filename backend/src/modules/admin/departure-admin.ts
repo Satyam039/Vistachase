@@ -3,6 +3,7 @@
 // its row, so the deploy's schedule seed (scripts/seed-departures.ts, insert-missing only) doesn't
 // add it back. Price changes apply to new bookings only; existing bookings keep their priceSnapshot.
 
+import { tourDisplayName } from "@site/tourNames";
 import type { DepartureStatus } from "@prisma/client";
 import prisma from "@/lib/db/prisma";
 import { ON_SALE } from "@/modules/tours/product-map";
@@ -43,7 +44,7 @@ export async function listDepartures(filter: { tourSlug?: string; routeSlug?: st
       date: formatDateOnly(d.date),
       departureTime: formatTimeOfDay(d.departureTime),
       returnTime: formatTimeOfDay(d.returnTime),
-      experience: d.tour?.title ?? d.shuttleRoute?.name ?? "Departure",
+      experience: d.tour ? tourDisplayName(d.tour) : (d.shuttleRoute?.name ?? "Departure"),
       tourSlug: d.tour?.slug ?? null,
       routeSlug: d.shuttleRoute?.slug ?? null,
       category: d.tour?.category ?? "SHUTTLE",

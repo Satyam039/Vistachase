@@ -1,3 +1,4 @@
+import { tourDisplayName } from "@site/tourNames";
 import prisma from "@/lib/db/prisma";
 import { dateOnly, formatDateOnly, formatTimeOfDay } from "@/lib/utils/time";
 import { resolveShuttlePickupTime } from "@/modules/shuttles/shuttle-timing";
@@ -104,7 +105,7 @@ export async function getDispatchManifest(date: string) {
       departureId: dep.id,
       date: formatDateOnly(dep.date),
       departureTime: formatTimeOfDay(dep.departureTime),
-      title: dep.tour?.title || dep.shuttleRoute?.name || "Rockies Shuttle Service",
+      title: (dep.tour ? tourDisplayName(dep.tour) : "") || dep.shuttleRoute?.name || "Rockies Shuttle Service",
       capacityTotal: dep.capacityTotal,
       capacityBooked: dep.capacityBooked,
       totalPassengers,
@@ -201,7 +202,7 @@ export async function getDepartureManifest(departureId: string) {
   const dep = await prisma.tourDeparture.findUnique({
     where: { id: departureId },
     include: {
-      tour: { select: { title: true, category: true } },
+      tour: { select: { slug: true, title: true, category: true } },
       shuttleRoute: { select: { name: true } },
       bookings: {
         where: { status: { in: ["CONFIRMED", "PAID_UNSYNCED", "COMPLETED"] } },
@@ -244,7 +245,7 @@ export async function getDepartureManifest(departureId: string) {
 
   return {
     departureId: dep.id,
-    experience: dep.tour?.title ?? dep.shuttleRoute?.name ?? "Departure",
+    experience: dep.tour ? tourDisplayName(dep.tour) : (dep.shuttleRoute?.name ?? "Departure"),
     date: formatDateOnly(dep.date),
     departureTime,
     returnTime: formatTimeOfDay(dep.returnTime),

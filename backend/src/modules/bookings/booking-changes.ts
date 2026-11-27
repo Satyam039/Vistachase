@@ -720,7 +720,7 @@ export async function listChangeRequests() {
           adultsCount: true, childrenCount: true, infantsCount: true, totalAmount: true, currency: true, paymentPlan: true, createdAt: true,
           paymentExpiresAt: true, priceSnapshot: true,
           payments: { select: { amount: true, status: true } },
-          tourDeparture: { select: { id: true, date: true, departureTime: true, tour: { select: { title: true, category: true } }, shuttleRoute: { select: { name: true } } } },
+          tourDeparture: { select: { id: true, date: true, departureTime: true, tour: { select: { slug: true, title: true, category: true } }, shuttleRoute: { select: { name: true } } } },
         },
       },
     },

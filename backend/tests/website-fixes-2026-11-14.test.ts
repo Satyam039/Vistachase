@@ -55,7 +55,7 @@ const guest = (email: string, departureId: string, extra: Record<string, unknown
 
 describe("booking itinerary = the website's itinerary for exactly what was booked", () => {
   it("reads the website's own files, which stay import-free so the backend can compile them", () => {
-    for (const file of ["itineraries.ts", "shuttleSchedule.ts"]) {
+    for (const file of ["itineraries.ts", "shuttleSchedule.ts", "tourNames.ts"]) {
       const src = fs.readFileSync(path.resolve(__dirname, "../../frontend/src/lib", file), "utf8");
       expect(src).not.toMatch(/^\s*import\s/m);
     }
@@ -77,7 +77,7 @@ describe("booking itinerary = the website's itinerary for exactly what was booke
     expect(sources[0].stops.map((s) => s.name)).toContain("Emerald Lake");
     // Private Icefield: the activities are optional add-ons, as on its page.
     expect(sources[3].stops.some((s) => s.name === "Ice Explorer + Skywalk — optional combined experience")).toBe(true);
-    expect(experienceTitle({ tour: { slug: "shared-tours-icefields-jasper", title: "Old Webflow name" } })).toBe("Columbia Icefield Adventure (Shared Tour)");
+    expect(experienceTitle({ tour: { slug: "shared-tours-icefields-jasper", title: "Old Webflow name" } })).toBe("SHARED - COLUMBIA ICEFIELD ADVENTURE");
   });
 
   it("leaves out summer-only stops in winter, and flags the winter Icefield route the team confirms", () => {

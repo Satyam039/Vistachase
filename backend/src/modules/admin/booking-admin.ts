@@ -202,7 +202,7 @@ export async function listFlags(filter: { status?: "OPEN" | "RESOLVED"; type?: B
       booking: {
         select: {
           id: true, bookingReference: true, status: true, customerName: true, customerEmail: true, totalAmount: true, currency: true,
-          tourDeparture: { select: { date: true, departureTime: true, tour: { select: { title: true } }, shuttleRoute: { select: { name: true } } } },
+          tourDeparture: { select: { date: true, departureTime: true, tour: { select: { slug: true, title: true, category: true } }, shuttleRoute: { select: { name: true } } } },
         },
       },
     },
@@ -215,7 +215,7 @@ export async function listFlags(filter: { status?: "OPEN" | "RESOLVED"; type?: B
       booking: {
         ...f.booking,
         totalAmount: f.booking.totalAmount / 100,
-        experience: f.booking.tourDeparture.tour?.title ?? f.booking.tourDeparture.shuttleRoute?.name ?? null,
+        experience: f.booking.tourDeparture.tour ? experienceTitle(f.booking.tourDeparture) : (f.booking.tourDeparture.shuttleRoute?.name ?? null),
         date: formatDateOnly(f.booking.tourDeparture.date),
         departureTime: formatTimeOfDay(f.booking.tourDeparture.departureTime),
       },

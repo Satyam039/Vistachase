@@ -54,6 +54,7 @@ import {
   type HistoryRow,
 } from "@/components/admin/staff/BookingDetail";
 import { ApproveBookingForm } from "@/components/admin/staff/RequestsPanel";
+import { tourDisplayName } from "@/lib/tourNames";
 
 interface Overview {
   id: string;
@@ -224,7 +225,7 @@ export function ManageBooking({ id, role, staffName }: { id: string; role: strin
   const live = LIVE.includes(booking.status);
   const date = booking.tourDeparture ? booking.tourDeparture.date.slice(0, 10) : "";
   const time = overview?.departure.time ?? "";
-  const tourTitle = overview?.tour.title ?? booking.tourDeparture?.tour?.title ?? booking.tourDeparture?.shuttleRoute?.name ?? "Booking";
+  const tourTitle = overview?.tour.title ?? (booking.tourDeparture?.tour?.title ? tourDisplayName(booking.tourDeparture.tour) : undefined) ?? booking.tourDeparture?.shuttleRoute?.name ?? "Booking";
   const statusChip = (
     <Chip className={BOOKING_STATUS_STYLE[booking.status] ?? "bg-obsidian-100 text-slate-700"}>{words(booking.status)}</Chip>
   );

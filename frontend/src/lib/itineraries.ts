@@ -37,7 +37,7 @@ export interface ItineraryStop {
 }
 
 export interface TourItinerary {
-  /** The tour's website name, with its kind ("Shared Tour" / "Private Tour"). */
+  /** The tour's website name, type first ("SHARED - BANFF & YOHO DISCOVERY"); same as lib/tourNames.ts DAY_TOUR_NAMES (a test checks). */
   title: string;
   /** How long the day lasts, as the tour page says it. */
   duration: string;
@@ -147,7 +147,7 @@ const PRIVATE_BANFF_YOHO_WINTER_STOPS: ItineraryStop[] = [
 
 export const TOUR_ITINERARIES: Record<string, TourItinerary> = {
   "banff-highlights-tour": {
-    title: "Banff & Yoho Discovery (Shared Tour)",
+    title: "SHARED - BANFF & YOHO DISCOVERY",
     duration: "10–11 hours",
     // Owner (2026-11-21): show the 60-minute lunch stop in Lake Louise Village after the two lakes.
     stops: [
@@ -172,7 +172,7 @@ export const TOUR_ITINERARIES: Record<string, TourItinerary> = {
     ],
   },
   "shared-tours-icefields-jasper": {
-    title: "Columbia Icefield Adventure (Shared Tour)",
+    title: "SHARED - COLUMBIA ICEFIELD ADVENTURE",
     duration: "9–11 hours (up to 12 hours on the waterfall replacement itinerary)",
     stops: ICEFIELD_SUMMER_STOPS,
     steps: [
@@ -210,7 +210,7 @@ export const TOUR_ITINERARIES: Record<string, TourItinerary> = {
     },
   },
   "banff-private-tour": {
-    title: "Private Banff & Yoho Discovery",
+    title: "PRIVATE - BANFF & YOHO DISCOVERY",
     duration: "Approximately 10–12 hours",
     stops: PRIVATE_BANFF_YOHO_STOPS,
     steps: [
@@ -256,7 +256,7 @@ export const TOUR_ITINERARIES: Record<string, TourItinerary> = {
   // one combined optional experience (about 2½ hours, invoiced separately), a separate Icefield
   // Centre lunch break, and a winter itinerary with Abraham Lake. Page copy: lib/tourContent.ts.
   "icefields-jasper-private-tour": {
-    title: "Private Columbia Icefield Adventure (Private Tour)",
+    title: "PRIVATE - COLUMBIA ICEFIELD ADVENTURE",
     duration: "Approximately 10–12 hours, pickup to drop-off",
     stops: [
       ...ICEFIELD_STOPS.slice(0, 4),

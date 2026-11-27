@@ -5,6 +5,7 @@
 //   → other ways to explore → closing call to action with phone and email.
 // Copy lives in lib/sharedTours.ts; prices come from each tour's live departures.
 
+import { DAY_TOUR_NAMES, PACKAGE_NAMES } from "@/lib/tourNames";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -424,7 +425,7 @@ function DayCard({ tour, price, award = false }: { tour: DayTour; price: number;
       </div>
       <div className={CARD_PANEL}>
         <p className={CARD_EYEBROW}>{tour.label}</p>
-        <h3 className="text-lg font-normal uppercase leading-snug tracking-[0.14em] text-white">{tour.title}</h3>
+        <h3 className="text-lg font-normal uppercase leading-snug tracking-[0.14em] text-white">{DAY_TOUR_NAMES[tour.slug] ?? tour.title}</h3>
         <p className="mt-1 text-xs text-summit-300 tracking-wide font-light">{tour.highlight}</p>
         <p className="mt-2 text-sm leading-relaxed text-white/75">{tour.description}</p>
         <Facts duration={tour.duration} />
@@ -464,7 +465,7 @@ function PackageCard({ price, separate }: { price: number; separate: number }) {
       </div>
       <div className={CARD_PANEL}>
         <p className={CARD_EYEBROW}>{TWO_DAY_PACKAGE.label}</p>
-        <h3 className="text-lg font-normal uppercase leading-snug tracking-[0.14em] text-white">{TWO_DAY_PACKAGE.title}</h3>
+        <h3 className="text-lg font-normal uppercase leading-snug tracking-[0.14em] text-white">{PACKAGE_NAMES[TWO_DAY_PACKAGE.slug]}</h3>
         <p className="mt-1 text-xs text-summit-300 tracking-wide font-light">{TWO_DAY_PACKAGE.highlight}</p>
         <p className="mt-2 text-sm leading-relaxed text-white/75">{TWO_DAY_PACKAGE.description}</p>
         <Facts duration={TWO_DAY_PACKAGE.duration} />

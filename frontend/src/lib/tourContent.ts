@@ -22,6 +22,7 @@ import { cancellationSentence } from "@/lib/policy";
 import { activityTicket } from "@/lib/activityTickets";
 import { SHUTTLE_CAPACITY } from "@/lib/shuttleSchedule";
 import { ICEFIELD_PAGE_TERMS, TOUR_ITINERARIES } from "@/lib/itineraries";
+import { DAY_TOUR_NAMES, tourDisplayName } from "@/lib/tourNames";
 
 interface DocContent {
   title: string;
@@ -656,7 +657,7 @@ function withPolicyFaq(tour: TourWithAvailability): TourWithAvailability {
 /** The website's title and summary for a doc tour (the database still has old Webflow copy), else null. */
 export function docTitleAndSummary(slug: string): { title: string; summary: string } | null {
   const c = CONTENT[slug];
-  return c ? { title: c.title, summary: c.summary } : null;
+  return c ? { title: DAY_TOUR_NAMES[slug] ?? c.title, summary: c.summary } : null;
 }
 
 /** Booking-panel extras the owner's doc sets for a tour page: seasonal prices, the two-day offer. */
@@ -842,7 +843,17 @@ function withShuttleCapacity(tour: TourWithAvailability): TourWithAvailability {
   return { ...tour, ...(fixed === text ? {} : JSON.parse(fixed)), maxGroupSize: SHUTTLE_CAPACITY };
 }
 
+/**
+ * The tour as the website shows it: the owner's doc copy, then the name with its type in front
+ * ("SHARED - COLUMBIA ICEFIELD ADVENTURE", lib/tourNames.ts) on cards, the tour page, checkout and
+ * everywhere else the catalog title is shown. Slugs, Bókun IDs and database titles don't change.
+ */
 export function withDocContent(tour: TourWithAvailability): TourWithAvailability {
+  const t = withDocCopy(tour);
+  return { ...t, title: tourDisplayName(t) };
+}
+
+function withDocCopy(tour: TourWithAvailability): TourWithAvailability {
   tour = withShuttleCapacity(withCorrections(tour));
   if (tour.category === "SHARED") {
     tour = {

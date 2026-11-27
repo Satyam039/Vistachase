@@ -9,6 +9,7 @@ import { getCheckoutData, getTourBySlug } from "@/lib/api/catalog";
 import { PackageCheckout, type PackageDay } from "@/components/booking/PackageCheckout";
 import { packageDayIncludes } from "@/lib/packageIncludes";
 import { TWO_DAY_PACKAGE } from "@/lib/sharedTours";
+import { PACKAGE_NAMES } from "@/lib/tourNames";
 
 export const metadata: Metadata = {
   // Checkout pages have no search value of their own.
@@ -53,7 +54,7 @@ export default async function TwoDayBookPage() {
             <li aria-current="page" className="text-obsidian-900">Book</li>
           </ol>
         </nav>
-        <h1 className="text-balance text-3xl font-light tracking-tight text-obsidian-900 sm:text-5xl">Book the {TWO_DAY_PACKAGE.title}</h1>
+        <h1 className="text-balance text-3xl font-light tracking-tight text-obsidian-900 sm:text-5xl">Book {PACKAGE_NAMES[TWO_DAY_PACKAGE.slug]}</h1>
         <p className="mt-2.5 max-w-2xl text-base text-slate-600 sm:text-lg">Both small-group tours, one booking, {Math.round(TWO_DAY_PACKAGE.discount * 100)}% off. Choose a date for each tour and pay once.</p>
         <div className="mt-6 sm:mt-8">
           <PackageCheckout packageSlug={TWO_DAY_PACKAGE.slug} title={TWO_DAY_PACKAGE.title} discountPercent={Math.round(TWO_DAY_PACKAGE.discount * 100)} days={days} stops={stops} wholePage />

@@ -28,6 +28,7 @@ import {
   Workflow,
   XCircle,
 } from "lucide-react";
+import { tourDisplayName } from "@/lib/tourNames";
 
 interface AdminMetrics {
   totalBookings: number;
@@ -188,7 +189,7 @@ export default function AdminDashboardPage() {
     const q = query.trim().toLowerCase();
     if (!q) return list;
     return list.filter((b) =>
-      [b.bookingReference, b.customerName, b.customerEmail, b.tourDeparture?.tour?.title, b.tourDeparture?.shuttleRoute?.name]
+      [b.bookingReference, b.customerName, b.customerEmail, b.tourDeparture?.tour?.title, b.tourDeparture?.tour?.title ? tourDisplayName(b.tourDeparture.tour) : undefined, b.tourDeparture?.shuttleRoute?.name]
         .filter(Boolean)
         .some((v) => String(v).toLowerCase().includes(q)),
     );
@@ -317,7 +318,7 @@ export default function AdminDashboardPage() {
                           <span className="block text-xs text-slate-600">{b.customerEmail}</span>
                         </td>
                         <td className="w-[13rem] min-w-[11rem] px-5 py-4 text-obsidian-900">
-                          <span className="line-clamp-2">{b.tourDeparture?.tour?.title || b.tourDeparture?.shuttleRoute?.name || "Tour"}</span>
+                          <span className="line-clamp-2">{(b.tourDeparture?.tour?.title ? tourDisplayName(b.tourDeparture.tour) : "") || b.tourDeparture?.shuttleRoute?.name || "Tour"}</span>
                         </td>
                         <td className="whitespace-nowrap px-5 py-4">
                           <span className="block text-obsidian-900">{b.tourDeparture?.date}</span>

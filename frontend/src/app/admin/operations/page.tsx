@@ -9,6 +9,7 @@ import Link from "next/link";
 import { CheckCircle2, Circle, Compass, ExternalLink, MapPin, Navigation, Phone, RefreshCw, Sliders, X } from "lucide-react";
 import { Dropdown } from "@/components/forms/Dropdown";
 import { AdminHeader, StaffSignIn } from "@/components/admin/AdminHeader";
+import { tourDisplayName } from "@/lib/tourNames";
 
 interface FleetVehicle {
   id: string;
@@ -279,7 +280,7 @@ export default function OperationsPage() {
                               <span className="font-mono text-sm text-slate-600">{run.departureTime || dep.departureTime}</span>
                             </td>
                             <td className="w-[16rem] min-w-[14rem] px-6 py-4">
-                              <span className="line-clamp-2 text-sm text-obsidian-900">{dep.tour?.title ?? dep.shuttleRoute?.name ?? "—"}</span>
+                              <span className="line-clamp-2 text-sm text-obsidian-900">{(dep.tour?.title ? tourDisplayName(dep.tour) : undefined) ?? dep.shuttleRoute?.name ?? "—"}</span>
                             </td>
                             <td className="px-6 py-4">
                               <span className="tabular-nums text-obsidian-900">
@@ -373,7 +374,7 @@ export default function OperationsPage() {
                   {selected.run.name}
                 </h2>
                 <p className="mt-1 text-sm text-slate-600">
-                  {selected.dep.tour?.title ?? selected.dep.shuttleRoute?.name} · {selected.run.vehicle ? `${selected.run.vehicle.name} (${selected.run.vehicle.licensePlate})` : "No vehicle"} ·{" "}
+                  {(selected.dep.tour?.title ? tourDisplayName(selected.dep.tour) : undefined) ?? selected.dep.shuttleRoute?.name} · {selected.run.vehicle ? `${selected.run.vehicle.name} (${selected.run.vehicle.licensePlate})` : "No vehicle"} ·{" "}
                   {selected.run.driver?.name ?? "No driver"}
                 </p>
               </div>

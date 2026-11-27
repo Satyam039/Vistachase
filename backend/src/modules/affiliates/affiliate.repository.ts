@@ -1,3 +1,4 @@
+import { tourDisplayName } from "@site/tourNames";
 import crypto from "node:crypto";
 import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/db/prisma";
@@ -114,7 +115,7 @@ async function commissionByBooking(affiliateId: string, bookingIds: string[]) {
 }
 
 const bookingInclude = {
-  tourDeparture: { include: { tour: { select: { title: true, slug: true } }, shuttleRoute: { select: { name: true } } } },
+  tourDeparture: { include: { tour: { select: { title: true, slug: true, category: true } }, shuttleRoute: { select: { name: true } } } },
 } as const;
 
 type PartnerBooking = Prisma.BookingGetPayload<{ include: typeof bookingInclude }>;
@@ -123,7 +124,7 @@ type PartnerBooking = Prisma.BookingGetPayload<{ include: typeof bookingInclude 
 function partnerBookingDto(b: PartnerBooking, commissionCents: number) {
   return {
     reference: b.bookingReference,
-    experience: b.tourDeparture.tour?.title ?? b.tourDeparture.shuttleRoute?.name ?? "Experience",
+    experience: b.tourDeparture.tour ? tourDisplayName(b.tourDeparture.tour) : (b.tourDeparture.shuttleRoute?.name ?? "Experience"),
     slug: b.tourDeparture.tour?.slug ?? null,
     date: b.tourDeparture.date,
     guests: b.totalSeats,
@@ -239,7 +240,7 @@ function ledgerDto(l: Prisma.CommissionLedgerGetPayload<{ include: { booking: { 
     rule: l.ruleSnapshot,
     reason: l.reason,
     bookingReference: l.booking?.bookingReference ?? null,
-    experience: l.booking ? l.booking.tourDeparture.tour?.title ?? l.booking.tourDeparture.shuttleRoute?.name ?? "Experience" : null,
+    experience: l.booking ? (l.booking.tourDeparture.tour ? tourDisplayName(l.booking.tourDeparture.tour) : (l.booking.tourDeparture.shuttleRoute?.name ?? "Experience")) : null,
     tourDate: l.booking?.tourDeparture.date ?? null,
     payoutId: l.payoutId,
     createdAt: l.createdAt,

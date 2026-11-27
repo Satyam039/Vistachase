@@ -32,6 +32,7 @@ import { BALANCE_DUE_DAYS, DEPOSIT_MIN_DAYS, DEPOSIT_PERCENT } from "@/lib/polic
 import { JsonLd } from "@/components/seo/JsonLd";
 import { FOUR_DAY_CANCELLATION, FOUR_DAY_FAQS, FOUR_DAY_INTRO, FOUR_DAY_LUGGAGE, FOUR_DAY_PRICE, FOUR_DAY_PRICING } from "@/lib/fourDayContent";
 import { cachePublicData } from "@/lib/api/cachePolicy";
+import { PACKAGE_NAMES } from "@/lib/tourNames";
 
 // Rendered once and served from cache, refreshed in the background at most every minute, instead of
 // on every request (fix recheck, 10 Nov 2026, N2/R2: 2.7-10 s responses and 5xx under a crawl).
@@ -169,7 +170,7 @@ export default function FourDayRockiesAndJasperPage() {
             </span>
 
             <h1 className="text-balance text-[clamp(2.25rem,8vw,4.5rem)] font-light leading-[1.05] tracking-tight text-white motion-safe:animate-[fadeUp_900ms_ease-out]">
-              Four-Day Rockies &amp; Jasper
+              {PACKAGE_NAMES["four-day-rockies-and-jasper"]}
             </h1>
             <p className="mt-3 text-base sm:text-xl font-light text-summit-200 tracking-wide">
               Private Banff, Yoho, Columbia Icefield &amp; Jasper Tour

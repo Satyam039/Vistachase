@@ -21,6 +21,7 @@ import {
   money,
   words,
 } from "@/components/admin/staff/shared";
+import { tourDisplayName } from "@/lib/tourNames";
 
 export interface BookingRow {
   id: string;
@@ -61,7 +62,7 @@ const STATUSES = [
 ];
 
 export const experienceOf = (b: Pick<BookingRow, "tourDeparture">) =>
-  b.tourDeparture?.tour?.title ?? b.tourDeparture?.shuttleRoute?.name ?? "–";
+  (b.tourDeparture?.tour?.title ? tourDisplayName(b.tourDeparture.tour) : undefined) ?? b.tourDeparture?.shuttleRoute?.name ?? "–";
 /** "YYYY-MM-DD" from a date string or an ISO timestamp. */
 export const dayOnly = (d: string) => String(d).slice(0, 10);
 /** "HH:MM" from a clock string or a time-of-day stored as an ISO timestamp. */

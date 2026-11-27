@@ -21,6 +21,7 @@
 
 import { PACKAGE_ITINERARIES, TOUR_ITINERARIES, inSummerSeason } from "@site/itineraries";
 import { SHUTTLE_DEPARTURES, SHUTTLE_PICKUPS, SHUTTLE_PRODUCT_NAME, clockRange, departuresFor, clock as shuttleClock } from "@site/shuttleSchedule";
+import { tourDisplayName } from "@site/tourNames";
 import { formatDateOnly, formatTimeOfDay } from "@/lib/utils/time";
 
 export interface ItineraryStep {
@@ -63,12 +64,12 @@ export const MISSING_ITINERARY_NOTE =
 /**
  * The names these tours carry on the website, where the database title is an older Webflow name
  * ("Our Best Selling Banff Shared Tour"). Shared and private share a page name, so emails say which
- * one was booked. The day tours' names come from lib/itineraries.ts.
+ * one was booked: the name starts with its type ("SHARED - BANFF & YOHO DISCOVERY", @site/tourNames). The day tours' names come from lib/itineraries.ts.
  */
 export const WEBSITE_TITLES: Record<string, string> = {
   ...Object.fromEntries(Object.entries(TOUR_ITINERARIES).map(([slug, t]) => [slug, t.title])),
-  "winter-special": "Winter Special Shared Tour",
-  "winter-signature-private-tour": "Special Winter Private Tour",
+  "winter-special": tourDisplayName({ title: "Winter Special", category: "SHARED" }),
+  "winter-signature-private-tour": tourDisplayName({ title: "Special Winter", category: "PRIVATE" }),
   "sunrise-shuttle-to-moraine-lake-and-lake-louise": SHUTTLE_PRODUCT_NAME,
   "full-day-at-lake-louise-and-moraine-lake": SHUTTLE_PRODUCT_NAME,
 };
@@ -79,7 +80,8 @@ export function experienceTitle(departure: { tour?: { slug: string; title: strin
   if (departure.shuttleRoute || tour?.category === "SHUTTLE" || tour?.slug?.includes("shuttle")) {
     return SHUTTLE_PRODUCT_NAME;
   }
-  return (tour && WEBSITE_TITLES[tour.slug]) || tour?.title || "Vista Chase experience";
+  // Any other shared or private tour still gets its type in front ("SHARED - …", lib/tourNames.ts).
+  return (tour && WEBSITE_TITLES[tour.slug]) || tourDisplayName(tour, "Vista Chase experience");
 }
 
 export interface ItineraryBooking {

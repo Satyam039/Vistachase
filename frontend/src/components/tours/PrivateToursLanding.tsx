@@ -12,6 +12,7 @@
 // - "Other Ways to Explore"
 // - Closing call to action with verified contact details
 
+import { privateOptionName } from "@/lib/tourNames";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -386,7 +387,7 @@ function PrivateTourCard({
       {/* Card Details Panel */}
       <div className="flex flex-1 flex-col p-6">
         <h3 className="text-xl font-normal tracking-wide text-white group-hover:text-summit-200 transition-colors">
-          {option.title}
+          {privateOptionName(option)}
         </h3>
         <p className="mt-2 text-sm leading-relaxed text-white/75">{option.description}</p>
 
