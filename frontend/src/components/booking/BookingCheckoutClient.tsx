@@ -690,9 +690,16 @@ export function BookingCheckoutClient({
       ? round2(Math.min(appliedPromo.amountOff, fareSubtotal))
       : round2(fareSubtotal * (appliedPromo.percent / 100));
   const promoTag = appliedPromo ? (appliedPromo.amountOff > 0 ? `−${money(appliedPromo.amountOff)}` : `−${appliedPromo.percent}%`) : "";
-  // Airport transfer (private tours): the doc's both-ways price, added after any promo discount.
+  // Airport transfer (private tours): the doc's both-ways price. The promo code comes off it too
+  // (owner, 2026-11-27), as the server does: a percent code the same percent, a fixed amount what's left.
   const transferPrice = airport ? airportTransferPrice(airportTransfer, adults + children + infants, transferPrices) : null;
-  const total = round2(fareSubtotal - discount + (transferPrice ?? 0));
+  const transferDiscount =
+    !appliedPromo || transferPrice == null
+      ? 0
+      : appliedPromo.amountOff > 0
+        ? round2(Math.max(0, Math.min(appliedPromo.amountOff - discount, transferPrice)))
+        : round2(transferPrice * (appliedPromo.percent / 100));
+  const total = round2(fareSubtotal - discount + (transferPrice ?? 0) - transferDiscount);
   const canDeposit = total > 0 && depositAvailable(departure.date, departure.departureTime);
   const plan = canDeposit ? paymentPlan : "FULL";
   const depositNow = depositFor(total);
@@ -1121,6 +1128,9 @@ export function BookingCheckoutClient({
           <SummaryRow label={`Promo ${appliedPromo.code} (${promoTag})`} value={`−${money(discount)}`} />
         )}
         {transferPrice != null && <SummaryRow label="Airport transfer" value={money(transferPrice)} />}
+        {appliedPromo && transferDiscount > 0 && (
+          <SummaryRow label={`Promo ${appliedPromo.code} · airport transfer`} value={`−${money(transferDiscount)}`} />
+        )}
         <Divider />
         <HStack hAlign="between" vAlign="center">
           <Text type="large" weight="bold">
@@ -1773,7 +1783,7 @@ export function BookingCheckoutClient({
                                   <span role="status">
                                     <span aria-hidden="true">✓ </span>
                                     {appliedPromo.message}
-                                    {discount > 0 ? ` You save ${money(discount)}.` : ""}
+                                    {discount + transferDiscount > 0 ? ` You save ${money(round2(discount + transferDiscount))}.` : ""}
                                   </span>
                                   <button type="button" onClick={() => setAppliedPromo(null)} className="shrink-0 underline hover:text-ocean-900">
                                     Remove <span className="sr-only">promo code {appliedPromo.code}</span>

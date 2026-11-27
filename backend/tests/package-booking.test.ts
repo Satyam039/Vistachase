@@ -423,6 +423,54 @@ describe("private multi-day journeys", () => {
     expect(amount.totalAmount).toBe(1575 * 3 - 100);
   });
 
+  it("the same promo code comes off the airport transfer too, once, percent and fixed (owner, 2026-11-27)", async () => {
+    setPaymentProviderForTests(browserPays);
+    await prisma.promoCode.createMany({
+      data: [
+        { code: "XFERTEN", percentOff: 10 },
+        { code: "XFERBIG", amountOffCents: 300000 },
+        { code: "XFERSHARED", percentOff: 10, appliesTo: ["SHARED"] },
+      ],
+    });
+    const days = async (start: number) => [
+      await vehicle("banff-private-tour", `2027-12-${String(start).padStart(2, "0")}`, 124000),
+      await vehicle("icefields-jasper-private-tour", `2027-12-${String(start + 1).padStart(2, "0")}`, 124000),
+    ];
+    const transfer = (start: number) => ({ type: "ROUND_TRIP" as const, area: "BANFF" as const, arrivalDate: `2027-12-${String(start - 1).padStart(2, "0")}`, arrivalTime: "14:00", departureDate: `2027-12-${String(start + 2).padStart(2, "0")}`, departureTime: "10:00", from: "Calgary Airport", to: "Banff" });
+
+    // 10%: CAD 1,240 a day and the round trip (2 x CAD 364 = 728) all 10% off.
+    const pct = await createPackageBooking(party(70, "two-day-rockies-explorer-private", await days(2), { promoCode: "XFERTEN", airportTransfer: transfer(2) }));
+    expect(pct.success).toBe(true);
+    expect(pct.totalAmount).toBeCloseTo((1240 * 2 + 728) * 0.9, 2);
+    expect(pct.payment?.amount).toBeCloseTo((1240 * 2 + 728) * 0.9, 2);
+    const [d1, d2] = await Promise.all(pct.bookings!.map((x) => prisma.booking.findUniqueOrThrow({ where: { bookingReference: x.bookingReference }, include: { items: true } })));
+    const t1 = (d1.priceSnapshot as { airportTransfer?: { discountCents?: number; promoCode?: string; priceCents?: number } }).airportTransfer;
+    expect(t1).toMatchObject({ priceCents: 72800, discountCents: 7280, promoCode: "XFERTEN" });
+    expect(d1.items).toEqual(expect.arrayContaining([expect.objectContaining({ name: "Promo XFERTEN: airport transfer discount", price: -7280, quantity: 1 })]));
+    expect(d1.addOnsTotal).toBe(72800 - 7280);
+    expect(d2.items).toHaveLength(0);
+    // Still one use of the code.
+    expect(await promoUses("XFERTEN")).toBe(1);
+    const { airportTransferSummary } = await import("@/modules/bookings/airport-transfer");
+    expect(airportTransferSummary(d1.priceSnapshot)).toContain("promo XFERTEN -CAD 72.80, CAD 655.20 after discount");
+
+    // Fixed CAD 3,000: Day 1's CAD 1,240 first, then the CAD 728 transfer; Day 2 pays in full. Never below 0.
+    const fixed = await createPackageBooking(party(71, "two-day-rockies-explorer-private", await days(6), { promoCode: "XFERBIG", airportTransfer: transfer(6) }));
+    expect(fixed.success).toBe(true);
+    expect(fixed.totalAmount).toBe(1240);
+    const f1 = await prisma.booking.findUniqueOrThrow({ where: { bookingReference: fixed.bookings![0].bookingReference } });
+    expect(f1.totalAmount).toBe(0);
+    expect((f1.priceSnapshot as { airportTransfer?: { discountCents?: number } }).airportTransfer?.discountCents).toBe(72800);
+
+    // A code limited to shared tours is refused for a private journey, transfer or not.
+    const wrong = await createPackageBooking(party(72, "two-day-rockies-explorer-private", await days(10), { promoCode: "XFERSHARED", airportTransfer: transfer(10) }));
+    expect(wrong.success).toBe(false);
+
+    // No code: the transfer is charged in full, no discount line.
+    const none = await createPackageBooking(party(73, "two-day-rockies-explorer-private", await days(14), { airportTransfer: transfer(14) }));
+    expect(none.totalAmount).toBe(1240 * 2 + 728);
+  });
+
   it("add-on activities: each with its own guests, kept on Day 1, charged only once priced (owner, 2026-11-18)", async () => {
     setPaymentProviderForTests(browserPays);
     const days = async (start: number) => [

@@ -20,8 +20,9 @@ turn one off. API: `GET/POST /api/affiliates/me/coupons`, `PATCH/DELETE /api/aff
 `/admin/promo-codes`. Admins create, edit, turn off and delete codes; operators can see them.
 
 - **Code**: 3–40 letters, numbers, `-` or `_`. Not case-sensitive (`summer10` = `SUMMER10`).
-- **Discount**: percent off (1–100) or a CAD amount off per booking. It comes off the tour fare only,
-  never off the airport transfer; a fixed amount never takes the fare below 0. A 100% code makes a
+- **Discount**: percent off (1–100) or a CAD amount off per booking. It comes off the tour fare and
+  the airport transfer (see below), never off add-on activities; a fixed amount never takes the price
+  below 0. A 100% code makes a
   free booking that is confirmed without payment.
 - **Where does it apply**: shared tours, private tours and/or shuttles (one, two or all three).
   Checked when the guest presses Apply and again when the booking is made, by the tour's category;
@@ -66,7 +67,23 @@ Code: `backend/src/modules/pricing/promo-codes.ts` (lookup), `backend/src/module
 
 The package checkout has its own promo box (owner, 2026-11-20). The code comes off **on top of the
 package price**: a percent code from every day, a fixed-amount code from Day 1 only (at most that
-day's package price). Airport transfers and activities are never discounted. One package uses the
+day's package price). Activities are never discounted; airport transfers are (next section). One package uses the
 code once: only Day 1's `priceSnapshot.promo.code` carries it (the other days keep the package label
 and note the code under `promo.packagePromo`). The page checks the code with `POST /api/pricing/promo`;
 the server checks it again, under the code's lock, when Day 1 is booked.
+
+## Airport transfers (owner, 2026-11-27)
+
+The same code comes off the Calgary Airport transfer booked with a private journey (Day 1), with the
+same checks (dates, on/off, use limit, "Where does it apply" by the tours' category). A percent code
+takes the same percent off the transfer; a fixed-amount code takes whatever it didn't already take off
+Day 1's fare, at most the transfer. It is still one use of the code. The package deal's own 10% never
+applies to the transfer.
+
+The booking keeps the transfer's full price as its item and adds a negative item
+"Promo CODE: airport transfer discount", so the fare discount (and date changes, which re-price the
+fare) stay as they were. `priceSnapshot.airportTransfer` gets `discountCents` and `promoCode`, and the
+transfer line in emails, the itinerary/voucher PDF and Admin reads "..., promo CODE -CAD 72.80, CAD 655.20
+after discount". The checkout shows the transfer price, a "Promo CODE · airport transfer" saving and
+the total; Stripe is charged that total. Code: `transferPromoDiscount()` in
+`backend/src/modules/pricing/booking-pricing.ts`, used in `booking.repository.ts`.

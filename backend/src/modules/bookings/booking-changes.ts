@@ -127,7 +127,9 @@ export function repriceBooking(booking: PricedBooking, current: PricedDep, targe
     fare = unit.adult * party.adults + unit.child * party.children + (unit.infant ?? 0) * (unit.infant != null ? party.infants : 0);
   }
   // The discount they booked with: a fixed amount stays (at most the fare), a percentage stays in proportion.
-  const fixedOff = snap.promo?.amountOffCents && !snap.promo?.percent ? snap.promo.amountOffCents : null;
+  // A fixed amount that partly came off the airport transfer (kept in the add-ons) counts only once.
+  const onTransfer = (snap.airportTransfer as { discountCents?: number } | undefined)?.discountCents ?? 0;
+  const fixedOff = snap.promo?.amountOffCents && !snap.promo?.percent ? Math.max(0, snap.promo.amountOffCents - onTransfer) : null;
   const discount = fixedOff != null ? Math.min(fixedOff, fare) : oldFare > 0 ? Math.round((fare * oldDiscount) / oldFare) : 0;
   const subtotal = fare - discount;
   return { vehicle, fareCents: fare, discountCents: discount, subtotalCents: subtotal, addOnsCents: addOns, keptCents: kept, totalCents: subtotal + addOns + kept };

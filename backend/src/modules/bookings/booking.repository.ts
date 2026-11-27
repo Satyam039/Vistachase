@@ -32,7 +32,7 @@ import { airportTransferLabel, airportTransferNote, airportTransferSchema, quote
 import { packageActivitiesNote, type StoredPackageActivity } from "@/modules/bookings/package-activities";
 import { activityAddOnsError, activityAddOnsNote, activityParticipantsError, combinedAddOnNote, COMBINED_ADD_ONS, ACTIVITY_ADD_ONS, type ActivityAddOnId, type ActivityGuests } from "@/modules/bookings/activity-add-ons";
 import { lookupPromo, normalizeCode, type ResolvedPromo } from "@/modules/pricing/promo-codes";
-import { priceBooking, type AddOnChoice } from "@/modules/pricing/booking-pricing";
+import { priceBooking, transferPromoDiscount, type AddOnChoice } from "@/modules/pricing/booking-pricing";
 import { referringAffiliateId } from "@/modules/affiliates/affiliate.repository";
 import { earnCommission, reverseCommissionForRefund } from "@/modules/affiliates/commission";
 import { sendCommissionEarnedEmail } from "@/modules/affiliates/partner-emails";
@@ -359,6 +359,23 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
         totals.addOnsCents += transferQuote.unitCents * transferQuote.transfers;
         totals.totalCents += transferQuote.unitCents * transferQuote.transfers;
       }
+      // The promo code also comes off the airport transfer (owner, 2026-11-27), once: a percent code
+      // the same percent, a fixed-amount code what's left after the fare. Its own negative line, so the
+      // fare discount (and date changes, which re-price the fare) stay as they were. The package deal's
+      // own 10% never applies to the transfer.
+      const transferCoupon: (ResolvedPromo & { alreadyOffCents: number }) | null = packagePromo
+        ? options.packagePromo!.countsUse || !packagePromo.amountOffCents
+          ? { ...packagePromo, alreadyOffCents: packagePromo.discountCents }
+          : null
+        : promo
+          ? { ...promo, alreadyOffCents: totals.discountCents }
+          : null;
+      const transferDiscountCents = transferCents != null && transferCoupon ? transferPromoDiscount(transferCents, transferCoupon, transferCoupon.alreadyOffCents) : 0;
+      if (transferDiscountCents > 0) {
+        totals.addOns.push({ name: `Promo ${transferCoupon!.code}: airport transfer discount`, priceCents: -transferDiscountCents, quantity: 1 });
+        totals.addOnsCents -= transferDiscountCents;
+        totals.totalCents -= transferDiscountCents;
+      }
       // Private journeys' activities: charged with Day 1 once priced, never discounted.
       const packageActivities = input.packageActivities ?? [];
       if (packageActivities.length > 0 && !isVehicle) throw new BookingRefused("Add-on activities can be added to private journeys only.");
@@ -416,7 +433,16 @@ export async function createBooking(input: CreateBookingInput, options: CreateBo
         // priceCents null: the team confirms the price (13+ guests); otherwise it is in addOns.
         // type, transfers (2 for a round trip), unitCents (one way) and priceCents (all transfers).
         ...(transfer && transferQuote
-          ? { airportTransfer: { ...transfer, guests: partySize, transfers: transferQuote.transfers, unitCents: transferQuote.unitCents, priceCents: transferCents } }
+          ? {
+              airportTransfer: {
+                ...transfer,
+                guests: partySize,
+                transfers: transferQuote.transfers,
+                unitCents: transferQuote.unitCents,
+                priceCents: transferCents,
+                ...(transferDiscountCents > 0 ? { discountCents: transferDiscountCents, promoCode: transferCoupon!.code } : {}),
+              },
+            }
           : {}),
         // Each activity with who joins it; priceCents null = the team confirms the price.
         ...(packageActivities.length > 0 ? { packageActivities } : {}),

@@ -264,7 +264,7 @@ export async function addVoucherPage(pdf: PDFDocument, booking: VoucherBooking, 
   row("Free cancel until", deadlineLabel);
   row("Lead guest", booking.customerName);
   row("Guests", guests);
-  row("Add-ons", booking.items.length ? booking.items.map((i) => (i.quantity > 1 ? `${i.name} x${i.quantity}` : i.name)).join(", ") : null);
+  row("Add-ons", booking.items.some((i) => i.price >= 0) ? booking.items.filter((i) => i.price >= 0).map((i) => (i.quantity > 1 ? `${i.name} x${i.quantity}` : i.name)).join(", ") : null);
   row("Airport transfer", airportTransferSummary(booking.priceSnapshot));
   row("Add-on activities", activitiesSummary(booking.priceSnapshot));
   row(
