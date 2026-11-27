@@ -7,14 +7,14 @@
 import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, MapPin } from "lucide-react";
+import { ArrowRight, CalendarDays, CheckCircle2, MapPin } from "lucide-react";
 import { Rail } from "@/components/motion/Rail";
 import { ACTIVITY_TICKETS_VISIBLE } from "@/lib/activityTickets";
 import { TOUR_CARD_RAIL_ITEM, TourCard } from "@/components/tours/TourCard";
 import { CARD_BADGE, CARD_EYEBROW, CARD_PANEL, CARD_TITLE } from "@/components/cards/MediaCard";
 import { SectionHeading } from "@/components/home/SectionHeading";
 import { PriceTag } from "@/components/pricing/PriceTag";
-import { hasPrice } from "@/lib/pricing";
+import { hasPrice, money, originalPrice } from "@/lib/pricing";
 import { buildExperienceTabs, type LinkCard } from "@/lib/experiences";
 import type { TourWithAvailability } from "@/lib/api/types";
 
@@ -106,7 +106,10 @@ export function TopExperiences({ tours }: { tours: TourWithAvailability[] }) {
 /** Same layout as TourCard, for options that are not a single catalog product (packages,
  *  multi-day journeys, shuttle departures). The whole card is one link. */
 export function ExperienceCard({ card, priority = false }: { card: LinkCard; priority?: boolean }) {
-  const { href, external, image, badge, eyebrow, title, facts, note, price, unit, noPrice } = card;
+  const { href, external, image, badge, eyebrow, title, facts, note, cancellation, season, price, unit, noPrice } = card;
+  // Struck "original" price, shown on its own line above the price so the price line reads exactly
+  // like TourCard's ("From CAD $X per unit") and never wraps.
+  const original = hasPrice(price) && card.key !== "banff-highlights-tour" && card.key !== "shared-tours-icefields-jasper" ? (card.original != null && card.original > price ? card.original : originalPrice(price)) : null;
   const seasonal =
     card.key === "two-day-shared"
       ? { summer: "CAD $486", winter: "CAD $396" }
@@ -160,35 +163,56 @@ export function ExperienceCard({ card, priority = false }: { card: LinkCard; pri
           ))}
         </ul>
 
-        {note && (
+        {/* Same row as TourCard's cancellation + availability line (multi-day cards, 2026-11-27). */}
+        {cancellation || season ? (
+          <p className="mb-4 mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-white/55">
+            {cancellation && (
+              <span className="inline-flex items-center gap-1">
+                <CheckCircle2 className="h-3 w-3 shrink-0 text-summit-300" aria-hidden="true" />
+                {cancellation}
+              </span>
+            )}
+            {season && (
+              <span className="inline-flex items-center gap-1">
+                <CalendarDays className="h-3 w-3 shrink-0 text-summit-300" aria-hidden="true" />
+                {season}
+              </span>
+            )}
+            {note && (
+              <span className="inline-flex items-center gap-1">
+                <CheckCircle2 className="h-3 w-3 shrink-0 text-summit-300" aria-hidden="true" />
+                {note}
+              </span>
+            )}
+          </p>
+        ) : note ? (
           <p className="mb-4 mt-1.5 flex items-start gap-1 text-xs text-white/55">
             <CheckCircle2 className="mt-px h-3 w-3 shrink-0 text-summit-300" aria-hidden="true" />
             {note}
           </p>
+        ) : (
+          <div className="mb-4" aria-hidden="true" />
         )}
 
         <div className="mt-auto flex items-end justify-between gap-3 border-t border-white/[0.1] pt-3">
           <div className="min-w-0">
             {hasPrice(price) ? (
               <>
+                {original && (
+                  <p className="text-xs text-white/55">
+                    <span className="sr-only">Original price </span>
+                    <del>{money(original, "CAD")}</del>
+                  </p>
+                )}
                 <div className="flex min-w-0 items-baseline gap-1.5 whitespace-nowrap">
                   <span className="text-xs text-white/55">From</span>
-                  <PriceTag
-                    price={price}
-                    currency="CAD"
-                    unit={unit}
-                    size="sm"
-                    tone="dark"
-                    layout="inline"
-                    showOriginal={card.key !== "banff-highlights-tour" && card.key !== "shared-tours-icefields-jasper"}
-                    original={card.original}
-                  />
+                  <PriceTag price={price} currency="CAD" unit={unit} size="sm" tone="dark" layout="inline" showOriginal={false} />
                 </div>
                 <p className="mt-0.5 text-xs text-white/55">Taxes and required fees included</p>
                 {seasonal && (
                   <div className="mt-1 flex flex-wrap gap-x-2.5 gap-y-0.5 text-[11px] text-white/60">
                     <span>Summer: <strong className="font-medium text-summit-200">{seasonal.summer}</strong></span>
-                    <span>Winter: <strong className="font-medium text-white/80">{seasonal.winter}</strong></span>
+                    <span>· Winter: <strong className="font-medium text-white/80">{seasonal.winter}</strong></span>
                   </div>
                 )}
               </>

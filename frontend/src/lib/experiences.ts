@@ -11,6 +11,7 @@
 import { CalendarDays, Clock, Users, type LucideIcon } from "lucide-react";
 import { departureFits, fromPrice, nextDepartureFor } from "@/lib/tours";
 import { BANFF_YOHO, ICEFIELD, TWO_DAY_PACKAGE, packagePrice } from "@/lib/sharedTours";
+import { cancellationBadge } from "@/lib/policy";
 import { PRIVATE_OPTIONS, type PrivateTourOption } from "@/lib/privateTours";
 import { LATE_SEASON_DEPARTURES, SHUTTLE_DEPARTURES, clock, clockRange } from "@/lib/shuttleSchedule";
 import type { DepartureAvailability, TourWithAvailability } from "@/lib/api/types";
@@ -57,6 +58,10 @@ export interface LinkCard {
   title: string;
   facts: { icon: LucideIcon; text: string }[];
   note?: string;
+  /** Short cancellation label, shown like TourCard's (e.g. "Free cancellation 24h"). */
+  cancellation?: string;
+  /** When it runs, shown like TourCard's availability (e.g. "Summer only: June 1–October 10"). */
+  season?: string;
   price: number;
   /** Struck-through price when it is a real one (both tours booked separately); else the fixed markup. */
   original?: number;
@@ -138,6 +143,7 @@ export function buildExperienceTabs(tours: TourWithAvailability[]): ExperienceTa
           { icon: Users, text: "Small group" },
         ],
         note: "Accommodation not included",
+        cancellation: cancellationBadge("SHARED"),
         price: sharedPackage.price,
         // The package page strikes through the two tours booked separately; the card shows the same.
         original: sharedPackage.separate,
@@ -178,7 +184,16 @@ export function buildExperienceTabs(tours: TourWithAvailability[]): ExperienceTa
           { icon: Clock, text: opt.duration },
           { icon: Users, text: opt.isCustomPartner ? "Luxury SUVs & vans" : "Private, up to 13 guests" },
         ],
-        note: opt.isCustomPartner ? "Personalised quote after consultation" : undefined,
+        note: opt.isCustomPartner
+          ? "Personalised quote after consultation"
+          : opt.seasonLabel
+            ? undefined
+            : opt.accommodation
+              ? "Accommodation not included"
+              : undefined,
+        // Private packages of two or more days: 80% refund up to 72h (lib/policy.ts).
+        cancellation: opt.isCustomPartner ? undefined : cancellationBadge("MULTIDAY"),
+        season: opt.isCustomPartner ? undefined : opt.seasonLabel,
         price: opt.priceFrom,
         unit: "per vehicle",
         noPrice: opt.isCustomPartner ? "Personalised quote after consultation" : "Price on request",

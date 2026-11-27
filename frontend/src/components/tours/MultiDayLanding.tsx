@@ -52,9 +52,9 @@ export function MultiDayLanding({ tours }: { tours: TourWithAvailability[] }) {
       </section>
 
       <div className="mx-auto max-w-7xl px-page pb-20 pt-10">
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
           {cards.map((card, i) => (
-            <li key={card.key}>
+            <li key={card.key} className="min-w-0">
               {/* The first card is the largest thing on a phone's first screen: its photo loads first. */}
               {card.kind === "tour" ? (
                 <TourCard tour={card.tour} title={card.title} image={card.image} priority={i === 0} />

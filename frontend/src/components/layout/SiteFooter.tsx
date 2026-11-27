@@ -77,7 +77,7 @@ const PROMISES = [
   // Booking & Cancellation Policy, per kind of booking (lib/policy.ts).
   { icon: CalendarCheck, text: "Free cancellation: 24h shared tours & shuttles, 72h private tours" },
   { icon: ShieldCheck, text: "Parks Canada licensed commercial operator" },
-  { icon: MapPin, text: "Hotel pickup in Banff, Canmore & Lake Louise" },
+  { icon: MapPin, text: "Hotel pickup in Banff & Canmore. Lake Louise pickup on selected tours." },
 ];
 
 // Heights balance the marks optically (the files have very different proportions and padding).
