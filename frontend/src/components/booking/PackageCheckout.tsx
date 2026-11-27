@@ -427,7 +427,7 @@ export function PackageCheckout({
     ? [...pickedList].sort((a, b) => (a.departure && b.departure ? a.departure.date.localeCompare(b.departure.date) : 0))
     : pickedList;
   // The transfer (owner, 2026-11-17): the server's price per one-way transfer by where the guest
-  // stays, twice for a round trip; added to Day 1, never discounted. The server prices it again.
+  // stays, twice for a round trip; added to Day 1. The server prices it again.
   const transferQuote = withAirport ? airportTransferQuote(airportTransfer, guests, transferPrices) : null;
   const transferDollars = transferQuote?.total ?? null;
   // Ticked activities: each priced for the guests joining it, added to Day 1 (the server prices them again).
@@ -436,16 +436,27 @@ export function PackageCheckout({
   const chosenActivityList = vehicle && activitiesOn ? packageActivities.filter((a) => activityChoice[a.id]) : [];
   const activityPriceOf = (id: string) => packageActivityPrice(activityPrices, id, activityChoice[id]!);
   const activitiesDollars = chosenActivityList.reduce((n, a) => n + (activityPriceOf(a.id) ?? 0), 0);
-  // Each day's promo saving (cents), from the day's package price; never the transfer or activities.
+  // Each day's promo saving (cents), from the day's package price; never the activities.
   const promoCents = lines.map((l, i) =>
     !appliedPromo ? 0 : appliedPromo.amountOff > 0 ? (i === 0 ? Math.min(Math.round(appliedPromo.amountOff * 100), l.total) : 0) : Math.round((l.total * appliedPromo.percent) / 100),
   );
-  const promoSaving = promoCents.reduce((n, c) => n + c, 0);
-  const total = lines.reduce((n, l) => n + l.total, 0) - promoSaving + (transferDollars ?? 0) * 100 + Math.round(activitiesDollars * 100);
+  // The same code on the airport transfer (owner, 2026-11-27), as the server works it out
+  // (booking-pricing.ts transferPromoDiscount): a percent code the same percent, a fixed amount
+  // what's left after Day 1's fare. Never the package's own 10%.
+  const transferCents = transferDollars != null ? Math.round(transferDollars * 100) : 0;
+  const transferPromoCents =
+    !appliedPromo || transferCents <= 0
+      ? 0
+      : appliedPromo.amountOff > 0
+        ? Math.max(0, Math.min(Math.round(appliedPromo.amountOff * 100) - (promoCents[0] ?? 0), transferCents))
+        : Math.round((transferCents * appliedPromo.percent) / 100);
+  const tourPromoSaving = promoCents.reduce((n, c) => n + c, 0);
+  const promoSaving = tourPromoSaving + transferPromoCents;
+  const total = lines.reduce((n, l) => n + l.total, 0) - promoSaving + transferCents + Math.round(activitiesDollars * 100);
   // 20% deposit: each day's own deposit (the server rounds per day), when every day is 15+ days away.
   const canDeposit = depositAllowed && allPicked && total > 0 && chosen.every((d) => d && depositAvailable(d.date.slice(0, 10), d.departureTime));
   const plan = canDeposit ? paymentPlan : "FULL";
-  const dayTotals = lines.map((l, i) => (l.total - promoCents[i]) / 100 + (i === 0 ? (transferDollars ?? 0) + activitiesDollars : 0));
+  const dayTotals = lines.map((l, i) => (l.total - promoCents[i]) / 100 + (i === 0 ? (transferCents - transferPromoCents) / 100 + activitiesDollars : 0));
   const depositNow = Math.round(dayTotals.reduce((n, t) => n + depositFor(t), 0) * 100) / 100;
   const firstDay = chosen.filter(Boolean).map((d) => d!).sort((a, b) => a.date.localeCompare(b.date))[0];
   const balanceDueLabel = firstDay ? formatRockiesDate(balanceDueDate(firstDay.date.slice(0, 10), firstDay.departureTime)) : "";
@@ -1226,10 +1237,16 @@ export function PackageCheckout({
                 </div>
               );
             })}
-            {appliedPromo && promoSaving > 0 && (
+            {appliedPromo && tourPromoSaving > 0 && (
               <div className="flex justify-between text-summit-200">
-                <dt>Promo {appliedPromo.code}</dt>
-                <dd>−{cad(promoSaving / 100)}</dd>
+                <dt>Promo {appliedPromo.code}{transferPromoCents > 0 ? " · tours" : ""}</dt>
+                <dd>−{cad(tourPromoSaving / 100)}</dd>
+              </div>
+            )}
+            {appliedPromo && transferPromoCents > 0 && (
+              <div className="flex justify-between text-summit-200">
+                <dt>Promo {appliedPromo.code} · airport transfer</dt>
+                <dd>−{cad(transferPromoCents / 100)}</dd>
               </div>
             )}
             <div className="flex justify-between border-t border-white/15 pt-3 text-xl font-light">

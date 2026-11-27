@@ -81,3 +81,18 @@ export function priceBooking(
   const totalCents = fareCents - discountCents + addOnsCents;
   return { fareCents, discountPercent, discountCents, addOns, addOnsCents, totalCents };
 }
+
+/**
+ * What a promo code takes off the airport transfer (owner, 2026-11-27: the same coupons apply to
+ * airport transfers). A percent code takes the same percent off the transfer; a fixed-amount code
+ * takes whatever it didn't already take off the fare (`alreadyOffCents`), at most the transfer.
+ */
+export function transferPromoDiscount(
+  transferCents: number,
+  promo: { percentOff: number | null; amountOffCents: number | null } | null | undefined,
+  alreadyOffCents = 0,
+): number {
+  if (!promo || transferCents <= 0) return 0;
+  if (promo.amountOffCents) return Math.max(0, Math.min(promo.amountOffCents - alreadyOffCents, transferCents));
+  return Math.round((transferCents * (promo.percentOff ?? 0)) / 100);
+}

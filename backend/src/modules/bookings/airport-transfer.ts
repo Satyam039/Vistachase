@@ -181,6 +181,9 @@ export interface StoredAirportTransfer extends Partial<AirportTransfer> {
   priceCents?: number | null;
   unitCents?: number | null;
   transfers?: number;
+  /** A promo code's saving on the transfer (owner, 2026-11-27), and the code. */
+  discountCents?: number | null;
+  promoCode?: string | null;
 }
 
 /**
@@ -200,7 +203,10 @@ export function airportTransferSummary(priceSnapshot: unknown): string | null {
     needsDeparture(type) && t.departureDate ? `departure ${t.departureDate} ${t.departureTime ?? ""}`.trim() : null,
   ].filter(Boolean);
   const flights = t.flightNumbers ? `, flight ${t.flightNumbers}` : "";
-  return `${TYPE_LABEL[type]} (${route})${times.length ? `, ${times.join(", ")}` : ""}${flights}, ${airportTransferPriceText({ transfers, unitCents })}`;
+  // A promo code's saving on the transfer: "..., promo SUMMER10 -CAD 170.00, CAD 1,530.00 after discount".
+  const off = t.discountCents && t.discountCents > 0 && unitCents != null ? t.discountCents : 0;
+  const promo = off > 0 ? `, promo ${t.promoCode ?? "code"} -${money(off)}, ${money(unitCents! * transfers - off)} after discount` : "";
+  return `${TYPE_LABEL[type]} (${route})${times.length ? `, ${times.join(", ")}` : ""}${flights}, ${airportTransferPriceText({ transfers, unitCents })}${promo}`;
 }
 
 // ---------------------------------------------------------------------------------------------
