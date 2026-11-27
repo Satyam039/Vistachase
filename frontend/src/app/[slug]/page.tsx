@@ -12,6 +12,7 @@ import { PageSeoExtras } from "@/components/seo/PageSeoExtras";
 import { ACTIVITY_TICKETS_VISIBLE, activityTicket } from "@/lib/activityTickets";
 import { RETIRED_TOUR_REDIRECTS } from "@/lib/retiredTours";
 import { cachePublicData } from "@/lib/api/cachePolicy";
+import { baseTourName } from "@/lib/tourNames";
 
 // Rendered once and served from cache, refreshed in the background at most every minute, instead of
 // on every request (fix recheck, 10 Nov 2026, N2/R2: 2.7-10 s responses and 5xx under a crawl).
@@ -32,7 +33,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const tour = await loadTour(slug);
   if (!tour) return { title: "Page not found | Vista Chase" };
-  const title = tour.metaTitle ?? `${tour.title} | Vista Chase`;
+  // Browser/SEO title keeps the plain tour name (the page shows it with its type: SHARED - ...).
+  const title = tour.metaTitle ?? `${baseTourName(tour.title)} | Vista Chase`;
   const description = tour.metaDescription ?? tour.summary;
   return withSeo(`/${tour.slug}`, {
     title,

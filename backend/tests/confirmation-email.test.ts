@@ -73,7 +73,7 @@ describe("confirmation email", () => {
     expect(await pages(email)).toBeLessThanOrEqual(2);
 
     // The website's name for the tour, not the older database title.
-    expect(email.html).toContain("Banff &amp; Yoho Discovery (Shared Tour)");
+    expect(email.html).toContain("SHARED - BANFF &amp; YOHO DISCOVERY");
     // Support gets its own summary (no copy of the guest's email), and the calendar file and links ride along.
     expect(email.bcc).toBeUndefined();
     const staff = sent.filter((e) => e.subject.startsWith(`New booking ${ref}`));

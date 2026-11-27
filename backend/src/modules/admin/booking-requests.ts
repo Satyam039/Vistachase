@@ -10,6 +10,7 @@
 //   flag), like Quick Book. Online payments still pending for it are marked FAILED so a late card
 //   payment is caught as a flag (confirmPaidBooking) instead of being counted twice.
 
+import { tourDisplayName } from "@site/tourNames";
 import type { BookingStatus } from "@prisma/client";
 import prisma from "@/lib/db/prisma";
 import { getEmailProvider } from "@/lib/email/email.provider";
@@ -40,8 +41,8 @@ export async function guestPolicyRefundCents(booking: PolicyBooking, at = new Da
   return (await policyDecision(booking, at)).refundCents;
 }
 
-export function titleOf(b: { tourDeparture: { tour: { title: string } | null; shuttleRoute: { name: string } | null } }) {
-  return b.tourDeparture.tour?.title || b.tourDeparture.shuttleRoute?.name || "Vista Chase experience";
+export function titleOf(b: { tourDeparture: { tour: { slug?: string; title: string; category?: string | null } | null; shuttleRoute: { name: string } | null } }) {
+  return (b.tourDeparture.tour ? tourDisplayName(b.tourDeparture.tour) : "") || b.tourDeparture.shuttleRoute?.name || "Vista Chase experience";
 }
 
 export function guestEmail(to: string, subject: string, heading: string, paragraphs: string[]) {
@@ -172,7 +173,7 @@ export async function listRequests() {
     id: true, bookingReference: true, status: true, customerName: true, customerEmail: true, customerPhone: true, totalSeats: true,
     totalAmount: true, currency: true, paymentPlan: true, createdAt: true, paymentExpiresAt: true,
     payments: { select: { amount: true, status: true, provider: true } },
-    tourDeparture: { select: { date: true, departureTime: true, tour: { select: { title: true } }, shuttleRoute: { select: { name: true } } } },
+    tourDeparture: { select: { date: true, departureTime: true, tour: { select: { slug: true, title: true, category: true } }, shuttleRoute: { select: { name: true } } } },
   } as const;
   const [requests, pending] = await Promise.all([
     prisma.bookingFlag.findMany({

@@ -34,6 +34,7 @@ import { BALANCE_DUE_DAYS, DEPOSIT_MIN_DAYS, DEPOSIT_PERCENT } from "@/lib/polic
 import { JsonLd } from "@/components/seo/JsonLd";
 import { THREE_DAY_CANCELLATION, THREE_DAY_DURATION, THREE_DAY_FAQS, THREE_DAY_INTRO, THREE_DAY_PRICE, THREE_DAY_PRICING } from "@/lib/threeDayContent";
 import { cachePublicData } from "@/lib/api/cachePolicy";
+import { PACKAGE_NAMES } from "@/lib/tourNames";
 
 // Rendered once and served from cache, refreshed in the background at most every minute, instead of
 // on every request (fix recheck, 10 Nov 2026, N2/R2: 2.7-10 s responses and 5xx under a crawl).
@@ -173,7 +174,7 @@ export default function ThreeDayRockiesDiscoveryPage() {
             </span>
 
             <h1 className="text-balance text-[clamp(2.25rem,8vw,4.5rem)] font-light leading-[1.05] tracking-tight text-white motion-safe:animate-[fadeUp_900ms_ease-out]">
-              Three-Day Rockies Discovery
+              {PACKAGE_NAMES["three-day-rockies-discovery"]}
             </h1>
             <p className="mt-3 text-base sm:text-xl font-light text-summit-200 tracking-wide">
               Private Banff, Yoho &amp; Columbia Icefield Tour

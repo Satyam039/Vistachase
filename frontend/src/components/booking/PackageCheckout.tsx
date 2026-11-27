@@ -51,6 +51,7 @@ import { StripeCheckoutForm, stripeConfigured } from "@/components/booking/Strip
 import { balanceDueDate, DEPOSIT_PERCENT, depositAvailable, depositFor, formatCancellationDeadline, formatRockiesDate } from "@/lib/policy";
 import { trackAdsPurchase } from "@/lib/googleAds";
 import { CheckoutLinksInNewTab } from "@/components/booking/CheckoutLinksInNewTab";
+import { packageDisplayName } from "@/lib/tourNames";
 
 export interface PackageDeparture {
   id: string;
@@ -1165,7 +1166,7 @@ export function PackageCheckout({
       </div>
 
       <aside className={compact ? "rounded-none bg-obsidian-950 p-5 text-white" : "rounded-none bg-obsidian-950 p-6 text-white sm:p-8 lg:sticky lg:top-[calc(var(--vc-header-h,80px)+24px)]"} aria-label="Your package">
-        <p className="text-sm uppercase tracking-[0.22em] text-summit-300">{title}</p>
+        <p className="text-sm uppercase tracking-[0.22em] text-summit-300">{packageDisplayName(packageSlug, title)}</p>
         <ul className="mt-5 space-y-4">
           {displayList.map((item) => (
             <li key={item.day.title} className="border-b border-white/10 pb-4">

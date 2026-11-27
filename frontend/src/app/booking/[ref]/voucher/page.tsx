@@ -28,6 +28,7 @@ import { ManageBooking } from "@/components/booking/ManageBooking";
 import { POLICY_URL, canCancelFree, cancellationSentence, cancellationShort, cancellationTerms, depositPolicy, formatCancellationDeadline, formatRockiesDate } from "@/lib/policy";
 import { clock as shuttleClock, clockRange, resolveShuttlePickupTime, SHUTTLE_PRODUCT_NAME, shuttleDepartureForTime } from "@/lib/shuttleSchedule";
 import { headers } from "next/headers";
+import { tourDisplayName } from "@/lib/tourNames";
 
 export async function generateMetadata({ params }: { params: Promise<{ ref: string }> }): Promise<Metadata> {
   const { ref } = await params;
@@ -96,7 +97,7 @@ export default async function VoucherPage({
   const shuttleDep = isShuttle ? shuttleDepartureForTime(departure.departureTime) : undefined;
   const title = isShuttle
     ? SHUTTLE_PRODUCT_NAME
-    : departure.tour?.title || departure.shuttleRoute?.name || "Canadian Rockies tour";
+    : (departure.tour?.title ? tourDisplayName(departure.tour) : "") || departure.shuttleRoute?.name || "Canadian Rockies tour";
   const image = departure.tour?.featuredImage || "/media/photos/moraine-lake-perfect-reflection.webp";
   const date = new Date(`${departure.date}T00:00:00`);
   const dateLabel = Number.isNaN(date.getTime())

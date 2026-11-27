@@ -78,6 +78,7 @@ import {
   UserRound,
   Users,
 } from "lucide-react";
+import { tourDisplayName } from "@/lib/tourNames";
 
 const OUTSIDE_BANFF_CANMORE = /\b(lake\s*louise|calgary|jasper|golden|field|revelstoke|edmonton|airdrie|cochrane|radium|invermere)\b/i;
 
@@ -743,7 +744,7 @@ export function BookingCheckoutClient({
 
   const experienceTitle = isShuttle
     ? SHUTTLE_PRODUCT_NAME
-    : departure.tour?.title ||
+    : (departure.tour?.title ? tourDisplayName(departure.tour) : "") ||
       departure.shuttleRoute?.name ||
       "Canadian Rockies tour";
   const experienceSubtitle = isShuttle

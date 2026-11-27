@@ -57,7 +57,7 @@ describe("concierge uses the live website's catalog only", () => {
     const r = (await executeAiTool("searchTours", { query: "Banff & Yoho" }, {})) as { data: { slug: string }[] };
     expect(r.data.map((t) => t.slug)).toContain("banff-highlights-tour");
     const d = (await executeAiTool("getTourDetails", { tourSlugOrBokunId: "banff-private-tour" }, {})) as { data: any };
-    expect(d.data.title).toBe("Private Banff & Yoho Discovery");
+    expect(d.data.title).toBe("PRIVATE - BANFF & YOHO DISCOVERY");
     expect(d.data.inclusions).toBeUndefined();
     expect(d.data.page).toBe("/banff-private-tour");
   });
@@ -67,7 +67,7 @@ describe("concierge uses the live website's catalog only", () => {
     if (!dep) return; // seed without departures for this tour
     const r = await runConciergeTool("check_availability", { date: dep.date.toISOString().slice(0, 10), tourSlug: "banff-private-tour" }, {});
     const rows = r.result as { title: string }[];
-    for (const row of rows) expect(row.title).toBe("Private Banff & Yoho Discovery");
+    for (const row of rows) expect(row.title).toBe("PRIVATE - BANFF & YOHO DISCOVERY");
   });
 
   it("offers the pickup points the checkout offers (database stops, with their ids)", async () => {

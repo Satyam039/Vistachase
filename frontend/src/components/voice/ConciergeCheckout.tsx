@@ -36,6 +36,7 @@ import {
   EMPTY_AIRPORT_TRANSFER,
   type AirportTransferValue,
 } from "@/components/booking/AirportTransferFields";
+import { tourDisplayName } from "@/lib/tourNames";
 
 type Stop = { id: string; name: string; town: string; address: string };
 type Departure = {
@@ -129,7 +130,7 @@ export function ConciergeCheckout(props: ConciergeCheckoutProps) {
   const isVehicle = dep?.tour?.category === "PRIVATE";
   const isShuttle = Boolean(dep?.tour?.category === "SHUTTLE" || dep?.shuttleRoute || dep?.tour?.slug?.includes("shuttle"));
   const shuttleDep = isShuttle && dep ? shuttleDepartureForTime(dep.departureTime) : undefined;
-  const title = isShuttle ? SHUTTLE_PRODUCT_NAME : props.title || dep?.tour?.title || dep?.shuttleRoute?.name || "Your Vista Chase trip";
+  const title = isShuttle ? SHUTTLE_PRODUCT_NAME : props.title || (dep?.tour?.title ? tourDisplayName(dep.tour) : "") || dep?.shuttleRoute?.name || "Your Vista Chase trip";
 
   // Departure, prices, live seats and pickup stops: the same data the /book page uses.
   const load = useCallback(async () => {

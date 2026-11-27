@@ -14,6 +14,7 @@ import { BANFF_YOHO, ICEFIELD, TWO_DAY_PACKAGE, packagePrice } from "@/lib/share
 import { PRIVATE_OPTIONS, type PrivateTourOption } from "@/lib/privateTours";
 import { LATE_SEASON_DEPARTURES, SHUTTLE_DEPARTURES, clock, clockRange } from "@/lib/shuttleSchedule";
 import type { DepartureAvailability, TourWithAvailability } from "@/lib/api/types";
+import { DAY_TOUR_NAMES, PACKAGE_NAMES, privateOptionName } from "@/lib/tourNames";
 
 export type ExperienceCategory = "SHARED" | "PRIVATE" | "SHUTTLE" | "MULTIDAY" | "TICKET";
 
@@ -104,9 +105,13 @@ export function buildExperienceTabs(tours: TourWithAvailability[]): ExperienceTa
   const tourCard = (category: ExperienceCategory, slug: string | undefined, title?: string, image?: string): ExperienceCard[] => {
     const tour = bySlug(slug);
     if (!tour) return [];
-    const typeLabel = category === "SHARED" ? "SHARED TOUR" : category === "PRIVATE" ? "PRIVATE TOUR" : category === "SHUTTLE" ? "SHUTTLE" : "TOUR";
+    // Shared and private tours carry their type in front ("SHARED - …", lib/tourNames.ts, applied
+    // to the catalog title by withDocContent); shuttles and tickets keep their own name.
     const raw = title ?? tour.title;
-    const formattedTitle = raw.includes("–") ? raw : `${raw.toUpperCase()} – ${typeLabel}`;
+    const formattedTitle =
+      category === "SHUTTLE" || category === "TICKET"
+        ? raw.includes("–") ? raw : `${raw.toUpperCase()} – ${category === "SHUTTLE" ? "SHUTTLE" : "TOUR"}`
+        : raw.toUpperCase();
     return [{ kind: "tour", key: tour.slug, tour, title: formattedTitle, image, category, text: `${formattedTitle} ${tourText(tour)}`.toLowerCase(), fits: (s, d) => tourFits(tour, s, d) }];
   };
   const linkCard = (category: ExperienceCategory, card: LinkCard, fits: CardBase["fits"]): ExperienceCard => ({
@@ -121,8 +126,8 @@ export function buildExperienceTabs(tours: TourWithAvailability[]): ExperienceTa
   const icefield = bySlug(ICEFIELD.slug);
   const sharedPackage = packagePrice(price(BANFF_YOHO.slug), price(ICEFIELD.slug));
   const shared: ExperienceCard[] = [
-    ...tourCard("SHARED", BANFF_YOHO.slug, "BANFF & YOHO DISCOVERY – SHARED TOUR", BANFF_YOHO.image),
-    ...tourCard("SHARED", ICEFIELD.slug, "COLUMBIA ICEFIELD ADVENTURE – SHARED TOUR", ICEFIELD.image),
+    ...tourCard("SHARED", BANFF_YOHO.slug, DAY_TOUR_NAMES[BANFF_YOHO.slug], BANFF_YOHO.image),
+    ...tourCard("SHARED", ICEFIELD.slug, DAY_TOUR_NAMES[ICEFIELD.slug], ICEFIELD.image),
     linkCard(
       "SHARED",
       {
@@ -132,7 +137,7 @@ export function buildExperienceTabs(tours: TourWithAvailability[]): ExperienceTa
         image: "/media/photos/peyto-lake.webp",
         badge: TWO_DAY_PACKAGE.saving,
         eyebrow: "Banff, Yoho & Icefields Parkway",
-        title: "TWO-DAY ROCKIES EXPLORER – SHARED TOUR",
+        title: PACKAGE_NAMES[TWO_DAY_PACKAGE.slug],
         facts: [
           { icon: Clock, text: TWO_DAY_PACKAGE.duration },
           { icon: Users, text: "Small group" },
@@ -153,8 +158,7 @@ export function buildExperienceTabs(tours: TourWithAvailability[]): ExperienceTa
   ];
 
   const privateCard = (category: ExperienceCategory, opt: PrivateTourOption): ExperienceCard => {
-    const typeLabel = opt.isCustomPartner ? "BY BANFF ELITE" : "PRIVATE TOUR";
-    const formattedTitle = opt.title.includes("–") ? opt.title : `${opt.title.toUpperCase()} – ${typeLabel}`;
+    const formattedTitle = privateOptionName(opt);
     const cardImage = opt.image;
 
     if (opt.slug && bySlug(opt.slug)) return tourCard(category, opt.slug, formattedTitle, cardImage)[0];

@@ -9,6 +9,7 @@
 import prisma from "@/lib/db/prisma";
 import { getBookingByReference } from "@/modules/bookings/booking.repository";
 import { formatDateOnly, formatTimeOfDay } from "@/lib/utils/time";
+import { packageDisplayName, tourDisplayName } from "@site/tourNames";
 
 export interface TripInfo {
   title: string;
@@ -22,11 +23,13 @@ export interface TripInfo {
 
 /** The trip a booking belongs to, from its price snapshot; null for a single-day booking. */
 export function tripOf(priceSnapshot: unknown, ownReference?: string): TripInfo | null {
-  const pkg = (priceSnapshot as { package?: { title?: unknown; day?: unknown; references?: unknown } } | null)?.package;
+  const pkg = (priceSnapshot as { package?: { slug?: unknown; title?: unknown; day?: unknown; references?: unknown } } | null)?.package;
   if (!pkg || !Array.isArray(pkg.references) || pkg.references.length < 2) return null;
   const references = pkg.references.filter((r): r is string => typeof r === "string");
   const day = typeof pkg.day === "number" ? pkg.day : ownReference ? references.indexOf(ownReference) + 1 : 1;
-  return { title: typeof pkg.title === "string" ? pkg.title : "Multi-day trip", reference: references[0], day, days: references.length, references };
+  // The journey's website name ("MULTI-DAY PRIVATE - THREE-DAY ROCKIES DISCOVERY"), also for trips booked before it.
+  const title = packageDisplayName(typeof pkg.slug === "string" ? pkg.slug : null, typeof pkg.title === "string" ? pkg.title : "Multi-day trip");
+  return { title, reference: references[0], day, days: references.length, references };
 }
 
 export type TripBooking = NonNullable<Awaited<ReturnType<typeof getBookingByReference>>>;
@@ -45,7 +48,7 @@ export async function tripBookings(reference: string): Promise<TripBooking[]> {
 export async function tripSummary(trip: TripInfo) {
   const rows = await prisma.booking.findMany({
     where: { bookingReference: { in: trip.references } },
-    select: { bookingReference: true, status: true, tourDeparture: { select: { date: true, departureTime: true, tour: { select: { title: true } }, shuttleRoute: { select: { name: true } } } } },
+    select: { bookingReference: true, status: true, tourDeparture: { select: { date: true, departureTime: true, tour: { select: { slug: true, title: true, category: true } }, shuttleRoute: { select: { name: true } } } } },
   });
   return {
     title: trip.title,
@@ -59,7 +62,7 @@ export async function tripSummary(trip: TripInfo) {
         status: b?.status ?? null,
         date: b ? formatDateOnly(b.tourDeparture.date) : null,
         departureTime: formatTimeOfDay(b?.tourDeparture.departureTime),
-        title: b?.tourDeparture.tour?.title ?? b?.tourDeparture.shuttleRoute?.name ?? null,
+        title: b?.tourDeparture.tour ? tourDisplayName(b.tourDeparture.tour) : (b?.tourDeparture.shuttleRoute?.name ?? null),
       };
     }),
   };

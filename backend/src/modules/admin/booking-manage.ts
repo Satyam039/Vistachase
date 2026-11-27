@@ -12,6 +12,7 @@
 
 import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/db/prisma";
+import { tourDisplayName } from "@site/tourNames";
 import { dateOnly, formatDateOnly, formatTimeOfDay, getMountainTimeInstant, todayInMountainTime } from "@/lib/utils/time";
 import { releaseBookedSeats, takeBookedSeats } from "@/modules/departures/inventory";
 import { seatsToReserve } from "@/modules/pricing/departure-pricing";
@@ -75,7 +76,7 @@ export async function bookingOverview(bookingId: string) {
     updatedAt: booking.updatedAt,
     source,
     tour: {
-      title: dep.tour?.title ?? dep.shuttleRoute?.name ?? "Booking",
+      title: dep.tour ? tourDisplayName(dep.tour) : (dep.shuttleRoute?.name ?? "Booking"),
       slug: dep.tour?.slug ?? null,
       image: dep.tour?.featuredImage || null,
       category: dep.tour?.category ?? "SHUTTLE",

@@ -4,6 +4,7 @@
 // private day tours in one payment (backend modules/bookings/package-booking.ts). Copy lives in
 // lib/twoDayPrivateContent.ts.
 
+import { PACKAGE_NAMES } from "@/lib/tourNames";
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -144,7 +145,7 @@ export default function PrivateTwoDayPage() {
             <span className="mb-3 inline-block rounded-full bg-summit-500/20 px-3.5 py-1 text-xs font-medium uppercase tracking-[0.2em] text-summit-300 ring-1 ring-summit-400/30 backdrop-blur-md">
               Private Tours · Two Experiences
             </span>
-            <h1 className="text-balance text-[clamp(2.25rem,8vw,4.5rem)] font-light leading-[1.05] tracking-tight text-white">Private Two-Day Rockies Explorer</h1>
+            <h1 className="text-balance text-[clamp(2.25rem,8vw,4.5rem)] font-light leading-[1.05] tracking-tight text-white">{PACKAGE_NAMES["two-day-rockies-explorer-private"]}</h1>
             <p className="mt-3 text-base font-light tracking-wide text-summit-200 sm:text-xl">Banff &amp; Yoho Discovery · Columbia Icefield Adventure</p>
             <p className="mx-auto mt-5 max-w-3xl text-base font-light leading-relaxed text-slate-100 sm:text-lg">{TWO_DAY_INTRO.headline}</p>
           </div>

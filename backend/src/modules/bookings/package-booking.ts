@@ -14,6 +14,7 @@
 // (metadata.kind PACKAGE, metadata.packageRefs). No schema change: the link between the two bookings
 // is kept in each booking's price snapshot and staff notes.
 
+import { packageDisplayName } from "@site/tourNames";
 import prisma from "@/lib/db/prisma";
 import { getPaymentProvider } from "@/lib/payment/payment.provider";
 import { bookingClosedError } from "@/modules/departures/booking-window";
@@ -397,7 +398,7 @@ export async function createPackageBooking(input: CreatePackageInput): Promise<P
     await prisma.booking.update({
       where: { id: b.id },
       data: {
-        priceSnapshot: { ...(b.priceSnapshot as object), package: { slug: pkg.slug, title: pkg.title, day: i + 1, references, discountPercent: packageDiscountFor(pkg, departureDates.get(input.departureIds[i]) ?? "") } },
+        priceSnapshot: { ...(b.priceSnapshot as object), package: { slug: pkg.slug, title: packageDisplayName(pkg.slug, pkg.title), day: i + 1, references, discountPercent: packageDiscountFor(pkg, departureDates.get(input.departureIds[i]) ?? "") } },
         adminNotes: [b.adminNotes, `${pkg.title}, ${pkg.dayTitles ? `${packageDayName(pkg, i)} (tour ${i + 1} of ${references.length})` : `day ${i + 1} of ${references.length}`}: booked and paid together with ${others}.`].filter(Boolean).join("\n"),
       },
     });

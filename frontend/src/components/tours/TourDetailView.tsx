@@ -51,6 +51,7 @@ import {
 } from "@/components/tours/TourCard";
 import type { DepartureAvailability, TourSection, TourWithAvailability } from "@/lib/api/types";
 import { TOUR_PROVIDER } from "@/lib/seo/business";
+import { baseTourName } from "@/lib/tourNames";
 
 const CATEGORY = {
   SHARED: { label: "Shared tours", href: "/shared-tours", sub: "Small-group tours" },
@@ -380,7 +381,7 @@ export function TourDetailView({
     {
       "@context": "https://schema.org",
       "@type": "TouristTrip",
-      name: tour.title,
+      name: baseTourName(tour.title),
       description: tour.metaDescription ?? tour.summary,
       touristType: isPrivate ? "Private Group" : "Small Group",
       // Absolute addresses: crawlers read JSON-LD without resolving it against the page.

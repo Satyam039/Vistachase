@@ -19,6 +19,7 @@ import { PackageTripJsonLd } from "@/components/seo/PackageTripJsonLd";
 import { cachePublicData } from "@/lib/api/cachePolicy";
 import { FaqBrowser } from "@/components/faq/FaqBrowser";
 import { TWO_DAY_ROCKIES_EXPLORER_FAQS } from "@/lib/twoDayPackageFaqs";
+import { PACKAGE_NAMES } from "@/lib/tourNames";
 
 // Rendered once and served from cache, refreshed in the background at most every minute, instead of
 // on every request (fix recheck, 10 Nov 2026, N2/R2: 2.7-10 s responses and 5xx under a crawl).
@@ -93,7 +94,7 @@ export default async function TwoDayRockiesExplorerPage() {
           </nav>
           <p className="mb-4 bg-summit-200 px-3 py-1 text-xs uppercase tracking-[0.14em] text-obsidian-900">{TWO_DAY_PACKAGE.saving}</p>
           <h1 className="text-balance text-[clamp(2.25rem,9vw,2.75rem)] font-light leading-[1.05] tracking-tight text-white sm:text-6xl lg:text-7xl">
-            {TWO_DAY_PACKAGE.title}
+            {PACKAGE_NAMES[TWO_DAY_PACKAGE.slug]}
           </h1>
           <p className="mt-4 text-sm uppercase tracking-[0.3em] text-summit-300 sm:text-base">{TWO_DAY_PACKAGE.label}</p>
           <p className="mx-auto mt-4 max-w-2xl text-base font-light leading-relaxed text-slate-100 sm:text-lg">{TWO_DAY_PACKAGE.description}</p>
